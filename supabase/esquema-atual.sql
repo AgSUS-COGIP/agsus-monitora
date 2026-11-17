@@ -35,6 +35,18 @@ CREATE SCHEMA arquivo;
 COMMENT ON SCHEMA arquivo IS 'Tabelas que saíram do sistema mas ainda não podem ser apagadas. Fora da Data API; sem acesso de anon/authenticated.';
 
 --
+-- Name: painel; Type: SCHEMA; Schema: -; Owner: -
+--
+
+CREATE SCHEMA painel;
+
+--
+-- Name: SCHEMA painel; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON SCHEMA painel IS 'Fontes conferidas das colunas dos Painéis: visões VW_<EDITAL|VAGA|APROVADO>_<NOME>, criadas só por migration, lidas só pelas RPCs dos Painéis (sem grant para a API).';
+
+--
 -- Name: private; Type: SCHEMA; Schema: -; Owner: -
 --
 
@@ -1197,6 +1209,124 @@ $_$;
 COMMENT ON FUNCTION private."FC_APLICAR_COORDENADA_MAPA"(p_alvo jsonb, p_latitude double precision, p_longitude double precision, p_latitude_anterior double precision, p_longitude_anterior double precision, p_motivo text, p_acao text, p_conferido text, p_historico_desfeito bigint) IS 'Grava uma alteração de coordenada do mapa (correção, conferência ou desfazer): administrador global ou gestor (FC_PODE_EDITAR_COORDENADA), limites do Brasil, motivo, identidade e posição anterior; atualiza a pendência e registra o histórico. Só chamada pelas RPCs do editor.';
 
 --
+-- Name: FC_APLICAR_FONTES_DO_PAINEL(text, text, jsonb); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_APLICAR_FONTES_DO_PAINEL"(p_area text, p_relatorio text, p_linhas jsonb) RETURNS jsonb
+    LANGUAGE plpgsql STABLE
+    SET search_path TO ''
+    AS $_$
+declare
+  v_linhas jsonb := coalesce(p_linhas, '[]'::jsonb);
+  v_fontes jsonb := '{}'::jsonb;
+  v_avisos jsonb := '[]'::jsonb;
+  c record;
+  v_visao text;
+  v_coluna text;
+  v_rotulo text;
+  v_tipo text;
+  v_chave_fonte text;
+  v_chave_linha text;
+  v_valor text;
+  v_novas jsonb;
+  v_repetidas integer;
+begin
+  for c in
+    select e.* from private."FC_COLUNAS_EDITAVEIS_DO_PAINEL"() e
+     where e.co_relatorio = p_relatorio order by e.nu_ordem
+  loop
+    select f."NO_VISAO", f."NO_COLUNA_VISAO" into v_visao, v_coluna
+      from public."TB_FONTE_COLUNA_PAINEL" f
+     where f."CO_AREA" = p_area and f."CO_RELATORIO" = p_relatorio and f."CO_COLUNA" = c.co_coluna;
+
+    if not found then
+      v_fontes := v_fontes || jsonb_build_object(c.co_coluna, jsonb_build_object(
+        'padrao', true, 'visao', null, 'coluna', null, 'rotulo', c.ds_padrao));
+      continue;
+    end if;
+
+    -- A escolha só vale se ainda estiver entre as opções do catálogo.
+    select o.ds_rotulo_visao || ' › ' || o.ds_rotulo_coluna into v_rotulo
+      from private."FC_OPCOES_DE_FONTE_DO_PAINEL"(p_relatorio, c.co_coluna) o
+     where o.no_visao = v_visao and o.no_coluna = v_coluna;
+
+    if not found then
+      select coalesce(jsonb_agg(l.v || jsonb_build_object(c.co_coluna, null) order by l.n), '[]'::jsonb)
+        into v_linhas
+        from jsonb_array_elements(v_linhas) with ordinality as l (v, n);
+      v_fontes := v_fontes || jsonb_build_object(c.co_coluna, jsonb_build_object(
+        'padrao', false, 'visao', v_visao, 'coluna', v_coluna, 'rotulo', 'Fonte indisponível'));
+      v_avisos := v_avisos || to_jsonb(format(
+        'A fonte escolhida para "%s" não está disponível: a coluna ficou vazia.', c.no_rotulo));
+      continue;
+    end if;
+
+    select t.typname::text into v_tipo
+      from pg_catalog.pg_attribute a
+      join pg_catalog.pg_class r on r.oid = a.attrelid
+      join pg_catalog.pg_namespace n on n.oid = r.relnamespace
+      join pg_catalog.pg_type t on t.oid = a.atttypid
+     where n.nspname = 'painel' and r.relname::text = v_visao and a.attname::text = v_coluna
+       and a.attnum > 0 and not a.attisdropped;
+
+    v_valor := case
+      when v_tipo = 'timestamptz' then format('to_char((f.%I at time zone ''America/Sao_Paulo'')::date, ''YYYY-MM-DD'')', v_coluna)
+      when v_tipo in ('timestamp', 'date') then format('to_char(f.%I::date, ''YYYY-MM-DD'')', v_coluna)
+      when c.tp_coluna = 'texto' then format('f.%I::text', v_coluna)
+      else format('f.%I', v_coluna)
+    end;
+    v_chave_fonte := case c.tp_grao
+      when 'EDITAL' then 'f."CO_MONITORAMENTO"::text'
+      when 'VAGA' then 'f."CO_MONITORAMENTO"::text || ''|'' || f."CO_VAGA"::text'
+      else 'f."CO_CANDIDATO_APROVADO"::text'
+    end;
+    v_chave_linha := case c.tp_grao
+      when 'EDITAL' then $k$(l.v ->> 'edital_id')$k$
+      when 'VAGA' then $k$((l.v ->> 'edital_id') || '|' || (l.v ->> 'codigo_vaga'))$k$
+      else $k$(l.v ->> 'candidato_id')$k$
+    end;
+
+    execute format($q$
+      with fonte as (
+        select %1$s as chave, count(*) as qtd, (array_agg(to_jsonb(%2$s)))[1] as valor
+          from painel.%3$I f
+         group by 1
+      ),
+      linhas as (
+        select l.v, l.n, %4$s as chave
+          from jsonb_array_elements($1) with ordinality as l (v, n)
+      )
+      select coalesce(jsonb_agg(linhas.v || jsonb_build_object($2,
+               case when fonte.qtd = 1 then fonte.valor else 'null'::jsonb end) order by linhas.n), '[]'::jsonb),
+             (count(distinct linhas.chave) filter (where fonte.qtd > 1))::integer
+        from linhas
+        left join fonte on fonte.chave = linhas.chave
+    $q$, v_chave_fonte, v_valor, v_visao, v_chave_linha)
+    into v_novas, v_repetidas
+    using v_linhas, c.co_coluna;
+
+    v_linhas := v_novas;
+    v_fontes := v_fontes || jsonb_build_object(c.co_coluna, jsonb_build_object(
+      'padrao', false, 'visao', v_visao, 'coluna', v_coluna, 'rotulo', v_rotulo));
+    if v_repetidas > 0 then
+      v_avisos := v_avisos || to_jsonb(format(
+        '%s chave%s repetida%s na fonte de "%s": essas células ficaram vazias.',
+        v_repetidas, case when v_repetidas > 1 then 's' else '' end,
+        case when v_repetidas > 1 then 's' else '' end, c.no_rotulo));
+    end if;
+  end loop;
+
+  return jsonb_build_object('linhas', v_linhas, 'fontes', v_fontes, 'avisos', v_avisos);
+end;
+$_$;
+
+--
+-- Name: FUNCTION "FC_APLICAR_FONTES_DO_PAINEL"(p_area text, p_relatorio text, p_linhas jsonb); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_APLICAR_FONTES_DO_PAINEL"(p_area text, p_relatorio text, p_linhas jsonb) IS 'Troca, nas linhas de um relatório dos Painéis, o valor de cada coluna com fonte escolhida na área (TB_FONTE_COLUNA_PAINEL) pelo da visão do schema painel, juntada pela chave do grão. Só usa nomes achados no catálogo (FC_OPCOES_DE_FONTE_DO_PAINEL); fonte indisponível ou chave repetida esvaziam as células e avisam. Devolve { linhas, fontes, avisos }.';
+
+--
 -- Name: FC_AREAS_DO_PERFIL(uuid); Type: FUNCTION; Schema: private; Owner: -
 --
 
@@ -2134,6 +2264,104 @@ $$;
 COMMENT ON FUNCTION private."FC_CALCULAR_ENTREVISTA"(p_entrevista uuid) IS 'Recalcula uma entrevista feita no sistema: média × peso por competência (TB_ENTREVISTA_NOTA), total e parecer pelas regras do roteiro. A média é a dos avaliadores que avaliam a competência (private."FC_AVALIADOR_AVALIA"). Com aspectos: nota do avaliador = média dos aspectos (só com todos lançados), total = soma sem arredondar (2 casas no fim) e eliminação só pelo mínimo da competência.';
 
 --
+-- Name: FC_CALCULAR_PAINEIS(); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_CALCULAR_PAINEIS"() RETURNS integer
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+declare
+  a record;
+  r text;
+  v_feitos integer := 0;
+begin
+  for a in select t."CO_AREA" from public."TB_AREA" t order by t."CO_AREA" loop
+    foreach r in array array['resumo-dos-editais', 'editais-por-cargo', 'aprovados'] loop
+      begin
+        perform private."FC_CALCULAR_RELATORIO_PAINEL"(a."CO_AREA", r, null, null);
+        v_feitos := v_feitos + 1;
+      exception when others then
+        raise warning 'Painéis: o cálculo de % / % falhou: %', a."CO_AREA", r, sqlerrm;
+      end;
+    end loop;
+  end loop;
+  return v_feitos;
+end;
+$$;
+
+--
+-- Name: FUNCTION "FC_CALCULAR_PAINEIS"(); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_CALCULAR_PAINEIS"() IS 'Painéis: recalcula os três relatórios de todas as áreas; um que falha não impede os outros (aviso no log). Devolve quantos calculou. Tarefa agsus_paineis_recalcular_relatorios, de hora em hora.';
+
+--
+-- Name: FC_CALCULAR_RELATORIO_PAINEL(text, text, uuid, interval); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_CALCULAR_RELATORIO_PAINEL"(p_area text, p_relatorio text, p_usuario uuid, p_intervalo interval DEFAULT NULL::interval) RETURNS boolean
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+declare
+  v jsonb;
+  v_linhas jsonb;
+  v_qt integer;
+  v_ultimo timestamptz;
+begin
+  -- Um cálculo por vez para a mesma área e relatório: quem chega depois espera e, com intervalo,
+  -- recebe o que acabou de ser calculado.
+  perform pg_advisory_xact_lock(hashtext('painel:' || p_area || ':' || p_relatorio));
+  if p_intervalo is not null then
+    select k."DT_CALCULO" into v_ultimo from public."TB_CALCULO_RELATORIO_PAINEL" k
+     where k."CO_AREA" = p_area and k."CO_RELATORIO" = p_relatorio;
+    if v_ultimo is not null and v_ultimo > now() - p_intervalo then
+      return false;
+    end if;
+  end if;
+
+  v := private."FC_LINHAS_DO_RELATORIO_PAINEL"(p_area, p_relatorio);
+  v_linhas := coalesce(v -> 'linhas', '[]'::jsonb);
+  v_qt := jsonb_array_length(v_linhas);
+  insert into public."TB_CALCULO_RELATORIO_PAINEL"
+    ("CO_AREA", "CO_RELATORIO", "DT_CALCULO", "QT_LINHA", "DS_FONTES", "DS_AVISOS", "CO_USUARIO_CALCULO")
+  values (p_area, p_relatorio, now(), v_qt,
+          coalesce(v -> 'fontes', '{}'::jsonb), coalesce(v -> 'avisos', '[]'::jsonb), p_usuario)
+  on conflict ("CO_AREA", "CO_RELATORIO") do update
+    set "DT_CALCULO" = excluded."DT_CALCULO", "QT_LINHA" = excluded."QT_LINHA",
+        "DS_FONTES" = excluded."DS_FONTES", "DS_AVISOS" = excluded."DS_AVISOS",
+        "CO_USUARIO_CALCULO" = excluded."CO_USUARIO_CALCULO";
+
+  -- Só o que mudou (20261116235500): a linha igual à guardada não é regravada.
+  delete from public."TB_LINHA_RELATORIO_PAINEL" l
+   where l."CO_AREA" = p_area and l."CO_RELATORIO" = p_relatorio
+     and l."NU_POSICAO" > v_qt;
+  update public."TB_LINHA_RELATORIO_PAINEL" l
+     set "CO_MONITORAMENTO" = x.edital, "DS_LINHA" = x.linha
+    from (select n::integer as posicao, (linha ->> 'edital_id')::uuid as edital, linha
+            from jsonb_array_elements(v_linhas) with ordinality as t (linha, n)) x
+   where l."CO_AREA" = p_area and l."CO_RELATORIO" = p_relatorio
+     and l."NU_POSICAO" = x.posicao
+     and (l."CO_MONITORAMENTO", l."DS_LINHA") is distinct from (x.edital, x.linha);
+  insert into public."TB_LINHA_RELATORIO_PAINEL"
+    ("CO_AREA", "CO_RELATORIO", "NU_POSICAO", "CO_MONITORAMENTO", "DS_LINHA")
+  select p_area, p_relatorio, x.n::integer, (x.linha ->> 'edital_id')::uuid, x.linha
+    from jsonb_array_elements(v_linhas) with ordinality as x (linha, n)
+   where not exists (select 1 from public."TB_LINHA_RELATORIO_PAINEL" l
+                      where l."CO_AREA" = p_area and l."CO_RELATORIO" = p_relatorio
+                        and l."NU_POSICAO" = x.n);
+  return true;
+end;
+$$;
+
+--
+-- Name: FUNCTION "FC_CALCULAR_RELATORIO_PAINEL"(p_area text, p_relatorio text, p_usuario uuid, p_intervalo interval); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_CALCULAR_RELATORIO_PAINEL"(p_area text, p_relatorio text, p_usuario uuid, p_intervalo interval) IS 'Painéis: recalcula um relatório da área e atualiza as linhas prontas, sob lock por área e relatório. Grava só a posição que mudou (a linha igual não é regravada; 20261116235500). Com p_intervalo, não recalcula se o último cálculo for mais recente (devolve false).';
+
+--
 -- Name: FC_CALCULO_PELO_PYTHON(); Type: FUNCTION; Schema: private; Owner: -
 --
 
@@ -2357,6 +2585,47 @@ $$;
 COMMENT ON FUNCTION private."FC_CODIGO_DE_COORDENACAO"(p_nome text) IS 'Código livre para uma coordenação nova a partir do nome: minúsculas sem acento, hífen no lugar do resto, até 60 caracteres, com sufixo numérico se já existir em TB_COORDENACAO.';
 
 --
+-- Name: FC_COLUNAS_EDITAVEIS_DO_PAINEL(); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_COLUNAS_EDITAVEIS_DO_PAINEL"() RETURNS TABLE(nu_ordem integer, co_relatorio text, tp_grao text, co_coluna text, no_rotulo text, tp_coluna text, ds_padrao text)
+    LANGUAGE sql IMMUTABLE
+    SET search_path TO ''
+    AS $$
+  select * from (values
+    (1, 'resumo-dos-editais', 'EDITAL', 'vagas_imediatas', 'Total de vagas imediatas', 'inteiro',
+        'Padrão: vagas do cadastro do edital'),
+    (2, 'resumo-dos-editais', 'EDITAL', 'data_divulgacao', 'Data da divulgação do edital', 'data',
+        'Padrão: início da 1ª etapa do cronograma'),
+    (3, 'resumo-dos-editais', 'EDITAL', 'data_final', 'Data final do processo seletivo', 'data',
+        'Padrão: fim da última etapa do cronograma'),
+    (4, 'editais-por-cargo', 'VAGA', 'vagas_imediatas', 'Vagas imediatas', 'inteiro',
+        'Padrão: quadro de vagas do edital, convocação, local da vaga ou número no título da vaga'),
+    (5, 'editais-por-cargo', 'VAGA', 'inscritos', 'Total de inscritos', 'inteiro',
+        'Padrão: inscritos da Seleção'),
+    (6, 'editais-por-cargo', 'VAGA', 'aprovados', 'Total de aprovados', 'inteiro',
+        'Padrão: lista de aprovados vigente'),
+    (7, 'aprovados', 'APROVADO', 'nota', 'Nota', 'decimal',
+        'Padrão: nota da lista de aprovados'),
+    (8, 'aprovados', 'APROVADO', 'classificacao', 'Classificação', 'inteiro',
+        'Padrão: classificação da lista de aprovados'),
+    (9, 'aprovados', 'APROVADO', 'status', 'Status', 'texto',
+        'Padrão: status da lista de aprovados'),
+    (10, 'aprovados', 'APROVADO', 'matricula', 'Matrícula', 'texto',
+        'Padrão: matrícula da lista de aprovados'),
+    (11, 'aprovados', 'APROVADO', 'data_contratacao', 'Data de admissão (registro no sistema)', 'data',
+        'Padrão: data em que o status atual foi registrado')
+  ) as c (nu_ordem, co_relatorio, tp_grao, co_coluna, no_rotulo, tp_coluna, ds_padrao)
+  order by c.nu_ordem
+$$;
+
+--
+-- Name: FUNCTION "FC_COLUNAS_EDITAVEIS_DO_PAINEL"(); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_COLUNAS_EDITAVEIS_DO_PAINEL"() IS 'As colunas dos relatórios dos Painéis cuja fonte se escolhe por área: relatório, grão (EDITAL, VAGA, APROVADO), coluna, rótulo, tipo (inteiro, decimal, data, texto) e o texto do padrão. Espelho de src/lib/relatorios-dos-paineis.ts.';
+
+--
 -- Name: FC_COLUNAS_JSON(jsonb, text[]); Type: FUNCTION; Schema: private; Owner: -
 --
 
@@ -2524,6 +2793,50 @@ $$;
 --
 
 COMMENT ON FUNCTION private."FC_CONFERIR_DISPAROS_ROBO"(p_disparo bigint) IS 'Agenda dos robôs (20261008140000): fecha os pedidos de TL_DISPARO_ROBO (todos, ou só p_disparo) pela resposta em net._http_response (2xx = ACEITO — o GitHub responde 204; outro código ou tempo esgotado = FALHOU, com a mensagem curta do GitHub), dá como FALHOU o pedido sem resposta há mais de 1 h e, na rodada geral, apaga as linhas com mais de 30 dias. Devolve quantos fechou. Só o dono (pg_cron a cada 5 min e situacao_do_disparo_robo).';
+
+--
+-- Name: FC_CONFERIR_INATIVACAO_EM_MASSA(text, integer); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_CONFERIR_INATIVACAO_EM_MASSA"(p_planilha text, p_a_inativar integer) RETURNS text
+    LANGUAGE plpgsql STABLE
+    SET search_path TO ''
+    AS $$
+declare
+  v_ativas integer;
+  v_limite integer;
+begin
+  if coalesce(p_a_inativar, 0) <= 0 then
+    return null;
+  end if;
+  -- O mesmo limite do incremental (FC_DESATIVAR_AUSENTES_DA_PLANILHA): 2% das ativas, no mínimo 25.
+  select count(*)::integer into v_ativas
+    from public."TB_ANALISE_CURRICULAR" a
+   where a.ativo
+     and a."CO_PLANILHA" = p_planilha
+     and a."TP_ORIGEM_REGISTRO" = 'PLANILHA'
+     and not private."FC_ANALISE_EH_TREINAMENTO"(a.origem_planilha);
+  v_limite := greatest(25, ceil(v_ativas * 0.02)::integer);
+  if p_a_inativar <= v_limite then
+    return null;
+  end if;
+  -- Limpeza intencional: só quem opera o banco liga, na própria sessão do SQL Editor.
+  if coalesce(current_setting('monitora.permitir_inativacao_em_massa', true), '') = 'sim' then
+    return null;
+  end if;
+  return format(
+    'Envio completo recusado: desativaria %s análises da planilha %s (limite %s, 2%% das %s ativas). '
+    'Nada foi desativado. Confira se a planilha tem todos os editais; uma limpeza intencional é feita '
+    'por quem opera o banco (set monitora.permitir_inativacao_em_massa = ''sim'').',
+    p_a_inativar, p_planilha, v_limite, v_ativas);
+end;
+$$;
+
+--
+-- Name: FUNCTION "FC_CONFERIR_INATIVACAO_EM_MASSA"(p_planilha text, p_a_inativar integer); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_CONFERIR_INATIVACAO_EM_MASSA"(p_planilha text, p_a_inativar integer) IS 'Trava do envio completo das análises (finalizar_sync_analises_lotes): devolve o motivo da recusa quando desativaria mais que 2% das ativas da planilha (mínimo 25), ou null. Liberada só com monitora.permitir_inativacao_em_massa = sim na sessão. 20261111120000.';
 
 --
 -- Name: FC_CONFIRMACAO_DO_EDITAL(uuid, text); Type: FUNCTION; Schema: private; Owner: -
@@ -3573,6 +3886,28 @@ $$;
 --
 
 COMMENT ON FUNCTION private."FC_EDITAIS_VISIVEIS"() IS 'Editais visíveis para o usuário logado pela coordenação; null = sem recorte além da área.';
+
+--
+-- Name: FC_EDITAL_ANALISE_ENCERRADO(text, text, date); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_EDITAL_ANALISE_ENCERRADO"(p_planilha text, p_edital text, p_fim date) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  -- O período acabou quando o último dia (data_fim_analise) é antes de hoje em Brasília: o
+  -- edital que termina hoje fica ativo até a meia-noite. Sem data de fim, nunca acaba.
+  -- O edital com a avaliação no MONITORA não segue a planilha e fica de fora.
+  select p_fim is not null
+     and p_fim < (now() at time zone 'America/Sao_Paulo')::date
+     and not public."FC_EDITAL_ANALISE_NO_MONITORA"(p_planilha, p_edital);
+$$;
+
+--
+-- Name: FUNCTION "FC_EDITAL_ANALISE_ENCERRADO"(p_planilha text, p_edital text, p_fim date); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_EDITAL_ANALISE_ENCERRADO"(p_planilha text, p_edital text, p_fim date) IS 'Regra do período das análises (20261111150000): o edital de análise está encerrado quando data_fim_analise é antes de hoje em Brasília (sem data, nunca), fora o edital com a avaliação no MONITORA.';
 
 --
 -- Name: FC_EDITAL_EH_TREINAMENTO(uuid); Type: FUNCTION; Schema: private; Owner: -
@@ -5281,6 +5616,33 @@ $$;
 COMMENT ON FUNCTION private."FC_EXIGIR_NOTA_NA_ESCALA"(p_roteiro uuid, p_competencia uuid, p_nota numeric) IS 'Recusa (22023) a nota fora da faixa da competência (0 a VL_NOTA_MAXIMA) ou fora da escala do roteiro (passo, lista ou níveis). Vale para a nota do avaliador e para a de cada aspecto.';
 
 --
+-- Name: FC_EXIGIR_PAINEIS_DA_AREA(text); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_EXIGIR_PAINEIS_DA_AREA"(p_area text) RETURNS void
+    LANGUAGE plpgsql STABLE
+    SET search_path TO ''
+    AS $$
+begin
+  if not exists (select 1 from public."TB_AREA" a where a."CO_AREA" = p_area) then
+    raise exception 'Área inválida' using errcode = '22023';
+  end if;
+  if not private.pode_recurso('paineis_dados', 1) then
+    raise exception 'Sem permissão para Painéis' using errcode = '42501';
+  end if;
+  if not private."FC_PODE_AREA"(p_area) then
+    raise exception 'Sem acesso a esta área' using errcode = '42501';
+  end if;
+end;
+$$;
+
+--
+-- Name: FUNCTION "FC_EXIGIR_PAINEIS_DA_AREA"(p_area text); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_EXIGIR_PAINEIS_DA_AREA"(p_area text) IS 'Guarda dos relatórios de Painéis: área existente (22023), recurso paineis_dados ≥ leitor e acesso à área (42501).';
+
+--
 -- Name: FC_EXIGIR_PARECER_RECURSO(); Type: FUNCTION; Schema: private; Owner: -
 --
 
@@ -5943,6 +6305,66 @@ CREATE FUNCTION private."FC_FIM_DAS_INSCRICOES"(p_edital uuid) RETURNS date
 $$;
 
 --
+-- Name: FC_FONTES_DO_PAINEL_JSON(text, text); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_FONTES_DO_PAINEL_JSON"(p_area text, p_relatorio text) RETURNS jsonb
+    LANGUAGE sql STABLE
+    SET search_path TO ''
+    AS $$
+  select jsonb_build_object(
+    'pode_editar', private.pode_recurso('paineis_dados', 3) and private."FC_PODE_AREA"(p_area),
+    'colunas', (
+      select coalesce(jsonb_agg(jsonb_build_object(
+               'coluna', c.co_coluna,
+               'rotulo', c.no_rotulo,
+               'tipo', c.tp_coluna,
+               'padrao', c.ds_padrao,
+               'escolha', (
+                 select jsonb_build_object('visao', f."NO_VISAO", 'coluna', f."NO_COLUNA_VISAO")
+                   from public."TB_FONTE_COLUNA_PAINEL" f
+                  where f."CO_AREA" = p_area and f."CO_RELATORIO" = p_relatorio
+                    and f."CO_COLUNA" = c.co_coluna),
+               'opcoes', (
+                 select coalesce(jsonb_agg(jsonb_build_object(
+                          'visao', o.no_visao, 'rotulo', o.ds_rotulo_visao, 'colunas', o.colunas)
+                          order by o.ds_rotulo_visao, o.no_visao), '[]'::jsonb)
+                   from (select x.no_visao, x.ds_rotulo_visao,
+                                jsonb_agg(jsonb_build_object('coluna', x.no_coluna, 'rotulo', x.ds_rotulo_coluna)
+                                          order by x.ds_rotulo_coluna) as colunas
+                           from private."FC_OPCOES_DE_FONTE_DO_PAINEL"(p_relatorio, c.co_coluna) x
+                          group by x.no_visao, x.ds_rotulo_visao) o)
+             ) order by c.nu_ordem), '[]'::jsonb)
+        from private."FC_COLUNAS_EDITAVEIS_DO_PAINEL"() c
+       where c.co_relatorio = p_relatorio),
+    'historico', (
+      select coalesce(jsonb_agg(h.item order by h.dt desc, h.id desc), '[]'::jsonb)
+        from (select t."DT_ALTERACAO" as dt, t."SQ_HISTORICO" as id,
+                     jsonb_build_object(
+                       'em', t."DT_ALTERACAO",
+                       'nome', coalesce(u.nome, 'Usuário sem perfil'),
+                       'coluna', coalesce(c.no_rotulo, t."CO_COLUNA"),
+                       'antes', t."DS_FONTE_ANTES",
+                       'depois', t."DS_FONTE_DEPOIS",
+                       'motivo', t."DS_MOTIVO") as item
+                from public."TH_FONTE_COLUNA_PAINEL" t
+                left join private."FC_COLUNAS_EDITAVEIS_DO_PAINEL"() c
+                  on c.co_relatorio = t."CO_RELATORIO" and c.co_coluna = t."CO_COLUNA"
+                left join lateral (select p.nome from public."TB_PERFIL_USUARIO" p
+                                    where p.user_id = t."CO_USUARIO_ALTERACAO" limit 1) u on true
+               where t."CO_AREA" = p_area and t."CO_RELATORIO" = p_relatorio
+               order by t."DT_ALTERACAO" desc, t."SQ_HISTORICO" desc
+               limit 20) h)
+  )
+$$;
+
+--
+-- Name: FUNCTION "FC_FONTES_DO_PAINEL_JSON"(p_area text, p_relatorio text); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_FONTES_DO_PAINEL_JSON"(p_area text, p_relatorio text) IS 'O editor de fontes de um relatório dos Painéis numa área: se quem pede pode editar, cada coluna editável (padrão, escolha, opções do catálogo) e as 20 trocas mais recentes.';
+
+--
 -- Name: FC_FONTES_PELO_CODIGO(text[]); Type: FUNCTION; Schema: private; Owner: -
 --
 
@@ -6020,6 +6442,53 @@ $$;
 --
 
 COMMENT ON FUNCTION private."FC_FOTO_DO_GOOGLE"(p_meta jsonb) IS 'URL da foto do Google nos metadados do login (avatar_url ou picture), só https e até 2048 caracteres; senão null.';
+
+--
+-- Name: FC_FUNDAMENTO_DA_ELIMINACAO(uuid, text); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_FUNDAMENTO_DA_ELIMINACAO"(p_edital uuid, p_motivo text) RETURNS jsonb
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  with regra as (
+    select t."TP_SITUACAO" as situacao,
+           (select e
+              from jsonb_array_elements(
+                     case when jsonb_typeof(h."DS_CONFIGURACAO" #> '{requisitos,eliminacao_automatica}') = 'array'
+                          then h."DS_CONFIGURACAO" #> '{requisitos,eliminacao_automatica}'
+                          else '[]'::jsonb end) e
+             where e ->> 'codigo' = p_motivo
+             limit 1) as entrada
+      from public."TB_REGRA_TRIAGEM" t
+      join public."TH_REGRA_TRIAGEM" h
+        on h."CO_REGRA_TRIAGEM" = t."CO_REGRA_TRIAGEM" and h."NU_VERSAO" = t."NU_VERSAO_VIGENTE"
+     where t."CO_MONITORAMENTO" = p_edital
+  ),
+  ultimo as (
+    select f.*
+      from public."TH_FUNDAMENTO_ELIMINACAO" f
+     where f."CO_MONITORAMENTO" = p_edital and f."CO_MOTIVO_ELIMINACAO" = p_motivo
+     order by f."CO_HISTORICO" desc
+     limit 1
+  )
+  select jsonb_build_object(
+           'situacao', case when r.situacao = 'CONFERIDA' and r.entrada is not null
+                             and r.entrada = u."DS_REGRA_MOTIVO" then 'CONFERIDO' else 'RECONFERIR' end,
+           'motivo_codigo', u."CO_MOTIVO_ELIMINACAO",
+           'item_edital', u."DS_ITEM_EDITAL",
+           'versao_regra', u."NU_VERSAO_REGRA",
+           'fonte', u."DS_FONTE",
+           'conferido_em', u."DT_CONFERENCIA")
+    from ultimo u
+    left join regra r on true;
+$$;
+
+--
+-- Name: FUNCTION "FC_FUNDAMENTO_DA_ELIMINACAO"(p_edital uuid, p_motivo text); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_FUNDAMENTO_DA_ELIMINACAO"(p_edital uuid, p_motivo text) IS 'O fundamento da última conferência de um motivo de eliminação da Triagem (TH_FUNDAMENTO_ELIMINACAO): situacao CONFERIDO enquanto a regra da Triagem vigente estiver conferida e tiver a mesma entrada do motivo; RECONFERIR quando mudou; nulo sem conferência. Nunca presume item. 20261110215930.';
 
 --
 -- Name: FC_GESTOR_DE_ACESSOS(); Type: FUNCTION; Schema: private; Owner: -
@@ -6479,7 +6948,7 @@ COMMENT ON FUNCTION private."FC_IMPACTO_REINICIO_FICHAS"(p_edital uuid) IS 'O qu
 CREATE FUNCTION private."FC_IMPORTAR_AVALIACAO_DA_PLANILHA"(p_edital uuid, p_motivo text, p_usuario uuid) RETURNS json
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
-    AS $$
+    AS $_$
 declare
   v_motivo text := btrim(coalesce(p_motivo, ''));
   -- A nota mínima do edital (a mesma de concluir_ficha; sem nível na planilha, a geral ou a menor
@@ -6610,8 +7079,7 @@ begin
   v_troca := private."FC_DEFINIR_ORIGEM_ANALISE"(p_edital, 'MONITORA', 'Importação da planilha: ' || v_motivo, p_usuario);
   return (v_troca::jsonb || jsonb_build_object('importadas', v_concluidas, 'fora_do_lote', v_saem))::json;
 end;
-$$;
-
+$_$;
 
 --
 -- Name: FUNCTION "FC_IMPORTAR_AVALIACAO_DA_PLANILHA"(p_edital uuid, p_motivo text, p_usuario uuid); Type: COMMENT; Schema: private; Owner: -
@@ -6804,12 +7272,37 @@ begin
 end;
 $$;
 
-
 --
 -- Name: FUNCTION "FC_IMPORTAR_ENTREVISTAS_DA_PLANILHA"(p_edital uuid, p_dados jsonb, p_motivo text, p_usuario uuid); Type: COMMENT; Schema: private; Owner: -
 --
 
 COMMENT ON FUNCTION private."FC_IMPORTAR_ENTREVISTAS_DA_PLANILHA"(p_edital uuid, p_dados jsonb, p_motivo text, p_usuario uuid) IS 'Importa as entrevistas da planilha da banca ("Avaliação Estruturada por Competência"; 16/11/2026): os avaliadores (TB_ENTREVISTA_AVALIADOR, origem "Planilha da banca"), cada entrevista como a ficha de notas do sistema (TB_ENTREVISTA sistema, sem exigir a lista de convocação), com banca, comparecimento, endereço da planilha e as notas de cada avaliador por competência (sem a escala do roteiro: a planilha guarda médias). Nota total e parecer pelo sistema (FC_CALCULAR_ENTREVISTA), comparados com os da planilha (devolve as divergências); inapto ou ausente recebe a justificativa pelo motivo. Histórico em TH_ENTREVISTA_AVALIACAO. Recusa edital com entrevista já lançada no sistema. p_dados: {avaliadores: [{banca, posicao, nome}], entrevistas: [{analise, banca, compareceu, link, notas: [{ordem, posicao, nota}], planilha: {nota_final, parecer}}]}. Sem grant.';
+
+--
+-- Name: FC_INATIVAR_EDITAIS_ANALISE_ENCERRADOS(); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_INATIVAR_EDITAIS_ANALISE_ENCERRADOS"() RETURNS integer
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+  v_total integer;
+begin
+  update public."TB_EDITAL_ANALISE" e
+     set ativo = false, updated_at = now()
+   where e.ativo is true
+     and private."FC_EDITAL_ANALISE_ENCERRADO"(e."CO_PLANILHA", e.edital, e.data_fim_analise);
+  get diagnostics v_total = row_count;
+  return v_total;
+end;
+$$;
+
+--
+-- Name: FUNCTION "FC_INATIVAR_EDITAIS_ANALISE_ENCERRADOS"(); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_INATIVAR_EDITAIS_ANALISE_ENCERRADOS"() IS 'Inativa os editais de análise ativos com o período encerrado (FC_EDITAL_ANALISE_ENCERRADO) e devolve quantos. Tarefa agsus_analises_inativar_editais_encerrados, todo dia às 00:10 de Brasília. 20261111150000.';
 
 --
 -- Name: FC_INATIVAR_LISTAS_VENCIDAS(uuid); Type: FUNCTION; Schema: private; Owner: -
@@ -7398,61 +7891,25 @@ CREATE FUNCTION private."FC_LIMPAR_HISTORICO_DO_CRON"(p_dias integer DEFAULT 14,
     SET search_path TO ''
     AS $$
 declare
-  v_qt integer;
+  v_n integer;
 begin
-  with m as materialized (
-    select m.id, m."CO_AREA" as area, m.ativo,
-           private."FC_NUMERO_EDITAL"(m.edital) as numero,
-           private."FC_TEXTO_BUSCA_RECURSO"(m.unidade) as unidade,
-           btrim(regexp_replace(private."FC_TEXTO_BUSCA_RECURSO"(m.unidade), '[[:space:]-]+', ' ', 'g')) as unidade_sem_hifen
-      from public."TB_MONITORAMENTO_INDIGENA" m
-     where private."FC_NUMERO_EDITAL"(m.edital) is not null
-  ),
-  u as materialized (
-    select private."FC_TEXTO_BUSCA_RECURSO"(u."NO_UNIDADE") as unidade, u."CO_AREA" as area
-      from public."TA_UNIDADE_AREA" u
-  ),
-  s as materialized (
-    select s."CO_SELECAO_VAGA" as id,
-           private."FC_NUMERO_EDITAL"(s."DS_EDITAL") as numero,
-           private."FC_TEXTO_BUSCA_RECURSO"(s."NO_UNIDADE") as unidade,
-           btrim(regexp_replace(private."FC_TEXTO_BUSCA_RECURSO"(s."NO_UNIDADE"), '[[:space:]-]+', ' ', 'g')) as unidade_sem_hifen,
-           private."FC_TEXTO_BUSCA_RECURSO"(s."NO_UNIDADE") ~ '^(dsei|casai)( |$)' as indigena
-      from public."TB_SELECAO_VAGA" s
-     where s."ST_REGISTRO_ATIVO" = 'S'
-  ),
-  com_tabela as (
-    select s.*, (select u.area from u where u.unidade = s.unidade limit 1) as area_tabela
-      from s
-  ),
-  alvo as (
-    select c.id,
-           e.id as edital_id,
-           case when c.indigena then 'saude-indigena'
-                else coalesce(e.area, c.area_tabela, 'sede') end as area
-      from com_tabela c
-      left join lateral (
-        select m.id, m.area from m
-         where c.numero is not null and m.numero = c.numero
-           -- DSEI/CASAI: só o edital da Saúde Indígena da mesma unidade.
-           and (case when c.indigena then m.area = 'saude-indigena'
-                                          and m.unidade_sem_hifen = c.unidade_sem_hifen
-                     else m.area <> 'saude-indigena' end)
-         order by m.ativo desc,
-                  (m.unidade = c.unidade) desc,
-                  (m.area = c.area_tabela) desc
-         limit 1
-      ) e on true
-  )
-  update public."TB_SELECAO_VAGA" s set
-    "CO_MONITORAMENTO" = alvo.edital_id,
-    "CO_AREA" = alvo.area
-    from alvo
-   where s."CO_SELECAO_VAGA" = alvo.id
-     and (s."CO_MONITORAMENTO" is distinct from alvo.edital_id
-          or s."CO_AREA" is distinct from alvo.area);
-  get diagnostics v_qt = row_count;
-  return v_qt;
+  if p_dias is null or p_dias not between 1 and 90 then
+    raise exception 'p_dias deve estar entre 1 e 90' using errcode = '22023';
+  end if;
+  if p_manter is null or p_manter not between 1 and 100 then
+    raise exception 'p_manter deve estar entre 1 e 100' using errcode = '22023';
+  end if;
+
+  delete from cron.job_run_details d
+   where d.start_time < now() - make_interval(days => p_dias)
+     and d.runid not in (
+       select x.runid
+         from (select r.runid,
+                      row_number() over (partition by r.jobid order by r.start_time desc, r.runid desc) as n
+                 from cron.job_run_details r) x
+        where x.n <= p_manter);
+  get diagnostics v_n = row_count;
+  return v_n;
 end;
 $$;
 
@@ -7494,6 +7951,78 @@ $$;
 --
 
 COMMENT ON FUNCTION private."FC_LIMPAR_MANIFESTO_ANALISE"(p_dias integer) IS 'Apaga o manifesto (TM_MANIFESTO_ANALISE) com mais de p_dias (1 a 30; padrão 2) de sync de análises que não está em andamento (erro, processado ou sem log); o sync em andamento nunca é tocado. Devolve as linhas apagadas. Chamada pela tarefa agsus_analises_limpar_manifesto (20261022154000). Só o dono (pg_cron).';
+
+--
+-- Name: FC_LINHAS_APROVADOS_DO_PAINEL(text); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_LINHAS_APROVADOS_DO_PAINEL"(p_area text) RETURNS jsonb
+    LANGUAGE plpgsql STABLE
+    SET search_path TO ''
+    AS $$
+declare
+  v_editais uuid[];
+  v_resultado json;
+  v_aplicado jsonb;
+begin
+  -- Sem o recorte do usuário: o cálculo vale para a área inteira; o recorte é aplicado na leitura.
+  v_editais := null;
+
+  v_resultado := (
+    with ed as (
+      select m.id, m.edital, m.unidade
+        from public."TB_MONITORAMENTO_INDIGENA" m
+       where m."CO_AREA" = p_area and m.ativo
+         and not private."FC_EH_TREINAMENTO"(m."ST_TREINAMENTO")
+         and (v_editais is null or m.id = any (v_editais))
+    ),
+    linhas as (
+      select ed.id as edital_id, ed.edital, ed.unidade, c.id as candidato_id,
+             c.cargo, c.codigo_vaga, c.nota, c.classificacao, c.nome, c.status, c.matricula,
+             case when c.status in ('Contratado', 'Migração') then (
+               select (max(h.alterado_em) at time zone 'America/Sao_Paulo')::date
+                 from public."TH_CANDIDATO_APROVADO" h
+                where h.candidato_id = c.id and h.status_novo = c.status
+             ) end as data_contratacao
+        from ed
+        join public."TB_LISTA_APROVADO" l on l.edital_id = ed.id::text and l.vigente is true and l.ativo
+        join public."TB_CANDIDATO_APROVADO" c on c.lista_id = l.id and c.removido_em is null
+    )
+    select json_build_object(
+      'schema_version', 1,
+      'area', p_area,
+      'gerado_em', now(),
+      'linhas', coalesce((
+        select json_agg(json_build_object(
+                 'edital_id', l.edital_id,
+                 'candidato_id', l.candidato_id,
+                 'edital', l.edital,
+                 'unidade', l.unidade,
+                 'cargo', l.cargo,
+                 'codigo_vaga', l.codigo_vaga,
+                 'nota', l.nota,
+                 'classificacao', l.classificacao,
+                 'nome', l.nome,
+                 'status', l.status,
+                 'matricula', l.matricula,
+                 'data_contratacao', l.data_contratacao
+               ) order by l.unidade, l.edital, l.cargo, l.classificacao nulls last, l.nome)
+          from linhas l
+      ), '[]'::json)
+    )
+  );
+
+  -- A fonte escolhida na área para cada coluna editável (20261113220000).
+  v_aplicado := private."FC_APLICAR_FONTES_DO_PAINEL"(p_area, 'aprovados', (v_resultado::jsonb) -> 'linhas');
+  return v_aplicado;
+end;
+$$;
+
+--
+-- Name: FUNCTION "FC_LINHAS_APROVADOS_DO_PAINEL"(p_area text); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_LINHAS_APROVADOS_DO_PAINEL"(p_area text) IS 'Painéis › Aprovados: as linhas da área inteira (sem o recorte do usuário), já com as fontes escolhidas — {linhas, fontes, avisos}. O mesmo SQL de public.listar_aprovados_do_painel em 20261113240000. Chamada só por FC_LINHAS_DO_RELATORIO_PAINEL.';
 
 --
 -- Name: FC_LINHAS_DA_FILA(uuid, text[], boolean, uuid, integer, uuid[]); Type: FUNCTION; Schema: private; Owner: -
@@ -7565,6 +8094,200 @@ $_$;
 COMMENT ON FUNCTION private."FC_LINHAS_DA_FILA"(p_edital uuid, p_vagas text[], p_nucleo boolean, p_apos uuid, p_limite integer, p_candidatos uuid[]) IS 'Linhas da fila da avaliação documental (o JSON de cada inscrito, sem as chaves nulas, com a ficha, a reserva vigente e a decisão da coordenação), de uma partição (p_nucleo: FC_NO_NUCLEO_DA_FILA), das vagas p_vagas (nulo = todas), em ordem do id do inscrito, depois de p_apos e até p_limite (nulo = sem limite); p_candidatos (nulo = todos) restringe a esses inscritos, pela chave (20261019150000). Sem conferência de permissão: quem chama confere.';
 
 --
+-- Name: FC_LINHAS_DO_RELATORIO_PAINEL(text, text); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_LINHAS_DO_RELATORIO_PAINEL"(p_area text, p_relatorio text) RETURNS jsonb
+    LANGUAGE plpgsql STABLE
+    SET search_path TO ''
+    AS $$
+begin
+  case p_relatorio
+    when 'resumo-dos-editais' then return private."FC_LINHAS_RESUMO_DO_PAINEL"(p_area);
+    when 'editais-por-cargo' then return private."FC_LINHAS_POR_CARGO_DO_PAINEL"(p_area);
+    when 'aprovados' then return private."FC_LINHAS_APROVADOS_DO_PAINEL"(p_area);
+    else raise exception 'Relatório desconhecido' using errcode = '22023';
+  end case;
+end;
+$$;
+
+--
+-- Name: FUNCTION "FC_LINHAS_DO_RELATORIO_PAINEL"(p_area text, p_relatorio text); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_LINHAS_DO_RELATORIO_PAINEL"(p_area text, p_relatorio text) IS 'Painéis: as linhas de um relatório da área inteira, com as fontes — {linhas, fontes, avisos}. Sem guarda de sessão: só FC_CALCULAR_RELATORIO_PAINEL chama.';
+
+--
+-- Name: FC_LINHAS_POR_CARGO_DO_PAINEL(text); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_LINHAS_POR_CARGO_DO_PAINEL"(p_area text) RETURNS jsonb
+    LANGUAGE plpgsql STABLE
+    SET search_path TO ''
+    AS $_$
+declare
+  v_editais uuid[];
+  v_resultado json;
+  v_aplicado jsonb;
+begin
+  -- Sem o recorte do usuário: o cálculo vale para a área inteira; o recorte é aplicado na leitura.
+  v_editais := null;
+
+  v_resultado := (
+    with ed as (
+      select m.id, m.edital, m.unidade, m.inscritos
+        from public."TB_MONITORAMENTO_INDIGENA" m
+       where m."CO_AREA" = p_area and m.ativo
+         and not private."FC_EH_TREINAMENTO"(m."ST_TREINAMENTO")
+         and (v_editais is null or m.id = any (v_editais))
+    ),
+    -- As vagas da Seleção (aba Resultado da Auditoria).
+    sel as (
+      select s."CO_SELECAO_VAGA" as id, s."CO_MONITORAMENTO" as edital_id,
+             s."CO_VAGA" as vaga, s."NO_CARGO" as cargo, s."NO_UNIDADE" as unidade,
+             s."QT_INSCRITO" as inscritos,
+             -- A 2ª vaga de mesmo código (chave com #2…) não recebe de novo os mesmos aprovados.
+             s."DS_CHAVE_ORIGEM" !~ '#[0-9]+$' as recebe_aprovados,
+             btrim(regexp_replace(private."FC_TEXTO_BUSCA_RECURSO"(s."DS_VAGA_PLANILHA"), '[^a-z0-9]+', ' ', 'g')) as vaga_nome
+        from public."TB_SELECAO_VAGA" s
+        join ed on ed.id = s."CO_MONITORAMENTO"
+       where s."ST_REGISTRO_ATIVO" = 'S'
+    ),
+    listas as (
+      select l.id, ed.id as edital_id
+        from ed
+        join public."TB_LISTA_APROVADO" l on l.edital_id = ed.id::text and l.vigente is true and l.ativo
+    ),
+    -- Os aprovados de cada vaga da lista (o "id da vaga" da planilha importada).
+    ap as (
+      select l.edital_id, c.codigo_vaga, min(c.cargo) as cargo, count(*)::integer as total,
+             regexp_replace(coalesce(c.codigo_vaga, ''), '[^0-9]', '', 'g') as vaga_num,
+             btrim(regexp_replace(private."FC_TEXTO_BUSCA_RECURSO"(c.codigo_vaga), '[^a-z0-9]+', ' ', 'g')) as vaga_nome
+        from listas l
+        join public."TB_CANDIDATO_APROVADO" c on c.lista_id = l.id and c.removido_em is null
+       group by l.edital_id, c.codigo_vaga
+    ),
+    -- Cada vaga da lista casada com a da Seleção (as regras de get_selecao_da_area).
+    par as (
+      select s.id as sel_id, a.edital_id, a.codigo_vaga, a.cargo, a.total
+        from sel s
+        join ap a on a.edital_id = s.edital_id
+       where s.recebe_aprovados
+         and ((s.vaga is not null and a.vaga_num = s.vaga)
+           or (s.vaga is null and a.vaga_nome <> '' and a.vaga_nome = s.vaga_nome))
+    ),
+    linhas as (
+      select s.edital_id, ed.edital, ed.unidade as unidade_do_edital,
+             coalesce(nullif(btrim(s.unidade), ''), ed.unidade) as unidade,
+             s.vaga as codigo_vaga,
+             case when s.cargo ~ '^[0-9]+$' then coalesce(
+                    (select min(p.cargo) from par p where p.sel_id = s.id),
+                    (select min(e."NO_CARGO") from public."TB_ENTREVISTA" e
+                      where e."CO_AREA" = p_area and e."CO_VAGA" = s.vaga),
+                    s.cargo)
+                  else s.cargo end as cargo,
+             s.inscritos,
+             case when exists (select 1 from listas l where l.edital_id = s.edital_id)
+                  then coalesce((select sum(p.total) from par p where p.sel_id = s.id), 0)::integer
+             end as aprovados
+        from sel s
+        join ed on ed.id = s.edital_id
+      union all
+      -- Vaga da lista que a Seleção não tem: os aprovados não somem do relatório.
+      select ed.id, ed.edital, ed.unidade, ed.unidade, a.codigo_vaga, a.cargo, null::integer, a.total
+        from ap a
+        join ed on ed.id = a.edital_id
+       where not exists (select 1 from par p
+                          where p.edital_id = a.edital_id and p.codigo_vaga is not distinct from a.codigo_vaga)
+      union all
+      -- Edital sem vaga na Seleção: uma linha com os inscritos do próprio edital (outra fonte do
+      -- funil, como a Avaliação documental), para todo edital do Resumo aparecer aqui.
+      select ed.id, ed.edital, ed.unidade, ed.unidade, null, null, ed.inscritos, null::integer
+        from ed
+       where not exists (select 1 from sel s where s.edital_id = ed.id)
+    ),
+    /*
+      Vagas imediatas, na ordem da Classificação (src/lib/classificacao/vagas.ts):
+        1. a linha do quadro de vagas do edital (Anexo II) ligada pelo nome da vaga
+           (FC_QUADRO_DA_VAGA, a ligação da Classificação), só nos editais que têm quadro;
+        2. sem ela, a configuração da convocação: a vaga (TB_VAGA_IMEDIATA) ou o padrão do edital;
+        3. sem ela, o local das vagas lido do edital (TB_LOCAL_VAGA_EDITAL), quando um só casa com o cargo;
+        4. por último, o número no título da vaga: "2 vagas (1 AC + …)" = 2; "Cadastro Reserva" = 0.
+      A ligação pelo código da vaga na Empregare (FC_QUADRO_DA_VAGA_EMPREGARE) fica de fora: na
+      Saúde indígena custou ~10 s a mais por cálculo para 36 linhas (medido em 16/11/2026).
+      "materialized": a ligação roda uma vez por linha (dentro do WHERE, rodaria por linha do quadro).
+    */
+    com_texto as materialized (
+      select l.*,
+             btrim(regexp_replace(private."FC_TEXTO_BUSCA_RECURSO"(l.cargo), '[^a-z0-9]+', ' ', 'g')) as cargo_busca,
+             case when l.cargo is not null
+                   and exists (select 1 from public."TB_QUADRO_VAGA_EDITAL" q
+                                where q."CO_MONITORAMENTO" = l.edital_id and q."ST_REGISTRO_ATIVO" = 'S')
+                  then private."FC_QUADRO_DA_VAGA"(l.edital_id, l.cargo) end as quadro_id
+        from linhas l
+    ),
+    final as (
+      select l.*,
+             (select q."QT_VAGA_IMEDIATA"
+                from public."TB_QUADRO_VAGA_EDITAL" q
+               where q."CO_QUADRO_VAGA" = l.quadro_id and q."ST_REGISTRO_ATIVO" = 'S') as vagas_no_quadro,
+             -- 10000 ou mais na convocação é "chamar todos", não vagas (o quadro vai até 9999).
+             case when l.codigo_vaga is not null then coalesce(
+               (select v."QT_VAGA_IMEDIATA"
+                  from public."TB_VAGA_IMEDIATA" v
+                 where v."CO_EDITAL" = l.edital_id::text and v."CO_VAGA" = l.codigo_vaga
+                   and v."QT_VAGA_IMEDIATA" < 10000),
+               (select c."QT_PADRAO_IMEDIATA"
+                  from public."TB_CONVOCACAO_EDITAL" c
+                 where c."CO_EDITAL" = l.edital_id::text
+                   and c."QT_PADRAO_IMEDIATA" between 1 and 9999)) end as vagas_na_convocacao,
+             case when l.cargo_busca <> '' then
+               (select max(lv."QT_VAGA")
+                  from public."TB_LOCAL_VAGA_EDITAL" lv
+                 where lv."CO_MONITORAMENTO" = l.edital_id and lv."ST_REGISTRO_ATIVO" = 'S'
+                   and lv."QT_VAGA" is not null
+                   and btrim(regexp_replace(private."FC_TEXTO_BUSCA_RECURSO"(lv."NO_CARGO"), '[^a-z0-9]+', ' ', 'g')) <> ''
+                   and position(' ' || btrim(regexp_replace(private."FC_TEXTO_BUSCA_RECURSO"(lv."NO_CARGO"), '[^a-z0-9]+', ' ', 'g')) || ' '
+                                in ' ' || l.cargo_busca || ' ') > 0
+                having count(*) = 1) end as vagas_no_local,
+             (regexp_match(private."FC_TEXTO_BUSCA_RECURSO"(l.cargo), '\y(\d{1,4})\s*vagas?\y'))[1]::integer as vagas_no_titulo,
+             private."FC_TEXTO_BUSCA_RECURSO"(l.cargo) ~ 'cadastro\s*(de\s*)?reserva' as so_cadastro_reserva
+        from com_texto l
+    )
+    select json_build_object(
+      'schema_version', 3,
+      'area', p_area,
+      'gerado_em', now(),
+      'linhas', coalesce((
+        select json_agg(json_build_object(
+                 'edital_id', f.edital_id,
+                 'edital', f.edital,
+                 'unidade', f.unidade,
+                 'codigo_vaga', f.codigo_vaga,
+                 'cargo', f.cargo,
+                 'vagas_imediatas', coalesce(f.vagas_no_quadro, f.vagas_na_convocacao, f.vagas_no_local,
+                                           f.vagas_no_titulo, case when f.so_cadastro_reserva then 0 end),
+                 'inscritos', f.inscritos,
+                 'aprovados', f.aprovados
+               ) order by f.unidade_do_edital, f.edital, f.unidade, f.codigo_vaga nulls last, f.cargo)
+          from final f
+      ), '[]'::json)
+    )
+  );
+
+  -- A fonte escolhida na área para cada coluna editável (20261113220000).
+  v_aplicado := private."FC_APLICAR_FONTES_DO_PAINEL"(p_area, 'editais-por-cargo', (v_resultado::jsonb) -> 'linhas');
+  return v_aplicado;
+end;
+$_$;
+
+--
+-- Name: FUNCTION "FC_LINHAS_POR_CARGO_DO_PAINEL"(p_area text); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_LINHAS_POR_CARGO_DO_PAINEL"(p_area text) IS 'Painéis › Editais por cargo: as linhas da área inteira (sem o recorte do usuário), já com as fontes escolhidas — {linhas, fontes, avisos}. Vagas imediatas: quadro de vagas do edital (pelo nome da vaga), convocação (vaga ou padrão, abaixo de 10000), local da vaga publicado (um só para o cargo) ou o número no título da vaga (20261116180000). Chamada só por FC_LINHAS_DO_RELATORIO_PAINEL.';
+
+--
 -- Name: FC_LINHAS_PRE_CLASSIF(jsonb); Type: FUNCTION; Schema: private; Owner: -
 --
 
@@ -7592,6 +8315,62 @@ $$;
 --
 
 COMMENT ON FUNCTION private."FC_LINHAS_PRE_CLASSIF"(p_linhas jsonb) IS 'As linhas da pré-classificação de uma vaga enviadas pelo job (lista json) como tabela tipada (com a declarada completa e a declarada congelada desde 20261007170000; com as cotas optadas, modalidades, desde 20261015150000 — sem a chave, a modalidade única); tipo inválido levanta erro de conversão.';
+
+--
+-- Name: FC_LINHAS_RESUMO_DO_PAINEL(text); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_LINHAS_RESUMO_DO_PAINEL"(p_area text) RETURNS jsonb
+    LANGUAGE plpgsql STABLE
+    SET search_path TO ''
+    AS $$
+declare
+  v_editais uuid[];
+  v_resultado json;
+  v_aplicado jsonb;
+  v_hoje date := (now() at time zone 'America/Sao_Paulo')::date;
+begin
+  -- Sem o recorte do usuário: o cálculo vale para a área inteira; o recorte é aplicado na leitura.
+  v_editais := null;
+
+  v_resultado := (
+    with e as (
+      select m.id, m.edital, m.unidade, m.vagas_total, m.data_inicio, m.data_fim,
+             private."FC_ESTADO_DO_CRONOGRAMA"(m.id, v_hoje) as estado
+        from public."TB_MONITORAMENTO_INDIGENA" m
+       where m."CO_AREA" = p_area and m.ativo
+         and not private."FC_EH_TREINAMENTO"(m."ST_TREINAMENTO")
+         and (v_editais is null or m.id = any (v_editais))
+    )
+    select json_build_object(
+      'schema_version', 1,
+      'area', p_area,
+      'gerado_em', now(),
+      'linhas', coalesce((
+        select json_agg(json_build_object(
+                 'edital_id', e.id,
+                 'edital', e.edital,
+                 'unidade', e.unidade,
+                 'vagas_imediatas', e.vagas_total,
+                 'data_divulgacao', coalesce((e.estado ->> 'data_inicio')::date, e.data_inicio),
+                 'data_final', coalesce((e.estado ->> 'data_fim')::date, e.data_fim)
+               ) order by e.unidade, e.edital)
+          from e
+      ), '[]'::json)
+    )
+  );
+
+  -- A fonte escolhida na área para cada coluna editável (20261113220000).
+  v_aplicado := private."FC_APLICAR_FONTES_DO_PAINEL"(p_area, 'resumo-dos-editais', (v_resultado::jsonb) -> 'linhas');
+  return v_aplicado;
+end;
+$$;
+
+--
+-- Name: FUNCTION "FC_LINHAS_RESUMO_DO_PAINEL"(p_area text); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_LINHAS_RESUMO_DO_PAINEL"(p_area text) IS 'Painéis › Resumo dos editais: as linhas da área inteira (sem o recorte do usuário), já com as fontes escolhidas — {linhas, fontes, avisos}. O mesmo SQL de public.listar_resumo_dos_editais_do_painel em 20261113240000. Chamada só por FC_LINHAS_DO_RELATORIO_PAINEL.';
 
 --
 -- Name: FC_LINHAS_VALIDAS(json, integer[]); Type: FUNCTION; Schema: private; Owner: -
@@ -8487,7 +9266,6 @@ CREATE FUNCTION private."FC_MOTIVO_REABERTURA_ENTREVISTA"(p_motivo text) RETURNS
   end;
 $$;
 
-
 --
 -- Name: FUNCTION "FC_MOTIVO_REABERTURA_ENTREVISTA"(p_motivo text); Type: COMMENT; Schema: private; Owner: -
 --
@@ -8654,6 +9432,26 @@ $$;
 --
 
 COMMENT ON FUNCTION private."FC_NOME_DO_RESPONSAVEL"(p_texto text, p_grupo text) IS 'Responsável pela análise como o painel mostra: apelido de TB_APELIDO_RESPONSAVEL (da área do grupo ou geral) → nome e sobrenome do perfil; senão nome completo de um perfil ativo → nome e sobrenome; senão o texto original (nunca apaga). Desde 20261016120000.';
+
+--
+-- Name: FC_NOME_DO_USUARIO(uuid); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_NOME_DO_USUARIO"(p_usuario uuid) RETURNS text
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  select coalesce(nullif(btrim(u.nome), ''), u.email)
+    from public."TB_PERFIL_USUARIO" u
+   where u.user_id = p_usuario
+   limit 1;
+$$;
+
+--
+-- Name: FUNCTION "FC_NOME_DO_USUARIO"(p_usuario uuid); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_NOME_DO_USUARIO"(p_usuario uuid) IS 'Nome legível do usuário (nome do perfil, senão e-mail), para mostrar quem marcou. 20261110150000.';
 
 --
 -- Name: FC_NOME_E_SOBRENOME(text); Type: FUNCTION; Schema: private; Owner: -
@@ -8937,6 +9735,62 @@ CREATE FUNCTION private."FC_NUMERO_OU_ZERO"(p_valor jsonb) RETURNS numeric
     AS $$
   select case when jsonb_typeof(p_valor) = 'number' then (p_valor #>> '{}')::numeric else 0 end;
 $$;
+
+--
+-- Name: FC_OPCOES_DE_FONTE_DO_PAINEL(text, text); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_OPCOES_DE_FONTE_DO_PAINEL"(p_relatorio text, p_coluna text) RETURNS TABLE(no_visao text, ds_rotulo_visao text, no_coluna text, ds_rotulo_coluna text)
+    LANGUAGE sql STABLE
+    SET search_path TO ''
+    AS $$
+  with alvo as (
+    select c.tp_grao, c.tp_coluna,
+           'VW_' || c.tp_grao || '_' as prefixo,
+           case c.tp_grao
+             when 'EDITAL' then array['CO_MONITORAMENTO']
+             when 'VAGA' then array['CO_MONITORAMENTO', 'CO_VAGA']
+             else array['CO_CANDIDATO_APROVADO']
+           end as chaves,
+           case c.tp_coluna
+             when 'inteiro' then array['int2', 'int4', 'int8']
+             when 'decimal' then array['int2', 'int4', 'int8', 'numeric', 'float4', 'float8']
+             when 'data' then array['date', 'timestamp', 'timestamptz']
+             else array['text', 'varchar', 'bpchar']
+           end as tipos
+      from private."FC_COLUNAS_EDITAVEIS_DO_PAINEL"() c
+     where c.co_relatorio = p_relatorio and c.co_coluna = p_coluna
+  ),
+  visoes as (
+    select r.oid, r.relname::text as nome, btrim(pg_catalog.obj_description(r.oid, 'pg_class')) as rotulo
+      from pg_catalog.pg_class r
+      join pg_catalog.pg_namespace n on n.oid = r.relnamespace
+      cross join alvo a
+     where n.nspname = 'painel'
+       and r.relkind in ('v', 'm')
+       and left(r.relname::text, length(a.prefixo)) = a.prefixo
+       and length(r.relname::text) > length(a.prefixo)
+       and coalesce(btrim(pg_catalog.obj_description(r.oid, 'pg_class')), '') <> ''
+       and (select count(*) from pg_catalog.pg_attribute k
+             where k.attrelid = r.oid and k.attnum > 0 and not k.attisdropped
+               and k.attname::text = any (a.chaves)) = cardinality(a.chaves)
+  )
+  select v.nome, v.rotulo, c.attname::text, btrim(pg_catalog.col_description(v.oid, c.attnum))
+    from visoes v
+    join pg_catalog.pg_attribute c on c.attrelid = v.oid and c.attnum > 0 and not c.attisdropped
+    join pg_catalog.pg_type t on t.oid = c.atttypid
+    cross join alvo a
+   where c.attname::text <> all (a.chaves)
+     and t.typname::text = any (a.tipos)
+     and coalesce(btrim(pg_catalog.col_description(v.oid, c.attnum)), '') <> ''
+   order by v.nome, c.attnum
+$$;
+
+--
+-- Name: FUNCTION "FC_OPCOES_DE_FONTE_DO_PAINEL"(p_relatorio text, p_coluna text); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_OPCOES_DE_FONTE_DO_PAINEL"(p_relatorio text, p_coluna text) IS 'As fontes que uma coluna dos Painéis aceita: visões do schema painel do grão do relatório (VW_<GRAO>_…), com a chave do grão, COMMENT na visão e na coluna e coluna de tipo compatível. Lidas do catálogo do PostgreSQL: é a única lista de onde um nome entra no SQL.';
 
 --
 -- Name: FC_PAINEIS_RODADA(text); Type: FUNCTION; Schema: private; Owner: -
@@ -9855,7 +10709,6 @@ CREATE FUNCTION private."FC_PLANO_IMPORTACAO_PLANILHA"(p_edital uuid) RETURNS TA
      and not exists (select 1 from ligadas g where g.ficha = f."CO_FICHA_ANALISE");
 $$;
 
-
 --
 -- Name: FUNCTION "FC_PLANO_IMPORTACAO_PLANILHA"(p_edital uuid); Type: COMMENT; Schema: private; Owner: -
 --
@@ -10054,6 +10907,33 @@ $$;
 --
 
 COMMENT ON FUNCTION private."FC_PODE_IGNORAR_AVISO"(p_modulo text, p_area text, p_edital uuid) IS 'Quem chama pode ignorar o aviso? Administrador global, ou quem vê o aviso e administra o módulo (nível admin; na classificação, editor, o nível mais alto dela).';
+
+--
+-- Name: FC_PODE_MARCAR_CRITICO(uuid); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_PODE_MARCAR_CRITICO"(p_edital uuid) RETURNS boolean
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+  v_perfil public."TB_PERFIL_USUARIO";
+begin
+  if (select auth.uid()) is null then return false; end if;
+  if private.is_master() then return true; end if;
+  v_perfil := private.current_profile();
+  return v_perfil.id is not null
+     and v_perfil.ativo is true
+     and v_perfil.perfil in ('edital_gestor', 'coordenador')
+     and private."FC_PODE_VER_EDITAL"(p_edital);
+end;
+$$;
+
+--
+-- Name: FUNCTION "FC_PODE_MARCAR_CRITICO"(p_edital uuid); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_PODE_MARCAR_CRITICO"(p_edital uuid) IS 'Quem marca o edital como crítico: administrador global, ou perfil ativo dos grupos edital_gestor ou coordenador que vê o edital (área e coordenação). 20261110150000.';
 
 --
 -- Name: FC_PODE_PARECER_RECURSO(); Type: FUNCTION; Schema: private; Owner: -
@@ -12908,7 +13788,7 @@ CREATE FUNCTION private."FC_RECURSOS_MODULO"() RETURNS text[]
     LANGUAGE sql IMMUTABLE
     SET search_path TO ''
     AS $$
-  select array['dashboard','analises','nucleo','calendario','aprovados','importacao','paineis','configuracoes','acessos','recursos','entrevistas','selecao','recursos_parecer','classificacao','chat','avaliacao_documental','aprovados_pendencias']::text[];
+  select array['dashboard','analises','nucleo','calendario','aprovados','importacao','paineis','configuracoes','acessos','recursos','entrevistas','selecao','recursos_parecer','classificacao','chat','avaliacao_documental','aprovados_pendencias','paineis_dados']::text[];
 $$;
 
 --
@@ -14642,6 +15522,29 @@ $$;
 COMMENT ON FUNCTION private."FC_TG_FICHA_IMUTAVEL"() IS 'Gatilho: barra o apagamento das fichas e dos filtros e qualquer mudança no histórico e no log de acessos da ficha (42501).';
 
 --
+-- Name: FC_TG_FUNDAMENTO_IMUTAVEL(); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_TG_FUNDAMENTO_IMUTAVEL"() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO ''
+    AS $$
+begin
+  if tg_op = 'DELETE' and private."FC_REINICIO_TREINAMENTO_PERMITE"(tg_table_name, to_jsonb(old)) then
+    return old;
+  end if;
+  raise exception 'A conferência do fundamento da eliminação não se altera nem se apaga: retifique com uma conferência nova.'
+    using errcode = '42501';
+end;
+$$;
+
+--
+-- Name: FUNCTION "FC_TG_FUNDAMENTO_IMUTAVEL"(); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_TG_FUNDAMENTO_IMUTAVEL"() IS 'Gatilho de TH_FUNDAMENTO_ELIMINACAO: recusa UPDATE e DELETE (só o reinício do edital de treinamento apaga). 20261110215930.';
+
+--
 -- Name: FC_TG_HERDAR_CONVOCACAO(); Type: FUNCTION; Schema: private; Owner: -
 --
 
@@ -14721,6 +15624,39 @@ $$;
 --
 
 COMMENT ON FUNCTION private."FC_TG_NOME_VERSAO_IMUTAVEL"() IS 'Gatilho: o histórico de nomes das versões (TH_NOME_VERSAO_REGRA) não muda nem se apaga.';
+
+--
+-- Name: FC_TG_PERIODO_EDITAL_ANALISE(); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_TG_PERIODO_EDITAL_ANALISE"() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+begin
+  if new.ativo is true
+     and private."FC_EDITAL_ANALISE_ENCERRADO"(new."CO_PLANILHA", new.edital, new.data_fim_analise) then
+    new.ativo := false;
+    -- A planilha manda SIM a cada carga: se, já inativo, a linha ficou igual à gravada,
+    -- não regrava (nem WAL nem o painel marcado para remontar a cada 20 minutos).
+    if tg_op = 'UPDATE'
+       and (new.grupo, new.unidade, new.edital, new.ativo, new.data_inicio_analise,
+            new.data_fim_analise, new."CO_PLANILHA")
+           is not distinct from
+           (old.grupo, old.unidade, old.edital, old.ativo, old.data_inicio_analise,
+            old.data_fim_analise, old."CO_PLANILHA") then
+      return null;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+--
+-- Name: FUNCTION "FC_TG_PERIODO_EDITAL_ANALISE"(); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_TG_PERIODO_EDITAL_ANALISE"() IS 'Gatilho BEFORE de TB_EDITAL_ANALISE (20261111150000): edital com o período encerrado (FC_EDITAL_ANALISE_ENCERRADO) entra ou fica inativo, mesmo com SIM na planilha; a regravação sem mudança é descartada.';
 
 --
 -- Name: FC_TG_PRE_CLASSIF_IMUTAVEL(); Type: FUNCTION; Schema: private; Owner: -
@@ -18651,6 +19587,122 @@ $_$;
 COMMENT ON FUNCTION public.alterar_status_candidato_aprovado(p_candidato_id uuid, p_status text, p_processo_sei text, p_matricula text, p_data_convocacao date) IS 'Altera o status de um candidato da lista vigente e ativa (Convocado, Contratado, Contratado em outra lista, Desistente, Migração, Documentação Rejeitada ou nulo), com processo SEI, matrícula (obrigatória em Contratado e Migração; opcional e guardada em Contratado em outra lista) e a data da convocação (Convocado; padrão hoje, nunca futura). Aprovados >= editor na área/edital; status já definido só o admin muda, exceto do Convocado para outro status. Grava TH_CANDIDATO_APROVADO e recalcula os contratados do edital.';
 
 --
+-- Name: alterar_status_candidatos_aprovados(uuid[], text, date); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.alterar_status_candidatos_aprovados(p_candidatos uuid[], p_status text, p_data_convocacao date DEFAULT NULL::date) RETURNS json
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $_$
+declare
+  v_hoje date := (now() at time zone 'America/Sao_Paulo')::date;
+  v_status text := nullif(btrim(coalesce(p_status, '')), '');
+  v_admin boolean;
+  v_ids uuid[];
+  v_c record;
+  v_data date;
+  v_alterados integer := 0;
+  v_ignorados jsonb := '[]'::jsonb;
+begin
+  if not private.pode_recurso('aprovados', 2) then
+    raise exception 'Perfil sem permissao para alterar status' using errcode = '42501';
+  end if;
+  v_admin := private.pode_recurso('aprovados', 3);
+  -- Contratado e Migração pedem a matrícula de cada um: só um por vez
+  -- (alterar_status_candidato_aprovado). Contratado em outra lista também.
+  if v_status is not null and v_status not in ('Convocado', 'Desistente', 'Documentação Rejeitada') then
+    raise exception 'Em lote, só Convocado, Desistente, Documentação Rejeitada ou sem status.' using errcode = '22023';
+  end if;
+  if v_status is null and not v_admin then
+    raise exception 'Só o admin de Aprovados deixa candidatos sem status.' using errcode = '42501';
+  end if;
+  if p_data_convocacao is not null and v_status is distinct from 'Convocado' then
+    raise exception 'A data da convocação só vale para o status Convocado' using errcode = '22023';
+  end if;
+  if p_data_convocacao > v_hoje then
+    raise exception 'A data da convocação não pode ser futura' using errcode = '22023';
+  end if;
+  select array_agg(distinct x) into v_ids from unnest(coalesce(p_candidatos, '{}'::uuid[])) x where x is not null;
+  if coalesce(array_length(v_ids, 1), 0) = 0 then
+    raise exception 'Escolha ao menos um candidato.' using errcode = '22023';
+  end if;
+  if array_length(v_ids, 1) > 500 then
+    raise exception 'No máximo 500 candidatos por vez.' using errcode = '22023';
+  end if;
+
+  -- Área e recorte de cada edital antes de mudar qualquer um (tudo ou nada).
+  perform private."FC_EXIGIR_AREA_EDITAL"(l.edital_id)
+     from public."TB_CANDIDATO_APROVADO" c
+     join public."TB_LISTA_APROVADO" l on l.id = c.lista_id
+    where c.id = any (v_ids);
+
+  for v_c in
+    select c.id, c.nome, c.status, c.lista_id, c."DT_CONVOCACAO", l.vigente, l.ativo
+      from public."TB_CANDIDATO_APROVADO" c
+      join public."TB_LISTA_APROVADO" l on l.id = c.lista_id
+     where c.id = any (v_ids) and c.removido_em is null
+     order by c.id
+       for update of c
+  loop
+    -- As regras de alterar_status_candidato_aprovado, candidato a candidato; quem
+    -- não passa volta em "ignorados", com o motivo, e os demais mudam.
+    if not v_c.vigente or not v_c.ativo then
+      v_ignorados := v_ignorados || jsonb_build_object('candidato_id', v_c.id, 'nome', v_c.nome, 'motivo', 'Lista inativa ou substituída');
+    elsif v_c.status is not distinct from v_status then
+      v_ignorados := v_ignorados || jsonb_build_object('candidato_id', v_c.id, 'nome', v_c.nome,
+        'motivo', coalesce('Já está como ' || v_c.status, 'Já está sem status'));
+    elsif not v_admin and v_c.status is not null and v_c.status <> 'Convocado' then
+      v_ignorados := v_ignorados || jsonb_build_object('candidato_id', v_c.id, 'nome', v_c.nome,
+        'motivo', 'Status já definido (' || v_c.status || '): só o admin muda');
+    else
+      v_data := case
+        when v_status = 'Convocado' then coalesce(p_data_convocacao, v_hoje)
+        when v_status is null then null
+        else v_c."DT_CONVOCACAO"
+      end;
+      insert into public."TH_CANDIDATO_APROVADO"(
+        candidato_id, lista_id, status_anterior, status_novo, alterado_por, "DT_CONVOCACAO"
+      ) values (
+        v_c.id, v_c.lista_id, v_c.status, v_status, (select auth.uid()), v_data
+      );
+      -- Matrícula só fica em Contratado, Migração e Contratado em outra lista:
+      -- nenhum dos status do lote. O processo SEI fica como estava.
+      update public."TB_CANDIDATO_APROVADO"
+         set status = v_status, matricula = null, "DT_CONVOCACAO" = v_data,
+             updated_by = (select auth.uid()), updated_at = now()
+       where id = v_c.id;
+      v_alterados := v_alterados + 1;
+    end if;
+  end loop;
+
+  -- O KPI de contratados de cada edital tocado (20261006070000).
+  perform private."FC_ATUALIZAR_CONTRATADOS_DO_EDITAL"(e.edital_id::uuid)
+     from (select distinct l.edital_id
+             from public."TB_CANDIDATO_APROVADO" c
+             join public."TB_LISTA_APROVADO" l on l.id = c.lista_id
+            where c.id = any (v_ids) and l.edital_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$') e;
+
+  -- Quem não existe (ou foi removido) também volta, para a tela dizer.
+  v_ignorados := v_ignorados || coalesce((
+    select jsonb_agg(jsonb_build_object('candidato_id', x, 'nome', null, 'motivo', 'Candidato não encontrado'))
+      from unnest(v_ids) x
+     where not exists (select 1 from public."TB_CANDIDATO_APROVADO" c where c.id = x and c.removido_em is null)
+  ), '[]'::jsonb);
+
+  -- "marcados" como em marcar_candidatos_convocados: a tela lê as duas respostas igual.
+  return json_build_object('marcados', v_alterados, 'ignorados', v_ignorados,
+                           'status', v_status, 'data_convocacao',
+                           case when v_status = 'Convocado' then coalesce(p_data_convocacao, v_hoje) end);
+end;
+$_$;
+
+--
+-- Name: FUNCTION alterar_status_candidatos_aprovados(p_candidatos uuid[], p_status text, p_data_convocacao date); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.alterar_status_candidatos_aprovados(p_candidatos uuid[], p_status text, p_data_convocacao date) IS 'Status em lote na Lista de aprovados (20261111180000): Convocado (com a data), Desistente, Documentação Rejeitada ou sem status (só admin), até 500 candidatos. As regras de alterar_status_candidato_aprovado candidato a candidato: lista vigente e ativa; status já definido só o admin muda, fora do Convocado; quem não passa volta em ignorados com o motivo. Contratado e Migração ficam de fora (matrícula de cada um). Histórico em TH_CANDIDATO_APROVADO; o processo SEI fica. Aprovados editor.';
+
+--
 -- Name: analises_make_chave_natural(text, text, text, text, text, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -19687,6 +20739,77 @@ $$;
 COMMENT ON FUNCTION public.cancelar_reinicio_fichas_do_edital(p_pedido bigint) IS 'Quem pediu o reinício desiste do pedido pendente (20261022210000): outro administrador recebe 42501 (deve recusar). Marca CANCELADO e grava CANCELAR.';
 
 --
+-- Name: carregar_admissoes_conciliadas(text, jsonb); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.carregar_admissoes_conciliadas(p_carga text, p_linhas jsonb) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+  v_carga text := btrim(coalesce(p_carga, ''));
+  v_recebidas integer;
+  v_sem_edital integer;
+  v_removidas integer;
+  v_gravadas integer;
+begin
+  if v_carga = '' or length(v_carga) > 60 then
+    raise exception 'Informe a carga (1 a 60 caracteres).' using errcode = '22023';
+  end if;
+  if jsonb_typeof(p_linhas) is distinct from 'array' or jsonb_array_length(p_linhas) = 0 then
+    raise exception 'A carga veio sem linhas.' using errcode = '22023';
+  end if;
+
+  drop table if exists pg_temp.tmp_admissao;
+  create temporary table tmp_admissao on commit drop as
+  select btrim(x.vinculo) as vinculo, x.edital, x.linha, x.admissao, x.desligamento
+    from jsonb_to_recordset(p_linhas) as x(vinculo text, edital uuid, linha uuid, admissao date, desligamento date);
+  get diagnostics v_recebidas = row_count;
+
+  if exists (select 1 from tmp_admissao group by vinculo having count(*) > 1) then
+    raise exception 'A carga tem vínculo repetido.' using errcode = '22023';
+  end if;
+  if exists (select 1 from tmp_admissao where vinculo is null or edital is null or admissao is null) then
+    raise exception 'Toda linha precisa de vínculo, edital e data de admissão.' using errcode = '22023';
+  end if;
+
+  delete from tmp_admissao t
+   where not exists (select 1 from public."TB_MONITORAMENTO_INDIGENA" m where m.id = t.edital);
+  get diagnostics v_sem_edital = row_count;
+
+  -- A planilha de conciliação é o retrato inteiro: o que saiu dela sai daqui.
+  delete from public."TB_ADMISSAO_CONCILIADA" a
+   where not exists (select 1 from tmp_admissao t where t.vinculo = a."CO_VINCULO");
+  get diagnostics v_removidas = row_count;
+
+  insert into public."TB_ADMISSAO_CONCILIADA" as a
+         ("CO_VINCULO", "CO_MONITORAMENTO", "CO_CANDIDATO_APROVADO", "DT_ADMISSAO", "DT_DESLIGAMENTO", "CO_CARGA")
+  select t.vinculo, t.edital, t.linha, t.admissao, t.desligamento, v_carga from tmp_admissao t
+  on conflict ("CO_VINCULO") do update
+     set "CO_MONITORAMENTO" = excluded."CO_MONITORAMENTO",
+         "CO_CANDIDATO_APROVADO" = excluded."CO_CANDIDATO_APROVADO",
+         "DT_ADMISSAO" = excluded."DT_ADMISSAO",
+         "DT_DESLIGAMENTO" = excluded."DT_DESLIGAMENTO",
+         "CO_CARGA" = excluded."CO_CARGA",
+         "DT_CARGA" = now()
+   where (a."CO_MONITORAMENTO", a."CO_CANDIDATO_APROVADO", a."DT_ADMISSAO", a."DT_DESLIGAMENTO")
+         is distinct from (excluded."CO_MONITORAMENTO", excluded."CO_CANDIDATO_APROVADO",
+                           excluded."DT_ADMISSAO", excluded."DT_DESLIGAMENTO");
+  get diagnostics v_gravadas = row_count;
+
+  return jsonb_build_object('recebidas', v_recebidas, 'sem_edital', v_sem_edital,
+                            'gravadas', v_gravadas, 'removidas', v_removidas,
+                            'total', (select count(*) from public."TB_ADMISSAO_CONCILIADA"));
+end;
+$$;
+
+--
+-- Name: FUNCTION carregar_admissoes_conciliadas(p_carga text, p_linhas jsonb); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.carregar_admissoes_conciliadas(p_carga text, p_linhas jsonb) IS 'Carga das admissões conciliadas com o RH (scripts/carregar-admissoes-conciliadas.mjs): troca TB_ADMISSAO_CONCILIADA pelo conteúdo da carga (o que não veio sai), ignora vínculo de edital inexistente e devolve recebidas, sem_edital, gravadas, removidas e total. Recusa carga vazia ou com vínculo repetido. Só service_role (20261113210000).';
+
+--
 -- Name: casamento_ler_pedidos(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -20324,7 +21447,6 @@ begin
 end;
 $$;
 
-
 --
 -- Name: FUNCTION concluir_entrevista(p_entrevista uuid); Type: COMMENT; Schema: public; Owner: -
 --
@@ -20824,7 +21946,7 @@ begin
       select split_part(k, '|', 1) as vaga, split_part(k, '|', 2) as codigo
         from unnest(coalesce(p_chaves, '{}')) k
     ),
-    linhas as (
+    base as (
       select a."CO_VAGA"::text as vaga, c."CO_CANDIDATO_EMPREGARE"::text as codigo, c."NO_CANDIDATO" as nome,
              a."TP_SITUACAO" as situacao, a."DS_MOTIVO_ELIMINACAO" as motivo, a."CO_MOTIVO_ELIMINACAO" as motivo_codigo,
              a."NO_MODALIDADE" as modalidade, a."VL_ART" as art, a."VL_NOTA_DECLARADA" as declarada,
@@ -20833,6 +21955,17 @@ begin
         join public."TB_EMPREGARE_CANDIDATO" c on c."CO_VAGA" = p.vaga and c."CO_CANDIDATO_EMPREGARE"::text = p.codigo
         join public."TB_PRE_CLASSIFICACAO" a
           on a."CO_MONITORAMENTO" = p_edital and a."CO_EMPREGARE_CANDIDATO" = c."CO_EMPREGARE_CANDIDATO"
+    ),
+    -- O fundamento só quando conferido (gestor/coordenador do edital ou administrador global); nunca presumido.
+    fundamentos as (
+      select m.motivo_codigo, private."FC_FUNDAMENTO_DA_ELIMINACAO"(p_edital, m.motivo_codigo) as f
+        from (select distinct b.motivo_codigo from base b where b.situacao = 'ELIMINADO' and b.motivo_codigo is not null) m
+    ),
+    linhas as (
+      select b.*,
+             case when b.situacao = 'ELIMINADO' and fu.f ->> 'situacao' = 'CONFERIDO' then fu.f end as fundamento
+        from base b
+        left join fundamentos fu on fu.motivo_codigo = b.motivo_codigo
     )
     select json_build_object(
       'schema_version', 1,
@@ -20849,7 +21982,133 @@ $$;
 -- Name: FUNCTION conferir_eliminados_pre_classificacao(p_edital uuid, p_chaves text[]); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.conferir_eliminados_pre_classificacao(p_edital uuid, p_chaves text[]) IS 'Comunicados de eliminação: a situação de agora só dos marcados (chaves vaga|código) e o cargo das vagas deles, em vez de reler a pré-classificação inteira. Coordenação do edital.';
+COMMENT ON FUNCTION public.conferir_eliminados_pre_classificacao(p_edital uuid, p_chaves text[]) IS 'Comunicados de eliminação: a situação de agora só dos marcados (chaves vaga|código) e o cargo das vagas deles, em vez de reler a pré-classificação inteira. Cada candidato traz fundamento (item_edital, versao_regra, fonte, conferido_em) só quando o motivo tem fundamento CONFERIDO pelo gestor/coordenador do edital ou administrador global (TH_FUNDAMENTO_ELIMINACAO, 20261110215930); senão nulo. Coordenação do edital.';
+
+--
+-- Name: conferir_fundamento_da_eliminacao(uuid, text, integer, text, text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.conferir_fundamento_da_eliminacao(p_edital uuid, p_motivo text, p_versao_regra integer, p_item_edital text, p_fonte text, p_justificativa text DEFAULT NULL::text) RETURNS json
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $_$
+declare
+  v_uid uuid := (select auth.uid());
+  v_perfil public."TB_PERFIL_USUARIO";
+  v_papel text;
+  v_motivo text := btrim(coalesce(p_motivo, ''));
+  v_item text := btrim(coalesce(p_item_edital, ''));
+  v_fonte text := btrim(coalesce(p_fonte, ''));
+  v_justificativa text := nullif(btrim(coalesce(p_justificativa, '')), '');
+  v_versao integer;
+  v_situacao text;
+  v_hash text;
+  v_config jsonb;
+  v_entrada jsonb;
+  v_item_da_nota text;
+  v_ultimo public."TH_FUNDAMENTO_ELIMINACAO";
+begin
+  if v_uid is null then
+    raise exception 'Entre no sistema para conferir o fundamento.' using errcode = '42501';
+  end if;
+  if p_edital is null or not exists (select 1 from public."TB_MONITORAMENTO_INDIGENA" m where m.id = p_edital) then
+    raise exception 'Edital não encontrado.' using errcode = '22023';
+  end if;
+
+  -- A autoridade: gestor ou coordenador do edital, ou administrador global.
+  if private.is_master() then
+    v_papel := 'ADMIN_GLOBAL';
+  else
+    v_perfil := private.current_profile();
+    if v_perfil.id is null or not private."FC_GESTOR_DO_EDITAL"(v_perfil.id, p_edital) then
+      raise exception 'Só o gestor ou o coordenador do edital, ou o administrador global, confere o fundamento da eliminação.'
+        using errcode = '42501';
+    end if;
+    v_papel := case v_perfil.perfil when 'coordenador' then 'COORDENADOR' else 'EDITAL_GESTOR' end;
+  end if;
+
+  if v_motivo !~ '^[A-Z][A-Z0-9_]{1,29}$' then
+    raise exception 'Motivo de eliminação inválido.' using errcode = '22023';
+  end if;
+  if v_item !~ '^[0-9]{1,3}(\.[0-9]{1,3}){0,6}$' then
+    raise exception 'Informe o item do edital como no texto oficial (ex.: 6.4 ou 8.2.6).' using errcode = '22023';
+  end if;
+  if length(v_fonte) not between 10 and 500 then
+    raise exception 'Informe a fonte em que o item foi conferido (10 a 500 caracteres).' using errcode = '22023';
+  end if;
+  if v_justificativa is not null
+     and not private."FC_MOTIVO_COM_SENTIDO"(v_justificativa) then
+    raise exception 'A justificativa precisa explicar a decisão em palavras (15 a 500 caracteres).' using errcode = '22023';
+  end if;
+
+  -- Uma conferência por vez em cada edital e motivo.
+  perform pg_advisory_xact_lock(hashtextextended('fundamento_eliminacao:' || p_edital::text || ':' || v_motivo, 0));
+
+  select t."NU_VERSAO_VIGENTE", t."TP_SITUACAO", h."DS_HASH", h."DS_CONFIGURACAO"
+    into v_versao, v_situacao, v_hash, v_config
+    from public."TB_REGRA_TRIAGEM" t
+    join public."TH_REGRA_TRIAGEM" h
+      on h."CO_REGRA_TRIAGEM" = t."CO_REGRA_TRIAGEM" and h."NU_VERSAO" = t."NU_VERSAO_VIGENTE"
+   where t."CO_MONITORAMENTO" = p_edital;
+  if not found then
+    raise exception 'O edital não tem regra da Triagem.' using errcode = '22023';
+  end if;
+  if v_situacao is distinct from 'CONFERIDA' then
+    raise exception 'Confira a regra da Triagem (versão %) antes de conferir o fundamento.', v_versao using errcode = '22023';
+  end if;
+  if p_versao_regra is distinct from v_versao then
+    raise exception 'A regra da Triagem mudou (versão vigente: %). Atualize a tela e confira de novo.', v_versao
+      using errcode = '40001';
+  end if;
+  select e into v_entrada
+    from jsonb_array_elements(
+           case when jsonb_typeof(v_config #> '{requisitos,eliminacao_automatica}') = 'array'
+                then v_config #> '{requisitos,eliminacao_automatica}' else '[]'::jsonb end) e
+   where e ->> 'codigo' = v_motivo
+   limit 1;
+  if v_entrada is null or jsonb_typeof(v_entrada) <> 'object' then
+    raise exception 'O motivo % não está na regra da Triagem (versão %).', v_motivo, v_versao using errcode = '22023';
+  end if;
+
+  -- O item da nota mínima do lote não fundamenta eliminação da Triagem sem justificativa expressa.
+  v_item_da_nota := nullif(btrim(coalesce(v_config #>> '{lote,item_edital}', '')), '');
+  if v_item = v_item_da_nota and v_justificativa is null then
+    raise exception 'O item % é o da nota mínima do lote nesta regra; a eliminação da Triagem não decorre da nota. Para usá-lo, justifique.', v_item
+      using errcode = '22023';
+  end if;
+
+  select f.* into v_ultimo
+    from public."TH_FUNDAMENTO_ELIMINACAO" f
+   where f."CO_MONITORAMENTO" = p_edital and f."CO_MOTIVO_ELIMINACAO" = v_motivo
+   order by f."CO_HISTORICO" desc
+   limit 1;
+  if v_ultimo."CO_HISTORICO" is not null then
+    if v_ultimo."DS_ITEM_EDITAL" = v_item and v_ultimo."DS_FONTE" = v_fonte
+       and v_ultimo."NU_VERSAO_REGRA" = v_versao and v_ultimo."DS_REGRA_MOTIVO" = v_entrada then
+      return json_build_object('ok', true, 'sem_mudanca', true,
+        'fundamento', private."FC_FUNDAMENTO_DA_ELIMINACAO"(p_edital, v_motivo));
+    end if;
+    if (v_ultimo."DS_ITEM_EDITAL" <> v_item or v_ultimo."DS_FONTE" <> v_fonte) and v_justificativa is null then
+      raise exception 'Já há fundamento conferido (item %). Para retificar, justifique.', v_ultimo."DS_ITEM_EDITAL"
+        using errcode = '22023';
+    end if;
+  end if;
+
+  insert into public."TH_FUNDAMENTO_ELIMINACAO" (
+    "CO_MONITORAMENTO", "CO_MOTIVO_ELIMINACAO", "NU_VERSAO_REGRA", "DS_HASH_REGRA", "DS_REGRA_MOTIVO",
+    "DS_ITEM_EDITAL", "DS_FONTE", "DS_JUSTIFICATIVA", "TP_PAPEL", "CO_USUARIO")
+  values (p_edital, v_motivo, v_versao, v_hash, v_entrada, v_item, v_fonte, v_justificativa, v_papel, v_uid);
+
+  return json_build_object('ok', true, 'sem_mudanca', false,
+    'fundamento', private."FC_FUNDAMENTO_DA_ELIMINACAO"(p_edital, v_motivo));
+end;
+$_$;
+
+--
+-- Name: FUNCTION conferir_fundamento_da_eliminacao(p_edital uuid, p_motivo text, p_versao_regra integer, p_item_edital text, p_fonte text, p_justificativa text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.conferir_fundamento_da_eliminacao(p_edital uuid, p_motivo text, p_versao_regra integer, p_item_edital text, p_fonte text, p_justificativa text) IS 'Confere o fundamento normativo (item oficial do edital e fonte) de um motivo de eliminação da Triagem, na versão vigente e conferida da regra da Triagem (p_versao_regra = a que a tela mostrou; outra = 40001). Só gestor ou coordenador do edital (FC_GESTOR_DO_EDITAL) ou administrador global (is_master); os demais = 42501. Grava uma linha nova em TH_FUNDAMENTO_ELIMINACAO (papel, quem, quando, versão, hash e retrato do motivo). Justificativa obrigatória para retificar e para usar o item da nota mínima do lote. Não altera motivo, nota, decisão nem resultado. 20261110215930.';
 
 --
 -- Name: conferir_regra_analise(uuid, integer); Type: FUNCTION; Schema: public; Owner: -
@@ -22633,7 +23892,6 @@ begin
 end;
 $$;
 
-
 --
 -- Name: FUNCTION exportar_aprovados_da_diretoria(p_area text, p_formato text, p_editais uuid[]); Type: COMMENT; Schema: public; Owner: -
 --
@@ -23035,6 +24293,8 @@ declare
   v_total_editais integer:=0;
   v_normalizados integer:=0;
   v_inativados integer:=0;
+  v_a_inativar integer:=0;
+  v_bloqueio text;
   v_editais integer:=0;
   v_editais_inativados integer:=0;
   v_editais_monitora integer:=0;
@@ -23099,6 +24359,27 @@ begin
   select count(*)::integer into v_normalizados from tmp_keys;
   create unique index tmp_keys_idx on tmp_keys(chave_natural);
   analyze tmp_keys;
+
+  -- [trava-em-massa] 20261111120000: conta antes de desativar e recusa o envio que
+  -- desativaria em massa (11/11/2026: um FULL com a planilha só dos editais novos
+  -- desativou 11.089 análises). Os lotes já gravados ficam; nada é desativado e o
+  -- sync termina em erro com o motivo (o Apps Script descarta o estado e segue).
+  select count(*)::integer into v_a_inativar
+    from public."TB_ANALISE_CURRICULAR" a
+   where a.ativo is true
+     and a."CO_PLANILHA"=v_planilha
+     and a."TP_ORIGEM_REGISTRO"='PLANILHA'
+     and not private."FC_ANALISE_EH_TREINAMENTO"(a.origem_planilha)
+     and not exists(select 1 from tmp_keys k where k.chave_natural=a.chave_natural);
+  v_bloqueio := private."FC_CONFERIR_INATIVACAO_EM_MASSA"(v_planilha, v_a_inativar);
+  if v_bloqueio is not null then
+    delete from public."TM_ANALISE_CURRICULAR" where sync_id=p_sync_id;
+    update public."TL_SYNC_ANALISE"
+    set status='erro', erro=v_bloqueio, finished_at=now(), updated_at=now()
+    where sync_id=p_sync_id;
+    return jsonb_build_object('ok',false,'sync_id',p_sync_id,'bloqueado',true,
+      'a_inativar',v_a_inativar,'motivo',v_bloqueio);
+  end if;
 
   -- [por-planilha] só desativa análises desta planilha.
   -- [monitora] nunca a linha publicada pela ficha (TP_ORIGEM_REGISTRO MONITORA).
@@ -23504,7 +24785,12 @@ begin
       (NEW.id, v_usuario_id, v_usuario_email, v_evento, to_jsonb(NEW));
 
   elsif TG_OP = 'UPDATE' then
-    if OLD is distinct from NEW then
+    -- Só o carimbo mudou (updated_at, updated_by e a data da fonte do funil, que a carga da
+    -- Seleção renova sem mudar número): não é mudança, não vai para o histórico
+    -- (20261116234000).
+    if (to_jsonb(OLD) - array['updated_at', 'updated_by', 'DT_FONTE_FUNIL'])
+       is distinct from
+       (to_jsonb(NEW) - array['updated_at', 'updated_by', 'DT_FONTE_FUNIL']) then
       v_evento := case
         when NEW.ativo = false and OLD.ativo = true then 'desativado'
         else 'atualizado'
@@ -23520,6 +24806,12 @@ begin
   return NEW;
 end;
 $$;
+
+--
+-- Name: FUNCTION fn_registrar_historico(); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.fn_registrar_historico() IS 'Gatilho trg_historico_monitoramento: grava a foto do edital (to_jsonb(NEW)) em TH_MONITORAMENTO no INSERT e no UPDATE que muda conteúdo. O UPDATE que só muda updated_at, updated_by e DT_FONTE_FUNIL não grava (20261116234000).';
 
 --
 -- Name: get_analise_detalhe_do_painel(uuid); Type: FUNCTION; Schema: public; Owner: -
@@ -24026,7 +25318,11 @@ begin
         'status_override_motivo', m.status_override_motivo,
         'status_override_data', m.status_override_data,
         'status_override_previsao_retomada', m.status_override_previsao_retomada,
-        'cronograma_ultima_errata', m.cronograma_ultima_errata
+        'cronograma_ultima_errata', m.cronograma_ultima_errata,
+        -- Validade do processo seletivo (20261111200000): o formulário do edital lê e devolve.
+        'nu_anos_validade', m."NU_ANOS_VALIDADE",
+        'nu_meses_validade', m."NU_MESES_VALIDADE",
+        'st_prorrogado', m."ST_PRORROGADO"
       )
       from public."TB_MONITORAMENTO_INDIGENA" m
       where m.id = p_monitoramento_id
@@ -24052,6 +25348,12 @@ begin
   );
 end;
 $$;
+
+--
+-- Name: FUNCTION get_monitoramento_cronograma(p_monitoramento_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.get_monitoramento_cronograma(p_monitoramento_id uuid) IS 'Leitura do formulário do edital (Editais): dados do monitoramento (cronograma automático, status excepcional, última errata e a validade do processo seletivo: nu_anos_validade, nu_meses_validade e st_prorrogado, 20261111200000), estado do cronograma, etapas e histórico. Exige dashboard, nucleo, calendario, aprovados ou importacao e acesso ao edital.';
 
 --
 -- Name: get_monitoramento_cronograma_estado(uuid, date); Type: FUNCTION; Schema: public; Owner: -
@@ -24141,7 +25443,7 @@ begin
         when not m.cronograma_automatico or coalesce(c.total, 0) = 0 then 'sem_cronograma'
         when coalesce(c.total, 0) < 2 or not coalesce(c.tem_resultado_final, false) then 'incompleto'
         when (e ->> 'dias_para_proxima')::integer between 0 and 3 then 'proxima_3d'
-        when (e ->> 'dias_para_proxima')::integer between 4 and 7 then 'proxima_7d'
+        when (e ->> 'dias_para_proxima')::integer between 4 and 6 then 'proxima_7d'
         else 'ok'
       end
     ) order by m.unidade, m.edital)
@@ -24782,7 +26084,10 @@ begin
     ),
     aprovados as (
       select l.edital_id, regexp_replace(coalesce(c.codigo_vaga, ''), '[^0-9]', '', 'g') as vaga,
-             count(*)::integer as total,
+             -- Quem foi contratado pela outra linha do edital (ampla x cota) é a mesma pessoa:
+             -- conta uma vez, como já não conta nos contratados (20261110203000).
+             (count(*) filter (where c.status is distinct from 'Contratado em outra lista'
+                                 and not private."FC_EM_OUTRA_LISTA"(c.id)))::integer as total,
              (count(*) filter (where c.status in ('Contratado', 'Migração') and not private."FC_EM_OUTRA_LISTA"(c.id)))::integer as contratados
         from listas l
         join public."TB_CANDIDATO_APROVADO" c on c.lista_id = l.id and c.removido_em is null
@@ -24793,7 +26098,10 @@ begin
     aprovados_por_cargo as (
       select l.edital_id,
              btrim(regexp_replace(private."FC_TEXTO_BUSCA_RECURSO"(c.codigo_vaga), '[^a-z0-9]+', ' ', 'g')) as cargo,
-             count(*)::integer as total,
+             -- Quem foi contratado pela outra linha do edital (ampla x cota) é a mesma pessoa:
+             -- conta uma vez, como já não conta nos contratados (20261110203000).
+             (count(*) filter (where c.status is distinct from 'Contratado em outra lista'
+                                 and not private."FC_EM_OUTRA_LISTA"(c.id)))::integer as total,
              (count(*) filter (where c.status in ('Contratado', 'Migração') and not private."FC_EM_OUTRA_LISTA"(c.id)))::integer as contratados
         from listas l
         join public."TB_CANDIDATO_APROVADO" c on c.lista_id = l.id and c.removido_em is null
@@ -24869,7 +26177,7 @@ $_$;
 -- Name: FUNCTION get_selecao_da_area(p_area text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.get_selecao_da_area(p_area text) IS 'Leitura da aba Seleção de uma área (json): o funil de cada vaga (aba Resultado da Auditoria), os convocados (entrevistas vigentes, FC_ENTREVISTAS_VIGENTES, quando o edital tem entrevista; senão o V da planilha) e aprovados/contratados/não contratados da lista vigente (a 2ª vaga de mesmo código ou cargo não repete os aprovados). Exige selecao >= leitor, a área e o recorte da coordenação.';
+COMMENT ON FUNCTION public.get_selecao_da_area(p_area text) IS 'Leitura da aba Seleção de uma área (json): o funil de cada vaga (aba Resultado da Auditoria), os convocados (entrevistas vigentes, FC_ENTREVISTAS_VIGENTES, quando o edital tem entrevista; senão o V da planilha) e aprovados/contratados/não contratados da lista vigente (a 2ª vaga de mesmo código ou cargo não repete os aprovados; quem foi contratado pela outra linha do edital conta uma vez nos aprovados, 20261110203000). Exige selecao >= leitor, a área e o recorte da coordenação.';
 
 --
 -- Name: get_selecao_da_area_se_mudou(text, text); Type: FUNCTION; Schema: public; Owner: -
@@ -26315,7 +27623,6 @@ begin
 end;
 $$;
 
-
 --
 -- Name: FUNCTION importar_avaliacao_da_planilha(p_edital uuid, p_motivo text); Type: COMMENT; Schema: public; Owner: -
 --
@@ -27049,6 +28356,77 @@ $$;
 --
 
 COMMENT ON FUNCTION public.lancar_notas_entrevista(p_entrevista uuid, p_dados jsonb) IS 'Lança/corrige notas ({notas:[{competencia, avaliador, nota|null}]}; roteiro com aspectos: {competencia, avaliador, aspectos:[{aspecto, nota}]|null}, todos os aspectos), o comparecimento ({compareceu:S|N, banca}), as observações dos avaliadores ({observacoes:[{avaliador, texto|null}]}, até 1.000 caracteres) e a justificativa da banca ({justificativa}, até 4.000) de um convocado, valida a escala do roteiro, recusa (23514) a nota de avaliador em competência que não é dele e a gravação que termina INAPTO ou com Faltou sem justificativa, grava o histórico e recalcula o resultado. entrevistas >= editor; no modo AVALIADOR, só a própria nota e a própria observação.';
+
+--
+-- Name: ler_relatorio_do_painel(text, text, integer, integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.ler_relatorio_do_painel(p_area text, p_relatorio text, p_pagina integer, p_por_pagina integer) RETURNS json
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    SET statement_timeout TO '30s'
+    SET lock_timeout TO '15s'
+    AS $$
+declare
+  c public."TB_CALCULO_RELATORIO_PAINEL";
+  v_editais uuid[];
+  v_total integer;
+  v_pagina integer := 1;
+begin
+  perform private."FC_EXIGIR_PAINEIS_DA_AREA"(p_area);
+  if p_relatorio is null or p_relatorio not in ('resumo-dos-editais', 'editais-por-cargo', 'aprovados') then
+    raise exception 'Relatório desconhecido' using errcode = '22023';
+  end if;
+  if p_por_pagina is not null and p_por_pagina not in (25, 50, 100) then
+    raise exception 'Linhas por página: 25, 50 ou 100.' using errcode = '22023';
+  end if;
+
+  select * into c from public."TB_CALCULO_RELATORIO_PAINEL" k
+   where k."CO_AREA" = p_area and k."CO_RELATORIO" = p_relatorio;
+  if not found then
+    perform private."FC_CALCULAR_RELATORIO_PAINEL"(p_area, p_relatorio, (select auth.uid()), null);
+    select * into c from public."TB_CALCULO_RELATORIO_PAINEL" k
+     where k."CO_AREA" = p_area and k."CO_RELATORIO" = p_relatorio;
+  end if;
+
+  -- O recorte da coordenação vale aqui: o cálculo guardado é da área inteira.
+  v_editais := (select private."FC_EDITAIS_VISIVEIS"())::uuid[];
+  select count(*)::integer into v_total
+    from public."TB_LINHA_RELATORIO_PAINEL" l
+   where l."CO_AREA" = p_area and l."CO_RELATORIO" = p_relatorio
+     and (v_editais is null or l."CO_MONITORAMENTO" = any (v_editais));
+  if p_por_pagina is not null then
+    v_pagina := least(greatest(1, ceil(v_total::numeric / p_por_pagina)::integer),
+                      greatest(1, coalesce(p_pagina, 1)));
+  end if;
+
+  return json_build_object(
+    'schema_version', 4,
+    'area', p_area,
+    'relatorio', p_relatorio,
+    'calculado_em', c."DT_CALCULO",
+    'total', v_total,
+    'pagina', v_pagina,
+    'por_pagina', p_por_pagina,
+    'linhas', coalesce((
+      select json_agg(x."DS_LINHA" order by x."NU_POSICAO")
+        from (select l."DS_LINHA", l."NU_POSICAO"
+                from public."TB_LINHA_RELATORIO_PAINEL" l
+               where l."CO_AREA" = p_area and l."CO_RELATORIO" = p_relatorio
+                 and (v_editais is null or l."CO_MONITORAMENTO" = any (v_editais))
+               order by l."NU_POSICAO"
+              offset (v_pagina - 1) * coalesce(p_por_pagina, 0)
+               limit p_por_pagina) x), '[]'::json),
+    'fontes', c."DS_FONTES",
+    'avisos', c."DS_AVISOS");
+end;
+$$;
+
+--
+-- Name: FUNCTION ler_relatorio_do_painel(p_area text, p_relatorio text, p_pagina integer, p_por_pagina integer); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.ler_relatorio_do_painel(p_area text, p_relatorio text, p_pagina integer, p_por_pagina integer) IS 'Painéis (json, schema 4): uma página de um relatório da área, do resultado pronto, com o recorte da coordenação — linhas, total, página, data do cálculo, fontes e avisos. p_por_pagina 25, 50 ou 100; nulo = todas as linhas (download). Sem cálculo ainda, calcula. Recurso paineis_dados ≥ Leitor e acesso à área.';
 
 --
 -- Name: ler_respostas_pergunta_vaga(text, boolean); Type: FUNCTION; Schema: public; Owner: -
@@ -28646,6 +30024,47 @@ $$;
 COMMENT ON FUNCTION public.listar_editais_classificacao(p_area text) IS 'Editais da área para a aba Classificação (json): só os que têm análise curricular ativa (qualquer origem) ou lista de classificação gerada; candidatos nas análises, treinamento, versão e nome da versão da regra e a última lista gerada. Ordem: ativo, fora do treinamento, em andamento antes de encerrado, número. Exige classificacao >= leitor, a área e o recorte da coordenação (20261023120000).';
 
 --
+-- Name: listar_editais_criticos_manuais(text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.listar_editais_criticos_manuais(p_area text) RETURNS jsonb
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    SET statement_timeout TO '5s'
+    AS $$
+declare
+  v_area text := lower(btrim(coalesce(p_area, '')));
+begin
+  if not private.pode_recurso('dashboard') then
+    raise exception 'Sem permissão para este recurso' using errcode = '42501';
+  end if;
+  if not (v_area = any ((select private."FC_AREAS_USUARIO"())::text[])) then
+    raise exception 'Sem permissão para esta área' using errcode = '42501';
+  end if;
+  return coalesce((
+    select jsonb_agg(jsonb_build_object(
+             'monitoramento_id', c."CO_MONITORAMENTO",
+             'motivo', c."DS_MOTIVO",
+             'quem', private."FC_NOME_DO_USUARIO"(c."CO_USUARIO"),
+             'quando', c."DT_MARCACAO"
+           ) order by c."DT_MARCACAO" desc)
+      from public."TB_EDITAL_CRITICO" c
+      join public."TB_MONITORAMENTO_INDIGENA" m on m.id = c."CO_MONITORAMENTO"
+     where m.ativo
+       and m."CO_AREA" = v_area
+       and ((select private."FC_EDITAIS_VISIVEIS"()) is null
+            or m.id = any ((select private."FC_EDITAIS_VISIVEIS"())::uuid[]))
+  ), '[]'::jsonb);
+end;
+$$;
+
+--
+-- Name: FUNCTION listar_editais_criticos_manuais(p_area text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.listar_editais_criticos_manuais(p_area text) IS 'Visão geral: os editais da área marcados à mão como críticos ([{monitoramento_id, motivo, quem, quando}]), só os que o usuário vê; exige dashboard e a área. 20261110150000.';
+
+--
 -- Name: listar_editais_da_api(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -28866,6 +30285,29 @@ begin
   ), '[]'::jsonb);
 end;
 $$;
+
+--
+-- Name: listar_fontes_do_painel(text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.listar_fontes_do_painel(p_area text, p_relatorio text) RETURNS jsonb
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+begin
+  perform private."FC_EXIGIR_PAINEIS_DA_AREA"(p_area);
+  if not exists (select 1 from private."FC_COLUNAS_EDITAVEIS_DO_PAINEL"() c where c.co_relatorio = p_relatorio) then
+    raise exception 'Relatório desconhecido' using errcode = '22023';
+  end if;
+  return private."FC_FONTES_DO_PAINEL_JSON"(p_area, p_relatorio);
+end;
+$$;
+
+--
+-- Name: FUNCTION listar_fontes_do_painel(p_area text, p_relatorio text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.listar_fontes_do_painel(p_area text, p_relatorio text) IS 'Painéis › Fontes dos dados (jsonb): para a área e o relatório, cada coluna editável com o padrão, a fonte escolhida e as opções do schema painel, o histórico recente e se quem pede pode editar. Recurso paineis_dados ≥ Leitor e acesso à área.';
 
 --
 -- Name: listar_historico_coordenada_mapa_projetos(text, integer); Type: FUNCTION; Schema: public; Owner: -
@@ -30556,7 +31998,6 @@ begin
 end;
 $$;
 
-
 --
 -- Name: FUNCTION listar_vagas_por_cargo_da_visao_geral(p_area text, p_editais uuid[]); Type: COMMENT; Schema: public; Owner: -
 --
@@ -30775,6 +32216,59 @@ $_$;
 --
 
 COMMENT ON FUNCTION public.marcar_candidatos_convocados(p_candidatos uuid[], p_data_convocacao date, p_carta uuid) IS 'Marca como Convocado (com a data; padrão hoje, nunca futura) os candidatos sem status ou já convocados, de listas vigentes e ativas — os demais voltam em ignorados com o motivo. Com p_carta, liga a alteração à carta emitida (TH_CANDIDATO_APROVADO.CO_CARTA_CONVOCACAO e RL_CARTA_CANDIDATO.DT_CONVOCACAO_MARCADA). Aprovados >= editor na área/edital de todos; até 500 por vez.';
+
+--
+-- Name: marcar_edital_critico(uuid, boolean, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.marcar_edital_critico(p_edital uuid, p_critico boolean, p_motivo text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+  v_uid uuid := (select auth.uid());
+  v_motivo text := nullif(regexp_replace(btrim(coalesce(p_motivo, '')), '\s+', ' ', 'g'), '');
+  v_antes public."TB_EDITAL_CRITICO";
+begin
+  if not private."FC_PODE_MARCAR_CRITICO"(p_edital) then
+    raise exception 'Só gestor, coordenador ou administrador global marcam o edital como crítico.' using errcode = '42501';
+  end if;
+  if p_critico is null then
+    raise exception 'Diga se o edital é crítico ou não.' using errcode = '22023';
+  end if;
+  if v_motivo is null or length(v_motivo) not between 10 and 500
+     or not private."FC_MOTIVO_PARECE_TEXTO"(v_motivo, 2) then
+    raise exception 'Escreva o motivo (10 a 500 caracteres, com pelo menos 2 palavras).' using errcode = '22023';
+  end if;
+
+  select * into v_antes from public."TB_EDITAL_CRITICO" where "CO_MONITORAMENTO" = p_edital for update;
+
+  if p_critico then
+    insert into public."TB_EDITAL_CRITICO" ("CO_MONITORAMENTO", "DS_MOTIVO", "CO_USUARIO", "DT_MARCACAO")
+    values (p_edital, v_motivo, v_uid, now())
+    on conflict ("CO_MONITORAMENTO") do update
+      set "DS_MOTIVO" = excluded."DS_MOTIVO", "CO_USUARIO" = excluded."CO_USUARIO",
+          "DT_MARCACAO" = excluded."DT_MARCACAO";
+    insert into public."TH_EDITAL_CRITICO" ("CO_MONITORAMENTO", "TP_ACAO", "DS_MOTIVO", "CO_USUARIO")
+    values (p_edital, case when v_antes."CO_MONITORAMENTO" is null then 'MARCAR' else 'ALTERAR' end, v_motivo, v_uid);
+  else
+    if v_antes."CO_MONITORAMENTO" is null then
+      raise exception 'O edital não está marcado como crítico.' using errcode = '22023';
+    end if;
+    delete from public."TB_EDITAL_CRITICO" where "CO_MONITORAMENTO" = p_edital;
+    insert into public."TH_EDITAL_CRITICO" ("CO_MONITORAMENTO", "TP_ACAO", "DS_MOTIVO", "CO_USUARIO")
+    values (p_edital, 'DESMARCAR', v_motivo, v_uid);
+  end if;
+
+  return public.obter_critico_do_edital(p_edital);
+end;
+$$;
+
+--
+-- Name: FUNCTION marcar_edital_critico(p_edital uuid, p_critico boolean, p_motivo text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.marcar_edital_critico(p_edital uuid, p_critico boolean, p_motivo text) IS 'Marca (p_critico = true; de novo = altera o motivo) ou desmarca o edital como crítico, sempre com motivo (10 a 500, 2 palavras) e histórico em TH_EDITAL_CRITICO. Só FC_PODE_MARCAR_CRITICO. Devolve obter_critico_do_edital. 20261110150000.';
 
 --
 -- Name: marcar_encerramento_visto(uuid); Type: FUNCTION; Schema: public; Owner: -
@@ -31749,6 +33243,37 @@ $$;
 COMMENT ON FUNCTION public.obter_contexto_monitora() IS 'Resolve em uma chamada o perfil ativo, os modulos e os paineis externos permitidos ao usuario autenticado.';
 
 --
+-- Name: obter_critico_do_edital(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.obter_critico_do_edital(p_edital uuid) RETURNS jsonb
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+  v_c public."TB_EDITAL_CRITICO";
+begin
+  if not private."FC_PODE_VER_EDITAL"(p_edital) then
+    raise exception 'Edital não encontrado ou sem acesso' using errcode = '42501';
+  end if;
+  select * into v_c from public."TB_EDITAL_CRITICO" where "CO_MONITORAMENTO" = p_edital;
+  return jsonb_build_object(
+    'marcado', v_c."CO_MONITORAMENTO" is not null,
+    'motivo', v_c."DS_MOTIVO",
+    'quem', private."FC_NOME_DO_USUARIO"(v_c."CO_USUARIO"),
+    'quando', v_c."DT_MARCACAO",
+    'pode_marcar', private."FC_PODE_MARCAR_CRITICO"(p_edital)
+  );
+end;
+$$;
+
+--
+-- Name: FUNCTION obter_critico_do_edital(p_edital uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.obter_critico_do_edital(p_edital uuid) IS 'Formulário do edital: a marcação manual de crítico ({marcado, motivo, quem, quando}) e se o usuário pode mudá-la (pode_marcar). 20261110150000.';
+
+--
 -- Name: obter_dados_previa_ajuste(uuid); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -32535,6 +34060,92 @@ $$;
 --
 
 COMMENT ON FUNCTION public.obter_fila_fora_do_lote(p_edital uuid, p_apos uuid, p_limite integer) IS 'Os inscritos de fora do lote na fila da avaliação documental (eliminados e ranqueados sem ficha viva: FC_NO_NUCLEO_DA_FILA), no mesmo formato de obter_fila_avaliacao, em páginas de até 2.000 em ordem do id do inscrito: p_apos = o "proximo" da página anterior (nulo na primeira); "proximo" nulo = acabou. O analista vê só as vagas que analisa. Exige avaliacao_documental >= leitor, a área e o recorte da coordenação.';
+
+--
+-- Name: obter_fundamentos_da_eliminacao(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.obter_fundamentos_da_eliminacao(p_edital uuid) RETURNS json
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+  v_area text := private."FC_EXIGIR_COORD_AVALIACAO"(p_edital);
+  v_perfil public."TB_PERFIL_USUARIO";
+  v_pode boolean;
+  v_versao integer;
+  v_situacao text;
+  v_config jsonb;
+begin
+  if private.is_master() then
+    v_pode := true;
+  else
+    v_perfil := private.current_profile();
+    v_pode := v_perfil.id is not null and private."FC_GESTOR_DO_EDITAL"(v_perfil.id, p_edital);
+  end if;
+
+  select t."NU_VERSAO_VIGENTE", t."TP_SITUACAO", h."DS_CONFIGURACAO"
+    into v_versao, v_situacao, v_config
+    from public."TB_REGRA_TRIAGEM" t
+    join public."TH_REGRA_TRIAGEM" h
+      on h."CO_REGRA_TRIAGEM" = t."CO_REGRA_TRIAGEM" and h."NU_VERSAO" = t."NU_VERSAO_VIGENTE"
+   where t."CO_MONITORAMENTO" = p_edital;
+
+  return (
+    with na_regra as (
+      select e ->> 'codigo' as codigo, e ->> 'motivo' as motivo,
+             nullif(btrim(coalesce(e ->> 'item_edital', '')), '') as item_na_regra, o.n as ordem
+        from jsonb_array_elements(
+               case when jsonb_typeof(v_config #> '{requisitos,eliminacao_automatica}') = 'array'
+                    then v_config #> '{requisitos,eliminacao_automatica}' else '[]'::jsonb end)
+             with ordinality o(e, n)
+       where jsonb_typeof(e) = 'object' and coalesce(e ->> 'codigo', '') <> ''
+    ),
+    gravados as (
+      select a."CO_MOTIVO_ELIMINACAO" as codigo, min(a."DS_MOTIVO_ELIMINACAO") as motivo, count(*)::int as n
+        from public."TB_PRE_CLASSIFICACAO" a
+       where a."CO_MONITORAMENTO" = p_edital and a."TP_SITUACAO" = 'ELIMINADO'
+       group by a."CO_MOTIVO_ELIMINACAO"
+    )
+    select json_build_object(
+      'schema_version', 1,
+      'edital', p_edital,
+      'pode_conferir', v_pode,
+      'regra', case when v_versao is null then null else json_build_object(
+        'versao', v_versao, 'situacao', v_situacao,
+        'item_da_nota', nullif(btrim(coalesce(v_config #>> '{lote,item_edital}', '')), '')) end,
+      'motivos', coalesce((
+        select json_agg(json_build_object(
+                 'codigo', r.codigo, 'motivo', coalesce(r.motivo, g.motivo), 'item_na_regra', r.item_na_regra,
+                 'eliminados', coalesce(g.n, 0),
+                 'fundamento', private."FC_FUNDAMENTO_DA_ELIMINACAO"(p_edital, r.codigo))
+               order by r.ordem)
+          from na_regra r left join gravados g on g.codigo = r.codigo), '[]'::json),
+      'fora_da_regra', coalesce((
+        select json_agg(json_build_object('codigo', g.codigo, 'motivo', g.motivo, 'eliminados', g.n) order by g.codigo)
+          from gravados g where not exists (select 1 from na_regra r where r.codigo = g.codigo)), '[]'::json),
+      'fora_do_lote_por_nota', (
+        select count(*)::int from public."TB_PRE_CLASSIFICACAO" a
+         where a."CO_MONITORAMENTO" = p_edital and a."TP_SITUACAO" = 'RANQUEADO'),
+      'historico', coalesce((
+        select json_agg(json_build_object(
+                 'id', f."CO_HISTORICO", 'motivo_codigo', f."CO_MOTIVO_ELIMINACAO", 'item_edital', f."DS_ITEM_EDITAL",
+                 'versao_regra', f."NU_VERSAO_REGRA", 'fonte', f."DS_FONTE", 'justificativa', f."DS_JUSTIFICATIVA",
+                 'papel', f."TP_PAPEL", 'por', coalesce(p.nome, p.email), 'em', f."DT_CONFERENCIA")
+               order by f."CO_HISTORICO" desc)
+          from public."TH_FUNDAMENTO_ELIMINACAO" f
+          left join lateral (
+            select u.nome, u.email from public."TB_PERFIL_USUARIO" u
+             where u.user_id = f."CO_USUARIO" order by u.ativo desc limit 1) p on true
+         where f."CO_MONITORAMENTO" = p_edital), '[]'::json)));
+end;
+$$;
+
+--
+-- Name: FUNCTION obter_fundamentos_da_eliminacao(p_edital uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.obter_fundamentos_da_eliminacao(p_edital uuid) IS 'O quadro do fundamento das eliminações da Triagem: regra vigente (versão, situação, item da nota mínima do lote), cada motivo da regra com quantos eliminados e o fundamento (CONFERIDO, RECONFERIR ou nulo), os motivos gravados fora da regra, quantos ficaram fora do lote pela nota (RANQUEADO, sem comunicado de eliminação), o histórico das conferências e pode_conferir (gestor ou coordenador do edital, ou administrador global). Coordenação da avaliação do edital (FC_EXIGIR_COORD_AVALIACAO). 20261110215930.';
 
 --
 -- Name: obter_inicio_da_sessao(); Type: FUNCTION; Schema: public; Owner: -
@@ -35003,7 +36614,6 @@ begin
 end;
 $$;
 
-
 --
 -- Name: FUNCTION previa_importacao_da_planilha(p_edital uuid); Type: COMMENT; Schema: public; Owner: -
 --
@@ -35523,7 +37133,6 @@ begin
   return public.obter_entrevistas_do_edital(v_e."CO_MONITORAMENTO");
 end;
 $$;
-
 
 --
 -- Name: FUNCTION reabrir_entrevista(p_entrevista uuid, p_motivo text, p_complemento text); Type: COMMENT; Schema: public; Owner: -
@@ -36467,6 +38076,140 @@ $$;
 --
 
 COMMENT ON FUNCTION public.registrar_evento_acesso(p_evento text, p_tela text, p_origem text, p_detalhes jsonb, p_client_session_id text, p_user_agent text, p_app_version text) IS 'Registra eventos de acesso via RLS. Usuario autenticado grava user_id; chamada anonima grava user_id null para eventos pre-auth.';
+
+--
+-- Name: registrar_exportacao_aprovados(text, text, uuid[], text[], text[], text[], boolean, integer, integer, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.registrar_exportacao_aprovados(p_area text, p_formato text, p_editais uuid[], p_cargos text[] DEFAULT '{}'::text[], p_modalidades text[] DEFAULT '{}'::text[], p_situacoes text[] DEFAULT '{}'::text[], p_recorte_do_aviso boolean DEFAULT false, p_total_na_tela integer DEFAULT NULL::integer, p_registros integer DEFAULT NULL::integer, p_conteudo text DEFAULT 'LISTA'::text) RETURNS json
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    SET statement_timeout TO '15s'
+    AS $$
+declare
+  c_situacoes constant text[] := array[
+    '__sem_status__', 'Convocado', 'Contratado', 'Contratado em outra lista',
+    'Desistente', 'Migração', 'Documentação Rejeitada'];
+  v_area text := lower(btrim(coalesce(p_area, '')));
+  v_formato text := upper(btrim(coalesce(p_formato, '')));
+  v_conteudo text := upper(btrim(coalesce(p_conteudo, 'LISTA')));
+  v_editais uuid[];
+  v_cargos text[];
+  v_modalidades text[];
+  v_situacoes text[];
+  v_visiveis uuid[];
+  v_recorte integer;
+  v_autor record;
+  v_id uuid;
+  v_emitida timestamptz;
+begin
+  if (select auth.uid()) is null then
+    raise exception 'Sessão não localizada.' using errcode = '28000';
+  end if;
+  if not private.pode_recurso('aprovados', 1) then
+    raise exception 'Sem permissão para exportar a lista de aprovados.' using errcode = '42501';
+  end if;
+  if not exists (select 1 from public."TB_AREA" a where a."CO_AREA" = v_area) then
+    raise exception 'Área inválida.' using errcode = '22023';
+  end if;
+  if not (v_area = any ((select private."FC_AREAS_USUARIO"())::text[])) then
+    raise exception 'Sem permissão para a lista de aprovados desta área.' using errcode = '42501';
+  end if;
+  if v_formato not in ('XLSX', 'CSV', 'PDF') then
+    raise exception 'Formato inválido: escolha XLSX, CSV ou PDF.' using errcode = '22023';
+  end if;
+  if v_conteudo not in ('LISTA', 'RESUMO') then
+    raise exception 'Conteúdo inválido: LISTA ou RESUMO.' using errcode = '22023';
+  end if;
+
+  -- Os filtros: sem nulos, sem repetir, com limite de tamanho (nada de texto livre longo).
+  select coalesce(array_agg(distinct e), '{}') into v_editais
+    from unnest(coalesce(p_editais, '{}'::uuid[])) e where e is not null;
+  select coalesce(array_agg(distinct btrim(x)), '{}') into v_cargos
+    from unnest(coalesce(p_cargos, '{}'::text[])) x where nullif(btrim(x), '') is not null;
+  select coalesce(array_agg(distinct btrim(x)), '{}') into v_modalidades
+    from unnest(coalesce(p_modalidades, '{}'::text[])) x where nullif(btrim(x), '') is not null;
+  select coalesce(array_agg(distinct btrim(x)), '{}') into v_situacoes
+    from unnest(coalesce(p_situacoes, '{}'::text[])) x where nullif(btrim(x), '') is not null;
+
+  if cardinality(v_editais) = 0 then
+    raise exception 'Nenhum edital para exportar.' using errcode = '22023';
+  end if;
+  if cardinality(v_editais) > 1000 or cardinality(v_cargos) > 1000 or cardinality(v_modalidades) > 200 then
+    raise exception 'Filtros demais para uma exportação.' using errcode = '22023';
+  end if;
+  if exists (select 1 from unnest(v_cargos || v_modalidades) x where length(x) > 300) then
+    raise exception 'Cargo ou modalidade com mais de 300 caracteres.' using errcode = '22023';
+  end if;
+  if not (v_situacoes <@ c_situacoes) then
+    raise exception 'Situação inválida.' using errcode = '22023';
+  end if;
+  if p_total_na_tela is null or p_total_na_tela < 0 or p_registros is null or p_registros < 0 then
+    raise exception 'Informe o total da tela e os registros exportados.' using errcode = '22023';
+  end if;
+
+  -- Cada edital: da área, com lista vigente, fora de treinamento e visível para a coordenação.
+  v_visiveis := private."FC_EDITAIS_VISIVEIS"();
+  if exists (
+    select 1 from unnest(v_editais) e
+     where not exists (
+       select 1
+         from public."TB_MONITORAMENTO_INDIGENA" m
+         join public."TB_LISTA_APROVADO" l on l.edital_id = m.id::text and l.vigente is true
+        where m.id = e
+          and m."CO_AREA" = v_area
+          and not private."FC_EH_TREINAMENTO"(m."ST_TREINAMENTO")
+          and (v_visiveis is null or m.id = any (v_visiveis))
+     )
+  ) then
+    raise exception 'Há edital fora da área, sem lista vigente ou sem permissão.' using errcode = '42501';
+  end if;
+
+  -- O total da lista vigente no recorte, contado aqui (o da tela pode estar velho).
+  select count(*)::integer into v_recorte
+    from public."TB_LISTA_APROVADO" l
+    join public."TB_CANDIDATO_APROVADO" c on c.lista_id = l.id and c.removido_em is null
+   where l.vigente is true
+     and l.edital_id = any (array(select e::text from unnest(v_editais) e))
+     and (cardinality(v_cargos) = 0 or btrim(coalesce(c.cargo, '')) = any (v_cargos))
+     and (cardinality(v_modalidades) = 0 or btrim(coalesce(c.modalidade, '')) = any (v_modalidades));
+
+  if v_recorte <> p_total_na_tela then
+    raise exception 'A lista mudou desde que a tela foi carregada (% na tela, % no banco). Clique em Atualizar e exporte de novo.',
+      p_total_na_tela, v_recorte using errcode = '40001';
+  end if;
+  if p_registros > v_recorte then
+    raise exception 'Mais registros que o total da lista vigente.' using errcode = '22023';
+  end if;
+  if cardinality(v_situacoes) = 0 and not coalesce(p_recorte_do_aviso, false) and p_registros <> v_recorte then
+    raise exception 'Sem filtro de situação, a exportação leva a lista vigente inteira do recorte.' using errcode = '22023';
+  end if;
+
+  select * into v_autor from private.autor_da_sessao();
+  insert into public."TL_EXPORTACAO_APROVADO" (
+    "CO_AREA", "TP_FORMATO", "TP_CONTEUDO", "DS_FILTRO", "QT_EDITAL", "QT_RECORTE", "QT_REGISTRO",
+    "CO_USUARIO", "NO_USUARIO", "DS_EMAIL_USUARIO"
+  ) values (
+    v_area, v_formato, v_conteudo,
+    jsonb_build_object(
+      'editais', to_jsonb(v_editais), 'cargos', to_jsonb(v_cargos),
+      'modalidades', to_jsonb(v_modalidades), 'situacoes', to_jsonb(v_situacoes),
+      'recorte_do_aviso', coalesce(p_recorte_do_aviso, false)),
+    cardinality(v_editais), v_recorte, p_registros,
+    (select auth.uid()), v_autor.nome, v_autor.email
+  ) returning "CO_EXPORTACAO_APROVADO", "DT_EMISSAO" into v_id, v_emitida;
+
+  return json_build_object(
+    'exportacao_id', v_id, 'emitida_em', v_emitida,
+    'recorte', v_recorte, 'registros', p_registros, 'conteudo', v_conteudo);
+end;
+$$;
+
+--
+-- Name: FUNCTION registrar_exportacao_aprovados(p_area text, p_formato text, p_editais uuid[], p_cargos text[], p_modalidades text[], p_situacoes text[], p_recorte_do_aviso boolean, p_total_na_tela integer, p_registros integer, p_conteudo text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.registrar_exportacao_aprovados(p_area text, p_formato text, p_editais uuid[], p_cargos text[], p_modalidades text[], p_situacoes text[], p_recorte_do_aviso boolean, p_total_na_tela integer, p_registros integer, p_conteudo text) IS 'Registra a exportação da Lista de aprovados antes de o navegador gerar o arquivo: sessão, aprovados >= leitor, área do usuário, editais só da área com lista vigente, sem treinamento e visíveis à coordenação; recalcula o total da lista vigente nos editais, cargos e modalidades e recusa (40001) se a tela tem outro número. p_conteudo: LISTA (padrão) ou RESUMO (Resumo por cargo e status). Grava TL_EXPORTACAO_APROVADO e devolve exportacao_id, emitida_em e conteudo.';
 
 --
 -- Name: registrar_lista_calculada(uuid, jsonb); Type: FUNCTION; Schema: public; Owner: -
@@ -38642,6 +40385,102 @@ $$;
 --
 
 COMMENT ON FUNCTION public.salvar_filtro_fila(p_nome text, p_filtro jsonb) IS 'Salva (ou troca, pelo mesmo nome) um filtro da fila de quem chama; até 30 por pessoa. Devolve os filtros salvos. Exige avaliacao_documental >= leitor.';
+
+--
+-- Name: salvar_fonte_da_coluna(text, text, text, text, text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.salvar_fonte_da_coluna(p_area text, p_relatorio text, p_coluna text, p_visao text, p_coluna_visao text, p_motivo text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    SET statement_timeout TO '30s'
+    SET lock_timeout TO '15s'
+    AS $$
+declare
+  v_usuario uuid := (select auth.uid());
+  v_motivo text := btrim(coalesce(p_motivo, ''));
+  c record;
+  v_visao_antes text;
+  v_coluna_antes text;
+  v_tinha boolean;
+  v_antes text;
+  v_depois text;
+begin
+  perform private."FC_EXIGIR_PAINEIS_DA_AREA"(p_area);
+  if v_usuario is null then
+    raise exception 'Sessão não localizada' using errcode = '28000';
+  end if;
+  if not private.pode_recurso('paineis_dados', 3) then
+    raise exception 'Só o Administrador em Painéis troca a fonte' using errcode = '42501';
+  end if;
+
+  select e.* into c from private."FC_COLUNAS_EDITAVEIS_DO_PAINEL"() e
+   where e.co_relatorio = p_relatorio and e.co_coluna = p_coluna;
+  if not found then
+    raise exception 'Coluna sem fonte editável' using errcode = '22023';
+  end if;
+  if length(v_motivo) not between 3 and 500 then
+    raise exception 'Motivo: de 3 a 500 caracteres.' using errcode = '22023';
+  end if;
+
+  select f."NO_VISAO", f."NO_COLUNA_VISAO" into v_visao_antes, v_coluna_antes
+    from public."TB_FONTE_COLUNA_PAINEL" f
+   where f."CO_AREA" = p_area and f."CO_RELATORIO" = p_relatorio and f."CO_COLUNA" = p_coluna
+     for update;
+  v_tinha := found;
+  v_antes := case when v_tinha
+    then coalesce((select o.ds_rotulo_visao || ' › ' || o.ds_rotulo_coluna
+                     from private."FC_OPCOES_DE_FONTE_DO_PAINEL"(p_relatorio, p_coluna) o
+                    where o.no_visao = v_visao_antes and o.no_coluna = v_coluna_antes),
+                  v_visao_antes || ' › ' || v_coluna_antes)
+    else c.ds_padrao end;
+
+  if p_visao is null then
+    if not v_tinha then
+      raise exception 'Nada mudou: a coluna já usa o padrão.' using errcode = '22023';
+    end if;
+    delete from public."TB_FONTE_COLUNA_PAINEL"
+     where "CO_AREA" = p_area and "CO_RELATORIO" = p_relatorio and "CO_COLUNA" = p_coluna;
+    v_depois := c.ds_padrao;
+  else
+    select o.ds_rotulo_visao || ' › ' || o.ds_rotulo_coluna into v_depois
+      from private."FC_OPCOES_DE_FONTE_DO_PAINEL"(p_relatorio, p_coluna) o
+     where o.no_visao = p_visao and o.no_coluna = p_coluna_visao;
+    if not found then
+      raise exception 'Fonte inválida para esta coluna' using errcode = '22023';
+    end if;
+    if v_tinha and v_visao_antes = p_visao and v_coluna_antes = p_coluna_visao then
+      raise exception 'Nada mudou: a coluna já usa esta fonte.' using errcode = '22023';
+    end if;
+    insert into public."TB_FONTE_COLUNA_PAINEL"
+      ("CO_AREA", "CO_RELATORIO", "CO_COLUNA", "NO_VISAO", "NO_COLUNA_VISAO", "DS_MOTIVO",
+       "CO_USUARIO_ATUALIZACAO", "DT_ATUALIZACAO")
+    values (p_area, p_relatorio, p_coluna, p_visao, p_coluna_visao, v_motivo, v_usuario, now())
+    on conflict ("CO_AREA", "CO_RELATORIO", "CO_COLUNA") do update
+       set "NO_VISAO" = excluded."NO_VISAO", "NO_COLUNA_VISAO" = excluded."NO_COLUNA_VISAO",
+           "DS_MOTIVO" = excluded."DS_MOTIVO", "CO_USUARIO_ATUALIZACAO" = excluded."CO_USUARIO_ATUALIZACAO",
+           "DT_ATUALIZACAO" = excluded."DT_ATUALIZACAO";
+  end if;
+
+  insert into public."TH_FONTE_COLUNA_PAINEL"
+    ("CO_AREA", "CO_RELATORIO", "CO_COLUNA", "NO_VISAO_ANTES", "NO_COLUNA_VISAO_ANTES",
+     "NO_VISAO_DEPOIS", "NO_COLUNA_VISAO_DEPOIS", "DS_FONTE_ANTES", "DS_FONTE_DEPOIS", "DS_MOTIVO",
+     "CO_USUARIO_ALTERACAO")
+  values (p_area, p_relatorio, p_coluna,
+          case when v_tinha then v_visao_antes end, case when v_tinha then v_coluna_antes end,
+          p_visao, case when p_visao is not null then p_coluna_visao end,
+          left(v_antes, 300), left(v_depois, 300), v_motivo, v_usuario);
+
+  perform private."FC_CALCULAR_RELATORIO_PAINEL"(p_area, p_relatorio, v_usuario, null);
+  return private."FC_FONTES_DO_PAINEL_JSON"(p_area, p_relatorio);
+end;
+$$;
+
+--
+-- Name: FUNCTION salvar_fonte_da_coluna(p_area text, p_relatorio text, p_coluna text, p_visao text, p_coluna_visao text, p_motivo text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.salvar_fonte_da_coluna(p_area text, p_relatorio text, p_coluna text, p_visao text, p_coluna_visao text, p_motivo text) IS 'Painéis › Fontes dos dados: troca a fonte de uma coluna editável na área (p_visao nulo = volta ao padrão), só entre as opções do catálogo, com motivo (3 a 500) e histórico, e recalcula o relatório na mesma transação (se o recálculo falhar, a troca é desfeita). Exige Administrador em paineis_dados e acesso à área. Devolve o mesmo de listar_fontes_do_painel.';
 
 --
 -- Name: salvar_grupo_acesso(jsonb, text); Type: FUNCTION; Schema: public; Owner: -
@@ -40892,6 +42731,37 @@ $_$;
 COMMENT ON FUNCTION public.sincronizar_entrevistas(p_sync text, p_area text, p_linhas jsonb) IS 'Recebe um lote (até 1000) de linhas da aba Entrevistados e faz upsert em TB_ENTREVISTA/TB_ENTREVISTA_NOTA, só do que mudou; as chaves do lote vão para private."TL_CHAVE_DA_CARGA" (20261103150000). Só service_role (Apps Script). Fechar com finalizar_sync_entrevistas.';
 
 --
+-- Name: sincronizar_relatorio_do_painel(text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.sincronizar_relatorio_do_painel(p_area text, p_relatorio text) RETURNS json
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    SET statement_timeout TO '30s'
+    SET lock_timeout TO '15s'
+    AS $$
+declare
+  v_recalculado boolean;
+begin
+  perform private."FC_EXIGIR_PAINEIS_DA_AREA"(p_area);
+  if p_relatorio is null or p_relatorio not in ('resumo-dos-editais', 'editais-por-cargo', 'aprovados') then
+    raise exception 'Relatório desconhecido' using errcode = '22023';
+  end if;
+  v_recalculado := private."FC_CALCULAR_RELATORIO_PAINEL"(p_area, p_relatorio, (select auth.uid()), interval '1 minute');
+  return json_build_object(
+    'calculado_em', (select k."DT_CALCULO" from public."TB_CALCULO_RELATORIO_PAINEL" k
+                      where k."CO_AREA" = p_area and k."CO_RELATORIO" = p_relatorio),
+    'recalculado', v_recalculado);
+end;
+$$;
+
+--
+-- Name: FUNCTION sincronizar_relatorio_do_painel(p_area text, p_relatorio text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.sincronizar_relatorio_do_painel(p_area text, p_relatorio text) IS 'Painéis › Sincronizar (json): recalcula o relatório da área, no máximo uma vez por minuto (dentro do minuto, devolve o que está pronto). Devolve {calculado_em, recalculado}. Recurso paineis_dados ≥ Leitor e acesso à área.';
+
+--
 -- Name: sincronizar_selecao(text, jsonb); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -42429,6 +44299,1034 @@ COMMENT ON CONSTRAINT "CK_EXECEXPURGO_TPSITUACAO" ON arquivo."TL_EXPURGO_ANEXO_C
 --
 
 COMMENT ON CONSTRAINT "CK_EXECEXPURGO_USUARIO" ON arquivo."TL_EXPURGO_ANEXO_CHAT" IS 'Usuário só (e sempre) no disparo pelo MONITORA.';
+
+--
+-- Name: TB_CANDIDATO_APROVADO; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."TB_CANDIDATO_APROVADO" (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    lista_id uuid NOT NULL,
+    codigo_vaga text,
+    cargo text NOT NULL,
+    classificacao integer,
+    nota numeric NOT NULL,
+    nome text NOT NULL,
+    modalidade text,
+    status text,
+    processo_sei text,
+    matricula text,
+    sub_judice boolean DEFAULT false NOT NULL,
+    removido_em timestamp with time zone,
+    removido_por uuid,
+    created_by uuid NOT NULL,
+    updated_by uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    alterado_judicialmente boolean DEFAULT false NOT NULL,
+    nota_original numeric,
+    modalidade_original text,
+    classificacao_original integer,
+    sub_judice_original boolean,
+    "CO_ANALISE_CURRICULAR" uuid,
+    "TP_SITUACAO_CLASSIFICACAO" character varying(4),
+    "CO_CANDIDATO_ANTERIOR" uuid,
+    "DT_CONVOCACAO" date,
+    CONSTRAINT "CK_CANDAPROVADO_DTCONVOCACAO" CHECK (((("DT_CONVOCACAO" IS NULL) OR (status IS NOT NULL)) AND ((status IS DISTINCT FROM 'Convocado'::text) OR ("DT_CONVOCACAO" IS NOT NULL)))),
+    CONSTRAINT "CK_CANDAPROVADO_TPSITUACAO" CHECK ((("TP_SITUACAO_CLASSIFICACAO" IS NULL) OR (("TP_SITUACAO_CLASSIFICACAO")::text = ANY (ARRAY[('VAGA'::character varying)::text, ('CR'::character varying)::text])))),
+    CONSTRAINT "CK_CANDIDATO_APROVADO_STATUS" CHECK (((status IS NULL) OR (status = ANY (ARRAY['Convocado'::text, 'Contratado'::text, 'Contratado em outra lista'::text, 'Desistente'::text, 'Migração'::text, 'Documentação Rejeitada'::text])))),
+    CONSTRAINT lista_aprovados_classificacao_check CHECK (((classificacao IS NULL) OR (classificacao > 0))),
+    CONSTRAINT lista_aprovados_importado_campos_check CHECK (((sub_judice IS TRUE) OR ((NULLIF(btrim(codigo_vaga), ''::text) IS NOT NULL) AND (classificacao IS NOT NULL) AND (NULLIF(btrim(modalidade), ''::text) IS NOT NULL)))),
+    CONSTRAINT lista_aprovados_matricula_status_check CHECK (((status <> ALL (ARRAY['Contratado'::text, 'Migração'::text])) OR (NULLIF(btrim(matricula), ''::text) IS NOT NULL))),
+    CONSTRAINT lista_aprovados_nota_check CHECK ((nota >= (0)::numeric))
+);
+
+--
+-- Name: COLUMN "TB_CANDIDATO_APROVADO".status; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_CANDIDATO_APROVADO".status IS 'Situação do candidato: Convocado (chamado para a contratação, aguardando apresentação e documentos; leva DT_CONVOCACAO), Contratado, Contratado em outra lista (fixado pela equipe: a mesma pessoa foi contratada pela outra linha do edital, ampla ou cota; não conta nos contratados nem ocupa vaga), Desistente, Migração ou Documentação Rejeitada. Nulo = sem status. Contratados (Seleção e KPIs) são Contratado e Migração, menos os Contratado que o instantâneo TB_CONTRATACAO_APROVADO dá como em outra lista.';
+
+--
+-- Name: COLUMN "TB_CANDIDATO_APROVADO".alterado_judicialmente; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_CANDIDATO_APROVADO".alterado_judicialmente IS 'Nota e/ou modalidade alteradas por decisão judicial (alterar_candidato_sub_judice).';
+
+--
+-- Name: COLUMN "TB_CANDIDATO_APROVADO".nota_original; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_CANDIDATO_APROVADO".nota_original IS 'Nota do resultado publicado, gravada na primeira alteração judicial.';
+
+--
+-- Name: COLUMN "TB_CANDIDATO_APROVADO".modalidade_original; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_CANDIDATO_APROVADO".modalidade_original IS 'Modalidade do resultado publicado, gravada na primeira alteração judicial.';
+
+--
+-- Name: COLUMN "TB_CANDIDATO_APROVADO".classificacao_original; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_CANDIDATO_APROVADO".classificacao_original IS 'Classificação do resultado publicado, gravada na primeira alteração judicial (desempate e desfazer).';
+
+--
+-- Name: COLUMN "TB_CANDIDATO_APROVADO".sub_judice_original; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_CANDIDATO_APROVADO".sub_judice_original IS 'Se já era sub judice (inclusão) antes da primeira alteração; volta no desfazer.';
+
+--
+-- Name: COLUMN "TB_CANDIDATO_APROVADO"."CO_ANALISE_CURRICULAR"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_CANDIDATO_APROVADO"."CO_ANALISE_CURRICULAR" IS 'Análise curricular do candidato (TB_ANALISE_CURRICULAR.id), nas listas publicadas da Classificação; nula nas de planilha.';
+
+--
+-- Name: COLUMN "TB_CANDIDATO_APROVADO"."TP_SITUACAO_CLASSIFICACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_CANDIDATO_APROVADO"."TP_SITUACAO_CLASSIFICACAO" IS 'No resultado final da Classificação: VAGA (dentro das vagas) ou CR (cadastro reserva); nula nas listas de planilha.';
+
+--
+-- Name: COLUMN "TB_CANDIDATO_APROVADO"."CO_CANDIDATO_ANTERIOR"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_CANDIDATO_APROVADO"."CO_CANDIDATO_ANTERIOR" IS 'O mesmo candidato na lista anterior do edital, de onde vieram status, matrícula, processo, sub judice e anexos na publicação.';
+
+--
+-- Name: COLUMN "TB_CANDIDATO_APROVADO"."DT_CONVOCACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_CANDIDATO_APROVADO"."DT_CONVOCACAO" IS 'Data em que o candidato foi convocado para a contratação. Fica depois que ele segue para Contratado, Desistente ou Documentação Rejeitada; some quando o status volta a nulo. A publicação de uma lista nova a herda do candidato anterior (TG_CANDAPROVADO_CONVOCACAO).';
+
+--
+-- Name: CONSTRAINT "CK_CANDAPROVADO_DTCONVOCACAO" ON "TB_CANDIDATO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_CANDAPROVADO_DTCONVOCACAO" ON public."TB_CANDIDATO_APROVADO" IS 'Data da convocação só com status; Convocado sempre com a data.';
+
+--
+-- Name: CONSTRAINT "CK_CANDAPROVADO_TPSITUACAO" ON "TB_CANDIDATO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_CANDAPROVADO_TPSITUACAO" ON public."TB_CANDIDATO_APROVADO" IS 'Situações do resultado final.';
+
+--
+-- Name: CONSTRAINT "CK_CANDIDATO_APROVADO_STATUS" ON "TB_CANDIDATO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_CANDIDATO_APROVADO_STATUS" ON public."TB_CANDIDATO_APROVADO" IS 'Status válidos (Fim de Fila saiu em 20261005180000; Contratado em outra lista entrou em 20261024120000).';
+
+--
+-- Name: VW_APROVADO_ANTES_DA_DECISAO; Type: VIEW; Schema: painel; Owner: -
+--
+
+CREATE VIEW painel."VW_APROVADO_ANTES_DA_DECISAO" AS
+ SELECT id AS "CO_CANDIDATO_APROVADO",
+    nota_original AS "VL_NOTA_ORIGINAL",
+    classificacao_original AS "NU_CLASSIFICACAO_ORIGINAL"
+   FROM public."TB_CANDIDATO_APROVADO" c
+  WHERE alterado_judicialmente;
+
+--
+-- Name: VIEW "VW_APROVADO_ANTES_DA_DECISAO"; Type: COMMENT; Schema: painel; Owner: -
+--
+
+COMMENT ON VIEW painel."VW_APROVADO_ANTES_DA_DECISAO" IS 'Antes da decisão judicial';
+
+--
+-- Name: COLUMN "VW_APROVADO_ANTES_DA_DECISAO"."VL_NOTA_ORIGINAL"; Type: COMMENT; Schema: painel; Owner: -
+--
+
+COMMENT ON COLUMN painel."VW_APROVADO_ANTES_DA_DECISAO"."VL_NOTA_ORIGINAL" IS 'Nota original';
+
+--
+-- Name: COLUMN "VW_APROVADO_ANTES_DA_DECISAO"."NU_CLASSIFICACAO_ORIGINAL"; Type: COMMENT; Schema: painel; Owner: -
+--
+
+COMMENT ON COLUMN painel."VW_APROVADO_ANTES_DA_DECISAO"."NU_CLASSIFICACAO_ORIGINAL" IS 'Classificação original';
+
+--
+-- Name: TB_CONTRATACAO_APROVADO; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."TB_CONTRATACAO_APROVADO" (
+    "CO_CANDIDATO_APROVADO" uuid NOT NULL,
+    "CO_MONITORAMENTO" uuid NOT NULL,
+    "DS_VINCULO" text NOT NULL,
+    "TP_SITUACAO" character varying(12) NOT NULL,
+    "CO_CANDIDATO_CONTRATACAO" uuid,
+    "TP_MOTIVO" character varying(20) NOT NULL,
+    "DS_MOTIVO" text NOT NULL,
+    "DS_BASE" text NOT NULL,
+    "NU_VERSAO_REGRA" smallint NOT NULL,
+    "CO_EXECUCAO" text NOT NULL,
+    "DT_DECISAO" timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT "CK_CONTRATAPROV_COEXECUCAO" CHECK (("CO_EXECUCAO" ~ '^contr-[0-9]{8}T[0-9]{6}-[0-9a-f]{8}$'::text)),
+    CONSTRAINT "CK_CONTRATAPROV_DSMOTIVO" CHECK (((length(btrim("DS_MOTIVO")) >= 1) AND (length(btrim("DS_MOTIVO")) <= 500))),
+    CONSTRAINT "CK_CONTRATAPROV_DSVINCULO" CHECK (("DS_VINCULO" ~ '^[0-9a-f]{64}$'::text)),
+    CONSTRAINT "CK_CONTRATAPROV_ESCOLHA" CHECK (
+CASE "TP_SITUACAO"
+    WHEN 'AMBIGUO'::text THEN (("CO_CANDIDATO_CONTRATACAO" IS NULL) AND (("TP_MOTIVO")::text = ANY ((ARRAY['NENHUMA_ALCANCADA'::character varying, 'MAIS_DE_UMA_AMPLA'::character varying, 'NENHUMA_AMPLA'::character varying])::text[])))
+    WHEN 'CONTRATACAO'::text THEN (("CO_CANDIDATO_CONTRATACAO" = "CO_CANDIDATO_APROVADO") AND (("TP_MOTIVO")::text = ANY ((ARRAY['UNICA_ALCANCADA'::character varying, 'AMPLA_ALCANCADA'::character varying, 'HERDADA'::character varying, 'ADMISSAO_NO_RH'::character varying])::text[])))
+    ELSE (("CO_CANDIDATO_CONTRATACAO" IS NOT NULL) AND ("CO_CANDIDATO_CONTRATACAO" <> "CO_CANDIDATO_APROVADO") AND (("TP_MOTIVO")::text = ANY ((ARRAY['UNICA_ALCANCADA'::character varying, 'AMPLA_ALCANCADA'::character varying, 'HERDADA'::character varying, 'ADMISSAO_NO_RH'::character varying])::text[])))
+END),
+    CONSTRAINT "CK_CONTRATAPROV_NUVERSAO" CHECK (("NU_VERSAO_REGRA" > 0)),
+    CONSTRAINT "CK_CONTRATAPROV_TPMOTIVO" CHECK ((("TP_MOTIVO")::text = ANY ((ARRAY['UNICA_ALCANCADA'::character varying, 'AMPLA_ALCANCADA'::character varying, 'HERDADA'::character varying, 'ADMISSAO_NO_RH'::character varying, 'NENHUMA_ALCANCADA'::character varying, 'MAIS_DE_UMA_AMPLA'::character varying, 'NENHUMA_AMPLA'::character varying])::text[]))),
+    CONSTRAINT "CK_CONTRATAPROV_TPSITUACAO" CHECK ((("TP_SITUACAO")::text = ANY ((ARRAY['CONTRATACAO'::character varying, 'OUTRA_LISTA'::character varying, 'AMBIGUO'::character varying])::text[])))
+);
+
+--
+-- Name: TABLE "TB_CONTRATACAO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public."TB_CONTRATACAO_APROVADO" IS 'Instantâneo do job Python "Contratado em outra lista" (scripts/aprovados/contratacao.py): para a mesma matrícula Contratado em duas ou mais linhas do mesmo edital, qual é a contratação (CONTRATACAO), quais ficam em outra lista (OUTRA_LISTA: não contam nos contratados nem ocupam vaga) ou se a regra não decide (AMBIGUO). Não muda o status gravado. Decisão congelada: só sai quando a base (DS_BASE) muda. Só pelas RPCs. 20261024120000.';
+
+--
+-- Name: COLUMN "TB_CONTRATACAO_APROVADO"."CO_CANDIDATO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_CONTRATACAO_APROVADO"."CO_CANDIDATO_APROVADO" IS 'A linha da lista de aprovados (Contratado).';
+
+--
+-- Name: COLUMN "TB_CONTRATACAO_APROVADO"."CO_MONITORAMENTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_CONTRATACAO_APROVADO"."CO_MONITORAMENTO" IS 'O edital (TB_MONITORAMENTO_INDIGENA) da lista vigente da linha.';
+
+--
+-- Name: COLUMN "TB_CONTRATACAO_APROVADO"."DS_VINCULO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_CONTRATACAO_APROVADO"."DS_VINCULO" IS 'Hash da matrícula (FC_VINCULO_DA_MATRICULA): o que junta as linhas da mesma contratação.';
+
+--
+-- Name: COLUMN "TB_CONTRATACAO_APROVADO"."TP_SITUACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_CONTRATACAO_APROVADO"."TP_SITUACAO" IS 'CONTRATACAO, OUTRA_LISTA ou AMBIGUO.';
+
+--
+-- Name: COLUMN "TB_CONTRATACAO_APROVADO"."CO_CANDIDATO_CONTRATACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_CONTRATACAO_APROVADO"."CO_CANDIDATO_CONTRATACAO" IS 'A linha que é a contratação (nula no ambíguo).';
+
+--
+-- Name: COLUMN "TB_CONTRATACAO_APROVADO"."TP_MOTIVO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_CONTRATACAO_APROVADO"."TP_MOTIVO" IS 'Por que: UNICA_ALCANCADA, AMPLA_ALCANCADA, HERDADA (da lista anterior), NENHUMA_ALCANCADA, MAIS_DE_UMA_AMPLA ou NENHUMA_AMPLA.';
+
+--
+-- Name: COLUMN "TB_CONTRATACAO_APROVADO"."DS_MOTIVO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_CONTRATACAO_APROVADO"."DS_MOTIVO" IS 'O motivo em texto, como a tela mostra (sem nome nem matrícula).';
+
+--
+-- Name: COLUMN "TB_CONTRATACAO_APROVADO"."DS_BASE"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_CONTRATACAO_APROVADO"."DS_BASE" IS 'Os ids das linhas Contratado da matrícula no edital, em ordem, quando a decisão foi tomada: mudou, a decisão é refeita.';
+
+--
+-- Name: COLUMN "TB_CONTRATACAO_APROVADO"."NU_VERSAO_REGRA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_CONTRATACAO_APROVADO"."NU_VERSAO_REGRA" IS 'Versão da regra (python/monitora/aprovados/contratacao.py, VERSAO).';
+
+--
+-- Name: COLUMN "TB_CONTRATACAO_APROVADO"."CO_EXECUCAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_CONTRATACAO_APROVADO"."CO_EXECUCAO" IS 'Execução do job que gravou (contr-AAAAMMDDTHHMMSS-xxxxxxxx).';
+
+--
+-- Name: COLUMN "TB_CONTRATACAO_APROVADO"."DT_DECISAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_CONTRATACAO_APROVADO"."DT_DECISAO" IS 'Quando a decisão foi gravada.';
+
+--
+-- Name: CONSTRAINT "CK_CONTRATAPROV_COEXECUCAO" ON "TB_CONTRATACAO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_CONTRATAPROV_COEXECUCAO" ON public."TB_CONTRATACAO_APROVADO" IS 'Identificador da execução do job.';
+
+--
+-- Name: CONSTRAINT "CK_CONTRATAPROV_DSMOTIVO" ON "TB_CONTRATACAO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_CONTRATAPROV_DSMOTIVO" ON public."TB_CONTRATACAO_APROVADO" IS 'Motivo de 1 a 500 caracteres.';
+
+--
+-- Name: CONSTRAINT "CK_CONTRATAPROV_DSVINCULO" ON "TB_CONTRATACAO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_CONTRATAPROV_DSVINCULO" ON public."TB_CONTRATACAO_APROVADO" IS 'sha256 em hexadecimal.';
+
+--
+-- Name: CONSTRAINT "CK_CONTRATAPROV_ESCOLHA" ON "TB_CONTRATACAO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_CONTRATAPROV_ESCOLHA" ON public."TB_CONTRATACAO_APROVADO" IS 'Ambíguo sem escolha; contratação aponta para si; em outra lista aponta para outra linha; o motivo combina (ADMISSAO_NO_RH só nas decisões: regra v2, 20261116170000).';
+
+--
+-- Name: CONSTRAINT "CK_CONTRATAPROV_NUVERSAO" ON "TB_CONTRATACAO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_CONTRATAPROV_NUVERSAO" ON public."TB_CONTRATACAO_APROVADO" IS 'Versão positiva.';
+
+--
+-- Name: CONSTRAINT "CK_CONTRATAPROV_TPMOTIVO" ON "TB_CONTRATACAO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_CONTRATAPROV_TPMOTIVO" ON public."TB_CONTRATACAO_APROVADO" IS 'Motivos válidos (ADMISSAO_NO_RH desde a regra v2, 20261116170000).';
+
+--
+-- Name: CONSTRAINT "CK_CONTRATAPROV_TPSITUACAO" ON "TB_CONTRATACAO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_CONTRATAPROV_TPSITUACAO" ON public."TB_CONTRATACAO_APROVADO" IS 'Situações válidas.';
+
+--
+-- Name: VW_APROVADO_CONTRATACAO; Type: VIEW; Schema: painel; Owner: -
+--
+
+CREATE VIEW painel."VW_APROVADO_CONTRATACAO" AS
+ SELECT "CO_CANDIDATO_APROVADO",
+    ("TP_SITUACAO")::text AS "TP_SITUACAO",
+    "DT_DECISAO"
+   FROM public."TB_CONTRATACAO_APROVADO" c;
+
+--
+-- Name: VIEW "VW_APROVADO_CONTRATACAO"; Type: COMMENT; Schema: painel; Owner: -
+--
+
+COMMENT ON VIEW painel."VW_APROVADO_CONTRATACAO" IS 'Contratação calculada (job dos aprovados)';
+
+--
+-- Name: COLUMN "VW_APROVADO_CONTRATACAO"."TP_SITUACAO"; Type: COMMENT; Schema: painel; Owner: -
+--
+
+COMMENT ON COLUMN painel."VW_APROVADO_CONTRATACAO"."TP_SITUACAO" IS 'Situação calculada (CONTRATACAO, AMBIGUO…)';
+
+--
+-- Name: COLUMN "VW_APROVADO_CONTRATACAO"."DT_DECISAO"; Type: COMMENT; Schema: painel; Owner: -
+--
+
+COMMENT ON COLUMN painel."VW_APROVADO_CONTRATACAO"."DT_DECISAO" IS 'Data da decisão do job';
+
+--
+-- Name: TB_MONITORAMENTO_INDIGENA; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."TB_MONITORAMENTO_INDIGENA" (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    processo text,
+    edital text NOT NULL,
+    id_unidade text,
+    sigla_unidade text,
+    tipo_unidade text,
+    unidade text NOT NULL,
+    uf character(2),
+    ciclo text,
+    cargos text,
+    vagas_total integer DEFAULT 0 NOT NULL,
+    inscritos integer,
+    aptos_analise integer DEFAULT 0,
+    cancelados integer DEFAULT 0,
+    eliminados_nota integer DEFAULT 0,
+    reprovados_analise integer DEFAULT 0,
+    total_eliminados integer DEFAULT 0,
+    aprovados_analise integer DEFAULT 0 NOT NULL,
+    aprovados_prova integer DEFAULT 0 NOT NULL,
+    entrevistados integer DEFAULT 0 NOT NULL,
+    contratados integer DEFAULT 0 NOT NULL,
+    vagas_ociosas integer GENERATED ALWAYS AS (GREATEST((vagas_total - contratados), 0)) STORED,
+    data_inicio date,
+    data_fim date,
+    status text,
+    etapa text,
+    risco text DEFAULT 'Baixo'::text,
+    responsavel text,
+    link_edital text,
+    observacoes text,
+    observacoes_internas text,
+    ativo boolean DEFAULT true NOT NULL,
+    created_by uuid,
+    updated_by uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    quantidade_cadastro_reserva text,
+    dias_ate_encerramento integer,
+    duracao_total_processo text,
+    origem_carga text,
+    raw_json jsonb DEFAULT '{}'::jsonb NOT NULL,
+    cronograma_automatico boolean DEFAULT false NOT NULL,
+    cronograma_pdf_path text,
+    cronograma_pdf_nome text,
+    cronograma_origem text,
+    cronograma_revisado_at timestamp with time zone,
+    cronograma_revisado_por uuid,
+    status_override text,
+    etapa_override text,
+    status_override_motivo text,
+    status_override_data date,
+    status_override_previsao_retomada date,
+    cronograma_ultima_errata text,
+    "CO_AREA" text NOT NULL,
+    "NU_ANOS_VALIDADE" smallint DEFAULT 0 NOT NULL,
+    "NU_MESES_VALIDADE" smallint DEFAULT 0 NOT NULL,
+    "ST_PRORROGADO" boolean DEFAULT false NOT NULL,
+    "ST_TREINAMENTO" character varying(1) DEFAULT 'N'::character varying NOT NULL,
+    "TP_FONTE_FUNIL" character varying(20),
+    "DT_FONTE_FUNIL" timestamp with time zone,
+    CONSTRAINT "CK_MONITINDIG_STTREINAMENTO" CHECK ((("ST_TREINAMENTO")::text = ANY (ARRAY[('S'::character varying)::text, ('N'::character varying)::text]))),
+    CONSTRAINT "CK_MONITORAMENTO_INDIGENA_VALIDADE" CHECK ((("NU_ANOS_VALIDADE" >= 0) AND ("NU_ANOS_VALIDADE" <= 10) AND (("NU_MESES_VALIDADE" >= 0) AND ("NU_MESES_VALIDADE" <= 11)))),
+    CONSTRAINT "CK_MONIT_INDIG_APTOS_INSCRITOS" CHECK (((ativo IS NOT TRUE) OR (aptos_analise IS NULL) OR (inscritos IS NULL) OR (aptos_analise <= inscritos))),
+    CONSTRAINT "CK_MONIT_INDIG_DATA_EDITAL" CHECK ((((data_inicio IS NULL) OR ((data_inicio >= '2015-01-01'::date) AND (data_inicio <= '2100-12-31'::date))) AND ((data_fim IS NULL) OR ((data_fim >= '2015-01-01'::date) AND (data_fim <= '2100-12-31'::date))) AND ((data_inicio IS NULL) OR (data_fim IS NULL) OR (data_inicio <= data_fim)))),
+    CONSTRAINT "CK_MONIT_INDIG_FONTE_FUNIL" CHECK ((("TP_FONTE_FUNIL" IS NULL) OR (("TP_FONTE_FUNIL")::text = ANY ((ARRAY['AVALIACAO_DOCUMENTAL'::character varying, 'SELECAO'::character varying, 'ANALISES'::character varying])::text[])))),
+    CONSTRAINT monitoramento_indigena_aprovados_analise_check CHECK ((aprovados_analise >= 0)),
+    CONSTRAINT monitoramento_indigena_aprovados_prova_check CHECK ((aprovados_prova >= 0)),
+    CONSTRAINT monitoramento_indigena_aptos_analise_check CHECK ((aptos_analise >= 0)),
+    CONSTRAINT monitoramento_indigena_cancelados_check CHECK ((cancelados >= 0)),
+    CONSTRAINT monitoramento_indigena_contratados_check CHECK ((contratados >= 0)),
+    CONSTRAINT monitoramento_indigena_eliminados_nota_check CHECK ((eliminados_nota >= 0)),
+    CONSTRAINT monitoramento_indigena_entrevistados_check CHECK ((entrevistados >= 0)),
+    CONSTRAINT monitoramento_indigena_inscritos_check CHECK ((inscritos >= 0)),
+    CONSTRAINT monitoramento_indigena_reprovados_analise_check CHECK ((reprovados_analise >= 0)),
+    CONSTRAINT monitoramento_indigena_total_eliminados_check CHECK ((total_eliminados >= 0)),
+    CONSTRAINT monitoramento_indigena_vagas_total_check CHECK ((vagas_total >= 0))
+);
+
+ALTER TABLE ONLY public."TB_MONITORAMENTO_INDIGENA" REPLICA IDENTITY FULL;
+
+--
+-- Name: COLUMN "TB_MONITORAMENTO_INDIGENA".responsavel; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_MONITORAMENTO_INDIGENA".responsavel IS 'Área responsável pelo edital: USI ou CORES. Define o catálogo de unidades oferecido no formulário.';
+
+--
+-- Name: COLUMN "TB_MONITORAMENTO_INDIGENA"."CO_AREA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_MONITORAMENTO_INDIGENA"."CO_AREA" IS 'Área do edital, calculada por private."FC_AREA_EDITAL" (gatilho "TBA_MONITORAMENTO_INDIGENA").';
+
+--
+-- Name: COLUMN "TB_MONITORAMENTO_INDIGENA"."NU_ANOS_VALIDADE"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_MONITORAMENTO_INDIGENA"."NU_ANOS_VALIDADE" IS 'Prazo de validade do processo seletivo: anos (contados da data de encerramento, data_fim).';
+
+--
+-- Name: COLUMN "TB_MONITORAMENTO_INDIGENA"."NU_MESES_VALIDADE"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_MONITORAMENTO_INDIGENA"."NU_MESES_VALIDADE" IS 'Prazo de validade do processo seletivo: meses (0 a 11), somados aos anos.';
+
+--
+-- Name: COLUMN "TB_MONITORAMENTO_INDIGENA"."ST_PRORROGADO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_MONITORAMENTO_INDIGENA"."ST_PRORROGADO" IS 'Processo seletivo prorrogado: a validade conta em dobro (prorrogação por período igual ao prazo).';
+
+--
+-- Name: COLUMN "TB_MONITORAMENTO_INDIGENA"."ST_TREINAMENTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_MONITORAMENTO_INDIGENA"."ST_TREINAMENTO" IS 'S = edital de treinamento (dados fictícios, sem valor oficial): fora da Visão geral, indicadores, painéis, caches, conferências e robôs; aparece nas telas operacionais com o selo "Treinamento". Só private."FC_PREPARAR_EDITAL_TREINAMENTO" grava S. Padrão N. Histórico: em 26/10/2026 a correção supabase/correcoes/20261026-edital-teste-da-sede-como-treinamento.sql marcou S o edital "Teste" da SEDE (317709c7-e5a5-4333-b2f2-ef0a8cfb8c12); em 04/11/2026 a correção supabase/correcoes/20261104-apagar-edital-teste-sede.sql, assinada pela conta do setor Gestão da Informação de Pessoal (a01afddb-f64b-47d9-80e8-476a1ed14e43), apagou esse edital e tudo ligado a ele.';
+
+--
+-- Name: COLUMN "TB_MONITORAMENTO_INDIGENA"."TP_FONTE_FUNIL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_MONITORAMENTO_INDIGENA"."TP_FONTE_FUNIL" IS 'De onde vem o funil do edital (inscritos, aptos, cancelados, eliminados, reprovados): AVALIACAO_DOCUMENTAL (pré-classificação ou retrato das inscrições), SELECAO (vagas da Seleção) ou ANALISES (análises curriculares). Nulo: sem fonte, valores da carga original. Gravada por FC_ATUALIZAR_KPIS_PELA_SELECAO (20261022200000).';
+
+--
+-- Name: COLUMN "TB_MONITORAMENTO_INDIGENA"."DT_FONTE_FUNIL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_MONITORAMENTO_INDIGENA"."DT_FONTE_FUNIL" IS 'Data dos dados da fonte do funil: última gravação da pré-classificação ou do retrato, última mudança nas vagas da Seleção do edital (max DT_ATUALIZACAO; antes de 20261103150000, a última carga concluída) ou última mudança nas análises do edital.';
+
+--
+-- Name: CONSTRAINT "CK_MONITINDIG_STTREINAMENTO" ON "TB_MONITORAMENTO_INDIGENA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_MONITINDIG_STTREINAMENTO" ON public."TB_MONITORAMENTO_INDIGENA" IS 'Marca do edital de treinamento: S ou N.';
+
+--
+-- Name: CONSTRAINT "CK_MONIT_INDIG_APTOS_INSCRITOS" ON "TB_MONITORAMENTO_INDIGENA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_MONIT_INDIG_APTOS_INSCRITOS" ON public."TB_MONITORAMENTO_INDIGENA" IS 'Edital ativo com aptos e inscritos: aptos <= inscritos (o funil vem de uma fonte só, FC_ATUALIZAR_KPIS_PELA_SELECAO, 20261022200000).';
+
+--
+-- Name: CONSTRAINT "CK_MONIT_INDIG_DATA_EDITAL" ON "TB_MONITORAMENTO_INDIGENA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_MONIT_INDIG_DATA_EDITAL" ON public."TB_MONITORAMENTO_INDIGENA" IS 'Datas do edital com ano entre 2015 e 2100 e início até o fim (anos digitados errados, como 0202 e 20206, eram aceitos).';
+
+--
+-- Name: CONSTRAINT "CK_MONIT_INDIG_FONTE_FUNIL" ON "TB_MONITORAMENTO_INDIGENA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_MONIT_INDIG_FONTE_FUNIL" ON public."TB_MONITORAMENTO_INDIGENA" IS 'Fontes válidas do funil do edital.';
+
+--
+-- Name: VW_EDITAL_CADASTRO; Type: VIEW; Schema: painel; Owner: -
+--
+
+CREATE VIEW painel."VW_EDITAL_CADASTRO" AS
+ SELECT id AS "CO_MONITORAMENTO",
+    vagas_total AS "QT_VAGA_TOTAL",
+    data_inicio AS "DT_INICIO",
+    data_fim AS "DT_FIM"
+   FROM public."TB_MONITORAMENTO_INDIGENA" m;
+
+--
+-- Name: VIEW "VW_EDITAL_CADASTRO"; Type: COMMENT; Schema: painel; Owner: -
+--
+
+COMMENT ON VIEW painel."VW_EDITAL_CADASTRO" IS 'Cadastro do edital (sem o cronograma)';
+
+--
+-- Name: COLUMN "VW_EDITAL_CADASTRO"."QT_VAGA_TOTAL"; Type: COMMENT; Schema: painel; Owner: -
+--
+
+COMMENT ON COLUMN painel."VW_EDITAL_CADASTRO"."QT_VAGA_TOTAL" IS 'Vagas imediatas do formulário';
+
+--
+-- Name: COLUMN "VW_EDITAL_CADASTRO"."DT_INICIO"; Type: COMMENT; Schema: painel; Owner: -
+--
+
+COMMENT ON COLUMN painel."VW_EDITAL_CADASTRO"."DT_INICIO" IS 'Data de início do formulário';
+
+--
+-- Name: COLUMN "VW_EDITAL_CADASTRO"."DT_FIM"; Type: COMMENT; Schema: painel; Owner: -
+--
+
+COMMENT ON COLUMN painel."VW_EDITAL_CADASTRO"."DT_FIM" IS 'Data de fim do formulário';
+
+--
+-- Name: VW_EDITAL_QUADRO_DE_VAGAS; Type: VIEW; Schema: painel; Owner: -
+--
+
+CREATE VIEW painel."VW_EDITAL_QUADRO_DE_VAGAS" AS
+ SELECT "CO_MONITORAMENTO",
+    (sum("QT_VAGA_IMEDIATA"))::integer AS "QT_VAGA_IMEDIATA"
+   FROM public."TB_QUADRO_VAGA_EDITAL" q
+  WHERE (("ST_REGISTRO_ATIVO")::text = 'S'::text)
+  GROUP BY "CO_MONITORAMENTO";
+
+--
+-- Name: VIEW "VW_EDITAL_QUADRO_DE_VAGAS"; Type: COMMENT; Schema: painel; Owner: -
+--
+
+COMMENT ON VIEW painel."VW_EDITAL_QUADRO_DE_VAGAS" IS 'Quadro de vagas do edital';
+
+--
+-- Name: COLUMN "VW_EDITAL_QUADRO_DE_VAGAS"."QT_VAGA_IMEDIATA"; Type: COMMENT; Schema: painel; Owner: -
+--
+
+COMMENT ON COLUMN painel."VW_EDITAL_QUADRO_DE_VAGAS"."QT_VAGA_IMEDIATA" IS 'Vagas imediatas (soma do quadro)';
+
+--
+-- Name: TB_VAGA_IMEDIATA; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."TB_VAGA_IMEDIATA" (
+    "CO_EDITAL" text NOT NULL,
+    "CO_VAGA" text NOT NULL,
+    "NO_CARGO" text,
+    "QT_VAGA_IMEDIATA" integer DEFAULT 0 NOT NULL,
+    "ST_QUADRO_MANUAL" character varying(1) DEFAULT 'N'::character varying NOT NULL,
+    "DS_QUADRO_MANUAL" jsonb DEFAULT '{}'::jsonb NOT NULL,
+    "CO_USUARIO_ATUALIZACAO" uuid NOT NULL,
+    "DT_CRIACAO" timestamp with time zone DEFAULT now() NOT NULL,
+    "DT_ATUALIZACAO" timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT "CK_VAGA_IMEDIATA_COVAGA" CHECK ((NULLIF(btrim("CO_VAGA"), ''::text) IS NOT NULL)),
+    CONSTRAINT "CK_VAGA_IMEDIATA_QT" CHECK (("QT_VAGA_IMEDIATA" >= 0)),
+    CONSTRAINT "CK_VAGA_IMEDIATA_QUADRO" CHECK ((jsonb_typeof("DS_QUADRO_MANUAL") = 'object'::text)),
+    CONSTRAINT "CK_VAGA_IMEDIATA_STMANUAL" CHECK ((("ST_QUADRO_MANUAL")::text = ANY (ARRAY[('S'::character varying)::text, ('N'::character varying)::text])))
+);
+
+--
+-- Name: TABLE "TB_VAGA_IMEDIATA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public."TB_VAGA_IMEDIATA" IS 'Vagas imediatas de um codigo de vaga. Ausencia de linha significa que a vaga segue o total padrao do edital.';
+
+--
+-- Name: COLUMN "TB_VAGA_IMEDIATA"."CO_EDITAL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_VAGA_IMEDIATA"."CO_EDITAL" IS 'Identificador do edital em TB_MONITORAMENTO_INDIGENA, como texto.';
+
+--
+-- Name: COLUMN "TB_VAGA_IMEDIATA"."CO_VAGA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_VAGA_IMEDIATA"."CO_VAGA" IS 'Codigo da vaga como veio no XLSX da lista de aprovados (coluna codigo_vaga).';
+
+--
+-- Name: COLUMN "TB_VAGA_IMEDIATA"."NO_CARGO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_VAGA_IMEDIATA"."NO_CARGO" IS 'Cargo da vaga, como veio na lista de aprovados.';
+
+--
+-- Name: COLUMN "TB_VAGA_IMEDIATA"."QT_VAGA_IMEDIATA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_VAGA_IMEDIATA"."QT_VAGA_IMEDIATA" IS 'Total de vagas de provimento imediato desta vaga. Zero significa somente cadastro de reserva.';
+
+--
+-- Name: COLUMN "TB_VAGA_IMEDIATA"."ST_QUADRO_MANUAL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_VAGA_IMEDIATA"."ST_QUADRO_MANUAL" IS 'S: DS_QUADRO_MANUAL manda. N: o quadro e derivado do total e dos percentuais do modelo.';
+
+--
+-- Name: COLUMN "TB_VAGA_IMEDIATA"."DS_QUADRO_MANUAL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_VAGA_IMEDIATA"."DS_QUADRO_MANUAL" IS 'Objeto JSON com uma chave por CO_CATEGORIA do modelo e a quantidade de vagas. So vale com ST_QUADRO_MANUAL = S.';
+
+--
+-- Name: COLUMN "TB_VAGA_IMEDIATA"."CO_USUARIO_ATUALIZACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_VAGA_IMEDIATA"."CO_USUARIO_ATUALIZACAO" IS 'Usuário (auth.uid()) da última alteração.';
+
+--
+-- Name: COLUMN "TB_VAGA_IMEDIATA"."DT_CRIACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_VAGA_IMEDIATA"."DT_CRIACAO" IS 'Quando a linha foi criada.';
+
+--
+-- Name: COLUMN "TB_VAGA_IMEDIATA"."DT_ATUALIZACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_VAGA_IMEDIATA"."DT_ATUALIZACAO" IS 'Quando a linha foi alterada pela última vez.';
+
+--
+-- Name: VW_EDITAL_VAGAS_DA_CONVOCACAO; Type: VIEW; Schema: painel; Owner: -
+--
+
+CREATE VIEW painel."VW_EDITAL_VAGAS_DA_CONVOCACAO" AS
+ SELECT ("CO_EDITAL")::uuid AS "CO_MONITORAMENTO",
+    (sum("QT_VAGA_IMEDIATA"))::integer AS "QT_VAGA_IMEDIATA"
+   FROM public."TB_VAGA_IMEDIATA" v
+  WHERE ("CO_EDITAL" ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'::text)
+  GROUP BY ("CO_EDITAL")::uuid;
+
+--
+-- Name: VIEW "VW_EDITAL_VAGAS_DA_CONVOCACAO"; Type: COMMENT; Schema: painel; Owner: -
+--
+
+COMMENT ON VIEW painel."VW_EDITAL_VAGAS_DA_CONVOCACAO" IS 'Vagas da convocação (Lista de aprovados)';
+
+--
+-- Name: COLUMN "VW_EDITAL_VAGAS_DA_CONVOCACAO"."QT_VAGA_IMEDIATA"; Type: COMMENT; Schema: painel; Owner: -
+--
+
+COMMENT ON COLUMN painel."VW_EDITAL_VAGAS_DA_CONVOCACAO"."QT_VAGA_IMEDIATA" IS 'Vagas imediatas (soma das vagas configuradas)';
+
+--
+-- Name: VW_VAGA_CONVOCACAO; Type: VIEW; Schema: painel; Owner: -
+--
+
+CREATE VIEW painel."VW_VAGA_CONVOCACAO" AS
+ SELECT ("CO_EDITAL")::uuid AS "CO_MONITORAMENTO",
+    "CO_VAGA",
+    "QT_VAGA_IMEDIATA"
+   FROM public."TB_VAGA_IMEDIATA" v
+  WHERE ("CO_EDITAL" ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'::text);
+
+--
+-- Name: VIEW "VW_VAGA_CONVOCACAO"; Type: COMMENT; Schema: painel; Owner: -
+--
+
+COMMENT ON VIEW painel."VW_VAGA_CONVOCACAO" IS 'Vagas da convocação (Lista de aprovados)';
+
+--
+-- Name: COLUMN "VW_VAGA_CONVOCACAO"."QT_VAGA_IMEDIATA"; Type: COMMENT; Schema: painel; Owner: -
+--
+
+COMMENT ON COLUMN painel."VW_VAGA_CONVOCACAO"."QT_VAGA_IMEDIATA" IS 'Vagas imediatas configuradas';
+
+--
+-- Name: TH_INSCRICAO_VAGA_EDITAL; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."TH_INSCRICAO_VAGA_EDITAL" (
+    "CO_MONITORAMENTO" uuid NOT NULL,
+    "CO_VAGA" character varying(20) NOT NULL,
+    "DT_RETRATO" date NOT NULL,
+    "QT_INSCRITO" integer NOT NULL,
+    "QT_FINALIZADO" integer,
+    "QT_APTO" integer,
+    "QT_ELIMINADO" integer,
+    "ST_PREVIA" character varying(1) DEFAULT 'N'::character varying NOT NULL,
+    "CO_EXECUCAO" character varying(80) NOT NULL,
+    "DT_ATUALIZACAO" timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT "CK_INSCRVAGA_COEXECUCAO" CHECK ((("CO_EXECUCAO")::text ~ '^[A-Za-z0-9_-]{8,80}$'::text)),
+    CONSTRAINT "CK_INSCRVAGA_COVAGA" CHECK ((("CO_VAGA")::text ~ '^[0-9]{1,20}$'::text)),
+    CONSTRAINT "CK_INSCRVAGA_QT" CHECK ((("QT_INSCRITO" >= 0) AND ("QT_INSCRITO" <= 100000) AND ((COALESCE("QT_FINALIZADO", 0) >= 0) AND (COALESCE("QT_FINALIZADO", 0) <= "QT_INSCRITO")) AND ((COALESCE("QT_APTO", 0) >= 0) AND (COALESCE("QT_APTO", 0) <= "QT_INSCRITO")) AND ((COALESCE("QT_ELIMINADO", 0) >= 0) AND (COALESCE("QT_ELIMINADO", 0) <= "QT_INSCRITO")))),
+    CONSTRAINT "CK_INSCRVAGA_STPREVIA" CHECK ((("ST_PREVIA")::text = ANY (ARRAY[('S'::character varying)::text, ('N'::character varying)::text])))
+);
+
+--
+-- Name: TABLE "TH_INSCRICAO_VAGA_EDITAL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public."TH_INSCRICAO_VAGA_EDITAL" IS 'Retrato diário das inscrições de cada vaga da Empregare de um edital (20261009140000): só contagens, nunca dado pessoal. Gravado pelo job da pré-classificação (gravar_retrato_inscricoes) durante as inscrições do cronograma; uma linha por edital, vaga e dia (o último retrato do dia vale). Lido por obter_acompanhamento_inscricoes (cartão Inscrições da aba Pré-classificação).';
+
+--
+-- Name: COLUMN "TH_INSCRICAO_VAGA_EDITAL"."CO_MONITORAMENTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_INSCRICAO_VAGA_EDITAL"."CO_MONITORAMENTO" IS 'Edital (TB_MONITORAMENTO_INDIGENA.id).';
+
+--
+-- Name: COLUMN "TH_INSCRICAO_VAGA_EDITAL"."CO_VAGA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_INSCRICAO_VAGA_EDITAL"."CO_VAGA" IS 'Código da vaga na Empregare (TB_EMPREGARE_VAGA.CO_VAGA).';
+
+--
+-- Name: COLUMN "TH_INSCRICAO_VAGA_EDITAL"."DT_RETRATO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_INSCRICAO_VAGA_EDITAL"."DT_RETRATO" IS 'Dia do retrato (data de Brasília).';
+
+--
+-- Name: COLUMN "TH_INSCRICAO_VAGA_EDITAL"."QT_INSCRITO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_INSCRICAO_VAGA_EDITAL"."QT_INSCRITO" IS 'Candidatos ativos na vaga da Empregare (quem saiu do arquivo não conta).';
+
+--
+-- Name: COLUMN "TH_INSCRICAO_VAGA_EDITAL"."QT_FINALIZADO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_INSCRICAO_VAGA_EDITAL"."QT_FINALIZADO" IS 'Ativos com o questionário finalizado (colunas "SITUAÇÃO - <questionário>" = FINALIZADO); nulo quando o arquivo não tem a coluna.';
+
+--
+-- Name: COLUMN "TH_INSCRICAO_VAGA_EDITAL"."QT_APTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_INSCRICAO_VAGA_EDITAL"."QT_APTO" IS 'Aptos para análise pela regra: no lote por nota mínima, não eliminados com a nota ≥ mínima; nas outras bases, no lote pela regra + acima do corte. Nulo sem regra.';
+
+--
+-- Name: COLUMN "TH_INSCRICAO_VAGA_EDITAL"."QT_ELIMINADO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_INSCRICAO_VAGA_EDITAL"."QT_ELIMINADO" IS 'Eliminados pela regra entre os ativos. Nulo sem regra.';
+
+--
+-- Name: COLUMN "TH_INSCRICAO_VAGA_EDITAL"."ST_PREVIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_INSCRICAO_VAGA_EDITAL"."ST_PREVIA" IS 'S = aptos e eliminados de uma prévia (regra ainda não conferida; nada da classificação foi gravado).';
+
+--
+-- Name: COLUMN "TH_INSCRICAO_VAGA_EDITAL"."CO_EXECUCAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_INSCRICAO_VAGA_EDITAL"."CO_EXECUCAO" IS 'Execução da pré-classificação que gravou (TL_PRE_CLASSIFICACAO.CO_EXECUCAO).';
+
+--
+-- Name: COLUMN "TH_INSCRICAO_VAGA_EDITAL"."DT_ATUALIZACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_INSCRICAO_VAGA_EDITAL"."DT_ATUALIZACAO" IS 'Quando o retrato do dia foi gravado pela última vez.';
+
+--
+-- Name: CONSTRAINT "CK_INSCRVAGA_COEXECUCAO" ON "TH_INSCRICAO_VAGA_EDITAL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_INSCRVAGA_COEXECUCAO" ON public."TH_INSCRICAO_VAGA_EDITAL" IS 'Identificador de execução da pré-classificação.';
+
+--
+-- Name: CONSTRAINT "CK_INSCRVAGA_COVAGA" ON "TH_INSCRICAO_VAGA_EDITAL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_INSCRVAGA_COVAGA" ON public."TH_INSCRICAO_VAGA_EDITAL" IS 'Código da vaga só com dígitos.';
+
+--
+-- Name: CONSTRAINT "CK_INSCRVAGA_QT" ON "TH_INSCRICAO_VAGA_EDITAL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_INSCRVAGA_QT" ON public."TH_INSCRICAO_VAGA_EDITAL" IS 'Contagens não negativas e nunca maiores que os inscritos.';
+
+--
+-- Name: CONSTRAINT "CK_INSCRVAGA_STPREVIA" ON "TH_INSCRICAO_VAGA_EDITAL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_INSCRVAGA_STPREVIA" ON public."TH_INSCRICAO_VAGA_EDITAL" IS 'S ou N.';
+
+--
+-- Name: VW_VAGA_INSCRICOES; Type: VIEW; Schema: painel; Owner: -
+--
+
+CREATE VIEW painel."VW_VAGA_INSCRICOES" AS
+ SELECT DISTINCT ON ("CO_MONITORAMENTO", "CO_VAGA") "CO_MONITORAMENTO",
+    "CO_VAGA",
+    "QT_INSCRITO",
+    "DT_RETRATO"
+   FROM public."TH_INSCRICAO_VAGA_EDITAL" i
+  WHERE (("ST_PREVIA")::text = 'N'::text)
+  ORDER BY "CO_MONITORAMENTO", "CO_VAGA", "DT_RETRATO" DESC, "DT_ATUALIZACAO" DESC;
+
+--
+-- Name: VIEW "VW_VAGA_INSCRICOES"; Type: COMMENT; Schema: painel; Owner: -
+--
+
+COMMENT ON VIEW painel."VW_VAGA_INSCRICOES" IS 'Retrato das inscrições (o mais recente)';
+
+--
+-- Name: COLUMN "VW_VAGA_INSCRICOES"."QT_INSCRITO"; Type: COMMENT; Schema: painel; Owner: -
+--
+
+COMMENT ON COLUMN painel."VW_VAGA_INSCRICOES"."QT_INSCRITO" IS 'Inscritos no retrato';
+
+--
+-- Name: TB_PRE_CLASSIF_VAGA; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."TB_PRE_CLASSIF_VAGA" (
+    "CO_MONITORAMENTO" uuid NOT NULL,
+    "CO_VAGA" character varying(20) NOT NULL,
+    "CO_EXECUCAO" text NOT NULL,
+    "NU_VERSAO_REGRA" integer NOT NULL,
+    "CO_QUADRO_VAGA" uuid,
+    "NO_CARGO" character varying(300),
+    "NO_LOTACAO" character varying(300),
+    "QT_VAGA_IMEDIATA" integer,
+    "ST_CADASTRO_RESERVA" character varying(1) DEFAULT 'N'::character varying NOT NULL,
+    "QT_INSCRITO" integer DEFAULT 0 NOT NULL,
+    "QT_ELIMINADO" integer DEFAULT 0 NOT NULL,
+    "QT_RANQUEADO" integer DEFAULT 0 NOT NULL,
+    "QT_LOTE" integer DEFAULT 0 NOT NULL,
+    "QT_TAMANHO_LOTE" integer,
+    "DS_TAMANHO_LOTE" character varying(200),
+    "DS_TAMANHO_MODALIDADE" jsonb,
+    "VL_ART_CORTE" numeric(8,4),
+    "QT_DIVERGENCIA" integer DEFAULT 0 NOT NULL,
+    "QT_SEM_ART" integer DEFAULT 0 NOT NULL,
+    "QT_ACIMA_CORTE" integer DEFAULT 0 NOT NULL,
+    "NU_ULTIMO_LOTE" smallint DEFAULT 0 NOT NULL,
+    "DS_AVISO" jsonb DEFAULT '[]'::jsonb NOT NULL,
+    "DT_CRIACAO" timestamp with time zone DEFAULT now() NOT NULL,
+    "DT_ATUALIZACAO" timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT "CK_PRECLASSVAGA_JSON" CHECK (((jsonb_typeof("DS_AVISO") = 'array'::text) AND (("DS_TAMANHO_MODALIDADE" IS NULL) OR (jsonb_typeof("DS_TAMANHO_MODALIDADE") = 'object'::text)))),
+    CONSTRAINT "CK_PRECLASSVAGA_QT" CHECK ((("QT_INSCRITO" >= 0) AND ("QT_ELIMINADO" >= 0) AND ("QT_RANQUEADO" >= 0) AND ("QT_LOTE" >= 0) AND ("QT_DIVERGENCIA" >= 0) AND ("QT_SEM_ART" >= 0) AND ("QT_ACIMA_CORTE" >= 0) AND (("NU_ULTIMO_LOTE" >= 0) AND ("NU_ULTIMO_LOTE" <= 999)) AND (("QT_VAGA_IMEDIATA" IS NULL) OR ("QT_VAGA_IMEDIATA" >= 0)) AND (("QT_TAMANHO_LOTE" IS NULL) OR (("QT_TAMANHO_LOTE" >= 0) AND ("QT_TAMANHO_LOTE" <= 100000))))),
+    CONSTRAINT "CK_PRECLASSVAGA_STCR" CHECK ((("ST_CADASTRO_RESERVA")::text = ANY (ARRAY[('S'::character varying)::text, ('N'::character varying)::text])))
+);
+
+--
+-- Name: TABLE "TB_PRE_CLASSIF_VAGA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public."TB_PRE_CLASSIF_VAGA" IS 'Resumo da pré-classificação de cada vaga na última execução do job: quadro de vagas, tamanho do lote e como foi contado, linha de corte, contagens e avisos (códigos).';
+
+--
+-- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."CO_MONITORAMENTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."CO_MONITORAMENTO" IS 'Edital.';
+
+--
+-- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."CO_VAGA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."CO_VAGA" IS 'Código da vaga da Empregare.';
+
+--
+-- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."CO_EXECUCAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."CO_EXECUCAO" IS 'Última execução que gravou a vaga.';
+
+--
+-- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."NU_VERSAO_REGRA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."NU_VERSAO_REGRA" IS 'Versão da regra da avaliação usada.';
+
+--
+-- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."CO_QUADRO_VAGA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."CO_QUADRO_VAGA" IS 'Linha do quadro de vagas ligada à vaga (FC_EMPREGARE_VAGAS_DO_QUADRO), lida pelo banco na gravação.';
+
+--
+-- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."NO_CARGO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."NO_CARGO" IS 'Cargo do quadro (cabeçalho das listas).';
+
+--
+-- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."NO_LOTACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."NO_LOTACAO" IS 'Lotação do quadro.';
+
+--
+-- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."QT_VAGA_IMEDIATA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."QT_VAGA_IMEDIATA" IS 'Vagas imediatas do quadro; nulo sem quadro (o lote então precisa de tamanho definido para a vaga).';
+
+--
+-- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."ST_CADASTRO_RESERVA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."ST_CADASTRO_RESERVA" IS 'S: a linha do quadro tem cadastro reserva.';
+
+--
+-- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."QT_INSCRITO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."QT_INSCRITO" IS 'Inscritos considerados (contados no banco).';
+
+--
+-- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."QT_ELIMINADO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."QT_ELIMINADO" IS 'Eliminados automáticos.';
+
+--
+-- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."QT_RANQUEADO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."QT_RANQUEADO" IS 'Na Provisória (não eliminados).';
+
+--
+-- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."QT_LOTE"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."QT_LOTE" IS 'No lote (NO_LOTE e ANALISADO).';
+
+--
+-- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."QT_TAMANHO_LOTE"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."QT_TAMANHO_LOTE" IS 'Tamanho do lote pela regra; nulo quando não dá para calcular (sem quadro).';
+
+--
+-- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."DS_TAMANHO_LOTE"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."DS_TAMANHO_LOTE" IS 'Como o tamanho foi contado ("3 × (11 + CR) = 36", "40 (definido para a vaga)").';
+
+--
+-- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."DS_TAMANHO_MODALIDADE"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."DS_TAMANHO_MODALIDADE" IS 'No lote por modalidade, o tamanho de cada lista ({"AC": 30, "PP": 6}).';
+
+--
+-- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."VL_ART_CORTE"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."VL_ART_CORTE" IS 'Linha de corte: a menor nota dentro do lote.';
+
+--
+-- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."QT_DIVERGENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."QT_DIVERGENCIA" IS 'Inscritos com ART divergente da nota declarada.';
+
+--
+-- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."QT_SEM_ART"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."QT_SEM_ART" IS 'Inscritos na Provisória sem ART no arquivo.';
+
+--
+-- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."QT_ACIMA_CORTE"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."QT_ACIMA_CORTE" IS 'Fora do lote com nota acima da linha de corte (entraram depois do recorte; quem está no lote só sai eliminado).';
+
+--
+-- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."NU_ULTIMO_LOTE"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."NU_ULTIMO_LOTE" IS 'Maior número de lote já usado na vaga (a próxima reposição é o seguinte).';
+
+--
+-- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."DS_AVISO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."DS_AVISO" IS 'Avisos da vaga (códigos: SEM_QUADRO, ART_AUSENTE, LINHA_PARADA, FORA_DO_LOTE_ACIMA_DO_CORTE, COLUNA_AUSENTE:<regra>…).';
+
+--
+-- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."DT_CRIACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."DT_CRIACAO" IS 'Primeira gravação.';
+
+--
+-- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."DT_ATUALIZACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."DT_ATUALIZACAO" IS 'Última gravação.';
+
+--
+-- Name: CONSTRAINT "CK_PRECLASSVAGA_JSON" ON "TB_PRE_CLASSIF_VAGA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_PRECLASSVAGA_JSON" ON public."TB_PRE_CLASSIF_VAGA" IS 'Avisos em lista; tamanhos por modalidade em objeto.';
+
+--
+-- Name: CONSTRAINT "CK_PRECLASSVAGA_QT" ON "TB_PRE_CLASSIF_VAGA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_PRECLASSVAGA_QT" ON public."TB_PRE_CLASSIF_VAGA" IS 'Contagens e tamanhos dentro dos limites.';
+
+--
+-- Name: CONSTRAINT "CK_PRECLASSVAGA_STCR" ON "TB_PRE_CLASSIF_VAGA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_PRECLASSVAGA_STCR" ON public."TB_PRE_CLASSIF_VAGA" IS 'Flag S/N.';
+
+--
+-- Name: VW_VAGA_TRIAGEM; Type: VIEW; Schema: painel; Owner: -
+--
+
+CREATE VIEW painel."VW_VAGA_TRIAGEM" AS
+ SELECT "CO_MONITORAMENTO",
+    "CO_VAGA",
+    "QT_VAGA_IMEDIATA",
+    "QT_INSCRITO"
+   FROM public."TB_PRE_CLASSIF_VAGA" p;
+
+--
+-- Name: VIEW "VW_VAGA_TRIAGEM"; Type: COMMENT; Schema: painel; Owner: -
+--
+
+COMMENT ON VIEW painel."VW_VAGA_TRIAGEM" IS 'Triagem';
+
+--
+-- Name: COLUMN "VW_VAGA_TRIAGEM"."QT_VAGA_IMEDIATA"; Type: COMMENT; Schema: painel; Owner: -
+--
+
+COMMENT ON COLUMN painel."VW_VAGA_TRIAGEM"."QT_VAGA_IMEDIATA" IS 'Vagas imediatas da Triagem';
+
+--
+-- Name: COLUMN "VW_VAGA_TRIAGEM"."QT_INSCRITO"; Type: COMMENT; Schema: painel; Owner: -
+--
+
+COMMENT ON COLUMN painel."VW_VAGA_TRIAGEM"."QT_INSCRITO" IS 'Inscritos da Triagem';
 
 --
 -- Name: TA_CANDIDATO_APROVADO_AREA; Type: TABLE; Schema: private; Owner: -
@@ -44262,6 +47160,96 @@ COMMENT ON CONSTRAINT "CK_ABA_STBETA" ON public."TB_ABA" IS 'Flag S/N.';
 COMMENT ON CONSTRAINT "CK_ABA_TPSITUACAO" ON public."TB_ABA" IS 'Situações válidas.';
 
 --
+-- Name: TB_ADMISSAO_CONCILIADA; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."TB_ADMISSAO_CONCILIADA" (
+    "CO_VINCULO" character varying(40) NOT NULL,
+    "CO_MONITORAMENTO" uuid NOT NULL,
+    "CO_CANDIDATO_APROVADO" uuid,
+    "DT_ADMISSAO" date NOT NULL,
+    "DT_DESLIGAMENTO" date,
+    "CO_CARGA" character varying(60) NOT NULL,
+    "DT_CARGA" timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT "CK_ADMISCONCIL_COCARGA" CHECK (((length(btrim(("CO_CARGA")::text)) >= 1) AND (length(btrim(("CO_CARGA")::text)) <= 60))),
+    CONSTRAINT "CK_ADMISCONCIL_COVINCULO" CHECK ((("CO_VINCULO")::text ~ '^[0-9a-f]{8,40}$'::text)),
+    CONSTRAINT "CK_ADMISCONCIL_DTADMISSAO" CHECK ((("DT_ADMISSAO" >= '2015-01-01'::date) AND ("DT_ADMISSAO" <= '2100-12-31'::date))),
+    CONSTRAINT "CK_ADMISCONCIL_DTDESLIGAMENTO" CHECK ((("DT_DESLIGAMENTO" IS NULL) OR ("DT_DESLIGAMENTO" >= "DT_ADMISSAO")))
+);
+
+--
+-- Name: TABLE "TB_ADMISSAO_CONCILIADA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public."TB_ADMISSAO_CONCILIADA" IS 'Admissões conciliadas com o RH (Impacto), uma por vínculo, carregadas da aba "Vínculos conciliados" das planilhas de conciliação (carregar_admissoes_conciliadas). Sem nome, CPF nem matrícula. A Visão geral mostra a 1ª e a última admissão de cada edital (20261113210000). Só a service_role grava; a leitura é pela RPC.';
+
+--
+-- Name: COLUMN "TB_ADMISSAO_CONCILIADA"."CO_VINCULO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_ADMISSAO_CONCILIADA"."CO_VINCULO" IS 'Token do vínculo na planilha de conciliação (hexadecimal; não identifica a pessoa).';
+
+--
+-- Name: COLUMN "TB_ADMISSAO_CONCILIADA"."CO_MONITORAMENTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_ADMISSAO_CONCILIADA"."CO_MONITORAMENTO" IS 'Edital (TB_MONITORAMENTO_INDIGENA) a que o vínculo foi atribuído.';
+
+--
+-- Name: COLUMN "TB_ADMISSAO_CONCILIADA"."CO_CANDIDATO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_ADMISSAO_CONCILIADA"."CO_CANDIDATO_APROVADO" IS 'Linha da lista de aprovados (TB_CANDIDATO_APROVADO) que a conciliação ligou ao vínculo. Sem chave estrangeira: a linha some quando a lista é trocada.';
+
+--
+-- Name: COLUMN "TB_ADMISSAO_CONCILIADA"."DT_ADMISSAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_ADMISSAO_CONCILIADA"."DT_ADMISSAO" IS 'Data de admissão no RH (Impacto).';
+
+--
+-- Name: COLUMN "TB_ADMISSAO_CONCILIADA"."DT_DESLIGAMENTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_ADMISSAO_CONCILIADA"."DT_DESLIGAMENTO" IS 'Data de desligamento no RH, se houver.';
+
+--
+-- Name: COLUMN "TB_ADMISSAO_CONCILIADA"."CO_CARGA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_ADMISSAO_CONCILIADA"."CO_CARGA" IS 'Identificador da carga que gravou a linha (o script de carga põe a data).';
+
+--
+-- Name: COLUMN "TB_ADMISSAO_CONCILIADA"."DT_CARGA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_ADMISSAO_CONCILIADA"."DT_CARGA" IS 'Quando a linha foi gravada ou mudou pela última vez.';
+
+--
+-- Name: CONSTRAINT "CK_ADMISCONCIL_COCARGA" ON "TB_ADMISSAO_CONCILIADA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_ADMISCONCIL_COCARGA" ON public."TB_ADMISSAO_CONCILIADA" IS 'Carga de 1 a 60 caracteres.';
+
+--
+-- Name: CONSTRAINT "CK_ADMISCONCIL_COVINCULO" ON "TB_ADMISSAO_CONCILIADA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_ADMISCONCIL_COVINCULO" ON public."TB_ADMISSAO_CONCILIADA" IS 'Token hexadecimal de 8 a 40 caracteres.';
+
+--
+-- Name: CONSTRAINT "CK_ADMISCONCIL_DTADMISSAO" ON "TB_ADMISSAO_CONCILIADA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_ADMISCONCIL_DTADMISSAO" ON public."TB_ADMISSAO_CONCILIADA" IS 'Data de admissão plausível.';
+
+--
+-- Name: CONSTRAINT "CK_ADMISCONCIL_DTDESLIGAMENTO" ON "TB_ADMISSAO_CONCILIADA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_ADMISCONCIL_DTDESLIGAMENTO" ON public."TB_ADMISSAO_CONCILIADA" IS 'Desligamento não antes da admissão.';
+
+--
 -- Name: TB_AGENDA_ENTREVISTA; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -45319,123 +48307,67 @@ CREATE TABLE public."TB_BRIDGE_AYA" (
 COMMENT ON TABLE public."TB_BRIDGE_AYA" IS 'Endereco publico atual do bridge da Aya. RLS ligada e sem policies: so as funcoes security definer deste modulo acessam.';
 
 --
--- Name: TB_CANDIDATO_APROVADO; Type: TABLE; Schema: public; Owner: -
+-- Name: TB_CALCULO_RELATORIO_PAINEL; Type: TABLE; Schema: public; Owner: -
 --
 
-CREATE TABLE public."TB_CANDIDATO_APROVADO" (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    lista_id uuid NOT NULL,
-    codigo_vaga text,
-    cargo text NOT NULL,
-    classificacao integer,
-    nota numeric NOT NULL,
-    nome text NOT NULL,
-    modalidade text,
-    status text,
-    processo_sei text,
-    matricula text,
-    sub_judice boolean DEFAULT false NOT NULL,
-    removido_em timestamp with time zone,
-    removido_por uuid,
-    created_by uuid NOT NULL,
-    updated_by uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    alterado_judicialmente boolean DEFAULT false NOT NULL,
-    nota_original numeric,
-    modalidade_original text,
-    classificacao_original integer,
-    sub_judice_original boolean,
-    "CO_ANALISE_CURRICULAR" uuid,
-    "TP_SITUACAO_CLASSIFICACAO" character varying(4),
-    "CO_CANDIDATO_ANTERIOR" uuid,
-    "DT_CONVOCACAO" date,
-    CONSTRAINT "CK_CANDAPROVADO_DTCONVOCACAO" CHECK (((("DT_CONVOCACAO" IS NULL) OR (status IS NOT NULL)) AND ((status IS DISTINCT FROM 'Convocado'::text) OR ("DT_CONVOCACAO" IS NOT NULL)))),
-    CONSTRAINT "CK_CANDAPROVADO_TPSITUACAO" CHECK ((("TP_SITUACAO_CLASSIFICACAO" IS NULL) OR (("TP_SITUACAO_CLASSIFICACAO")::text = ANY (ARRAY[('VAGA'::character varying)::text, ('CR'::character varying)::text])))),
-    CONSTRAINT "CK_CANDIDATO_APROVADO_STATUS" CHECK (((status IS NULL) OR (status = ANY (ARRAY['Convocado'::text, 'Contratado'::text, 'Contratado em outra lista'::text, 'Desistente'::text, 'Migração'::text, 'Documentação Rejeitada'::text])))),
-    CONSTRAINT lista_aprovados_classificacao_check CHECK (((classificacao IS NULL) OR (classificacao > 0))),
-    CONSTRAINT lista_aprovados_importado_campos_check CHECK (((sub_judice IS TRUE) OR ((NULLIF(btrim(codigo_vaga), ''::text) IS NOT NULL) AND (classificacao IS NOT NULL) AND (NULLIF(btrim(modalidade), ''::text) IS NOT NULL)))),
-    CONSTRAINT lista_aprovados_matricula_status_check CHECK (((status <> ALL (ARRAY['Contratado'::text, 'Migração'::text])) OR (NULLIF(btrim(matricula), ''::text) IS NOT NULL))),
-    CONSTRAINT lista_aprovados_nota_check CHECK ((nota >= (0)::numeric))
+CREATE TABLE public."TB_CALCULO_RELATORIO_PAINEL" (
+    "CO_AREA" text NOT NULL,
+    "CO_RELATORIO" character varying(40) NOT NULL,
+    "DT_CALCULO" timestamp with time zone DEFAULT now() NOT NULL,
+    "QT_LINHA" integer NOT NULL,
+    "DS_FONTES" jsonb DEFAULT '{}'::jsonb NOT NULL,
+    "DS_AVISOS" jsonb DEFAULT '[]'::jsonb NOT NULL,
+    "CO_USUARIO_CALCULO" uuid,
+    CONSTRAINT "CK_CALCRELPAINEL_RELATORIO" CHECK ((("CO_RELATORIO")::text = ANY ((ARRAY['resumo-dos-editais'::character varying, 'editais-por-cargo'::character varying, 'aprovados'::character varying])::text[])))
 );
 
 --
--- Name: COLUMN "TB_CANDIDATO_APROVADO".status; Type: COMMENT; Schema: public; Owner: -
+-- Name: TABLE "TB_CALCULO_RELATORIO_PAINEL"; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public."TB_CANDIDATO_APROVADO".status IS 'Situação do candidato: Convocado (chamado para a contratação, aguardando apresentação e documentos; leva DT_CONVOCACAO), Contratado, Contratado em outra lista (fixado pela equipe: a mesma pessoa foi contratada pela outra linha do edital, ampla ou cota; não conta nos contratados nem ocupa vaga), Desistente, Migração ou Documentação Rejeitada. Nulo = sem status. Contratados (Seleção e KPIs) são Contratado e Migração, menos os Contratado que o instantâneo TB_CONTRATACAO_APROVADO dá como em outra lista.';
+COMMENT ON TABLE public."TB_CALCULO_RELATORIO_PAINEL" IS 'Painéis: o último cálculo de cada relatório por área (as linhas ficam em TB_LINHA_RELATORIO_PAINEL). Recalculado de hora em hora (cron agsus_paineis_recalcular_relatorios), pelo Sincronizar (no máximo 1 vez por minuto) e na troca de fonte. 20261116160000.';
 
 --
--- Name: COLUMN "TB_CANDIDATO_APROVADO".alterado_judicialmente; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN "TB_CALCULO_RELATORIO_PAINEL"."CO_AREA"; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public."TB_CANDIDATO_APROVADO".alterado_judicialmente IS 'Nota e/ou modalidade alteradas por decisão judicial (alterar_candidato_sub_judice).';
+COMMENT ON COLUMN public."TB_CALCULO_RELATORIO_PAINEL"."CO_AREA" IS 'Área do relatório';
 
 --
--- Name: COLUMN "TB_CANDIDATO_APROVADO".nota_original; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN "TB_CALCULO_RELATORIO_PAINEL"."CO_RELATORIO"; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public."TB_CANDIDATO_APROVADO".nota_original IS 'Nota do resultado publicado, gravada na primeira alteração judicial.';
+COMMENT ON COLUMN public."TB_CALCULO_RELATORIO_PAINEL"."CO_RELATORIO" IS 'Relatório (resumo-dos-editais, editais-por-cargo, aprovados)';
 
 --
--- Name: COLUMN "TB_CANDIDATO_APROVADO".modalidade_original; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN "TB_CALCULO_RELATORIO_PAINEL"."DT_CALCULO"; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public."TB_CANDIDATO_APROVADO".modalidade_original IS 'Modalidade do resultado publicado, gravada na primeira alteração judicial.';
+COMMENT ON COLUMN public."TB_CALCULO_RELATORIO_PAINEL"."DT_CALCULO" IS 'Quando o cálculo foi feito (a data que a tela mostra)';
 
 --
--- Name: COLUMN "TB_CANDIDATO_APROVADO".classificacao_original; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN "TB_CALCULO_RELATORIO_PAINEL"."QT_LINHA"; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public."TB_CANDIDATO_APROVADO".classificacao_original IS 'Classificação do resultado publicado, gravada na primeira alteração judicial (desempate e desfazer).';
+COMMENT ON COLUMN public."TB_CALCULO_RELATORIO_PAINEL"."QT_LINHA" IS 'Quantas linhas o cálculo gerou (área inteira, sem recorte)';
 
 --
--- Name: COLUMN "TB_CANDIDATO_APROVADO".sub_judice_original; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN "TB_CALCULO_RELATORIO_PAINEL"."DS_FONTES"; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public."TB_CANDIDATO_APROVADO".sub_judice_original IS 'Se já era sub judice (inclusão) antes da primeira alteração; volta no desfazer.';
+COMMENT ON COLUMN public."TB_CALCULO_RELATORIO_PAINEL"."DS_FONTES" IS 'A fonte de cada coluna editável no cálculo (jsonb, como FC_APLICAR_FONTES_DO_PAINEL devolve)';
 
 --
--- Name: COLUMN "TB_CANDIDATO_APROVADO"."CO_ANALISE_CURRICULAR"; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN "TB_CALCULO_RELATORIO_PAINEL"."DS_AVISOS"; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public."TB_CANDIDATO_APROVADO"."CO_ANALISE_CURRICULAR" IS 'Análise curricular do candidato (TB_ANALISE_CURRICULAR.id), nas listas publicadas da Classificação; nula nas de planilha.';
+COMMENT ON COLUMN public."TB_CALCULO_RELATORIO_PAINEL"."DS_AVISOS" IS 'Avisos das fontes no cálculo (jsonb, lista de textos; citam só coluna e quantidades)';
 
 --
--- Name: COLUMN "TB_CANDIDATO_APROVADO"."TP_SITUACAO_CLASSIFICACAO"; Type: COMMENT; Schema: public; Owner: -
+-- Name: COLUMN "TB_CALCULO_RELATORIO_PAINEL"."CO_USUARIO_CALCULO"; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public."TB_CANDIDATO_APROVADO"."TP_SITUACAO_CLASSIFICACAO" IS 'No resultado final da Classificação: VAGA (dentro das vagas) ou CR (cadastro reserva); nula nas listas de planilha.';
-
---
--- Name: COLUMN "TB_CANDIDATO_APROVADO"."CO_CANDIDATO_ANTERIOR"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_CANDIDATO_APROVADO"."CO_CANDIDATO_ANTERIOR" IS 'O mesmo candidato na lista anterior do edital, de onde vieram status, matrícula, processo, sub judice e anexos na publicação.';
-
---
--- Name: COLUMN "TB_CANDIDATO_APROVADO"."DT_CONVOCACAO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_CANDIDATO_APROVADO"."DT_CONVOCACAO" IS 'Data em que o candidato foi convocado para a contratação. Fica depois que ele segue para Contratado, Desistente ou Documentação Rejeitada; some quando o status volta a nulo. A publicação de uma lista nova a herda do candidato anterior (TG_CANDAPROVADO_CONVOCACAO).';
-
---
--- Name: CONSTRAINT "CK_CANDAPROVADO_DTCONVOCACAO" ON "TB_CANDIDATO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_CANDAPROVADO_DTCONVOCACAO" ON public."TB_CANDIDATO_APROVADO" IS 'Data da convocação só com status; Convocado sempre com a data.';
-
---
--- Name: CONSTRAINT "CK_CANDAPROVADO_TPSITUACAO" ON "TB_CANDIDATO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_CANDAPROVADO_TPSITUACAO" ON public."TB_CANDIDATO_APROVADO" IS 'Situações do resultado final.';
-
---
--- Name: CONSTRAINT "CK_CANDIDATO_APROVADO_STATUS" ON "TB_CANDIDATO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_CANDIDATO_APROVADO_STATUS" ON public."TB_CANDIDATO_APROVADO" IS 'Status válidos (Fim de Fila saiu em 20261005180000; Contratado em outra lista entrou em 20261024120000).';
+COMMENT ON COLUMN public."TB_CALCULO_RELATORIO_PAINEL"."CO_USUARIO_CALCULO" IS 'Quem pediu o cálculo (auth.users); nulo quando foi o cron';
 
 --
 -- Name: TB_CASO_AVISO_CONFERENCIA; Type: TABLE; Schema: public; Owner: -
@@ -45831,150 +48763,6 @@ COMMENT ON CONSTRAINT "CK_CONGELINSCR_DSMOTIVO" ON public."TB_CONGELAMENTO_INSCR
 --
 
 COMMENT ON CONSTRAINT "CK_CONGELINSCR_STCONGELADAS" ON public."TB_CONGELAMENTO_INSCRICAO" IS 'S ou N.';
-
---
--- Name: TB_CONTRATACAO_APROVADO; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public."TB_CONTRATACAO_APROVADO" (
-    "CO_CANDIDATO_APROVADO" uuid NOT NULL,
-    "CO_MONITORAMENTO" uuid NOT NULL,
-    "DS_VINCULO" text NOT NULL,
-    "TP_SITUACAO" character varying(12) NOT NULL,
-    "CO_CANDIDATO_CONTRATACAO" uuid,
-    "TP_MOTIVO" character varying(20) NOT NULL,
-    "DS_MOTIVO" text NOT NULL,
-    "DS_BASE" text NOT NULL,
-    "NU_VERSAO_REGRA" smallint NOT NULL,
-    "CO_EXECUCAO" text NOT NULL,
-    "DT_DECISAO" timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT "CK_CONTRATAPROV_COEXECUCAO" CHECK (("CO_EXECUCAO" ~ '^contr-[0-9]{8}T[0-9]{6}-[0-9a-f]{8}$'::text)),
-    CONSTRAINT "CK_CONTRATAPROV_DSMOTIVO" CHECK (((length(btrim("DS_MOTIVO")) >= 1) AND (length(btrim("DS_MOTIVO")) <= 500))),
-    CONSTRAINT "CK_CONTRATAPROV_DSVINCULO" CHECK (("DS_VINCULO" ~ '^[0-9a-f]{64}$'::text)),
-    CONSTRAINT "CK_CONTRATAPROV_ESCOLHA" CHECK (
-CASE "TP_SITUACAO"
-    WHEN 'AMBIGUO'::text THEN (("CO_CANDIDATO_CONTRATACAO" IS NULL) AND (("TP_MOTIVO")::text = ANY ((ARRAY['NENHUMA_ALCANCADA'::character varying, 'MAIS_DE_UMA_AMPLA'::character varying, 'NENHUMA_AMPLA'::character varying])::text[])))
-    WHEN 'CONTRATACAO'::text THEN (("CO_CANDIDATO_CONTRATACAO" = "CO_CANDIDATO_APROVADO") AND (("TP_MOTIVO")::text = ANY ((ARRAY['UNICA_ALCANCADA'::character varying, 'AMPLA_ALCANCADA'::character varying, 'HERDADA'::character varying, 'ADMISSAO_NO_RH'::character varying])::text[])))
-    ELSE (("CO_CANDIDATO_CONTRATACAO" IS NOT NULL) AND ("CO_CANDIDATO_CONTRATACAO" <> "CO_CANDIDATO_APROVADO") AND (("TP_MOTIVO")::text = ANY ((ARRAY['UNICA_ALCANCADA'::character varying, 'AMPLA_ALCANCADA'::character varying, 'HERDADA'::character varying, 'ADMISSAO_NO_RH'::character varying])::text[])))
-END),
-    CONSTRAINT "CK_CONTRATAPROV_NUVERSAO" CHECK (("NU_VERSAO_REGRA" > 0)),
-    CONSTRAINT "CK_CONTRATAPROV_TPMOTIVO" CHECK ((("TP_MOTIVO")::text = ANY ((ARRAY['UNICA_ALCANCADA'::character varying, 'AMPLA_ALCANCADA'::character varying, 'HERDADA'::character varying, 'ADMISSAO_NO_RH'::character varying, 'NENHUMA_ALCANCADA'::character varying, 'MAIS_DE_UMA_AMPLA'::character varying, 'NENHUMA_AMPLA'::character varying])::text[]))),
-    CONSTRAINT "CK_CONTRATAPROV_TPSITUACAO" CHECK ((("TP_SITUACAO")::text = ANY ((ARRAY['CONTRATACAO'::character varying, 'OUTRA_LISTA'::character varying, 'AMBIGUO'::character varying])::text[])))
-);
-
---
--- Name: TABLE "TB_CONTRATACAO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public."TB_CONTRATACAO_APROVADO" IS 'Instantâneo do job Python "Contratado em outra lista" (scripts/aprovados/contratacao.py): para a mesma matrícula Contratado em duas ou mais linhas do mesmo edital, qual é a contratação (CONTRATACAO), quais ficam em outra lista (OUTRA_LISTA: não contam nos contratados nem ocupam vaga) ou se a regra não decide (AMBIGUO). Não muda o status gravado. Decisão congelada: só sai quando a base (DS_BASE) muda. Só pelas RPCs. 20261024120000.';
-
---
--- Name: COLUMN "TB_CONTRATACAO_APROVADO"."CO_CANDIDATO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_CONTRATACAO_APROVADO"."CO_CANDIDATO_APROVADO" IS 'A linha da lista de aprovados (Contratado).';
-
---
--- Name: COLUMN "TB_CONTRATACAO_APROVADO"."CO_MONITORAMENTO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_CONTRATACAO_APROVADO"."CO_MONITORAMENTO" IS 'O edital (TB_MONITORAMENTO_INDIGENA) da lista vigente da linha.';
-
---
--- Name: COLUMN "TB_CONTRATACAO_APROVADO"."DS_VINCULO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_CONTRATACAO_APROVADO"."DS_VINCULO" IS 'Hash da matrícula (FC_VINCULO_DA_MATRICULA): o que junta as linhas da mesma contratação.';
-
---
--- Name: COLUMN "TB_CONTRATACAO_APROVADO"."TP_SITUACAO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_CONTRATACAO_APROVADO"."TP_SITUACAO" IS 'CONTRATACAO, OUTRA_LISTA ou AMBIGUO.';
-
---
--- Name: COLUMN "TB_CONTRATACAO_APROVADO"."CO_CANDIDATO_CONTRATACAO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_CONTRATACAO_APROVADO"."CO_CANDIDATO_CONTRATACAO" IS 'A linha que é a contratação (nula no ambíguo).';
-
---
--- Name: COLUMN "TB_CONTRATACAO_APROVADO"."TP_MOTIVO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_CONTRATACAO_APROVADO"."TP_MOTIVO" IS 'Por que: UNICA_ALCANCADA, AMPLA_ALCANCADA, HERDADA (da lista anterior), NENHUMA_ALCANCADA, MAIS_DE_UMA_AMPLA ou NENHUMA_AMPLA.';
-
---
--- Name: COLUMN "TB_CONTRATACAO_APROVADO"."DS_MOTIVO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_CONTRATACAO_APROVADO"."DS_MOTIVO" IS 'O motivo em texto, como a tela mostra (sem nome nem matrícula).';
-
---
--- Name: COLUMN "TB_CONTRATACAO_APROVADO"."DS_BASE"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_CONTRATACAO_APROVADO"."DS_BASE" IS 'Os ids das linhas Contratado da matrícula no edital, em ordem, quando a decisão foi tomada: mudou, a decisão é refeita.';
-
---
--- Name: COLUMN "TB_CONTRATACAO_APROVADO"."NU_VERSAO_REGRA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_CONTRATACAO_APROVADO"."NU_VERSAO_REGRA" IS 'Versão da regra (python/monitora/aprovados/contratacao.py, VERSAO).';
-
---
--- Name: COLUMN "TB_CONTRATACAO_APROVADO"."CO_EXECUCAO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_CONTRATACAO_APROVADO"."CO_EXECUCAO" IS 'Execução do job que gravou (contr-AAAAMMDDTHHMMSS-xxxxxxxx).';
-
---
--- Name: COLUMN "TB_CONTRATACAO_APROVADO"."DT_DECISAO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_CONTRATACAO_APROVADO"."DT_DECISAO" IS 'Quando a decisão foi gravada.';
-
---
--- Name: CONSTRAINT "CK_CONTRATAPROV_COEXECUCAO" ON "TB_CONTRATACAO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_CONTRATAPROV_COEXECUCAO" ON public."TB_CONTRATACAO_APROVADO" IS 'Identificador da execução do job.';
-
---
--- Name: CONSTRAINT "CK_CONTRATAPROV_DSMOTIVO" ON "TB_CONTRATACAO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_CONTRATAPROV_DSMOTIVO" ON public."TB_CONTRATACAO_APROVADO" IS 'Motivo de 1 a 500 caracteres.';
-
---
--- Name: CONSTRAINT "CK_CONTRATAPROV_DSVINCULO" ON "TB_CONTRATACAO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_CONTRATAPROV_DSVINCULO" ON public."TB_CONTRATACAO_APROVADO" IS 'sha256 em hexadecimal.';
-
---
--- Name: CONSTRAINT "CK_CONTRATAPROV_ESCOLHA" ON "TB_CONTRATACAO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_CONTRATAPROV_ESCOLHA" ON public."TB_CONTRATACAO_APROVADO" IS 'Ambíguo sem escolha; contratação aponta para si; em outra lista aponta para outra linha; o motivo combina (ADMISSAO_NO_RH só nas decisões: regra v2, 20261116170000).';
-
---
--- Name: CONSTRAINT "CK_CONTRATAPROV_NUVERSAO" ON "TB_CONTRATACAO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_CONTRATAPROV_NUVERSAO" ON public."TB_CONTRATACAO_APROVADO" IS 'Versão positiva.';
-
---
--- Name: CONSTRAINT "CK_CONTRATAPROV_TPMOTIVO" ON "TB_CONTRATACAO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_CONTRATAPROV_TPMOTIVO" ON public."TB_CONTRATACAO_APROVADO" IS 'Motivos válidos (ADMISSAO_NO_RH desde a regra v2, 20261116170000).';
-
---
--- Name: CONSTRAINT "CK_CONTRATAPROV_TPSITUACAO" ON "TB_CONTRATACAO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_CONTRATAPROV_TPSITUACAO" ON public."TB_CONTRATACAO_APROVADO" IS 'Situações válidas.';
 
 --
 -- Name: TB_CONVOCACAO_EDITAL; Type: TABLE; Schema: public; Owner: -
@@ -46832,6 +49620,24 @@ CREATE TABLE public."TB_EDITAL_ANALISE" (
 COMMENT ON COLUMN public."TB_EDITAL_ANALISE"."CO_PLANILHA" IS 'Planilha que enviou o edital (TB_PLANILHA_ANALISE). Só o sync dessa planilha altera ou desativa a linha.';
 
 --
+-- Name: TB_EDITAL_CRITICO; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."TB_EDITAL_CRITICO" (
+    "CO_MONITORAMENTO" uuid NOT NULL,
+    "DS_MOTIVO" text NOT NULL,
+    "CO_USUARIO" uuid,
+    "DT_MARCACAO" timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT "TB_EDITAL_CRITICO_DS_MOTIVO_check" CHECK (((length(btrim("DS_MOTIVO")) >= 10) AND (length(btrim("DS_MOTIVO")) <= 500)))
+);
+
+--
+-- Name: TABLE "TB_EDITAL_CRITICO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public."TB_EDITAL_CRITICO" IS 'Edital marcado como crítico à mão (gestor, coordenador ou administrador global), com o motivo. Só por RPC (marcar_edital_critico). 20261110150000.';
+
+--
 -- Name: TB_EMPREGARE_ANEXO; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -47583,13 +50389,11 @@ COMMENT ON COLUMN public."TB_ENTREVISTA"."NU_BANCA" IS 'Banca que entrevistou (q
 
 COMMENT ON COLUMN public."TB_ENTREVISTA"."DS_JUSTIFICATIVA_BANCA" IS 'Justificativa da banca para o parecer (entrevista feita no sistema). Opcional para APTO; obrigatória, em gravação nova pela ficha de notas, quando o parecer é INAPTO ou o candidato faltou (lancar_notas_entrevista). Nula nas entrevistas gravadas antes e nas da planilha.';
 
-
 --
 -- Name: COLUMN "TB_ENTREVISTA"."DT_CONCLUSAO"; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON COLUMN public."TB_ENTREVISTA"."DT_CONCLUSAO" IS 'Quando a entrevista foi concluída (concluir_entrevista): com data, a ficha é só leitura até a coordenação reabrir (reabrir_entrevista). Nulo = aberta (20261117050000).';
-
 
 --
 -- Name: COLUMN "TB_ENTREVISTA"."CO_USUARIO_CONCLUSAO"; Type: COMMENT; Schema: public; Owner: -
@@ -47602,7 +50406,6 @@ COMMENT ON COLUMN public."TB_ENTREVISTA"."CO_USUARIO_CONCLUSAO" IS 'auth.uid de 
 --
 
 COMMENT ON CONSTRAINT "CK_ENTREVISTA_CONCLUSAO" ON public."TB_ENTREVISTA" IS 'Quem concluiu só com a data da conclusão.';
-
 
 --
 -- Name: CONSTRAINT "CK_ENTREVISTA_DSJUSTIFICATIVABANCA" ON "TB_ENTREVISTA"; Type: COMMENT; Schema: public; Owner: -
@@ -47967,7 +50770,6 @@ COMMENT ON COLUMN public."TB_ENTREVISTA_EDITAL"."DT_ATUALIZACAO" IS 'Última alt
 
 COMMENT ON COLUMN public."TB_ENTREVISTA_EDITAL"."CO_USUARIO_ATUALIZACAO" IS 'Autor da última alteração.';
 
-
 --
 -- Name: COLUMN "TB_ENTREVISTA_EDITAL"."TP_ARREDONDAMENTO"; Type: COMMENT; Schema: public; Owner: -
 --
@@ -47985,7 +50787,6 @@ COMMENT ON CONSTRAINT "CK_ENTREVISTAEDITAL_JSON" ON public."TB_ENTREVISTA_EDITAL
 --
 
 COMMENT ON CONSTRAINT "CK_ENTREVISTAEDITAL_TPARREDONDAMENTO" ON public."TB_ENTREVISTA_EDITAL" IS 'Modos de arredondamento.';
-
 
 --
 -- Name: CONSTRAINT "CK_ENTREVISTAEDITAL_TPLANCAMENTO" ON "TB_ENTREVISTA_EDITAL"; Type: COMMENT; Schema: public; Owner: -
@@ -48304,6 +51105,76 @@ COMMENT ON CONSTRAINT "CK_FILTROFILA_NOME" ON public."TB_FILTRO_FILA_ANALISE" IS
 --
 
 COMMENT ON CONSTRAINT "CK_FILTROFILA_STATIVO" ON public."TB_FILTRO_FILA_ANALISE" IS 'Flag S/N.';
+
+--
+-- Name: TB_FONTE_COLUNA_PAINEL; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."TB_FONTE_COLUNA_PAINEL" (
+    "CO_AREA" text NOT NULL,
+    "CO_RELATORIO" character varying(40) NOT NULL,
+    "CO_COLUNA" character varying(40) NOT NULL,
+    "NO_VISAO" character varying(63) NOT NULL,
+    "NO_COLUNA_VISAO" character varying(63) NOT NULL,
+    "DS_MOTIVO" character varying(500) NOT NULL,
+    "CO_USUARIO_ATUALIZACAO" uuid NOT NULL,
+    "DT_ATUALIZACAO" timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT "CK_FONTECOLUNAPAINEL_MOTIVO" CHECK (((length(btrim(("DS_MOTIVO")::text)) >= 3) AND (length(btrim(("DS_MOTIVO")::text)) <= 500)))
+);
+
+--
+-- Name: TABLE "TB_FONTE_COLUNA_PAINEL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public."TB_FONTE_COLUNA_PAINEL" IS 'A fonte escolhida, por área, de cada coluna editável dos relatórios dos Painéis. Sem linha, a coluna usa o padrão (o SQL da RPC do relatório).';
+
+--
+-- Name: COLUMN "TB_FONTE_COLUNA_PAINEL"."CO_AREA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_FONTE_COLUNA_PAINEL"."CO_AREA" IS 'Área (TB_AREA) a que a escolha vale.';
+
+--
+-- Name: COLUMN "TB_FONTE_COLUNA_PAINEL"."CO_RELATORIO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_FONTE_COLUNA_PAINEL"."CO_RELATORIO" IS 'Relatório (resumo-dos-editais, editais-por-cargo, aprovados).';
+
+--
+-- Name: COLUMN "TB_FONTE_COLUNA_PAINEL"."CO_COLUNA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_FONTE_COLUNA_PAINEL"."CO_COLUNA" IS 'Coluna editável do relatório (FC_COLUNAS_EDITAVEIS_DO_PAINEL).';
+
+--
+-- Name: COLUMN "TB_FONTE_COLUNA_PAINEL"."NO_VISAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_FONTE_COLUNA_PAINEL"."NO_VISAO" IS 'Visão do schema painel escolhida como fonte (revalidada no catálogo a cada leitura).';
+
+--
+-- Name: COLUMN "TB_FONTE_COLUNA_PAINEL"."NO_COLUNA_VISAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_FONTE_COLUNA_PAINEL"."NO_COLUNA_VISAO" IS 'Coluna da visão que dá o valor.';
+
+--
+-- Name: COLUMN "TB_FONTE_COLUNA_PAINEL"."DS_MOTIVO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_FONTE_COLUNA_PAINEL"."DS_MOTIVO" IS 'Motivo da última troca (3 a 500 caracteres).';
+
+--
+-- Name: COLUMN "TB_FONTE_COLUNA_PAINEL"."CO_USUARIO_ATUALIZACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_FONTE_COLUNA_PAINEL"."CO_USUARIO_ATUALIZACAO" IS 'auth.uid() de quem fez a última troca.';
+
+--
+-- Name: COLUMN "TB_FONTE_COLUNA_PAINEL"."DT_ATUALIZACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_FONTE_COLUNA_PAINEL"."DT_ATUALIZACAO" IS 'Quando foi a última troca.';
 
 --
 -- Name: TB_GRUPO_ACESSO; Type: TABLE; Schema: public; Owner: -
@@ -48687,6 +51558,55 @@ COMMENT ON CONSTRAINT "CK_LEITARQ_DSALERTA" ON public."TB_LEITURA_ARQUIVO" IS 'A
 --
 
 COMMENT ON CONSTRAINT "CK_LEITARQ_DSITEM" ON public."TB_LEITURA_ARQUIVO" IS 'Itens numa lista de até 60.';
+
+--
+-- Name: TB_LINHA_RELATORIO_PAINEL; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."TB_LINHA_RELATORIO_PAINEL" (
+    "CO_AREA" text NOT NULL,
+    "CO_RELATORIO" character varying(40) NOT NULL,
+    "NU_POSICAO" integer NOT NULL,
+    "CO_MONITORAMENTO" uuid NOT NULL,
+    "DS_LINHA" jsonb NOT NULL
+)
+WITH (fillfactor='90');
+
+--
+-- Name: TABLE "TB_LINHA_RELATORIO_PAINEL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public."TB_LINHA_RELATORIO_PAINEL" IS 'Painéis: as linhas prontas de cada relatório por área, na ordem do relatório. Contém dado pessoal (nome e matrícula, no relatório Aprovados): só as RPCs dos Painéis leem, com o recorte de quem pede. 20261116160000.';
+
+--
+-- Name: COLUMN "TB_LINHA_RELATORIO_PAINEL"."CO_AREA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_LINHA_RELATORIO_PAINEL"."CO_AREA" IS 'Área do relatório';
+
+--
+-- Name: COLUMN "TB_LINHA_RELATORIO_PAINEL"."CO_RELATORIO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_LINHA_RELATORIO_PAINEL"."CO_RELATORIO" IS 'Relatório';
+
+--
+-- Name: COLUMN "TB_LINHA_RELATORIO_PAINEL"."NU_POSICAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_LINHA_RELATORIO_PAINEL"."NU_POSICAO" IS 'Posição da linha no relatório (1, 2, …)';
+
+--
+-- Name: COLUMN "TB_LINHA_RELATORIO_PAINEL"."CO_MONITORAMENTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_LINHA_RELATORIO_PAINEL"."CO_MONITORAMENTO" IS 'Edital da linha (TB_MONITORAMENTO_INDIGENA.id), para o recorte da coordenação';
+
+--
+-- Name: COLUMN "TB_LINHA_RELATORIO_PAINEL"."DS_LINHA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_LINHA_RELATORIO_PAINEL"."DS_LINHA" IS 'A linha do relatório (jsonb), já com as fontes escolhidas';
 
 --
 -- Name: TB_LISTA_APROVADO; Type: TABLE; Schema: public; Owner: -
@@ -49510,163 +52430,6 @@ COMMENT ON CONSTRAINT "CK_MODELORESPOSTA_TAMANHOS" ON public."TB_MODELO_RESPOSTA
 --
 
 COMMENT ON CONSTRAINT "CK_MODELORESPOSTA_TPSITUACAO" ON public."TB_MODELO_RESPOSTA_RECURSO" IS 'Só situações decididas.';
-
---
--- Name: TB_MONITORAMENTO_INDIGENA; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public."TB_MONITORAMENTO_INDIGENA" (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    processo text,
-    edital text NOT NULL,
-    id_unidade text,
-    sigla_unidade text,
-    tipo_unidade text,
-    unidade text NOT NULL,
-    uf character(2),
-    ciclo text,
-    cargos text,
-    vagas_total integer DEFAULT 0 NOT NULL,
-    inscritos integer,
-    aptos_analise integer DEFAULT 0,
-    cancelados integer DEFAULT 0,
-    eliminados_nota integer DEFAULT 0,
-    reprovados_analise integer DEFAULT 0,
-    total_eliminados integer DEFAULT 0,
-    aprovados_analise integer DEFAULT 0 NOT NULL,
-    aprovados_prova integer DEFAULT 0 NOT NULL,
-    entrevistados integer DEFAULT 0 NOT NULL,
-    contratados integer DEFAULT 0 NOT NULL,
-    vagas_ociosas integer GENERATED ALWAYS AS (GREATEST((vagas_total - contratados), 0)) STORED,
-    data_inicio date,
-    data_fim date,
-    status text,
-    etapa text,
-    risco text DEFAULT 'Baixo'::text,
-    responsavel text,
-    link_edital text,
-    observacoes text,
-    observacoes_internas text,
-    ativo boolean DEFAULT true NOT NULL,
-    created_by uuid,
-    updated_by uuid,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    quantidade_cadastro_reserva text,
-    dias_ate_encerramento integer,
-    duracao_total_processo text,
-    origem_carga text,
-    raw_json jsonb DEFAULT '{}'::jsonb NOT NULL,
-    cronograma_automatico boolean DEFAULT false NOT NULL,
-    cronograma_pdf_path text,
-    cronograma_pdf_nome text,
-    cronograma_origem text,
-    cronograma_revisado_at timestamp with time zone,
-    cronograma_revisado_por uuid,
-    status_override text,
-    etapa_override text,
-    status_override_motivo text,
-    status_override_data date,
-    status_override_previsao_retomada date,
-    cronograma_ultima_errata text,
-    "CO_AREA" text NOT NULL,
-    "NU_ANOS_VALIDADE" smallint DEFAULT 0 NOT NULL,
-    "NU_MESES_VALIDADE" smallint DEFAULT 0 NOT NULL,
-    "ST_PRORROGADO" boolean DEFAULT false NOT NULL,
-    "ST_TREINAMENTO" character varying(1) DEFAULT 'N'::character varying NOT NULL,
-    "TP_FONTE_FUNIL" character varying(20),
-    "DT_FONTE_FUNIL" timestamp with time zone,
-    CONSTRAINT "CK_MONITINDIG_STTREINAMENTO" CHECK ((("ST_TREINAMENTO")::text = ANY (ARRAY[('S'::character varying)::text, ('N'::character varying)::text]))),
-    CONSTRAINT "CK_MONITORAMENTO_INDIGENA_VALIDADE" CHECK ((("NU_ANOS_VALIDADE" >= 0) AND ("NU_ANOS_VALIDADE" <= 10) AND (("NU_MESES_VALIDADE" >= 0) AND ("NU_MESES_VALIDADE" <= 11)))),
-    CONSTRAINT "CK_MONIT_INDIG_APTOS_INSCRITOS" CHECK (((ativo IS NOT TRUE) OR (aptos_analise IS NULL) OR (inscritos IS NULL) OR (aptos_analise <= inscritos))),
-    CONSTRAINT "CK_MONIT_INDIG_DATA_EDITAL" CHECK ((((data_inicio IS NULL) OR ((data_inicio >= '2015-01-01'::date) AND (data_inicio <= '2100-12-31'::date))) AND ((data_fim IS NULL) OR ((data_fim >= '2015-01-01'::date) AND (data_fim <= '2100-12-31'::date))) AND ((data_inicio IS NULL) OR (data_fim IS NULL) OR (data_inicio <= data_fim)))),
-    CONSTRAINT "CK_MONIT_INDIG_FONTE_FUNIL" CHECK ((("TP_FONTE_FUNIL" IS NULL) OR (("TP_FONTE_FUNIL")::text = ANY ((ARRAY['AVALIACAO_DOCUMENTAL'::character varying, 'SELECAO'::character varying, 'ANALISES'::character varying])::text[])))),
-    CONSTRAINT monitoramento_indigena_aprovados_analise_check CHECK ((aprovados_analise >= 0)),
-    CONSTRAINT monitoramento_indigena_aprovados_prova_check CHECK ((aprovados_prova >= 0)),
-    CONSTRAINT monitoramento_indigena_aptos_analise_check CHECK ((aptos_analise >= 0)),
-    CONSTRAINT monitoramento_indigena_cancelados_check CHECK ((cancelados >= 0)),
-    CONSTRAINT monitoramento_indigena_contratados_check CHECK ((contratados >= 0)),
-    CONSTRAINT monitoramento_indigena_eliminados_nota_check CHECK ((eliminados_nota >= 0)),
-    CONSTRAINT monitoramento_indigena_entrevistados_check CHECK ((entrevistados >= 0)),
-    CONSTRAINT monitoramento_indigena_inscritos_check CHECK ((inscritos >= 0)),
-    CONSTRAINT monitoramento_indigena_reprovados_analise_check CHECK ((reprovados_analise >= 0)),
-    CONSTRAINT monitoramento_indigena_total_eliminados_check CHECK ((total_eliminados >= 0)),
-    CONSTRAINT monitoramento_indigena_vagas_total_check CHECK ((vagas_total >= 0))
-);
-
-ALTER TABLE ONLY public."TB_MONITORAMENTO_INDIGENA" REPLICA IDENTITY FULL;
-
---
--- Name: COLUMN "TB_MONITORAMENTO_INDIGENA".responsavel; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_MONITORAMENTO_INDIGENA".responsavel IS 'Área responsável pelo edital: USI ou CORES. Define o catálogo de unidades oferecido no formulário.';
-
---
--- Name: COLUMN "TB_MONITORAMENTO_INDIGENA"."CO_AREA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_MONITORAMENTO_INDIGENA"."CO_AREA" IS 'Área do edital, calculada por private."FC_AREA_EDITAL" (gatilho "TBA_MONITORAMENTO_INDIGENA").';
-
---
--- Name: COLUMN "TB_MONITORAMENTO_INDIGENA"."NU_ANOS_VALIDADE"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_MONITORAMENTO_INDIGENA"."NU_ANOS_VALIDADE" IS 'Prazo de validade do processo seletivo: anos (contados da data de encerramento, data_fim).';
-
---
--- Name: COLUMN "TB_MONITORAMENTO_INDIGENA"."NU_MESES_VALIDADE"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_MONITORAMENTO_INDIGENA"."NU_MESES_VALIDADE" IS 'Prazo de validade do processo seletivo: meses (0 a 11), somados aos anos.';
-
---
--- Name: COLUMN "TB_MONITORAMENTO_INDIGENA"."ST_PRORROGADO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_MONITORAMENTO_INDIGENA"."ST_PRORROGADO" IS 'Processo seletivo prorrogado: a validade conta em dobro (prorrogação por período igual ao prazo).';
-
---
--- Name: COLUMN "TB_MONITORAMENTO_INDIGENA"."ST_TREINAMENTO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_MONITORAMENTO_INDIGENA"."ST_TREINAMENTO" IS 'S = edital de treinamento (dados fictícios, sem valor oficial): fora da Visão geral, indicadores, painéis, caches, conferências e robôs; aparece nas telas operacionais com o selo "Treinamento". Só private."FC_PREPARAR_EDITAL_TREINAMENTO" grava S. Padrão N. Histórico: em 26/10/2026 a correção supabase/correcoes/20261026-edital-teste-da-sede-como-treinamento.sql marcou S o edital "Teste" da SEDE (317709c7-e5a5-4333-b2f2-ef0a8cfb8c12); em 04/11/2026 a correção supabase/correcoes/20261104-apagar-edital-teste-sede.sql, assinada pela conta do setor Gestão da Informação de Pessoal (a01afddb-f64b-47d9-80e8-476a1ed14e43), apagou esse edital e tudo ligado a ele.';
-
---
--- Name: COLUMN "TB_MONITORAMENTO_INDIGENA"."TP_FONTE_FUNIL"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_MONITORAMENTO_INDIGENA"."TP_FONTE_FUNIL" IS 'De onde vem o funil do edital (inscritos, aptos, cancelados, eliminados, reprovados): AVALIACAO_DOCUMENTAL (pré-classificação ou retrato das inscrições), SELECAO (vagas da Seleção) ou ANALISES (análises curriculares). Nulo: sem fonte, valores da carga original. Gravada por FC_ATUALIZAR_KPIS_PELA_SELECAO (20261022200000).';
-
---
--- Name: COLUMN "TB_MONITORAMENTO_INDIGENA"."DT_FONTE_FUNIL"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_MONITORAMENTO_INDIGENA"."DT_FONTE_FUNIL" IS 'Data dos dados da fonte do funil: última gravação da pré-classificação ou do retrato, última mudança nas vagas da Seleção do edital (max DT_ATUALIZACAO; antes de 20261103150000, a última carga concluída) ou última mudança nas análises do edital.';
-
---
--- Name: CONSTRAINT "CK_MONITINDIG_STTREINAMENTO" ON "TB_MONITORAMENTO_INDIGENA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_MONITINDIG_STTREINAMENTO" ON public."TB_MONITORAMENTO_INDIGENA" IS 'Marca do edital de treinamento: S ou N.';
-
---
--- Name: CONSTRAINT "CK_MONIT_INDIG_APTOS_INSCRITOS" ON "TB_MONITORAMENTO_INDIGENA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_MONIT_INDIG_APTOS_INSCRITOS" ON public."TB_MONITORAMENTO_INDIGENA" IS 'Edital ativo com aptos e inscritos: aptos <= inscritos (o funil vem de uma fonte só, FC_ATUALIZAR_KPIS_PELA_SELECAO, 20261022200000).';
-
---
--- Name: CONSTRAINT "CK_MONIT_INDIG_DATA_EDITAL" ON "TB_MONITORAMENTO_INDIGENA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_MONIT_INDIG_DATA_EDITAL" ON public."TB_MONITORAMENTO_INDIGENA" IS 'Datas do edital com ano entre 2015 e 2100 e início até o fim (anos digitados errados, como 0202 e 20206, eram aceitos).';
-
---
--- Name: CONSTRAINT "CK_MONIT_INDIG_FONTE_FUNIL" ON "TB_MONITORAMENTO_INDIGENA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_MONIT_INDIG_FONTE_FUNIL" ON public."TB_MONITORAMENTO_INDIGENA" IS 'Fontes válidas do funil do edital.';
 
 --
 -- Name: TB_ORIGEM_ANALISE_EDITAL; Type: TABLE; Schema: public; Owner: -
@@ -50862,208 +53625,6 @@ COMMENT ON CONSTRAINT "CK_PRECLASSIF_STDIVERGENTE" ON public."TB_PRE_CLASSIFICAC
 --
 
 COMMENT ON CONSTRAINT "CK_PRECLASSIF_TPSITUACAO" ON public."TB_PRE_CLASSIFICACAO" IS 'Situações válidas.';
-
---
--- Name: TB_PRE_CLASSIF_VAGA; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public."TB_PRE_CLASSIF_VAGA" (
-    "CO_MONITORAMENTO" uuid NOT NULL,
-    "CO_VAGA" character varying(20) NOT NULL,
-    "CO_EXECUCAO" text NOT NULL,
-    "NU_VERSAO_REGRA" integer NOT NULL,
-    "CO_QUADRO_VAGA" uuid,
-    "NO_CARGO" character varying(300),
-    "NO_LOTACAO" character varying(300),
-    "QT_VAGA_IMEDIATA" integer,
-    "ST_CADASTRO_RESERVA" character varying(1) DEFAULT 'N'::character varying NOT NULL,
-    "QT_INSCRITO" integer DEFAULT 0 NOT NULL,
-    "QT_ELIMINADO" integer DEFAULT 0 NOT NULL,
-    "QT_RANQUEADO" integer DEFAULT 0 NOT NULL,
-    "QT_LOTE" integer DEFAULT 0 NOT NULL,
-    "QT_TAMANHO_LOTE" integer,
-    "DS_TAMANHO_LOTE" character varying(200),
-    "DS_TAMANHO_MODALIDADE" jsonb,
-    "VL_ART_CORTE" numeric(8,4),
-    "QT_DIVERGENCIA" integer DEFAULT 0 NOT NULL,
-    "QT_SEM_ART" integer DEFAULT 0 NOT NULL,
-    "QT_ACIMA_CORTE" integer DEFAULT 0 NOT NULL,
-    "NU_ULTIMO_LOTE" smallint DEFAULT 0 NOT NULL,
-    "DS_AVISO" jsonb DEFAULT '[]'::jsonb NOT NULL,
-    "DT_CRIACAO" timestamp with time zone DEFAULT now() NOT NULL,
-    "DT_ATUALIZACAO" timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT "CK_PRECLASSVAGA_JSON" CHECK (((jsonb_typeof("DS_AVISO") = 'array'::text) AND (("DS_TAMANHO_MODALIDADE" IS NULL) OR (jsonb_typeof("DS_TAMANHO_MODALIDADE") = 'object'::text)))),
-    CONSTRAINT "CK_PRECLASSVAGA_QT" CHECK ((("QT_INSCRITO" >= 0) AND ("QT_ELIMINADO" >= 0) AND ("QT_RANQUEADO" >= 0) AND ("QT_LOTE" >= 0) AND ("QT_DIVERGENCIA" >= 0) AND ("QT_SEM_ART" >= 0) AND ("QT_ACIMA_CORTE" >= 0) AND (("NU_ULTIMO_LOTE" >= 0) AND ("NU_ULTIMO_LOTE" <= 999)) AND (("QT_VAGA_IMEDIATA" IS NULL) OR ("QT_VAGA_IMEDIATA" >= 0)) AND (("QT_TAMANHO_LOTE" IS NULL) OR (("QT_TAMANHO_LOTE" >= 0) AND ("QT_TAMANHO_LOTE" <= 100000))))),
-    CONSTRAINT "CK_PRECLASSVAGA_STCR" CHECK ((("ST_CADASTRO_RESERVA")::text = ANY (ARRAY[('S'::character varying)::text, ('N'::character varying)::text])))
-);
-
---
--- Name: TABLE "TB_PRE_CLASSIF_VAGA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public."TB_PRE_CLASSIF_VAGA" IS 'Resumo da pré-classificação de cada vaga na última execução do job: quadro de vagas, tamanho do lote e como foi contado, linha de corte, contagens e avisos (códigos).';
-
---
--- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."CO_MONITORAMENTO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."CO_MONITORAMENTO" IS 'Edital.';
-
---
--- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."CO_VAGA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."CO_VAGA" IS 'Código da vaga da Empregare.';
-
---
--- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."CO_EXECUCAO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."CO_EXECUCAO" IS 'Última execução que gravou a vaga.';
-
---
--- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."NU_VERSAO_REGRA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."NU_VERSAO_REGRA" IS 'Versão da regra da avaliação usada.';
-
---
--- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."CO_QUADRO_VAGA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."CO_QUADRO_VAGA" IS 'Linha do quadro de vagas ligada à vaga (FC_EMPREGARE_VAGAS_DO_QUADRO), lida pelo banco na gravação.';
-
---
--- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."NO_CARGO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."NO_CARGO" IS 'Cargo do quadro (cabeçalho das listas).';
-
---
--- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."NO_LOTACAO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."NO_LOTACAO" IS 'Lotação do quadro.';
-
---
--- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."QT_VAGA_IMEDIATA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."QT_VAGA_IMEDIATA" IS 'Vagas imediatas do quadro; nulo sem quadro (o lote então precisa de tamanho definido para a vaga).';
-
---
--- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."ST_CADASTRO_RESERVA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."ST_CADASTRO_RESERVA" IS 'S: a linha do quadro tem cadastro reserva.';
-
---
--- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."QT_INSCRITO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."QT_INSCRITO" IS 'Inscritos considerados (contados no banco).';
-
---
--- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."QT_ELIMINADO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."QT_ELIMINADO" IS 'Eliminados automáticos.';
-
---
--- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."QT_RANQUEADO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."QT_RANQUEADO" IS 'Na Provisória (não eliminados).';
-
---
--- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."QT_LOTE"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."QT_LOTE" IS 'No lote (NO_LOTE e ANALISADO).';
-
---
--- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."QT_TAMANHO_LOTE"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."QT_TAMANHO_LOTE" IS 'Tamanho do lote pela regra; nulo quando não dá para calcular (sem quadro).';
-
---
--- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."DS_TAMANHO_LOTE"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."DS_TAMANHO_LOTE" IS 'Como o tamanho foi contado ("3 × (11 + CR) = 36", "40 (definido para a vaga)").';
-
---
--- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."DS_TAMANHO_MODALIDADE"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."DS_TAMANHO_MODALIDADE" IS 'No lote por modalidade, o tamanho de cada lista ({"AC": 30, "PP": 6}).';
-
---
--- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."VL_ART_CORTE"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."VL_ART_CORTE" IS 'Linha de corte: a menor nota dentro do lote.';
-
---
--- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."QT_DIVERGENCIA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."QT_DIVERGENCIA" IS 'Inscritos com ART divergente da nota declarada.';
-
---
--- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."QT_SEM_ART"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."QT_SEM_ART" IS 'Inscritos na Provisória sem ART no arquivo.';
-
---
--- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."QT_ACIMA_CORTE"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."QT_ACIMA_CORTE" IS 'Fora do lote com nota acima da linha de corte (entraram depois do recorte; quem está no lote só sai eliminado).';
-
---
--- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."NU_ULTIMO_LOTE"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."NU_ULTIMO_LOTE" IS 'Maior número de lote já usado na vaga (a próxima reposição é o seguinte).';
-
---
--- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."DS_AVISO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."DS_AVISO" IS 'Avisos da vaga (códigos: SEM_QUADRO, ART_AUSENTE, LINHA_PARADA, FORA_DO_LOTE_ACIMA_DO_CORTE, COLUNA_AUSENTE:<regra>…).';
-
---
--- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."DT_CRIACAO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."DT_CRIACAO" IS 'Primeira gravação.';
-
---
--- Name: COLUMN "TB_PRE_CLASSIF_VAGA"."DT_ATUALIZACAO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_PRE_CLASSIF_VAGA"."DT_ATUALIZACAO" IS 'Última gravação.';
-
---
--- Name: CONSTRAINT "CK_PRECLASSVAGA_JSON" ON "TB_PRE_CLASSIF_VAGA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_PRECLASSVAGA_JSON" ON public."TB_PRE_CLASSIF_VAGA" IS 'Avisos em lista; tamanhos por modalidade em objeto.';
-
---
--- Name: CONSTRAINT "CK_PRECLASSVAGA_QT" ON "TB_PRE_CLASSIF_VAGA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_PRECLASSVAGA_QT" ON public."TB_PRE_CLASSIF_VAGA" IS 'Contagens e tamanhos dentro dos limites.';
-
---
--- Name: CONSTRAINT "CK_PRECLASSVAGA_STCR" ON "TB_PRE_CLASSIF_VAGA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_PRECLASSVAGA_STCR" ON public."TB_PRE_CLASSIF_VAGA" IS 'Flag S/N.';
 
 --
 -- Name: TB_RASCUNHO_REGRA; Type: TABLE; Schema: public; Owner: -
@@ -53190,86 +55751,6 @@ COMMENT ON CONSTRAINT "CK_TAREFAGEND_NOTAREFA" ON public."TB_TAREFA_AGENDADA" IS
 COMMENT ON CONSTRAINT "CK_TAREFAGEND_STPREFIXO" ON public."TB_TAREFA_AGENDADA" IS 'S ou N.';
 
 --
--- Name: TB_VAGA_IMEDIATA; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public."TB_VAGA_IMEDIATA" (
-    "CO_EDITAL" text NOT NULL,
-    "CO_VAGA" text NOT NULL,
-    "NO_CARGO" text,
-    "QT_VAGA_IMEDIATA" integer DEFAULT 0 NOT NULL,
-    "ST_QUADRO_MANUAL" character varying(1) DEFAULT 'N'::character varying NOT NULL,
-    "DS_QUADRO_MANUAL" jsonb DEFAULT '{}'::jsonb NOT NULL,
-    "CO_USUARIO_ATUALIZACAO" uuid NOT NULL,
-    "DT_CRIACAO" timestamp with time zone DEFAULT now() NOT NULL,
-    "DT_ATUALIZACAO" timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT "CK_VAGA_IMEDIATA_COVAGA" CHECK ((NULLIF(btrim("CO_VAGA"), ''::text) IS NOT NULL)),
-    CONSTRAINT "CK_VAGA_IMEDIATA_QT" CHECK (("QT_VAGA_IMEDIATA" >= 0)),
-    CONSTRAINT "CK_VAGA_IMEDIATA_QUADRO" CHECK ((jsonb_typeof("DS_QUADRO_MANUAL") = 'object'::text)),
-    CONSTRAINT "CK_VAGA_IMEDIATA_STMANUAL" CHECK ((("ST_QUADRO_MANUAL")::text = ANY (ARRAY[('S'::character varying)::text, ('N'::character varying)::text])))
-);
-
---
--- Name: TABLE "TB_VAGA_IMEDIATA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public."TB_VAGA_IMEDIATA" IS 'Vagas imediatas de um codigo de vaga. Ausencia de linha significa que a vaga segue o total padrao do edital.';
-
---
--- Name: COLUMN "TB_VAGA_IMEDIATA"."CO_EDITAL"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_VAGA_IMEDIATA"."CO_EDITAL" IS 'Identificador do edital em TB_MONITORAMENTO_INDIGENA, como texto.';
-
---
--- Name: COLUMN "TB_VAGA_IMEDIATA"."CO_VAGA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_VAGA_IMEDIATA"."CO_VAGA" IS 'Codigo da vaga como veio no XLSX da lista de aprovados (coluna codigo_vaga).';
-
---
--- Name: COLUMN "TB_VAGA_IMEDIATA"."NO_CARGO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_VAGA_IMEDIATA"."NO_CARGO" IS 'Cargo da vaga, como veio na lista de aprovados.';
-
---
--- Name: COLUMN "TB_VAGA_IMEDIATA"."QT_VAGA_IMEDIATA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_VAGA_IMEDIATA"."QT_VAGA_IMEDIATA" IS 'Total de vagas de provimento imediato desta vaga. Zero significa somente cadastro de reserva.';
-
---
--- Name: COLUMN "TB_VAGA_IMEDIATA"."ST_QUADRO_MANUAL"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_VAGA_IMEDIATA"."ST_QUADRO_MANUAL" IS 'S: DS_QUADRO_MANUAL manda. N: o quadro e derivado do total e dos percentuais do modelo.';
-
---
--- Name: COLUMN "TB_VAGA_IMEDIATA"."DS_QUADRO_MANUAL"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_VAGA_IMEDIATA"."DS_QUADRO_MANUAL" IS 'Objeto JSON com uma chave por CO_CATEGORIA do modelo e a quantidade de vagas. So vale com ST_QUADRO_MANUAL = S.';
-
---
--- Name: COLUMN "TB_VAGA_IMEDIATA"."CO_USUARIO_ATUALIZACAO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_VAGA_IMEDIATA"."CO_USUARIO_ATUALIZACAO" IS 'Usuário (auth.uid()) da última alteração.';
-
---
--- Name: COLUMN "TB_VAGA_IMEDIATA"."DT_CRIACAO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_VAGA_IMEDIATA"."DT_CRIACAO" IS 'Quando a linha foi criada.';
-
---
--- Name: COLUMN "TB_VAGA_IMEDIATA"."DT_ATUALIZACAO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_VAGA_IMEDIATA"."DT_ATUALIZACAO" IS 'Quando a linha foi alterada pela última vez.';
-
---
 -- Name: TD_ALDEIA_DSEI; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -54653,6 +57134,39 @@ ALTER TABLE public."TH_DEMANDA_INTERNA" ALTER COLUMN "CO_EVENTO" ADD GENERATED A
 );
 
 --
+-- Name: TH_EDITAL_CRITICO; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."TH_EDITAL_CRITICO" (
+    "CO_HISTORICO" bigint NOT NULL,
+    "CO_MONITORAMENTO" uuid NOT NULL,
+    "TP_ACAO" text NOT NULL,
+    "DS_MOTIVO" text NOT NULL,
+    "CO_USUARIO" uuid,
+    "DT_REGISTRO" timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT "TH_EDITAL_CRITICO_TP_ACAO_check" CHECK (("TP_ACAO" = ANY (ARRAY['MARCAR'::text, 'ALTERAR'::text, 'DESMARCAR'::text])))
+);
+
+--
+-- Name: TABLE "TH_EDITAL_CRITICO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public."TH_EDITAL_CRITICO" IS 'Histórico da marcação manual de edital crítico (MARCAR, ALTERAR, DESMARCAR), com motivo e quem. 20261110150000.';
+
+--
+-- Name: TH_EDITAL_CRITICO_CO_HISTORICO_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public."TH_EDITAL_CRITICO" ALTER COLUMN "CO_HISTORICO" ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public."TH_EDITAL_CRITICO_CO_HISTORICO_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
 -- Name: TH_ENTREVISTA_AVALIACAO; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -54909,6 +57423,265 @@ ALTER TABLE public."TH_FICHA_ANALISE" ALTER COLUMN "CO_HISTORICO_FICHA" ADD GENE
 );
 
 --
+-- Name: TH_FONTE_COLUNA_PAINEL; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."TH_FONTE_COLUNA_PAINEL" (
+    "SQ_HISTORICO" bigint NOT NULL,
+    "CO_AREA" text NOT NULL,
+    "CO_RELATORIO" character varying(40) NOT NULL,
+    "CO_COLUNA" character varying(40) NOT NULL,
+    "NO_VISAO_ANTES" character varying(63),
+    "NO_COLUNA_VISAO_ANTES" character varying(63),
+    "NO_VISAO_DEPOIS" character varying(63),
+    "NO_COLUNA_VISAO_DEPOIS" character varying(63),
+    "DS_FONTE_ANTES" character varying(300) NOT NULL,
+    "DS_FONTE_DEPOIS" character varying(300) NOT NULL,
+    "DS_MOTIVO" character varying(500) NOT NULL,
+    "CO_USUARIO_ALTERACAO" uuid NOT NULL,
+    "DT_ALTERACAO" timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
+-- Name: TABLE "TH_FONTE_COLUNA_PAINEL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public."TH_FONTE_COLUNA_PAINEL" IS 'Histórico das trocas de fonte das colunas dos Painéis: de qual fonte para qual, o motivo, quem e quando.';
+
+--
+-- Name: COLUMN "TH_FONTE_COLUNA_PAINEL"."SQ_HISTORICO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_FONTE_COLUNA_PAINEL"."SQ_HISTORICO" IS 'Identificador da troca.';
+
+--
+-- Name: COLUMN "TH_FONTE_COLUNA_PAINEL"."CO_AREA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_FONTE_COLUNA_PAINEL"."CO_AREA" IS 'Área da troca.';
+
+--
+-- Name: COLUMN "TH_FONTE_COLUNA_PAINEL"."CO_RELATORIO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_FONTE_COLUNA_PAINEL"."CO_RELATORIO" IS 'Relatório da troca.';
+
+--
+-- Name: COLUMN "TH_FONTE_COLUNA_PAINEL"."CO_COLUNA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_FONTE_COLUNA_PAINEL"."CO_COLUNA" IS 'Coluna da troca.';
+
+--
+-- Name: COLUMN "TH_FONTE_COLUNA_PAINEL"."NO_VISAO_ANTES"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_FONTE_COLUNA_PAINEL"."NO_VISAO_ANTES" IS 'Visão de antes (nulo = padrão).';
+
+--
+-- Name: COLUMN "TH_FONTE_COLUNA_PAINEL"."NO_COLUNA_VISAO_ANTES"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_FONTE_COLUNA_PAINEL"."NO_COLUNA_VISAO_ANTES" IS 'Coluna da visão de antes (nulo = padrão).';
+
+--
+-- Name: COLUMN "TH_FONTE_COLUNA_PAINEL"."NO_VISAO_DEPOIS"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_FONTE_COLUNA_PAINEL"."NO_VISAO_DEPOIS" IS 'Visão de depois (nulo = padrão).';
+
+--
+-- Name: COLUMN "TH_FONTE_COLUNA_PAINEL"."NO_COLUNA_VISAO_DEPOIS"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_FONTE_COLUNA_PAINEL"."NO_COLUNA_VISAO_DEPOIS" IS 'Coluna da visão de depois (nulo = padrão).';
+
+--
+-- Name: COLUMN "TH_FONTE_COLUNA_PAINEL"."DS_FONTE_ANTES"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_FONTE_COLUNA_PAINEL"."DS_FONTE_ANTES" IS 'A fonte de antes, como aparecia na tela.';
+
+--
+-- Name: COLUMN "TH_FONTE_COLUNA_PAINEL"."DS_FONTE_DEPOIS"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_FONTE_COLUNA_PAINEL"."DS_FONTE_DEPOIS" IS 'A fonte de depois, como aparece na tela.';
+
+--
+-- Name: COLUMN "TH_FONTE_COLUNA_PAINEL"."DS_MOTIVO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_FONTE_COLUNA_PAINEL"."DS_MOTIVO" IS 'Motivo informado na troca.';
+
+--
+-- Name: COLUMN "TH_FONTE_COLUNA_PAINEL"."CO_USUARIO_ALTERACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_FONTE_COLUNA_PAINEL"."CO_USUARIO_ALTERACAO" IS 'auth.uid() de quem trocou.';
+
+--
+-- Name: COLUMN "TH_FONTE_COLUNA_PAINEL"."DT_ALTERACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_FONTE_COLUNA_PAINEL"."DT_ALTERACAO" IS 'Quando trocou.';
+
+--
+-- Name: TH_FONTE_COLUNA_PAINEL_SQ_HISTORICO_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public."TH_FONTE_COLUNA_PAINEL" ALTER COLUMN "SQ_HISTORICO" ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public."TH_FONTE_COLUNA_PAINEL_SQ_HISTORICO_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
+-- Name: TH_FUNDAMENTO_ELIMINACAO; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."TH_FUNDAMENTO_ELIMINACAO" (
+    "CO_HISTORICO" bigint NOT NULL,
+    "CO_MONITORAMENTO" uuid NOT NULL,
+    "CO_MOTIVO_ELIMINACAO" character varying(30) NOT NULL,
+    "NU_VERSAO_REGRA" integer NOT NULL,
+    "DS_HASH_REGRA" character varying(64) NOT NULL,
+    "DS_REGRA_MOTIVO" jsonb NOT NULL,
+    "DS_ITEM_EDITAL" character varying(30) NOT NULL,
+    "DS_FONTE" character varying(500) NOT NULL,
+    "DS_JUSTIFICATIVA" character varying(500),
+    "TP_PAPEL" character varying(15) NOT NULL,
+    "CO_USUARIO" uuid NOT NULL,
+    "DT_CONFERENCIA" timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT "CK_THFUNDELIM_COMOTIVO" CHECK ((("CO_MOTIVO_ELIMINACAO")::text ~ '^[A-Z][A-Z0-9_]{1,29}$'::text)),
+    CONSTRAINT "CK_THFUNDELIM_DSHASH" CHECK ((("DS_HASH_REGRA")::text ~ '^[0-9a-f]{64}$'::text)),
+    CONSTRAINT "CK_THFUNDELIM_FONTE" CHECK ((((length(btrim(("DS_FONTE")::text)) >= 10) AND (length(btrim(("DS_FONTE")::text)) <= 500)) AND (("DS_FONTE")::text = btrim(("DS_FONTE")::text)))),
+    CONSTRAINT "CK_THFUNDELIM_ITEM" CHECK ((("DS_ITEM_EDITAL")::text ~ '^[0-9]{1,3}(\.[0-9]{1,3}){0,6}$'::text)),
+    CONSTRAINT "CK_THFUNDELIM_JUSTIFICATIVA" CHECK ((("DS_JUSTIFICATIVA" IS NULL) OR (((length(btrim(("DS_JUSTIFICATIVA")::text)) >= 15) AND (length(btrim(("DS_JUSTIFICATIVA")::text)) <= 500)) AND (("DS_JUSTIFICATIVA")::text = btrim(("DS_JUSTIFICATIVA")::text))))),
+    CONSTRAINT "CK_THFUNDELIM_NUVERSAO" CHECK (("NU_VERSAO_REGRA" >= 1)),
+    CONSTRAINT "CK_THFUNDELIM_REGRAMOTIVO" CHECK ((jsonb_typeof("DS_REGRA_MOTIVO") = 'object'::text)),
+    CONSTRAINT "CK_THFUNDELIM_TPPAPEL" CHECK ((("TP_PAPEL")::text = ANY ((ARRAY['EDITAL_GESTOR'::character varying, 'COORDENADOR'::character varying, 'ADMIN_GLOBAL'::character varying])::text[])))
+);
+
+--
+-- Name: TABLE "TH_FUNDAMENTO_ELIMINACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public."TH_FUNDAMENTO_ELIMINACAO" IS 'Histórico imutável das conferências do fundamento normativo de cada motivo de eliminação da Triagem (issue #593, 20261110215930): o item oficial do edital escolhido por quem tem a autoridade (gestor ou coordenador do edital, ou administrador global), a fonte, a versão da regra da Triagem e o retrato do motivo nela, o papel, quem e quando. A vigente é a última de cada edital e motivo (private."FC_FUNDAMENTO_DA_ELIMINACAO"). Retificação = linha nova com justificativa. Grava só conferir_fundamento_da_eliminacao; lê obter_fundamentos_da_eliminacao. Nunca altera motivo, nota, decisão ou resultado.';
+
+--
+-- Name: COLUMN "TH_FUNDAMENTO_ELIMINACAO"."CO_HISTORICO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_FUNDAMENTO_ELIMINACAO"."CO_HISTORICO" IS 'Identificador e ordem da conferência.';
+
+--
+-- Name: COLUMN "TH_FUNDAMENTO_ELIMINACAO"."CO_MONITORAMENTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_FUNDAMENTO_ELIMINACAO"."CO_MONITORAMENTO" IS 'Edital (TB_MONITORAMENTO_INDIGENA.id).';
+
+--
+-- Name: COLUMN "TH_FUNDAMENTO_ELIMINACAO"."CO_MOTIVO_ELIMINACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_FUNDAMENTO_ELIMINACAO"."CO_MOTIVO_ELIMINACAO" IS 'Código do motivo de eliminação da Triagem (TB_PRE_CLASSIFICACAO.CO_MOTIVO_ELIMINACAO; requisitos.eliminacao_automatica[].codigo da regra).';
+
+--
+-- Name: COLUMN "TH_FUNDAMENTO_ELIMINACAO"."NU_VERSAO_REGRA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_FUNDAMENTO_ELIMINACAO"."NU_VERSAO_REGRA" IS 'Versão da regra da Triagem (TH_REGRA_TRIAGEM.NU_VERSAO), vigente e conferida no momento da conferência.';
+
+--
+-- Name: COLUMN "TH_FUNDAMENTO_ELIMINACAO"."DS_HASH_REGRA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_FUNDAMENTO_ELIMINACAO"."DS_HASH_REGRA" IS 'Hash dessa versão da regra (TH_REGRA_TRIAGEM.DS_HASH).';
+
+--
+-- Name: COLUMN "TH_FUNDAMENTO_ELIMINACAO"."DS_REGRA_MOTIVO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_FUNDAMENTO_ELIMINACAO"."DS_REGRA_MOTIVO" IS 'Retrato da entrada do motivo na regra conferida (requisitos.eliminacao_automatica[]). O fundamento vale enquanto a regra vigente tiver a mesma entrada.';
+
+--
+-- Name: COLUMN "TH_FUNDAMENTO_ELIMINACAO"."DS_ITEM_EDITAL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_FUNDAMENTO_ELIMINACAO"."DS_ITEM_EDITAL" IS 'Item oficial do edital (ex.: 6.4 ou 8.2.6), escolhido por quem confere; nunca presumido.';
+
+--
+-- Name: COLUMN "TH_FUNDAMENTO_ELIMINACAO"."DS_FONTE"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_FUNDAMENTO_ELIMINACAO"."DS_FONTE" IS 'Fonte em que o item foi conferido (ex.: Edital nº 114/2026 publicado em …, retificação nº …).';
+
+--
+-- Name: COLUMN "TH_FUNDAMENTO_ELIMINACAO"."DS_JUSTIFICATIVA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_FUNDAMENTO_ELIMINACAO"."DS_JUSTIFICATIVA" IS 'Justificativa: obrigatória para retificar uma conferência anterior e para usar o item da nota mínima do lote numa eliminação da Triagem.';
+
+--
+-- Name: COLUMN "TH_FUNDAMENTO_ELIMINACAO"."TP_PAPEL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_FUNDAMENTO_ELIMINACAO"."TP_PAPEL" IS 'Autoridade com que conferiu: EDITAL_GESTOR ou COORDENADOR (FC_GESTOR_DO_EDITAL) ou ADMIN_GLOBAL (is_master).';
+
+--
+-- Name: COLUMN "TH_FUNDAMENTO_ELIMINACAO"."CO_USUARIO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_FUNDAMENTO_ELIMINACAO"."CO_USUARIO" IS 'Quem conferiu (auth.users.id).';
+
+--
+-- Name: COLUMN "TH_FUNDAMENTO_ELIMINACAO"."DT_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_FUNDAMENTO_ELIMINACAO"."DT_CONFERENCIA" IS 'Quando conferiu.';
+
+--
+-- Name: CONSTRAINT "CK_THFUNDELIM_FONTE" ON "TH_FUNDAMENTO_ELIMINACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_THFUNDELIM_FONTE" ON public."TH_FUNDAMENTO_ELIMINACAO" IS 'Fonte de 10 a 500 caracteres, sem espaço nas pontas.';
+
+--
+-- Name: CONSTRAINT "CK_THFUNDELIM_ITEM" ON "TH_FUNDAMENTO_ELIMINACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_THFUNDELIM_ITEM" ON public."TH_FUNDAMENTO_ELIMINACAO" IS 'Item numérico do edital, de 1 a 7 níveis (8, 8.2, 8.2.6…).';
+
+--
+-- Name: CONSTRAINT "CK_THFUNDELIM_JUSTIFICATIVA" ON "TH_FUNDAMENTO_ELIMINACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_THFUNDELIM_JUSTIFICATIVA" ON public."TH_FUNDAMENTO_ELIMINACAO" IS 'Justificativa ausente ou de 15 a 500 caracteres.';
+
+--
+-- Name: CONSTRAINT "CK_THFUNDELIM_TPPAPEL" ON "TH_FUNDAMENTO_ELIMINACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_THFUNDELIM_TPPAPEL" ON public."TH_FUNDAMENTO_ELIMINACAO" IS 'Papéis com autoridade para conferir.';
+
+--
+-- Name: TH_FUNDAMENTO_ELIMINACAO_CO_HISTORICO_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public."TH_FUNDAMENTO_ELIMINACAO" ALTER COLUMN "CO_HISTORICO" ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public."TH_FUNDAMENTO_ELIMINACAO_CO_HISTORICO_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
 -- Name: TH_GRUPO_ACESSO; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -55051,117 +57824,6 @@ COMMENT ON COLUMN public."TH_HORA_NASCIMENTO_CANDIDATO"."DT_REGISTRO" IS 'Quando
 --
 
 COMMENT ON CONSTRAINT "CK_HISTHORANASC_MUDOU" ON public."TH_HORA_NASCIMENTO_CANDIDATO" IS 'Só registra mudança de verdade.';
-
---
--- Name: TH_INSCRICAO_VAGA_EDITAL; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public."TH_INSCRICAO_VAGA_EDITAL" (
-    "CO_MONITORAMENTO" uuid NOT NULL,
-    "CO_VAGA" character varying(20) NOT NULL,
-    "DT_RETRATO" date NOT NULL,
-    "QT_INSCRITO" integer NOT NULL,
-    "QT_FINALIZADO" integer,
-    "QT_APTO" integer,
-    "QT_ELIMINADO" integer,
-    "ST_PREVIA" character varying(1) DEFAULT 'N'::character varying NOT NULL,
-    "CO_EXECUCAO" character varying(80) NOT NULL,
-    "DT_ATUALIZACAO" timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT "CK_INSCRVAGA_COEXECUCAO" CHECK ((("CO_EXECUCAO")::text ~ '^[A-Za-z0-9_-]{8,80}$'::text)),
-    CONSTRAINT "CK_INSCRVAGA_COVAGA" CHECK ((("CO_VAGA")::text ~ '^[0-9]{1,20}$'::text)),
-    CONSTRAINT "CK_INSCRVAGA_QT" CHECK ((("QT_INSCRITO" >= 0) AND ("QT_INSCRITO" <= 100000) AND ((COALESCE("QT_FINALIZADO", 0) >= 0) AND (COALESCE("QT_FINALIZADO", 0) <= "QT_INSCRITO")) AND ((COALESCE("QT_APTO", 0) >= 0) AND (COALESCE("QT_APTO", 0) <= "QT_INSCRITO")) AND ((COALESCE("QT_ELIMINADO", 0) >= 0) AND (COALESCE("QT_ELIMINADO", 0) <= "QT_INSCRITO")))),
-    CONSTRAINT "CK_INSCRVAGA_STPREVIA" CHECK ((("ST_PREVIA")::text = ANY (ARRAY[('S'::character varying)::text, ('N'::character varying)::text])))
-);
-
---
--- Name: TABLE "TH_INSCRICAO_VAGA_EDITAL"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public."TH_INSCRICAO_VAGA_EDITAL" IS 'Retrato diário das inscrições de cada vaga da Empregare de um edital (20261009140000): só contagens, nunca dado pessoal. Gravado pelo job da pré-classificação (gravar_retrato_inscricoes) durante as inscrições do cronograma; uma linha por edital, vaga e dia (o último retrato do dia vale). Lido por obter_acompanhamento_inscricoes (cartão Inscrições da aba Pré-classificação).';
-
---
--- Name: COLUMN "TH_INSCRICAO_VAGA_EDITAL"."CO_MONITORAMENTO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TH_INSCRICAO_VAGA_EDITAL"."CO_MONITORAMENTO" IS 'Edital (TB_MONITORAMENTO_INDIGENA.id).';
-
---
--- Name: COLUMN "TH_INSCRICAO_VAGA_EDITAL"."CO_VAGA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TH_INSCRICAO_VAGA_EDITAL"."CO_VAGA" IS 'Código da vaga na Empregare (TB_EMPREGARE_VAGA.CO_VAGA).';
-
---
--- Name: COLUMN "TH_INSCRICAO_VAGA_EDITAL"."DT_RETRATO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TH_INSCRICAO_VAGA_EDITAL"."DT_RETRATO" IS 'Dia do retrato (data de Brasília).';
-
---
--- Name: COLUMN "TH_INSCRICAO_VAGA_EDITAL"."QT_INSCRITO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TH_INSCRICAO_VAGA_EDITAL"."QT_INSCRITO" IS 'Candidatos ativos na vaga da Empregare (quem saiu do arquivo não conta).';
-
---
--- Name: COLUMN "TH_INSCRICAO_VAGA_EDITAL"."QT_FINALIZADO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TH_INSCRICAO_VAGA_EDITAL"."QT_FINALIZADO" IS 'Ativos com o questionário finalizado (colunas "SITUAÇÃO - <questionário>" = FINALIZADO); nulo quando o arquivo não tem a coluna.';
-
---
--- Name: COLUMN "TH_INSCRICAO_VAGA_EDITAL"."QT_APTO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TH_INSCRICAO_VAGA_EDITAL"."QT_APTO" IS 'Aptos para análise pela regra: no lote por nota mínima, não eliminados com a nota ≥ mínima; nas outras bases, no lote pela regra + acima do corte. Nulo sem regra.';
-
---
--- Name: COLUMN "TH_INSCRICAO_VAGA_EDITAL"."QT_ELIMINADO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TH_INSCRICAO_VAGA_EDITAL"."QT_ELIMINADO" IS 'Eliminados pela regra entre os ativos. Nulo sem regra.';
-
---
--- Name: COLUMN "TH_INSCRICAO_VAGA_EDITAL"."ST_PREVIA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TH_INSCRICAO_VAGA_EDITAL"."ST_PREVIA" IS 'S = aptos e eliminados de uma prévia (regra ainda não conferida; nada da classificação foi gravado).';
-
---
--- Name: COLUMN "TH_INSCRICAO_VAGA_EDITAL"."CO_EXECUCAO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TH_INSCRICAO_VAGA_EDITAL"."CO_EXECUCAO" IS 'Execução da pré-classificação que gravou (TL_PRE_CLASSIFICACAO.CO_EXECUCAO).';
-
---
--- Name: COLUMN "TH_INSCRICAO_VAGA_EDITAL"."DT_ATUALIZACAO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TH_INSCRICAO_VAGA_EDITAL"."DT_ATUALIZACAO" IS 'Quando o retrato do dia foi gravado pela última vez.';
-
---
--- Name: CONSTRAINT "CK_INSCRVAGA_COEXECUCAO" ON "TH_INSCRICAO_VAGA_EDITAL"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_INSCRVAGA_COEXECUCAO" ON public."TH_INSCRICAO_VAGA_EDITAL" IS 'Identificador de execução da pré-classificação.';
-
---
--- Name: CONSTRAINT "CK_INSCRVAGA_COVAGA" ON "TH_INSCRICAO_VAGA_EDITAL"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_INSCRVAGA_COVAGA" ON public."TH_INSCRICAO_VAGA_EDITAL" IS 'Código da vaga só com dígitos.';
-
---
--- Name: CONSTRAINT "CK_INSCRVAGA_QT" ON "TH_INSCRICAO_VAGA_EDITAL"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_INSCRVAGA_QT" ON public."TH_INSCRICAO_VAGA_EDITAL" IS 'Contagens não negativas e nunca maiores que os inscritos.';
-
---
--- Name: CONSTRAINT "CK_INSCRVAGA_STPREVIA" ON "TH_INSCRICAO_VAGA_EDITAL"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_INSCRVAGA_STPREVIA" ON public."TH_INSCRICAO_VAGA_EDITAL" IS 'S ou N.';
 
 --
 -- Name: TH_MODELO_CARTA_CONVOCACAO; Type: TABLE; Schema: public; Owner: -
@@ -57311,6 +59973,125 @@ CREATE TABLE public."TL_EVENTO_ACESSO" (
 );
 
 --
+-- Name: TL_EXPORTACAO_APROVADO; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."TL_EXPORTACAO_APROVADO" (
+    "CO_EXPORTACAO_APROVADO" uuid DEFAULT gen_random_uuid() NOT NULL,
+    "CO_AREA" text NOT NULL,
+    "TP_FORMATO" character varying(4) NOT NULL,
+    "DS_FILTRO" jsonb NOT NULL,
+    "QT_EDITAL" integer NOT NULL,
+    "QT_RECORTE" integer NOT NULL,
+    "QT_REGISTRO" integer NOT NULL,
+    "CO_USUARIO" uuid NOT NULL,
+    "NO_USUARIO" character varying(255),
+    "DS_EMAIL_USUARIO" character varying(320),
+    "DT_EMISSAO" timestamp with time zone DEFAULT now() NOT NULL,
+    "TP_CONTEUDO" character varying(10) DEFAULT 'LISTA'::character varying NOT NULL,
+    CONSTRAINT "CK_EXPAPROV_DSFILTRO" CHECK ((jsonb_typeof("DS_FILTRO") = 'object'::text)),
+    CONSTRAINT "CK_EXPAPROV_QUANTIDADES" CHECK ((("QT_EDITAL" >= 1) AND ("QT_RECORTE" >= 0) AND ("QT_REGISTRO" >= 0) AND ("QT_REGISTRO" <= "QT_RECORTE"))),
+    CONSTRAINT "CK_EXPAPROV_TPCONTEUDO" CHECK ((("TP_CONTEUDO")::text = ANY ((ARRAY['LISTA'::character varying, 'RESUMO'::character varying, 'DIRETORIA'::character varying])::text[]))),
+    CONSTRAINT "CK_EXPAPROV_TPFORMATO" CHECK ((("TP_FORMATO")::text = ANY ((ARRAY['XLSX'::character varying, 'CSV'::character varying, 'PDF'::character varying])::text[])))
+);
+
+--
+-- Name: TABLE "TL_EXPORTACAO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public."TL_EXPORTACAO_APROVADO" IS 'Cada exportação da Lista de aprovados (XLSX, CSV ou PDF, gerada no navegador): área, formato, conteúdo (lista, resumo ou relatório da diretoria), filtros, total do recorte no banco, registros exportados, quem e quando. Sem dado de candidato. Gravam registrar_exportacao_aprovados e exportar_aprovados_da_diretoria.';
+
+--
+-- Name: COLUMN "TL_EXPORTACAO_APROVADO"."CO_EXPORTACAO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TL_EXPORTACAO_APROVADO"."CO_EXPORTACAO_APROVADO" IS 'Identificador da exportação (sai no arquivo).';
+
+--
+-- Name: COLUMN "TL_EXPORTACAO_APROVADO"."CO_AREA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TL_EXPORTACAO_APROVADO"."CO_AREA" IS 'Área da lista exportada.';
+
+--
+-- Name: COLUMN "TL_EXPORTACAO_APROVADO"."TP_FORMATO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TL_EXPORTACAO_APROVADO"."TP_FORMATO" IS 'Formato do arquivo: XLSX, CSV ou PDF.';
+
+--
+-- Name: COLUMN "TL_EXPORTACAO_APROVADO"."DS_FILTRO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TL_EXPORTACAO_APROVADO"."DS_FILTRO" IS 'Filtros da exportação: editais (ids), cargos, modalidades, situações e se veio do recorte de um aviso. Sem dado de candidato.';
+
+--
+-- Name: COLUMN "TL_EXPORTACAO_APROVADO"."QT_EDITAL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TL_EXPORTACAO_APROVADO"."QT_EDITAL" IS 'Quantos editais entraram na exportação.';
+
+--
+-- Name: COLUMN "TL_EXPORTACAO_APROVADO"."QT_RECORTE"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TL_EXPORTACAO_APROVADO"."QT_RECORTE" IS 'Candidatos da lista vigente nos editais, cargos e modalidades pedidos, contados pelo banco na hora.';
+
+--
+-- Name: COLUMN "TL_EXPORTACAO_APROVADO"."QT_REGISTRO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TL_EXPORTACAO_APROVADO"."QT_REGISTRO" IS 'Registros que saíram no arquivo (com o filtro de situação e o recorte do aviso).';
+
+--
+-- Name: COLUMN "TL_EXPORTACAO_APROVADO"."CO_USUARIO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TL_EXPORTACAO_APROVADO"."CO_USUARIO" IS 'Quem exportou (auth.uid()).';
+
+--
+-- Name: COLUMN "TL_EXPORTACAO_APROVADO"."NO_USUARIO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TL_EXPORTACAO_APROVADO"."NO_USUARIO" IS 'Nome de quem exportou, no momento.';
+
+--
+-- Name: COLUMN "TL_EXPORTACAO_APROVADO"."DS_EMAIL_USUARIO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TL_EXPORTACAO_APROVADO"."DS_EMAIL_USUARIO" IS 'E-mail de quem exportou, no momento.';
+
+--
+-- Name: COLUMN "TL_EXPORTACAO_APROVADO"."DT_EMISSAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TL_EXPORTACAO_APROVADO"."DT_EMISSAO" IS 'Data e hora da emissão (do servidor; sai no arquivo).';
+
+--
+-- Name: COLUMN "TL_EXPORTACAO_APROVADO"."TP_CONTEUDO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TL_EXPORTACAO_APROVADO"."TP_CONTEUDO" IS 'O que saiu no arquivo: LISTA (nominal, aba Aprovados) ou RESUMO (contagem por cargo e status, sem dado de candidato).';
+
+--
+-- Name: CONSTRAINT "CK_EXPAPROV_DSFILTRO" ON "TL_EXPORTACAO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_EXPAPROV_DSFILTRO" ON public."TL_EXPORTACAO_APROVADO" IS 'Os filtros são um objeto JSON.';
+
+--
+-- Name: CONSTRAINT "CK_EXPAPROV_QUANTIDADES" ON "TL_EXPORTACAO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_EXPAPROV_QUANTIDADES" ON public."TL_EXPORTACAO_APROVADO" IS 'Ao menos um edital; os registros exportados não passam do recorte.';
+
+--
+-- Name: CONSTRAINT "CK_EXPAPROV_TPFORMATO" ON "TL_EXPORTACAO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_EXPAPROV_TPFORMATO" ON public."TL_EXPORTACAO_APROVADO" IS 'Formatos válidos.';
+
+--
 -- Name: TL_SYNC_ANALISE; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -58509,6 +61290,19 @@ ALTER TABLE ONLY private."TH_COORDENADA_MAPA_SAUDE_INDIG"
     ADD CONSTRAINT "UK_THCOORD_DESFEITO" UNIQUE ("CO_HISTORICO_DESFEITO");
 
 --
+-- Name: TB_ADMISSAO_CONCILIADA PK_ADMISSAO_CONCILIADA; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TB_ADMISSAO_CONCILIADA"
+    ADD CONSTRAINT "PK_ADMISSAO_CONCILIADA" PRIMARY KEY ("CO_VINCULO");
+
+--
+-- Name: CONSTRAINT "PK_ADMISSAO_CONCILIADA" ON "TB_ADMISSAO_CONCILIADA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "PK_ADMISSAO_CONCILIADA" ON public."TB_ADMISSAO_CONCILIADA" IS 'Um registro por vínculo.';
+
+--
 -- Name: TB_ANEXO_CANDIDATO_APROVADO PK_ANEXO_CANDIDATO_APROVADO; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -58737,6 +61531,13 @@ ALTER TABLE ONLY public."TB_AREA"
 
 ALTER TABLE ONLY public."TB_AVISO_CONFERENCIA"
     ADD CONSTRAINT "PK_TB_AVISO_CONFERENCIA" PRIMARY KEY ("CO_AVISO_CONFERENCIA");
+
+--
+-- Name: TB_CALCULO_RELATORIO_PAINEL PK_TB_CALCULO_RELATORIO_PAINEL; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TB_CALCULO_RELATORIO_PAINEL"
+    ADD CONSTRAINT "PK_TB_CALCULO_RELATORIO_PAINEL" PRIMARY KEY ("CO_AREA", "CO_RELATORIO");
 
 --
 -- Name: TB_CASO_AVISO_CONFERENCIA PK_TB_CASO_AVISO_CONFERENCIA; Type: CONSTRAINT; Schema: public; Owner: -
@@ -58968,6 +61769,13 @@ ALTER TABLE ONLY public."TB_FILTRO_FILA_ANALISE"
 COMMENT ON CONSTRAINT "PK_TB_FILTRO_FILA_ANALISE" ON public."TB_FILTRO_FILA_ANALISE" IS 'Identificador do filtro.';
 
 --
+-- Name: TB_FONTE_COLUNA_PAINEL PK_TB_FONTE_COLUNA_PAINEL; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TB_FONTE_COLUNA_PAINEL"
+    ADD CONSTRAINT "PK_TB_FONTE_COLUNA_PAINEL" PRIMARY KEY ("CO_AREA", "CO_RELATORIO", "CO_COLUNA");
+
+--
 -- Name: TB_GRUPO_ACESSO PK_TB_GRUPO_ACESSO; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -59000,6 +61808,13 @@ COMMENT ON CONSTRAINT "PK_TB_ITEM_AJUSTE_PONTUACAO" ON public."TB_ITEM_AJUSTE_PO
 
 ALTER TABLE ONLY public."TB_LEITURA_ARQUIVO"
     ADD CONSTRAINT "PK_TB_LEITURA_ARQUIVO" PRIMARY KEY ("CO_LEITURA_ARQUIVO");
+
+--
+-- Name: TB_LINHA_RELATORIO_PAINEL PK_TB_LINHA_RELATORIO_PAINEL; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TB_LINHA_RELATORIO_PAINEL"
+    ADD CONSTRAINT "PK_TB_LINHA_RELATORIO_PAINEL" PRIMARY KEY ("CO_AREA", "CO_RELATORIO", "NU_POSICAO");
 
 --
 -- Name: TB_LISTA_CLASSIFICACAO PK_TB_LISTA_CLASSIFICACAO; Type: CONSTRAINT; Schema: public; Owner: -
@@ -59476,6 +62291,20 @@ ALTER TABLE ONLY public."TH_FICHA_ANALISE"
 COMMENT ON CONSTRAINT "PK_TH_FICHA_ANALISE" ON public."TH_FICHA_ANALISE" IS 'Identificador do registro.';
 
 --
+-- Name: TH_FONTE_COLUNA_PAINEL PK_TH_FONTE_COLUNA_PAINEL; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TH_FONTE_COLUNA_PAINEL"
+    ADD CONSTRAINT "PK_TH_FONTE_COLUNA_PAINEL" PRIMARY KEY ("SQ_HISTORICO");
+
+--
+-- Name: TH_FUNDAMENTO_ELIMINACAO PK_TH_FUNDAMENTO_ELIMINACAO; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TH_FUNDAMENTO_ELIMINACAO"
+    ADD CONSTRAINT "PK_TH_FUNDAMENTO_ELIMINACAO" PRIMARY KEY ("CO_HISTORICO");
+
+--
 -- Name: TH_GRUPO_ACESSO PK_TH_GRUPO_ACESSO; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -59690,6 +62519,13 @@ ALTER TABLE ONLY public."TL_DISPARO_ROBO"
 COMMENT ON CONSTRAINT "PK_TL_DISPARO_ROBO" ON public."TL_DISPARO_ROBO" IS 'Uma linha por pedido.';
 
 --
+-- Name: TL_EXPORTACAO_APROVADO PK_TL_EXPORTACAO_APROVADO; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TL_EXPORTACAO_APROVADO"
+    ADD CONSTRAINT "PK_TL_EXPORTACAO_APROVADO" PRIMARY KEY ("CO_EXPORTACAO_APROVADO");
+
+--
 -- Name: TL_PRE_CLASSIFICACAO PK_TL_PRE_CLASSIFICACAO; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -59738,6 +62574,13 @@ ALTER TABLE ONLY public."TB_VAGA_IMEDIATA"
     ADD CONSTRAINT "PK_VAGA_IMEDIATA" PRIMARY KEY ("CO_EDITAL", "CO_VAGA");
 
 --
+-- Name: TB_EDITAL_CRITICO TB_EDITAL_CRITICO_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TB_EDITAL_CRITICO"
+    ADD CONSTRAINT "TB_EDITAL_CRITICO_pkey" PRIMARY KEY ("CO_MONITORAMENTO");
+
+--
 -- Name: TB_MODELO_CONVOCACAO TB_MODELO_CONVOCACAO_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -59757,6 +62600,13 @@ ALTER TABLE ONLY public."TB_PERMISSAO_RECURSO"
 
 ALTER TABLE ONLY public."TB_PREVISAO_ENTREVISTA_EDITAL"
     ADD CONSTRAINT "TB_PREVISAO_ENTREVISTA_EDITAL_pkey" PRIMARY KEY ("CO_MONITORAMENTO");
+
+--
+-- Name: TH_EDITAL_CRITICO TH_EDITAL_CRITICO_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TH_EDITAL_CRITICO"
+    ADD CONSTRAINT "TH_EDITAL_CRITICO_pkey" PRIMARY KEY ("CO_HISTORICO");
 
 --
 -- Name: TH_PERMISSAO_RECURSO TH_PERMISSAO_RECURSO_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -60516,6 +63366,18 @@ CREATE INDEX "IN_ACESSOFICHA_FICHA" ON public."TL_ACESSO_FICHA_ANALISE" USING bt
 COMMENT ON INDEX public."IN_ACESSOFICHA_FICHA" IS 'Acessos de uma ficha na ordem.';
 
 --
+-- Name: IN_ADMISCONCIL_MONITORAMENTO; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "IN_ADMISCONCIL_MONITORAMENTO" ON public."TB_ADMISSAO_CONCILIADA" USING btree ("CO_MONITORAMENTO", "DT_ADMISSAO");
+
+--
+-- Name: INDEX "IN_ADMISCONCIL_MONITORAMENTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON INDEX public."IN_ADMISCONCIL_MONITORAMENTO" IS 'A 1ª e a última admissão por edital (listar_acompanhamento_da_visao_geral).';
+
+--
 -- Name: IN_AJUSTEPONTREC_EDITAL; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -60820,6 +63682,30 @@ COMMENT ON INDEX public."IN_ENTREVISTA_AREA_ATIVO" IS 'Entrevistas ativas por á
 --
 
 CREATE UNIQUE INDEX "IN_ENTRLIBERACAO_VIGENTE" ON public."TB_ENTREVISTA_LIBERACAO" USING btree ("CO_MONITORAMENTO") WHERE (("ST_REGISTRO_ATIVO")::text = 'S'::text);
+
+--
+-- Name: IN_EXPAPROV_AREA_DATA; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "IN_EXPAPROV_AREA_DATA" ON public."TL_EXPORTACAO_APROVADO" USING btree ("CO_AREA", "DT_EMISSAO" DESC);
+
+--
+-- Name: INDEX "IN_EXPAPROV_AREA_DATA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON INDEX public."IN_EXPAPROV_AREA_DATA" IS 'Exportações da área, das mais novas.';
+
+--
+-- Name: IN_EXPAPROV_USUARIO_DATA; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "IN_EXPAPROV_USUARIO_DATA" ON public."TL_EXPORTACAO_APROVADO" USING btree ("CO_USUARIO", "DT_EMISSAO" DESC);
+
+--
+-- Name: INDEX "IN_EXPAPROV_USUARIO_DATA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON INDEX public."IN_EXPAPROV_USUARIO_DATA" IS 'Exportações de cada usuário, das mais novas.';
 
 --
 -- Name: IN_FICHAANALISE_CONCLUIDA; Type: INDEX; Schema: public; Owner: -
@@ -61866,6 +64752,12 @@ CREATE INDEX "IN_HISTCONGELINSCR_COMONITOR_DTEVENTO" ON public."TH_CONGELAMENTO_
 COMMENT ON INDEX public."IN_HISTCONGELINSCR_COMONITOR_DTEVENTO" IS 'O histórico de um edital, do mais novo ao mais antigo.';
 
 --
+-- Name: IN_HISTFONTECOL_AREA_DATA; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "IN_HISTFONTECOL_AREA_DATA" ON public."TH_FONTE_COLUNA_PAINEL" USING btree ("CO_AREA", "CO_RELATORIO", "DT_ALTERACAO" DESC);
+
+--
 -- Name: IN_HISTHORANASC_ANALISE; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -61930,6 +64822,12 @@ CREATE INDEX "IN_HORANASCCANDIDATO_MONITORAMENTO" ON public."TB_HORA_NASCIMENTO_
 --
 
 COMMENT ON INDEX public."IN_HORANASCCANDIDATO_MONITORAMENTO" IS 'As horas de um edital (carga da Classificação).';
+
+--
+-- Name: IN_LINHARELPAINEL_EDITAL; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "IN_LINHARELPAINEL_EDITAL" ON public."TB_LINHA_RELATORIO_PAINEL" USING btree ("CO_AREA", "CO_RELATORIO", "CO_MONITORAMENTO", "NU_POSICAO");
 
 --
 -- Name: IN_LISTACLASSIF_EDITAL_TIPO; Type: INDEX; Schema: public; Owner: -
@@ -62292,6 +65190,12 @@ CREATE INDEX "IN_THFICHA_REABRIR" ON public."TH_FICHA_ANALISE" USING btree ("DT_
 COMMENT ON INDEX public."IN_THFICHA_REABRIR" IS 'Reaberturas de ficha (TP_ACAO REABRIR) por data: selo Precisão dos Destaques de hoje no card Ritmo da análise (20261021100000).';
 
 --
+-- Name: IN_THFUNDELIM_EDITAL_MOTIVO; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "IN_THFUNDELIM_EDITAL_MOTIVO" ON public."TH_FUNDAMENTO_ELIMINACAO" USING btree ("CO_MONITORAMENTO", "CO_MOTIVO_ELIMINACAO", "CO_HISTORICO" DESC);
+
+--
 -- Name: IN_THGRUPOACESSO_DTALTERACAO; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -62344,6 +65248,12 @@ CREATE INDEX "IN_TLPRECLASSIF_INICIO" ON public."TL_PRE_CLASSIFICACAO" USING btr
 --
 
 COMMENT ON INDEX public."IN_TLPRECLASSIF_INICIO" IS 'Últimas execuções (Status das atualizações e a aba Pré-classificação).';
+
+--
+-- Name: IX_TH_EDITAL_CRITICO_EDITAL; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "IX_TH_EDITAL_CRITICO_EDITAL" ON public."TH_EDITAL_CRITICO" USING btree ("CO_MONITORAMENTO", "DT_REGISTRO" DESC);
 
 --
 -- Name: INDEX "PK_TH_MODELO_ESPELHO_NOTA"; Type: COMMENT; Schema: public; Owner: -
@@ -63012,6 +65922,12 @@ CREATE TRIGGER "TG_EDITALANALISE_CACHE_INS" AFTER INSERT ON public."TB_EDITAL_AN
 CREATE TRIGGER "TG_EDITALANALISE_CACHE_UPD" AFTER UPDATE ON public."TB_EDITAL_ANALISE" REFERENCING OLD TABLE AS antigas NEW TABLE AS novas FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_CACHE_EDITAL_ANALISE"();
 
 --
+-- Name: TB_EDITAL_ANALISE TG_EDITALANALISE_PERIODO; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "TG_EDITALANALISE_PERIODO" BEFORE INSERT OR UPDATE ON public."TB_EDITAL_ANALISE" FOR EACH ROW EXECUTE FUNCTION private."FC_TG_PERIODO_EDITAL_ANALISE"();
+
+--
 -- Name: TB_ENTREVISTA TG_ENTREVISTA_CACHE_DEL; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -63324,6 +66240,18 @@ CREATE TRIGGER "TG_THFICHA_IMUTAVEL" BEFORE DELETE OR UPDATE ON public."TH_FICHA
 COMMENT ON TRIGGER "TG_THFICHA_IMUTAVEL" ON public."TH_FICHA_ANALISE" IS 'Histórico imutável (FC_TG_FICHA_IMUTAVEL).';
 
 --
+-- Name: TH_FUNDAMENTO_ELIMINACAO TG_THFUNDELIM_IMUTAVEL; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "TG_THFUNDELIM_IMUTAVEL" BEFORE DELETE OR UPDATE ON public."TH_FUNDAMENTO_ELIMINACAO" FOR EACH ROW EXECUTE FUNCTION private."FC_TG_FUNDAMENTO_IMUTAVEL"();
+
+--
+-- Name: TRIGGER "TG_THFUNDELIM_IMUTAVEL" ON "TH_FUNDAMENTO_ELIMINACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TRIGGER "TG_THFUNDELIM_IMUTAVEL" ON public."TH_FUNDAMENTO_ELIMINACAO" IS 'Histórico imutável (FC_TG_FUNDAMENTO_IMUTAVEL).';
+
+--
 -- Name: TH_NOME_VERSAO_REGRA TG_THNOMEVERSAOREGRA_IMUTAVEL; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -63440,6 +66368,14 @@ ALTER TABLE public."RL_PERFIL_USUARIO_AREA" ENABLE ALWAYS TRIGGER "TG_VERSAO_FON
 CREATE TRIGGER "TG_VERSAO_FONTE_DEL" AFTER DELETE ON public."TA_GRUPO_ACESSO_RECURSO" REFERENCING OLD TABLE AS antigas FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_VERSAO_FONTE"();
 
 ALTER TABLE public."TA_GRUPO_ACESSO_RECURSO" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_DEL";
+
+--
+-- Name: TB_ADMISSAO_CONCILIADA TG_VERSAO_FONTE_DEL; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "TG_VERSAO_FONTE_DEL" AFTER DELETE ON public."TB_ADMISSAO_CONCILIADA" REFERENCING OLD TABLE AS antigas FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_VERSAO_FONTE"();
+
+ALTER TABLE public."TB_ADMISSAO_CONCILIADA" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_DEL";
 
 --
 -- Name: TB_AJUSTE_PONTUACAO_RECURSO TG_VERSAO_FONTE_DEL; Type: TRIGGER; Schema: public; Owner: -
@@ -63826,6 +66762,14 @@ CREATE TRIGGER "TG_VERSAO_FONTE_INS" AFTER INSERT ON public."TA_GRUPO_ACESSO_REC
 ALTER TABLE public."TA_GRUPO_ACESSO_RECURSO" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_INS";
 
 --
+-- Name: TB_ADMISSAO_CONCILIADA TG_VERSAO_FONTE_INS; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "TG_VERSAO_FONTE_INS" AFTER INSERT ON public."TB_ADMISSAO_CONCILIADA" REFERENCING NEW TABLE AS novas FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_VERSAO_FONTE"();
+
+ALTER TABLE public."TB_ADMISSAO_CONCILIADA" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_INS";
+
+--
 -- Name: TB_AJUSTE_PONTUACAO_RECURSO TG_VERSAO_FONTE_INS; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -64210,6 +67154,14 @@ CREATE TRIGGER "TG_VERSAO_FONTE_TRUNC" AFTER TRUNCATE ON public."TA_GRUPO_ACESSO
 ALTER TABLE public."TA_GRUPO_ACESSO_RECURSO" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_TRUNC";
 
 --
+-- Name: TB_ADMISSAO_CONCILIADA TG_VERSAO_FONTE_TRUNC; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "TG_VERSAO_FONTE_TRUNC" AFTER TRUNCATE ON public."TB_ADMISSAO_CONCILIADA" FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_VERSAO_FONTE"();
+
+ALTER TABLE public."TB_ADMISSAO_CONCILIADA" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_TRUNC";
+
+--
 -- Name: TB_AJUSTE_PONTUACAO_RECURSO TG_VERSAO_FONTE_TRUNC; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -64592,6 +67544,14 @@ ALTER TABLE public."RL_PERFIL_USUARIO_AREA" ENABLE ALWAYS TRIGGER "TG_VERSAO_FON
 CREATE TRIGGER "TG_VERSAO_FONTE_UPD" AFTER UPDATE ON public."TA_GRUPO_ACESSO_RECURSO" REFERENCING NEW TABLE AS novas FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_VERSAO_FONTE"();
 
 ALTER TABLE public."TA_GRUPO_ACESSO_RECURSO" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_UPD";
+
+--
+-- Name: TB_ADMISSAO_CONCILIADA TG_VERSAO_FONTE_UPD; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "TG_VERSAO_FONTE_UPD" AFTER UPDATE ON public."TB_ADMISSAO_CONCILIADA" REFERENCING NEW TABLE AS novas FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_VERSAO_FONTE"();
+
+ALTER TABLE public."TB_ADMISSAO_CONCILIADA" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_UPD";
 
 --
 -- Name: TB_AJUSTE_PONTUACAO_RECURSO TG_VERSAO_FONTE_UPD; Type: TRIGGER; Schema: public; Owner: -
@@ -65390,6 +68350,19 @@ ALTER TABLE ONLY public."TB_ENTREVISTA"
 COMMENT ON CONSTRAINT "FK_AREA_ENTREVISTA" ON public."TB_ENTREVISTA" IS 'Área da entrevista.';
 
 --
+-- Name: TL_EXPORTACAO_APROVADO FK_AREA_EXPAPROV; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TL_EXPORTACAO_APROVADO"
+    ADD CONSTRAINT "FK_AREA_EXPAPROV" FOREIGN KEY ("CO_AREA") REFERENCES public."TB_AREA"("CO_AREA");
+
+--
+-- Name: CONSTRAINT "FK_AREA_EXPAPROV" ON "TL_EXPORTACAO_APROVADO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "FK_AREA_EXPAPROV" ON public."TL_EXPORTACAO_APROVADO" IS 'Área da exportação.';
+
+--
 -- Name: TB_MODELO_CARTA_CONVOCACAO FK_AREA_MODELOCARTA; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -65540,6 +68513,13 @@ ALTER TABLE ONLY public."TB_CASO_AVISO_CONFERENCIA"
 --
 
 COMMENT ON CONSTRAINT "FK_AVISOCONF_CASOAVISO" ON public."TB_CASO_AVISO_CONFERENCIA" IS 'Aviso do caso; os casos saem junto com o aviso.';
+
+--
+-- Name: TB_CALCULO_RELATORIO_PAINEL FK_CALCRELPAINEL_AREA; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TB_CALCULO_RELATORIO_PAINEL"
+    ADD CONSTRAINT "FK_CALCRELPAINEL_AREA" FOREIGN KEY ("CO_AREA") REFERENCES public."TB_AREA"("CO_AREA");
 
 --
 -- Name: TB_CANDIDATO_APROVADO FK_CANDAPROVADO_CANDANTERIOR; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -65950,6 +68930,13 @@ ALTER TABLE ONLY public."TH_FICHA_ANALISE"
 COMMENT ON CONSTRAINT "FK_FICHAANALISE_THFICHA" ON public."TH_FICHA_ANALISE" IS 'Ficha.';
 
 --
+-- Name: TB_FONTE_COLUNA_PAINEL FK_FONTECOLUNAPAINEL_AREA; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TB_FONTE_COLUNA_PAINEL"
+    ADD CONSTRAINT "FK_FONTECOLUNAPAINEL_AREA" FOREIGN KEY ("CO_AREA") REFERENCES public."TB_AREA"("CO_AREA");
+
+--
 -- Name: TA_GRUPO_ACESSO_RECURSO FK_GRUPOACESSO_GRUPACESSOREC; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -66021,6 +69008,13 @@ ALTER TABLE ONLY public."RL_REGRA_CRITERIO_DESEMPATE"
 --
 
 COMMENT ON CONSTRAINT "FK_HISTREGRACLASSIF_REGRACRITERIO" ON public."RL_REGRA_CRITERIO_DESEMPATE" IS 'Versão da regra.';
+
+--
+-- Name: TB_LINHA_RELATORIO_PAINEL FK_LINHARELPAINEL_CALCULO; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TB_LINHA_RELATORIO_PAINEL"
+    ADD CONSTRAINT "FK_LINHARELPAINEL_CALCULO" FOREIGN KEY ("CO_AREA", "CO_RELATORIO") REFERENCES public."TB_CALCULO_RELATORIO_PAINEL"("CO_AREA", "CO_RELATORIO") ON DELETE CASCADE;
 
 --
 -- Name: TB_PEDIDO_CASAMENTO_LISTA FK_LISTAANTERIOR_PEDCASAMENTO; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -66244,6 +69238,19 @@ ALTER TABLE ONLY public."TB_CONVOCACAO_EDITAL"
 
 ALTER TABLE ONLY public."RL_COORDENACAO_EDITAL"
     ADD CONSTRAINT "FK_MONITINDIG_COORDEDITAL" FOREIGN KEY ("CO_EDITAL") REFERENCES public."TB_MONITORAMENTO_INDIGENA"(id) ON DELETE CASCADE;
+
+--
+-- Name: TB_ADMISSAO_CONCILIADA FK_MONITORAMENTO_ADMISCONCIL; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TB_ADMISSAO_CONCILIADA"
+    ADD CONSTRAINT "FK_MONITORAMENTO_ADMISCONCIL" FOREIGN KEY ("CO_MONITORAMENTO") REFERENCES public."TB_MONITORAMENTO_INDIGENA"(id) ON DELETE CASCADE;
+
+--
+-- Name: CONSTRAINT "FK_MONITORAMENTO_ADMISCONCIL" ON "TB_ADMISSAO_CONCILIADA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "FK_MONITORAMENTO_ADMISCONCIL" ON public."TB_ADMISSAO_CONCILIADA" IS 'O edital existe; apagado o edital, saem as admissões.';
 
 --
 -- Name: TB_AGENDA_ENTREVISTA FK_MONITORAMENTO_AGENDAENTREV; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -67331,6 +70338,13 @@ ALTER TABLE ONLY public."TD_CARGO_APELIDO"
 COMMENT ON CONSTRAINT "FK_TDCARGO_TDCARGOAPELIDO" ON public."TD_CARGO_APELIDO" IS 'Cargo do apelido, da mesma área.';
 
 --
+-- Name: TH_FUNDAMENTO_ELIMINACAO FK_THFUNDELIM_MONITORAMENTO; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TH_FUNDAMENTO_ELIMINACAO"
+    ADD CONSTRAINT "FK_THFUNDELIM_MONITORAMENTO" FOREIGN KEY ("CO_MONITORAMENTO") REFERENCES public."TB_MONITORAMENTO_INDIGENA"(id) ON DELETE RESTRICT;
+
+--
 -- Name: TB_FICHA_ANALISE FK_THREGRAANAL_FICHAANALISE; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -67481,6 +70495,13 @@ ALTER TABLE ONLY public."TB_RASCUNHO_REGRA"
 COMMENT ON CONSTRAINT "FK_USUARIO_RASCUNHOREGRA" ON public."TB_RASCUNHO_REGRA" IS 'Dono do rascunho; apagar a conta apaga o rascunho.';
 
 --
+-- Name: TB_EDITAL_CRITICO TB_EDITAL_CRITICO_CO_MONITORAMENTO_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TB_EDITAL_CRITICO"
+    ADD CONSTRAINT "TB_EDITAL_CRITICO_CO_MONITORAMENTO_fkey" FOREIGN KEY ("CO_MONITORAMENTO") REFERENCES public."TB_MONITORAMENTO_INDIGENA"(id) ON DELETE CASCADE;
+
+--
 -- Name: TB_PERMISSAO_RECURSO TB_PERMISSAO_RECURSO_perfil_usuario_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -67493,6 +70514,13 @@ ALTER TABLE ONLY public."TB_PERMISSAO_RECURSO"
 
 ALTER TABLE ONLY public."TB_PREVISAO_ENTREVISTA_EDITAL"
     ADD CONSTRAINT "TB_PREVISAO_ENTREVISTA_EDITAL_CO_MONITORAMENTO_fkey" FOREIGN KEY ("CO_MONITORAMENTO") REFERENCES public."TB_MONITORAMENTO_INDIGENA"(id);
+
+--
+-- Name: TH_EDITAL_CRITICO TH_EDITAL_CRITICO_CO_MONITORAMENTO_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TH_EDITAL_CRITICO"
+    ADD CONSTRAINT "TH_EDITAL_CRITICO_CO_MONITORAMENTO_fkey" FOREIGN KEY ("CO_MONITORAMENTO") REFERENCES public."TB_MONITORAMENTO_INDIGENA"(id) ON DELETE CASCADE;
 
 --
 -- Name: TH_PREVISAO_ENTREVISTA_EDITAL TH_PREVISAO_ENTREVISTA_EDITAL_CO_MONITORAMENTO_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -68007,6 +71035,12 @@ ALTER TABLE public."TA_UNIDADE_AREA" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public."TB_ABA" ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: TB_ADMISSAO_CONCILIADA; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public."TB_ADMISSAO_CONCILIADA" ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: TB_AGENDA_ENTREVISTA; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -68059,6 +71093,12 @@ ALTER TABLE public."TB_AVISO_CONFERENCIA" ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public."TB_BRIDGE_AYA" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: TB_CALCULO_RELATORIO_PAINEL; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public."TB_CALCULO_RELATORIO_PAINEL" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: TB_CANDIDATO_APROVADO; Type: ROW SECURITY; Schema: public; Owner: -
@@ -68163,6 +71203,12 @@ ALTER TABLE public."TB_DESEMPATE_CLASSIFICACAO" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public."TB_EDITAL_ANALISE" ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: TB_EDITAL_CRITICO; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public."TB_EDITAL_CRITICO" ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: TB_EMPREGARE_ANEXO; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -68259,6 +71305,12 @@ ALTER TABLE public."TB_FICHA_ANALISE" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public."TB_FILTRO_FILA_ANALISE" ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: TB_FONTE_COLUNA_PAINEL; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public."TB_FONTE_COLUNA_PAINEL" ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: TB_GRUPO_ACESSO; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -68281,6 +71333,12 @@ ALTER TABLE public."TB_ITEM_AJUSTE_PONTUACAO" ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public."TB_LEITURA_ARQUIVO" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: TB_LINHA_RELATORIO_PAINEL; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public."TB_LINHA_RELATORIO_PAINEL" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: TB_LISTA_APROVADO; Type: ROW SECURITY; Schema: public; Owner: -
@@ -68655,6 +71713,12 @@ ALTER TABLE public."TH_DECISAO_LOTE" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public."TH_DEMANDA_INTERNA" ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: TH_EDITAL_CRITICO; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public."TH_EDITAL_CRITICO" ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: TH_ENTREVISTA_AVALIACAO; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -68665,6 +71729,18 @@ ALTER TABLE public."TH_ENTREVISTA_AVALIACAO" ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public."TH_FICHA_ANALISE" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: TH_FONTE_COLUNA_PAINEL; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public."TH_FONTE_COLUNA_PAINEL" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: TH_FUNDAMENTO_ELIMINACAO; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public."TH_FUNDAMENTO_ELIMINACAO" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: TH_GRUPO_ACESSO; Type: ROW SECURITY; Schema: public; Owner: -
@@ -68821,6 +71897,12 @@ ALTER TABLE public."TL_DISPARO_ROBO" ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public."TL_EVENTO_ACESSO" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: TL_EXPORTACAO_APROVADO; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public."TL_EXPORTACAO_APROVADO" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: TL_PRE_CLASSIFICACAO; Type: ROW SECURITY; Schema: public; Owner: -
@@ -69554,6 +72636,12 @@ REVOKE ALL ON FUNCTION private."FC_APLICAR_COORDENADA_LOCAL"(p_lugar text, p_lat
 REVOKE ALL ON FUNCTION private."FC_APLICAR_COORDENADA_MAPA"(p_alvo jsonb, p_latitude double precision, p_longitude double precision, p_latitude_anterior double precision, p_longitude_anterior double precision, p_motivo text, p_acao text, p_conferido text, p_historico_desfeito bigint) FROM PUBLIC;
 
 --
+-- Name: FUNCTION "FC_APLICAR_FONTES_DO_PAINEL"(p_area text, p_relatorio text, p_linhas jsonb); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_APLICAR_FONTES_DO_PAINEL"(p_area text, p_relatorio text, p_linhas jsonb) FROM PUBLIC;
+
+--
 -- Name: FUNCTION "FC_AREAS_DO_PERFIL"(p_perfil_usuario uuid); Type: ACL; Schema: private; Owner: -
 --
 
@@ -69681,6 +72769,18 @@ REVOKE ALL ON FUNCTION private."FC_CALCULADO_DO_BLOCO"(p_bloco jsonb, p_lanc jso
 REVOKE ALL ON FUNCTION private."FC_CALCULAR_ENTREVISTA"(p_entrevista uuid) FROM PUBLIC;
 
 --
+-- Name: FUNCTION "FC_CALCULAR_PAINEIS"(); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_CALCULAR_PAINEIS"() FROM PUBLIC;
+
+--
+-- Name: FUNCTION "FC_CALCULAR_RELATORIO_PAINEL"(p_area text, p_relatorio text, p_usuario uuid, p_intervalo interval); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_CALCULAR_RELATORIO_PAINEL"(p_area text, p_relatorio text, p_usuario uuid, p_intervalo interval) FROM PUBLIC;
+
+--
 -- Name: FUNCTION "FC_CALCULO_PELO_PYTHON"(); Type: ACL; Schema: private; Owner: -
 --
 
@@ -69729,6 +72829,12 @@ REVOKE ALL ON FUNCTION private."FC_CODIGO_DA_LEITURA"(p_funcoes text[]) FROM PUB
 REVOKE ALL ON FUNCTION private."FC_CODIGO_DE_COORDENACAO"(p_nome text) FROM PUBLIC;
 
 --
+-- Name: FUNCTION "FC_COLUNAS_EDITAVEIS_DO_PAINEL"(); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_COLUNAS_EDITAVEIS_DO_PAINEL"() FROM PUBLIC;
+
+--
 -- Name: FUNCTION "FC_COLUNAS_JSON"(p_linhas jsonb, p_dicionario text[]); Type: ACL; Schema: private; Owner: -
 --
 
@@ -69753,6 +72859,12 @@ REVOKE ALL ON FUNCTION private."FC_CONFERENCIA_RECURSO"(p_modulo text) FROM PUBL
 --
 
 REVOKE ALL ON FUNCTION private."FC_CONFERIR_DISPAROS_ROBO"(p_disparo bigint) FROM PUBLIC;
+
+--
+-- Name: FUNCTION "FC_CONFERIR_INATIVACAO_EM_MASSA"(p_planilha text, p_a_inativar integer); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_CONFERIR_INATIVACAO_EM_MASSA"(p_planilha text, p_a_inativar integer) FROM PUBLIC;
 
 --
 -- Name: FUNCTION "FC_CONFIRMACAO_DO_EDITAL"(p_edital uuid, p_confirmacao text); Type: ACL; Schema: private; Owner: -
@@ -69907,6 +73019,12 @@ REVOKE ALL ON FUNCTION private."FC_EDITAIS_POR_NUMERO"() FROM PUBLIC;
 
 REVOKE ALL ON FUNCTION private."FC_EDITAIS_VISIVEIS"() FROM PUBLIC;
 GRANT ALL ON FUNCTION private."FC_EDITAIS_VISIVEIS"() TO authenticated;
+
+--
+-- Name: FUNCTION "FC_EDITAL_ANALISE_ENCERRADO"(p_planilha text, p_edital text, p_fim date); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_EDITAL_ANALISE_ENCERRADO"(p_planilha text, p_edital text, p_fim date) FROM PUBLIC;
 
 --
 -- Name: FUNCTION "FC_EDITAL_EH_TREINAMENTO"(p_edital uuid); Type: ACL; Schema: private; Owner: -
@@ -70138,6 +73256,13 @@ REVOKE ALL ON FUNCTION private."FC_EXIGIR_GRAVAR_FICHA"(p_ficha public."TB_FICHA
 REVOKE ALL ON FUNCTION private."FC_EXIGIR_NOTA_NA_ESCALA"(p_roteiro uuid, p_competencia uuid, p_nota numeric) FROM PUBLIC;
 
 --
+-- Name: FUNCTION "FC_EXIGIR_PAINEIS_DA_AREA"(p_area text); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_EXIGIR_PAINEIS_DA_AREA"(p_area text) FROM PUBLIC;
+GRANT ALL ON FUNCTION private."FC_EXIGIR_PAINEIS_DA_AREA"(p_area text) TO authenticated;
+
+--
 -- Name: FUNCTION "FC_EXIGIR_PARECER_RECURSO"(); Type: ACL; Schema: private; Owner: -
 --
 
@@ -70240,6 +73365,12 @@ REVOKE ALL ON FUNCTION private."FC_FILTROS_FILA_JSON"(p_usuario uuid) FROM PUBLI
 REVOKE ALL ON FUNCTION private."FC_FIM_DAS_INSCRICOES"(p_edital uuid) FROM PUBLIC;
 
 --
+-- Name: FUNCTION "FC_FONTES_DO_PAINEL_JSON"(p_area text, p_relatorio text); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_FONTES_DO_PAINEL_JSON"(p_area text, p_relatorio text) FROM PUBLIC;
+
+--
 -- Name: FUNCTION "FC_FONTES_PELO_CODIGO"(p_funcoes text[]); Type: ACL; Schema: private; Owner: -
 --
 
@@ -70250,6 +73381,12 @@ REVOKE ALL ON FUNCTION private."FC_FONTES_PELO_CODIGO"(p_funcoes text[]) FROM PU
 --
 
 REVOKE ALL ON FUNCTION private."FC_FOTO_DO_GOOGLE"(p_meta jsonb) FROM PUBLIC;
+
+--
+-- Name: FUNCTION "FC_FUNDAMENTO_DA_ELIMINACAO"(p_edital uuid, p_motivo text); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_FUNDAMENTO_DA_ELIMINACAO"(p_edital uuid, p_motivo text) FROM PUBLIC;
 
 --
 -- Name: FUNCTION "FC_GESTOR_DE_ACESSOS"(); Type: ACL; Schema: private; Owner: -
@@ -70328,6 +73465,12 @@ REVOKE ALL ON FUNCTION private."FC_IMPORTAR_AVALIACAO_DA_PLANILHA"(p_edital uuid
 --
 
 REVOKE ALL ON FUNCTION private."FC_IMPORTAR_ENTREVISTAS_DA_PLANILHA"(p_edital uuid, p_dados jsonb, p_motivo text, p_usuario uuid) FROM PUBLIC;
+
+--
+-- Name: FUNCTION "FC_INATIVAR_EDITAIS_ANALISE_ENCERRADOS"(); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_INATIVAR_EDITAIS_ANALISE_ENCERRADOS"() FROM PUBLIC;
 
 --
 -- Name: FUNCTION "FC_INATIVAR_LISTAS_VENCIDAS"(p_edital_id uuid); Type: ACL; Schema: private; Owner: -
@@ -70456,16 +73599,40 @@ REVOKE ALL ON FUNCTION private."FC_LIMPAR_HISTORICO_DO_CRON"(p_dias integer, p_m
 REVOKE ALL ON FUNCTION private."FC_LIMPAR_MANIFESTO_ANALISE"(p_dias integer) FROM PUBLIC;
 
 --
+-- Name: FUNCTION "FC_LINHAS_APROVADOS_DO_PAINEL"(p_area text); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_LINHAS_APROVADOS_DO_PAINEL"(p_area text) FROM PUBLIC;
+
+--
 -- Name: FUNCTION "FC_LINHAS_DA_FILA"(p_edital uuid, p_vagas text[], p_nucleo boolean, p_apos uuid, p_limite integer, p_candidatos uuid[]); Type: ACL; Schema: private; Owner: -
 --
 
 REVOKE ALL ON FUNCTION private."FC_LINHAS_DA_FILA"(p_edital uuid, p_vagas text[], p_nucleo boolean, p_apos uuid, p_limite integer, p_candidatos uuid[]) FROM PUBLIC;
 
 --
+-- Name: FUNCTION "FC_LINHAS_DO_RELATORIO_PAINEL"(p_area text, p_relatorio text); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_LINHAS_DO_RELATORIO_PAINEL"(p_area text, p_relatorio text) FROM PUBLIC;
+
+--
+-- Name: FUNCTION "FC_LINHAS_POR_CARGO_DO_PAINEL"(p_area text); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_LINHAS_POR_CARGO_DO_PAINEL"(p_area text) FROM PUBLIC;
+
+--
 -- Name: FUNCTION "FC_LINHAS_PRE_CLASSIF"(p_linhas jsonb); Type: ACL; Schema: private; Owner: -
 --
 
 REVOKE ALL ON FUNCTION private."FC_LINHAS_PRE_CLASSIF"(p_linhas jsonb) FROM PUBLIC;
+
+--
+-- Name: FUNCTION "FC_LINHAS_RESUMO_DO_PAINEL"(p_area text); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_LINHAS_RESUMO_DO_PAINEL"(p_area text) FROM PUBLIC;
 
 --
 -- Name: FUNCTION "FC_LINHAS_VALIDAS"(p_linhas json, p_tamanhos integer[]); Type: ACL; Schema: private; Owner: -
@@ -70628,6 +73795,12 @@ REVOKE ALL ON FUNCTION private."FC_NOME_DA_VERSAO"(p_nome text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION private."FC_NOME_DO_RESPONSAVEL"(p_texto text, p_grupo text) FROM PUBLIC;
 
 --
+-- Name: FUNCTION "FC_NOME_DO_USUARIO"(p_usuario uuid); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_NOME_DO_USUARIO"(p_usuario uuid) FROM PUBLIC;
+
+--
 -- Name: FUNCTION "FC_NOME_E_SOBRENOME"(p_nome text); Type: ACL; Schema: private; Owner: -
 --
 
@@ -70686,6 +73859,12 @@ REVOKE ALL ON FUNCTION private."FC_NUMERO_EDITAL"(p_texto text) FROM PUBLIC;
 --
 
 REVOKE ALL ON FUNCTION private."FC_NUMERO_OU_ZERO"(p_valor jsonb) FROM PUBLIC;
+
+--
+-- Name: FUNCTION "FC_OPCOES_DE_FONTE_DO_PAINEL"(p_relatorio text, p_coluna text); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_OPCOES_DE_FONTE_DO_PAINEL"(p_relatorio text, p_coluna text) FROM PUBLIC;
 
 --
 -- Name: FUNCTION "FC_PAINEIS_RODADA"(p_cache text); Type: ACL; Schema: private; Owner: -
@@ -70841,6 +74020,12 @@ REVOKE ALL ON FUNCTION private."FC_PODE_EDITAR_DEMANDA"(p_area text, p_edital uu
 --
 
 REVOKE ALL ON FUNCTION private."FC_PODE_IGNORAR_AVISO"(p_modulo text, p_area text, p_edital uuid) FROM PUBLIC;
+
+--
+-- Name: FUNCTION "FC_PODE_MARCAR_CRITICO"(p_edital uuid); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_PODE_MARCAR_CRITICO"(p_edital uuid) FROM PUBLIC;
 
 --
 -- Name: FUNCTION "FC_PODE_PARECER_RECURSO"(); Type: ACL; Schema: private; Owner: -
@@ -71276,6 +74461,12 @@ REVOKE ALL ON FUNCTION private."FC_TG_FECHAR_CARGAS_PRESAS"() FROM PUBLIC;
 REVOKE ALL ON FUNCTION private."FC_TG_FICHA_IMUTAVEL"() FROM PUBLIC;
 
 --
+-- Name: FUNCTION "FC_TG_FUNDAMENTO_IMUTAVEL"(); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_TG_FUNDAMENTO_IMUTAVEL"() FROM PUBLIC;
+
+--
 -- Name: FUNCTION "FC_TG_HERDAR_CONVOCACAO"(); Type: ACL; Schema: private; Owner: -
 --
 
@@ -71292,6 +74483,12 @@ REVOKE ALL ON FUNCTION private."FC_TG_LOTE_COM_FICHA"() FROM PUBLIC;
 --
 
 REVOKE ALL ON FUNCTION private."FC_TG_NOME_VERSAO_IMUTAVEL"() FROM PUBLIC;
+
+--
+-- Name: FUNCTION "FC_TG_PERIODO_EDITAL_ANALISE"(); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_TG_PERIODO_EDITAL_ANALISE"() FROM PUBLIC;
 
 --
 -- Name: FUNCTION "FC_TG_PRE_CLASSIF_IMUTAVEL"(); Type: ACL; Schema: private; Owner: -
@@ -71711,6 +74908,13 @@ REVOKE ALL ON FUNCTION public.alterar_status_candidato_aprovado(p_candidato_id u
 GRANT ALL ON FUNCTION public.alterar_status_candidato_aprovado(p_candidato_id uuid, p_status text, p_processo_sei text, p_matricula text, p_data_convocacao date) TO authenticated;
 
 --
+-- Name: FUNCTION alterar_status_candidatos_aprovados(p_candidatos uuid[], p_status text, p_data_convocacao date); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.alterar_status_candidatos_aprovados(p_candidatos uuid[], p_status text, p_data_convocacao date) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.alterar_status_candidatos_aprovados(p_candidatos uuid[], p_status text, p_data_convocacao date) TO authenticated;
+
+--
 -- Name: FUNCTION analises_make_chave_natural(p_grupo text, p_unidade text, p_edital text, p_codigo_vaga text, p_id_origem text, p_candidato text); Type: ACL; Schema: public; Owner: -
 --
 
@@ -71855,6 +75059,13 @@ GRANT ALL ON FUNCTION public.cancelar_minha_solicitacao_acesso() TO authenticate
 
 REVOKE ALL ON FUNCTION public.cancelar_reinicio_fichas_do_edital(p_pedido bigint) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.cancelar_reinicio_fichas_do_edital(p_pedido bigint) TO authenticated;
+
+--
+-- Name: FUNCTION carregar_admissoes_conciliadas(p_carga text, p_linhas jsonb); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.carregar_admissoes_conciliadas(p_carga text, p_linhas jsonb) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.carregar_admissoes_conciliadas(p_carga text, p_linhas jsonb) TO service_role;
 
 --
 -- Name: FUNCTION casamento_ler_pedidos(p_pedido uuid); Type: ACL; Schema: public; Owner: -
@@ -72010,6 +75221,13 @@ GRANT ALL ON FUNCTION public.conferencia_ler_listas_e_quadros() TO service_role;
 
 REVOKE ALL ON FUNCTION public.conferir_eliminados_pre_classificacao(p_edital uuid, p_chaves text[]) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.conferir_eliminados_pre_classificacao(p_edital uuid, p_chaves text[]) TO authenticated;
+
+--
+-- Name: FUNCTION conferir_fundamento_da_eliminacao(p_edital uuid, p_motivo text, p_versao_regra integer, p_item_edital text, p_fonte text, p_justificativa text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.conferir_fundamento_da_eliminacao(p_edital uuid, p_motivo text, p_versao_regra integer, p_item_edital text, p_fonte text, p_justificativa text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.conferir_fundamento_da_eliminacao(p_edital uuid, p_motivo text, p_versao_regra integer, p_item_edital text, p_fonte text, p_justificativa text) TO authenticated;
 
 --
 -- Name: FUNCTION conferir_regra_analise(p_edital uuid, p_versao integer); Type: ACL; Schema: public; Owner: -
@@ -72615,6 +75833,13 @@ GRANT ALL ON FUNCTION public.lancar_notas_entrevista(p_entrevista uuid, p_dados 
 GRANT ALL ON FUNCTION public.lancar_notas_entrevista(p_entrevista uuid, p_dados jsonb) TO service_role;
 
 --
+-- Name: FUNCTION ler_relatorio_do_painel(p_area text, p_relatorio text, p_pagina integer, p_por_pagina integer); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.ler_relatorio_do_painel(p_area text, p_relatorio text, p_pagina integer, p_por_pagina integer) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.ler_relatorio_do_painel(p_area text, p_relatorio text, p_pagina integer, p_por_pagina integer) TO authenticated;
+
+--
 -- Name: FUNCTION ler_respostas_pergunta_vaga(p_vaga text, p_compacto boolean); Type: ACL; Schema: public; Owner: -
 --
 
@@ -72804,6 +76029,13 @@ GRANT ALL ON FUNCTION public.listar_editais_classificacao(p_area text) TO authen
 GRANT ALL ON FUNCTION public.listar_editais_classificacao(p_area text) TO service_role;
 
 --
+-- Name: FUNCTION listar_editais_criticos_manuais(p_area text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.listar_editais_criticos_manuais(p_area text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.listar_editais_criticos_manuais(p_area text) TO authenticated;
+
+--
 -- Name: FUNCTION listar_editais_da_api(); Type: ACL; Schema: public; Owner: -
 --
 
@@ -72831,6 +76063,13 @@ GRANT ALL ON FUNCTION public.listar_eliminados_fila(p_edital uuid, p_vaga text, 
 
 REVOKE ALL ON FUNCTION public.listar_etapas_do_cronograma() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.listar_etapas_do_cronograma() TO authenticated;
+
+--
+-- Name: FUNCTION listar_fontes_do_painel(p_area text, p_relatorio text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.listar_fontes_do_painel(p_area text, p_relatorio text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.listar_fontes_do_painel(p_area text, p_relatorio text) TO authenticated;
 
 --
 -- Name: FUNCTION listar_historico_coordenada_mapa_projetos(p_lugar text, p_limite integer); Type: ACL; Schema: public; Owner: -
@@ -73034,6 +76273,13 @@ REVOKE ALL ON FUNCTION public.marcar_candidatos_convocados(p_candidatos uuid[], 
 GRANT ALL ON FUNCTION public.marcar_candidatos_convocados(p_candidatos uuid[], p_data_convocacao date, p_carta uuid) TO authenticated;
 
 --
+-- Name: FUNCTION marcar_edital_critico(p_edital uuid, p_critico boolean, p_motivo text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.marcar_edital_critico(p_edital uuid, p_critico boolean, p_motivo text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.marcar_edital_critico(p_edital uuid, p_critico boolean, p_motivo text) TO authenticated;
+
+--
 -- Name: FUNCTION marcar_encerramento_visto(p_edital uuid); Type: ACL; Schema: public; Owner: -
 --
 
@@ -73183,6 +76429,13 @@ REVOKE ALL ON FUNCTION public.obter_contexto_monitora() FROM PUBLIC;
 GRANT ALL ON FUNCTION public.obter_contexto_monitora() TO authenticated;
 
 --
+-- Name: FUNCTION obter_critico_do_edital(p_edital uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.obter_critico_do_edital(p_edital uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.obter_critico_do_edital(p_edital uuid) TO authenticated;
+
+--
 -- Name: FUNCTION obter_dados_previa_ajuste(p_recurso uuid); Type: ACL; Schema: public; Owner: -
 --
 
@@ -73262,6 +76515,13 @@ GRANT ALL ON FUNCTION public.obter_fila_avaliacao_desde(p_edital uuid, p_desde t
 
 REVOKE ALL ON FUNCTION public.obter_fila_fora_do_lote(p_edital uuid, p_apos uuid, p_limite integer) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.obter_fila_fora_do_lote(p_edital uuid, p_apos uuid, p_limite integer) TO authenticated;
+
+--
+-- Name: FUNCTION obter_fundamentos_da_eliminacao(p_edital uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.obter_fundamentos_da_eliminacao(p_edital uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.obter_fundamentos_da_eliminacao(p_edital uuid) TO authenticated;
 
 --
 -- Name: FUNCTION obter_inicio_da_sessao(); Type: ACL; Schema: public; Owner: -
@@ -73728,6 +76988,13 @@ GRANT ALL ON FUNCTION public.registrar_evento_acesso(p_evento text, p_tela text,
 GRANT ALL ON FUNCTION public.registrar_evento_acesso(p_evento text, p_tela text, p_origem text, p_detalhes jsonb, p_client_session_id text, p_user_agent text, p_app_version text) TO service_role;
 
 --
+-- Name: FUNCTION registrar_exportacao_aprovados(p_area text, p_formato text, p_editais uuid[], p_cargos text[], p_modalidades text[], p_situacoes text[], p_recorte_do_aviso boolean, p_total_na_tela integer, p_registros integer, p_conteudo text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.registrar_exportacao_aprovados(p_area text, p_formato text, p_editais uuid[], p_cargos text[], p_modalidades text[], p_situacoes text[], p_recorte_do_aviso boolean, p_total_na_tela integer, p_registros integer, p_conteudo text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.registrar_exportacao_aprovados(p_area text, p_formato text, p_editais uuid[], p_cargos text[], p_modalidades text[], p_situacoes text[], p_recorte_do_aviso boolean, p_total_na_tela integer, p_registros integer, p_conteudo text) TO authenticated;
+
+--
 -- Name: FUNCTION registrar_lista_calculada(p_pedido uuid, p_resultado jsonb); Type: ACL; Schema: public; Owner: -
 --
 
@@ -73968,6 +77235,13 @@ REVOKE ALL ON FUNCTION public.salvar_filtro_fila(p_nome text, p_filtro jsonb) FR
 GRANT ALL ON FUNCTION public.salvar_filtro_fila(p_nome text, p_filtro jsonb) TO authenticated;
 
 --
+-- Name: FUNCTION salvar_fonte_da_coluna(p_area text, p_relatorio text, p_coluna text, p_visao text, p_coluna_visao text, p_motivo text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.salvar_fonte_da_coluna(p_area text, p_relatorio text, p_coluna text, p_visao text, p_coluna_visao text, p_motivo text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.salvar_fonte_da_coluna(p_area text, p_relatorio text, p_coluna text, p_visao text, p_coluna_visao text, p_motivo text) TO authenticated;
+
+--
 -- Name: FUNCTION salvar_grupo_acesso(p_grupo jsonb, p_motivo text); Type: ACL; Schema: public; Owner: -
 --
 
@@ -74146,6 +77420,13 @@ REVOKE ALL ON FUNCTION public.sincronizar_entrevistas(p_sync text, p_area text, 
 GRANT ALL ON FUNCTION public.sincronizar_entrevistas(p_sync text, p_area text, p_linhas jsonb) TO service_role;
 
 --
+-- Name: FUNCTION sincronizar_relatorio_do_painel(p_area text, p_relatorio text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.sincronizar_relatorio_do_painel(p_area text, p_relatorio text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.sincronizar_relatorio_do_painel(p_area text, p_relatorio text) TO authenticated;
+
+--
 -- Name: FUNCTION sincronizar_selecao(p_sync text, p_linhas jsonb); Type: ACL; Schema: public; Owner: -
 --
 
@@ -74250,6 +77531,33 @@ GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE arquivo."TH_LIMPEZA_CHAT" TO
 GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE arquivo."TL_EXPURGO_ANEXO_CHAT" TO service_role;
 
 --
+-- Name: TABLE "TB_CANDIDATO_APROVADO"; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_CANDIDATO_APROVADO" TO service_role;
+GRANT SELECT ON TABLE public."TB_CANDIDATO_APROVADO" TO authenticated;
+
+--
+-- Name: TABLE "TB_MONITORAMENTO_INDIGENA"; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT SELECT ON TABLE public."TB_MONITORAMENTO_INDIGENA" TO authenticated;
+GRANT SELECT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_MONITORAMENTO_INDIGENA" TO service_role;
+
+--
+-- Name: TABLE "TB_VAGA_IMEDIATA"; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_VAGA_IMEDIATA" TO service_role;
+GRANT SELECT ON TABLE public."TB_VAGA_IMEDIATA" TO authenticated;
+
+--
+-- Name: TABLE "TB_PRE_CLASSIF_VAGA"; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_PRE_CLASSIF_VAGA" TO service_role;
+
+--
 -- Name: TABLE "RL_ABA_AREA"; Type: ACL; Schema: public; Owner: -
 --
 
@@ -74347,6 +77655,12 @@ GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_ABA" TO service_r
 GRANT SELECT ON TABLE public."TB_ABA" TO authenticated;
 
 --
+-- Name: TABLE "TB_ADMISSAO_CONCILIADA"; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_ADMISSAO_CONCILIADA" TO service_role;
+
+--
 -- Name: TABLE "TB_AGENDA_ENTREVISTA"; Type: ACL; Schema: public; Owner: -
 --
 
@@ -74403,11 +77717,10 @@ GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_AVISO_CONFERENCIA
 GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_BRIDGE_AYA" TO service_role;
 
 --
--- Name: TABLE "TB_CANDIDATO_APROVADO"; Type: ACL; Schema: public; Owner: -
+-- Name: TABLE "TB_CALCULO_RELATORIO_PAINEL"; Type: ACL; Schema: public; Owner: -
 --
 
-GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_CANDIDATO_APROVADO" TO service_role;
-GRANT SELECT ON TABLE public."TB_CANDIDATO_APROVADO" TO authenticated;
+GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_CALCULO_RELATORIO_PAINEL" TO service_role;
 
 --
 -- Name: TABLE "TB_CASO_AVISO_CONFERENCIA"; Type: ACL; Schema: public; Owner: -
@@ -74488,6 +77801,12 @@ GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_DESEMPATE_CLASSIF
 
 GRANT SELECT ON TABLE public."TB_EDITAL_ANALISE" TO authenticated;
 GRANT ALL ON TABLE public."TB_EDITAL_ANALISE" TO service_role;
+
+--
+-- Name: TABLE "TB_EDITAL_CRITICO"; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_EDITAL_CRITICO" TO service_role;
 
 --
 -- Name: TABLE "TB_EMPREGARE_ANEXO"; Type: ACL; Schema: public; Owner: -
@@ -74580,6 +77899,12 @@ GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_ENTREVISTA_VAGA" 
 GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_FILTRO_FILA_ANALISE" TO service_role;
 
 --
+-- Name: TABLE "TB_FONTE_COLUNA_PAINEL"; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_FONTE_COLUNA_PAINEL" TO service_role;
+
+--
 -- Name: TABLE "TB_GRUPO_ACESSO"; Type: ACL; Schema: public; Owner: -
 --
 
@@ -74603,6 +77928,12 @@ GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_ITEM_AJUSTE_PONTU
 --
 
 GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_LEITURA_ARQUIVO" TO service_role;
+
+--
+-- Name: TABLE "TB_LINHA_RELATORIO_PAINEL"; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_LINHA_RELATORIO_PAINEL" TO service_role;
 
 --
 -- Name: TABLE "TB_LISTA_APROVADO"; Type: ACL; Schema: public; Owner: -
@@ -74647,13 +77978,6 @@ GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_MODELO_ESPELHO_NO
 --
 
 GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_MODELO_RESPOSTA_RECURSO" TO service_role;
-
---
--- Name: TABLE "TB_MONITORAMENTO_INDIGENA"; Type: ACL; Schema: public; Owner: -
---
-
-GRANT SELECT ON TABLE public."TB_MONITORAMENTO_INDIGENA" TO authenticated;
-GRANT SELECT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_MONITORAMENTO_INDIGENA" TO service_role;
 
 --
 -- Name: TABLE "TB_ORIGEM_ANALISE_EDITAL"; Type: ACL; Schema: public; Owner: -
@@ -74711,12 +78035,6 @@ GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_PRESENCA_ONLINE_M
 --
 
 GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_PRE_CLASSIFICACAO" TO service_role;
-
---
--- Name: TABLE "TB_PRE_CLASSIF_VAGA"; Type: ACL; Schema: public; Owner: -
---
-
-GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_PRE_CLASSIF_VAGA" TO service_role;
 
 --
 -- Name: TABLE "TB_RASCUNHO_REGRA"; Type: ACL; Schema: public; Owner: -
@@ -74828,13 +78146,6 @@ GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_SOLICITACAO_ACESS
 GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_SUGESTAO_FICHA" TO service_role;
 
 --
--- Name: TABLE "TB_VAGA_IMEDIATA"; Type: ACL; Schema: public; Owner: -
---
-
-GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_VAGA_IMEDIATA" TO service_role;
-GRANT SELECT ON TABLE public."TB_VAGA_IMEDIATA" TO authenticated;
-
---
 -- Name: TABLE "TD_ALDEIA_DSEI"; Type: ACL; Schema: public; Owner: -
 --
 
@@ -74903,6 +78214,12 @@ GRANT ALL ON TABLE public."TH_CRONOGRAMA_MONIT_INDIG" TO service_role;
 GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TH_DECISAO_LOTE" TO service_role;
 
 --
+-- Name: TABLE "TH_EDITAL_CRITICO"; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TH_EDITAL_CRITICO" TO service_role;
+
+--
 -- Name: TABLE "TH_ENTREVISTA_AVALIACAO"; Type: ACL; Schema: public; Owner: -
 --
 
@@ -74913,6 +78230,18 @@ GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TH_ENTREVISTA_AVALIA
 --
 
 GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TH_FICHA_ANALISE" TO service_role;
+
+--
+-- Name: TABLE "TH_FONTE_COLUNA_PAINEL"; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TH_FONTE_COLUNA_PAINEL" TO service_role;
+
+--
+-- Name: TABLE "TH_FUNDAMENTO_ELIMINACAO"; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TH_FUNDAMENTO_ELIMINACAO" TO service_role;
 
 --
 -- Name: TABLE "TH_GRUPO_ACESSO"; Type: ACL; Schema: public; Owner: -
@@ -75092,6 +78421,12 @@ GRANT INSERT(user_agent) ON TABLE public."TL_EVENTO_ACESSO" TO authenticated;
 GRANT INSERT(app_version) ON TABLE public."TL_EVENTO_ACESSO" TO authenticated;
 
 --
+-- Name: TABLE "TL_EXPORTACAO_APROVADO"; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TL_EXPORTACAO_APROVADO" TO service_role;
+
+--
 -- Name: TABLE "TL_SYNC_ANALISE"; Type: ACL; Schema: public; Owner: -
 --
 
@@ -75243,6 +78578,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT REFERENCES,TRI
 -- agsus_analises_analyze_diario | 20 6 * * * | ativa | analyze public."TM_ANALISE_CURRICULAR"; analyze public."TL_SYNC_ANALISE"; analyze public."TB_ANALISE_CURRICULAR"; analyze public."TB_EDITAL_ANALISE";
 -- agsus_analises_cache_do_painel | */5 * * * * | ativa | call private."PR_REMONTAR_CACHE_AGENDADO"('ANALISES');
 -- agsus_analises_encerrar_inativas | */30 * * * * | ativa | select public."FC_ENCERRAR_SYNC_ANALISE_INATIVO"(null, 30);
+-- agsus_analises_inativar_editais_encerrados | 10 3 * * * | ativa | select private."FC_INATIVAR_EDITAIS_ANALISE_ENCERRADOS"() where pg_try_advisory_xact_lock(hashtext('agsus_analises_inativar_editais_encerrados'));
 -- agsus_analises_limpar_manifesto | 40 6 * * * | ativa | select private."FC_LIMPAR_MANIFESTO_ANALISE"(2) where pg_try_advisory_xact_lock(hashtext('agsus_analises_limpar_manifesto'));
 -- agsus_aprovados_cache_por_area | 35 * * * * | ativa | call private."PR_REMONTAR_CACHE_AGENDADO"('APROVADOS');
 -- agsus_cron_limpar_historico | 52 6 * * * | ativa | select private."FC_LIMPAR_HISTORICO_DO_CRON"(14, 10) where pg_try_advisory_xact_lock(hashtext('agsus_cron_limpar_historico'));
@@ -75251,6 +78587,7 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT REFERENCES,TRI
 -- agsus_fila_estatisticas | 45 * * * * | ativa | select private."FC_ESTATISTICAS_DA_FILA"();
 -- agsus_inativar_listas_vencidas | 5 3 * * * | ativa | select private."FC_INATIVAR_LISTAS_VENCIDAS"();
 -- agsus_kpis_do_edital_pela_selecao | 0 13 * * * | ativa | select private."FC_ATUALIZAR_KPIS_PELA_SELECAO"() where pg_try_advisory_xact_lock(hashtext('agsus_kpis_do_edital_pela_selecao'));
+-- agsus_paineis_recalcular_relatorios | 17 * * * * | ativa | select private."FC_CALCULAR_PAINEIS"() where pg_try_advisory_xact_lock(hashtext('agsus_paineis_recalcular_relatorios'));
 -- agsus_robo_conferencias | 0 9 * * * | ativa | select private."FC_DISPARAR_ROBO"('conferencias.yml', '{"modo": "normal"}', p_origem => 'AGENDA');
 -- agsus_robo_conferir_disparos | */15 * * * * | ativa | select private."FC_CONFERIR_DISPAROS_ROBO"();
 -- agsus_robo_sincronizar_entrevistas | 5 0-10,15,21-23 * * * | parada | select private."FC_DISPARAR_ROBO"('sincronizar-entrevistas.yml', '{"modo": "normal"}', p_origem => 'AGENDA');
