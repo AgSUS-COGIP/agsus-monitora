@@ -53,7 +53,7 @@ usam a cópia que guardaram no IndexedDB na última leitura com rede (o que leva
 | Entrevistas › Conduzir (fila e ficha)                          | a lista de editais e o edital aberto, com a data ao lado do edital |
 | Avaliação documental, Classificação, Conferências, Visão geral | ainda o erro (ou a cópia da sessão, na Visão geral)                |
 
-- A data (`rotuloDaCopia`) aparece uma vez só, no lugar da data de atualização; sai quando a versão
+- A data (`src/lib/rotulo-da-copia.ts`) aparece uma vez só, no lugar da data de atualização; sai quando a versão
   nova chega. Sem cópia, o erro de sempre ("Não foi possível falar com o servidor…").
 - A cópia é lida quando a falha é de conexão (`ehFalhaDeConexao`); erro do banco ou de permissão
   continua erro, e 42501/22023 apagam as cópias.

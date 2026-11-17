@@ -40,7 +40,7 @@ import {
   ESQUEMAS_DO_PAYLOAD,
   revalidarPayload,
 } from "../../lib/cache-do-painel-de-analises.ts";
-import { respostaInalterada, versaoDoPacote } from "../../lib/cache-de-payload";
+import { respostaInalterada, versaoDoPacote } from "../../lib/versao-do-pacote";
 import { comTempoLimite } from "../../lib/falha-de-rede";
 import {
   envelopeDeTodos,

@@ -40,8 +40,8 @@ do que o banco mandou, para abrir na hora e para consultar sem rede.
 | Avaliação documental, pré-classificação e Classificação (`<RPC>:<edital>`) | regra; nome, código e notas dos candidatos                                                                                                     |
 
 - **Sem CPF, e-mail nem telefone:** as RPCs dessas telas não os mandam.
-- **48 horas** (`VALIDADE_DO_CACHE_MS`, `src/lib/cache-de-payload.ts`): a cópia vencida é apagada
-  na leitura e na abertura do app (`apagarCopiasVencidas`), não só ignorada.
+- **48 horas** (`VALIDADE_DO_CACHE_MS`, `src/lib/validade-das-copias.ts`): a cópia vencida é apagada
+  na leitura e na abertura do app (`src/app/varredura-das-copias.ts`), não só ignorada.
 - **De um usuário só:** outra pessoa abrindo uma tela no mesmo navegador apaga as cópias de quem
   veio antes.
 - **Saem inteiras** ao Sair, no "Limpar sessão", ao perder o acesso (perfil sem acesso; 42501/22023

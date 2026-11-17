@@ -14,7 +14,7 @@
   sem a RPC nova (migration não aplicada: PGRST202) ou resposta vazia: lê pela
   RPC de sempre, como antes.
 */
-import { respostaInalterada, versaoDoPacote } from "../cache-de-payload";
+import { respostaInalterada, versaoDoPacote } from "../versao-do-pacote";
 
 export type ChamadaDeRpc = (
   nome: string,
