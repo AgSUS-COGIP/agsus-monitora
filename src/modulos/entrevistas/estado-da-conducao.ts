@@ -81,6 +81,8 @@ const RPC_CONFIGURAR = "configurar_entrevista_edital";
 const RPC_CONVOCAR = "convocar_para_entrevista";
 const RPC_DESCONVOCAR = "desconvocar_da_entrevista";
 const RPC_LANCAR_NOTAS = "lancar_notas_entrevista";
+const RPC_CONCLUIR = "concluir_entrevista";
+const RPC_REABRIR = "reabrir_entrevista";
 const RPC_LISTAR_EDITAIS = "listar_editais_entrevista";
 const RPC_LIBERAR_EDITAL = "liberar_entrevista_edital";
 const RPC_OBTER_AGENDA = "obter_agenda_entrevista";
@@ -605,6 +607,38 @@ export function criarEstadoDaConducao({
     });
   }
 
+  /** Conclui a entrevista: a ficha fica só leitura (20261117050000). */
+  function concluirEntrevista(entrevista: string) {
+    const editalId = estado.editalId;
+    return executar("conclusao", "Concluindo a entrevista…", async () => {
+      const novo = await rpc(RPC_CONCLUIR, { p_entrevista: entrevista });
+      aplicar(novo, editalId);
+      toast("Entrevista concluída; a ficha ficou só para leitura.", "ok");
+      aoMudarResultados();
+      return { ok: true, dados: dadosDoEditalDaConducao(novo) };
+    });
+  }
+
+  /** Reabre a entrevista concluída (coordenação do edital, com motivo). */
+  function reabrirEntrevista(
+    entrevista: string,
+    motivo: string,
+    complemento: string | null,
+  ) {
+    const editalId = estado.editalId;
+    return executar("conclusao", "Reabrindo a entrevista…", async () => {
+      const novo = await rpc(RPC_REABRIR, {
+        p_entrevista: entrevista,
+        p_motivo: motivo,
+        p_complemento: complemento,
+      });
+      aplicar(novo, editalId);
+      toast("Entrevista reaberta; as notas podem ser alteradas.", "ok");
+      aoMudarResultados();
+      return { ok: true, dados: dadosDoEditalDaConducao(novo) };
+    });
+  }
+
   /** Abre (id do convocado) ou fecha (null) a ficha de notas. */
   function abrirFicha(id: string | null) {
     publicar({ fichaAberta: id || null });
@@ -629,6 +663,8 @@ export function criarEstadoDaConducao({
     convocar,
     desconvocar,
     lancarNotas,
+    concluirEntrevista,
+    reabrirEntrevista,
     abrirFicha,
   };
 }

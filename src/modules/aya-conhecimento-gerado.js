@@ -4815,8 +4815,8 @@ export const VERBETES_AYA = Object.freeze([
       "mostrar editais concluidos",
     ],
     resposta:
-      'Conduzir entrevistas é a tela de fazer (secretaria e avaliadores), com entrada própria no menu. No cabeçalho ficam o edital (com o selo Treinamento ao lado quando é de treinamento; abre sozinho o último aberto na área ou, se houver um só, ele; o administrador global tem, dentro do próprio seletor, "Mostrar também os concluídos e fora da janela"), as seções Fila e Preparar e o Atualizar. A Fila abre em Hoje: os convocados com horário hoje na agenda salva na Classificação; sem entrevista hoje, abre em Próximos; sem agenda, em Todos. No alto fica a faixa de situação: o total do período (Hoje, Próximos ou Todos), Aguardando, Em andamento, Concluídas, Faltaram e, quando há, Sem nota (quem ainda aguardava ou estava em andamento depois do dia marcado, de qualquer dia). Cada número é o total da lista que ele abre: clicar filtra (de novo, tira). Embaixo dos números, a barra da distribuição, "X de Y hoje" (concluídas e faltas entre as de hoje) e a próxima entrevista do dia (horário, nome, vaga e banca) com "Iniciar". A lista vem num card: Hoje · Próximos · Todos, a busca pelo nome ou código (a tecla "/" leva até ela; Esc limpa), Vaga, Banca (com "Minha banca" para quem está na banca) e o "⋯" (a agenda na Classificação e Preparar). A tabela segue a ordem de horário, 50 e mais 50 ao rolar: o horário em destaque (os encerrados acinzentados; fora de hoje, o dia embaixo), em Hoje a linha "Agora · HH:MM" entre o que passou e o que vem, a pessoa (o nome e, embaixo, o código e a modalidade), a vaga com o cargo, a banca e a situação — Aguardando, Em andamento (com "3 de 6" notas), Concluída (com a nota), Faltou ou Sem nota. A ação da linha é azul quando há o que fazer (Continuar, Lançar nota) e neutra nas outras (Iniciar, Ver, Remarcar — a agenda é na Classificação); o "⋯" tem "Ver ficha", "Remarcar na agenda" e "Copiar código". A ficha de notas abre em tela cheia e "Salvar e abrir o próximo" segue a ordem da lista. Ao concluir todas as de hoje, há uma comemoração (se as comemorações estiverem ligadas). O período, a situação, a vaga e a banca ficam no endereço da página. Preparar guia a preparação em quatro passos.',
-    fato: "A fila de Conduzir entrevistas abre em Hoje, pela agenda salva na Classificação; concluída é quem tem parecer ou todas as notas, faltou é quem tem Faltou marcado.",
+      'Conduzir entrevistas é a tela de fazer (secretaria e avaliadores), com entrada própria no menu. No cabeçalho ficam o edital (com o selo Treinamento ao lado quando é de treinamento; abre sozinho o último aberto na área ou, se houver um só, ele; o administrador global tem, dentro do próprio seletor, "Mostrar também os concluídos e fora da janela"), as seções Fila e Preparar e o Atualizar. A Fila abre em Hoje: os convocados com horário hoje na agenda salva na Classificação; sem entrevista hoje, abre em Próximos; sem agenda, em Todos. No alto fica a faixa de situação: o total do período (Hoje, Próximos ou Todos), Aguardando, Em andamento, A concluir, Concluídas, Faltaram e, quando há, Sem nota (quem ainda aguardava ou estava em andamento depois do dia marcado, de qualquer dia). Cada número é o total da lista que ele abre: clicar filtra (de novo, tira). Embaixo dos números, a barra da distribuição, "X de Y hoje" (concluídas e faltas entre as de hoje) e a próxima entrevista do dia (horário, nome, vaga e banca) com "Iniciar". A lista vem num card: Hoje · Próximos · Todos, a busca pelo nome ou código (a tecla "/" leva até ela; Esc limpa), Vaga, Banca (com "Minha banca" para quem está na banca) e o "⋯" (a agenda na Classificação e Preparar). A tabela segue a ordem de horário, 50 e mais 50 ao rolar: o horário em destaque (os encerrados acinzentados; fora de hoje, o dia embaixo), em Hoje a linha "Agora · HH:MM" entre o que passou e o que vem, a pessoa (o nome e, embaixo, o código e a modalidade), a vaga com o cargo, a banca e a situação — Aguardando, Em andamento (com "3 de 6" notas), A concluir (o resultado definido, falta concluir; com a nota), Concluída (com a nota), Faltou ou Sem nota. A ação da linha é azul quando há o que fazer (Continuar, Concluir, Lançar nota) e neutra nas outras (Iniciar, Ver, Remarcar — a agenda é na Classificação); o "⋯" tem "Ver ficha", "Remarcar na agenda" e "Copiar código". A ficha de notas abre em tela cheia e "Salvar e abrir o próximo" segue a ordem da lista. Ao concluir todas as de hoje, há uma comemoração (se as comemorações estiverem ligadas). O período, a situação, a vaga e a banca ficam no endereço da página. Preparar guia a preparação em quatro passos.',
+    fato: "A fila de Conduzir entrevistas abre em Hoje, pela agenda salva na Classificação; concluída é a entrevista concluída na ficha (só leitura), A concluir é quem já tem parecer ou todas as notas e falta concluir, faltou é quem tem Faltou marcado.",
     fonte:
       "src/modulos/entrevistas/conduzir.tsx; src/modulos/entrevistas/fila-do-dia.tsx; src/lib/fila-de-conducao.ts",
     abrir: "conduzir-entrevistas",
@@ -5109,6 +5109,28 @@ export const VERBETES_AYA = Object.freeze([
     fato: "",
     fonte:
       "src/modulos/entrevistas/ficha.tsx; src/modulos/entrevistas/parecer-pronto.tsx; src/lib/parecer-da-entrevista.ts; src/modulos/entrevistas/matriz-de-notas.tsx; src/modulos/entrevistas/resultado-da-ficha.tsx; src/modulos/entrevistas/cabecalho-da-ficha.tsx; src/lib/conducao-de-entrevista.ts",
+  },
+  {
+    arquivo: "regras-das-entrevistas.md",
+    titulo: "Concluir e reabrir a entrevista",
+    perguntas: [
+      "concluir entrevista",
+      "como concluir a ficha de entrevista",
+      "ficha de entrevista so leitura",
+      "nao consigo mudar a nota da entrevista",
+      "reabrir entrevista",
+      "como reabrir a ficha de entrevista",
+      "quem reabre a entrevista",
+      "motivo da reabertura da entrevista",
+      "a concluir",
+      "entrevista concluida",
+    ],
+    resposta:
+      'A ficha de entrevista funciona como a da Avaliação documental. Com o resultado definido (comparecimento marcado e, se compareceu, todas as notas) e tudo salvo, aparece "Concluir" no rodapé; em Inapto ou falta, a justificativa da banca precisa estar escrita. Concluída, a ficha fica só para leitura: as notas, o comparecimento, a banca e os textos não mudam, e o rodapé mostra "Concluída por … em …". Para mudar, a coordenação do edital (a mesma da Avaliação documental, incluindo o gestor e o administrador global) clica em "Reabrir", escolhe o motivo na lista (Correção de nota, Correção do comparecimento, Correção da banca ou dos avaliadores, Correção da justificativa da banca, Recurso deferido ou Outro, que pede a descrição) e pode escrever um complemento. A ficha volta a aceitar notas e precisa ser concluída de novo. Conclusão e reabertura vão para o histórico da entrevista, com quem, quando e o motivo. Na fila, quem já tem o resultado e ainda não foi concluído aparece como "A concluir". Se uma nota mudar depois das listas ENTREVISTA ou FINAL geradas, a Classificação avisa que a lista precisa ser gerada de novo. As entrevistas do 93/2026, importadas das planilhas da banca e conferidas, já estão concluídas.',
+    fato: "No Yeendé, a ficha de entrevista concluída é só leitura; só a coordenação do edital reabre, com motivo da lista.",
+    fonte:
+      "src/modulos/entrevistas/ficha.tsx; src/lib/reabertura-da-entrevista.ts; src/modulos/avaliacao-documental/ficha/reabrir-a-ficha.tsx; supabase/migrations/20261117050000_concluir_e_reabrir_a_entrevista.sql",
+    abrir: "conduzir-entrevistas",
   },
   {
     arquivo: "regras-das-entrevistas.md",

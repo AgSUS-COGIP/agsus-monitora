@@ -374,8 +374,12 @@ function TelaDeConducao({
             dados={dados}
             convocado={convocado}
             convocados={lista}
-            salvando={e.acao?.tipo === "notas"}
+            salvando={e.acao?.tipo === "notas" || e.acao?.tipo === "conclusao"}
             aoSalvar={(p) => conducao.lancarNotas(convocado.id, p)}
+            aoConcluir={() => conducao.concluirEntrevista(convocado.id)}
+            aoReabrir={(motivo, complemento) =>
+              conducao.reabrirEntrevista(convocado.id, motivo, complemento)
+            }
             aoAbrir={(id: string) => conducao.abrirFicha(id)}
             aoFechar={() => conducao.abrirFicha(null)}
           />

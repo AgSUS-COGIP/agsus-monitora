@@ -109,6 +109,7 @@ const convocados = [
     compareceu: "S",
     parecer: "APTO",
     avaliacoes: todas,
+    concluida_em: "2026-10-07T13:00:00Z",
   },
   {
     id: "e4",
@@ -187,14 +188,36 @@ describe("fila de Conduzir entrevistas", () => {
     });
   });
 
-  it("todas as notas lançadas (mesmo sem parecer) conta como concluída; aspectos contam o par uma vez", () => {
+  it("todas as notas lançadas (mesmo sem parecer) fica A concluir até concluir; aspectos contam o par uma vez", () => {
     const comAspectos = {
       ...convocados[1],
       avaliacoes: [...todas, { ...nota("c1", "a1"), aspecto: "x" }],
     };
     const p = progressoDoConvocado(comAspectos, avaliadores, comp);
     expect(p).toEqual({ lancadas: 4, esperadas: 4 });
-    expect(situacaoDoConvocado(comAspectos, p)).toBe("concluida");
+    expect(situacaoDoConvocado(comAspectos, p)).toBe("a_concluir");
+    expect(
+      situacaoDoConvocado(
+        { ...comAspectos, concluida_em: "2026-10-07T13:00:00Z" },
+        p,
+      ),
+    ).toBe("concluida");
+  });
+
+  it("parecer sem conclusão: A concluir, que não conta como feita nem vira Sem nota", () => {
+    const pronta = { ...convocados[2], concluida_em: null };
+    const p = progressoDoConvocado(pronta, avaliadores, comp);
+    expect(situacaoDoConvocado(pronta, p)).toBe("a_concluir");
+    const item = { situacao: "a_concluir", data: "2026-10-01" };
+    expect(situacaoNaTela(item, HOJE)).toBe("a_concluir");
+    expect(contadorDoDia([{ ...item, data: HOJE }], HOJE).feitas).toBe(0);
+    // Faltou continua Faltou (com ou sem conclusão).
+    expect(
+      situacaoDoConvocado(
+        { ...convocados[3], concluida_em: "2026-10-07T13:00:00Z" },
+        { lancadas: 0, esperadas: 4 },
+      ),
+    ).toBe("faltou");
   });
 
   it("recortes Hoje / Próximos / Todos, vaga e o recorte inicial", () => {
@@ -242,6 +265,7 @@ describe("fila de Conduzir entrevistas", () => {
     expect(resumoDasSituacoes(fila, HOJE)).toEqual({
       aguardando: 3,
       em_andamento: 1,
+      a_concluir: 0,
       concluida: 1,
       faltou: 1,
       sem_nota: 0,

@@ -1350,6 +1350,20 @@ table.entrevistas-tabela {
   background: var(--state-info);
   animation: entrevistas-pulsar 900ms ease-in-out infinite alternate;
 }
+/* Concluída (só leitura): o cadeado no lugar do ponto. */
+.entrevistas-gravacao[data-estado="concluida"]::before {
+  display: none;
+}
+.entrevistas-gravacao[data-estado="concluida"] {
+  color: var(--text-primary);
+}
+/* O "Reabrir" da coordenação: o motivo e o complemento na mesma linha. */
+.entrevistas-reabrir {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
 .entrevistas-rodape-resultado {
   display: none;
 }

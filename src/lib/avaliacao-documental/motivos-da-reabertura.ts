@@ -76,16 +76,20 @@ export type ReaberturaInvalida = {
   erro: string;
 };
 
-export function motivoDaReabertura(codigo: unknown): MotivoDaReabertura | null {
-  return MOTIVOS_DA_REABERTURA.find((m) => m.codigo === codigo) ?? null;
+export function motivoDaReabertura(
+  codigo: unknown,
+  motivos: readonly MotivoDaReabertura[] = MOTIVOS_DA_REABERTURA,
+): MotivoDaReabertura | null {
+  return motivos.find((m) => m.codigo === codigo) ?? null;
 }
 
 /** O motivo legível: "Correção de experiência — <complemento>" ou "Outro — <descrição>". */
 export function textoDaReabertura(
   codigo: string,
   complemento: unknown,
+  motivos: readonly MotivoDaReabertura[] = MOTIVOS_DA_REABERTURA,
 ): string {
-  const rotulo = motivoDaReabertura(codigo)?.rotulo ?? "";
+  const rotulo = motivoDaReabertura(codigo, motivos)?.rotulo ?? "";
   const extra = textoLimpo(complemento);
   return extra ? `${rotulo} — ${extra}` : rotulo;
 }
@@ -94,8 +98,10 @@ export function textoDaReabertura(
 export function validarReabertura(
   codigo: unknown,
   complemento: unknown,
+  /** Outra lista com as mesmas regras (a da entrevista: reabertura-da-entrevista.ts). */
+  motivos: readonly MotivoDaReabertura[] = MOTIVOS_DA_REABERTURA,
 ): ReaberturaValida | ReaberturaInvalida {
-  const escolhido = motivoDaReabertura(codigo);
+  const escolhido = motivoDaReabertura(codigo, motivos);
   if (!escolhido)
     return {
       ok: false,
@@ -126,6 +132,6 @@ export function validarReabertura(
   return {
     ok: true,
     argumentos: { p_motivo: escolhido.codigo, p_complemento: extra || null },
-    texto: textoDaReabertura(escolhido.codigo, extra),
+    texto: textoDaReabertura(escolhido.codigo, extra, motivos),
   };
 }

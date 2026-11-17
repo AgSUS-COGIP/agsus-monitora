@@ -55,6 +55,13 @@ import {
   textoDoParecerDaEntrevista,
 } from "../../lib/parecer-da-entrevista.ts";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
+import { dataHoraBR } from "../../lib/entrevistas-do-painel.ts";
+import {
+  entrevistaConcluida,
+  MOTIVOS_DA_REABERTURA_DA_ENTREVISTA,
+  podeConcluirAEntrevista,
+} from "../../lib/reabertura-da-entrevista.ts";
+import { ReabrirAFicha } from "../avaliacao-documental/ficha/reabrir-a-ficha.tsx";
 import { ParecerPronto } from "./parecer-pronto.tsx";
 import {
   JustificativaDaBanca,
@@ -101,6 +108,11 @@ import { numeroBR, ResultadoDaFicha } from "./resultado-da-ficha.tsx";
   modo por competência, só os avaliadores dela. Contadores ("3/12", "faltam N
   notas") e a digitação contam só as células atribuídas; a prévia faz a
   média só de quem avalia (o banco recusa a nota fora da competência).
+
+  Concluir e reabrir (20261117050000), como a ficha da Avaliação documental:
+  com o resultado definido e tudo salvo, "Concluir" fecha a ficha; concluída,
+  ela é só leitura (o banco recusa o lançamento) e o rodapé diz quem concluiu
+  e quando; a coordenação do edital reabre com um motivo da lista.
 
   Teclado: dígitos lançam e avançam; Enter/setas andam; Ctrl+Enter salva;
   Esc volta à lista. Celular: um avaliador por vez, uma competência por
@@ -241,15 +253,24 @@ function Atalhos() {
 }
 
 export function FichaDoCandidato({
-  dados,
+  dados: dadosDoEdital,
   convocado,
   convocados,
   salvando,
   aoSalvar,
+  aoConcluir = undefined,
+  aoReabrir = undefined,
   aoAbrir,
   aoFechar,
   copiar = undefined,
 }: PropriedadesDaFicha) {
+  // Concluída: só leitura (como sem permissão de editar) até a coordenação reabrir.
+  const concluida = entrevistaConcluida(convocado);
+  const dados = useMemo(
+    () =>
+      concluida ? { ...dadosDoEdital, pode_editar: false } : dadosDoEdital,
+    [dadosDoEdital, concluida],
+  );
   const roteiro = dados.configuracao?.roteiro || null;
   const arredondamento = dados.configuracao?.arredondamento ?? null;
   const aspectos = useMemo(() => aspectosDoRoteiro(roteiro), [roteiro]);
@@ -701,6 +722,12 @@ export function FichaDoCandidato({
     if (abrirProximo && proximo) aoAbrir(proximo.id);
   }
 
+  async function concluir() {
+    setErro("");
+    const resposta = await aoConcluir?.();
+    if (resposta?.erro) setErro(resposta.erro);
+  }
+
   const niveis =
     roteiro?.escala === "NIVEIS" && competencias[0]
       ? escalaDe(competencias[0]).opcoes.filter((o) => o.rotulo)
@@ -744,6 +771,16 @@ export function FichaDoCandidato({
       : salvoEm
         ? { tom: "salvo", texto: `Salvo às ${horaCurta(salvoEm)}` }
         : { tom: "salvo", texto: "Sem alterações" };
+  const podeConcluir =
+    Boolean(aoConcluir) &&
+    podeConcluirAEntrevista({
+      podeEditar: Boolean(dadosDoEdital.pode_editar),
+      concluida,
+      sujo,
+      pendencia,
+      compareceu: f.compareceu,
+    }) &&
+    !faltaJustificativa;
 
   return (
     <section
@@ -1029,6 +1066,55 @@ export function FichaDoCandidato({
           ) : null}
         </div>
 
+        {concluida && roteiro ? (
+          <div className="entrevistas-analise-barra" data-concluida="">
+            <span
+              className="entrevistas-gravacao"
+              data-estado="concluida"
+              role="status"
+            >
+              <i className="fa-solid fa-lock" aria-hidden="true" /> Concluída
+              {convocado.concluida_por ? ` por ${convocado.concluida_por}` : ""}
+              {dataHoraBR(convocado.concluida_em)
+                ? ` em ${dataHoraBR(convocado.concluida_em)}`
+                : ""}
+            </span>
+            <span className="entrevistas-rodape-resultado" data-tom={tom}>
+              {numeroBR(resultado.total)} / {numeroBR(maxima)}
+            </span>
+            {erro ? (
+              <span className="entrevistas-analise-erro" role="alert">
+                {erro}
+              </span>
+            ) : null}
+            {dadosDoEdital.pode_reabrir && aoReabrir ? (
+              <ReabrirAFicha
+                className="entrevistas-reabrir"
+                motivos={MOTIVOS_DA_REABERTURA_DA_ENTREVISTA}
+                loja={{
+                  reabrir: async (motivo, complemento) => {
+                    const r = await aoReabrir(motivo, complemento);
+                    return r?.erro ? { ok: false, erro: r.erro } : { ok: true };
+                  },
+                }}
+              />
+            ) : null}
+            {proximo ? (
+              <button
+                type="button"
+                ref={principal}
+                className="btn"
+                onClick={() => ir(proximo)}
+              >
+                <span>
+                  <span className="entrevistas-so-largo">Abrir o </span>
+                  próximo
+                </span>
+                <i className="fa-solid fa-arrow-right" aria-hidden="true" />
+              </button>
+            ) : null}
+          </div>
+        ) : null}
         {dados.pode_editar && roteiro ? (
           <div className="entrevistas-analise-barra">
             <span
@@ -1068,6 +1154,18 @@ export function FichaDoCandidato({
             >
               {salvando ? "Salvando…" : "Salvar"}
             </button>
+            {podeConcluir ? (
+              <button
+                type="button"
+                className="btn secondary"
+                data-acao="concluir-entrevista"
+                disabled={salvando}
+                onClick={() => void concluir()}
+              >
+                <i className="fa-solid fa-lock" aria-hidden="true" />
+                Concluir
+              </button>
+            ) : null}
             {proximo ? (
               <button
                 type="button"

@@ -89,6 +89,7 @@ export type PropriedadesDaFila = {
 const ORDEM_DAS_SITUACOES: SituacaoNaTela[] = [
   "aguardando",
   "em_andamento",
+  "a_concluir",
   "concluida",
   "faltou",
   "sem_nota",
@@ -96,6 +97,7 @@ const ORDEM_DAS_SITUACOES: SituacaoNaTela[] = [
 const TOM_DA_FAIXA: Record<SituacaoNaTela, string> = {
   aguardando: "neutro",
   em_andamento: "info",
+  a_concluir: "alerta",
   concluida: "sucesso",
   faltou: "perigo",
   sem_nota: "alerta",
@@ -103,6 +105,7 @@ const TOM_DA_FAIXA: Record<SituacaoNaTela, string> = {
 const ROTULO_DA_FAIXA: Record<SituacaoNaTela, string> = {
   aguardando: "Aguardando",
   em_andamento: "Em andamento",
+  a_concluir: "A concluir",
   concluida: "Concluídas",
   faltou: "Faltaram",
   sem_nota: "Sem nota",
@@ -112,7 +115,11 @@ export const MINHA_BANCA = "minha";
 
 function NotasDaLinha({ item }: { item: ItemDaFila }) {
   const nota = item.convocado.nota;
-  if (item.situacao === "concluida" && nota !== null && nota !== undefined)
+  if (
+    (item.situacao === "concluida" || item.situacao === "a_concluir") &&
+    nota !== null &&
+    nota !== undefined
+  )
     return (
       <span className="entrevistas-fila-nota" title="Nota da entrevista">
         {numeroBR(nota)} pts
@@ -139,6 +146,13 @@ function principalDaLinha(
   if (situacao === "em_andamento")
     return {
       rotulo: "Continuar",
+      destaque: true,
+      acao: "abrir-ficha",
+      aoClicar: abrir,
+    };
+  if (situacao === "a_concluir")
+    return {
+      rotulo: "Concluir",
       destaque: true,
       acao: "abrir-ficha",
       aoClicar: abrir,
@@ -198,6 +212,7 @@ export function FilaDoDia({
     const r: Record<SituacaoNaTela, number> = {
       aguardando: 0,
       em_andamento: 0,
+      a_concluir: 0,
       concluida: 0,
       faltou: 0,
       sem_nota: 0,

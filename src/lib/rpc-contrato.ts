@@ -1049,6 +1049,19 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
       "Lança/corrige notas (roteiro com aspectos: todos os aspectos de cada avaliador), comparecimento, observações dos avaliadores (observacoes, opcional) e a justificativa da banca (justificativa, opcional) de um convocado (22023 fora da escala, aspecto faltando ou texto longo; 23514 avaliador em competência que não é dele ou INAPTO/Faltou sem justificativa; 42501 no modo AVALIADOR para nota ou observação de outro) e recalcula o resultado. Devolve o payload do edital.",
   },
 
+  concluir_entrevista: {
+    argumentos: ["p_entrevista"],
+    critica: false,
+    resumo:
+      "Conclui a entrevista (20261117050000): a ficha fica só leitura até a coordenação reabrir. Entrevistas (editor); exige o comparecimento, com presença todas as notas e, em Inapto ou falta, a justificativa (23514); já concluída: 55000. Devolve o payload do edital.",
+  },
+  reabrir_entrevista: {
+    argumentos: ["p_entrevista", "p_motivo", "p_complemento"],
+    critica: false,
+    resumo:
+      "Reabre a entrevista concluída (20261117050000): só a coordenação do edital (42501); motivo da lista de src/lib/reabertura-da-entrevista.ts, complemento até 500 e, em Outro, a descrição (22023); não concluída: 55000. Vai para o histórico. Devolve o payload do edital.",
+  },
+
   // ── Recursos dos candidatos (aba Recursos, 20260929120000_recursos.sql) ──
   get_recursos_da_area: {
     argumentos: ["p_area"],
