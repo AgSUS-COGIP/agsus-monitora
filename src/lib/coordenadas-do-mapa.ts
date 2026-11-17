@@ -14,6 +14,7 @@ import {
   registroDoEditor,
 } from "./respostas-do-editor-de-coordenadas.ts";
 import { coordenadasDoMunicipio } from "./coordenadas-dos-municipios.ts";
+import { TIPO_CASAI, tipoDaUnidade } from "./mapa-saude-indigena/formas.ts";
 import {
   filaDoEditor,
   formatarDistancia,
@@ -123,13 +124,17 @@ export function pontosEditaveisDoMapa(
       );
     });
   });
+  // CASAIs só do SIGEPSI: as do CNES e do lmap não estão no mapa (corrige-se lá).
+  const casaisDoSigepsi = registro(redeCnes).casais_do_sigepsi === true;
   Object.entries(registro(registro(redeCnes).rede)).forEach(([dsei, valor]) => {
     if (chaveDsei && dsei !== chaveDsei) return;
     const rede = registro(valor);
     for (const tipo of ["u", "c"] as const) {
+      if (casaisDoSigepsi && tipo === "c") continue;
       lista(rede[tipo]).forEach((valorDoPonto, indice) => {
         if (!Array.isArray(valorDoPonto)) return;
         const ponto: unknown[] = valorDoPonto;
+        if (casaisDoSigepsi && tipoDaUnidade(ponto[0]) === TIPO_CASAI) return;
         incluir(
           {
             fonte: "rede_cnes",
@@ -147,7 +152,7 @@ export function pontosEditaveisDoMapa(
       });
     }
   });
-  if (!chaveDsei) {
+  if (!chaveDsei && !casaisDoSigepsi) {
     lista(registro(lmap).casai).forEach((valor, indice) => {
       const ponto = registro(valor);
       incluir(

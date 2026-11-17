@@ -23,6 +23,19 @@ import { chaveDoDsei, temCoordenada, texto } from "./chaves.js";
 
 export const ORIGEM_SIGEPSI = "sigepsi" as const;
 
+/*
+  As CASAIs de referência nacional no SIGEPSI, pelo código da localização
+  (`CO_SEQ_LOCALIZACAO_POLO_BASE`): 131 = CASAI DF (Brasília), 132 = CASAI
+  São Paulo. Viram o losango do mapa nacional, não ponto de um DSEI.
+*/
+export const CODIGOS_DAS_CASAIS_NACIONAIS: ReadonlySet<string> = new Set([
+  "131",
+  "132",
+]);
+
+const ehCasaiNacional = (linha: Record<string, unknown>) =>
+  CODIGOS_DAS_CASAIS_NACIONAIS.has(texto(linha.CO_SEQ_LOCALIZACAO_POLO_BASE));
+
 /* `unidade`: unidade de lotação (UBSI, posto, aldeia) — une com o mesmo
    lugar do CNES que não seja polo nem CASAI. */
 export type TipoDoSigepsi = "casai" | "polo" | "unidade";
@@ -145,7 +158,9 @@ export function localizacoesPorDsei(linhas: unknown): LocalizacoesPorDsei {
     if (!linha) continue;
     if (texto(linha.ST_REGISTRO_ATIVO).toUpperCase() !== "S") continue;
     const nomeDoDsei = texto(linha.NO_DSEI);
-    // "CASAI DF", "CASAI SÃO PAULO": CASAI nacional no lugar do DSEI, não distrito.
+    // CASAI nacional (131, 132): vai para o mapa nacional, não é ponto de DSEI.
+    if (ehCasaiNacional(linha)) continue;
+    // O NO_DSEI delas é o próprio nome ("CASAI DF"): também não vira distrito.
     if (/^CASAI\b/.test(semAcento(nomeDoDsei))) continue;
     const chave = chaveDoDsei(nomeDoDsei);
     if (!chave) continue;
@@ -183,6 +198,68 @@ export function localizacoesPorDsei(linhas: unknown): LocalizacoesPorDsei {
     });
   }
   return porDsei;
+}
+
+/*
+  AS CASAIs VÊM SÓ DO SIGEPSI
+
+  As de cada DSEI já entram como polos `tipo: "casai"`. As nacionais
+  (CODIGOS_DAS_CASAIS_NACIONAIS: 131 CASAI DF, 132 CASAI São Paulo) viram a
+  lista `nac` do mapa nacional, no formato compacto do `rede_cnes`
+  ([nome, código, lat, lon, município, UF]). Sem CEP (CASAI DF), a UF é a
+  sigla do nome do DSEI ("CASAI DF" → DF).
+*/
+export type CasaiNacionalDoSigepsi = [
+  nome: string,
+  codigo: string | null,
+  lat: number,
+  lon: number,
+  municipio: string,
+  uf: string,
+];
+
+export function casaisNacionaisDoSigepsi(
+  linhas: unknown,
+): CasaiNacionalDoSigepsi[] {
+  if (!Array.isArray(linhas)) return [];
+  return linhas.flatMap((valor): CasaiNacionalDoSigepsi[] => {
+    const linha = registro(valor);
+    if (!linha || texto(linha.ST_REGISTRO_ATIVO).toUpperCase() !== "S")
+      return [];
+    if (!ehCasaiNacional(linha)) return [];
+    const nome = texto(linha.NO_LOTACAO) || texto(linha.NO_DSEI);
+    const lat = texto(linha.CG_LATITUDE);
+    const lon = texto(linha.CG_LONGITUDE);
+    if (!temCoordenada(lat, lon)) return [];
+    if (Number(lat) === 0 && Number(lon) === 0) return [];
+    const sigla = chaveDoDsei(linha.NO_DSEI);
+    const uf = ufDoCep(linha.NU_CEP) || (/^[A-Z]{2}$/.test(sigla) ? sigla : "");
+    return [
+      [
+        nome,
+        texto(linha.CO_SEQ_LOCALIZACAO_POLO_BASE) || null,
+        Number(lat),
+        Number(lon),
+        texto(linha.NO_MUNICIPIO),
+        uf,
+      ],
+    ];
+  });
+}
+
+/*
+  O `rede_cnes` com as CASAIs do SIGEPSI: `nac` passa a ser a lista nacional
+  do SIGEPSI e `casais_do_sigepsi: true` avisa que as CASAIs do CNES (`c` e as
+  unidades com nome de CASAI) não entram no mapa nem no editor. As listas do
+  CNES não são recortadas: o editor confere cada ponto pela posição nelas.
+*/
+export function aplicarCasaisDoSigepsi(
+  redeCnes: unknown,
+  casaisNacionais: readonly CasaiNacionalDoSigepsi[] | null | undefined,
+): unknown {
+  if (!casaisNacionais) return redeCnes;
+  const base = registro(redeCnes) || { rede: {} };
+  return { ...base, nac: [...casaisNacionais], casais_do_sigepsi: true };
 }
 
 const MINUSCULAS = new Set(["e", "de", "do", "da", "dos", "das"]);

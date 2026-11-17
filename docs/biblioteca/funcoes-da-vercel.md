@@ -39,7 +39,8 @@ respondem 404. A Aya responde no navegador; o endpoint de IA e o bridge local fo
   Supabase (conferido em `/auth/v1/user`) e a função lê
   `https://sigepsi.agenciasus.org.br/api/mapa-dseis/localizacoes/todas` com
   `Bearer <SIGEPSI_API_TOKEN>` (variável da Vercel, nunca no front). Responde
-  `{ dseis: { <chave>: { nome, polos, sede } }, lidoEm }` (a lista de DSEIs do mapa) já agrupado por `chaveDoDsei` (`src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts`), guarda
+  `{ dseis: { <chave>: { nome, polos, sede } }, casaisNacionais, lidoEm }` (a lista de DSEIs do
+  mapa e as CASAIs nacionais, localizações 131 e 132) já agrupado por `chaveDoDsei` (`src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts`), guarda
   10 min na instância e só em cache privado. Sem a variável: 500 com `faltam`; SIGEPSI recusando:
   502 com `status_do_sigepsi`.
 

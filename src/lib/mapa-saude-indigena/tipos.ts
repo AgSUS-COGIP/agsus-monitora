@@ -52,6 +52,8 @@ export interface RedeCnesDoMapa {
     { u: EstabelecimentoCompacto[]; c: EstabelecimentoCompacto[] }
   >;
   nac: EstabelecimentoCompacto[];
+  /** As CASAIs vêm só do SIGEPSI: as do CNES não entram (`nac` já é do SIGEPSI). */
+  casais_do_sigepsi?: boolean;
 }
 export interface ContagemDoDsei {
   editais: number;

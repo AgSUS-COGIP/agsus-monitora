@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  aplicarCasaisDoSigepsi,
   aplicarLocalizacoes,
+  casaisNacionaisDoSigepsi,
   localizacoesPorDsei,
   tipoDaLocalizacao,
   ufDoCep,
@@ -10,6 +12,7 @@ import {
   resumoDaRede,
 } from "../../src/lib/mapa-saude-indigena/mapa-do-dsei.ts";
 import { pontosEditaveisDoMapa } from "../../src/lib/coordenadas-do-mapa.ts";
+import { redeCnesDoMapa } from "../../src/lib/mapa-saude-indigena/dados-do-mapa.ts";
 import type {
   DseiDoMapa,
   EstabelecimentoCompacto,
@@ -60,6 +63,62 @@ const LOTACAO = linha({
   NO_MUNICIPIO: "PORTO REAL DO COLEGIO",
   CG_LATITUDE: "-10.1",
   CG_LONGITUDE: "-36.8",
+});
+
+/* As CASAIs nacionais do SIGEPSI: localizações 131 (DF) e 132 (São Paulo). */
+const CASAI_DF = linha({
+  CO_SEQ_LOCALIZACAO_POLO_BASE: "131",
+  NO_DSEI: "CASAI DF",
+  TP_UNIDADE: "CASAI",
+  NO_LOTACAO: "CASAI DF",
+  NU_CEP: "",
+  NO_MUNICIPIO: "BRASILIA",
+  CG_LATITUDE: "-15.7432",
+  CG_LONGITUDE: "-47.7133",
+});
+const CASAI_SP = linha({
+  CO_SEQ_LOCALIZACAO_POLO_BASE: "132",
+  NO_DSEI: "CASAI SÃO PAULO",
+  TP_UNIDADE: "CASAI",
+  NO_LOTACAO: "CASAI SÃO PAULO",
+  NU_CEP: "05161000",
+  NO_MUNICIPIO: "SAO PAULO",
+  CG_LATITUDE: "-23.5821",
+  CG_LONGITUDE: "-46.6136",
+});
+
+describe("CASAIs só do SIGEPSI", () => {
+  it("as nacionais são as localizações 131 e 132, fora da lista de DSEIs", () => {
+    const linhas = [CASAI, CASAI_DF, CASAI_SP];
+    expect(casaisNacionaisDoSigepsi(linhas)).toEqual([
+      ["CASAI DF", "131", -15.7432, -47.7133, "BRASILIA", "DF"],
+      ["CASAI SÃO PAULO", "132", -23.5821, -46.6136, "SAO PAULO", "SP"],
+    ]);
+    // A CASAI de um DSEI não é nacional; as nacionais não viram DSEI.
+    expect(Object.keys(localizacoesPorDsei(linhas))).toEqual([
+      "ALAGOAS SERGIPE",
+    ]);
+    expect(
+      casaisNacionaisDoSigepsi([
+        linha({ ...CASAI_DF, ST_REGISTRO_ATIVO: "N" }),
+      ]),
+    ).toEqual([]);
+  });
+
+  it("o rede_cnes marca as CASAIs do SIGEPSI e troca as nacionais", () => {
+    const rede = {
+      rede: { X: { u: [], c: [["CASAI DO CNES", "1", 1, 1]] } },
+      nac: [["CASAI BRASÍLIA", "2", 1, 1]],
+    };
+    const nacionais = casaisNacionaisDoSigepsi([CASAI_DF]);
+    const novo = aplicarCasaisDoSigepsi(rede, nacionais);
+    expect(novo).toEqual({ ...rede, nac: nacionais, casais_do_sigepsi: true });
+    // A validação dos dados do mapa preserva a marca.
+    expect(redeCnesDoMapa(novo).casais_do_sigepsi).toBe(true);
+    expect(redeCnesDoMapa(rede)).not.toHaveProperty("casais_do_sigepsi");
+    // Sem SIGEPSI, fica o banco.
+    expect(aplicarCasaisDoSigepsi(rede, null)).toBe(rede);
+  });
 });
 
 describe("localizacoesPorDsei", () => {
@@ -284,6 +343,35 @@ describe("no mapa do DSEI e no editor", () => {
     ]);
   });
 
+  it("com as CASAIs do SIGEPSI, as do CNES saem do mapa e do editor", () => {
+    const rede = {
+      rede: {
+        [dsei.k]: {
+          u: [
+            cnes("5", "CASA DE SAUDE INDIGENA LONGE", -9.0, -36.0),
+            cnes("6", "UBSI LONGE", -9.1, -36.1),
+          ],
+          c: [cnes("7", "CASAI OUTRO LUGAR", -9.2, -36.2)],
+        },
+      },
+      nac: [],
+    };
+    const sem = registrosDoDsei(dsei, rede).map((r) => r.name);
+    expect(sem).toContain("CASAI OUTRO LUGAR");
+    const comSigepsi = { ...rede, casais_do_sigepsi: true };
+    const com = registrosDoDsei(dsei, comSigepsi);
+    expect(
+      com.filter((r) => r.type.key === "casai").map((r) => r.name),
+    ).toEqual(["CASAI DSEI AL/SE"]);
+    expect(com.map((r) => r.name)).toContain("UBSI LONGE");
+    expect(
+      pontosEditaveisDoMapa(
+        { dsei: [dsei], casai: [{ n: "CASAI Nacional", lat: 1, lon: 1 }] },
+        { ...comSigepsi, nac: [["CASAI DF", "131", 1, 1, "", "DF"]] },
+      ).map((p) => p.nome),
+    ).toEqual(["Unidade CNES · UBSI LONGE"]);
+  });
+
   it("o editor não oferece a sede nem os pontos do SIGEPSI", () => {
     expect(pontosEditaveisDoMapa({ dsei: [dsei] }, null, dsei.k)).toEqual([]);
   });
@@ -370,7 +458,7 @@ describe("/api/dseis", () => {
     const fetchFalso = vi.fn<typeof fetch>(async (entrada) =>
       urlDe(entrada).endsWith("/auth/v1/user")
         ? new Response("{}", { status: 200 })
-        : new Response(JSON.stringify([CASAI]), { status: 200 }),
+        : new Response(JSON.stringify([CASAI, CASAI_DF]), { status: 200 }),
     );
     globalThis.fetch = fetchFalso;
     const r = await chamar({ authorization: "Bearer sessao" });
@@ -381,6 +469,9 @@ describe("/api/dseis", () => {
           polos: [expect.objectContaining({ tipo: "casai" })],
         },
       },
+      casaisNacionais: [
+        ["CASAI DF", "131", -15.7432, -47.7133, "BRASILIA", "DF"],
+      ],
     });
     expect(r.corpo).not.toContain("segredo");
     const opcoes = fetchFalso.mock.calls[1]?.[1];
@@ -433,13 +524,16 @@ describe("carregarLocalizacoes (navegador)", () => {
       await import("../../src/modulos/mapa-saude-indigena/localizacoes.ts");
     const buscar = vi.fn<typeof fetch>(
       async () =>
-        new Response(JSON.stringify({ dseis: DSEIS }), { status: 200 }),
+        new Response(JSON.stringify({ dseis: DSEIS, casaisNacionais: [] }), {
+          status: 200,
+        }),
     );
     let agora = 0;
     const relogio = () => agora;
-    expect(await carregarLocalizacoes(sessao, { buscar, relogio })).toEqual(
-      DSEIS,
-    );
+    expect(await carregarLocalizacoes(sessao, { buscar, relogio })).toEqual({
+      dseis: DSEIS,
+      casaisNacionais: [],
+    });
     const [rota, opcoes] = buscar.mock.calls[0] ?? [];
     expect(rota).toBe("/api/dseis");
     expect(new Headers(opcoes?.headers).get("Authorization")).toBe(
