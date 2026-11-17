@@ -19,10 +19,10 @@
   `criarCacheDePayload`; `apagarCacheDePayload` também nunca lança.
 */
 
-const BANCO = "agsus-monitora-analises";
-const LOJA = "payload";
+export const BANCO = "agsus-monitora-analises";
+export const LOJA = "payload";
 
-function abrirBanco(): Promise<IDBDatabase> {
+export function abrirBanco(): Promise<IDBDatabase> {
   return new Promise((resolver, rejeitar) => {
     const pedido = globalThis.indexedDB.open(BANCO, 1);
     pedido.onupgradeneeded = () => pedido.result.createObjectStore(LOJA);
@@ -63,6 +63,9 @@ export const armazenamentoDePayload = Object.freeze({
   },
   async apagarTudo(): Promise<void> {
     await naLoja("readwrite", (loja) => loja.clear());
+  },
+  async apagar(chave: string): Promise<void> {
+    await naLoja("readwrite", (loja) => loja.delete(chave));
   },
 });
 

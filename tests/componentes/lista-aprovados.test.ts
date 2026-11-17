@@ -2248,6 +2248,31 @@ describe("candidatos por área, com a cópia do navegador", () => {
     expect(nomes()).toContain("Bruno Lima");
   });
 
+  it("sem rede, a próxima abertura mostra a cópia guardada com a data dela", async () => {
+    const armazenamento = armazenamentoEmMemoria();
+    await montar({ perfil: USUARIO, armazenamento });
+    await assentar();
+    await act(async () => definido(definido(controlador).raiz).unmount());
+
+    const supabase = supabaseFalso();
+    supabase.rpc.mockImplementation(async () => ({
+      data: null,
+      error: { message: "TypeError: Failed to fetch", code: "" },
+    }));
+    const { toast } = await montar({
+      perfil: USUARIO,
+      armazenamento,
+      supabase,
+    });
+    await assentar();
+    expect(nomes()).toContain("Bruno Lima");
+    expect(toast).not.toHaveBeenCalled();
+    expect(achar("[data-status-da-carga]", document.body).textContent).toMatch(
+      /^Dados de \d{2}\/\d{2}, \d{2}:\d{2}$/,
+    );
+    expect(definido(controlador).estado.obter().listas).toHaveLength(2);
+  });
+
   it("a cópia aparece na hora e a versão nova do banco a substitui", async () => {
     const armazenamento = armazenamentoEmMemoria();
     await montar({ perfil: USUARIO, armazenamento });

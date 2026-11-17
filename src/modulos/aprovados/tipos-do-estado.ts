@@ -33,6 +33,8 @@ export interface SnapshotDosAprovados {
   configs: ConfiguracoesDaConvocacao;
   carregado: boolean;
   carregadoEm: string;
+  /** Hora da cópia na tela quando o banco não pôde ser lido (sem rede); senão `null`. */
+  copiaDe: number | null;
   erroAoCarregar: string;
   acao: { tipo: string; rotulo: string } | null;
   perfil: unknown;
@@ -139,6 +141,8 @@ export interface ResultadoDosCandidatos {
   versao?: string | null;
   guardado?: unknown;
   inalterado?: boolean;
+  /** Sem rede: a hora da cópia guardada que veio no lugar da resposta. */
+  copiaDe?: number;
 }
 export type EstadoDosAprovados = ReturnType<
   typeof import("./estado.ts").criarEstadoDaListaDeAprovados

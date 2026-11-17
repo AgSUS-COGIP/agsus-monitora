@@ -50,6 +50,8 @@ import {
   normalizePlatformContext,
 } from "../lib/platform-context";
 import { SESSAO_ATIVA, estadoDaSessao } from "../lib/sessao";
+import { ehFalhaDeConexao } from "../lib/falha-de-rede";
+import type { PerfilGuardado } from "./perfil-guardado.ts";
 import {
   getSupabaseAuthStorage,
   getSupabaseClient,
@@ -139,6 +141,11 @@ export type EstadoDaSessaoDoApp = {
   erroDeConfiguracao: string;
   consultarPedido: boolean;
   configuracao: ConfiguracaoDaEntrada;
+  /**
+   * Entrou sem rede, com o perfil guardado (src/lib/sessao-sem-rede.ts): o
+   * perfil é conferido no banco quando a rede voltar.
+   */
+  semRede: boolean;
 };
 
 /** De onde veio a sessão que está entrando. */
@@ -189,6 +196,8 @@ export type DependenciasDaSessao = {
   celular?: () => boolean;
   agora?: () => number;
   esperar?: (ms: number) => Promise<unknown>;
+  /** A cópia do perfil para entrar sem rede; `null` desliga. */
+  perfilGuardado?: () => PerfilGuardado | null;
 };
 
 /** O usuário do Supabase Auth, na parte que dá nome à pessoa. */
@@ -210,6 +219,31 @@ const SEM_MENSAGEM = Object.freeze({ texto: "", tom: "" });
 const PERFIL_ILEGIVEL: Readonly<{ ilegivel: true }> = Object.freeze({
   ilegivel: true,
 });
+/* A leitura do perfil falhou por falta de rede: serve o perfil guardado. */
+const PERFIL_SEM_REDE: Readonly<{ semRede: true }> = Object.freeze({
+  semRede: true,
+});
+
+/* A cópia do perfil (IndexedDB) baixa sob demanda: fora do pedaço da entrada. */
+let perfilGuardadoPadrao: Promise<PerfilGuardado> | null = null;
+const carregarPerfilGuardado = () =>
+  (perfilGuardadoPadrao ??= import("./perfil-guardado.ts").then((m) =>
+    m.criarPerfilGuardado(),
+  ));
+const PERFIL_GUARDADO_DO_APP: PerfilGuardado = Object.freeze({
+  ler: (usuarioId: string) =>
+    carregarPerfilGuardado()
+      .then((p) => p.ler(usuarioId))
+      .catch(() => null),
+  guardar: (
+    usuarioId: string,
+    contexto: Parameters<PerfilGuardado["guardar"]>[1],
+  ) =>
+    carregarPerfilGuardado()
+      .then((p) => p.guardar(usuarioId, contexto))
+      .catch(() => false),
+});
+const perfilGuardadoDoApp = () => PERFIL_GUARDADO_DO_APP;
 
 /* As chaves de TB_CONFIGURACAO que a entrada usa, com o padrão de quando não vieram. */
 const CONFIGURACAO_PADRAO = Object.freeze({
@@ -286,6 +320,7 @@ export function criarSessao({
   celular = () => isMobileOAuthContext(),
   agora = () => Date.now(),
   esperar = esperarPadrao,
+  perfilGuardado = perfilGuardadoDoApp,
 }: DependenciasDaSessao = {}) {
   let estado: EstadoDaSessaoDoApp = {
     fase: FASES.INICIANDO,
@@ -298,6 +333,7 @@ export function criarSessao({
     erroDeConfiguracao: "",
     consultarPedido: true,
     configuracao: configuracaoDaEntrada(),
+    semRede: false,
   };
   const ouvintes = new Set<() => void>();
   let sistema: GanchosDoSistema = {};
@@ -469,27 +505,34 @@ export function criarSessao({
    * perfil, e a pessoa não deve cair no pedido de acesso por isso.
    */
   async function carregarPerfil(): Promise<
-    ContextoDoPerfil | typeof PERFIL_ILEGIVEL | null
+    ContextoDoPerfil | typeof PERFIL_ILEGIVEL | typeof PERFIL_SEM_REDE | null
   > {
     const client = obterCliente()!;
     const { data, error } = await client.rpc(RPC_CONTEXTO);
     if (error) {
       console.warn("Falha ao ler o contexto do usuário:", error);
-      return PERFIL_ILEGIVEL;
+      return ehFalhaDeConexao(error) ? PERFIL_SEM_REDE : PERFIL_ILEGIVEL;
     }
     const contexto = normalizePlatformContext(data);
-    if (contexto)
-      return {
+    if (contexto) {
+      const lido = {
         perfil: contexto.profile,
         painelIds: contexto.panelIds,
         contextoCarregado: true,
       };
+      // A cópia para entrar sem rede renova a cada leitura com rede.
+      const id = estado.usuario?.id;
+      if (id) void perfilGuardado()?.guardar(id, lido);
+      return lido;
+    }
     // Sem contexto unificado: o contrato antigo. Um contexto ausente não revive
     // perfil desativado nem as permissões amplas do legado.
     const reserva = await client.rpc(RPC_MEU_USUARIO);
     if (reserva.error) {
       console.warn("Perfil indisponível para o usuário atual:", reserva.error);
-      return PERFIL_ILEGIVEL;
+      return ehFalhaDeConexao(reserva.error)
+        ? PERFIL_SEM_REDE
+        : PERFIL_ILEGIVEL;
     }
     const linha: Record<string, unknown> | null = Array.isArray(reserva.data)
       ? reserva.data[0] || null
@@ -548,8 +591,18 @@ export function criarSessao({
     const usuario = sessao.user;
     // O legado liga o skeleton e começa a ler a cópia da sessão junto com o perfil.
     chamar("aoVerificar", { usuario, origem });
-    const contexto = await carregarPerfil();
-    if (contexto === PERFIL_ILEGIVEL) {
+    let contexto = await carregarPerfil();
+    /*
+      Sem rede: o perfil guardado na última entrada com rede (até 48 h). Sem
+      ele, o erro de sempre. Quando a rede voltar, o perfil é conferido.
+    */
+    const semRede = contexto === PERFIL_SEM_REDE;
+    if (semRede)
+      contexto =
+        ((await perfilGuardado()?.ler(
+          usuario.id,
+        )) as ContextoDoPerfil | null) ?? PERFIL_ILEGIVEL;
+    if (contexto === PERFIL_ILEGIVEL || contexto === PERFIL_SEM_REDE) {
       falharNaEntrada(MENSAGENS.permissoes);
       return;
     }
@@ -572,7 +625,7 @@ export function criarSessao({
     });
     if (aberto) {
       usuarioCarregado = usuario.id;
-      definir({ fase: FASES.CONECTADO, mensagem: SEM_MENSAGEM });
+      definir({ fase: FASES.CONECTADO, mensagem: SEM_MENSAGEM, semRede });
     } else if (estado.fase === FASES.ABRINDO) {
       // Os dados não vieram (o legado já avisou): fica a tela de acesso.
       definir({ fase: FASES.DESLOGADO });
@@ -679,12 +732,13 @@ export function criarSessao({
     try {
       const contexto = await carregarPerfil();
       // Leitura falhou com o sistema aberto: fica o perfil que já estava.
-      if (contexto === PERFIL_ILEGIVEL) return;
+      if (contexto === PERFIL_ILEGIVEL || contexto === PERFIL_SEM_REDE) return;
       if (!contexto) {
         ficarSemAcesso({ consultar: true });
         return;
       }
       definir({
+        semRede: false,
         perfil: (contexto as ContextoDoPerfil).perfil,
         painelIds: (contexto as ContextoDoPerfil).painelIds,
         contextoCarregado: (contexto as ContextoDoPerfil).contextoCarregado,
@@ -850,6 +904,21 @@ export function criarSessao({
     // eslint-disable-next-line @typescript-eslint/no-misused-promises -- devolve a promessa de propósito (o teste aguarda o login entrar); o navegador ignora o retorno.
     janela.addEventListener("message", aoReceberMensagem);
     janela.addEventListener("pageshow", aoMostrarPagina);
+    janela.addEventListener("online", () => void conferirDepoisDaRede());
+  }
+
+  /*
+    Entrou sem rede com o perfil guardado: a rede voltou, o perfil é conferido
+    no banco. Sem acesso, o app fecha e as cópias saem (`ficarSemAcesso`).
+  */
+  async function conferirDepoisDaRede() {
+    if (!estado.semRede || estado.fase !== FASES.CONECTADO) return;
+    try {
+      const { data } = await obterCliente()!.auth.getSession();
+      if (data?.session) await recarregarPerfil(data.session);
+    } catch (erro) {
+      console.warn("Falha ao conferir o perfil depois da rede:", erro);
+    }
   }
 
   async function entrarComGoogle() {
