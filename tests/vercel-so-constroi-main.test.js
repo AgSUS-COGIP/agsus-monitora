@@ -5,6 +5,21 @@ import { describe, expect, it } from "vitest";
 const vercel = JSON.parse(readFileSync("vercel.json", "utf8"));
 
 /*
+  O comando roda no `sh` da Vercel. No Windows fora do Git Bash (PowerShell)
+  não há `sh` no PATH: sem ele, a falha de abrir o processo virava "saída 1"
+  e os testes de "pula" caíam sem defeito nenhum. Aí eles são pulados; no CI
+  (Linux) sempre rodam.
+*/
+const temSh = (() => {
+  try {
+    execFileSync("sh", ["-c", "exit 0"], { stdio: "ignore" });
+    return true;
+  } catch {
+    return false;
+  }
+})();
+
+/*
   A conta chegou ao limite de build da Vercel construindo preview de cada
   branch. Como o CI do GitHub já roda build, smoke e a suíte inteira, o preview
   era o item mais caro e o menos necessário.
@@ -32,11 +47,11 @@ describe("a Vercel só constrói a main", () => {
     }
   }
 
-  it("constrói a main", () => {
+  it.skipIf(!temSh)("constrói a main", () => {
     expect(saidaPara("main")).not.toBe(0);
   });
 
-  it("pula qualquer outra branch", () => {
+  it.skipIf(!temSh)("pula qualquer outra branch", () => {
     for (const ref of [
       "fix/alguma-coisa",
       "Permissões",
@@ -48,7 +63,7 @@ describe("a Vercel só constrói a main", () => {
     }
   });
 
-  it("não confunde branch cujo nome contém main", () => {
+  it.skipIf(!temSh)("não confunde branch cujo nome contém main", () => {
     expect(saidaPara("mainline")).toBe(0);
     expect(saidaPara("hotfix/main")).toBe(0);
   });
