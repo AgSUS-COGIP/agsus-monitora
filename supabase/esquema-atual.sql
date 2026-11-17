@@ -6482,6 +6482,9 @@ CREATE FUNCTION private."FC_IMPORTAR_AVALIACAO_DA_PLANILHA"(p_edital uuid, p_mot
     AS $$
 declare
   v_motivo text := btrim(coalesce(p_motivo, ''));
+  -- A nota mínima do edital (a mesma de concluir_ficha; sem nível na planilha, a geral ou a menor
+  -- por nível). Reprovado com nota igual ou acima dela não foi por nota: foi por requisito.
+  v_minima numeric;
   v_p record;
   v_f public."TB_FICHA_ANALISE";
   v_l public."TB_ANALISE_CURRICULAR";
@@ -6540,9 +6543,19 @@ begin
     end if;
 
     select * into v_l from public."TB_ANALISE_CURRICULAR" where id = v_p.linha;
+    if v_minima is null then
+      select coalesce(
+               case when jsonb_typeof(d -> 'nota_minima') = 'number' then (d ->> 'nota_minima')::numeric end,
+               (select min(x.value::numeric) from jsonb_each_text(coalesce(d -> 'nota_minima_por_nivel', '{}'::jsonb)) x
+                 where x.value ~ '^[0-9]+([.][0-9]+)?$'))
+        into v_minima
+        from (select private."FC_DOCUMENTAL_DO_EDITAL"(p_edital) d) dd;
+    end if;
     v_resultado := case
       when v_l.status_consolidado = 'Aprovado' then 'APTO'
       when coalesce(v_l.nota_final_ajustada, 0) = 0 then 'INAPTO_REQUISITO'
+      -- 17/11/2026: com a nota na mínima ou acima, a reprovação foi por requisito.
+      when v_minima is not null and v_l.nota_final_ajustada >= v_minima then 'INAPTO_REQUISITO'
       else 'INAPTO_NOTA'
     end;
     v_nota := case when v_resultado = 'INAPTO_REQUISITO' then 0 else v_l.nota_final_ajustada end;
