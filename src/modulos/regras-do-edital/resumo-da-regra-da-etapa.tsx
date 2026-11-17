@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { importarComRecarga } from "../../lib/importar-com-recarga";
+import { importarComRecarga } from "../../lib/carga/importar-com-recarga";
 import type { LinhaDoResumo } from "../../lib/regras-do-edital.ts";
 import { GradeDeKv, Kv, Selo } from "../../ui/index.ts";
 import "./resumo-da-regra-da-etapa.css";

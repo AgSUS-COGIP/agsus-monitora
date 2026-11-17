@@ -1,4 +1,4 @@
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 
 /*
   Formatos comuns da gaveta de Recursos (detalhe, formulário, resposta, anexos

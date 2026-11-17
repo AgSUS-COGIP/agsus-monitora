@@ -63,7 +63,7 @@ function responderDoSigepsi(atual) {
 }
 
 const graficos = vi.hoisted(() => []);
-vi.mock("../../src/lib/chartjs-global.ts", () => {
+vi.mock("../../src/lib/base/chartjs-global.ts", () => {
   const Chart = class {
     constructor(canvas, configuracao) {
       this.canvas = canvas;

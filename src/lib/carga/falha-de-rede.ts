@@ -32,7 +32,7 @@ export class TempoEsgotado extends Error {
 export function ehFalhaDeConexao(erro: unknown): boolean {
   if (!erro) return false;
   const lido = erro as ErroLido;
-  // `FalhaDeConexao` de src/lib/sessao.ts (a sessão não pôde ser conferida).
+  // `FalhaDeConexao` de src/lib/sessao/sessao.ts (a sessão não pôde ser conferida).
   if (erro instanceof TempoEsgotado || lido.falhaTransitoria === true)
     return true;
   if (

@@ -18,8 +18,8 @@ import {
   carregarTela,
   registrarTelas,
 } from "../../src/app/registro-das-telas.ts";
-import { CHAVE_DA_TELA_GUARDADA } from "../../src/lib/navegacao";
-import { TELAS_DAS_AREAS } from "../../src/lib/rotas.ts";
+import { CHAVE_DA_TELA_GUARDADA } from "../../src/lib/navegacao/navegacao";
+import { TELAS_DAS_AREAS } from "../../src/lib/navegacao/rotas.ts";
 import {
   definirAreaAtual,
   obterDadosDoMonitoramento,

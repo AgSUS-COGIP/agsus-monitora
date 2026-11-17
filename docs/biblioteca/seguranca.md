@@ -16,23 +16,23 @@ convite ou por solicitação aprovada por um administrador, que define grupo e p
 ([[modulo-acessos]]). **Há um caminho único de auth**: nenhum `createClient` avulso
 (`npm run check:auth-architecture`, `scripts/check-supabase-auth-architecture.mjs`).
 
-- `src/lib/sessao.ts`, `session-lifecycle.ts`, `auth-flow.ts`, `supabaseClient.ts` — o único
+- `src/lib/sessao/sessao.ts`, `session-lifecycle.ts`, `auth-flow.ts`, `supabaseClient.ts` — o único
   caminho de auth; o cliente Supabase é um só (`getSupabaseClient()`).
 - `src/modules/auth-storage.ts` — guarda da sessão (vai para `src/lib/` na etapa 6 da
   arquitetura).
-- `src/lib/novas-tentativas.ts` — **regra única de nova tentativa automática** de chamada ao
+- `src/lib/sessao/novas-tentativas.ts` — **regra única de nova tentativa automática** de chamada ao
   Supabase (leitura passageira, token vencido): espera crescente sorteada, teto, limite e orçamento
   comum, aplicada pelo cliente único no `fetch`. Nada de laço próprio de repetição em tela; espera
   crescente usa `esperaAntesDaTentativa`.
 - `src/app/sessao.ts` e `src/app/sistema.ts` — o contrato "Sessão ↔ sistema" entre a sessão e o
   resto do app ([docs/arquitetura-react.md](../arquitetura-react.md)).
 - `src/app/entrada/` — a tela de acesso e o pedido de acesso (`src/lib/solicitacao-de-acesso.ts`).
-  A marca da tela de acesso fica em `src/lib/access-branding.ts`, `access-branding-cache.ts` e
+  A marca da tela de acesso fica em `src/lib/entrada/access-branding.ts`, `access-branding-cache.ts` e
   `access-branding-publico.ts`; a da barra lateral, em `src/componentes/barra-lateral/marca.ts`.
 - `src/auth/callback.ts` (de `auth/callback.html`) — o retorno do OAuth. O login volta para
   `<endereço>/auth/callback.html`, que precisa estar nas **Redirect URLs** do Supabase.
-- `src/lib/env.ts` — leitura de variáveis; nunca chave escrita no código.
-- `src/lib/versao-do-sistema.ts` — o sinal de "tela antiga" (PGRST202 / "recarregue a página") no
+- `src/lib/sessao/env.ts` — leitura de variáveis; nunca chave escrita no código.
+- `src/lib/base/versao-do-sistema.ts` — o sinal de "tela antiga" (PGRST202 / "recarregue a página") no
   fetch do cliente.
 
 Regras da sessão:
@@ -40,10 +40,10 @@ Regras da sessão:
 - Nunca aplicar o acesso automático @agenciasus (decisão de nunca aplicar, em `supabase/`).
 - Login e permissões falham de forma clara, nunca com tela travada.
 - A cópia da sessão no navegador só abre a tela para o mesmo usuário, mesmo acesso e mesma versão
-  (`src/lib/copia-da-sessao.ts`): afrouxar expõe dado a quem perdeu acesso
+  (`src/lib/sessao/copia-da-sessao.ts`): afrouxar expõe dado a quem perdeu acesso
   ([[arquitetura-do-front]]).
 - **Sem rede**, a sessão guardada e o perfil guardado servem por até 48 h, e o perfil é conferido
-  quando a rede volta ([[pwa-e-modo-offline]], `src/lib/sessao-sem-rede.ts`). Só a falha de rede
+  quando a rede volta ([[pwa-e-modo-offline]], `src/lib/sessao/sessao-sem-rede.ts`). Só a falha de rede
   abre esse caminho: recusa do servidor e erro do banco seguem como antes.
 - Testes: Playwright `sessao-simulada` (app com sessão e Supabase respondido por `page.route`) e,
   com banco de desenvolvimento, `sessao-autenticada` ([[testes]]).
@@ -69,9 +69,9 @@ fixado ([[rpc-e-contrato]]). Não desligar RLS para "resolver" permissão.
 
 ## Fronteiras no código (não afrouxar)
 
-- HTML dinâmico passa por `src/lib/sanitize.ts` / `html-security.ts`; CSV exportado por
+- HTML dinâmico passa por `src/lib/seguranca/sanitize.ts` / `html-security.ts`; CSV exportado por
   `csv-security.ts`. Nunca `innerHTML` cru nem `dangerouslySetInnerHTML`.
-- Os proxies da FUNAI validam a origem com `src/lib/origem-da-requisicao.ts`
+- Os proxies da FUNAI validam a origem com `src/lib/seguranca/origem-da-requisicao.ts`
   (`origemDeTerceiro`): sem isso o endpoint vira proxy aberto.
 - A API para outro sistema confere a chave em tempo constante (`api/_rota-com-chave.ts`).
 - Cabeçalhos de segurança (HSTS, CSP etc.) no `vercel.json`, usados também pelo servidor
@@ -79,7 +79,7 @@ fixado ([[rpc-e-contrato]]). Não desligar RLS para "resolver" permissão.
 - **A CSP é aplicada** (deixou de ser só relatório em 16/11/2026): script de fora só do Google
   Analytics e do cdnjs, sem `eval`, sem `<object>`. Fonte nova de script, quadro ou conexão entra
   no `vercel.json` no mesmo PR, senão o navegador a bloqueia. Cada bloqueio vai para
-  `TL_EVENTO_ACESSO` (`csp_report_only_violation`, nome antigo) por `src/lib/csp-report-monitor.ts`.
+  `TL_EVENTO_ACESSO` (`csp_report_only_violation`, nome antigo) por `src/lib/seguranca/csp-report-monitor.ts`.
 - `tests/setup/rede-bloqueada.ts` bloqueia a rede em todo teste unitário (um teste já chamou o
   Supabase de produção via `.env.local`).
 - O servidor e o `dist/` não servem `CLAUDE.md`, `.env` nem arquivo com ponto

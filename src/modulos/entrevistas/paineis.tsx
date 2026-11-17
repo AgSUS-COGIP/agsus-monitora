@@ -11,7 +11,7 @@ import type {
   PropsDosGraficos,
 } from "./tipos-do-painel.ts";
 import { useEffect, useMemo, useRef } from "react";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import {
   contagemPorComparecimento,
   contagemPorParecer,

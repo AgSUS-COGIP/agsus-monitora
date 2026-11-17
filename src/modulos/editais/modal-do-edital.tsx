@@ -9,7 +9,10 @@ import type { ChangeEvent } from "react";
 import { RESPONSAVEIS_DE_EDITAL } from "../../lib/responsavel-do-edital.ts";
 import { cicloPadronizado, opcoesDeCiclo } from "../../lib/ciclo-do-edital.ts";
 import { canMoveEditalBetweenAreas } from "../../lib/access-roles.ts";
-import { AREAS_DO_SISTEMA, nomeDaArea } from "../../lib/menu-lateral.ts";
+import {
+  AREAS_DO_SISTEMA,
+  nomeDaArea,
+} from "../../lib/navegacao/menu-lateral.ts";
 import {
   NOVA_UNIDADE,
   areaDaUnidade,

@@ -17,7 +17,7 @@
     sessão guardada serve, até `LIMITE_SEM_REDE_MS` depois de o token vencer.
     Recusa do servidor, sessão ausente ou erro que não é de rede seguem como
     vieram. Com a rede de volta, o auth-js renova o token e tudo segue igual.
-  - `PERFIL_GUARDADO` (src/lib/perfil-sem-rede.ts): o tipo da cópia do perfil,
+  - `PERFIL_GUARDADO` (src/lib/sessao/perfil-sem-rede.ts): o tipo da cópia do perfil,
     gravada a cada leitura do perfil com rede e lida só quando a leitura falha
     por falta de rede. Vale 48 h, como as outras cópias, e sai com elas (Sair,
     "Limpar sessão", acesso perdido, outra pessoa no navegador). Quando a rede
@@ -28,7 +28,7 @@
   estava no aparelho, por até 48 h.
 */
 /*
-  Só o classificador da biblioteca (e não src/lib/sessao.ts): este arquivo baixa
+  Só o classificador da biblioteca (e não src/lib/sessao/sessao.ts): este arquivo baixa
   sob demanda, quando a leitura da sessão falha, e não pode puxar outro pedaço
   para a entrada.
 */

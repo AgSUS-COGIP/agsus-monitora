@@ -4,7 +4,7 @@ import { irParaTela } from "../../app/ir-para-tela.ts";
 import { carregarTela } from "../../app/registro-das-telas.ts";
 import { situacaoDoSistema } from "../../app/situacao-do-sistema.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
-import { paginaDesligada } from "../../lib/pagina-desligada.ts";
+import { paginaDesligada } from "../../lib/navegacao/pagina-desligada.ts";
 import { abasDoMenu, catalogoDoBanco } from "../../modules/catalogo-de-abas.ts";
 import { Aviso, Carregando, Segmentado } from "../../ui/index.ts";
 

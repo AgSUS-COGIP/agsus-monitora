@@ -44,7 +44,7 @@ import {
   motivosDeAtencao,
 } from "./criticos-da-visao-geral.ts";
 import type { MarcacaoDeCritico } from "./criticos-da-visao-geral.ts";
-import { sanitizeCsvCell } from "./csv-security";
+import { sanitizeCsvCell } from "./seguranca/csv-security";
 import { tomDoStatusDoEdital } from "./editais-do-nucleo.ts";
 import {
   faseDoEdital,

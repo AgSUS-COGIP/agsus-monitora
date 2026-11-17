@@ -4,7 +4,7 @@ import {
   filtrarPelaBuscaDaFila,
   tomDoStatus,
 } from "../../lib/analises-curriculares.ts";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import { Selo, TabelaInfinita } from "../../ui/index.ts";
 
 /*

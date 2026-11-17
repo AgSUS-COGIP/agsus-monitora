@@ -30,7 +30,7 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { usarFiltrosNaUrl } from "../../app/usar-filtros-na-url.ts";
 import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
 import { copiarTexto } from "../../lib/convite-de-acesso.ts";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import {
   MOTIVOS_DE_ELIMINACAO,
   TIPOS_DE_LISTA,
@@ -54,7 +54,7 @@ import {
   ordinal,
 } from "../../lib/classificacao/numeros.ts";
 import { normalizarRegra } from "../../lib/classificacao/regra.ts";
-import { rotuloDaVersaoNaLista } from "../../lib/nome-da-versao.ts";
+import { rotuloDaVersaoNaLista } from "../../lib/base/nome-da-versao.ts";
 import { conferirSorteio } from "../../lib/classificacao/sorteio.ts";
 import { DocumentoDoSei } from "./documento.tsx";
 import { HoraDeNascimento } from "./hora-de-nascimento.tsx";

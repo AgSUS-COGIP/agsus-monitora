@@ -1,4 +1,4 @@
-import { getSupabaseClient } from "./supabaseClient";
+import { getSupabaseClient } from "../sessao/supabaseClient";
 
 /** Os campos lidos de um `SecurityPolicyViolationEvent`. */
 type ViolacaoLida = {

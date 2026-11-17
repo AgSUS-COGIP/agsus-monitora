@@ -32,7 +32,7 @@ import {
   temPeriodo,
   tendenciaDiaria,
 } from "../../lib/analises-curriculares.ts";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import { paletaDoPainel } from "../../lib/tema-do-painel";
 import {
   Campo,

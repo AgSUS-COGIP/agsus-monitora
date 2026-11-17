@@ -53,7 +53,7 @@ import {
   Os candidatos vêm só da área atual do menu (`areaAtual`, de
   `dados-do-monitoramento.ts`): trocar de área e abrir a página busca os da
   área nova. A primeira abertura de uma área mostra a cópia guardada no
-  navegador (IndexedDB, regras em `lib/cache-de-payload.ts`) e pergunta ao
+  navegador (IndexedDB, regras em `lib/carga/cache-de-payload.ts`) e pergunta ao
   banco, por trás, se a `versao` dela ainda vale — o banco calcula a versão dos
   próprios dados a cada chamada e só manda o pacote de novo se ela mudou. A
   releitura depois de uma escrita nunca usa a cópia: vai ao banco, que devolve
@@ -76,7 +76,7 @@ import {
   criarCacheDePayload,
   ehErroDeAcesso,
   revalidarPayload,
-} from "../../lib/cache-de-payload";
+} from "../../lib/carga/cache-de-payload";
 import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import {
@@ -103,7 +103,10 @@ import {
   statusTravado,
 } from "../../lib/lista-aprovados-rules.ts";
 import { hojeEmBrasilia } from "../../lib/carta-de-convocacao.ts";
-import { ehFalhaDeConexao, mensagemDeFalha } from "../../lib/falha-de-rede";
+import {
+  ehFalhaDeConexao,
+  mensagemDeFalha,
+} from "../../lib/carga/falha-de-rede";
 import type {
   FormatoDaExportacao,
   PedidoDaExportacao,
@@ -126,7 +129,7 @@ import {
   modeloParaSalvar,
   somaDasReservas,
 } from "../../lib/configuracao-de-convocacao.ts";
-import { PLANILHAS } from "../../lib/planilhas.ts";
+import { PLANILHAS } from "../../lib/base/planilhas.ts";
 import { motivoValido } from "../../lib/publicacao-de-aprovados.ts";
 import {
   acompanharCasamento,

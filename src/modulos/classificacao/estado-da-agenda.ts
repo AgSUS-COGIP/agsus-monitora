@@ -12,7 +12,7 @@ import {
   regraRegistradaDaAgenda,
 } from "../../lib/dados-da-agenda.ts";
 import type { DadosDaAgenda } from "../../lib/dados-da-agenda.ts";
-import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
+import { ehConflitoDeVersao } from "../../lib/base/conflito-de-versao.ts";
 type SnapshotDaAgenda = {
   editalId: string;
   dados: DadosDaAgenda | null;
@@ -63,7 +63,7 @@ import {
   comTempoLimite,
   ehFalhaDeConexao,
   mensagemDeFalha,
-} from "../../lib/falha-de-rede";
+} from "../../lib/carga/falha-de-rede";
 import { baixarNoNavegador } from "./estado.ts";
 
 const RPC_OBTER_AGENDA = "obter_agenda_entrevista";

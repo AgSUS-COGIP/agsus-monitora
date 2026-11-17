@@ -15,7 +15,7 @@
   dá 3.52:1. O que o limiar de luminância garante é a *melhor das duas opções*,
   não que ela baste.
 */
-import { needsLightForeground } from "./access-branding.ts";
+import { needsLightForeground } from "../entrada/access-branding.ts";
 
 /** As cores que a tela realmente usa, definidas na seção Login de platform-shell.css. */
 export const TEXTO_CLARO = "#ffffff";

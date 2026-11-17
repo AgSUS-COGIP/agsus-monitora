@@ -48,12 +48,12 @@ export type {
   SituacaoDoPainel,
   ValorDoCampoDoPainel,
 } from "../../lib/paineis-externos-das-configuracoes.ts";
-export type { MarcaDoAcesso } from "../../lib/access-branding.ts";
+export type { MarcaDoAcesso } from "../../lib/entrada/access-branding.ts";
 export type {
   CampoDaMarcaGuardada,
   MarcaGuardada,
-} from "../../lib/access-branding-cache.ts";
-export type { ArquivoDeImagem } from "../../lib/access-background-storage.ts";
+} from "../../lib/entrada/access-branding-cache.ts";
+export type { ArquivoDeImagem } from "../../lib/entrada/access-background-storage.ts";
 export type {
   TipoDoAviso,
   TomDoAviso,

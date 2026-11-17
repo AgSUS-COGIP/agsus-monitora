@@ -11,12 +11,12 @@ import { chaveDoCacheDoPayload } from "./area-do-painel-de-analises.ts";
 import {
   criarCacheDePayload,
   revalidarPayload as revalidarCopia,
-} from "./cache-de-payload";
+} from "./carga/cache-de-payload";
 import type {
   ArmazenamentoDoCache,
   CacheDePayload,
   TipoDePayload,
-} from "./cache-de-payload";
+} from "./carga/cache-de-payload";
 
 /** O contexto que dá a chave da cópia do painel (além do `usuarioId`). */
 export interface ContextoDoPainel {

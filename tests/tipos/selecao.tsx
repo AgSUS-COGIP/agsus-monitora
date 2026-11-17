@@ -5,7 +5,7 @@ import type {
   ClienteDaSelecao,
   VagaDaSelecao,
 } from "../../src/modulos/selecao/tipos.ts";
-import { comTempoLimite } from "../../src/lib/falha-de-rede";
+import { comTempoLimite } from "../../src/lib/carga/falha-de-rede";
 import {
   FILTROS_VAZIOS,
   normalizarPayload,

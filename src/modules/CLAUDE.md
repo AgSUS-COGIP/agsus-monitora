@@ -13,7 +13,7 @@ Cada `[[nome]]` é `docs/biblioteca/<nome>.md`. Regra completa: [[nova-tela-e-le
 - Grupos: `aya-*` (assistente) · `map-*` (seletor Mapa/Satélite, [[mapas-e-leaflet]]) ·
   `indigenous-*` (terras indígenas) · `icones.ts` (registro único de ícones, [[componentes-padrao]]) ·
   `auth-storage.ts` ([[seguranca]]) · IndexedDB e PWA.
-- Quem ainda mexe aqui: sem `innerHTML` cru (`src/lib/sanitize.ts`), nenhum `MutationObserver`
+- Quem ainda mexe aqui: sem `innerHTML` cru (`src/lib/seguranca/sanitize.ts`), nenhum `MutationObserver`
   novo, dados só por RPC, marcação com os componentes do Design System (seção 11: `.btn`, `.card`,
   `.table-card`, `.modal`); teste em `tests/` ou `tests/modules/`.
 - O legado fala com o React por estado externo e eventos ([[nova-tela-e-legado]]).

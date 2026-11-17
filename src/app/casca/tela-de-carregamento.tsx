@@ -1,6 +1,9 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { carregamento } from "../avisos.ts";
-import { getLoadingStage, isGenericLoadingCopy } from "../../lib/loading-copy";
+import {
+  getLoadingStage,
+  isGenericLoadingCopy,
+} from "../../lib/entrada/loading-copy";
 
 /*
   A tela de carregamento dos salvamentos (`#loader`), aberta por

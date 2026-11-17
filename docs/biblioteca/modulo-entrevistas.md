@@ -41,7 +41,7 @@ seleção (cabeçalho com o edital e as seções).
   administrador global); o último aberto na área fica no navegador (só conveniência); com um só na
   lista, abre sozinho. Na URL: a seção, o período, a situação, a vaga, a banca e o passo.
 - Links antigos (`entrevistas:conduzir`, `entrevistas:roteiros`) vão para Conduzir entrevistas
-  (`destinoDaTela`, `src/lib/navegacao.ts`; o controlador tem `abrirVisao` e `abrirEdital`).
+  (`destinoDaTela`, `src/lib/navegacao/navegacao.ts`; o controlador tem `abrirVisao` e `abrirEdital`).
 
 ### Ficha de notas
 

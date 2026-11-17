@@ -16,9 +16,9 @@ import {
   PAPEIS_DA_EQUIPE,
   rotuloDe,
 } from "../../lib/avaliacao-documental/catalogo.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient";
+import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import { Aviso, CabecalhoDaTela, Segmentado } from "../../ui/index.ts";
-import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.ts";
+import { CHAVE_DO_CABECALHO } from "../../lib/base/cabecalho-dos-documentos.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import {
   coordenaOEdital,

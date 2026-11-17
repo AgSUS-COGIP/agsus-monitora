@@ -114,7 +114,7 @@ ou sem as RPCs no banco, vale a regra; outra falha (rede, banco) vira `erroDaCon
 - Textos e colunas ajustados pelo gestor ficam na regra (`DS_CONFIGURACAO.documento`, `.colunas` por
   publicação, `.desempate` = a nota abaixo de cada tabela, geral ou de cota, com empate de nota
   resolvido; sem migration); o cabeçalho da agência, em Configurações › Marca
-  (`documento_cabecalho`, `src/lib/cabecalho-dos-documentos.ts`).
+  (`documento_cabecalho`, `src/lib/base/cabecalho-dos-documentos.ts`).
 
 ## Explicações
 

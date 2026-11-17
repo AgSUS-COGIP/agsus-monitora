@@ -3,7 +3,7 @@ import type {
   CelulaDaPlanilha,
   PlanilhaDaClassificacao,
 } from "./classificacao/tipos-dos-documentos.ts";
-import { sanitizeCsvCell } from "./csv-security.ts";
+import { sanitizeCsvCell } from "./seguranca/csv-security.ts";
 import { arquivosDoXlsx, MIME_XLSX } from "./classificacao/exportacao.ts";
 import {
   filterApprovedCandidates,

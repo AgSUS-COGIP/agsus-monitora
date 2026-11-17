@@ -7,7 +7,7 @@ import type {
   ChartType,
   Plugin,
 } from "chart.js";
-import { carregarChart, chartCarregado } from "../lib/chartjs-global.ts";
+import { carregarChart, chartCarregado } from "../lib/base/chartjs-global.ts";
 
 /*
   Cores dos gráficos dentro do app, lidas dos tokens (src/styles/tokens.css)

@@ -18,8 +18,8 @@ import {
   teclar,
 } from "../componentes/interacoes.ts";
 import { paginasPermitidas } from "../../src/lib/access-roles.ts";
-import { bloqueioDaTela } from "../../src/lib/navegacao.ts";
-import { telaDaRota } from "../../src/lib/rotas.ts";
+import { bloqueioDaTela } from "../../src/lib/navegacao/navegacao.ts";
+import { telaDaRota } from "../../src/lib/navegacao/rotas.ts";
 import type {
   NiveisPorRecurso,
   PerfilDeAcesso,

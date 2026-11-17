@@ -6,7 +6,7 @@ import {
   rascunhoDaConfiguracao,
   rotuloDoLancamento,
 } from "../../lib/conducao-de-entrevista.ts";
-import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
+import { rotuloDaVersao } from "../../lib/base/nome-da-versao.ts";
 import { pendenciasDaConfiguracao } from "../../lib/passos-do-preparar.ts";
 import { frasesDaBanca } from "../../lib/resumo-da-entrevista.ts";
 import type { EntradaDoResumo } from "../../lib/resumo-da-entrevista.ts";

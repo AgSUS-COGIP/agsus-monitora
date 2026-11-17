@@ -1,5 +1,5 @@
 import type { SupabaseClient, Subscription } from "@supabase/supabase-js";
-import { getSupabaseClient } from "../lib/supabaseClient";
+import { getSupabaseClient } from "../lib/sessao/supabaseClient";
 
 /** O usuário da sessão, no que a foto lê. */
 type UsuarioComFoto =

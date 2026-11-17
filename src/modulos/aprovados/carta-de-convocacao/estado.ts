@@ -33,9 +33,9 @@ import {
 */
 
 import { MIME_DOCX } from "../../../lib/documento-da-resposta.ts";
-import { CABECALHO_PADRAO } from "../../../lib/cabecalho-dos-documentos.ts";
+import { CABECALHO_PADRAO } from "../../../lib/base/cabecalho-dos-documentos.ts";
 import { canChangeCandidateStatus } from "../../../lib/access-roles.ts";
-import { ehConflitoDeVersao } from "../../../lib/conflito-de-versao.ts";
+import { ehConflitoDeVersao } from "../../../lib/base/conflito-de-versao.ts";
 import {
   assinaturaDaEmissao,
   camposParaRegistrar,
@@ -55,7 +55,7 @@ import {
   soACarta,
   textoParaSei,
 } from "../../../lib/carta-de-convocacao-documento.ts";
-import { LOGO_PADRAO_DA_BARRA } from "../../../lib/marca-da-barra-lateral.ts";
+import { LOGO_PADRAO_DA_BARRA } from "../../../lib/navegacao/marca-da-barra-lateral.ts";
 
 const texto = (valor: unknown) => String(valor ?? "").trim();
 const mensagemDe = (erro: unknown) =>

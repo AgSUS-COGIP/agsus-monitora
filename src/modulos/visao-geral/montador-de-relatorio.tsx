@@ -7,9 +7,9 @@ import type {
 import type { ClienteDoRelatorio } from "./dados-da-diretoria.ts";
 import { useEffect, useRef, useState } from "react";
 import { Modal, Segmentado } from "../../ui/index.ts";
-import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.ts";
-import { erroDeVersaoNova } from "../../lib/importar-com-recarga.ts";
-import { nomeDaArea } from "../../lib/menu-lateral.ts";
+import { CHAVE_DO_CABECALHO } from "../../lib/base/cabecalho-dos-documentos.ts";
+import { erroDeVersaoNova } from "../../lib/carga/importar-com-recarga.ts";
+import { nomeDaArea } from "../../lib/navegacao/menu-lateral.ts";
 import { csvDaVisaoGeral, nomeDoCsv } from "../../lib/visao-geral.ts";
 import {
   aprovadosNoRecorte,

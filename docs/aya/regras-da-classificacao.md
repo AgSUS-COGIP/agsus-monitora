@@ -176,7 +176,7 @@ dos PDFs oficiais).
 
 **perguntas:** docx da classificacao | word da lista de classificacao | papel timbrado da classificacao | baixar docx
 **resposta:** "Baixar DOCX" gera o mesmo documento em Word para anexar ou ajustar: no cabeçalho, o logo da AgSUS e o nome, endereço e site da agência (Configurações › Marca › Documentos oficiais); no corpo, o título, os itens numerados com o recuo do SEI, as tabelas por vaga e a linha final "Brasília, <data por extenso>."; no rodapé, o nome do documento, o processo SEI e o número da página. Não tem bloco de assinatura: quem assina é o SEI.
-**fonte:** src/lib/classificacao/documento-docx.ts; src/lib/cabecalho-dos-documentos.ts
+**fonte:** src/lib/classificacao/documento-docx.ts; src/lib/base/cabecalho-dos-documentos.ts
 **abrir:** classificacao
 
 ## Listas por etapa
@@ -256,7 +256,7 @@ dos PDFs oficiais).
 **perguntas:** nome da versao da classificacao | nome da regra de classificacao | renomear a regra de classificacao | trocar o nome da versao da classificacao | regra v2 da classificacao | nome desta versao classificacao
 **resposta:** A regra de classificação também pode ter um nome por versão (3 a 80 caracteres). Ao salvar na aba Regra da Classificação, o campo "Nome desta versão" vem com a sugestão — "Classificação do edital 93/2026" mais o começo do motivo — editável (vazio grava sem nome). O seletor de editais, a barra do topo, a lista de versões e a linha da lista gerada mostram o nome em destaque e o número discreto ("Decisão CORES · v3"); sem nome, "Versão 3". "Renomear", em cada versão, troca só o nome, com motivo de 10 a 500 caracteres; a configuração não muda e a troca fica no histórico. Renomeia quem tem Editor na Classificação (e o administrador global).
 **fato:** No Yeendé, a versão da regra de classificação tem nome opcional, trocável com motivo sem mudar a configuração.
-**fonte:** src/lib/nome-da-versao.ts; supabase/migrations/20261008180000_nome_das_versoes_das_regras.sql (salvar_regra_classificacao, renomear_versao_regra_classificacao)
+**fonte:** src/lib/base/nome-da-versao.ts; supabase/migrations/20261008180000_nome_das_versoes_das_regras.sql (salvar_regra_classificacao, renomear_versao_regra_classificacao)
 **abrir:** classificacao
 
 ## Hora de nascimento no desempate

@@ -20,7 +20,7 @@ import { montarTela } from "../montar-tela.ts";
   migration no essencial.
 */
 
-vi.mock("../../src/lib/chartjs-global.ts", () => {
+vi.mock("../../src/lib/base/chartjs-global.ts", () => {
   const Chart = class {
     constructor(canvas, configuracao) {
       this.data = configuracao.data;

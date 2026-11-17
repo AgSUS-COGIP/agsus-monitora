@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { sanitizeCsvCell, sanitizeCsvDocument } from "../src/lib/csv-security";
+import {
+  sanitizeCsvCell,
+  sanitizeCsvDocument,
+} from "../src/lib/seguranca/csv-security";
 
 describe("csv-security", () => {
   it("neutraliza os prefixos interpretados como fórmula por planilhas", () => {

@@ -1,5 +1,5 @@
 /*
-  A validade das cópias de payload no aparelho (src/lib/cache-de-payload.ts),
+  A validade das cópias de payload no aparelho (src/lib/carga/cache-de-payload.ts),
   à parte para a varredura da abertura do app
   (src/modules/cache-de-payload-indexeddb.ts, na entrada) não levar o resto.
 

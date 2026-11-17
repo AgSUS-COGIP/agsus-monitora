@@ -18,7 +18,7 @@ import {
 } from "../../lib/convocacao-da-entrevista.ts";
 import { hojeEmBrasilia } from "../../lib/fila-de-conducao.ts";
 import { dataBR } from "../../lib/classificacao/numeros.ts";
-import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
+import { rotuloDaVersao } from "../../lib/base/nome-da-versao.ts";
 import {
   agendaPorDia,
   passoInicial,
@@ -33,7 +33,10 @@ import {
   type DestinoDoResumo,
   type EntradaDoResumo,
 } from "../../lib/resumo-da-entrevista.ts";
-import { gruposAteOLimite, totalDosGrupos } from "../../lib/carga-continua.ts";
+import {
+  gruposAteOLimite,
+  totalDosGrupos,
+} from "../../lib/carga/carga-continua.ts";
 import {
   EstadoVazio,
   MaisDaCarga,

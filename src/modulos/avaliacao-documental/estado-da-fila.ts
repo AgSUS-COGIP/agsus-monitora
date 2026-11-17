@@ -50,8 +50,8 @@
   aviso; o que foi salvo continua nela e o que está na tela não é apagado.
 */
 import { isAdminGlobal } from "../../lib/access-roles.ts";
-import { comTempoLimite } from "../../lib/falha-de-rede";
-import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
+import { comTempoLimite } from "../../lib/carga/falha-de-rede";
+import { ehConflitoDeVersao } from "../../lib/base/conflito-de-versao.ts";
 import { lerFilaComRecuperacao } from "../../lib/avaliacao-documental/repetir-leitura-da-fila.ts";
 import {
   csvDaFila,

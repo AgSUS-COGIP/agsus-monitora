@@ -8,7 +8,7 @@ import type {
   RegraDeOutroEdital,
   RegraSalva,
 } from "../../../lib/avaliacao-documental/tipos-da-regra.ts";
-import { rotuloDaVersao } from "../../../lib/nome-da-versao.ts";
+import { rotuloDaVersao } from "../../../lib/base/nome-da-versao.ts";
 import { Aviso } from "../../../ui/index.ts";
 
 /*

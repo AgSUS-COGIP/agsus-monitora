@@ -20,7 +20,7 @@ type PropsDoFiltro = {
   aoFiltrar: AoFiltrarRecursos;
 };
 import { useEffect, useMemo, useRef, useState } from "react";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import {
   esteiraDosRecursos,
   FILTROS_VAZIOS,

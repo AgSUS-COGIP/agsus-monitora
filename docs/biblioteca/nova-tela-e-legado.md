@@ -35,7 +35,7 @@ inteira: `src/modulos/recursos/`, `selecao/`, `entrevistas/`, `analises/`. A not
 - O módulo exporta `criar<Nome>(opcoes)`, sem DOM, que devolve `{ estado, nome, conteudo,
   render() }` (`nome` aparece no console se a tela quebrar; `render()` roda a cada abertura).
 - A tela entra em `src/app/telas.tsx` (`registrarTelasDoApp`: `criar` no pacote principal ou
-  `carregar: () => import(…)` sob demanda) e em `src/lib/rotas.ts` (view, caminho, título). A rota
+  `carregar: () => import(…)` sob demanda) e em `src/lib/navegacao/rotas.ts` (view, caminho, título). A rota
   desenha a `<section id="page-<view>">`, põe a tela num `ErrorBoundary` e a mantém montada.
 - Quem precisa de outra tela usa o registro (`carregarTela(view)`, `src/app/registro-das-telas.ts`),
   nunca `window`. Título e área ficam no cabeçalho; a tela não repete. Área de
@@ -46,7 +46,7 @@ inteira: `src/modulos/recursos/`, `selecao/`, `entrevistas/`, `analises/`. A not
 - Parte fixa do app (cabeçalho, topo, overlay) é filha da casca (`src/app/casca/`); pedaço React
   dentro de DOM feito à mão entra por `abrirPortalAvulso` (`src/app/portais-avulsos.tsx`). **Nada
   de `createRoot` novo.**
-- Página nova ou área nova no menu: `src/lib/menu-lateral.ts` ([[modulo-barra-lateral]]); quem vê,
+- Página nova ou área nova no menu: `src/lib/navegacao/menu-lateral.ts` ([[modulo-barra-lateral]]); quem vê,
   `src/lib/access-roles.ts` ([[modulo-acessos]]).
 
 ## Regras do componente
@@ -77,7 +77,7 @@ inteira: `src/modulos/recursos/`, `selecao/`, `entrevistas/`, `analises/`. A not
 - Os módulos são features de UI sem framework, instaladas por `src/main.ts` (a ordem importa).
   Grupos: `aya-*` (assistente) · `map-*`, `indigenous-*` (seletor de fundo e Terras Indígenas) ·
   `icones.ts` (registro único de ícones Lucide, usado também pelo React; [[componentes-padrao]]).
-- Quem ainda mexe ali: sem `innerHTML` cru (`src/lib/sanitize.ts`); nenhum `MutationObserver`
+- Quem ainda mexe ali: sem `innerHTML` cru (`src/lib/seguranca/sanitize.ts`); nenhum `MutationObserver`
   novo; dados só por RPC; marcação nova segue os componentes do Design System (seção 11: `.btn`,
   `.card`, `.table-card`, `.modal`) em vez de inventar classe; teste em `tests/` ou
   `tests/modules/`.
@@ -99,12 +99,12 @@ Por **estado externo e eventos, nunca pelo DOM do componente** (vem do antigo
 - **Dado que o legado carrega e o React lê** (linhas do monitoramento, unidades) passa por
   `src/componentes/dados-do-monitoramento.ts`: o legado publica (`loadData` / `loadUnidades`), o
   componente assina. O Núcleo não relê a view. Sob demanda: só as páginas de
-  `src/lib/telas-com-linhas.ts` (via `src/app/pagina-aberta.ts`) ou `usarLinhasDoMonitoramento`
+  `src/lib/navegacao/telas-com-linhas.ts` (via `src/app/pagina-aberta.ts`) ou `usarLinhasDoMonitoramento`
   fazem a carga lê-las ([[arquitetura-do-front]]).
 - O legado empurra dados para o estado externo (`src/componentes/barra-lateral/estado.ts`:
   `atualizarMenuLateral`, `marcarItemAtivoNoMenu`) e o componente lê com `useSyncExternalStore`.
 - **O que o componente não percebe sozinho chega por evento** em `document`
-  (`src/lib/eventos-da-barra-lateral.ts`): barra recolhida/expandida, tema trocado. Outros eventos
+  (`src/lib/navegacao/eventos-da-barra-lateral.ts`): barra recolhida/expandida, tema trocado. Outros eventos
   do contrato: `agsus:filtros-alterados` (filtros do mapa), `agsus:busca-global-escolhida`,
   `agsus:content-updated`. Nada de `MutationObserver`.
 - **O DOM continua sendo contrato** enquanto houver consumidor legado: `#nav [data-view]`,

@@ -10,7 +10,7 @@ import {
   FORMATOS_DA_EXPORTACAO,
 } from "../../../lib/exportacao-da-lista-de-aprovados.ts";
 import { OPCOES_DO_FILTRO_DE_STATUS } from "../../../lib/lista-aprovados-rules.ts";
-import { formatNumberBR } from "../../../lib/formatters";
+import { formatNumberBR } from "../../../lib/base/formatters";
 import { plural } from "../partes.tsx";
 
 /*

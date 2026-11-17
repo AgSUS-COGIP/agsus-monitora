@@ -2,7 +2,7 @@ import type {
   AbaDoCatalogo,
   ArvoreDoMenu,
   ItemDoMenu,
-} from "../componentes/barra-lateral/tipos.ts";
+} from "../../componentes/barra-lateral/tipos.ts";
 import {
   ABAS_DO_MENU,
   ehAreaDoSistema,
@@ -40,7 +40,7 @@ import type {
 
   A regra é a mesma para todos, administrador global inclusive: o catálogo do
   banco não mostra aba desligada para ninguém (só a manutenção tem a exceção
-  do administrador, em src/lib/situacao-dos-modulos.ts).
+  do administrador, em src/lib/navegacao/situacao-dos-modulos.ts).
 */
 
 type Situacao = Parameters<typeof areaEstaAtiva>[0];

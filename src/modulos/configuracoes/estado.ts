@@ -10,7 +10,7 @@
   imagens da Aparência (arte de fundo e logo da barra) são de `imagens.ts`.
 */
 
-import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede";
+import { comTempoLimite, mensagemDeFalha } from "../../lib/carga/falha-de-rede";
 import {
   alteracoesDaVersao,
   buildChanges,
@@ -32,7 +32,7 @@ import type {
   ValorDoCampoDoPainel,
 } from "../../lib/paineis-externos-das-configuracoes.ts";
 import type { ConfiguracaoCarregada } from "../../lib/publicacao-de-configuracoes.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient";
+import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import type {
   IdDaSecaoDeConfiguracao,
   ModalDasConfiguracoes,

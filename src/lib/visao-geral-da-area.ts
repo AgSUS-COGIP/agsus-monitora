@@ -33,7 +33,7 @@ import {
 } from "./coordenadas-dos-municipios.ts";
 import { numeroDoEdital } from "./numero-do-edital.ts";
 import { raioDaBolha } from "./mapa-render.ts";
-import { nomeDaArea } from "./menu-lateral.ts";
+import { nomeDaArea } from "./navegacao/menu-lateral.ts";
 import { AREA_SAUDE_INDIGENA } from "./responsavel-do-edital.ts";
 
 const num = (valor: unknown) => {

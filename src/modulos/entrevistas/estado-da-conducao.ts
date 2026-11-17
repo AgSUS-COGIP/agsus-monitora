@@ -60,15 +60,15 @@ import {
   comTempoLimite,
   ehFalhaDeConexao,
   mensagemDeFalha,
-} from "../../lib/falha-de-rede";
+} from "../../lib/carga/falha-de-rede";
 import {
   editaisParaConduzir,
   mensagemDoErroDaEntrevista,
 } from "../../lib/conducao-de-entrevista.ts";
 import { classificarEdital } from "../../lib/classificacao/ajustes.ts";
 import { convocacaoDoEdital } from "../../lib/classificacao/convocacao-do-edital.ts";
-import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
-import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
+import { rotuloDaVersao } from "../../lib/base/nome-da-versao.ts";
+import { ehConflitoDeVersao } from "../../lib/base/conflito-de-versao.ts";
 import {
   FORMATO_DA_COPIA_DA_CONDUCAO,
   copiaParaOCampo,

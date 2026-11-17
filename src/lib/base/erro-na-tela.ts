@@ -5,9 +5,9 @@
   As RPCs do MONITORA já recusam em português ("Sem acesso a esta área",
   "Edital da agenda inválido."): essas frases passam iguais. O que vira frase
   fixa é o técnico, que chega do navegador, do PostgREST ou do Postgres:
-  - sem conexão ("Failed to fetch"…) → SEM_SERVIDOR (src/lib/falha-de-rede.ts);
+  - sem conexão ("Failed to fetch"…) → SEM_SERVIDOR (src/lib/carga/falha-de-rede.ts);
   - arquivo de uma versão anterior ("dynamically imported module") →
-    MENSAGEM_DE_VERSAO_NOVA (src/lib/importar-com-recarga.ts);
+    MENSAGEM_DE_VERSAO_NOVA (src/lib/carga/importar-com-recarga.ts);
   - sessão vencida (JWT) → entrar de novo;
   - tempo esgotado no banco (57014, "statement timeout") → tentar de novo;
   - permissão negada pelo Postgres em inglês ("permission denied") → sem permissão;
@@ -16,8 +16,8 @@
   O detalhe técnico continua no console (quem chama faz o console.warn).
 */
 
-import { SEM_SERVIDOR, ehFalhaDeConexao } from "./falha-de-rede.ts";
-import { MENSAGEM_DE_VERSAO_NOVA } from "./importar-com-recarga.ts";
+import { SEM_SERVIDOR, ehFalhaDeConexao } from "../carga/falha-de-rede.ts";
+import { MENSAGEM_DE_VERSAO_NOVA } from "../carga/importar-com-recarga.ts";
 
 const VERSAO_ANTERIOR =
   /dynamically imported module|Importing a module script failed|error loading dynamically|ChunkLoadError/i;

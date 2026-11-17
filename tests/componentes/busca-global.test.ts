@@ -7,7 +7,7 @@ import {
   publicarLinhasDoMonitoramento,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { EVENTO_ESCOLHA_DA_BUSCA } from "../../src/lib/busca-global.ts";
+import { EVENTO_ESCOLHA_DA_BUSCA } from "../../src/lib/navegacao/busca-global.ts";
 import { definido } from "../definido.ts";
 
 /*

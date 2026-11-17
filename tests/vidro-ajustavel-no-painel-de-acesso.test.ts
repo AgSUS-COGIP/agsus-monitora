@@ -8,13 +8,13 @@ import {
   normalizarCorNoVidro,
   normalizarDesfoqueDoVidro,
   porcentagemDaCorNoVidro,
-} from "../src/lib/contraste.ts";
-import { mapearBrandingPublico } from "../src/lib/access-branding-publico.ts";
+} from "../src/lib/base/contraste.ts";
+import { mapearBrandingPublico } from "../src/lib/entrada/access-branding-publico.ts";
 import {
   guardarMarca,
   lerMarcaGuardada,
   limparMarcaGuardada,
-} from "../src/lib/access-branding-cache.ts";
+} from "../src/lib/entrada/access-branding-cache.ts";
 import {
   aplicarAjusteDoVidro,
   definirMarcaDaConfiguracao,

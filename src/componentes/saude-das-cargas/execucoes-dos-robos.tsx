@@ -1,6 +1,6 @@
 import type { ExecucaoDoRobo, ResultadoDaVaga, PropsDoRobo } from "./tipos.ts";
 import { Fragment } from "react";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import {
   acompanhamentoDoPedido,
   SITUACOES_DA_EXECUCAO,

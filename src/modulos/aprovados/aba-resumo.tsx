@@ -31,7 +31,7 @@ import {
   statusEfetivo,
 } from "../../lib/lista-aprovados-rules.ts";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import {
   Campo,
   EstadoVazio,

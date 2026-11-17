@@ -5,7 +5,7 @@ import type {
   PainelDosModulos,
   HistoricoDosModulos,
   ManutencaoDoModulo,
-} from "../modulos/modulos/tipos.ts";
+} from "../../modulos/modulos/tipos.ts";
 
 function invalido(): never {
   throw new Error("Resposta de módulos e abas inválida. Tente novamente.");

@@ -119,7 +119,7 @@ import {
 } from "../../lib/classificacao/documento-sei.ts";
 import { gerarDocxOficial } from "../../lib/classificacao/documento-docx.ts";
 import { ehEditalDeTreinamento } from "../../lib/edital-de-treinamento.ts";
-import { LOGO_PADRAO_DA_BARRA } from "../../lib/marca-da-barra-lateral.ts";
+import { LOGO_PADRAO_DA_BARRA } from "../../lib/navegacao/marca-da-barra-lateral.ts";
 import {
   copiarParaAreaDeTransferencia,
   imprimirPagina,
@@ -128,14 +128,14 @@ import {
 import { convocacaoDoEdital } from "../../lib/classificacao/convocacao-do-edital.ts";
 import { normalizarRegra } from "../../lib/classificacao/regra.ts";
 import { geracaoDesatualizada } from "../../lib/classificacao/dados.ts";
-import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
-import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
+import { rotuloDaVersao } from "../../lib/base/nome-da-versao.ts";
+import { ehConflitoDeVersao } from "../../lib/base/conflito-de-versao.ts";
 import {
   comTempoLimite,
   ehFalhaDeConexao,
   mensagemDeFalha,
-} from "../../lib/falha-de-rede";
-import { esperaAntesDaTentativa } from "../../lib/novas-tentativas.ts";
+} from "../../lib/carga/falha-de-rede";
+import { esperaAntesDaTentativa } from "../../lib/sessao/novas-tentativas.ts";
 import { criarCopiasPorVersao } from "../../app/copias-por-versao.ts";
 import { criarLeituraPorVersao } from "../../lib/avaliacao-documental/leitura-por-versao.ts";
 
@@ -578,7 +578,7 @@ export function criarEstadoDaClassificacao({
     avisar("calculando");
     const inicio = agora();
     let lido = calculoLido({ ...pedido, retrato: null });
-    // Conexão caída: a espera cresce a cada falha seguida (src/lib/novas-tentativas.ts).
+    // Conexão caída: a espera cresce a cada falha seguida (src/lib/sessao/novas-tentativas.ts).
     let falhasSeguidas = 0;
     while (esperaOJob(lido.situacao)) {
       if (agora() - inicio >= prazoDoCalculoMs) {

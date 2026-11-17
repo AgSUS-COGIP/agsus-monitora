@@ -31,7 +31,7 @@ import {
   ehAreaSaudeIndigena,
   experienciaProfissionalDaLinha,
 } from "./area-do-painel-de-analises.ts";
-import { sanitizeCsvCell } from "./csv-security";
+import { sanitizeCsvCell } from "./seguranca/csv-security";
 import { STATUS_PENDENTES } from "./status-da-analise.ts";
 import {
   chaveDoDia,
@@ -42,7 +42,7 @@ import {
 export { chaveDoDia, dataDaPlanilha } from "./data-de-analise.ts";
 import { completarLinhaPeloEnvelope } from "./lista-do-painel-de-analises.ts";
 import { modalidadesDaConcorrencia } from "./modalidades-de-concorrencia.ts";
-import { urlDaPlanilhaGoogle } from "./planilhas.ts";
+import { urlDaPlanilhaGoogle } from "./base/planilhas.ts";
 import { municipioUfDaLinha } from "./textos-do-painel-de-analises.ts";
 
 export const SEM_RESPONSAVEL = "Sem responsável";

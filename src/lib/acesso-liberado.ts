@@ -1,10 +1,10 @@
-import { primeiroNome } from "./boas-vindas.ts";
+import { primeiroNome } from "./entrada/boas-vindas.ts";
 import { gravarArmazenamento, lerArmazenamento } from "./comemoracao.ts";
 import {
   AREAS_DO_SISTEMA,
   areasDoUsuario,
   nomeDaArea,
-} from "./menu-lateral.ts";
+} from "./navegacao/menu-lateral.ts";
 import { LEVELS, RESOURCES } from "./permissoes-recursos.ts";
 import type {
   InstanteRecebido,

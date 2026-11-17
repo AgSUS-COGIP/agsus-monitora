@@ -19,7 +19,7 @@ teto do coordenador, "como a pessoa vê" e pedidos de acesso, em React. Pasta
   liberadas** (`paginasPermitidas`, `secaoDeConfiguracaoPermitida`), usada pela barra lateral e
   pelo "Ver como".
 - `src/lib/permissoes-recursos.ts` — módulos (recursos de permissão) e níveis.
-- O menu por permissão e por área: `src/lib/menu-lateral.ts` ([[modulo-barra-lateral]]).
+- O menu por permissão e por área: `src/lib/navegacao/menu-lateral.ts` ([[modulo-barra-lateral]]).
 - **O perfil é relido a cada `render()`**: as permissões mudam sem aviso do legado.
 - Quem só lê não vê os controles de edição (sem selo "Somente consulta"; [[textos-da-interface]]).
 - RLS ligada por padrão; não desligar para "resolver" permissão. Mudar a matriz costuma exigir

@@ -10,7 +10,10 @@ import {
   paineisPermitidos,
   secaoDeConfiguracaoPermitida,
 } from "../src/lib/access-roles.ts";
-import { areasDoUsuario, montarArvoreDoMenu } from "../src/lib/menu-lateral.ts";
+import {
+  areasDoUsuario,
+  montarArvoreDoMenu,
+} from "../src/lib/navegacao/menu-lateral.ts";
 import { registrarNoRascunho } from "../src/lib/matriz-de-acessos.ts";
 
 const SECOES = [

@@ -9,7 +9,7 @@ atualizado: 2026-11-16
 Relatórios de conferência da área escolhida, em tabela, para baixar em CSV e XLSX: Resumo dos
 editais, Editais por cargo e Aprovados, um por aba. Rota `/<área>/paineis-de-dados`, pasta
 `src/modulos/paineis-de-dados/`. No menu, é o item Painéis do bloco **Dados**, abaixo de Processo
-seletivo (`BLOCO_DE_DADOS` em `src/lib/menu-lateral.ts`). Não confundir com os painéis externos
+seletivo (`BLOCO_DE_DADOS` em `src/lib/navegacao/menu-lateral.ts`). Não confundir com os painéis externos
 (`panel:<código>`, [[modulo-paineis-externos]]).
 
 ## Arquivos

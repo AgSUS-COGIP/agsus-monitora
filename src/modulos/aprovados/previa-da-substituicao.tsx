@@ -1,6 +1,6 @@
 import type { PreviaDaSubstituicao } from "./tipos-do-estado.ts";
 import { numerosDoCasamento } from "../../lib/casamento-da-lista.ts";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import { MOTIVO_MAXIMO } from "../../lib/publicacao-de-aprovados.ts";
 import { Aviso, GradeDeKpis, Kpi } from "../../ui/index.ts";
 

@@ -10,7 +10,7 @@ import {
   subtituloDoResultado,
   textoDaBusca,
   tituloDoResultado,
-} from "../src/lib/busca-global.ts";
+} from "../src/lib/navegacao/busca-global.ts";
 
 const linha = (extra) => ({
   id: 1,

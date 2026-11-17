@@ -38,7 +38,7 @@ import type {
   CampoDaMarcaGuardada,
   MarcaGuardada,
 } from "./access-branding-cache.ts";
-import { SUPABASE_KEY, SUPABASE_URL } from "./env";
+import { SUPABASE_KEY, SUPABASE_URL } from "../sessao/env";
 
 export const RPC_BRANDING_PUBLICO = "obter_branding_acesso_publico";
 

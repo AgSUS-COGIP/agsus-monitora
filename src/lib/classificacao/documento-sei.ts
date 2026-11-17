@@ -84,7 +84,7 @@ import {
 } from "./colunas-do-documento.ts";
 import { escalar, formatarNota, lerData, ordinal } from "./numeros.ts";
 import { documentoDaRegra, normalizarRegra } from "./regra.ts";
-import { CABECALHO_PADRAO } from "../cabecalho-dos-documentos.ts";
+import { CABECALHO_PADRAO } from "../base/cabecalho-dos-documentos.ts";
 import {
   MARCA_SEM_VALOR_OFICIAL,
   ehEditalDeTreinamento,

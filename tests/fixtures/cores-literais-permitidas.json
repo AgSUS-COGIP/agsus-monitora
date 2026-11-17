@@ -3,17 +3,17 @@
   "motivos": {
     "src/app/casca/cabecalho-do-relatorio.tsx": "impressão: cabeçalho do relatório impresso, sempre em papel branco",
     "src/app/entrada/icones-da-entrada.tsx": "marca: as quatro cores do G do Google",
-    "src/lib/access-branding.ts": "valor padrão gravado da cor do painel da tela de acesso (configuração, não tema)",
+    "src/lib/entrada/access-branding.ts": "valor padrão gravado da cor do painel da tela de acesso (configuração, não tema)",
     "src/lib/avaliacao-documental/anexo-na-empregare.ts": "falso positivo: entidade HTML (&#160;), não é cor",
     "src/lib/avaliacao-documental/espelho-de-nota.ts": "documento para impressão (espelho de nota do candidato): papel branco, escala azul e neutros do manual da AgSUS (tokens.css) e a mesa da prévia",
     "src/lib/avaliacao-documental/resumo-da-regra.ts": "documento gerado para impressão/arquivo: papel branco, texto preto",
     "src/lib/classificacao/documento-sei.ts": "documento no padrão do SEI: papel branco, texto preto, bordas e faixas do modelo",
     "src/lib/classificacao/relatorio-de-desempate.ts": "documento para impressão (PDF do relatório de desempate): papel branco, texto escuro, faixas e selo de cota",
-    "src/lib/contraste.ts": "regra de contraste: as duas cores de texto sobre cor configurada (barra, painel de acesso) e os extremos branco e preto da arte sob o painel de vidro",
+    "src/lib/base/contraste.ts": "regra de contraste: as duas cores de texto sobre cor configurada (barra, painel de acesso) e os extremos branco e preto da arte sob o painel de vidro",
     "src/lib/documento-da-resposta.ts": "documento gerado para impressão/arquivo: papel branco, texto preto",
     "src/lib/fogos-paleta.ts": "efeito de comemoração (canvas): cores do fogo de artifício",
     "src/lib/mapa-saude-indigena/formas.ts": "mapa: cores de domínio das camadas e marcadores (iguais nos dois temas)",
-    "src/lib/marca-da-barra-lateral.ts": "valor padrão gravado da cor da barra lateral (configuração, não tema)",
+    "src/lib/navegacao/marca-da-barra-lateral.ts": "valor padrão gravado da cor da barra lateral (configuração, não tema)",
     "src/lib/particulas-do-motor.ts": "efeito de comemoração (canvas): corações, sombra e brilho das partículas",
     "src/lib/tema-do-painel.ts": "reserva dos gráficos quando o CSS não carregou (testes); a tela lê os tokens",
     "src/lib/terras-indigenas/fases-e-estilos.ts": "mapa: cores de domínio das Terras Indígenas (tests/cor-da-terra-indigena.test.js)",
@@ -49,7 +49,7 @@
       "#fbbc05": 1,
       "#34a853": 1
     },
-    "src/lib/access-branding.ts": {
+    "src/lib/entrada/access-branding.ts": {
       "#c296eb": 1
     },
     "src/lib/avaliacao-documental/anexo-na-empregare.ts": {
@@ -91,7 +91,7 @@
       "#fff3e0": 1,
       "#0b3d91": 1
     },
-    "src/lib/contraste.ts": {
+    "src/lib/base/contraste.ts": {
       "#ffffff": 2,
       "#000000": 1,
       "#102a43": 1
@@ -130,7 +130,7 @@
       "#c2410c": 1,
       "#2f6fb0": 1
     },
-    "src/lib/marca-da-barra-lateral.ts": {
+    "src/lib/navegacao/marca-da-barra-lateral.ts": {
       "#ffffff": 1
     },
     "src/lib/particulas-do-motor.ts": {

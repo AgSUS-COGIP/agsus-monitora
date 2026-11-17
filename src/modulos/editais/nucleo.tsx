@@ -12,8 +12,8 @@ import {
   usarEstadoDaNavegacao,
   usarNavegacao,
 } from "../../app/contexto-do-app.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient";
-import { safeHttpUrl } from "../../lib/sanitize";
+import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
+import { safeHttpUrl } from "../../lib/seguranca/sanitize";
 import {
   canImportApprovedList,
   canManageEditais,
@@ -36,7 +36,7 @@ import {
   tomDoRisco,
   tomDoStatusDoEdital,
 } from "../../lib/editais-do-nucleo.ts";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { Selo, TabelaInfinita, TopoDoPainel } from "../../ui/index.ts";
 import { avisoDaListaDoEdital } from "../../lib/aprovados-por-edital.ts";
@@ -59,7 +59,7 @@ import type {
   ModalDoNucleo,
   OpcoesDoEstadoDoNucleo,
 } from "./estado.ts";
-import { importarComRecarga } from "../../lib/importar-com-recarga.ts";
+import { importarComRecarga } from "../../lib/carga/importar-com-recarga.ts";
 import { BlocosEsqueleto } from "../../ui/index.ts";
 import { etapaDasRegras } from "../../lib/regras-do-edital.ts";
 import type { EtapaDasRegras } from "../../lib/regras-do-edital.ts";

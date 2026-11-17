@@ -30,7 +30,7 @@ type Paleta = ReturnType<typeof paleta>;
 type EscalaDeBarras = NonNullable<ChartOptions<"bar">["scales"]>[string];
 import { useEffect, useMemo, useRef } from "react";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import { rotuloEmLinhas } from "../../lib/rotulo-em-linhas.ts";
 import {
   aptosEEliminados,

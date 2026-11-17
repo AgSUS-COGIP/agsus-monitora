@@ -69,12 +69,12 @@ import {
   comTempoLimite,
   ehFalhaDeConexao,
   mensagemDeFalha,
-} from "../../lib/falha-de-rede";
+} from "../../lib/carga/falha-de-rede";
 import { criarCopiasPorVersao } from "../../app/copias-por-versao.ts";
 import { criarLeituraPorVersao } from "../../lib/avaliacao-documental/leitura-por-versao.ts";
 import { editalVigente } from "../../lib/avaliacao-documental/editais.ts";
 import { regraComTextosSemEspacosNasPontas } from "../../lib/avaliacao-documental/textos-da-regra.ts";
-import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
+import { ehConflitoDeVersao } from "../../lib/base/conflito-de-versao.ts";
 import {
   coordenaOEdital,
   editalParaAbrir,

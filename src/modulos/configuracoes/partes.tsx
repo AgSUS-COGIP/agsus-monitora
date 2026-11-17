@@ -4,7 +4,7 @@ import {
   type ChangeEvent,
   type ReactNode,
 } from "react";
-import { DEFAULT_ACCESS_BRANDING } from "../../lib/access-branding.ts";
+import { DEFAULT_ACCESS_BRANDING } from "../../lib/entrada/access-branding.ts";
 import { urlDeImagem } from "../../lib/apresentacao-das-configuracoes.ts";
 import {
   DESFOQUE_DO_VIDRO_EM_PX,
@@ -14,7 +14,7 @@ import {
   normalizarDesfoqueDoVidro,
   normalizarEstilo,
   porcentagemDaCorNoVidro,
-} from "../../lib/contraste.ts";
+} from "../../lib/base/contraste.ts";
 import { Aviso, Campo } from "../../ui/index.ts";
 import { Icone } from "../../componentes/icone.tsx";
 import type {

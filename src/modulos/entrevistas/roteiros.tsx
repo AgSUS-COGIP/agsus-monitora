@@ -45,7 +45,7 @@ import {
   nomeParaGravar,
   rotuloDaVersao,
   sugerirNomeDaVersao,
-} from "../../lib/nome-da-versao.ts";
+} from "../../lib/base/nome-da-versao.ts";
 import {
   Aviso,
   Campo,

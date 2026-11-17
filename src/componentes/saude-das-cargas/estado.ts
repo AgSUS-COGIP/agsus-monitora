@@ -34,7 +34,7 @@ import type {
   tela segue como antes.
 */
 import { isAdminGlobal } from "../../lib/access-roles.ts";
-import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede";
+import { comTempoLimite, mensagemDeFalha } from "../../lib/carga/falha-de-rede";
 import {
   acompanhamentoDoPedido,
   normalizarPainel,

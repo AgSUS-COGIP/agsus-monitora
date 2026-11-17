@@ -38,7 +38,7 @@ Como o sistema cumpre:
 - `Modal` e `Gaveta` prendem o foco e fecham com Esc.
 - Pesos 400/500/600, nada abaixo de 12px, sentence case ([[design-e-tokens]]).
 - Testes: `tests/contraste-dos-temas.spec.js` (Playwright, os dois temas; [[testes]]) e
-  `tests/cores-so-por-token.test.js`; `src/lib/contraste.ts` calcula o contraste do aviso de
+  `tests/cores-so-por-token.test.js`; `src/lib/base/contraste.ts` calcula o contraste do aviso de
   branding (reutilize em vez de reescrever).
 
 ## Mobile e responsividade

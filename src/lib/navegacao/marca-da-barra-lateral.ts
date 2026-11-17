@@ -6,7 +6,7 @@
   (src/modulos/configuracoes/aparencia.tsx).
 */
 
-import { ACCESS_BACKGROUND_FOLDER } from "./access-background-storage.ts";
+import { ACCESS_BACKGROUND_FOLDER } from "../entrada/access-background-storage.ts";
 
 export const CHAVE_DO_LOGO_DA_BARRA = "ui_sidebar_logo_url";
 export const CHAVE_DA_COR_DA_BARRA = "ui_sidebar_background_color";

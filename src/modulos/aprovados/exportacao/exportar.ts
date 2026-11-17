@@ -14,7 +14,7 @@ import {
   registroDaResposta,
   xlsxDaExportacao,
 } from "../../../lib/exportacao-da-lista-de-aprovados.ts";
-import { erroDeVersaoNova } from "../../../lib/importar-com-recarga.ts";
+import { erroDeVersaoNova } from "../../../lib/carga/importar-com-recarga.ts";
 
 /*
   Exportar a Lista de aprovados (issue #583), sem React:

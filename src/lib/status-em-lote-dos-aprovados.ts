@@ -3,7 +3,7 @@ import {
   canChangeCandidateStatus,
   canUnlockCandidateStatus,
 } from "./access-roles.ts";
-import { formatNumberBR } from "./formatters";
+import { formatNumberBR } from "./base/formatters";
 
 /*
   Status em lote na aba Aprovados (pedido de 11/11/2026; RPC

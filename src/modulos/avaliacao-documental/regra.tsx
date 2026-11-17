@@ -23,7 +23,7 @@ import {
   erroDoNomeDaVersao,
   nomeParaGravar,
   sugerirNomeDaVersao,
-} from "../../lib/nome-da-versao.ts";
+} from "../../lib/base/nome-da-versao.ts";
 import {
   Aviso,
   AvisoDeRascunho,

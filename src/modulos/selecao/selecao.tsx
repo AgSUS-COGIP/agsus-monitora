@@ -1,5 +1,5 @@
-import { erroParaATela } from "../../lib/erro-na-tela.ts";
-import { rotuloDaCopia } from "../../lib/rotulo-da-copia.ts";
+import { erroParaATela } from "../../lib/base/erro-na-tela.ts";
+import { rotuloDaCopia } from "../../lib/carga/rotulo-da-copia.ts";
 import type {
   CampoDoFiltro,
   EstadoDaSelecao,
@@ -21,7 +21,7 @@ import {
   observacoesDoRecorte,
   opcoesDosFiltros,
 } from "../../lib/selecao-do-painel.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient";
+import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import { Aviso } from "../../ui/index.ts";
 import { textoDaConferencia } from "../../lib/texto-da-conferencia.ts";
 import { criarEstadoDaSelecao, MENSAGEM_SEM_ACESSO } from "./estado.ts";

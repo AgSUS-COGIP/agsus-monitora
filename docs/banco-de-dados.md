@@ -233,7 +233,7 @@ Medição que importa para o diagnóstico, feita no banco real:
 A segunda linha é a razão de a chamada pública de branding não usar o cliente
 compartilhado: uma sessão corrompida no armazenamento faria a requisição falhar
 com 401 **mesmo tendo `anon` o `execute` concedido**. Ver
-`src/lib/access-branding-publico.ts`.
+`src/lib/entrada/access-branding-publico.ts`.
 
 ### 4.2 Seis tabelas com RLS e sem policy — não mexer
 
@@ -720,7 +720,7 @@ virarem aba, entram com `TP_ABA = 'externa'`).
 O front (`src/modules/catalogo-de-abas.ts`) pede a função junto com as outras
 consultas da entrada e guarda a resposta na cópia da sessão (parte opcional
 `abas`). Sem a função (PostgREST `PGRST202`), com erro ou resposta vazia, usa
-`ABAS_DO_MENU` (`src/lib/menu-lateral.ts`), o mesmo catálogo no código — por
+`ABAS_DO_MENU` (`src/lib/navegacao/menu-lateral.ts`), o mesmo catálogo no código — por
 isso o front pode ir antes da migration. `tests/catalogo-de-abas.test.js`
 confere que o seed é `ABAS_DO_MENU`, que a resposta capturada no ensaio
 (`tests/fixtures/listar-abas-do-menu.json`) é a que o seed produz e que a árvore
@@ -820,7 +820,7 @@ default null)`. Com `p_area`: só a área (22023 se não existe, 42501 se não �
   candidato a menos.
 - **No navegador**: uma cópia por área no IndexedDB (`aprovados:<área>`, no
   mesmo banco e com o mesmo dono das cópias do painel de análises; regras gerais
-  em `src/lib/cache-de-payload.ts`). A primeira abertura da área mostra a cópia
+  em `src/lib/carga/cache-de-payload.ts`). A primeira abertura da área mostra a cópia
   e pergunta ao banco se a `versao` dela vale; a releitura depois de uma
   escrita vai sempre ao banco, com a versão da tela. Sair, "Limpar sessão",
   acesso revogado e outro usuário apagam as cópias.

@@ -8,7 +8,7 @@ import type {
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient";
+import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import {
   temProcessosPorProjeto,
   textosDaVisaoGeral,

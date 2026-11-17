@@ -14,7 +14,7 @@ import {
   ehSessaoEncerrada,
   estadoDaSessao,
   exigirSessao,
-} from "../src/lib/sessao";
+} from "../src/lib/sessao/sessao";
 
 const clienteQue = (resposta) => ({
   auth: {

@@ -13,7 +13,7 @@ import {
   redefinirBarraLateral,
 } from "../../src/componentes/barra-lateral/estado.ts";
 import { redefinirDadosDoMonitoramento } from "../../src/componentes/dados-do-monitoramento.ts";
-import { montarArvoreDoMenu } from "../../src/lib/menu-lateral.ts";
+import { montarArvoreDoMenu } from "../../src/lib/navegacao/menu-lateral.ts";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 

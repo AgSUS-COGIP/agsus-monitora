@@ -10,7 +10,7 @@ import {
   type Recorte,
   type SituacaoNaTela,
 } from "../../lib/fila-de-conducao.ts";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import {
   AcoesDaLinha,
   BarraDaLista,

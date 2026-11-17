@@ -8,7 +8,7 @@ import type {
   RegistroDaExportacao,
 } from "./exportacao-da-lista-de-aprovados.ts";
 import { textoParaOPdf } from "./avaliacao-documental/espelho-em-pdf.ts";
-import { CABECALHO_PADRAO } from "./cabecalho-dos-documentos.ts";
+import { CABECALHO_PADRAO } from "./base/cabecalho-dos-documentos.ts";
 import {
   dataHoraDeBrasilia,
   identificacaoDaExportacao,

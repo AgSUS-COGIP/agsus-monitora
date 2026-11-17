@@ -5,7 +5,7 @@ import {
 } from "../../../lib/avaliacao-documental/pontos-informativos.ts";
 import type { RegraAnalise } from "../../../lib/avaliacao-documental/tipos-da-regra.ts";
 import { DIRECOES, NIVEIS } from "../../../lib/classificacao/catalogo.ts";
-import { rotuloDaVersao } from "../../../lib/nome-da-versao.ts";
+import { rotuloDaVersao } from "../../../lib/base/nome-da-versao.ts";
 import { Aviso } from "../../../ui/index.ts";
 import { Caixa, CampoNumero } from "../campos.tsx";
 import { ListaOrdenavel } from "./lista-ordenavel.tsx";

@@ -443,7 +443,7 @@ body:not(.access-request-mode) .login-screen,
   sucesso, perigo, neutro sólido): no escuro esses preenchimentos clareiam, e o
   texto escurece (#071421 sobre #63b6f3: 8,41).
 */
-/* A cor de cada área (src/lib/menu-lateral.ts), em `html[data-area]` (posto
+/* A cor de cada área (src/lib/navegacao/menu-lateral.ts), em `html[data-area]` (posto
    por src/app/moldura.ts): Saúde Indígena na floresta, SEDE no ocre e
    Projetos na terracota. Fora delas (Painéis, Administração) `--cor-da-area`
    não existe e quem a lê cai no próprio padrão. Vale nos dois temas, porque os

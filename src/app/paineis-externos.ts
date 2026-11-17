@@ -1,4 +1,4 @@
-import { getSupabaseClient } from "../lib/supabaseClient";
+import { getSupabaseClient } from "../lib/sessao/supabaseClient";
 import { permissaoLegada } from "../lib/access-roles.ts";
 import { enderecoDoPainel } from "../lib/endereco-do-painel";
 import { semOPainelAntigoDeAnalises } from "../lib/pagina-do-painel";
@@ -6,7 +6,7 @@ import {
   origensParaPreconectar,
   precisaDeCrossorigin,
 } from "../lib/carregamento-do-painel.ts";
-import { codigoDoPainel, ehPainelExterno } from "../lib/navegacao";
+import { codigoDoPainel, ehPainelExterno } from "../lib/navegacao/navegacao";
 import { acompanharCarregamentoDoPainel } from "../modulos/paineis-externos/carregamento-do-painel.tsx";
 import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.ts";
 import { avisar as avisarPadrao } from "./avisos.ts";

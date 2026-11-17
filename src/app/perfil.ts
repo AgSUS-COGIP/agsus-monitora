@@ -1,6 +1,6 @@
 import { permissaoLegada, roleLabel } from "../lib/access-roles.ts";
-import { profileDisplayName } from "../lib/platform-context";
-import type { PerfilDaPlataforma } from "../lib/platform-context";
+import { profileDisplayName } from "../lib/navegacao/platform-context";
+import type { PerfilDaPlataforma } from "../lib/navegacao/platform-context";
 import type {
   PerfilDeAcesso,
   PermissaoLegada,

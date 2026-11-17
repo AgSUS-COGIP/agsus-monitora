@@ -22,21 +22,21 @@ o build e o CI ([[ci-e-qualidade]]).
   `*-refinement`, `*-enhancements`, `post-N…` nem `window.navigate = …`/`window.saveAdminSettings
   = …` por outro módulo. Mude a fonte onde o comportamento é definido; ao passar por um remendo
   existente, prefira absorvê-lo na fonte e apagá-lo.
-- **HTML dinâmico** passa por `src/lib/sanitize.ts` / `html-security.ts`. Nunca `innerHTML` cru;
+- **HTML dinâmico** passa por `src/lib/seguranca/sanitize.ts` / `html-security.ts`. Nunca `innerHTML` cru;
   em React, sem `dangerouslySetInnerHTML` ([[seguranca]]).
 - Tela ou feature nova = **React** em `src/modulos/<nome>/`, nada novo em `src/modules/` nem em
   `src/analises/` ([[nova-tela-e-legado]]).
 - **Arquivo gerado se edita na fonte** e se regenera com o script (`public/data/*.json`,
   `src/modules/aya-conhecimento-gerado.js`, `src/styles/icones-lucide.css` de `npm run icones`);
   nunca à mão ([[ci-e-qualidade]]).
-- **Link, caminho ou bucket de planilha só em `src/lib/planilhas.ts`**; o consumidor importa de lá
+- **Link, caminho ou bucket de planilha só em `src/lib/base/planilhas.ts`**; o consumidor importa de lá
   (`tests/planilhas.test.js` falha se aparecer em outro arquivo). Ver [[planilhas]].
 - **CSS segue as regras de ouro** ([[design-e-tokens]]): token em vez de hex, sem
   `!important`/`#id` novos, sem arquivo `*-fix.css` novo ([[css]]).
 - **Interface sem textos genéricos** ([[textos-da-interface]]).
 - Nomenclatura de banco no padrão MAD; skill `mad-ddl-review` ([[banco-e-migrations]]).
 - Nova tentativa automática de chamada ao Supabase só pela regra única de
-  `src/lib/novas-tentativas.ts` (`esperaAntesDaTentativa`); nada de laço próprio de repetição em
+  `src/lib/sessao/novas-tentativas.ts` (`esperaAntesDaTentativa`); nada de laço próprio de repetição em
   tela.
 - Nome de robô, tarefa ou horário de agenda não se escreve à mão na tela: vem do catálogo do banco
   e do `cron.job` ([[robos-e-agenda]]).

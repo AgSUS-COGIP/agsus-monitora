@@ -1,6 +1,6 @@
 /*
-  A cópia do perfil para entrar sem rede (src/lib/sessao-sem-rede.ts explica a
-  decisão), no formato de src/lib/cache-de-payload.ts. À parte da regra da
+  A cópia do perfil para entrar sem rede (src/lib/sessao/sessao-sem-rede.ts explica a
+  decisão), no formato de src/lib/carga/cache-de-payload.ts. À parte da regra da
   sessão: só a cópia (src/app/perfil-guardado.ts, baixada sob demanda) a usa.
 */
 

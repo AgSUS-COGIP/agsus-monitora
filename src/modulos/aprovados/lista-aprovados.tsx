@@ -1,4 +1,4 @@
-import { rotuloDaCopia } from "../../lib/rotulo-da-copia.ts";
+import { rotuloDaCopia } from "../../lib/carga/rotulo-da-copia.ts";
 import {
   naLocalidade,
   opcoesDeLocalidade,
@@ -13,13 +13,13 @@ import type {
 import type { FiltrosDaTabelaDeAprovados } from "./tipos-da-aba-de-aprovados.ts";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient";
+import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import {
   canAlterarPorDecisaoJudicial,
   canChangeCandidateStatus,
   canManageSubJudice,
 } from "../../lib/access-roles.ts";
-import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.ts";
+import { CHAVE_DO_CABECALHO } from "../../lib/base/cabecalho-dos-documentos.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import {
   candidateCargosForEdital,
@@ -28,7 +28,7 @@ import {
   manterSoAsOpcoes,
   opcoesDeEdital,
 } from "../../lib/lista-aprovados-rules.ts";
-import { PLANILHAS } from "../../lib/planilhas.ts";
+import { PLANILHAS } from "../../lib/base/planilhas.ts";
 import { formatarDataHora } from "../../lib/cronograma-do-edital.ts";
 import { soDosEditais } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";

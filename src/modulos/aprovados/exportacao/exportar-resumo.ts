@@ -18,7 +18,7 @@ import {
   nomeDoArquivoDoResumo,
   xlsxDoResumo,
 } from "../../../lib/exportacao-do-resumo-por-cargo.ts";
-import { erroDeVersaoNova } from "../../../lib/importar-com-recarga.ts";
+import { erroDeVersaoNova } from "../../../lib/carga/importar-com-recarga.ts";
 import { mensagemDoErroDaExportacao } from "./exportar.ts";
 
 /*

@@ -25,7 +25,7 @@ import {
 } from "../src/lib/comemoracao.ts";
 import { decididoNoPrazo } from "../src/lib/prazo-do-recurso.ts";
 import { enriquecerRecurso } from "../src/lib/recursos-dos-candidatos.ts";
-import { normalizarSituacaoDoSistema } from "../src/lib/situacao-dos-modulos.ts";
+import { normalizarSituacaoDoSistema } from "../src/lib/navegacao/situacao-dos-modulos.ts";
 import { act } from "react";
 import { filaDeComemoracoes } from "../src/app/fila-de-comemoracoes.ts";
 import { comemoracoesNaPagina } from "./shows-de-comemoracao.js";

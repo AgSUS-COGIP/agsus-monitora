@@ -3,11 +3,11 @@ import type {
   ResultadoDaBusca,
   AtalhoDaBusca,
   ParteDoRealce,
-} from "../componentes/busca-global/tipos.ts";
+} from "../../componentes/busca-global/tipos.ts";
 import {
   identificacaoDoMonitoramento,
   normalizarLinhaDoMonitoramento,
-} from "./linhas-do-monitoramento.ts";
+} from "../linhas-do-monitoramento.ts";
 
 /*
   Busca global (Ctrl+K / Cmd+K): a lógica pura do componente
@@ -16,7 +16,7 @@ import {
   banco, até 12 resultados.
 */
 
-import { tomDoRisco } from "./editais-do-nucleo.ts";
+import { tomDoRisco } from "../editais-do-nucleo.ts";
 
 export const LIMITE_DE_RESULTADOS = 12;
 

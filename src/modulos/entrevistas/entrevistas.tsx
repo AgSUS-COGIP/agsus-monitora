@@ -1,5 +1,5 @@
-import { erroParaATela } from "../../lib/erro-na-tela.ts";
-import { rotuloDaCopia } from "../../lib/rotulo-da-copia.ts";
+import { erroParaATela } from "../../lib/base/erro-na-tela.ts";
+import { rotuloDaCopia } from "../../lib/carga/rotulo-da-copia.ts";
 import type {
   EstadoDasEntrevistas,
   SnapshotDasEntrevistas,
@@ -23,7 +23,7 @@ import {
   pendenciasDasEntrevistas,
   textoDasFontesDoPainel,
 } from "../../lib/entrevistas-do-painel.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient";
+import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import { Aviso } from "../../ui/index.ts";
 import { hojeEmBrasilia } from "../../lib/fila-de-conducao.ts";
 import {
@@ -83,7 +83,7 @@ import "./entrevistas.css";
   acesso às Entrevistas".
 
   Links antigos para as visões "Conduzir entrevistas" e "Roteiros" desta
-  tela vão para a tela nova (src/lib/navegacao.ts, `destinoDaTela`).
+  tela vão para a tela nova (src/lib/navegacao/navegacao.ts, `destinoDaTela`).
 */
 
 const NUMEROS_ZERADOS = calcularIndicadores([]);

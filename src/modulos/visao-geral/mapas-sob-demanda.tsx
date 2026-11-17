@@ -1,7 +1,7 @@
-import { erroParaATela } from "../../lib/erro-na-tela.ts";
+import { erroParaATela } from "../../lib/base/erro-na-tela.ts";
 import type { ComponentProps, ComponentType } from "react";
 import { useEffect, useSyncExternalStore } from "react";
-import { importarComRecarga } from "../../lib/importar-com-recarga.ts";
+import { importarComRecarga } from "../../lib/carga/importar-com-recarga.ts";
 import { carregarLeaflet } from "../mapa-saude-indigena/carregar-leaflet.ts";
 import { Carregando, ErroAoCarregar } from "../../ui/index.ts";
 

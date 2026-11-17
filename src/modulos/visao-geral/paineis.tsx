@@ -17,8 +17,8 @@ import {
   primeiroNome,
   resumoDoDia,
   saudacao,
-} from "../../lib/boas-vindas.ts";
-import { formatNumberBR } from "../../lib/formatters";
+} from "../../lib/entrada/boas-vindas.ts";
+import { formatNumberBR } from "../../lib/base/formatters";
 import {
   andamentoPorFase,
   CAMPOS_DO_FILTRO,

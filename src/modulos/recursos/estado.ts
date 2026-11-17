@@ -59,7 +59,7 @@ import type {
   mostra o rótulo, os outros ficam desativados.
 */
 import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.ts";
-import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
+import { ehConflitoDeVersao } from "../../lib/base/conflito-de-versao.ts";
 import { csvDosRecursos } from "../../lib/recursos-dos-candidatos.ts";
 import {
   BUCKET_DOS_ANEXOS,

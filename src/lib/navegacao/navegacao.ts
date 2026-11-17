@@ -10,7 +10,7 @@ import {
   paginasPermitidas,
   permissaoLegada,
   podeAbrirConfiguracoes,
-} from "./access-roles";
+} from "../access-roles";
 
 /*
   Regras da navegação do app (sem DOM): que tela o perfil pode abrir, qual é a

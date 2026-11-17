@@ -22,7 +22,7 @@ servidor opcional em container ([[servidor-web]]).
   abrir a PR (`npm run check:migrations`; [[banco-e-migrations]]).
 - No mesmo PR da mudança: o contrato de RPC ([[rpc-e-contrato]]), o retrato
   `supabase/esquema-atual.sql` (depois de aplicar a migration), a novidade em
-  `src/lib/novidades.ts` quando muda algo para quem usa (abaixo) e a nota da biblioteca do assunto
+  `src/lib/base/novidades.ts` quando muda algo para quem usa (abaixo) e a nota da biblioteca do assunto
   ([[documentacao]]).
 - Nenhum segredo no diff ([[seguranca]]); não commitar `.env`/`.env.local` nem `dist/`.
 - Mudança confirmada pelo usuário → o legado que ela substituiu sai ([[nova-tela-e-legado]]).
@@ -47,7 +47,7 @@ publicada; nenhum segredo no diff; novidade registrada quando muda algo para que
   redirecionar: os robôs, o Apps Script e os painéis externos chamam `/api/...` por ele. Passar a
   redirecionar só depois de trocar o endereço nesses clientes.
 - O código não guarda o endereço: o login volta para a origem da página
-  (`getOAuthCallbackUrl`, `src/lib/auth-flow.ts`) e as funções comparam a origem com o próprio
+  (`getOAuthCallbackUrl`, `src/lib/sessao/auth-flow.ts`) e as funções comparam a origem com o próprio
   host. Domínio novo pede só duas configurações: o domínio na Vercel (Settings › Domains) e a URL
   `/auth/callback.html` dele em Redirect URLs do Supabase Auth ([[seguranca]]).
 - Sessão e preferências do navegador são por endereço: no domínio novo, cada pessoa entra de novo
@@ -104,7 +104,7 @@ casaisNacionais, lidoEm }` (a lista de DSEIs do mapa e as CASAIs nacionais, loca
 
 ### Regras das funções
 
-- Os dois proxies validam a origem com `src/lib/origem-da-requisicao.ts` (`origemDeTerceiro`). Não
+- Os dois proxies validam a origem com `src/lib/seguranca/origem-da-requisicao.ts` (`origemDeTerceiro`). Não
   remover: sem isso o endpoint vira proxy aberto.
 - Não expor chave ou URL interna na resposta. Segredo vem de variável de ambiente da Vercel.
 - Código compartilhado com o front vem de `src/`; não duplicar lógica aqui.
@@ -125,14 +125,14 @@ casaisNacionais, lidoEm }` (a lista de DSEIs do mapa e as CASAIs nacionais, loca
 
 - Cada build publica `/versao.json`. Quem está com o sistema aberto vê a faixa "Há uma versão nova
   do MONITORA" (`src/app/aviso-de-versao.ts`, componente `src/componentes/aviso-de-versao/`).
-- **Mudança visível para quem usa entra no topo de `NOVIDADES` em `src/lib/novidades.ts`, no mesmo
+- **Mudança visível para quem usa entra no topo de `NOVIDADES` em `src/lib/base/novidades.ts`, no mesmo
   PR.** Entrada nova: `id` único (data + assunto), `data` (AAAA-MM-DD), `texto` curto, sem ponto
   final, em minúscula ("motivo padronizado na reabertura"), e `visivel: true` só quando a mudança
   importa para quem usa (correção interna fica `false`).
 - O build copia as novidades com `visivel: true` para o `versao.json` (`vite.config.js`), e a
   página antiga lê de lá; o aviso mostra a mais recente que a versão aberta ainda não tem (sem
   nenhuma, só "Há uma versão nova").
-- `src/lib/versao-do-sistema.ts` lê o `versao.json`, escolhe a novidade e dá o sinal de "tela
+- `src/lib/base/versao-do-sistema.ts` lê o `versao.json`, escolhe a novidade e dá o sinal de "tela
   antiga" (PGRST202 / "recarregue a página"). Tela sob demanda baixada com a versão velha recarrega
   uma vez (`importarComRecarga`).
 

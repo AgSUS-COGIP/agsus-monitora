@@ -11,7 +11,7 @@ import type {
 } from "./tipos.ts";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { isAdminGlobal } from "../../lib/access-roles.ts";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import {
   estadoDoBotao,
   OPCOES_DOS_ROBOS,
@@ -24,7 +24,7 @@ import {
   textoDaIdade,
   visaoSimples,
 } from "../../lib/saude-das-cargas.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient";
+import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import { CartaoDeAvisos } from "../../modulos/conferencias/avisos-de-conferencia.tsx";
 import { Icone } from "../icone.tsx";
 import { AgendaDosRobos } from "./agenda-dos-robos.tsx";

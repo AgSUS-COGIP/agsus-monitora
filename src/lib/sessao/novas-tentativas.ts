@@ -4,7 +4,7 @@
   Antes, quem repetia uma chamada era o próprio postgrest-js (GET, 3 vezes,
   1 s → 2 s → 4 s, sem sorteio e sem teto para o `Retry-After`): numa queda,
   todas as abas abertas voltavam ao banco no mesmo segundo. Agora o cliente
-  único (src/lib/supabaseClient.ts) desliga a repetição da biblioteca
+  único (src/lib/sessao/supabaseClient.ts) desliga a repetição da biblioteca
   (`db.retry: false`) e passa todo `fetch` do banco por `comNovasTentativas`:
 
   - só repete o que é seguro repetir: leitura (GET/HEAD/OPTIONS) que falhou

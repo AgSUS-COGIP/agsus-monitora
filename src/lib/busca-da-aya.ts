@@ -31,7 +31,7 @@ import {
 } from "../modules/aya-knowledge.ts";
 import { paginaDaAya } from "./aya-paginas.ts";
 import type { SugestaoDaAya } from "./aya-paginas.ts";
-import { nomeDaArea } from "./menu-lateral.ts";
+import { nomeDaArea } from "./navegacao/menu-lateral.ts";
 import { contextualAyaAnswer, resolverReferencia } from "./contexto-da-aya.ts";
 import type {
   ContextoParaResposta,

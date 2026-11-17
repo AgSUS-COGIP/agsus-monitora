@@ -8,7 +8,7 @@ Vercel (o `server/servidor.ts` não as tem).
 
 Regras:
 
-- Os proxies da FUNAI validam a origem com `src/lib/origem-da-requisicao.ts` (`origemDeTerceiro`).
+- Os proxies da FUNAI validam a origem com `src/lib/seguranca/origem-da-requisicao.ts` (`origemDeTerceiro`).
   Não remover: sem isso o endpoint vira proxy aberto.
 - Não expor chave ou URL interna na resposta. Segredo vem de variável de ambiente da Vercel;
   `EDITAIS_API_CHAVE` e `SUPABASE_SERVICE_ROLE_KEY` nunca vão para o front ([[seguranca]]).

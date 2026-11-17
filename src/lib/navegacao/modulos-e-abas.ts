@@ -7,7 +7,7 @@ import type {
   EstadoDoModulo,
   AlvoDoHistorico,
   HistoricoDosModulos,
-} from "../modulos/modulos/tipos.ts";
+} from "../../modulos/modulos/tipos.ts";
 /*
   Configurações › Módulos e abas, sem DOM: o rascunho das alterações e o que
   vai para `salvar_situacao_modulos(p_alteracoes, p_motivo)`.

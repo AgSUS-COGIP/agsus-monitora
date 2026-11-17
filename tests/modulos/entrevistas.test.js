@@ -5,7 +5,7 @@ import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { EVENTO_TEMA_ALTERADO } from "../../src/lib/eventos-da-barra-lateral.ts";
+import { EVENTO_TEMA_ALTERADO } from "../../src/lib/navegacao/eventos-da-barra-lateral.ts";
 import {
   clicar,
   digitar,
@@ -28,7 +28,7 @@ import { montarTela } from "../montar-tela.ts";
 
 // O Chart.js não desenha no jsdom (sem canvas): um falso guarda o que recebeu.
 const graficos = vi.hoisted(() => []);
-vi.mock("../../src/lib/chartjs-global.ts", () => {
+vi.mock("../../src/lib/base/chartjs-global.ts", () => {
   const Chart = class {
     constructor(canvas, configuracao) {
       this.canvas = canvas;

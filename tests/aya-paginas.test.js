@@ -12,7 +12,7 @@ import {
   ABAS_DO_MENU,
   AREAS_DO_SISTEMA,
   nomeDaArea,
-} from "../src/lib/menu-lateral.ts";
+} from "../src/lib/navegacao/menu-lateral.ts";
 import { SECOES } from "../src/modulos/configuracoes/secoes.ts";
 import { responderAya } from "../src/lib/busca-da-aya.ts";
 import { VERBETES_AYA } from "../src/modules/aya-conhecimento-gerado.js";

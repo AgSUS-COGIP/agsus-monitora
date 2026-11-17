@@ -25,7 +25,7 @@
   alteração e segura a versão nova do sistema enquanto houver gravação por
   fazer.
 */
-import { comTempoLimite, ehFalhaDeConexao } from "../lib/falha-de-rede";
+import { comTempoLimite, ehFalhaDeConexao } from "../lib/carga/falha-de-rede";
 import {
   chaveDoRascunhoLocal,
   escolherRascunho,

@@ -6,15 +6,15 @@ import {
   partesDaVersao,
   rotuloDaVersao,
   TAMANHO_MAXIMO_DO_NOME,
-} from "../lib/nome-da-versao.ts";
-import type { VersaoComNome } from "../lib/nome-da-versao.ts";
+} from "../lib/base/nome-da-versao.ts";
+import type { VersaoComNome } from "../lib/base/nome-da-versao.ts";
 import { Aviso } from "./aviso.tsx";
 import { Campo } from "./campo.tsx";
 import { Modal } from "./modal.tsx";
 
 /*
   O nome das versões das três regras (avaliação documental, classificação e
-  roteiro de entrevista), regras em src/lib/nome-da-versao.ts:
+  roteiro de entrevista), regras em src/lib/base/nome-da-versao.ts:
     NomeDaVersao        "Decisão CORES · v7" (nome em destaque, número
                         discreto); sem nome, "Versão 7".
     CampoNomeDaVersao   "Nome desta versão" ao salvar: vem com a sugestão

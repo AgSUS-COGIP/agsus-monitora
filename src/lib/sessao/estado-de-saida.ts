@@ -23,7 +23,7 @@
      manual continua sendo a mesma saída manual, não uma expiração nova.
 
   Falha temporária de rede não passa por aqui: não produz `SIGNED_OUT`, e a
-  classificação de erro vive em `lib/sessao.ts`.
+  classificação de erro vive em `lib/sessao/sessao.ts`.
 */
 
 export const SAIDA_MANUAL = "manual";
@@ -59,7 +59,7 @@ const MENSAGENS: Readonly<Record<CausaDaSaida, string>> = {
     sucesso em aparência de falha.
 
     A causa não se adivinha. Só `SAIDA_EXPIRADA` — declarada com prova pelo
-    classificador de `lib/sessao.ts` — produz a mensagem de expiração.
+    classificador de `lib/sessao/sessao.ts` — produz a mensagem de expiração.
   */
   [SAIDA_DESCONHECIDA]: "",
 };

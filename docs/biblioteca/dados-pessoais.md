@@ -40,7 +40,7 @@ do que o banco mandou, para abrir na hora e para consultar sem rede.
 | Avaliação documental, pré-classificação e Classificação (`<RPC>:<edital>`) | regra; nome, código e notas dos candidatos                                                                                                     |
 
 - **Sem CPF, e-mail nem telefone:** as RPCs dessas telas não os mandam.
-- **48 horas** (`VALIDADE_DO_CACHE_MS`, `src/lib/validade-das-copias.ts`): a cópia vencida é apagada
+- **48 horas** (`VALIDADE_DO_CACHE_MS`, `src/lib/carga/validade-das-copias.ts`): a cópia vencida é apagada
   na leitura e na abertura do app (`src/app/varredura-das-copias.ts`), não só ignorada.
 - **De um usuário só:** outra pessoa abrindo uma tela no mesmo navegador apaga as cópias de quem
   veio antes.
@@ -48,7 +48,7 @@ do que o banco mandou, para abrir na hora e para consultar sem rede.
   na leitura) e quando outro usuário entra (`apagarCacheDePayload`, `src/app/sistema.ts`).
 - Sem rede, a tela mostra a cópia só para consulta, com "Dados de 17/11, 10:14" no topo; gravar
   exige rede.
-- A cópia da sessão (banco `agsus-monitora`, `src/lib/copia-da-sessao.ts`) não leva dado de candidato e
+- A cópia da sessão (banco `agsus-monitora`, `src/lib/sessao/copia-da-sessao.ts`) não leva dado de candidato e
   segue com 7 dias.
 
 ## Nos robôs e jobs

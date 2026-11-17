@@ -1,4 +1,4 @@
-import { getSupabaseClient } from "./supabaseClient";
+import { getSupabaseClient } from "../sessao/supabaseClient";
 
 /** Medida de recurso (PerformanceResourceTiming ou parecido). */
 type MedidaDeRecurso = { transferSize?: unknown; decodedBodySize?: unknown };

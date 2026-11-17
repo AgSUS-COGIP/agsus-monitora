@@ -10,8 +10,11 @@ import {
   paineisPermitidos,
   secaoDeConfiguracaoPermitida,
 } from "./access-roles.ts";
-import { areasDoUsuario, montarArvoreDoMenu } from "./menu-lateral.ts";
-import { normalizePlatformContext } from "./platform-context";
+import {
+  areasDoUsuario,
+  montarArvoreDoMenu,
+} from "./navegacao/menu-lateral.ts";
+import { normalizePlatformContext } from "./navegacao/platform-context";
 import { niveisDoRecurso } from "./permissoes-recursos.ts";
 import {
   MODULOS,

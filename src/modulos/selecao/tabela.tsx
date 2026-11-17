@@ -1,5 +1,5 @@
 import type { VagaDaSelecao } from "./tipos.ts";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import {
   FILTROS_VAZIOS,
   filtrarVagas,

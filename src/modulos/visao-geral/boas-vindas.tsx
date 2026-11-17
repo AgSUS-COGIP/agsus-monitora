@@ -12,7 +12,7 @@ import {
   mensagemDoMarcoDoAno,
   proximoEstadoDoMarco,
 } from "../../lib/comemoracao.ts";
-import { nomeDaArea } from "../../lib/menu-lateral.ts";
+import { nomeDaArea } from "../../lib/navegacao/menu-lateral.ts";
 import { comemorar } from "../../app/comemoracao-sob-demanda.ts";
 import { lerMarcosDaArea } from "./marcos.ts";
 

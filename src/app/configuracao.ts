@@ -1,13 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getSupabaseClient } from "../lib/supabaseClient";
-import { DEFAULT_ACCESS_BRANDING } from "../lib/access-branding.ts";
-import { avisoGlobal } from "../lib/aviso-global";
-import { erroAmigavel } from "../lib/erro-amigavel";
+import { getSupabaseClient } from "../lib/sessao/supabaseClient";
+import { DEFAULT_ACCESS_BRANDING } from "../lib/entrada/access-branding.ts";
+import { avisoGlobal } from "../lib/base/aviso-global";
+import { erroAmigavel } from "../lib/base/erro-amigavel";
 import {
   FAVICON_PADRAO,
   aplicarFaviconDaMarca,
   definirSistemaDaAba,
-} from "../lib/identidade-da-aba";
+} from "../lib/sessao/identidade-da-aba";
 import { sessaoDoApp } from "./sessao.ts";
 import { definirMarcaDaConfiguracao } from "./entrada/marca.ts";
 import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.ts";
@@ -125,7 +125,7 @@ export function criarConfiguracao({
 
   /*
     Aviso global — a mensagem de topo definida em Configurações. A decisão de
-    aparência está em `lib/aviso-global.ts`; aqui só a escrita no DOM.
+    aparência está em `lib/base/aviso-global.ts`; aqui só a escrita no DOM.
   */
   function aplicarAvisoGlobal() {
     const barra = $("broadcastBar");

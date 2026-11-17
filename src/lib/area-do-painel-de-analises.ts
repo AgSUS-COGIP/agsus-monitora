@@ -10,7 +10,7 @@
   têm critério étnico nem experiência em saúde indígena/atenção básica; têm
   o tempo de experiência profissional).
 */
-import { AREAS_DO_SISTEMA, nomeDaArea } from "./menu-lateral.ts";
+import { AREAS_DO_SISTEMA, nomeDaArea } from "./navegacao/menu-lateral.ts";
 
 export const AREA_PADRAO_DO_PAINEL = "saude-indigena";
 

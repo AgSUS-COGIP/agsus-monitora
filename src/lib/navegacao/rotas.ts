@@ -2,7 +2,7 @@
   As rotas do app: a área e a tela no endereço (`/saude-indigena/cronograma`).
   Regra pura, sem DOM: quem lê e escreve o endereço é src/app/endereco.ts, e
   quem decide se a tela abre é a navegação (src/app/navegacao.ts), com as
-  mesmas permissões de sempre (src/lib/navegacao.ts).
+  mesmas permissões de sempre (src/lib/navegacao/navegacao.ts).
 
     /<area>/<tela>[/<edital>][?visao=<visão>][&<filtros>]  telas das áreas (Saúde Indígena, SEDE, Projetos)
     /<area>/editais/<edital>/regras/<etapa>     Regras do edital (Editais), na etapa
@@ -14,7 +14,7 @@
   A `view` é o nome interno de sempre (o do menu, das permissões e do
   catálogo de abas); o caminho é o nome que a pessoa lê no endereço.
 */
-import { etapaDasRegras } from "./regras-do-edital.ts";
+import { etapaDasRegras } from "../regras-do-edital.ts";
 
 /** Para onde ir: a tela (view) e o que vai com ela. */
 export interface DestinoDaRota {

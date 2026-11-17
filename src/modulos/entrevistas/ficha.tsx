@@ -54,7 +54,7 @@ import {
   parecerPronto,
   textoDoParecerDaEntrevista,
 } from "../../lib/parecer-da-entrevista.ts";
-import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
+import { rotuloDaVersao } from "../../lib/base/nome-da-versao.ts";
 import { dataHoraBR } from "../../lib/entrevistas-do-painel.ts";
 import {
   entrevistaConcluida,

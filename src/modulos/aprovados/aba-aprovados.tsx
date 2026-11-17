@@ -22,7 +22,7 @@ import {
   ordenarAprovados,
   proximaOrdemDosAprovados,
 } from "../../lib/ordem-dos-aprovados.ts";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import { resumoDasOrigens } from "../../lib/publicacao-de-aprovados.ts";
 import { statusDoLotePara } from "../../lib/status-em-lote-dos-aprovados.ts";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";

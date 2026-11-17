@@ -1,7 +1,7 @@
 import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.ts";
 import { telaPronta } from "../../app/registro-das-telas.ts";
 import type { LinhaDaVisaoGeral } from "./tipos.ts";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import {
   contratacoesDoCadastroReserva,
   contratadasImediatas,

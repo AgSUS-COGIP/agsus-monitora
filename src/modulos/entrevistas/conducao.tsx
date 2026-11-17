@@ -28,7 +28,10 @@ import {
   criteriosDeDesempate,
   textoDoEmpateFinal,
 } from "../../lib/convocacao-da-entrevista.ts";
-import { gruposAteOLimite, totalDosGrupos } from "../../lib/carga-continua.ts";
+import {
+  gruposAteOLimite,
+  totalDosGrupos,
+} from "../../lib/carga/carga-continua.ts";
 import {
   Aviso,
   Campo,

@@ -1,10 +1,10 @@
 import { useEffect, useRef, useSyncExternalStore } from "react";
-import { ACCESS_BACKGROUND_MIME_TYPES } from "../../lib/access-background-storage.ts";
+import { ACCESS_BACKGROUND_MIME_TYPES } from "../../lib/entrada/access-background-storage.ts";
 import {
   CHAVE_DA_COR_DA_BARRA,
   CHAVE_DO_LOGO_DA_BARRA,
   logoDaBarraSegura,
-} from "../../lib/marca-da-barra-lateral.ts";
+} from "../../lib/navegacao/marca-da-barra-lateral.ts";
 import { camposDaSecao } from "../../lib/publicacao-de-configuracoes.ts";
 import { aplicarMarcaDaBarraLateral } from "../../componentes/barra-lateral/marca.ts";
 import { Aviso, Selo } from "../../ui/index.ts";

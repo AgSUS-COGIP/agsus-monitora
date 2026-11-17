@@ -1,12 +1,12 @@
-import { hasSupabaseEnv } from "./lib/env";
+import { hasSupabaseEnv } from "./lib/sessao/env";
 // Antes de qualquer rede: pinta a tela de acesso com a marca da visita anterior.
 import "./app/entrada/marca.ts";
-import { installCsvBlobSecurityGuard } from "./lib/csv-security";
-import { installSessionLifecycle } from "./lib/session-lifecycle";
-import { installBackgroundResourceLifecycle } from "./lib/background-resource-lifecycle";
-import { installFrontendPerformanceMonitor } from "./lib/frontend-performance-monitor";
-import { installCspReportMonitor } from "./lib/csp-report-monitor";
-import "./lib/chartjs-global.ts";
+import { installCsvBlobSecurityGuard } from "./lib/seguranca/csv-security";
+import { installSessionLifecycle } from "./lib/sessao/session-lifecycle";
+import { installBackgroundResourceLifecycle } from "./lib/carga/background-resource-lifecycle";
+import { installFrontendPerformanceMonitor } from "./lib/carga/frontend-performance-monitor";
+import { installCspReportMonitor } from "./lib/seguranca/csp-report-monitor";
+import "./lib/base/chartjs-global.ts";
 import "./styles/tokens.css";
 import "./styles/icones-lucide.css";
 import "./styles/visual-polish.css";
@@ -65,7 +65,7 @@ import {
   preCarregarTelaRegistrada,
   viewDaSecao,
 } from "./app/registro-das-telas.ts";
-import { registrarPreCarga } from "./lib/carga-de-telas";
+import { registrarPreCarga } from "./lib/carga/carga-de-telas";
 import { FASES, sessaoDoApp } from "./app/sessao.ts";
 
 import type { avisar, mostrarCarregamento } from "./app/avisos.ts";

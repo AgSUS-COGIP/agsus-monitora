@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { AriaAttributes, KeyboardEvent, ReactNode, UIEvent } from "react";
-import { formatNumberBR } from "../lib/formatters";
+import { formatNumberBR } from "../lib/base/formatters";
 import { classes } from "./classes.ts";
 import { ErroAoCarregar } from "./erro-ao-carregar.tsx";
 import { LinhasEsqueleto } from "./esqueleto.tsx";

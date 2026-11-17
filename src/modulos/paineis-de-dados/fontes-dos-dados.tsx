@@ -1,6 +1,6 @@
 import { useId, useState, useSyncExternalStore } from "react";
 import { Aviso, Carregando, Gaveta } from "../../ui/index.ts";
-import { nomeDaArea } from "../../lib/menu-lateral.ts";
+import { nomeDaArea } from "../../lib/navegacao/menu-lateral.ts";
 import { definicaoDoRelatorio } from "../../lib/relatorios-dos-paineis.ts";
 import type { ColunaComFonte } from "../../lib/fontes-dos-paineis.ts";
 import type { EstadoDaTelaDePaineis, TrocaPedida } from "./estado.ts";

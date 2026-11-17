@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { StrictMode, act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { EVENTO_TEMA_ALTERADO } from "../../src/lib/eventos-da-barra-lateral.ts";
+import { EVENTO_TEMA_ALTERADO } from "../../src/lib/navegacao/eventos-da-barra-lateral.ts";
 import {
   CACHE_TTL_MS,
   RPC_DOS_MUNICIPIOS,

@@ -1,5 +1,5 @@
-import { erroParaATela } from "../../lib/erro-na-tela.ts";
-import { rotuloDaCopia } from "../../lib/rotulo-da-copia.ts";
+import { erroParaATela } from "../../lib/base/erro-na-tela.ts";
+import { rotuloDaCopia } from "../../lib/carga/rotulo-da-copia.ts";
 import type {
   EstadoDasAnalises,
   SnapshotDasAnalises,
@@ -34,9 +34,9 @@ import {
   temPeriodo,
   ultimaAtualizacao,
 } from "../../lib/analises-curriculares.ts";
-import { getLoadingStage } from "../../lib/loading-copy";
+import { getLoadingStage } from "../../lib/entrada/loading-copy";
 import { textoDaConferencia } from "../../lib/texto-da-conferencia.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient";
+import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import { haLinhasSemParecer } from "../../lib/textos-do-painel-de-analises.ts";
 import {
   Aviso,

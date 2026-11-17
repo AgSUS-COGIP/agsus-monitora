@@ -3,13 +3,16 @@
 
   IndexedDB e não `localStorage`: o mapa (`lmap`) passa com folga
   do limite de alguns megabytes do `localStorage`. As regras de quando a cópia
-  serve estão em `src/lib/copia-da-sessao.ts`.
+  serve estão em `src/lib/sessao/copia-da-sessao.ts`.
 
   Nada aqui lança erro: janela anônima, armazenamento bloqueado ou cheio viram
   "não há cópia", e a entrada segue pela rede como antes.
 */
 
-import { PARTES_DA_COPIA, type CopiaDaSessao } from "../lib/copia-da-sessao";
+import {
+  PARTES_DA_COPIA,
+  type CopiaDaSessao,
+} from "../lib/sessao/copia-da-sessao";
 import { apagarCacheDePayload } from "./cache-de-payload-indexeddb.ts";
 
 const BANCO = "agsus-monitora";

@@ -1,11 +1,11 @@
 import {
   normalizarSituacaoDoSistema,
   SITUACAO_PADRAO,
-} from "../lib/situacao-dos-modulos.ts";
+} from "../lib/navegacao/situacao-dos-modulos.ts";
 import type {
   RespostaDaSituacao,
   SituacaoDoSistema,
-} from "../lib/situacao-dos-modulos.ts";
+} from "../lib/navegacao/situacao-dos-modulos.ts";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   OpcoesDaCargaDoBanco,
@@ -17,7 +17,7 @@ import type {
   áreas e abas em manutenção ou desativados, e as comemorações ligadas. Sem
   DOM e sem React.
 
-  Quem decide o que vale é `src/lib/situacao-dos-modulos.ts`. O app só:
+  Quem decide o que vale é `src/lib/navegacao/situacao-dos-modulos.ts`. O app só:
     - dispara a consulta junto com as outras da entrada
       (`consultaDaSituacaoDoSistema`, src/app/carga.ts) e aplica a resposta
       (`carregarSituacaoDoSistema`) antes de montar o menu, que tira as áreas

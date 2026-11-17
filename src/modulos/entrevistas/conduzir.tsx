@@ -43,8 +43,8 @@ import {
   type Recorte,
   type SituacaoNaTela,
 } from "../../lib/fila-de-conducao.ts";
-import { importarComRecarga } from "../../lib/importar-com-recarga";
-import { getSupabaseClient } from "../../lib/supabaseClient";
+import { importarComRecarga } from "../../lib/carga/importar-com-recarga";
+import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import { comemorar } from "../../app/comemoracao-sob-demanda.ts";
 import {
   Aviso,

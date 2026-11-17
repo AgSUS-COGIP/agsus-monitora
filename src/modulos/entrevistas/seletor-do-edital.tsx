@@ -7,7 +7,7 @@ import {
   sufixoDeTreinamento,
 } from "../../lib/edital-de-treinamento.ts";
 import { Aviso } from "../../ui/index.ts";
-import { rotuloDaCopia } from "../../lib/rotulo-da-copia.ts";
+import { rotuloDaCopia } from "../../lib/carga/rotulo-da-copia.ts";
 import { LiberacaoDoEdital } from "./conducao.tsx";
 import type {
   EditalDaLista,

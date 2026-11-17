@@ -5,12 +5,12 @@ import {
   SUPABASE_URL,
   hasSupabaseEnv,
 } from "./env";
-import { createSafeAuthStorage } from "../modules/auth-storage.ts";
+import { createSafeAuthStorage } from "../../modules/auth-storage.ts";
 import {
   EVENTO_TELA_ANTIGA,
   observarRespostasDoBanco,
   type SinalDeTelaAntiga,
-} from "./versao-do-sistema.ts";
+} from "../base/versao-do-sistema.ts";
 import { comNovasTentativas, criarOrcamento } from "./novas-tentativas.ts";
 
 type ArmazenamentoDaSessao = ReturnType<typeof createSafeAuthStorage>;
@@ -26,7 +26,7 @@ export function getSupabaseAuthStorage(): ArmazenamentoDaSessao {
 }
 
 /*
-  RPC que falhou como "tela antiga" (src/lib/versao-do-sistema.ts) vira um
+  RPC que falhou como "tela antiga" (src/lib/base/versao-do-sistema.ts) vira um
   evento: o aviso de versão (src/app/aviso-de-versao.ts) confere se há versão
   nova e pede para atualizar. A resposta segue igual para quem chamou.
 */
@@ -90,7 +90,7 @@ export function getSupabaseClient(): SupabaseClient | null {
         // duas tentativas concorrentes de exchangeCodeForSession.
         detectSessionInUrl: false,
       },
-      // Repetir chamada é com src/lib/novas-tentativas.ts, não com a biblioteca.
+      // Repetir chamada é com src/lib/sessao/novas-tentativas.ts, não com a biblioteca.
       db: { retry: false },
       global: {
         fetch: observarRespostasDoBanco(
@@ -113,7 +113,7 @@ export function getSupabaseClient(): SupabaseClient | null {
 /*
   Sem rede e com o token vencido (1 h), o auth-js devolve `session: null`
   embora a sessão continue guardada: a leitura da sessão do cliente passa a
-  devolver a guardada, por até 48 h (src/lib/sessao-sem-rede.ts). É aqui, onde
+  devolver a guardada, por até 48 h (src/lib/sessao/sessao-sem-rede.ts). É aqui, onde
   o cliente nasce, para valer em todas as telas que pedem o usuário ao
   `getSession()`. Com a rede de volta, a leitura da biblioteca renova o token.
 */

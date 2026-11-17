@@ -47,7 +47,10 @@ import {
   linhasDaArea,
   obterDadosDoMonitoramento,
 } from "../../componentes/dados-do-monitoramento.ts";
-import { respostaInalterada, versaoDoPacote } from "../../lib/versao-do-pacote";
+import {
+  respostaInalterada,
+  versaoDoPacote,
+} from "../../lib/carga/versao-do-pacote";
 import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.ts";
 import { semTreinamento } from "../../lib/edital-de-treinamento.ts";
 import { chaveDoDsei } from "../../lib/mapa-saude-indigena/chaves.ts";

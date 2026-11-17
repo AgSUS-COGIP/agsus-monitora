@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getSupabaseClient } from "../lib/supabaseClient";
+import { getSupabaseClient } from "../lib/sessao/supabaseClient";
 
 /*
   O início da sessão numa chamada: `obter_inicio_da_sessao` (migration

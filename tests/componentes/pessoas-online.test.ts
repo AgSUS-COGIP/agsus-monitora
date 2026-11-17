@@ -4,8 +4,8 @@ import { act, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PessoasOnline } from "../../src/componentes/pessoas-online/pessoas-online.tsx";
 import { desenharNoTeste } from "../montar-tela.ts";
-import { situacaoDaPresenca } from "../../src/lib/online-presence";
-import { normalizeOnlinePresenceList } from "../../src/lib/online-presence";
+import { situacaoDaPresenca } from "../../src/lib/sessao/online-presence";
+import { normalizeOnlinePresenceList } from "../../src/lib/sessao/online-presence";
 import type {
   EstadoDaPresenca,
   PresencaDoCabecalho,

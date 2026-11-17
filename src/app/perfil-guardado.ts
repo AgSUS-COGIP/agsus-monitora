@@ -1,16 +1,16 @@
 /*
-  A cópia do perfil para entrar sem rede (src/lib/sessao-sem-rede.ts), no
+  A cópia do perfil para entrar sem rede (src/lib/sessao/sessao-sem-rede.ts), no
   IndexedDB das cópias de payload (src/modules/cache-de-payload-indexeddb.ts):
   de um usuário só e por 48 h; sai com as outras cópias ao Sair, no "Limpar
   sessão", ao perder o acesso e quando outra pessoa entra no navegador.
 */
-import { criarCacheDePayload } from "../lib/cache-de-payload";
-import type { ArmazenamentoDoCache } from "../lib/cache-de-payload";
+import { criarCacheDePayload } from "../lib/carga/cache-de-payload";
+import type { ArmazenamentoDoCache } from "../lib/carga/cache-de-payload";
 import {
   PERFIL_GUARDADO,
   perfilParaGuardar,
   type PerfilParaGuardar,
-} from "../lib/perfil-sem-rede.ts";
+} from "../lib/sessao/perfil-sem-rede.ts";
 import { armazenamentoDePayload } from "../modules/cache-de-payload-indexeddb.ts";
 
 /* Sobe quando o formato guardado muda (a cópia antiga deixa de servir). */

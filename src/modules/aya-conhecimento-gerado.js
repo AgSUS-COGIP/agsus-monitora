@@ -2429,7 +2429,7 @@ export const VERBETES_AYA = Object.freeze([
       'Cada versão da regra pode ter um nome (de 3 a 80 caracteres), em vez de só o número. Ao salvar (no assistente ou no modo avançado), o campo "Nome desta versão" já vem com uma sugestão — o edital e o começo do motivo, por exemplo "Regra do edital 93/2026 – decisão CORES" — que dá para editar ou apagar (vazio grava sem nome). A tela mostra o nome em destaque e o número discreto ("Decisão CORES · v7") no cabeçalho, no seletor de editais, nas versões, em comparar versões, na triagem, na fila e na ficha; sem nome, aparece "Versão 7". Para trocar o nome de uma versão já salva, use "Renomear" no cabeçalho ou na lista de versões: pede o novo nome e o motivo (10 a 500 caracteres), muda só o nome — o conteúdo, o hash e a situação (Conferida ou não) continuam iguais — e a troca fica no histórico ("nome trocado", com de, para, quem e quando). Renomeia quem pode mudar a regra: a coordenação do edital; o administrador global pode tudo. O número da versão continua sendo o que as fichas e listas guardam.',
     fato: "No Yeendé, o nome da versão da regra é opcional, fica na versão (NO_VERSAO) e pode ser trocado com motivo sem mudar o conteúdo nem o hash.",
     fonte:
-      "src/lib/nome-da-versao.ts; src/ui/nome-da-versao.tsx; supabase/migrations/20261008180000_nome_das_versoes_das_regras.sql (salvar_regra_analise, renomear_versao_regra_analise)",
+      "src/lib/base/nome-da-versao.ts; src/ui/nome-da-versao.tsx; supabase/migrations/20261008180000_nome_das_versoes_das_regras.sql (salvar_regra_analise, renomear_versao_regra_analise)",
     abrir: "avaliacao-documental",
   },
   {
@@ -2833,7 +2833,7 @@ export const VERBETES_AYA = Object.freeze([
       '"Baixar DOCX" gera o mesmo documento em Word para anexar ou ajustar: no cabeçalho, o logo da AgSUS e o nome, endereço e site da agência (Configurações › Marca › Documentos oficiais); no corpo, o título, os itens numerados com o recuo do SEI, as tabelas por vaga e a linha final "Brasília, <data por extenso>."; no rodapé, o nome do documento, o processo SEI e o número da página. Não tem bloco de assinatura: quem assina é o SEI.',
     fato: "",
     fonte:
-      "src/lib/classificacao/documento-docx.ts; src/lib/cabecalho-dos-documentos.ts",
+      "src/lib/classificacao/documento-docx.ts; src/lib/base/cabecalho-dos-documentos.ts",
     abrir: "classificacao",
   },
   {
@@ -3025,7 +3025,7 @@ export const VERBETES_AYA = Object.freeze([
       'A regra de classificação também pode ter um nome por versão (3 a 80 caracteres). Ao salvar na aba Regra da Classificação, o campo "Nome desta versão" vem com a sugestão — "Classificação do edital 93/2026" mais o começo do motivo — editável (vazio grava sem nome). O seletor de editais, a barra do topo, a lista de versões e a linha da lista gerada mostram o nome em destaque e o número discreto ("Decisão CORES · v3"); sem nome, "Versão 3". "Renomear", em cada versão, troca só o nome, com motivo de 10 a 500 caracteres; a configuração não muda e a troca fica no histórico. Renomeia quem tem Editor na Classificação (e o administrador global).',
     fato: "No Yeendé, a versão da regra de classificação tem nome opcional, trocável com motivo sem mudar a configuração.",
     fonte:
-      "src/lib/nome-da-versao.ts; supabase/migrations/20261008180000_nome_das_versoes_das_regras.sql (salvar_regra_classificacao, renomear_versao_regra_classificacao)",
+      "src/lib/base/nome-da-versao.ts; supabase/migrations/20261008180000_nome_das_versoes_das_regras.sql (salvar_regra_classificacao, renomear_versao_regra_classificacao)",
     abrir: "classificacao",
   },
   {
@@ -4221,7 +4221,7 @@ export const VERBETES_AYA = Object.freeze([
       "O Yeendé tem três áreas: Saúde Indígena, SEDE e Projetos. Cada área repete as mesmas páginas (Visão geral, Editais, Cronograma, Painel das análises, Avaliação documental, Painel de recursos, Analisar recursos, Painel de entrevistas, Conduzir entrevistas, Classificação, Lista de aprovados e Seleção), e cada página mostra só os registros da área atual, a escolhida no menu. O que muda é o bloco do mapa da Visão geral: DSEIs e CASAIs na Saúde Indígena, os locais das vagas dos projetos em Projetos, e nenhum mapa na SEDE. A área do edital é calculada pelo banco a partir da unidade e do responsável: SEDE, Escritório Distrital e Regional e CCE ficam na SEDE; Caminhoneiros, Saúde nas Fronteiras, MFC e Rio Doce, em Projetos; as demais, na Saúde Indígena.",
     fato: "O Yeendé tem três áreas (Saúde Indígena, SEDE e Projetos); cada página mostra só a área atual escolhida no menu, e só a Visão geral da Saúde Indígena fala de DSEIs e CASAIs.",
     fonte:
-      "src/lib/menu-lateral.ts; supabase/migrations/20260925170000_areas_do_sistema.sql",
+      "src/lib/navegacao/menu-lateral.ts; supabase/migrations/20260925170000_areas_do_sistema.sql",
   },
   {
     arquivo: "regras-das-areas.md",
@@ -4257,7 +4257,7 @@ export const VERBETES_AYA = Object.freeze([
       "O menu de cada área tem dois blocos. Em Acompanhamento ficam as páginas de consulta: Visão geral, Painel das análises, Painel de recursos, Painel de entrevistas e Seleção (e os painéis externos liberados para a pessoa, quando houver). Em Processo seletivo fica onde se trabalha, na ordem das etapas: Editais, Cronograma, Avaliação documental, Analisar recursos, Conduzir entrevistas, Classificação e Lista de aprovados. Cada pessoa vê só as páginas que pode abrir, e o bloco sem nenhuma página some. Abaixo das áreas fica Administração (as seções de Configurações). Com a barra recolhida, o nome do bloco vira um traço entre os ícones. O selo BETA ao lado do nome marca a aba ainda em teste.",
     fato: "O menu de cada área tem dois blocos: Acompanhamento (Visão geral, Painel das análises, Painel de recursos, Painel de entrevistas, Seleção e os painéis externos) e Processo seletivo (Editais, Cronograma, Avaliação documental, Analisar recursos, Conduzir entrevistas, Classificação e Lista de aprovados).",
     fonte:
-      "supabase/migrations/20261001160000_ordem_do_menu_por_etapa.sql; supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql; supabase/migrations/20261008130000_conduzir_entrevistas_no_menu.sql; supabase/migrations/20261009230000_analisar_recursos_no_menu.sql; src/lib/menu-lateral.ts",
+      "supabase/migrations/20261001160000_ordem_do_menu_por_etapa.sql; supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql; supabase/migrations/20261008130000_conduzir_entrevistas_no_menu.sql; supabase/migrations/20261009230000_analisar_recursos_no_menu.sql; src/lib/navegacao/menu-lateral.ts",
   },
   {
     arquivo: "regras-das-areas.md",
@@ -5382,7 +5382,7 @@ export const VERBETES_AYA = Object.freeze([
       'Além do nome do roteiro, cada versão dele pode ter um nome próprio (3 a 80 caracteres). Ao salvar o roteiro (Conduzir entrevistas › Preparar › Roteiros), o campo "Nome desta versão" vem com a sugestão — o nome do roteiro e a data — editável (vazio grava sem nome). O cartão do roteiro, o resumo do edital, a escolha do roteiro e a ficha de notas mostram o nome da versão em destaque e o número discreto ("Banca por competência · v2"); sem nome, "Versão 2". "Renomear", no cartão, troca só o nome, com motivo de 10 a 500 caracteres: as competências, a escala e os editais que usam a versão não mudam, e a troca fica no histórico. Renomeia quem tem Editor em Entrevistas, na área do roteiro.',
     fato: "No Yeendé, a versão do roteiro de entrevista tem nome opcional (NO_VERSAO), trocável com motivo sem mudar o roteiro.",
     fonte:
-      "src/lib/nome-da-versao.ts; supabase/migrations/20261008180000_nome_das_versoes_das_regras.sql (salvar_roteiro_entrevista, renomear_versao_roteiro_entrevista)",
+      "src/lib/base/nome-da-versao.ts; supabase/migrations/20261008180000_nome_das_versoes_das_regras.sql (salvar_roteiro_entrevista, renomear_versao_roteiro_entrevista)",
   },
   {
     arquivo: "regras-do-cronograma.md",
@@ -5771,7 +5771,7 @@ export const VERBETES_AYA = Object.freeze([
       'Pessoas online fica no menu da conta (clique no seu nome, no alto à direita) e só o administrador global e o Gestor veem. Mostra quem está com o Yeendé aberto: nome, foto ou iniciais, grupo e onde a pessoa está, como "Análises curriculares · Saúde Indígena" ou "Configurações › Acessos" (painel externo aparece como "Painel externo"). A presença de cada pessoa é avisada a cada 2 minutos e meio com a aba visível (e na hora de trocar de página, área ou seção); quem fecha ou esconde a aba sai da lista em até 6 minutos. A contagem do botão se atualiza a cada 10 minutos, e a lista aberta, a cada 2 minutos e meio.',
     fato: "",
     fonte:
-      "src/lib/online-presence.ts; src/app/presenca.ts; src/componentes/pessoas-online/pessoas-online.tsx; src/lib/access-roles.ts (podeVerPessoasOnline)",
+      "src/lib/sessao/online-presence.ts; src/app/presenca.ts; src/componentes/pessoas-online/pessoas-online.tsx; src/lib/access-roles.ts (podeVerPessoasOnline)",
   },
   {
     arquivo: "regras-do-sistema.md",
@@ -5790,7 +5790,7 @@ export const VERBETES_AYA = Object.freeze([
       'Quando sai uma versão nova do Yeendé, aparece no topo da página a faixa "Há uma versão nova do Yeendé.", com "Atualizar agora" e o X para fechar (fechada, ela só volta numa versão mais nova). Se a versão trouxe uma mudança que importa, a faixa diz o que é, como "Novo: motivo padronizado na reabertura". O sistema confere a versão a cada 5 minutos com a aba aberta e ao voltar para ela, sem consultar o banco. Nada recarrega à força: com rascunho ou alteração não salva, "Atualizar agora" pede para salvar antes. Se uma ação falhar porque a tela é de uma versão anterior, a faixa fica amarela e pede "Atualize para continuar". Só uma tela que não consegue abrir por ser da versão antiga recarrega sozinha, uma vez.',
     fato: "",
     fonte:
-      "src/app/aviso-de-versao.ts; src/componentes/aviso-de-versao/aviso-de-versao.tsx; src/lib/versao-do-sistema.ts; src/lib/novidades.ts; src/lib/importar-com-recarga.ts; src/modules/pwa-lifecycle.ts; src/app/navegacao.ts (navigate)",
+      "src/app/aviso-de-versao.ts; src/componentes/aviso-de-versao/aviso-de-versao.tsx; src/lib/base/versao-do-sistema.ts; src/lib/base/novidades.ts; src/lib/carga/importar-com-recarga.ts; src/modules/pwa-lifecycle.ts; src/app/navegacao.ts (navigate)",
   },
   {
     arquivo: "regras-do-sistema.md",
@@ -5812,7 +5812,7 @@ export const VERBETES_AYA = Object.freeze([
       'Depois de aberto uma vez com internet, o Yeendé guarda no aparelho o necessário para abrir todas as telas, mesmo as que você ainda não abriu. Sem conexão, aparece o aviso "Sem conexão com a internet" e você continua trocando de tela, recarregando a página e até abrindo o Yeendé de novo: até 48 horas depois da última entrada com internet, ele entra com o seu perfil guardado no aparelho e confere as suas permissões no banco quando a conexão volta (se o acesso tiver sido retirado, o Yeendé fecha e apaga o que guardou). Os dados vêm do banco: sem internet, Análises, Seleção, Entrevistas (o painel, a fila do dia e a ficha) e a Lista de aprovados mostram o que o aparelho guardou da última vez que foram abertas com internet, com a data no alto, como "Dados de 17/11, 10:14"; dá para consultar, não para gravar. Essas cópias ficam só no aparelho, sem CPF nem contatos, valem 48 horas e saem ao Sair, ao perder o acesso ou quando outra pessoa entra no navegador. Mapas de terras e DSEIs precisam de internet. Quando a conexão volta, aparece "Conexão restabelecida". O Yeendé se instala pelo navegador, no celular e no computador; não há aplicativo de loja.',
     fato: "",
     fonte:
-      "sw.js; sw-policy.js; src/lib/cache-do-service-worker.ts; src/app/casca/aviso-de-conexao.tsx; src/lib/cache-de-payload.ts; src/lib/sessao-sem-rede.ts; src/app/sessao.ts; src/app/copias-da-conducao.ts",
+      "sw.js; sw-policy.js; src/lib/carga/cache-do-service-worker.ts; src/app/casca/aviso-de-conexao.tsx; src/lib/carga/cache-de-payload.ts; src/lib/sessao/sessao-sem-rede.ts; src/app/sessao.ts; src/app/copias-da-conducao.ts",
   },
   {
     arquivo: "regras-do-sistema.md",
@@ -5827,7 +5827,7 @@ export const VERBETES_AYA = Object.freeze([
       "Ctrl+K (ou Cmd+K) abre a busca global, com usuário conectado. Ela procura em edital, unidade, etapa, status, UF, risco, ciclo, responsável e observações e mostra até 12 resultados. Escolher um resultado limpa os filtros, filtra a unidade e o edital, abre o painel e destaca a linha na tabela; sem permissão, aparece um aviso. Quem não é administrador global só encontra editais das suas áreas.",
     fato: "",
     fonte:
-      "src/lib/busca-global.ts; src/componentes/busca-global/busca-global.tsx; src/lib/responsavel-do-edital.ts",
+      "src/lib/navegacao/busca-global.ts; src/componentes/busca-global/busca-global.tsx; src/lib/responsavel-do-edital.ts",
   },
   {
     arquivo: "regras-do-sistema.md",
@@ -6254,7 +6254,7 @@ export const VERBETES_AYA = Object.freeze([
       'Confira, nesta ordem: a pessoa entrou com a conta Google do e-mail convidado (o link sozinho não dá acesso e outra conta não serve); o e-mail é de um domínio permitido (Configurações › Tela de acesso); e o cadastro está ativo — conta desativada vê "Seu acesso ao Yeendé foi desativado." e pode pedir reativação. Quem entra sem convite vê a tela de pedido de acesso, que vai para Acessos › Usuários › Pendentes. Se o Login Google estiver Inativo, o botão some da tela de entrada; com o sistema inteiro em manutenção, quem não é administrador global vê a tela de manutenção.',
     fato: "",
     fonte:
-      "src/lib/convite-de-acesso.ts; src/lib/solicitacao-de-acesso.ts; supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/lib/situacao-dos-modulos.ts",
+      "src/lib/convite-de-acesso.ts; src/lib/solicitacao-de-acesso.ts; supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/lib/navegacao/situacao-dos-modulos.ts",
     abrir: "config:acessos",
   },
   {
@@ -6766,7 +6766,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em manutenção, a aba (ou a área, ou o sistema inteiro) continua no menu com o aviso, mas quem não é administrador global vê a tela de manutenção com a mensagem e a previsão configuradas; o administrador global entra normalmente, com a faixa "Em manutenção para os demais usuários". Vale a mensagem do nível mais alto: sistema, depois área, depois aba em todas as áreas, depois aba naquela área. O sistema inteiro não se desativa, só entra ou sai de manutenção. Se a situação não puder ser lida do banco, tudo vale como ativo.',
     fato: "",
     fonte:
-      "src/lib/situacao-dos-modulos.ts; supabase/migrations/20260930140000_modulos_e_manutencao.sql",
+      "src/lib/navegacao/situacao-dos-modulos.ts; supabase/migrations/20260930140000_modulos_e_manutencao.sql",
   },
   {
     arquivo: "regras-dos-modulos-e-abas.md",
@@ -6781,7 +6781,7 @@ export const VERBETES_AYA = Object.freeze([
       'Desativada, a área (ou a aba, ou o painel) some do menu de todos, administrador global inclusive. Quem estava na página vê, em até uns 2 minutos e sem recarregar, o aviso "Esta página foi desativada pela coordenação.", com o botão para a página inicial; a página para de carregar dados. Quem tinha alteração não salva (uma ficha da Avaliação documental, por exemplo) vê só uma faixa pedindo para salvar, e a página fecha depois. Religada, a aba volta ao menu sozinha. Pelo menos uma área precisa continuar ativa.',
     fato: "",
     fonte:
-      "supabase/migrations/20260930140000_modulos_e_manutencao.sql; supabase/migrations/20261019160000_versao_do_catalogo_na_presenca.sql; src/lib/menu-lateral.ts; src/lib/pagina-desligada.ts; src/app/vigia-do-catalogo.ts",
+      "supabase/migrations/20260930140000_modulos_e_manutencao.sql; supabase/migrations/20261019160000_versao_do_catalogo_na_presenca.sql; src/lib/navegacao/menu-lateral.ts; src/lib/navegacao/pagina-desligada.ts; src/app/vigia-do-catalogo.ts",
   },
   {
     arquivo: "regras-dos-modulos-e-abas.md",
@@ -6790,7 +6790,8 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "O selo BETA aparece ao lado do nome da aba no menu e marca uma aba ainda em teste. É ligado por aba, em Configurações › Módulos e abas, pelo administrador global, e vale em todas as áreas.",
     fato: "",
-    fonte: "src/lib/menu-lateral.ts; src/lib/modulos-e-abas.ts",
+    fonte:
+      "src/lib/navegacao/menu-lateral.ts; src/lib/navegacao/modulos-e-abas.ts",
   },
   {
     arquivo: "regras-dos-modulos-e-abas.md",

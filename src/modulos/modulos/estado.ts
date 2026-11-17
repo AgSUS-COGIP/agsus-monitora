@@ -11,14 +11,14 @@ import {
   normalizarArvoreDosModulos,
   normalizarResultadoDosModulos,
   codigoDoErroDosModulos,
-} from "../../lib/arvore-dos-modulos.ts";
+} from "../../lib/navegacao/arvore-dos-modulos.ts";
 /*
   Estado de Configurações › Módulos e abas, fora do React: a árvore lida
   (`obter_modulos_e_abas`), o rascunho das alterações e o salvamento em lote
   com motivo (`salvar_situacao_modulos`), uma ação por vez (`executar` /
   `acao`, como em Acessos). Este arquivo não importa React; as RPCs ficam
   aqui. A regra do rascunho é de
-  `src/lib/modulos-e-abas.ts`.
+  `src/lib/navegacao/modulos-e-abas.ts`.
 
   O RASCUNHO mora aqui, não no componente: a guarda de saída do legado
   (`navigate`) e a troca de seção de Configurações perguntam a este estado se
@@ -26,15 +26,15 @@ import {
 */
 
 import { isAdminGlobal } from "../../lib/access-roles.ts";
-import { exigirSessao } from "../../lib/sessao";
-import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede";
+import { exigirSessao } from "../../lib/sessao/sessao";
+import { comTempoLimite, mensagemDeFalha } from "../../lib/carga/falha-de-rede";
 import {
   alteracoesDoRascunho,
   contarPendencias,
   originaisDaArvore,
   registrarCampo,
   registrarEstado,
-} from "../../lib/modulos-e-abas.ts";
+} from "../../lib/navegacao/modulos-e-abas.ts";
 
 const RPC_MODULOS_E_ABAS = "obter_modulos_e_abas";
 const RPC_SALVAR_SITUACAO_MODULOS = "salvar_situacao_modulos";

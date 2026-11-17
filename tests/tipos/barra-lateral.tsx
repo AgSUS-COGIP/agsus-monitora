@@ -8,7 +8,7 @@ import {
   montarArvoreDoMenu,
   proximoFlutuante,
   FLUTUANTE_FECHADO,
-} from "../../src/lib/menu-lateral.ts";
+} from "../../src/lib/navegacao/menu-lateral.ts";
 
 const arvore = montarArvoreDoMenu({
   permitidas: { nucleo: true },

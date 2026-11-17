@@ -7,7 +7,7 @@ import type {
   TextosDaVisaoGeral,
 } from "./tipos.ts";
 import { cloneElement, useEffect, useRef, useState } from "react";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import {
   contratacoesDoCadastroReserva,
   contratadasImediatas,

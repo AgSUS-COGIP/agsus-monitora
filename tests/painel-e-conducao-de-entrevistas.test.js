@@ -30,9 +30,9 @@ import {
   criteriosDeDesempate,
   textoDoEmpateFinal,
 } from "../src/lib/convocacao-da-entrevista.ts";
-import { destinoDaTela } from "../src/lib/navegacao";
+import { destinoDaTela } from "../src/lib/navegacao/navegacao";
 import { paginasPermitidas } from "../src/lib/access-roles.ts";
-import { bloqueioDaTela } from "../src/lib/navegacao";
+import { bloqueioDaTela } from "../src/lib/navegacao/navegacao";
 
 /*
   O painel (acompanhar) e Conduzir entrevistas (fazer), sem React: a fila do

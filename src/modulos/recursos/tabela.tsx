@@ -5,7 +5,7 @@ import type {
   IdentificadorDoRecurso,
   EtapaDoRecurso,
 } from "../../lib/tipos-dos-recursos.ts";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import {
   ETAPAS,
   FILTROS_VAZIOS,

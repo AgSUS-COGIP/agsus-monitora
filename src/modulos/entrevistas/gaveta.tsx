@@ -3,7 +3,7 @@ import type {
   EntrevistaDoPainel,
   AprovadoSemEntrevista,
 } from "./tipos-do-painel.ts";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import {
   agruparAprovadosSemEntrevista,
   formatarNota,
@@ -12,7 +12,7 @@ import {
   rotuloDoComparecimento,
   rotuloDoParecer,
 } from "../../lib/entrevistas-do-painel.ts";
-import { gruposAteOLimite } from "../../lib/carga-continua.ts";
+import { gruposAteOLimite } from "../../lib/carga/carga-continua.ts";
 import {
   EstadoVazio,
   Gaveta,

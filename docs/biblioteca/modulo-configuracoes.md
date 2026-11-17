@@ -64,8 +64,8 @@ os personalizados são só o aviso (sem efeito, intensidade, duração nem som).
 Liga, desliga, põe em manutenção ou beta os módulos e as abas, sem deploy. Pasta
 `src/modulos/modulos/`, toda em React e TypeScript: `modulos.tsx` monta a tela, `estado.ts`
 concentra carga, rascunho e salvamento, `tipos.ts` declara contratos de dados, alvos, campos e
-ações. Regras puras em `src/lib/modulos-e-abas.ts`; leitura da resposta em
-`src/lib/arvore-dos-modulos.ts`.
+ações. Regras puras em `src/lib/navegacao/modulos-e-abas.ts`; leitura da resposta em
+`src/lib/navegacao/arvore-dos-modulos.ts`.
 
 - **Só o administrador global** carrega a árvore.
 - Alterações do sistema, áreas, abas, abas por área e painéis se acumulam no rascunho e vão em lote,

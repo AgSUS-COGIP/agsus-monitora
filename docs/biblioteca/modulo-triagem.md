@@ -6,7 +6,7 @@ atualizado: 2026-11-10
 
 # Módulo: Triagem
 
-Página do Processo seletivo (antes "Pré-classificação"), rota `/<área>/triagem` (`src/lib/rotas.ts`),
+Página do Processo seletivo (antes "Pré-classificação"), rota `/<área>/triagem` (`src/lib/navegacao/rotas.ts`),
 sob o mesmo recurso de permissão da Avaliação documental (`src/app/telas.tsx`). A tela mora em
 `src/modulos/avaliacao-documental/pre-classificacao.tsx`; a pasta `src/modulos/triagem/` guarda a
 regra própria da Triagem. Mostra, por vaga, a Lista Geral de Classificação Provisória por ART e o lote.

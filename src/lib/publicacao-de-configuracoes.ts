@@ -15,7 +15,7 @@ import {
   normalizeAccessBackgroundUrl,
   normalizeAccessLogoUrl,
   normalizeAccessPanelColor,
-} from "./access-branding.ts";
+} from "./entrada/access-branding.ts";
 import { isValidAccessAssetUrl } from "./config-validation";
 import {
   CORES_DO_VIDRO,
@@ -23,17 +23,17 @@ import {
   normalizarDesfoqueDoVidro,
   normalizarEstilo,
   normalizarModo,
-} from "./contraste.ts";
+} from "./base/contraste.ts";
 import {
   corDaBarraSegura,
   logoDaBarraSegura,
-} from "./marca-da-barra-lateral.ts";
-import { normalizeAllowedDomains } from "./platform-context";
+} from "./navegacao/marca-da-barra-lateral.ts";
+import { normalizeAllowedDomains } from "./navegacao/platform-context";
 import { EMAIL_DO_SUPORTE_PADRAO, emailValido } from "./chamado-da-aya.ts";
 import {
   CABECALHO_PADRAO,
   CHAVE_DO_CABECALHO,
-} from "./cabecalho-dos-documentos.ts";
+} from "./base/cabecalho-dos-documentos.ts";
 import {
   alteracoesDasComemoracoes,
   CHAVE_DAS_COMEMORACOES,

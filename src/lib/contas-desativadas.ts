@@ -12,7 +12,7 @@
 */
 
 import { dataCurta } from "./convite-de-acesso.ts";
-import { mensagemDeFalha } from "./falha-de-rede";
+import { mensagemDeFalha } from "./carga/falha-de-rede";
 import {
   ficariaSemArea,
   gerenciariaAcessosSemCoordenacao,

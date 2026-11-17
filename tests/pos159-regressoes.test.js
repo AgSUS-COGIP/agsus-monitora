@@ -6,7 +6,7 @@ import {
   linhasDasSecoes,
   normalizarValoresCarregados,
 } from "../src/lib/publicacao-de-configuracoes.ts";
-import { LOGO_PADRAO_DA_BARRA } from "../src/lib/marca-da-barra-lateral.ts";
+import { LOGO_PADRAO_DA_BARRA } from "../src/lib/navegacao/marca-da-barra-lateral.ts";
 
 const app = fonteDoApp();
 const governance = readFileSync("src/modulos/configuracoes/estado.ts", "utf8");
@@ -15,7 +15,7 @@ const mapGuard = readFileSync(
   "src/modulos/mapa-saude-indigena/guarda-do-mapa.ts",
   "utf8",
 );
-const lifecycle = readFileSync("src/lib/session-lifecycle.ts", "utf8");
+const lifecycle = readFileSync("src/lib/sessao/session-lifecycle.ts", "utf8");
 // A barra lateral é React: o <img id="sideLogo"> nasce no componente da marca.
 const barraLateral = readFileSync(
   "src/componentes/barra-lateral/barra-lateral.tsx",

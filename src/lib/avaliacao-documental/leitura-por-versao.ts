@@ -10,11 +10,11 @@
   `linhasDoPacote` refaz nos mesmos objetos, com as chaves nulas.
 
   A tela guarda o último payload na memória (e, com `copias`, no navegador —
-  src/lib/cache-de-payload.js) e manda a versão dele na próxima leitura. Banco
+  src/lib/carga/cache-de-payload.js) e manda a versão dele na próxima leitura. Banco
   sem a RPC nova (migration não aplicada: PGRST202) ou resposta vazia: lê pela
   RPC de sempre, como antes.
 */
-import { respostaInalterada, versaoDoPacote } from "../versao-do-pacote";
+import { respostaInalterada, versaoDoPacote } from "../carga/versao-do-pacote";
 
 export type ChamadaDeRpc = (
   nome: string,
@@ -75,7 +75,7 @@ export function comListasRefeitas(payload: unknown): unknown {
   return saida ?? payload;
 }
 
-/** Onde a cópia do navegador fica (src/lib/cache-de-payload.js com o usuário da sessão). */
+/** Onde a cópia do navegador fica (src/lib/carga/cache-de-payload.js com o usuário da sessão). */
 export interface CopiasPorChave {
   ler(chave: string): Promise<unknown>;
   guardar(chave: string, payload: unknown): Promise<unknown>;

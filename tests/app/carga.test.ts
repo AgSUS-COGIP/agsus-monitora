@@ -11,10 +11,13 @@ import type {
   OpcoesDaConsulta,
 } from "../../src/app/carga.ts";
 import type { OpcoesDaCargaDaConfiguracao } from "../../src/app/configuracao.ts";
-import type { CopiaDaSessao } from "../../src/lib/copia-da-sessao";
+import type { CopiaDaSessao } from "../../src/lib/sessao/copia-da-sessao";
 import type { PerfilDeAcesso } from "../../src/lib/tipos-dos-acessos.ts";
 import { definido } from "../definido.ts";
-import { assinaturaDoAcesso, montarCopia } from "../../src/lib/copia-da-sessao";
+import {
+  assinaturaDoAcesso,
+  montarCopia,
+} from "../../src/lib/sessao/copia-da-sessao";
 import {
   obterDadosDoMonitoramento,
   redefinirDadosDoMonitoramento,

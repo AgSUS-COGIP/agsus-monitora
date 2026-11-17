@@ -10,10 +10,10 @@
     candidatos que não foram convocados) não vai: no campo, a fila basta.
 
   As RPCs da condução não mandam CPF nem contatos. A cópia vale 48 h
-  (src/lib/cache-de-payload.ts).
+  (src/lib/carga/cache-de-payload.ts).
 */
 
-import { VALIDADE_DO_CACHE_MS } from "./cache-de-payload";
+import { VALIDADE_DO_CACHE_MS } from "./carga/cache-de-payload";
 
 export const FORMATO_DA_COPIA_DA_CONDUCAO = 1;
 

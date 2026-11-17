@@ -8,7 +8,7 @@ import { AcoesDoConvite } from "./convite.tsx";
 import {
   isAllowedInstitutionalEmail,
   normalizeAllowedDomains,
-} from "../../lib/platform-context";
+} from "../../lib/navegacao/platform-context";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import type {
   ConvitePronto,

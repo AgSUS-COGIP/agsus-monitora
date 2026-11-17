@@ -1,6 +1,6 @@
 /*
   A data da cópia guardada no aparelho, para o status discreto do topo das
-  telas (src/lib/cache-de-payload.ts guarda a hora). À parte do cache, que
+  telas (src/lib/carga/cache-de-payload.ts guarda a hora). À parte do cache, que
   está no pedaço da entrada: só as telas, que baixam sob demanda, a usam.
 */
 

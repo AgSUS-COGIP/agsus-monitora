@@ -2,22 +2,22 @@ import { aplicarAtualizacaoPendente } from "../modules/pwa-lifecycle.ts";
 import { guardaDeAlteracoes } from "./guarda-de-alteracoes.ts";
 import { situacaoDoSistema } from "./situacao-do-sistema.ts";
 import { abasDoMenu, catalogoDoBanco } from "../modules/catalogo-de-abas.ts";
-import { filtrarAreasAtivas } from "../lib/situacao-dos-modulos.ts";
+import { filtrarAreasAtivas } from "../lib/navegacao/situacao-dos-modulos.ts";
 import {
   avisoDaPagina,
   paginaDesligada,
   primeiraPaginaLigada,
   textoDaFaixaDeSaida,
-} from "../lib/pagina-desligada.ts";
+} from "../lib/navegacao/pagina-desligada.ts";
 import type {
   AvisoNoLugarDaPagina,
   FaixaDaPagina,
-} from "../lib/pagina-desligada.ts";
+} from "../lib/navegacao/pagina-desligada.ts";
 import {
   areasDoUsuario,
   montarArvoreDoMenu,
   nomeDaArea,
-} from "../lib/menu-lateral.ts";
+} from "../lib/navegacao/menu-lateral.ts";
 import {
   isAdminGlobal,
   paginasPermitidas,
@@ -33,15 +33,15 @@ import {
   telaDeEntrada,
   telaInicialDoSistema,
   telaPermitida,
-} from "../lib/navegacao";
+} from "../lib/navegacao/navegacao";
 import {
   caminhoDoDestino,
   destinoDoCaminho,
   ehRaizDoApp,
   telaDaRota,
-} from "../lib/rotas.ts";
-import type { DestinoDaRota } from "../lib/rotas.ts";
-import { definirPaginaDaAba } from "../lib/identidade-da-aba";
+} from "../lib/navegacao/rotas.ts";
+import type { DestinoDaRota } from "../lib/navegacao/rotas.ts";
+import { definirPaginaDaAba } from "../lib/sessao/identidade-da-aba";
 import { cabecalhoDaVisaoGeral } from "../lib/visao-geral-da-area.ts";
 import {
   assinarDadosDoMonitoramento,
@@ -69,7 +69,7 @@ import {
 } from "./filtros-no-endereco.ts";
 import type { Endereco } from "./endereco.ts";
 import type { PerfilDeAcesso } from "../lib/tipos-dos-acessos.ts";
-import type { PaineisDaNavegacao } from "../lib/navegacao";
+import type { PaineisDaNavegacao } from "../lib/navegacao/navegacao";
 import type { ArvoreDoMenu } from "../componentes/barra-lateral/tipos.ts";
 
 /*
@@ -77,10 +77,10 @@ import type { ArvoreDoMenu } from "../componentes/barra-lateral/tipos.ts";
   a tela aberta (view, área, edital, visão, seção, título) que o React lê
   (src/app/telas.tsx desenha as `<section class="page">` e marca a ativa; o
   cabeçalho lê o título) e o endereço da página (src/app/endereco.ts, regras
-  em src/lib/rotas.ts): a área e a tela ficam na URL, e o voltar/avançar do
+  em src/lib/navegacao/rotas.ts): a área e a tela ficam na URL, e o voltar/avançar do
   navegador, o recarregar e o link compartilhado funcionam.
 
-  Também decide: as permissões por tela (src/lib/navegacao.ts), a guarda de
+  Também decide: as permissões por tela (src/lib/navegacao/navegacao.ts), a guarda de
   saída de Acessos, Módulos e abas e Configurações, a versão nova esperando,
   a tela guardada para a próxima entrada e o menu da barra lateral que o
   perfil vê. `window.navigate(view)` (é `irPara`) continua sendo o contrato
@@ -365,7 +365,7 @@ export function criarNavegacao({
 
   const permitida = (tela: string) => telaPermitida(tela, perfil(), paineis);
 
-  /* A página (view) na área está desligada pela coordenação (src/lib/pagina-desligada.ts)? */
+  /* A página (view) na área está desligada pela coordenação (src/lib/navegacao/pagina-desligada.ts)? */
   const desligada = (tela: string, area: string = areaAtual()) =>
     paginaDesligada({
       abas: abasDoMenu(),

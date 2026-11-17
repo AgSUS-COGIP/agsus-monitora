@@ -20,7 +20,7 @@
   `SITUACAO_PADRAO`: tudo ativo (e comemorações desligadas). A tela nunca
   tranca ninguém por falha de rede.
 */
-import { comemoracoesLigadasNaResposta } from "./comemoracao.ts";
+import { comemoracoesLigadasNaResposta } from "../comemoracao.ts";
 
 /** A manutenção de uma linha (sistema, área ou aba). */
 export interface ManutencaoDaLinha {

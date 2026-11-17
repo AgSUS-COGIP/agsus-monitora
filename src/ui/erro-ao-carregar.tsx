@@ -1,4 +1,4 @@
-import { erroParaATela } from "../lib/erro-na-tela.ts";
+import { erroParaATela } from "../lib/base/erro-na-tela.ts";
 import { Aviso } from "./aviso.tsx";
 
 /*

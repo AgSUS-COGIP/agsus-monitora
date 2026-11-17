@@ -26,7 +26,7 @@ import type {
   mudou" calculados, sem digitar.
 */
 import { hojeEmBrasilia } from "./cronograma-do-edital.ts";
-import { sanitizeCsvCell } from "./csv-security";
+import { sanitizeCsvCell } from "./seguranca/csv-security";
 import {
   cronogramasPorEdital,
   decididoNoPrazo,

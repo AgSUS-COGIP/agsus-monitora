@@ -42,9 +42,9 @@ import {
 } from "../../lib/area-do-painel-de-analises.ts";
 import { chavesDoCacheAntigo } from "../../lib/cache-do-painel-de-analises.ts";
 import { editaisDasLinhas } from "../../lib/editais-das-linhas.ts";
-import { ehErroDeAcesso } from "../../lib/cache-de-payload";
-import { mensagemDeFalha } from "../../lib/falha-de-rede";
-import { formatNumberBR } from "../../lib/formatters";
+import { ehErroDeAcesso } from "../../lib/carga/cache-de-payload";
+import { mensagemDeFalha } from "../../lib/carga/falha-de-rede";
+import { formatNumberBR } from "../../lib/base/formatters";
 import { linhaSemDetalhe } from "../../lib/lista-do-painel-de-analises.ts";
 import {
   haLinhasSemParecer,

@@ -312,7 +312,7 @@ describe("CSV e cópia guardada", () => {
 });
 
 describe("registro da aba", async () => {
-  const { ABAS_DO_MENU } = await import("../src/lib/menu-lateral.ts");
+  const { ABAS_DO_MENU } = await import("../src/lib/navegacao/menu-lateral.ts");
   const { RESOURCES } = await import("../src/lib/permissoes-recursos.ts");
   const { canViewSelecao, paginasPermitidas } =
     await import("../src/lib/access-roles.ts");

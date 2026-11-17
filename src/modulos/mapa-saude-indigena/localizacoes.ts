@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { exigirSessao, type ClienteDaSessao } from "../../lib/sessao";
+import { exigirSessao, type ClienteDaSessao } from "../../lib/sessao/sessao";
 import type {
   CasaiNacionalDoSigepsi,
   LocalizacoesPorDsei,

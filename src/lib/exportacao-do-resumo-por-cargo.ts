@@ -12,7 +12,7 @@ import type {
   LinhaPlanaDoResumo,
   ResumoPorCargoEStatus,
 } from "./resumo-por-cargo-e-status.ts";
-import { sanitizeCsvCell } from "./csv-security.ts";
+import { sanitizeCsvCell } from "./seguranca/csv-security.ts";
 import { arquivosDoXlsx } from "./classificacao/exportacao.ts";
 import {
   argumentosDoRegistro,

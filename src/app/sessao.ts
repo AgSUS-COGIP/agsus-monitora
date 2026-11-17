@@ -21,7 +21,7 @@
   pontos do contrato (docs/arquitetura-react.md, "Sessão ↔ sistema").
 
   Por que a sessão termina (manual, expirada, revogada) continua em
-  src/lib/estado-de-saida.ts; "a sessão acabou mesmo?", em src/lib/sessao.ts.
+  src/lib/sessao/estado-de-saida.ts; "a sessão acabou mesmo?", em src/lib/sessao/sessao.ts.
 */
 
 import {
@@ -31,9 +31,9 @@ import {
   LOGIN_POPUP_MESSAGE,
   openLoginPopup,
   startMobileGoogleOAuth,
-} from "../lib/auth-flow";
-import { DEFAULT_ACCESS_BRANDING } from "../lib/access-branding.ts";
-import { hasSupabaseEnv } from "../lib/env";
+} from "../lib/sessao/auth-flow";
+import { DEFAULT_ACCESS_BRANDING } from "../lib/entrada/access-branding.ts";
+import { hasSupabaseEnv } from "../lib/sessao/env";
 import {
   SAIDA_DESCONHECIDA,
   SAIDA_MANUAL,
@@ -43,27 +43,27 @@ import {
   encerrarTransicaoDeSaida,
   mensagemDaSaida,
   reivindicarSaida,
-} from "../lib/estado-de-saida";
+} from "../lib/sessao/estado-de-saida";
 import {
   isAllowedInstitutionalEmail,
   normalizeAllowedDomains,
   normalizePlatformContext,
-} from "../lib/platform-context";
-import { SESSAO_ATIVA, estadoDaSessao } from "../lib/sessao";
-import { ehFalhaDeConexao } from "../lib/falha-de-rede";
+} from "../lib/navegacao/platform-context";
+import { SESSAO_ATIVA, estadoDaSessao } from "../lib/sessao/sessao";
+import { ehFalhaDeConexao } from "../lib/carga/falha-de-rede";
 import type { PerfilGuardado } from "./perfil-guardado.ts";
 import {
   getSupabaseAuthStorage,
   getSupabaseClient,
-} from "../lib/supabaseClient";
+} from "../lib/sessao/supabaseClient";
 import type {
   AuthChangeEvent,
   Session,
   SupabaseClient,
   User,
 } from "@supabase/supabase-js";
-import type { CausaDaSaida } from "../lib/estado-de-saida";
-import type { PerfilDaPlataforma } from "../lib/platform-context";
+import type { CausaDaSaida } from "../lib/sessao/estado-de-saida";
+import type { PerfilDaPlataforma } from "../lib/navegacao/platform-context";
 
 const RPC_CONTEXTO = "obter_contexto_monitora";
 const RPC_MEU_USUARIO = "meu_usuario";
@@ -142,7 +142,7 @@ export type EstadoDaSessaoDoApp = {
   consultarPedido: boolean;
   configuracao: ConfiguracaoDaEntrada;
   /**
-   * Entrou sem rede, com o perfil guardado (src/lib/sessao-sem-rede.ts): o
+   * Entrou sem rede, com o perfil guardado (src/lib/sessao/sessao-sem-rede.ts): o
    * perfil é conferido no banco quando a rede voltar.
    */
   semRede: boolean;

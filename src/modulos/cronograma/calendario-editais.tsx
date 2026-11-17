@@ -13,7 +13,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { getSupabaseClient } from "../../lib/supabaseClient";
+import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import type { VisaoDoCalendario } from "../../lib/calendario-editais.ts";
 import {
   CHAVE_DA_VISAO,

@@ -16,7 +16,7 @@ import {
   corDoTextoPara,
   normalizarModo,
   razaoDeContraste,
-} from "../src/lib/contraste.ts";
+} from "../src/lib/base/contraste.ts";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -213,8 +213,14 @@ describe("modo do texto sobre o painel", () => {
     "utf8",
   );
   const boot = readFileSync("src/app/entrada/marca.ts", "utf8");
-  const cache = readFileSync("src/lib/access-branding-cache.ts", "utf8");
-  const publico = readFileSync("src/lib/access-branding-publico.ts", "utf8");
+  const cache = readFileSync(
+    "src/lib/entrada/access-branding-cache.ts",
+    "utf8",
+  );
+  const publico = readFileSync(
+    "src/lib/entrada/access-branding-publico.ts",
+    "utf8",
+  );
 
   it("auto é o padrão e preserva o comportamento anterior", () => {
     expect(normalizarModo(undefined)).toBe(MODO_AUTO);

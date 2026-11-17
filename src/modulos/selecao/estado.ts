@@ -7,7 +7,7 @@
   (recurso `selecao` >= leitor), área e o recorte da coordenação
   (supabase/migrations/20261001090000_selecao.sql).
 
-  Cópia guardada ("stale-while-revalidate", src/lib/cache-de-payload.ts, a
+  Cópia guardada ("stale-while-revalidate", src/lib/carga/cache-de-payload.ts, a
   mesma da tela de Entrevistas): na primeira carga da área, a cópia do
   navegador (do mesmo usuário e da mesma publicação) aparece na hora e a
   versão nova é pedida por trás. Acesso revogado (42501) apaga as cópias.
@@ -23,12 +23,12 @@ import {
   respostaInalterada,
   revalidarPayload,
   versaoDoPacote,
-} from "../../lib/cache-de-payload";
+} from "../../lib/carga/cache-de-payload";
 import {
   comTempoLimite,
   ehFalhaDeConexao,
   mensagemDeFalha,
-} from "../../lib/falha-de-rede";
+} from "../../lib/carga/falha-de-rede";
 import {
   csvDaSelecao,
   normalizarPayload,

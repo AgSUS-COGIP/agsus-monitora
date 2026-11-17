@@ -6,16 +6,16 @@ import {
   obterEstadoDaBarraLateral,
 } from "../../componentes/barra-lateral/estado.ts";
 import type { ArvoreDoMenu } from "../../componentes/barra-lateral/tipos.ts";
-import { needsLightForeground } from "../../lib/access-branding.ts";
+import { needsLightForeground } from "../../lib/entrada/access-branding.ts";
 import {
   corDaBarraSegura,
   logoDaBarraSegura,
-} from "../../lib/marca-da-barra-lateral.ts";
+} from "../../lib/navegacao/marca-da-barra-lateral.ts";
 import {
   ABAS_DO_MENU,
   AREAS_DO_SISTEMA,
   montarArvoreDoMenu,
-} from "../../lib/menu-lateral.ts";
+} from "../../lib/navegacao/menu-lateral.ts";
 import { MolduraDaPrevia } from "./moldura-da-previa.tsx";
 import { SECOES } from "./secoes.ts";
 

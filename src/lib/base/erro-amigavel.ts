@@ -1,4 +1,4 @@
-import { ehFalhaTransitoria, ehSessaoEncerrada } from "./sessao";
+import { ehFalhaTransitoria, ehSessaoEncerrada } from "../sessao/sessao";
 
 /** Os campos que esta tradução lê de um erro qualquer (todos opcionais). */
 type ErroLido =

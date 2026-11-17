@@ -18,8 +18,8 @@ import {
   lembrarContaDesativada,
   marcarBoasVindasPendentes,
 } from "../../lib/acesso-liberado.ts";
-import { mensagemDeFalha } from "../../lib/falha-de-rede";
-import { normalizePlatformContext } from "../../lib/platform-context";
+import { mensagemDeFalha } from "../../lib/carga/falha-de-rede";
+import { normalizePlatformContext } from "../../lib/navegacao/platform-context";
 import {
   AREAS_DA_SOLICITACAO,
   CAMPOS_VAZIOS,
@@ -34,7 +34,7 @@ import {
   type MinhaSolicitacao,
   type TelaDaSolicitacao,
 } from "../../lib/solicitacao-de-acesso.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient";
+import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import { nomeDoUsuario } from "../sessao.ts";
 
 const RPC_OPCOES = "listar_opcoes_da_solicitacao_acesso";

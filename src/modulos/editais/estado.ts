@@ -18,7 +18,7 @@ import {
 } from "../../lib/access-roles.ts";
 import { aprovadosPorEdital } from "../../lib/aprovados-por-edital.ts";
 import { ehEditalDeTreinamento } from "../../lib/edital-de-treinamento.ts";
-import { exigirSessao } from "../../lib/sessao";
+import { exigirSessao } from "../../lib/sessao/sessao";
 import {
   analisarCronograma,
   cronogramaParaSalvar,

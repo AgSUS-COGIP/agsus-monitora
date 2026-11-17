@@ -46,7 +46,7 @@ import {
 import { motivosDoResultado } from "../../../lib/avaliacao-documental/motivos-do-resultado.ts";
 import { pontuacaoInformativaDaFicha } from "../../../lib/avaliacao-documental/pontos-informativos.ts";
 import { modalidadesDoLancamento } from "../../../lib/avaliacao-documental/pontuacao.ts";
-import { rotuloDaVersaoNaLista } from "../../../lib/nome-da-versao.ts";
+import { rotuloDaVersaoNaLista } from "../../../lib/base/nome-da-versao.ts";
 import { Aviso } from "../../../ui/index.ts";
 import { guardaDeAlteracoes } from "../../../app/guarda-de-alteracoes.ts";
 import {
@@ -86,7 +86,7 @@ import {
 import type { ChamadaDeRpc } from "../../../lib/avaliacao-documental/leitura-por-versao.ts";
 import type { EnderecosDaEmpregare } from "../../../lib/avaliacao-documental/anexo-na-empregare.ts";
 import type { FichaAberta } from "../tipos-do-estado.ts";
-import type { VersaoComNome } from "../../../lib/nome-da-versao.ts";
+import type { VersaoComNome } from "../../../lib/base/nome-da-versao.ts";
 import type {
   Bloco,
   ContextoDaEmpregare,

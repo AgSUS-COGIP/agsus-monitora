@@ -9,7 +9,7 @@ import type {
   EstadoFlutuante,
   EventoFlutuante,
   PosicaoDoFlutuante,
-} from "../componentes/barra-lateral/tipos.ts";
+} from "../../componentes/barra-lateral/tipos.ts";
 
 /*
   O menu lateral organizado em grupos.
@@ -133,7 +133,7 @@ export const AREAS_DO_MENU = Object.freeze([
 
   `manutencao` (opcional, só do banco): `{ mensagem, previsao }` quando a aba
   — em todas as áreas, ou só numa (`areas[].manutencao`) — está em
-  manutenção (`src/lib/situacao-dos-modulos.ts`). O catálogo do código nunca
+  manutenção (`src/lib/navegacao/situacao-dos-modulos.ts`). O catálogo do código nunca
   o tem.
 */
 const congelarArea = ({ manutencao, ...area }: AreaDoCatalogo) =>

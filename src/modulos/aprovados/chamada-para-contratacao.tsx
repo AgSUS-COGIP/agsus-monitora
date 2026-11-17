@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useEffect, useSyncExternalStore } from "react";
 import { resumoDoModelo } from "../../lib/configuracao-de-convocacao.ts";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import type {
   ConfiguracoesDaConvocacao,
   ModelosDaConvocacao,

@@ -11,7 +11,7 @@
   - Passo de trilha tem `pagina`: o tour pede a troca de tela (`irPara`) e
     espera o elemento aparecer por alguns instantes, olhando de tempos em
     tempos (sem MutationObserver); se não aparecer, pula. Enquanto a tela
-    ainda baixa (telas sob demanda, src/lib/carga-de-telas.ts), a espera se
+    ainda baixa (telas sob demanda, src/lib/carga/carga-de-telas.ts), a espera se
     estende — mas nunca além de LIMITE_DA_PROCURA_MS: uma tela que não termina
     de baixar não deixa a procura rodando para sempre.
   - O elemento destacado continua clicável (o véu são quatro faixas em volta
@@ -48,7 +48,7 @@ import type {
   PassoDoTour,
   PosicaoDoBalao,
 } from "../../../lib/aya-tours.ts";
-import { haTelaCarregando } from "../../../lib/carga-de-telas";
+import { haTelaCarregando } from "../../../lib/carga/carga-de-telas";
 
 /** Por que o tour acabou: chegou ao fim ou a pessoa pulou (Esc, Pular). */
 export type MotivoDoFimDoTour = "concluiu" | "pulou";

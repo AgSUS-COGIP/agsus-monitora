@@ -8,7 +8,7 @@ import type {
   TabelaDoRelatorio,
 } from "./relatorio-da-visao-geral.ts";
 import { textoParaOPdf } from "./avaliacao-documental/espelho-em-pdf.ts";
-import { CABECALHO_PADRAO } from "./cabecalho-dos-documentos.ts";
+import { CABECALHO_PADRAO } from "./base/cabecalho-dos-documentos.ts";
 
 /*
   O PDF do montador de relatório da Visão geral (A4 deitado): o timbrado

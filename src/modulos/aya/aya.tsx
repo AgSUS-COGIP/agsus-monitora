@@ -69,7 +69,7 @@ import {
   trilhasDoPerfil,
 } from "../../lib/aya-tours.ts";
 import { montarChamado, pedeSuporte } from "../../lib/chamado-da-aya.ts";
-import { nomeDaArea } from "../../lib/menu-lateral.ts";
+import { nomeDaArea } from "../../lib/navegacao/menu-lateral.ts";
 import { collectAyaPageContext, estadoDaTela } from "./contexto.ts";
 import { responderComDados } from "../../lib/dados-da-aya.ts";
 import { isAdminGlobal } from "../../lib/access-roles.ts";

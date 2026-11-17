@@ -5,7 +5,7 @@ import {
   semDemanda,
   totalDoResumo,
 } from "../../lib/resumo-do-dia.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient";
+import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 
 /*
   Estado do resumo do dia (fora do React): o resumo da pessoa logada, se o

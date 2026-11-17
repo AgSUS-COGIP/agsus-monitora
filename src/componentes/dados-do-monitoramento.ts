@@ -197,7 +197,7 @@ export function soDosEditais<T extends object>(
   19/10/2026 o Supabase NANO saturou com ~10 avaliadores que nunca abriam uma
   página com estas linhas. Por isso a carga (src/app/carga.ts) só as pede
   quando alguém precisa: a página aberta que as usa (src/app/pagina-aberta.ts,
-  lista em src/lib/telas-com-linhas.ts) ou um componente fora dessas páginas
+  lista em src/lib/navegacao/telas-com-linhas.ts) ou um componente fora dessas páginas
   (busca global, Coordenações de Acessos), por `pedirLinhasDoMonitoramento`
   (ou o hook `usarLinhasDoMonitoramento`). O pedido vale até ser devolvido.
 */
