@@ -85,11 +85,18 @@ function MapaDaSaudeIndigena({
   supabase,
 }: PropsDoPainel & { perfil: Perfil | null; supabase: SupabaseClient | null }) {
   const { lmap: lmapDoBanco, redeCnes } = e.mapa || {};
-  // Polos e CASAIs do SIGEPSI por cima do `lmap` do banco (o resto do DSEI fica).
+  /*
+    A lista de DSEIs, as sedes e os pontos são os do SIGEPSI; do `lmap` do
+    banco vêm população e UFs. Enquanto o SIGEPSI não responde, o mapa espera
+    (não mostra a lista do banco para trocá-la em seguida); sem SIGEPSI, fica
+    a do banco.
+  */
   const localizacoes = usarLocalizacoesDoSigepsi(supabase);
+  const esperando = localizacoes.estado === "carregando";
   const lmap = useMemo(
-    () => aplicarLocalizacoes(lmapDoBanco, localizacoes),
-    [lmapDoBanco, localizacoes],
+    () =>
+      esperando ? null : aplicarLocalizacoes(lmapDoBanco, localizacoes.dseis),
+    [esperando, lmapDoBanco, localizacoes.dseis],
   );
   return (
     <div

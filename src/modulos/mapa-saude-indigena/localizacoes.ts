@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { exigirSessao } from "../../lib/sessao";
+import { exigirSessao, type ClienteDaSessao } from "../../lib/sessao";
 import type { LocalizacoesPorDsei } from "../../lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts";
 
 /*
-  OS POLOS E CASAIs DO SIGEPSI, PARA O MAPA DA SAÚDE INDÍGENA
+  OS DSEIs DO SIGEPSI (lista, sedes e pontos), PARA O MAPA DA SAÚDE INDÍGENA
 
   `/api/dseis` (função da Vercel) lê a API do SIGEPSI com o token do servidor;
   aqui só se manda o token da sessão. Um pedido por CACHE_MS para a página
-  inteira (trocar de área e voltar não repete); falha não fica guardada e o
-  mapa segue com os polos do banco (`lmap`). Fora da Vercel (servidor local)
-  a rota não existe: o mapa segue igual, com os polos do banco.
+  inteira (trocar de área e voltar não repete). Falha não fica guardada e o
+  mapa usa a lista do banco (`lmap`); fora da Vercel (servidor local) a rota
+  não existe e é igual.
 */
 
 export const ROTA_DAS_LOCALIZACOES = "/api/dseis";
@@ -26,7 +26,7 @@ export function esquecerLocalizacoes() {
 }
 
 export function carregarLocalizacoes(
-  supabase: SupabaseClient | null,
+  supabase: ClienteDaSessao | SupabaseClient | null,
   { buscar = fetch, relogio = () => Date.now() } = {},
 ): Promise<LocalizacoesPorDsei | null> {
   if (guardado && relogio() - guardado.em < CACHE_MS)
@@ -65,20 +65,37 @@ export function carregarLocalizacoes(
 }
 
 /** As localizações do SIGEPSI, ou `null` enquanto não chegam (ou se falharem). */
+export type LocalizacoesNaTela =
+  | { estado: "carregando"; dseis: null }
+  | { estado: "pronto"; dseis: LocalizacoesPorDsei }
+  /* SIGEPSI fora ou sem `/api` (servidor local): o mapa usa a lista do banco. */
+  | { estado: "indisponivel"; dseis: null };
+
+/**
+ * As localizações do SIGEPSI e se ainda estão chegando: o mapa espera por
+ * elas, porque a lista de DSEIs é a do SIGEPSI.
+ */
 export function usarLocalizacoesDoSigepsi(
   supabase: SupabaseClient | null,
-): LocalizacoesPorDsei | null {
-  const [dseis, setDseis] = useState<LocalizacoesPorDsei | null>(
-    () => guardado?.dseis ?? null,
+): LocalizacoesNaTela {
+  const [localizacoes, setLocalizacoes] = useState<LocalizacoesNaTela>(() =>
+    guardado
+      ? { estado: "pronto", dseis: guardado.dseis }
+      : { estado: "carregando", dseis: null },
   );
   useEffect(() => {
     let vivo = true;
     void carregarLocalizacoes(supabase).then((resultado) => {
-      if (vivo && resultado) setDseis(resultado);
+      if (!vivo) return;
+      setLocalizacoes(
+        resultado
+          ? { estado: "pronto", dseis: resultado }
+          : { estado: "indisponivel", dseis: null },
+      );
     });
     return () => {
       vivo = false;
     };
   }, [supabase]);
-  return dseis;
+  return localizacoes;
 }

@@ -31,6 +31,8 @@ export interface DseiDoMapa extends PoloDoMapa {
   sede_cnes?: string;
   /** "sigepsi" quando a sede (lat/lon) veio da API (o editor não oferece). */
   sede_origem?: string;
+  /** Posição do DSEI no `lmap` do banco (a lista vem do SIGEPSI). */
+  indice_no_banco?: number;
 }
 export type EstabelecimentoCompacto = [
   nome: string,
