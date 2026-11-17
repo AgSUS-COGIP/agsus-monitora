@@ -8,7 +8,7 @@ Cada `[[nome]]` é `docs/biblioteca/<nome>.md`. Regra completa: [[nova-tela-e-le
   vira `.ts` (qualquer `.js`/`.jsx` editado quebra a checagem).
 - Instalados por `src/main.ts`; a ordem importa. Ao migrar uma tela, o módulo dela sai daqui.
 - Não ler por inteiro: `indigenous-territories-layer.ts` (41 KB; partes puras em
-  `src/lib/terras-indigenas/`, [[mapas-e-leaflet]]) e `aya-conhecimento-gerado.js` (**gerado** por
+  `src/lib/mapas/terras-indigenas/`, [[mapas-e-leaflet]]) e `aya-conhecimento-gerado.js` (**gerado** por
   `npm run aya:conhecimento` a partir de `docs/aya/`; [[aya-base-de-conhecimento]]).
 - Grupos: `aya-*` (assistente) · `map-*` (seletor Mapa/Satélite, [[mapas-e-leaflet]]) ·
   `indigenous-*` (terras indígenas) · `icones.ts` (registro único de ícones, [[componentes-padrao]]) ·

@@ -34,8 +34,8 @@ Tipos e fronteiras dos dados (e o que saiu do legado): [[mapa-saude-indigena-con
   (`<LegendaFlutuante>`), `tela-cheia.tsx` (`travarRolagemDaPagina` é contada: tela cheia e edição
   de Projetos), `usar-ultimo.ts`.
 - `ordem-da-lista.tsx` — "Ordenar" (Vagas, A–Z, Nº do DSEI, % preenchidas, Ociosas), escolha
-  guardada no navegador; regras em `src/lib/mapa-saude-indigena/ordem-dos-territorios.ts`.
-- Regras puras em `src/lib/mapa-saude-indigena/` (`chaves`, `formas`, `mapa-nacional`,
+  guardada no navegador; regras em `src/lib/mapas/mapa-saude-indigena/ordem-dos-territorios.ts`.
+- Regras puras em `src/lib/mapas/mapa-saude-indigena/` (`chaves`, `formas`, `mapa-nacional`,
   `mapa-do-dsei`, `localizacoes-do-sigepsi`, `contornos` com `UF_GEO` e `BR_OUTLINE`). CSS em
   `mapa-saude-indigena.css`, só tokens.
 
@@ -107,7 +107,7 @@ Terceiro botão do seletor do fundo, só no `#map` (`map-base-layer-switcher.ts`
 - A lista mostra o número do DSEI; foco/mouse na linha realça o polígono na hora. O mouse no
   polígono acende a linha só depois de parar nele (`ESPERA_DO_REALCE_NA_LISTA`, 150 ms) e nunca
   rola, reordena nem remonta a lista (só a classe `is-realce` muda). O clique abre o DSEI.
-- Numeração: `src/lib/mapa-saude-indigena/dseis-oficiais.ts` (34 nomes oficiais em ordem
+- Numeração: `src/lib/mapas/mapa-saude-indigena/dseis-oficiais.ts` (34 nomes oficiais em ordem
   alfabética, como o mapa institucional da AgSUS). Regras (faixas, sem dado, dica):
   `mapa-simples.ts`; os números são os de "Territórios por vagas", sem consulta nova. Cores:
   tokens `--mapa-simples-*` em `src/styles/tokens.css`.

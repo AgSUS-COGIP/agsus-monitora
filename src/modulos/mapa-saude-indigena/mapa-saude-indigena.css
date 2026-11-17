@@ -1,7 +1,7 @@
 /*
   Mapa da Saúde Indígena (src/modulos/mapa-saude-indigena/). Só o que é deste
   bloco; card, título, vazio e esqueleto vêm de src/ui/ (ui.css). Cores do
-  domínio (formas, bolhas, terras) vêm de src/lib/mapa-saude-indigena/formas.js
+  domínio (formas, bolhas, terras) vêm de src/lib/mapas/mapa-saude-indigena/formas.js
   e das variáveis --terra-* (tokens.css).
 */
 .mapa-si {

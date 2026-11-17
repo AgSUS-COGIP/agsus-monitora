@@ -1,8 +1,8 @@
 import type { ReactNode } from "react";
-import type { LinhaDoMonitoramento } from "../../componentes/tipos-do-monitoramento.ts";
-import type { CoordenadasDoMapa } from "../mapas/tipos-do-mapa.ts";
+import type { LinhaDoMonitoramento } from "../../../componentes/tipos-do-monitoramento.ts";
+import type { CoordenadasDoMapa } from "../tipos-do-mapa.ts";
 import type { tipoDaUnidade } from "./formas.ts";
-import type { VoltaDoDsei } from "../../modulos/mapa-saude-indigena/tipos-do-painel.ts";
+import type { VoltaDoDsei } from "../../../modulos/mapa-saude-indigena/tipos-do-painel.ts";
 
 export interface PoloDoMapa {
   [campo: string]: unknown;
@@ -140,7 +140,7 @@ export interface PropsDaVisaoNacional extends Pick<
   "aoEscolherDsei" | "aoFiltrarPorBusca"
 > {
   L:
-    | import("../../modulos/mapa-saude-indigena/tipos-do-leaflet.ts").LeafletDoMapa
+    | import("../../../modulos/mapa-saude-indigena/tipos-do-leaflet.ts").LeafletDoMapa
     | null;
   idDoMapa: string;
   visivel: boolean;
@@ -159,7 +159,7 @@ export interface PropsDoMapaDoDsei extends Pick<
   "aoEscolherUnidade"
 > {
   L:
-    | import("../../modulos/mapa-saude-indigena/tipos-do-leaflet.ts").LeafletDoMapa
+    | import("../../../modulos/mapa-saude-indigena/tipos-do-leaflet.ts").LeafletDoMapa
     | null;
   dsei: DseiDoMapa;
   idDoMapa: string;

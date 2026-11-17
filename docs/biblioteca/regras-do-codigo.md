@@ -94,7 +94,7 @@ As regras de cada tela estão na nota `modulo-<nome>` dela.
 
 A migração de JavaScript para TypeScript começou em 07/10/2026 e está concluída no front: em
 17/11/2026 `src/` tem só dois `.js`, ambos dados (`src/modules/aya-conhecimento-gerado.js`, gerado,
-e `src/lib/mapa-saude-indigena/contornos.js`, contornos do Brasil e das UFs). O servidor também é
+e `src/lib/mapas/mapa-saude-indigena/contornos.js`, contornos do Brasil e das UFs). O servidor também é
 TypeScript ([[servidor-web]]). O inventário da migração, módulo a módulo, ficou como histórico em
 [typescript-no-frontend](../_arquivo/typescript-no-frontend.md).
 

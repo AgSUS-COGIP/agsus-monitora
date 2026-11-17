@@ -5,13 +5,13 @@ import {
   localizacoesPorDsei,
   tipoDaLocalizacao,
   ufDoCep,
-} from "../../src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts";
+} from "../../src/lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts";
 import {
   registrosDoDsei,
   resumoDaRede,
-} from "../../src/lib/mapa-saude-indigena/mapa-do-dsei.ts";
-import { casaisNacionaisDoMapa } from "../../src/lib/mapa-saude-indigena/dados-do-mapa.ts";
-import type { DseiDoMapa } from "../../src/lib/mapa-saude-indigena/tipos.ts";
+} from "../../src/lib/mapas/mapa-saude-indigena/mapa-do-dsei.ts";
+import { casaisNacionaisDoMapa } from "../../src/lib/mapas/mapa-saude-indigena/dados-do-mapa.ts";
+import type { DseiDoMapa } from "../../src/lib/mapas/mapa-saude-indigena/tipos.ts";
 import type {
   PedidoDaVercel,
   RespostaDaVercel,

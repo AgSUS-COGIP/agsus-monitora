@@ -144,7 +144,7 @@ describe("a logo da barra lateral é o <img> real", () => {
 describe("enquadramento do Brasil medido no contorno real", () => {
   /*
     A constante contra os vértices do contorno (a cópia única, em
-    src/lib/mapa-saude-indigena/contornos.js) é conferida em
+    src/lib/mapas/mapa-saude-indigena/contornos.js) é conferida em
     tests/mapa-saude-indigena.test.js.
   */
   it("a guarda do mapa usa a medição, não um retângulo à mão", () => {

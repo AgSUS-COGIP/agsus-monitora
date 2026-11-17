@@ -5,7 +5,7 @@
   e as divisas das UFs (`contornos.js`). A abrangência oficial vinha da Funai
   (`/api/funai-geodata?dataset=dsei`, camada `Funai:areas_dsei`), que deixou
   de publicá-la — o proxy responde 502 e a camada fica vazia (ver
-  `src/lib/terras-indigenas/geometria.ts`).
+  `src/lib/mapas/terras-indigenas/geometria.ts`).
 
   O "Mapa DSEIs" usa um arquivo estático, `public/data/contornos-dos-dseis.json`,
   gerado por `scripts/compilar-contornos-dos-dseis.mjs` a partir da última

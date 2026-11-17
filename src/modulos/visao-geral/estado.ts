@@ -53,7 +53,7 @@ import {
 } from "../../lib/carga/versao-do-pacote";
 import { hojeEmBrasilia } from "../../lib/cronograma/cronograma-do-edital.ts";
 import { semTreinamento } from "../../lib/editais/edital-de-treinamento.ts";
-import { chaveDoDsei } from "../../lib/mapa-saude-indigena/chaves.ts";
+import { chaveDoDsei } from "../../lib/mapas/mapa-saude-indigena/chaves.ts";
 import {
   acompanhamentoDaResposta,
   CAMPOS,

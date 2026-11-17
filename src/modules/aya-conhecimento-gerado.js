@@ -5679,7 +5679,7 @@ export const VERBETES_AYA = Object.freeze([
       'No Yeendé, o popup de cada ponto do mapa do DSEI traz só o que a unidade é: tipo, nome, município e UF e o código CNES (quando há). Não há frases como "Localização em validação", "Fontes discordam" ou "validada". A lista de DSEIs, a sede, os polos base, as CASAIs (todas, inclusive as nacionais) e as unidades de lotação de cada um vêm do SIGEPSI, a fonte verdadeira dos pontos, lidos a cada abertura do mapa; do banco do Yeendé vêm só o nome bem grafado, a população (o tamanho da bolha) e as UFs administrativas de cada DSEI. Se um ponto parecer errado, a correção é feita no próprio SIGEPSI: o mapa não tem editor de coordenadas.',
     fato: "",
     fonte:
-      "src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts; src/lib/mapa-saude-indigena/mapa-do-dsei.ts",
+      "src/lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts; src/lib/mapas/mapa-saude-indigena/mapa-do-dsei.ts",
   },
   {
     arquivo: "regras-do-mapa-saude-indigena.md",
@@ -5745,7 +5745,7 @@ export const VERBETES_AYA = Object.freeze([
       'No mapa da Saúde Indígena os pontos (sede, polos base, CASAIs e unidades) vêm do SIGEPSI, e o mapa não tem editor de coordenadas nem botão "Coordenadas", fila de pendências ou "Conferido". Para corrigir um ponto, peça a correção no próprio SIGEPSI; o mapa passa a mostrar a posição nova na abertura seguinte. O editor de coordenadas existe só no mapa de Projetos (veja as regras do mapa de Projetos).',
     fato: "",
     fonte:
-      "src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts; src/modulos/mapa-saude-indigena/localizacoes.ts",
+      "src/lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts; src/modulos/mapa-saude-indigena/localizacoes.ts",
   },
   {
     arquivo: "regras-do-mapa-saude-indigena.md",
@@ -6742,7 +6742,7 @@ export const VERBETES_AYA = Object.freeze([
       'No mapa da Saúde Indígena, toda coordenada vem do SIGEPSI: a sede de cada DSEI (onde fica a bolha), os polos base, a ROTA, as CASAIs (inclusive as nacionais, de Brasília e São Paulo) e as unidades de lotação, com a UF pelo CEP. Do banco do Yeendé vêm só o nome, a população e as UFs administrativas de cada DSEI. O mapa desenha o que o SIGEPSI devolve; nada é recalculado na tela, e se o SIGEPSI não responde a Visão geral mostra o erro "Não foi possível carregar o mapa da Saúde Indígena: o SIGEPSI não respondeu", com "Tentar novamente". Para corrigir um ponto, a correção é feita no SIGEPSI. A planilha "Lotações, Meios de Acesso/Polo Base" também não entra no mapa. De 02/10 a 16/11/2026 o mapa desenhava as coordenadas gravadas no banco, auditadas em 01 e 02/10/2026 contra fontes oficiais; esse registro histórico está em docs/coordenadas/.',
     fato: "",
     fonte:
-      "src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts; docs/coordenadas/auditoria-oficial-das-coordenadas-2026-10-01.md; docs/coordenadas/pontos-so-na-planilha-de-lotacoes.md",
+      "src/lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts; docs/coordenadas/auditoria-oficial-das-coordenadas-2026-10-01.md; docs/coordenadas/pontos-so-na-planilha-de-lotacoes.md",
   },
   {
     arquivo: "regras-dos-modulos-e-abas.md",

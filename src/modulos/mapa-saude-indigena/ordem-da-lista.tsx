@@ -1,14 +1,14 @@
 import { useCallback, useId, useState } from "react";
-import type { OrdemDosTerritorios } from "../../lib/mapa-saude-indigena/ordem-dos-territorios.ts";
+import type { OrdemDosTerritorios } from "../../lib/mapas/mapa-saude-indigena/ordem-dos-territorios.ts";
 import {
   OPCOES_DE_ORDEM,
   ordemPadrao,
   ordemValida,
-} from "../../lib/mapa-saude-indigena/ordem-dos-territorios.ts";
+} from "../../lib/mapas/mapa-saude-indigena/ordem-dos-territorios.ts";
 
 /*
   "Ordenar" da lista de territórios do mapa nacional (regras em
-  src/lib/mapa-saude-indigena/ordem-dos-territorios.ts).
+  src/lib/mapas/mapa-saude-indigena/ordem-dos-territorios.ts).
 
   Enquanto a pessoa não escolhe, a ordem segue o fundo: "Vagas" no Mapa e no
   Satélite, "Nº do DSEI" no Mapa DSEIs. Escolhida, fica guardada neste

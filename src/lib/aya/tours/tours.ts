@@ -7,7 +7,7 @@ import {
   canEditRecursos,
   canManageEditais,
   isAdminGlobal,
-} from "../acessos/access-roles.ts";
+} from "../../acessos/access-roles.ts";
 import {
   ABA,
   PASSO_DA_AYA,

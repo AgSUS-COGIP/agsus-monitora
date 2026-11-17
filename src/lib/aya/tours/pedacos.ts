@@ -1,6 +1,6 @@
 /* Tours da Aya: seletor, regras de perfil e passos repetidos (API pública em ../aya-tours.ts). */
 
-import { hasResource } from "../acessos/permissoes-recursos.ts";
+import { hasResource } from "../../acessos/permissoes-recursos.ts";
 import type { AlvoDoPasso, ExtraDoPasso, PassoDoTour } from "./tipos.ts";
 
 export const passo = (

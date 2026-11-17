@@ -47,7 +47,7 @@ docs/                   biblioteca, documentos longos de referência e base de c
 | `supabase/esquema-atual.sql`                  | 3,6 MB     | retrato do schema: `grep -n 'FUNCTION private."FC_X"'` |
 | `src/styles/app.css`                          | 110 KB     | CSS base                                     |
 | `index.html`                                  | 24 KB      | `<head>` e entrada                           |
-| `src/modules/indigenous-territories-layer.ts` | 41 KB      | partes puras em `src/lib/terras-indigenas/`  |
+| `src/modules/indigenous-territories-layer.ts` | 41 KB      | partes puras em `src/lib/mapas/terras-indigenas/`  |
 | `src/modules/aya-conhecimento-gerado.js`      | 27 KB      | gerado de `docs/aya/`                        |
 | `docs/banco-de-dados.md`, `docs/design-system-agsus.md` | longos | leia a seção do assunto              |
 | `package-lock.json`, `dist/`, `node_modules/` |            | nunca                                        |

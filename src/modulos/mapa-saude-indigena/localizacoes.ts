@@ -4,7 +4,7 @@ import { exigirSessao, type ClienteDaSessao } from "../../lib/sessao/sessao";
 import type {
   CasaiNacionalDoSigepsi,
   LocalizacoesPorDsei,
-} from "../../lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts";
+} from "../../lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts";
 
 /*
   OS DSEIs E AS CASAIs DO SIGEPSI, PARA O MAPA DA SAÚDE INDÍGENA

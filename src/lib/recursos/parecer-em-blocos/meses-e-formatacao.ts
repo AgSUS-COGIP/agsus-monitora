@@ -1,7 +1,7 @@
 /* Parecer em blocos: meses de experiência (regra da ficha) e formatação (API pública em ../parecer-em-blocos.ts). */
 
-import { diasDosIntervalos } from "../avaliacao-documental/pontuacao.ts";
-import { arredondar } from "../classificacao/numeros.ts";
+import { diasDosIntervalos } from "../../avaliacao-documental/pontuacao.ts";
+import { arredondar } from "../../classificacao/numeros.ts";
 
 // ── Meses de experiência (a regra da ficha) ──────────────────────────────
 

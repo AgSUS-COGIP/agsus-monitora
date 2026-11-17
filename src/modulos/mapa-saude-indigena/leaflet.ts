@@ -22,7 +22,7 @@ import type {
 import type {
   RegistroDoDsei,
   EnquadramentoDoMapa,
-} from "../../lib/mapa-saude-indigena/tipos.ts";
+} from "../../lib/mapas/mapa-saude-indigena/tipos.ts";
 import type { MapaDoPainel, MapaCriadoDoBrasil } from "./tipos-do-painel.ts";
 import type {
   LeafletDoMapa,
@@ -59,7 +59,7 @@ import {
   CORES_DO_MAPA,
   DESENHO_DAS_FORMAS,
   formaDoTipo,
-} from "../../lib/mapa-saude-indigena/formas.ts";
+} from "../../lib/mapas/mapa-saude-indigena/formas.ts";
 import {
   manterDicasDentroDoMapa,
   opcoesDoPopup,
@@ -383,10 +383,10 @@ export function criarMapaDoBrasil(
   demanda, uma vez, quando o primeiro mapa os desenha.
 */
 let contornos: Promise<
-  typeof import("../../lib/mapa-saude-indigena/contornos.js")
+  typeof import("../../lib/mapas/mapa-saude-indigena/contornos.js")
 > | null = null;
 export function carregarContornos() {
-  contornos ??= import("../../lib/mapa-saude-indigena/contornos.js");
+  contornos ??= import("../../lib/mapas/mapa-saude-indigena/contornos.js");
   return contornos;
 }
 

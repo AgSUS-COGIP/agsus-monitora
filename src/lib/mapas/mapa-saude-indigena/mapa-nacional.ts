@@ -11,8 +11,8 @@
   mapa só conta. Com filtro ativo, só aparecem os DSEIs e as CASAIs nacionais
   que têm edital no recorte.
 */
-import type { LinhaDoMonitoramento } from "../../componentes/tipos-do-monitoramento.ts";
-import type { CoordenadasDoMapa } from "../mapas/tipos-do-mapa.ts";
+import type { LinhaDoMonitoramento } from "../../../componentes/tipos-do-monitoramento.ts";
+import type { CoordenadasDoMapa } from "../tipos-do-mapa.ts";
 import type {
   BolhaDoDsei,
   ContagemDoDsei,
@@ -22,9 +22,9 @@ import type {
   CasaiNacionalDoMapa,
   EnquadramentoDoMapa,
 } from "./tipos.ts";
-import { enquadramentoDoRecorte } from "../mapas/enquadramento-do-brasil.ts";
-import { OPACIDADE_DA_BOLHA, raioDaBolha } from "../mapas/mapa-render.ts";
-import { siglaDaUf } from "../mapas/uf-ibge.ts";
+import { enquadramentoDoRecorte } from "../enquadramento-do-brasil.ts";
+import { OPACIDADE_DA_BOLHA, raioDaBolha } from "../mapa-render.ts";
+import { siglaDaUf } from "../uf-ibge.ts";
 import {
   chaveDoDsei,
   formatarNumero,
@@ -40,7 +40,7 @@ import {
   temResultado,
   vagasEfetivas,
   vagasSemContratacao,
-} from "../visao-geral/indicadores-do-monitoramento.ts";
+} from "../../visao-geral/indicadores-do-monitoramento.ts";
 
 const VAZIO: Readonly<ContagemDoDsei> = Object.freeze({
   editais: 0,

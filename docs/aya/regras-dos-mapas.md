@@ -2,7 +2,7 @@
 
 O mapa da Visão geral em cada área: DSEIs e CASAIs na Saúde Indígena, os locais das vagas em
 Projetos, nenhum na SEDE; e a auditoria das coordenadas. Fontes: `src/lib/visao-geral/visao-geral-da-area.ts`,
-`src/modulos/mapa-de-projetos/`, `src/lib/mapa-saude-indigena/mapa-do-dsei.ts`,
+`src/modulos/mapa-de-projetos/`, `src/lib/mapas/mapa-saude-indigena/mapa-do-dsei.ts`,
 `docs/coordenadas/auditoria-oficial-das-coordenadas-2026-10-01.md` e a migration
 `20261001180000_locais_das_vagas_dos_projetos.sql`.
 
@@ -52,4 +52,4 @@ Projetos, nenhum na SEDE; e a auditoria das coordenadas. Fontes: `src/lib/visao-
 
 **perguntas:** de onde vem as coordenadas do mapa | coordenadas do mapa | auditoria das coordenadas | ponto errado no mapa | planilha de lotacoes no mapa
 **resposta:** No mapa da Saúde Indígena, toda coordenada vem do SIGEPSI: a sede de cada DSEI (onde fica a bolha), os polos base, a ROTA, as CASAIs (inclusive as nacionais, de Brasília e São Paulo) e as unidades de lotação, com a UF pelo CEP. Do banco do Yeendé vêm só o nome, a população e as UFs administrativas de cada DSEI. O mapa desenha o que o SIGEPSI devolve; nada é recalculado na tela, e se o SIGEPSI não responde a Visão geral mostra o erro "Não foi possível carregar o mapa da Saúde Indígena: o SIGEPSI não respondeu", com "Tentar novamente". Para corrigir um ponto, a correção é feita no SIGEPSI. A planilha "Lotações, Meios de Acesso/Polo Base" também não entra no mapa. De 02/10 a 16/11/2026 o mapa desenhava as coordenadas gravadas no banco, auditadas em 01 e 02/10/2026 contra fontes oficiais; esse registro histórico está em docs/coordenadas/.
-**fonte:** src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts; docs/coordenadas/auditoria-oficial-das-coordenadas-2026-10-01.md; docs/coordenadas/pontos-so-na-planilha-de-lotacoes.md
+**fonte:** src/lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts; docs/coordenadas/auditoria-oficial-das-coordenadas-2026-10-01.md; docs/coordenadas/pontos-so-na-planilha-de-lotacoes.md

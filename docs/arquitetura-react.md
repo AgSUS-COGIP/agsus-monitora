@@ -485,7 +485,7 @@ src/modules/map-base-layer-switcher.ts    Mapa/Satélite, em TypeScript; continu
                                           canto de controles é do Leaflet, nos três mapas)
 src/modules/indigenous-territories-layer.ts  Terras Indígenas em TypeScript; as partes puras
                                           (catálogo, textos, geometria, fases e estilos,
-                                          preferências) em src/lib/terras-indigenas/
+                                          preferências) em src/lib/mapas/terras-indigenas/
 ```
 
 `scripts/check-legado-so-encolhe.mjs` agora também recusa qualquer `.js` nas pastas do legado

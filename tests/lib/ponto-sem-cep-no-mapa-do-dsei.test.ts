@@ -3,8 +3,8 @@ import {
   classificarRegistros,
   dicaDoRegistro,
   registrosDoDsei,
-} from "../../src/lib/mapa-saude-indigena/mapa-do-dsei.ts";
-import type { DseiDoMapa } from "../../src/lib/mapa-saude-indigena/tipos.ts";
+} from "../../src/lib/mapas/mapa-saude-indigena/mapa-do-dsei.ts";
+import type { DseiDoMapa } from "../../src/lib/mapas/mapa-saude-indigena/tipos.ts";
 import {
   VINCULO_EXTERNO,
   VINCULO_INDETERMINADO,

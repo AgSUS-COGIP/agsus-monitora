@@ -29,7 +29,7 @@
   O teste tests/aya-tours.test.js confere que cada `data-tour` usado aqui
   existe em algum componente.
 
-  O código fica em src/lib/aya-tours/, um arquivo por assunto; este arquivo
+  O código fica em src/lib/aya/tours/, um arquivo por assunto; este arquivo
   só reexporta a API pública (quem importa não precisa mudar).
 */
 
@@ -51,15 +51,15 @@ export type {
   PosicaoDoBalao,
   FaixaDoVeu,
   GeometriaDoHolofote,
-} from "../aya-tours/tipos.ts";
-export { t } from "../aya-tours/pedacos.ts";
+} from "./tours/tipos.ts";
+export { t } from "./tours/pedacos.ts";
 export {
   chaveDoTour,
   tourDaPagina,
   PAGINAS_COM_TOUR,
   passosDaTrilha,
   trilhasDoPerfil,
-} from "../aya-tours/regras.ts";
+} from "./tours/regras.ts";
 export {
   progressoDasTrilhas,
   comPassoDaTrilha,
@@ -69,9 +69,9 @@ export {
   rotuloDoPasso,
   convitesFeitos,
   deveConvidar,
-} from "../aya-tours/progresso.ts";
+} from "./tours/progresso.ts";
 export {
   posicaoDoBalao,
   MARGEM_DO_HOLOFOTE,
   geometriaDoHolofote,
-} from "../aya-tours/balao.ts";
+} from "./tours/balao.ts";

@@ -164,9 +164,9 @@ describe("tours das telas", () => {
   });
 
   it("todo data-tour usado nos roteiros existe num componente", () => {
-    // Os roteiros ficam em src/lib/aya-tours/ (aya-tours.ts só reexporta).
-    const fonte = readdirSync("src/lib/aya-tours")
-      .map((nome) => readFileSync(join("src/lib/aya-tours", nome), "utf8"))
+    // Os roteiros ficam em src/lib/aya/tours/ (aya-tours.ts só reexporta).
+    const fonte = readdirSync("src/lib/aya/tours")
+      .map((nome) => readFileSync(join("src/lib/aya/tours", nome), "utf8"))
       .join("\n");
     // `t("nome")` monta o seletor [data-tour='nome'].
     const usados = [

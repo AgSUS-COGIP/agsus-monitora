@@ -5,7 +5,7 @@ import {
   canEditRecursos,
   canManageAccess,
   paginasPermitidas,
-} from "../acessos/access-roles.ts";
+} from "../../acessos/access-roles.ts";
 import { ABA, decideRecursos, passo, t } from "./pedacos.ts";
 import type { TrilhaDaAya } from "./tipos.ts";
 

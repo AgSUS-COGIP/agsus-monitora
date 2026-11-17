@@ -5,7 +5,7 @@ import { strFromU8, unzipSync } from "fflate";
 import {
   DSEIS_OFICIAIS,
   numeroDoDsei,
-} from "../src/lib/mapa-saude-indigena/dseis-oficiais.ts";
+} from "../src/lib/mapas/mapa-saude-indigena/dseis-oficiais.ts";
 
 /*
   COMPILA OS CONTORNOS DOS 34 DSEIs PARA O "MAPA DSEIs"
@@ -35,7 +35,7 @@ import {
 
   - lê o .shp/.dbf do zip (polígonos em graus, SIRGAS 2000 ≈ WGS 84);
   - casa o nome de cada polígono com os 34 de
-    `src/lib/mapa-saude-indigena/dseis-oficiais.ts` (o número 1–34 vem de
+    `src/lib/mapas/mapa-saude-indigena/dseis-oficiais.ts` (o número 1–34 vem de
     lá) e falha se faltar algum ou sobrar algum;
   - simplifica para a escala nacional (Douglas-Peucker, ~1 km) e descarta
     ilhotas menores que um pixel a zoom 5;

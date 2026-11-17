@@ -20,7 +20,7 @@ erros, nunca voltou ao front.
 
 ## Regras
 
-- Saúde Indígena: coordenada só do SIGEPSI (`src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts`);
+- Saúde Indígena: coordenada só do SIGEPSI (`src/lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts`);
   nada de reserva vinda do banco, de planilha ou de arquivo em `public/data/`. Corrigir um ponto é
   no SIGEPSI; o mapa não tem editor.
 - Projetos: coordenada no banco, corrigida pelo editor ou por correção de dados com ensaio.
