@@ -78,7 +78,8 @@ Indígena (`mapaDaVisaoGeral(area) === MAPA_DOS_DSEIS`). Lê o MESMO estado
   onde fica a bolha nacional, município e UF), os polos base, a ROTA (como polo), as CASAIs e as
   unidades de lotação. `TP_UNIDADE`: POLO BASE e ROTA → `polo`; CASAI → `casai`; SEDE → a sede;
   UNIDADE DE LOTAÇÃO → `unidade` (ou polo/CASAI, se o nome disser), desenhada pelo nome (UBSI ou
-  Unidade). UF dos pontos pelo CEP.
+  Unidade). UF dos pontos pelo CEP; sem CEP (39 de 568 em 17/11/2026, 22 no Yanomami), o ponto
+  não herda a UF da sede: o vínculo fica não classificado e a dica avisa.
 - **CASAIs nacionais.** São as localizações 131 (CASAI DF) e 132 (CASAI São Paulo)
   (`CODIGOS_DAS_CASAIS_NACIONAIS`); `casaisNacionaisDoSigepsi` as entrega como `casaisNacionais`
   (o losango do mapa nacional) e elas não viram DSEI.

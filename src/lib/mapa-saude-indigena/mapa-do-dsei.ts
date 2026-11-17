@@ -11,8 +11,8 @@ import type {
   Os pontos de um distrito são os do SIGEPSI, a fonte verdadeira: os `polos`
   que `aplicarLocalizacoes` (localizacoes-do-sigepsi.ts) põe em cada DSEI —
   polos base, CASAIs e unidades de lotação, na posição, no município e na UF
-  (pelo CEP) cadastrados lá. O CNES (`rede_cnes`) e a reconciliação com ele
-  saíram do mapa em 17/11/2026.
+  (pelo CEP) cadastrados lá. O CNES e a reconciliação com ele saíram do mapa
+  em 17/11/2026.
 
   Mais o vínculo territorial (UF do ponto × UFs do DSEI), os filtros por tipo,
   o resumo da dica e os dois enquadramentos (território / com vínculos
@@ -63,7 +63,9 @@ export function registrosDoDsei(dsei: DseiDoMapa): RegistroDoDsei[] {
           lat,
           lon,
           city: p.municipio || "",
-          uf: p.uf || dsei.sedeuf,
+          // Sem CEP, sem UF: não herda a da sede (esconderia o ponto de fora
+          // da área); o vínculo fica indeterminado.
+          uf: p.uf || "",
           type: tipoDoPonto(p.tipo, p.n),
           origens: ["sigepsi"],
         },
