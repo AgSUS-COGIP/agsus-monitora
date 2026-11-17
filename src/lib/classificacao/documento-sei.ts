@@ -484,6 +484,44 @@ export function textoDasNotasMinimas(regraBruta: unknown): string {
   return "____ (____) pontos";
 }
 
+/*
+  A conta da nota final, para quem lê o resultado (17/11/2026): sem ela, a nota
+  final abaixo da nota da análise curricular parecia perda de pontos (a
+  entrevista vai de 0 a 10; a análise, de 0 a 50). Sai da composição da regra
+  (o motor soma nota × peso, motor/etapas.ts): pesos iguais que somam 1 são a
+  média aritmética; pesos 1 são a soma; outros, a porcentagem de cada nota.
+  Com um componente só, não há conta a explicar ("").
+*/
+const NOTA_DO_COMPONENTE: Readonly<Record<string, string>> = Object.freeze({
+  DOCUMENTAL: "nota da análise curricular",
+  ENTREVISTA: "nota da entrevista",
+  ART: "nota da autodeclaração (ART)",
+});
+export function textoDaComposicao(regraBruta: unknown): string {
+  const r = normalizarRegra(regraBruta);
+  const componentes = r.composicao.componentes.filter(
+    (c) => NOTA_DO_COMPONENTE[c.codigo] && c.peso > 0,
+  );
+  if (componentes.length < 2) return "";
+  const juntar = (partes: string[]) =>
+    `${partes.slice(0, -1).join(", ")} e ${partes.at(-1)}`;
+  const nomes = componentes.map((c) => `da ${NOTA_DO_COMPONENTE[c.codigo]}`);
+  const pesos = componentes.map((c) => c.peso);
+  const iguais = pesos.every((p) => Math.abs(p - pesos[0]!) < 1e-9);
+  const soma = pesos.reduce((s, p) => s + p, 0);
+  if (iguais && Math.abs(soma - 1) < 1e-9)
+    return `A nota final é a média aritmética ${juntar(nomes)}.`;
+  if (iguais && Math.abs(pesos[0]! - 1) < 1e-9)
+    return `A nota final é a soma ${juntar(nomes)}.`;
+  const porcento = (p: number) =>
+    `${String(Math.round(p * 10000) / 100).replace(".", ",")}%`;
+  return `A nota final é a soma de ${juntar(
+    componentes.map(
+      (c) => `${porcento(c.peso)} ${`da ${NOTA_DO_COMPONENTE[c.codigo]}`}`,
+    ),
+  )}.`;
+}
+
 const MESES = [
   "janeiro",
   "fevereiro",
@@ -1103,6 +1141,15 @@ export function documentoOficial(
   const desempatePorVaga = blocos.some((b) =>
     b.tabelas.some((t) => t.notaDeDesempate),
   );
+  // A conta da nota final (textoDaComposicao), no resultado final com notas.
+  const composicao = textoDaComposicao(r);
+  if (
+    composicao &&
+    retrato.tipo === "FINAL" &&
+    listaEfetiva !== "eliminados" &&
+    !finais.some((i) => /a nota final é/i.test(semMarcas(i.texto)))
+  )
+    finais.push({ nivel: 2, texto: composicao });
   // O rodapé da regra (ex.: os critérios de desempate) vale para o resultado
   // final — menos a frase do desempate quando ela já está abaixo das vagas.
   if (

@@ -33,6 +33,10 @@ em andamento primeiro (`listar_editais_classificacao`,
   (`nota_documental`, `nota_entrevista`; 16/11/2026, no motor e no Python): a tela mostra as colunas
   Análise curricular, Entrevista e Nota final; o documento oferece "Nota da análise curricular" e
   "Nota da entrevista" para marcar em "Como fica no SEI"; a planilha XLSX traz as duas no fim.
+  O resultado final explica a conta no fim do documento (`textoDaComposicao`, documento-sei.ts,
+  17/11/2026), pela composição da regra: "A nota final é a média aritmética da nota da análise
+  curricular e da nota da entrevista" (pesos iguais que somam 1), a soma (pesos 1) ou a porcentagem
+  de cada nota; sem ela, a nota final abaixo da análise curricular parecia perda de pontos.
 - A lista `CONVOCACAO` gerada aqui é a única convocação para a entrevista: Conduzir entrevistas ›
   Preparar mostra a última gerada e registra para a ficha só quem está nela
   (`20261005150000_convocacao_unica_da_entrevista.sql`); o retrato guarda, por vaga, as vagas, a

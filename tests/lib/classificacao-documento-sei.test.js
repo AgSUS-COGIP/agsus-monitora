@@ -13,6 +13,7 @@ import {
   numeroComExtenso,
   numeroDoEdital,
   paginaDaPrevia,
+  textoDaComposicao,
   textoDasNotasMinimas,
   textoParaSei,
   trechos,
@@ -625,6 +626,7 @@ describe("resultado da entrevista e resultado final (83/2026)", () => {
     expect(doc.finais.map((i) => i.texto)).toEqual([
       "Os(as) candidatos(as) aprovados(as) dentro do quantitativo de vagas ofertadas para início imediato serão convocados(as) para a realização dos exames médicos admissionais, seguindo rigorosamente a ordem de classificação.",
       "Os(as) candidatos(as) integrantes do cadastro de reserva poderão ser convocados(as) à medida que surgirem novas vagas, observados o prazo de validade do processo seletivo e as necessidades operacionais do DSEI Xingu.",
+      "A nota final é a soma da nota da análise curricular e da nota da entrevista.",
       "Os critérios de desempate foram considerados conforme item 10.4 do edital.",
     ]);
   });
@@ -684,6 +686,7 @@ describe("textos do edital (regra.documento)", () => {
     );
     expect(doc.finais.map((i) => i.texto)).toEqual([
       "Único item final.",
+      "A nota final é a soma da nota da análise curricular e da nota da entrevista.",
       "Os critérios de desempate foram considerados conforme item 10.4 do edital.",
     ]);
   });
@@ -891,5 +894,57 @@ describe("prévia (Como fica no SEI)", () => {
     expect(paginaDaPrevia(doc, { logo: 'javascript:alert(1)"' })).not.toContain(
       "<img",
     );
+  });
+});
+
+describe("a conta da nota final no resultado final", () => {
+  const comPesos = (pesos) =>
+    normalizarRegra({
+      composicao: {
+        componentes: pesos.map(([codigo, peso]) => ({ codigo, peso })),
+        casas: 2,
+      },
+    });
+
+  it("sai da composição da regra: média, soma ou porcentagem de cada nota", () => {
+    expect(
+      textoDaComposicao(
+        comPesos([
+          ["DOCUMENTAL", 0.5],
+          ["ENTREVISTA", 0.5],
+        ]),
+      ),
+    ).toBe(
+      "A nota final é a média aritmética da nota da análise curricular e da nota da entrevista.",
+    );
+    expect(
+      textoDaComposicao(
+        comPesos([
+          ["DOCUMENTAL", 1],
+          ["ENTREVISTA", 1],
+        ]),
+      ),
+    ).toBe(
+      "A nota final é a soma da nota da análise curricular e da nota da entrevista.",
+    );
+    expect(
+      textoDaComposicao(
+        comPesos([
+          ["DOCUMENTAL", 0.6],
+          ["ENTREVISTA", 0.4],
+        ]),
+      ),
+    ).toBe(
+      "A nota final é a soma de 60% da nota da análise curricular e 40% da nota da entrevista.",
+    );
+    expect(
+      textoDaComposicao(
+        comPesos([
+          ["DOCUMENTAL", 1],
+          ["ENTREVISTA", 0],
+        ]),
+      ),
+    ).toBe("");
+    expect(textoDaComposicao(comPesos([["DOCUMENTAL", 1]]))).toBe("");
   });
 });
