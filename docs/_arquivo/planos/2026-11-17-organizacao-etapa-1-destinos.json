@@ -1,0 +1,359 @@
+{
+  "observacao": "Destino de cada arquivo solto de src/lib/ (sem extensão; todos são .ts). Conferido pelo grafo de imports na Tarefa 1; trocas registradas no fim do plano.",
+  "ficam_na_raiz": [
+    "rpc-contrato",
+    "CLAUDE.md"
+  ],
+  "pastas_que_mudam": {
+    "aya-tours": "aya/tours",
+    "mapa-saude-indigena": "mapas/mapa-saude-indigena",
+    "terras-indigenas": "mapas/terras-indigenas",
+    "parecer-em-blocos": "recursos/parecer-em-blocos"
+  },
+  "pastas_que_ficam": [
+    "avaliacao-documental",
+    "classificacao",
+    "triagem"
+  ],
+  "lotes": {
+    "tecnicas": [
+      "sessao",
+      "seguranca",
+      "entrada",
+      "navegacao",
+      "carga",
+      "base"
+    ],
+    "telas-a-e": [
+      "acessos",
+      "analises",
+      "aprovados",
+      "aprovados/carta-de-convocacao",
+      "aprovados/exportacao",
+      "automacao",
+      "aya",
+      "comemoracao",
+      "conferencias",
+      "configuracoes",
+      "cronograma",
+      "editais",
+      "encerramento-do-edital",
+      "entrevistas"
+    ],
+    "telas-m-v": [
+      "mapas",
+      "paineis",
+      "recursos",
+      "regras-do-edital",
+      "resumo-do-dia",
+      "selecao",
+      "visao-geral"
+    ]
+  },
+  "destinos": {
+    "sessao": [
+      "auth-flow",
+      "copia-da-sessao",
+      "env",
+      "estado-de-saida",
+      "identidade-da-aba",
+      "novas-tentativas",
+      "online-presence",
+      "perfil-sem-rede",
+      "sessao",
+      "sessao-sem-rede",
+      "session-lifecycle",
+      "supabaseClient"
+    ],
+    "seguranca": [
+      "csp-report-monitor",
+      "csv-security",
+      "html-security",
+      "origem-da-requisicao",
+      "sanitize"
+    ],
+    "entrada": [
+      "access-background-storage",
+      "access-branding-cache",
+      "access-branding-publico",
+      "access-branding",
+      "boas-vindas",
+      "esqueleto-da-entrada",
+      "loading-copy"
+    ],
+    "navegacao": [
+      "arvore-dos-modulos",
+      "busca-global",
+      "eventos-da-barra-lateral",
+      "link-interno",
+      "marca-da-barra-lateral",
+      "menu-lateral",
+      "modulos-e-abas",
+      "navegacao",
+      "pagina-desligada",
+      "platform-context",
+      "rotas",
+      "situacao-dos-modulos",
+      "telas-com-linhas"
+    ],
+    "carga": [
+      "background-resource-lifecycle",
+      "cache-de-payload",
+      "cache-do-service-worker",
+      "carga-continua",
+      "carga-de-telas",
+      "falha-de-rede",
+      "frontend-performance-monitor",
+      "importar-com-recarga",
+      "rotulo-da-copia",
+      "validade-das-copias",
+      "versao-do-pacote"
+    ],
+    "base": [
+      "aviso-global",
+      "cabecalho-dos-documentos",
+      "chartjs-global",
+      "conflito-de-versao",
+      "contraste",
+      "erro-amigavel",
+      "erro-na-tela",
+      "formatters",
+      "mapa-de-icones-lucide",
+      "nome-da-versao",
+      "novidades",
+      "planilhas",
+      "versao-do-sistema"
+    ],
+    "acessos": [
+      "access-roles",
+      "acesso-liberado",
+      "contas-desativadas",
+      "convite-de-acesso",
+      "grupos-e-coordenacoes",
+      "matriz-de-acessos",
+      "permissoes-recursos",
+      "solicitacao-de-acesso",
+      "teto-de-acessos",
+      "tipos-dos-acessos",
+      "ver-como"
+    ],
+    "analises": [
+      "analises-curriculares",
+      "area-do-painel-de-analises",
+      "cache-do-painel-de-analises",
+      "data-de-analise",
+      "espelho-do-painel-de-analises",
+      "lista-do-painel-de-analises",
+      "modalidades-de-concorrencia",
+      "ritmo-da-analise",
+      "status-da-analise",
+      "textos-do-painel-de-analises"
+    ],
+    "aprovados": [
+      "anexos-do-candidato",
+      "aprovados-e-cronograma-da-api",
+      "aprovados-import",
+      "candidatos-aprovados-compactos",
+      "casamento-da-lista",
+      "dados-da-publicacao-de-aprovados",
+      "dados-do-estado-de-aprovados",
+      "dados-do-historico-de-publicacoes",
+      "lista-aprovados-rules",
+      "lista-convocacao-rules",
+      "localidade-da-vaga",
+      "ordem-dos-aprovados",
+      "pendencias-do-edital",
+      "publicacao-de-aprovados",
+      "status-em-lote-dos-aprovados",
+      "tipos-da-importacao-de-aprovados",
+      "tipos-da-lista-de-convocacao",
+      "tipos-da-publicacao-de-aprovados",
+      "tipos-das-regras-de-aprovados",
+      "tipos-do-estado-de-aprovados"
+    ],
+    "aprovados/carta-de-convocacao": [
+      "carta-de-convocacao-documento",
+      "carta-de-convocacao",
+      "configuracao-de-convocacao",
+      "dados-da-carta",
+      "dados-da-configuracao-de-convocacao",
+      "modelo-de-convocacao",
+      "tipos-da-carta",
+      "tipos-da-configuracao-de-convocacao"
+    ],
+    "aprovados/exportacao": [
+      "exportacao-da-lista-de-aprovados-em-pdf",
+      "exportacao-da-lista-de-aprovados",
+      "exportacao-do-resumo-por-cargo-em-pdf",
+      "exportacao-do-resumo-por-cargo",
+      "resumo-por-cargo-e-status"
+    ],
+    "automacao": [
+      "agenda-do-cron",
+      "catalogo-dos-robos",
+      "chaves-da-automacao",
+      "painel-dos-robos",
+      "robos-de-carga",
+      "saude-das-cargas"
+    ],
+    "aya": [
+      "aya-paginas",
+      "aya-tours",
+      "borda-da-aya",
+      "busca-da-aya",
+      "chamado-da-aya",
+      "contexto-da-aya",
+      "conversa-da-aya",
+      "dados-da-aya",
+      "estado-da-aya",
+      "filtro-da-aya",
+      "intencoes-da-aya",
+      "perguntas-sem-resposta",
+      "permissoes-da-aya",
+      "termos-da-aya"
+    ],
+    "comemoracao": [
+      "catalogo-de-comemoracoes",
+      "comemoracao",
+      "efeitos-das-comemoracoes",
+      "exemplos-das-comemoracoes",
+      "fogos-cena",
+      "fogos-fisica",
+      "fogos-formas",
+      "fogos-paleta",
+      "fogos-parametros",
+      "fogos-roteiro",
+      "fogos-show",
+      "fogos-tipos",
+      "fogos",
+      "motor-de-efeitos",
+      "particulas-do-motor",
+      "preferencia-de-comemoracoes"
+    ],
+    "conferencias": [
+      "avisos-de-conferencia",
+      "texto-da-conferencia"
+    ],
+    "configuracoes": [
+      "apresentacao-das-configuracoes",
+      "config-validation",
+      "paineis-externos-das-configuracoes",
+      "publicacao-de-configuracoes"
+    ],
+    "cronograma": [
+      "calendario-editais",
+      "cronograma-do-edital",
+      "datas-do-cronograma",
+      "demandas-internas",
+      "retificacao-do-cronograma"
+    ],
+    "editais": [
+      "anexos-do-edital",
+      "aprovados-por-edital",
+      "ciclo-do-edital",
+      "editais-da-api",
+      "editais-das-linhas",
+      "editais-do-nucleo",
+      "edital-de-treinamento",
+      "etapas-de-edital",
+      "funil-do-edital",
+      "numero-do-edital",
+      "ordem-dos-editais",
+      "rascunho-do-edital",
+      "responsavel-do-edital",
+      "validade-do-edital"
+    ],
+    "encerramento-do-edital": [
+      "encerramento-do-edital"
+    ],
+    "entrevistas": [
+      "agenda-das-entrevistas",
+      "conducao-de-entrevista",
+      "conducao-para-o-campo",
+      "convocacao-da-entrevista",
+      "dados-da-agenda",
+      "dados-da-conducao",
+      "digitacao-de-notas",
+      "entrevista-vigente",
+      "entrevistas-da-planilha",
+      "entrevistas-do-painel",
+      "fila-de-conducao",
+      "painel-de-entrevistas",
+      "parecer-da-entrevista",
+      "passos-do-preparar",
+      "pendencias-do-roteiro",
+      "reabertura-da-entrevista",
+      "resumo-da-entrevista",
+      "roteiro-de-entrevista",
+      "tipos-da-agenda",
+      "tipos-da-convocacao-da-entrevista",
+      "tipos-do-roteiro-de-entrevista"
+    ],
+    "mapas": [
+      "brasil-bounds",
+      "coordenadas-dos-municipios",
+      "coordenadas-dos-projetos",
+      "dica-dentro-do-mapa",
+      "editor-de-coordenadas",
+      "enquadramento-do-brasil",
+      "fabrica-do-leaflet",
+      "filtros-do-mapa",
+      "leque-de-marcadores",
+      "mapa-recolhido",
+      "mapa-render",
+      "recuo-de-azulejo",
+      "respostas-do-editor-de-coordenadas",
+      "tipos-do-editor-de-coordenadas",
+      "tipos-do-mapa",
+      "uf-ibge"
+    ],
+    "paineis": [
+      "carregamento-do-painel",
+      "endereco-do-painel",
+      "fontes-dos-paineis",
+      "pagina-do-painel",
+      "relatorios-dos-paineis",
+      "tema-do-painel"
+    ],
+    "recursos": [
+      "anexos-do-recurso",
+      "dados-dos-recursos",
+      "documento-da-resposta",
+      "modelos-de-resposta",
+      "parecer-do-recurso",
+      "parecer-em-blocos",
+      "prazo-do-recurso",
+      "recursos-dos-candidatos",
+      "resposta-do-recurso",
+      "tipos-da-resposta-do-recurso",
+      "tipos-dos-recursos"
+    ],
+    "regras-do-edital": [
+      "rascunho-da-regra",
+      "regras-do-edital-resumos",
+      "regras-do-edital"
+    ],
+    "resumo-do-dia": [
+      "resumo-do-dia"
+    ],
+    "selecao": [
+      "rotulo-em-linhas",
+      "selecao-da-planilha",
+      "selecao-do-painel"
+    ],
+    "visao-geral": [
+      "atalhos-de-filtro",
+      "criticos-da-visao-geral",
+      "fases-do-processo",
+      "indicadores-do-monitoramento",
+      "linhas-do-monitoramento",
+      "relatorio-da-diretoria",
+      "relatorio-da-visao-geral",
+      "relatorio-da-visao-geral-em-pdf",
+      "vagas-reabertas",
+      "visao-geral",
+      "visao-geral-da-area"
+    ]
+  },
+  "duvidas": []
+}
