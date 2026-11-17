@@ -7,58 +7,37 @@
 
 import { mensagemDaComemoracao } from "./acesso-liberado.ts";
 import {
-  agradecimentoDoMarco,
-  letreiroDoMarcoDoAno,
   mensagemDaFilaZerada,
   mensagemDaVagaPronta,
   mensagemDoEditalConcluido,
-  mensagemDoFimDoTour,
+  mensagemDoMarcoDoAno,
 } from "./comemoracao.ts";
-import { tituloDeQuemFechou } from "./encerramento-do-edital.ts";
-import { TEXTO_DA_META_BATIDA } from "./ritmo-da-analise.ts";
+import { mensagemDeQuemFechou } from "./encerramento-do-edital.ts";
 
 const AREA = "Saúde Indígena";
-const EDITAL = "12/2026";
-const MARCO = 1000;
+const EDITAL = "114/2026";
 
-export interface ExemploDoMarco {
-  texto: string;
-  /** O letreiro do exemplo, quando o marco calcula o seu (marco do ano). */
-  letreiro?: string;
-}
-
-const EXEMPLOS: Readonly<Record<string, () => ExemploDoMarco>> = {
-  "edital-concluido": () => ({
-    texto: mensagemDoEditalConcluido({ edital: EDITAL, unidade: "DSEI Xingu" }),
-  }),
-  "edital-fechado": () => ({
-    texto: `Você ${tituloDeQuemFechou(EDITAL)}! A última ficha do edital foi sua.`,
-  }),
-  "fila-zerada": () => ({ texto: mensagemDaFilaZerada(AREA) }),
-  "meta-do-dia": () => ({ texto: TEXTO_DA_META_BATIDA }),
-  "vaga-pronta": () => ({
-    texto: mensagemDaVagaPronta({ vaga: "V10", cargo: "Enfermeiro" }),
-  }),
-  "marco-do-ano": () => ({
-    texto: agradecimentoDoMarco({
+const EXEMPLOS: Readonly<Record<string, () => string>> = {
+  "edital-concluido": () =>
+    mensagemDoEditalConcluido({
+      edital: EDITAL,
+      unidade: "Rio de Janeiro",
+      total: 1512,
+    }),
+  "edital-fechado": () => mensagemDeQuemFechou(EDITAL),
+  "fila-zerada": () => mensagemDaFilaZerada("SEDE"),
+  "vaga-pronta": () =>
+    mensagemDaVagaPronta({ vaga: "179698", cargo: "Químico" }),
+  "marco-do-ano": () =>
+    mensagemDoMarcoDoAno({
       nomeDaArea: AREA,
-      marco: MARCO,
+      marco: 7500,
       ano: new Date().getFullYear(),
     }),
-    letreiro: letreiroDoMarcoDoAno(MARCO),
-  }),
-  "acesso-liberado": () => ({
-    texto: mensagemDaComemoracao("liberado", "Ana Souza"),
-  }),
-  "fim-do-tour": () => ({
-    texto: mensagemDoFimDoTour({ trilha: false, nome: "Editais" }),
-  }),
-  "fim-da-trilha": () => ({
-    texto: mensagemDoFimDoTour({ trilha: true, nome: "Primeiros passos" }),
-  }),
+  "acesso-liberado": () => mensagemDaComemoracao("liberado", "Ana Souza"),
 };
 
-/** O exemplo do marco do catálogo; sem exemplo, o próprio rótulo. */
-export function exemploDoMarco(id: string, rotulo: string): ExemploDoMarco {
-  return EXEMPLOS[id]?.() ?? { texto: rotulo };
+/** A frase de exemplo do marco do catálogo; sem exemplo, o próprio rótulo. */
+export function exemploDoMarco(id: string, rotulo: string): string {
+  return EXEMPLOS[id]?.() ?? rotulo;
 }

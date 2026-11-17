@@ -140,7 +140,7 @@ describe("fogos da tela", () => {
     expect(fogosDoEncerramento(definido(comum), new Set())).toEqual({
       marco: "edital-concluido",
       forma: "coracao",
-      texto: "Edital 114/2026 concluído! Obrigado, equipe.",
+      texto: "Edital 114/2026 concluído.",
     });
   });
 
@@ -160,7 +160,7 @@ describe("fogos da tela", () => {
     ).toEqual({
       marco: "edital-fechado",
       forma: "estrela",
-      texto: "Você fechou o 114! A última ficha do edital foi sua.",
+      texto: "Você concluiu a última ficha do edital 114/2026.",
     });
   });
 

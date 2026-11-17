@@ -4,7 +4,6 @@ import {
   agoraEmBrasilia,
   calcularRitmo,
   destaquesDoDia,
-  metaDaEquipeBatida,
   MINIMO_DO_SELO,
   diasUteisAtePrazo,
   diaUtilDepois,
@@ -653,14 +652,12 @@ describe("destaques de hoje: medalhas e selo Precisão", () => {
     ).toEqual([]);
   });
 
-  it("meta da equipe batida: o edital cujo selo do dia é 'batida'", () => {
+  it("meta da equipe batida: o selo do dia é 'batida'", () => {
     const agora = { hoje: "2026-10-19", hora: 15 };
     const batida = calcularRitmo(
       edital({ porDia: [{ dia: "2026-10-19", qt: 400 }] }),
       agora,
     );
     expect(batida.dia.situacao).toBe("batida");
-    expect(metaDaEquipeBatida([batida])).toBe(batida);
-    expect(metaDaEquipeBatida([calcularRitmo(edital(), agora)])).toBeNull();
   });
 });

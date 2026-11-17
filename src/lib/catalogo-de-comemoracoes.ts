@@ -1,9 +1,14 @@
 /*
   Catálogo e configuração das comemorações, sem DOM.
 
-  - CATALOGO_DE_MARCOS: os marcos que o MONITORA já comemora (onde nascem
-    está em `onde`); cada um com as opções padrão, que reproduzem o
-    comportamento de antes da configuração.
+  - CATALOGO_DE_MARCOS: as ocasiões que o Yeendé comemora (onde nascem
+    está em `onde`), cada uma com as opções padrão. Só quatro têm efeito
+    (fogos, estrelas…): edital 100% analisado, quem fechou a última ficha,
+    marco do ano e acesso liberado. Fila zerada e vaga pronta são só o
+    aviso (`soAviso`), como os marcos personalizados.
+  - No máximo UMA comemoração com efeito por pessoa por dia (dia de
+    Brasília, guardado neste navegador): as seguintes saem só como aviso
+    (`reservarEfeitoDoDia`). O Testar e o Palco de testes não contam.
   - A configuração publicada fica em TB_CONFIGURACAO, chave
     `comemoracoes_marcos` (CHAVE_DAS_COMEMORACOES), publicada com motivo e
     histórico pela barra fixa de Configurações (mesma publicação das outras
@@ -61,16 +66,10 @@ export interface MarcoDoCatalogo {
   onde: string;
   /** A forma no céu (no Testar; o marco de verdade passa a dele). */
   forma: FormaDoMarco;
-  /**
-   * O texto escrito no céu no grande final dos fogos (Normal e Festa), até
-   * 14 caracteres; null, nenhum (no Festa, LETREIRO_DA_FESTA).
-   */
-  letreiro: string | null;
+  /** Só o aviso, sem efeito: na configuração, só ligado e mensagem. */
+  soAviso: boolean;
   padrao: OpcoesDoMarco;
 }
-
-/* O letreiro do Festa quando o marco não tem um. */
-export const LETREIRO_DA_FESTA = "Parabéns!";
 
 export interface MarcoPersonalizado extends OpcoesDoMarco {
   id: string;
@@ -131,8 +130,8 @@ export const CATALOGO_DE_MARCOS: readonly MarcoDoCatalogo[] = Object.freeze([
     grupo: "Análises",
     onde: "src/modulos/analises/marcos.ts",
     forma: "coracao",
-    letreiro: "100%!",
-    padrao: opcoes("fogos", "normal"),
+    soAviso: false,
+    padrao: opcoes("fogos", "festa"),
   },
   {
     id: "edital-fechado",
@@ -140,35 +139,26 @@ export const CATALOGO_DE_MARCOS: readonly MarcoDoCatalogo[] = Object.freeze([
     grupo: "Análises",
     onde: "src/lib/encerramento-do-edital.ts",
     forma: "estrela",
-    letreiro: "Fechou!",
-    padrao: opcoes("estrelas", "festa"),
+    soAviso: false,
+    padrao: opcoes("estrelas", "suave"),
   },
   {
     id: "fila-zerada",
     rotulo: "Fila de análises zerada",
     grupo: "Análises",
     onde: "src/modulos/analises/marcos.ts",
-    forma: "estrela",
-    letreiro: "Fila zerada!",
-    padrao: opcoes("fogos", "normal"),
-  },
-  {
-    id: "meta-do-dia",
-    rotulo: "Meta de hoje batida pela equipe (Ritmo da análise)",
-    grupo: "Análises",
-    onde: "src/modulos/analises/marcos.ts",
-    forma: "estrela",
-    letreiro: "Meta batida!",
+    forma: null,
+    soAviso: true,
     padrao: opcoes("fogos", "normal"),
   },
   {
     id: "vaga-pronta",
-    rotulo: "Vaga pronta para o resultado final",
+    rotulo: "Vaga pronta para a Classificação",
     grupo: "Entrevistas",
     onde: "src/modulos/entrevistas/marcos.ts",
     forma: null,
-    letreiro: "Vaga pronta!",
-    padrao: opcoes("fogos", "suave"),
+    soAviso: true,
+    padrao: opcoes("fogos", "normal"),
   },
   {
     id: "marco-do-ano",
@@ -176,8 +166,8 @@ export const CATALOGO_DE_MARCOS: readonly MarcoDoCatalogo[] = Object.freeze([
     grupo: "Visão geral",
     onde: "src/modulos/visao-geral/boas-vindas.tsx",
     forma: { tipo: "numero", texto: "1.000" },
-    letreiro: null,
-    padrao: opcoes("fogos", "festa"),
+    soAviso: false,
+    padrao: opcoes("fogos", "normal"),
   },
   {
     id: "acesso-liberado",
@@ -185,26 +175,8 @@ export const CATALOGO_DE_MARCOS: readonly MarcoDoCatalogo[] = Object.freeze([
     grupo: "Acesso",
     onde: "src/modules/comemoracao-do-acesso.ts",
     forma: "check",
-    letreiro: "Boas-vindas!",
-    padrao: opcoes("fogos", "normal"),
-  },
-  {
-    id: "fim-do-tour",
-    rotulo: "Tour da Aya concluído",
-    grupo: "Aya",
-    onde: "src/modulos/aya/aya.tsx",
-    forma: null,
-    letreiro: "Tudo pronto",
-    padrao: opcoes("fogos", "normal"),
-  },
-  {
-    id: "fim-da-trilha",
-    rotulo: "Trilha da Aya concluída",
-    grupo: "Aya",
-    onde: "src/modulos/aya/aya.tsx",
-    forma: "estrela",
-    letreiro: "Concluída",
-    padrao: opcoes("fogos", "festa"),
+    soAviso: false,
+    padrao: opcoes("fogos", "suave"),
   },
 ]);
 
@@ -212,23 +184,11 @@ const marcoDoCatalogo = (id: string) =>
   CATALOGO_DE_MARCOS.find((m) => m.id === id);
 
 /**
- * O letreiro de uma comemoração: o pedido (se veio; vazio, nenhum), o do
- * marco do catálogo ou, no Festa, LETREIRO_DA_FESTA. Sem nenhum, null.
+ * Só o aviso, sem efeito: os marcos do catálogo marcados `soAviso` e todo
+ * marco personalizado (ou id que o catálogo não conhece).
  */
-export function letreiroDaComemoracao({
-  marco = "",
-  letreiro,
-  intensidade,
-}: {
-  marco?: string;
-  letreiro?: string | null;
-  intensidade?: string | null;
-}): string | null {
-  if (typeof letreiro === "string") return letreiro.trim() || null;
-  const doMarco = marco ? marcoDoCatalogo(marco)?.letreiro : null;
-  if (doMarco) return doMarco;
-  return intensidade === "festa" ? LETREIRO_DA_FESTA : null;
-}
+export const marcoSoComAviso = (id: string): boolean =>
+  marcoDoCatalogo(id)?.soAviso ?? true;
 
 // ── Normalização ────────────────────────────────────────────────────────────
 
@@ -278,13 +238,18 @@ export function duracaoSAoDigitar(valor: unknown): number | null | undefined {
   return normalizarDuracaoS(numero);
 }
 
-/** As opções de um marco a partir do bruto, completando com o padrão. */
+/**
+ * As opções de um marco a partir do bruto, completando com o padrão. Marco
+ * só de aviso: efeito, intensidade, duração e som ficam no padrão (o que a
+ * configuração antiga tinha deles não vale mais).
+ */
 export function normalizarOpcoes(
   bruto: unknown,
   padrao: OpcoesDoMarco,
+  soAviso = false,
 ): OpcoesDoMarco {
   const o = objeto(bruto);
-  return {
+  const lidas: OpcoesDoMarco = {
     ligado: typeof o.ligado === "boolean" ? o.ligado : padrao.ligado,
     efeito: ehEfeito(o.efeito) ? o.efeito : padrao.efeito,
     intensidade: ehIntensidade(o.intensidade)
@@ -299,6 +264,9 @@ export function normalizarOpcoes(
         : padrao.mensagem,
     publico: ehPublico(o.publico) ? o.publico : padrao.publico,
   };
+  if (!soAviso) return lidas;
+  const { efeito, intensidade, duracaoS, som } = padrao;
+  return { ...lidas, efeito, intensidade, duracaoS, som };
 }
 
 export const PADRAO_DO_PERSONALIZADO: OpcoesDoMarco = opcoes(
@@ -322,7 +290,7 @@ function normalizarPersonalizado(
   if (!ehTipo(o.tipo)) return null;
   const id = texto(o.id).replace(/[^a-z0-9-]/gi, "") || `pessoal-${indice + 1}`;
   return {
-    ...normalizarOpcoes(o, PADRAO_DO_PERSONALIZADO),
+    ...normalizarOpcoes(o, PADRAO_DO_PERSONALIZADO, true),
     id: id.startsWith("pessoal-") ? id : `pessoal-${id}`,
     nome: texto(o.nome).slice(0, 80),
     tipo: o.tipo,
@@ -333,7 +301,8 @@ function normalizarPersonalizado(
 
 /**
  * A configuração a partir do valor publicado (texto JSON, objeto ou vazio).
- * Nunca lança: JSON quebrado ou campos desconhecidos viram o padrão.
+ * Nunca lança: JSON quebrado ou campos desconhecidos viram o padrão; marco
+ * que saiu do catálogo (meta do dia, fim do tour ou da trilha) é ignorado.
  */
 export function normalizarConfiguracao(
   bruto: unknown,
@@ -351,7 +320,7 @@ export function normalizarConfiguracao(
   const marcos = Object.fromEntries(
     CATALOGO_DE_MARCOS.map((m) => [
       m.id,
-      normalizarOpcoes(marcosBrutos[m.id], m.padrao),
+      normalizarOpcoes(marcosBrutos[m.id], m.padrao, m.soAviso),
     ]),
   );
   const vistos = new Set<string>();
@@ -609,13 +578,46 @@ export function personalizadosAlcancados(
   });
 }
 
+/** O maior dos personalizados alcançados (a maior meta), ou null. */
+export const maiorPersonalizado = (
+  alcancados: readonly MarcoPersonalizado[],
+): MarcoPersonalizado | null =>
+  alcancados.reduce<MarcoPersonalizado | null>(
+    (maior, p) => (!maior || p.meta > maior.meta ? p : maior),
+    null,
+  );
+
 /** A frase do personalizado: a mensagem escrita ou a padrão. */
 export function mensagemDoPersonalizado(p: MarcoPersonalizado): string {
   if (p.mensagem) return p.mensagem;
   const meta = p.meta.toLocaleString("pt-BR");
   return p.tipo === "edital-contratados"
-    ? `Edital ${p.edital} chegou a ${meta} contratados!`
-    : `A equipe passou de ${meta} análises concluídas hoje!`;
+    ? `Edital ${p.edital}: ${meta} contratados.`
+    : `${meta} análises concluídas hoje.`;
+}
+
+// ── Uma comemoração com efeito por dia ──────────────────────────────────────
+
+export const CHAVE_DO_EFEITO_DO_DIA = "agsus_monitora_comemoracao_com_efeito";
+
+/**
+ * Reserva o efeito de hoje (`hoje` em AAAA-MM-DD, dia de Brasília): devolve
+ * true e guarda o dia se ainda não houve comemoração com efeito hoje neste
+ * navegador; false se já houve (a próxima sai só como aviso). Sem
+ * armazenamento (janela privada, bloqueado) não há como contar: libera.
+ */
+export function reservarEfeitoDoDia(
+  armazenamento: Pick<Storage, "getItem" | "setItem"> | null | undefined,
+  hoje: string,
+): boolean {
+  try {
+    if (!armazenamento) return true;
+    if (armazenamento.getItem(CHAVE_DO_EFEITO_DO_DIA) === hoje) return false;
+    armazenamento.setItem(CHAVE_DO_EFEITO_DO_DIA, hoje);
+    return true;
+  } catch {
+    return true;
+  }
 }
 
 // ── Revisão da publicação ───────────────────────────────────────────────────

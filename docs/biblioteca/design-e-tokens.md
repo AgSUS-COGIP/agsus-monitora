@@ -1,7 +1,7 @@
 ---
 tipo: regra
 area: front
-atualizado: 2026-11-12
+atualizado: 2026-11-17
 ---
 
 # Design e tokens
@@ -59,7 +59,7 @@ contam; a cor só conta em valor de declaração (seletor `#abc` não), e `borde
   `node scripts/check-acabamento-so-encolhe.mjs --atualizar --aceitar-subida="<motivo>"`, e o
   motivo vai na mensagem do commit.
 - **Exceção da comemoração:** `src/styles/comemoracao.css` é uma coreografia deliberada (entrada
-  com mola, selo, letreiro, brilho), fora da norma 7.1 ("sem movimento decorativo"): durações e
+  com mola, selo que pula, véu), fora da norma 7.1 ("sem movimento decorativo"): durações e
   curvas próprias, com `permitido(curva)` por animação e a justificativa em um comentário de bloco
   no topo do arquivo. `prefers-reduced-motion` a desliga.
 

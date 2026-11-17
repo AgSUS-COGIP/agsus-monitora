@@ -32,7 +32,8 @@ própria têm nota sua ([[modulo-acessos]], [[robos-e-agenda]], [[modulo-paineis
 O desenho, os marcos e as regras de quando comemorar estão em [[modulo-comemoracao]]. Aqui fica a
 seção que configura: `comemoracoes.tsx` (catálogo de marcos, personalizados, preferência pessoal) e
 `palco-de-testes.tsx` (efeito, intensidade, duração e som escolhidos na hora, sem gravar), sobre
-`src/lib/catalogo-de-comemoracoes.ts`.
+`src/lib/catalogo-de-comemoracoes.ts`. A frase fica só no aviso; fila zerada, vaga pronta e
+os personalizados são só o aviso (sem efeito, intensidade, duração nem som).
 
 - **Persistência.** Chave `comemoracoes_marcos` de `TB_CONFIGURACAO`, publicada pela barra fixa
   (`salvar_configuracoes_e_paineis_v2`, com motivo e `TH_CONFIGURACAO`; restaurar versão volta os
@@ -44,12 +45,15 @@ seção que configura: `comemoracoes.tsx` (catálogo de marcos, personalizados, 
 - **Quem vê.** Só quem fez (quem vê a transição no próprio navegador). "Toda a área online" fica
   desabilitado: a presença é uma batida a cada 45 s, sem canal por área. Próximo passo: canal
   Supabase Realtime por área (broadcast `comemoracao` com `{ marco, texto }`).
-- **Preferência pessoal**: `agsus_monitora_comemoracoes_desligadas` = `"1"`
-  (`CHAVE_COMEMORACOES_PESSOAIS` em `src/lib/preferencia-de-comemoracoes.ts`, a mesma da mascote).
+- **Respeita** `prefers-reduced-motion` (só o aviso), o liga/desliga geral (Módulos e abas
+  › Sistema inteiro) e a preferência pessoal (`agsus_monitora_comemoracoes_desligadas` = `"1"`,
+  `CHAVE_COMEMORACOES_PESSOAIS` em `src/lib/preferencia-de-comemoracoes.ts`, a mesma da mascote).
   "Testar" e o palco passam `teste: true`: ignoram configuração e preferência e não gravam.
-- **Marcos personalizados** (`src/app/marcos-personalizados.ts`): "Edital X chegou a N contratados"
-  (soma de `contratados` das linhas do monitoramento, a cada carga/Realtime) e "a área passou de N
-  análises concluídas no dia" (linhas de Análises).
+- **Marcos personalizados.** "Edital X chegou a N contratados" (soma de `contratados` das linhas do
+  monitoramento, a cada carga/Realtime) e "a área passou de N análises concluídas no dia" (linhas de
+  Análises). Linha de base em silêncio, comemora a transição, uma vez por pessoa e navegador. Só o
+  aviso; vários alcançados na mesma leitura, só o maior. Frases: "Edital X: N contratados." e
+  "N análises concluídas hoje." (a mensagem própria tem prioridade).
 - **Aya comemorando** (e o Combinado) não desenha a arara: avisa a mascote pelo evento
   `aya:estado` na janela (`EVENTO_DA_AYA`, em `src/modulos/comemoracao/comemoracoes.tsx`), com
   `detail` `{ estado: "comemorando", duracaoMs }` no começo e `{ estado: "parada" }` no fim. Sem

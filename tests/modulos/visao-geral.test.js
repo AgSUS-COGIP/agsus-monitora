@@ -919,7 +919,33 @@ describe("boas-vindas e marcos do ano", () => {
     expect(secao.querySelector(".boas-vindas")).toBeNull();
   });
 
-  it("marco novo da equipe aparece uma vez (comemorações ligadas)", async () => {
+  it("primeira leitura em silêncio: o marco já alcançado não é anunciado", async () => {
+    const supabase = {
+      rpc: vi.fn(async () => ({
+        data: { ano: 2026, concluidas_no_ano: 7600 },
+        error: null,
+      })),
+    };
+    await montar({ comPerfil: true, supabase, comemoracoes: true });
+    await esperar();
+    expect(supabase.rpc).toHaveBeenCalledWith("obter_marcos_da_area", {
+      p_area: "saude-indigena",
+    });
+    expect(
+      JSON.parse(
+        localStorage.getItem("agsus_monitora_marco:ano:u1:saude-indigena"),
+      ),
+    ).toEqual({ ano: 2026, marco: 7500 });
+    await new Promise((resolver) => setTimeout(resolver, 20));
+    expect(document.querySelector(".comemoracao")).toBeNull();
+    expect(secao.querySelector(".marcos-do-ano")).toBeNull();
+  });
+
+  it("marco novo da equipe: só o aviso com os fogos, uma vez, sem card na tela", async () => {
+    localStorage.setItem(
+      "agsus_monitora_marco:ano:u1:saude-indigena",
+      JSON.stringify({ ano: 2026, marco: 5000 }),
+    );
     const supabase = {
       rpc: vi.fn(async () => ({
         data: { ano: 2026, concluidas_no_ano: 7600 },
@@ -936,23 +962,18 @@ describe("boas-vindas e marcos do ano", () => {
     expect(supabase.rpc).toHaveBeenCalledWith("obter_marcos_da_area", {
       p_area: "saude-indigena",
     });
-    const marco = secao.querySelector(".marcos-do-ano");
-    expect(marco.textContent).toContain(
-      "a equipe da Saúde Indígena já concluiu 7.500 análises",
-    );
-    // E os fogos do marco, com o agradecimento à equipe (o número vai no céu);
-    // o desenho chega por import() (src/app/comemoracao-sob-demanda.ts).
+    // Sem card na Visão geral: o fato vai no aviso, com os fogos (o número
+    // no céu); o desenho chega por import() (src/app/comemoracao-sob-demanda.ts).
+    expect(secao.querySelector(".marcos-do-ano")).toBeNull();
     await vi.waitFor(() =>
       expect(document.querySelector(".comemoracao")).not.toBeNull(),
     );
     expect(document.querySelector(".comemoracao").textContent).toContain(
-      "7.500 análises concluídas em 2026. Obrigado, equipe da Saúde Indígena!",
+      "Saúde Indígena: 7.500 análises concluídas em 2026.",
     );
     await act(async () =>
       document.querySelector(".comemoracao__fechar").click(),
     );
-    await clicar(marco.querySelector("button"));
-    expect(secao.querySelector(".marcos-do-ano")).toBeNull();
   });
 
   it("comemorações desligadas: nem consulta o banco", async () => {

@@ -34,7 +34,7 @@ export interface PosicaoDaAya {
 }
 
 /**
- * O som de um evento do show: estouro grave (marco e letreiro), estalo (o
+ * O som de um evento do show: estouro grave (marco), estalo (o
  * comum), crepitar (estouro que estala no fim), assobio (foguete subindo) e
  * pop (rajada pequena e o confete da Aya).
  */
@@ -187,7 +187,7 @@ const FORMATOS_QUE_CREPITAM: readonly unknown[] = Object.freeze([
 /**
  * O som de um evento do show (de avancarShow ou da cena): "assobio" para o
  * foguete que assobia ao subir, "pop" para a rajada e o confete da Aya,
- * "grave" para o marco e o letreiro, "crepitar" para faíscas que piscam e
+ * "grave" para o marco, "crepitar" para faíscas que piscam e
  * estalam, "estalo" para o resto. Volume baixo (0–1, relativo), menor nas
  * salvas do grande final e da apoteose (muitos juntos).
  */
@@ -207,8 +207,7 @@ export function somDoEstouro(
     };
   if (evento.tipo === "confete" || evento.papel === "rajada")
     return { tipo: "pop", volume: 0.4 };
-  if (evento.papel === "marco" || evento.papel === "letreiro")
-    return { tipo: "grave", volume: 0.9 };
+  if (evento.papel === "marco") return { tipo: "grave", volume: 0.9 };
   if (FORMATOS_QUE_CREPITAM.includes(evento.formato))
     return { tipo: "crepitar", volume: 0.5 };
   return {

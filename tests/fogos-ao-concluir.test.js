@@ -341,7 +341,14 @@ describe("o aviso da comemoração", () => {
     expect(doc.querySelector(".comemoracao__pular")).toBeNull();
     expect(aviso(doc)).not.toBeNull();
 
-    comemorar({ texto: "De novo", doc, janela, aleatorio: criarAleatorio(4) });
+    // O segundo efeito do dia sairia só como aviso: aqui, como teste.
+    comemorar({
+      texto: "De novo",
+      teste: true,
+      doc,
+      janela,
+      aleatorio: criarAleatorio(4),
+    });
     quadros.shift()(0);
     clicar(
       [...doc.querySelectorAll(".comemoracao")]
@@ -475,17 +482,13 @@ describe("o aviso da comemoração", () => {
     expect(audios).toHaveLength(0);
   });
 
-  it("o fim do tour (Concluir) celebra: fogos no tour, festa e estrela na trilha", () => {
+  it("o fim do tour e da trilha da Aya não comemora mais", () => {
     const aya = readFileSync("src/modulos/aya/aya.tsx", "utf8");
-    expect(aya).toMatch(/motivo === "concluiu"\) celebrarFimDoTour\(tour\)/);
-    expect(aya).toContain(
-      'marco: concluido.trilha ? "fim-da-trilha" : "fim-do-tour"',
-    );
-    expect(aya).toContain('forma: concluido.trilha ? "estrela" : null');
+    expect(aya).not.toMatch(/comemorar|fim-do-tour|fim-da-trilha/);
   });
 });
 
-describe("fogos mais divertidos: a dança, o letreiro e o desempenho", () => {
+describe("fogos mais divertidos: a dança e o desempenho", () => {
   const dancando = (doc) => doc.querySelectorAll(".comemoracao__aya--danca");
 
   it("no fim, a Aya volta para dançar (outra arara), solta confete num canvas próprio e tudo sai", () => {
@@ -533,99 +536,30 @@ describe("fogos mais divertidos: a dança, o letreiro e o desempenho", () => {
     expect(sobras(doc)).toBe(0);
   });
 
-  it("a frase do marco é texto de verdade numa placa (não faíscas): no Festa e com letreiro pedido; no Normal sem letreiro, nenhuma", () => {
+  it("a frase fica só no aviso: nenhum letreiro no meio da tela, nem no Festa", () => {
     vi.useFakeTimers();
     const janelas = [];
     try {
-      const frase = (doc) =>
-        doc
-          .querySelector(".comemoracao__letreiro")
-          ?.textContent.replace(/\u00a0/g, " ") ?? null;
-      const festa = janelaComCanvas();
-      janelas.push(festa);
-      soltarFogos(festa.doc, festa.janela, {
-        intensidade: "festa",
-        aleatorio: criarAleatorio(2),
-      });
-      // Antes do clímax, nada; depois, a frase inteira, por cima de tudo.
-      expect(frase(festa.doc)).toBeNull();
-      act(() => vi.advanceTimersByTime(3000));
-      expect(frase(festa.doc)).toBe("Parabéns!");
-      const letreiro = festa.doc.querySelector(".comemoracao__letreiro");
-      expect(letreiro.getAttribute("aria-hidden")).toBe("true");
-      expect(letreiro.getAttribute("data-fase")).toBe("entrando");
-      expect(letreiro.style.getPropertyValue("--letreiro-fonte")).toMatch(
-        /^clamp\(/,
-      );
-      // Os fogos não escrevem mais a frase em pontinhos.
-      expect(festa.contagem.getImageData).toBeUndefined();
-
-      const normal = janelaComCanvas();
-      janelas.push(normal);
-      soltarFogos(normal.doc, normal.janela, { aleatorio: criarAleatorio(2) });
-      act(() => vi.advanceTimersByTime(3000));
-      expect(frase(normal.doc)).toBeNull();
-
-      const pedido = janelaComCanvas();
-      janelas.push(pedido);
-      soltarFogos(pedido.doc, pedido.janela, {
-        letreiro: "Valeu!",
-        aleatorio: criarAleatorio(2),
-      });
-      act(() => vi.advanceTimersByTime(3000));
-      expect(frase(pedido.doc)).toBe("Valeu!");
-      // E sai sozinha, suave (fase "saindo"), antes de sumir.
-      act(() => vi.advanceTimersByTime(1900));
-      expect(
-        pedido.doc
-          .querySelector(".comemoracao__letreiro")
-          ?.getAttribute("data-fase"),
-      ).toBe("saindo");
-      act(() => vi.advanceTimersByTime(1000));
-      expect(frase(pedido.doc)).toBeNull();
+      for (const intensidade of ["normal", "festa"]) {
+        const j = janelaComCanvas();
+        janelas.push(j);
+        soltarFogos(j.doc, j.janela, {
+          intensidade,
+          aleatorio: criarAleatorio(2),
+        });
+        act(() => vi.advanceTimersByTime(3000));
+        expect(j.doc.querySelector(".comemoracao__letreiro")).toBeNull();
+        expect(j.doc.querySelector(".comemoracao").textContent).toContain(
+          "Fogos",
+        );
+        // Os fogos também não escrevem frase em pontinhos.
+        expect(j.contagem.getImageData).toBeUndefined();
+      }
+      const css = readFileSync("src/styles/comemoracao.css", "utf8");
+      expect(css).not.toMatch(/letreiro/);
     } finally {
       vi.useRealTimers();
       for (const j of janelas) j.rodar();
-    }
-  });
-
-  it("Pular tira a frase com a saída suave; com menos movimento, a frase aparece sem partículas", () => {
-    vi.useFakeTimers();
-    try {
-      const { doc, janela, rodar } = janelaComCanvas();
-      soltarFogos(doc, janela, {
-        intensidade: "festa",
-        aleatorio: criarAleatorio(3),
-      });
-      act(() => vi.advanceTimersByTime(3000));
-      expect(doc.querySelector(".comemoracao__letreiro")).not.toBeNull();
-      pular(doc);
-      expect(
-        doc.querySelector(".comemoracao__letreiro").getAttribute("data-fase"),
-      ).toBe("saindo");
-      act(() => vi.advanceTimersByTime(700));
-      expect(doc.querySelector(".comemoracao__letreiro")).toBeNull();
-      rodar();
-
-      const calmo = janelaComCanvas({ movimento: false });
-      comemorar({
-        texto: "Meta batida",
-        teste: true,
-        efeito: "confete",
-        intensidade: "normal",
-        letreiro: "Meta batida!",
-        doc: calmo.doc,
-        janela: calmo.janela,
-      });
-      act(() => vi.advanceTimersByTime(400));
-      expect(calmo.doc.querySelector("canvas")).toBeNull();
-      expect(
-        calmo.doc
-          .querySelector(".comemoracao__letreiro")
-          ?.textContent.replace(/\u00a0/g, " "),
-      ).toBe("Meta batida!");
-    } finally {
-      vi.useRealTimers();
     }
   });
 

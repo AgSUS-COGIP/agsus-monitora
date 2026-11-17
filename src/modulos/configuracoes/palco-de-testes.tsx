@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import {
   DURACAO_MAXIMA_S,
   DURACAO_MINIMA_S,
-  LETREIRO_DA_FESTA,
   type Efeito,
   type FormaDoMarco,
   type Intensidade,
@@ -34,13 +33,12 @@ import { Icone } from "../../componentes/icone.tsx";
 
 export interface PedidoDeTeste {
   texto: string;
-  efeito: Efeito;
-  intensidade: Intensidade;
-  duracaoMs: number | null;
-  som: boolean;
+  /** null: só o aviso (marco só de aviso). */
+  efeito: Efeito | null;
+  intensidade?: Intensidade;
+  duracaoMs?: number | null;
+  som?: boolean;
   forma?: FormaDoMarco;
-  /** O texto escrito no céu no fim dos fogos (Normal e Festa). */
-  letreiro?: string;
 }
 
 export type Testar = (pedido: PedidoDeTeste) => void;
@@ -179,8 +177,6 @@ export function PalcoDeTestes({
       intensidade,
       duracaoMs: Math.round(duracaoS * 1000),
       som,
-      // No Normal e no Festa, a frase aparece em destaque (o letreiro).
-      letreiro: LETREIRO_DA_FESTA,
     });
   return (
     <section

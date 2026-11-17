@@ -6,13 +6,6 @@ import {
   somDoEstouro,
   trajetoDaAya,
 } from "../src/lib/fogos-cena.ts";
-import {
-  caixaDaForma,
-  caixaDoLetreiro,
-  normalizarLetreiro,
-  pontosDoLetreiro,
-  TAMANHO_DO_LETREIRO,
-} from "../src/lib/fogos-formas.ts";
 import { criarAleatorio } from "../src/lib/fogos.ts";
 import {
   avancarCena,
@@ -35,7 +28,7 @@ import {
 
 /*
   O que deixa os fogos mais divertidos, sem DOM: a dança da Aya no fim, o
-  letreiro (o texto do marco no céu), o confete que ela solta (motor), o
+  confete que ela solta (motor), o
   som sintetizado (com um áudio falso que registra os nós) e a queda
   automática de qualidade. Sorteio fixo.
 */
@@ -92,7 +85,7 @@ describe("a dança da Aya", () => {
 });
 
 describe("o som de cada evento", () => {
-  it("assobio no lançamento (com a subida), pop na rajada e no confete, grave no letreiro", () => {
+  it("assobio no lançamento (com a subida), pop na rajada e no confete, grave no marco", () => {
     const assobio = somDoEstouro({
       tipo: "lancamento",
       papel: "comum",
@@ -103,7 +96,7 @@ describe("o som de cada evento", () => {
     expect(somDoEstouro({ tipo: "lancamento", subida: 9 }).duracao).toBe(1.6);
     expect(somDoEstouro({ tipo: "confete", papel: "aya" }).tipo).toBe("pop");
     expect(somDoEstouro({ tipo: "estouro", papel: "rajada" }).tipo).toBe("pop");
-    expect(somDoEstouro({ tipo: "estouro", papel: "letreiro" }).tipo).toBe(
+    expect(somDoEstouro({ tipo: "estouro", papel: "marco" }).tipo).toBe(
       "grave",
     );
     expect(
@@ -115,59 +108,6 @@ describe("o som de cada evento", () => {
     const final = somDoEstouro({ papel: "final", formato: "peonia" });
     expect(apoteose.tipo).toBe("estalo");
     expect(apoteose.volume).toBeLessThan(final.volume);
-  });
-});
-
-describe("o letreiro (texto do marco no céu)", () => {
-  /* O "canvas": o texto vira um retângulo cheio de pixels. */
-  const amostrarTexto = () => {
-    const width = 320;
-    const height = 80;
-    const data = new Uint8ClampedArray(width * height * 4);
-    for (let y = 20; y < 60; y += 1)
-      for (let x = 10; x < 310; x += 1) data[(y * width + x) * 4 + 3] = 255;
-    return { data, width, height };
-  };
-
-  it("texto limpo e curto; vazio vira null", () => {
-    expect(normalizarLetreiro("  Fila   zerada!  ")).toBe("Fila zerada!");
-    expect(normalizarLetreiro("x".repeat(40))).toHaveLength(
-      TAMANHO_DO_LETREIRO,
-    );
-    expect(normalizarLetreiro("   ")).toBeNull();
-    expect(normalizarLetreiro(null)).toBeNull();
-  });
-
-  it("os pontos cabem na faixa do letreiro, abaixo da forma, até a quantidade", () => {
-    const pontos = pontosDoLetreiro("Parabéns!", {
-      ...tela,
-      quantidade: 300,
-      amostrarTexto,
-    });
-    expect(pontos.length).toBeGreaterThan(100);
-    expect(pontos.length).toBeLessThanOrEqual(300);
-    const caixa = caixaDoLetreiro(tela);
-    const forma = caixaDaForma(tela);
-    for (const p of pontos) {
-      expect(Math.abs(p.x - caixa.cx)).toBeLessThanOrEqual(
-        caixa.larguraMax / 2 + 1e-6,
-      );
-      expect(Math.abs(p.y - caixa.cy)).toBeLessThanOrEqual(
-        caixa.alturaMax / 2 + 1e-6,
-      );
-    }
-    // A faixa do letreiro começa abaixo da caixa da forma.
-    expect(caixa.cy - caixa.alturaMax / 2).toBeGreaterThan(
-      forma.cy + forma.alturaMax / 2,
-    );
-    // Canvas que falha: a fonte de pontos (algarismos), sem erro.
-    const quebrado = () => {
-      throw new Error("sem canvas");
-    };
-    expect(
-      pontosDoLetreiro("1.000", { ...tela, amostrarTexto: quebrado }).length,
-    ).toBeGreaterThan(30);
-    expect(pontosDoLetreiro("", { ...tela, amostrarTexto })).toEqual([]);
   });
 });
 

@@ -50,7 +50,9 @@ import {
   marcos em linhas agrupadas por módulo (interruptor, nome, chip do efeito,
   intensidade, Testar e "Detalhes", que abre inline duração, mensagem, som e
   quem vê — um por vez); os marcos personalizados na mesma forma, criados
-  por um mini-assistente. A preferência pessoal ("Para mim") é um
+  por um mini-assistente. Marco só de aviso (fila zerada, vaga pronta e os
+  personalizados) não tem efeito, intensidade, duração nem som: só ligado,
+  mensagem e quem vê. A preferência pessoal ("Para mim") é um
   interruptor na linha do título da seção (InterruptorPessoal, posto pela
   moldura em configuracoes.tsx).
 
@@ -70,7 +72,13 @@ interface EstadoDasConfiguracoes {
 
 function testarPadrao(janela: Window | undefined) {
   return (pedido: PedidoDeTeste) => {
-    void comemorar({ ...pedido, teste: true, janela });
+    // Sem efeito (marco só de aviso): só o aviso, sem os fogos padrão.
+    void comemorar({
+      ...pedido,
+      ...(pedido.efeito ? {} : { confete: false }),
+      teste: true,
+      janela,
+    });
   };
 }
 
@@ -115,9 +123,10 @@ export function InterruptorPessoal({
 function pedidoDoMarco(
   opcoes: OpcoesDoMarco,
   texto: string,
+  soAviso: boolean,
   forma: FormaDoMarco = null,
-  letreiro: string | null = null,
 ): PedidoDeTeste {
+  if (soAviso) return { texto: opcoes.mensagem || texto, efeito: null };
   return {
     texto: opcoes.mensagem || texto,
     efeito: opcoes.efeito,
@@ -125,8 +134,6 @@ function pedidoDoMarco(
     duracaoMs: duracaoMsDasOpcoes(opcoes),
     som: opcoes.som,
     forma,
-    // O texto no céu do marco (o de verdade lê do catálogo pelo id).
-    ...(letreiro ? { letreiro } : {}),
   };
 }
 
@@ -179,6 +186,7 @@ function LinhaDoMarco({
   nome,
   modulo,
   opcoes,
+  soAviso,
   mensagemPadrao,
   aberto,
   aoAlternar,
@@ -191,6 +199,7 @@ function LinhaDoMarco({
   nome: string;
   modulo: string;
   opcoes: OpcoesDoMarco;
+  soAviso: boolean;
   mensagemPadrao: string;
   aberto: boolean;
   aoAlternar: () => void;
@@ -220,32 +229,36 @@ function LinhaDoMarco({
             {modulo ? <small>{modulo}</small> : null}
           </span>
         </label>
-        <label className="comemoracoes-chip" title="Efeito">
-          <Icone nome={ICONES_DOS_EFEITOS[opcoes.efeito]} tamanho={14} />
-          <select
-            id={`${prefixo}-efeito`}
-            aria-label={`Efeito: ${nome}`}
-            value={opcoes.efeito}
-            disabled={!opcoes.ligado}
-            onChange={(evento) =>
-              aoMudar({ efeito: evento.target.value as Efeito })
-            }
-          >
-            {(EFEITOS as Efeito[]).map((efeito) => (
-              <option key={efeito} value={efeito}>
-                {ROTULOS_DOS_EFEITOS[efeito]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <Segmentado
-          rotulo={`Intensidade: ${nome}`}
-          className="comemoracoes-intensidade"
-          opcoes={OPCOES_DE_INTENSIDADE}
-          valor={opcoes.intensidade}
-          desabilitado={!opcoes.ligado}
-          aoMudar={(intensidade: Intensidade) => aoMudar({ intensidade })}
-        />
+        {soAviso ? null : (
+          <>
+            <label className="comemoracoes-chip" title="Efeito">
+              <Icone nome={ICONES_DOS_EFEITOS[opcoes.efeito]} tamanho={14} />
+              <select
+                id={`${prefixo}-efeito`}
+                aria-label={`Efeito: ${nome}`}
+                value={opcoes.efeito}
+                disabled={!opcoes.ligado}
+                onChange={(evento) =>
+                  aoMudar({ efeito: evento.target.value as Efeito })
+                }
+              >
+                {(EFEITOS as Efeito[]).map((efeito) => (
+                  <option key={efeito} value={efeito}>
+                    {ROTULOS_DOS_EFEITOS[efeito]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <Segmentado
+              rotulo={`Intensidade: ${nome}`}
+              className="comemoracoes-intensidade"
+              opcoes={OPCOES_DE_INTENSIDADE}
+              valor={opcoes.intensidade}
+              desabilitado={!opcoes.ligado}
+              aoMudar={(intensidade: Intensidade) => aoMudar({ intensidade })}
+            />
+          </>
+        )}
         <div className="comemoracoes-marco__acoes">
           <button
             type="button"
@@ -275,13 +288,15 @@ function LinhaDoMarco({
           className="comemoracoes-marco__detalhes ui-grade-de-campos"
         >
           {extras}
-          <Campo rotulo="Duração (s)">
-            <CampoDeDuracao
-              id={`${prefixo}-duracao`}
-              valor={opcoes.duracaoS}
-              aoMudar={(duracaoS) => aoMudar({ duracaoS })}
-            />
-          </Campo>
+          {soAviso ? null : (
+            <Campo rotulo="Duração (s)">
+              <CampoDeDuracao
+                id={`${prefixo}-duracao`}
+                valor={opcoes.duracaoS}
+                aoMudar={(duracaoS) => aoMudar({ duracaoS })}
+              />
+            </Campo>
+          )}
           <Campo rotulo="Quem vê">
             <select
               id={`${prefixo}-publico`}
@@ -311,15 +326,17 @@ function LinhaDoMarco({
               onChange={(evento) => aoMudar({ mensagem: evento.target.value })}
             />
           </Campo>
-          <label className="comemoracoes-caixa">
-            <input
-              id={`${prefixo}-som`}
-              type="checkbox"
-              checked={opcoes.som}
-              onChange={(evento) => aoMudar({ som: evento.target.checked })}
-            />
-            Som
-          </label>
+          {soAviso ? null : (
+            <label className="comemoracoes-caixa">
+              <input
+                id={`${prefixo}-som`}
+                type="checkbox"
+                checked={opcoes.som}
+                onChange={(evento) => aoMudar({ som: evento.target.checked })}
+              />
+              Som
+            </label>
+          )}
         </div>
       ) : null}
     </li>
@@ -618,7 +635,8 @@ export function SecaoComemoracoes({
                       nome={m.rotulo}
                       modulo=""
                       opcoes={opcoes}
-                      mensagemPadrao={exemploDoMarco(m.id, m.rotulo).texto}
+                      soAviso={m.soAviso}
+                      mensagemPadrao={exemploDoMarco(m.id, m.rotulo)}
                       aberto={aberto === m.id}
                       aoAlternar={() => alternar(m.id)}
                       aoMudar={(mudancas) => mudarMarco(m.id, mudancas)}
@@ -626,10 +644,9 @@ export function SecaoComemoracoes({
                         soltar(
                           pedidoDoMarco(
                             opcoes,
-                            exemploDoMarco(m.id, m.rotulo).texto,
+                            exemploDoMarco(m.id, m.rotulo),
+                            m.soAviso,
                             m.forma,
-                            exemploDoMarco(m.id, m.rotulo).letreiro ??
-                              m.letreiro,
                           ),
                         )
                       }
@@ -677,12 +694,13 @@ export function SecaoComemoracoes({
                         : `${p.meta || "?"} análises no dia`
                     }
                     opcoes={p}
+                    soAviso
                     mensagemPadrao={mensagemDoPersonalizado(p)}
                     aberto={aberto === p.id}
                     aoAlternar={() => alternar(p.id)}
                     aoMudar={(mudancas) => mudarPersonalizado(p.id, mudancas)}
                     aoTestar={() =>
-                      soltar(pedidoDoMarco(p, mensagemDoPersonalizado(p)))
+                      soltar(pedidoDoMarco(p, mensagemDoPersonalizado(p), true))
                     }
                     extras={
                       <CamposDoPersonalizado

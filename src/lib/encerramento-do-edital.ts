@@ -77,6 +77,10 @@ export const numeroCurto = (numero: string) =>
 export const tituloDeQuemFechou = (numero: string) =>
   `fechou o ${numeroCurto(numero)}`;
 
+/** O aviso de quem fechou: "Você concluiu a última ficha do edital 114/2026." */
+export const mensagemDeQuemFechou = (numero: string) =>
+  `Você concluiu a última ficha do edital ${numeroDoEdital(numero) || texto(numero)}.`;
+
 function lerMelhorDia(valor: unknown): MelhorDia | null {
   if (!ehRegistro(valor)) return null;
   const dia = texto(valor.dia).slice(0, 10);
@@ -152,13 +156,13 @@ export function fogosDoEncerramento(
     return {
       marco: "edital-fechado",
       forma: "estrela",
-      texto: `Você ${tituloDeQuemFechou(e.numero)}! A última ficha do edital foi sua.`,
+      texto: mensagemDeQuemFechou(e.numero),
     };
   if (jaSoltos.has(e.numero)) return null;
   return {
     marco: "edital-concluido",
     forma: "coracao",
-    texto: `Edital ${e.numero} concluído! Obrigado, equipe.`,
+    texto: `Edital ${e.numero} concluído.`,
   };
 }
 

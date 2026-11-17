@@ -17,12 +17,16 @@ import {
   estadoDosPersonalizados,
   guardarPreferenciaPessoal,
   hojeComoChave,
+  maiorPersonalizado,
+  marcoSoComAviso,
   mensagemDoPersonalizado,
   normalizarConfiguracao,
   normalizarDuracaoS,
   novoPersonalizado,
   opcoesDoMarco,
   personalizadosAlcancados,
+  reservarEfeitoDoDia,
+  CHAVE_DO_EFEITO_DO_DIA,
   serializarConfiguracao,
 } from "../src/lib/catalogo-de-comemoracoes.ts";
 import {
@@ -56,12 +60,9 @@ describe("catálogo de marcos", () => {
       "edital-concluido",
       "edital-fechado",
       "fila-zerada",
-      "meta-do-dia",
       "vaga-pronta",
       "marco-do-ano",
       "acesso-liberado",
-      "fim-do-tour",
-      "fim-da-trilha",
     ]);
     expect(new Set(ids).size).toBe(ids.length);
     // O id aparece no arquivo que dispara a comemoração.
@@ -74,18 +75,29 @@ describe("catálogo de marcos", () => {
     }
   });
 
-  it("o padrão reproduz o de antes: fogos; suave na vaga pronta; festa no marco do ano e na trilha", () => {
+  it("o padrão: efeito só em quatro marcos; fila zerada e vaga pronta são só o aviso", () => {
     const config = normalizarConfiguracao("");
+    const efeito = (id) => {
+      const { efeito, intensidade } = opcoesDoMarco(config, id);
+      return `${efeito}/${intensidade}`;
+    };
+    expect(efeito("edital-concluido")).toBe("fogos/festa");
+    expect(efeito("edital-fechado")).toBe("estrelas/suave");
+    expect(efeito("marco-do-ano")).toBe("fogos/normal");
+    expect(efeito("acesso-liberado")).toBe("fogos/suave");
     expect(opcoesDoMarco(config, "vaga-pronta")).toMatchObject({
       ligado: true,
-      efeito: "fogos",
-      intensidade: "suave",
       som: false,
       publico: "quem-fez",
     });
-    expect(opcoesDoMarco(config, "marco-do-ano").intensidade).toBe("festa");
-    expect(opcoesDoMarco(config, "fim-da-trilha").intensidade).toBe("festa");
-    expect(opcoesDoMarco(config, "fila-zerada").intensidade).toBe("normal");
+    expect(
+      CATALOGO_DE_MARCOS.filter((m) => m.soAviso).map((m) => m.id),
+    ).toEqual(["fila-zerada", "vaga-pronta"]);
+    expect(marcoSoComAviso("fila-zerada")).toBe(true);
+    expect(marcoSoComAviso("edital-concluido")).toBe(false);
+    // Personalizado (ou id que saiu do catálogo): só o aviso.
+    expect(marcoSoComAviso("pessoal-1")).toBe(true);
+    expect(marcoSoComAviso("meta-do-dia")).toBe(true);
     expect(opcoesDoMarco(config, "nao-existe")).toBeNull();
   });
 });
@@ -98,7 +110,7 @@ describe("configuração publicada", () => {
     expect(serializarConfiguracao(normalizarConfiguracao(null))).toBe("");
     const config = normalizarConfiguracao({
       marcos: {
-        "fila-zerada": {
+        "edital-concluido": {
           efeito: "laser",
           intensidade: "nuclear",
           duracaoS: 99,
@@ -108,14 +120,57 @@ describe("configuração publicada", () => {
         inventado: { ligado: false },
       },
     });
-    const fila = opcoesDoMarco(config, "fila-zerada");
-    expect(fila.efeito).toBe("fogos");
-    expect(fila.intensidade).toBe("normal");
-    expect(fila.duracaoS).toBe(15);
+    const edital = opcoesDoMarco(config, "edital-concluido");
+    expect(edital.efeito).toBe("fogos");
+    expect(edital.intensidade).toBe("festa");
+    expect(edital.duracaoS).toBe(15);
     // "Toda a área online" ainda não existe (sem tempo real por área).
-    expect(fila.publico).toBe("quem-fez");
-    expect(fila.mensagem).toHaveLength(160);
+    expect(edital.publico).toBe("quem-fez");
+    expect(edital.mensagem).toHaveLength(160);
     expect(config.marcos.inventado).toBeUndefined();
+  });
+
+  it("configuração antiga: marcos que saíram são ignorados; marco só de aviso perde o efeito", () => {
+    const antiga = JSON.stringify({
+      marcos: {
+        "meta-do-dia": { intensidade: "festa" },
+        "fim-do-tour": { efeito: "confete" },
+        "fim-da-trilha": { ligado: false },
+        "fila-zerada": { efeito: "baloes", intensidade: "festa", som: true },
+        "vaga-pronta": { ligado: false, mensagem: "Pronta" },
+      },
+      personalizados: [
+        {
+          id: "pessoal-1",
+          nome: "Dia produtivo",
+          tipo: "analises-no-dia",
+          meta: 200,
+          efeito: "fogos",
+          intensidade: "festa",
+        },
+      ],
+    });
+    const config = normalizarConfiguracao(antiga);
+    expect(Object.keys(config.marcos)).not.toContain("meta-do-dia");
+    expect(Object.keys(config.marcos)).not.toContain("fim-do-tour");
+    expect(opcoesDoMarco(config, "fila-zerada")).toMatchObject({
+      efeito: "fogos",
+      intensidade: "normal",
+      som: false,
+    });
+    expect(config.personalizados[0].intensidade).toBe("normal");
+    expect(JSON.parse(serializarConfiguracao(config))).toEqual({
+      marcos: { "vaga-pronta": { ligado: false, mensagem: "Pronta" } },
+      personalizados: [
+        {
+          id: "pessoal-1",
+          nome: "Dia produtivo",
+          tipo: "analises-no-dia",
+          meta: 200,
+        },
+      ],
+    });
+    expect(alteracoesDasComemoracoes(antiga, antiga)).toEqual([]);
   });
 
   it("serializa só o que difere do padrão, estável, e volta igual", () => {
@@ -124,19 +179,19 @@ describe("configuração publicada", () => {
       ...config,
       marcos: {
         ...config.marcos,
-        "fila-zerada": {
-          ...config.marcos["fila-zerada"],
+        "edital-concluido": {
+          ...config.marcos["edital-concluido"],
           efeito: "confete",
           duracaoS: 8,
         },
-        "fim-do-tour": { ...config.marcos["fim-do-tour"], ligado: false },
+        "marco-do-ano": { ...config.marcos["marco-do-ano"], ligado: false },
       },
     };
     const texto = serializarConfiguracao(mudada);
     expect(JSON.parse(texto)).toEqual({
       marcos: {
-        "fila-zerada": { efeito: "confete", duracaoS: 8 },
-        "fim-do-tour": { ligado: false },
+        "edital-concluido": { efeito: "confete", duracaoS: 8 },
+        "marco-do-ano": { ligado: false },
       },
     });
     expect(serializarConfiguracao(normalizarConfiguracao(texto))).toBe(texto);
@@ -171,7 +226,10 @@ describe("configuração publicada", () => {
     ]);
     expect(
       mensagemDoPersonalizado({ ...um, edital: "012/2026", meta: 30 }),
-    ).toBe("Edital 012/2026 chegou a 30 contratados!");
+    ).toBe("Edital 012/2026: 30 contratados.");
+    expect(mensagemDoPersonalizado({ ...dois, meta: 1200 })).toBe(
+      "1.200 análises concluídas hoje.",
+    );
     expect(
       mensagemDoPersonalizado({ ...dois, meta: 50, mensagem: "Uau" }),
     ).toBe("Uau");
@@ -293,6 +351,16 @@ describe("marcos personalizados com dados do front", () => {
     ).toEqual([]);
   });
 
+  it("vários alcançados na mesma leitura: só o maior", () => {
+    const tres = [200, 400, 300].map((meta, i) => ({
+      ...dia,
+      id: `pessoal-${i + 10}`,
+      meta,
+    }));
+    expect(maiorPersonalizado(tres)?.meta).toBe(400);
+    expect(maiorPersonalizado([])).toBeNull();
+  });
+
   it("no dia: recomeça a cada dia", () => {
     const lista = [dia];
     const ontem = { dia: "2026-10-06", valores: { "pessoal-2": 9 } };
@@ -319,11 +387,11 @@ describe("publicação com histórico (mesma das outras seções)", () => {
 
   it("a revisão mostra cada campo mudado, não o JSON", () => {
     const depois = JSON.stringify({
-      marcos: { "fila-zerada": { efeito: "confete" } },
+      marcos: { "edital-concluido": { efeito: "confete" } },
     });
     expect(alteracoesDasComemoracoes("", depois)).toEqual([
       {
-        label: "Comemorações · Fila de análises zerada",
+        label: "Comemorações · Edital 100% analisado",
         field: "Efeito",
         before: "fogos",
         after: "confete",
@@ -337,7 +405,7 @@ describe("publicação com histórico (mesma das outras seções)", () => {
     expect(mudancas).toEqual([
       {
         entity: "Configuração",
-        label: "Comemorações · Fila de análises zerada",
+        label: "Comemorações · Edital 100% analisado",
         field: "Efeito",
         before: "fogos",
         after: "confete",
@@ -357,6 +425,29 @@ describe("preferência pessoal compartilhada com a mascote", () => {
     const armazenamento = memoria();
     armazenamento.setItem(CHAVE_COMEMORACOES_PESSOAIS, "1");
     expect(comemoracoesPessoaisLigadas(armazenamento)).toBe(false);
+  });
+});
+
+describe("uma comemoração com efeito por dia", () => {
+  it("a primeira do dia reserva o efeito; as seguintes, não; outro dia, de novo", () => {
+    const armazenamento = memoria();
+    expect(reservarEfeitoDoDia(armazenamento, "2026-11-17")).toBe(true);
+    expect(armazenamento.guardado.get(CHAVE_DO_EFEITO_DO_DIA)).toBe(
+      "2026-11-17",
+    );
+    expect(reservarEfeitoDoDia(armazenamento, "2026-11-17")).toBe(false);
+    expect(reservarEfeitoDoDia(armazenamento, "2026-11-18")).toBe(true);
+  });
+
+  it("sem armazenamento (bloqueado, ausente), não há como contar: libera", () => {
+    const bloqueado = {
+      getItem: () => {
+        throw new Error("bloqueado");
+      },
+      setItem: () => {},
+    };
+    expect(reservarEfeitoDoDia(bloqueado, "2026-11-17")).toBe(true);
+    expect(reservarEfeitoDoDia(null, "2026-11-17")).toBe(true);
   });
 });
 
