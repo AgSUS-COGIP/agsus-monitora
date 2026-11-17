@@ -21,19 +21,19 @@ import {
 import { criarCarregadorDeMunicipios } from "../mapa-de-projetos/carregador.ts";
 // Os mapas (e o Leaflet) baixam quando montam: ./mapas-sob-demanda.tsx.
 import { MapaDeProjetos, MapaSaudeIndigena } from "./mapas-sob-demanda.tsx";
-import { BoasVindas, MarcosDoAno } from "./boas-vindas.tsx";
+import { MarcosDoAno } from "./boas-vindas.tsx";
 import {
   buscarAcompanhamentoNoSupabase,
   estadoDaVisaoGeral,
 } from "./estado.ts";
 import { GavetaDoProcesso } from "./gaveta.tsx";
 import {
-  Fases,
+  Cabecalho,
+  EmAndamento,
   Filtros,
-  Indicadores,
-  PosResultado,
+  PedeAcao,
   ProcessosPorProjeto,
-  Topo,
+  Vagas,
 } from "./paineis.tsx";
 import { TabelaDeProcessos } from "./tabela.tsx";
 import { MontadorDeRelatorio } from "./montador-de-relatorio.tsx";
@@ -51,12 +51,13 @@ import { podeBaixarAprovados } from "../../lib/access-roles.ts";
   conteúdo só monta na primeira abertura (`visitada`), e o acompanhamento só
   é pedido com a página aberta: quem não abre a Visão geral não paga por ela.
 
-  Ordem: boas-vindas e marcos do ano, topo (hora da carga, Atualizar,
-  Exportar CSV), filtros, indicadores, o MAPA DA ÁREA, "Processos por
-  projeto" (só Projetos), "Fases" e "Pós-resultado" e a tabela de
-  processos, com os detalhes numa gaveta. Os prazos dos próximos 7 dias
-  ficam nas boas-vindas e os processos críticos no indicador que filtra a
-  tabela.
+  Ordem (o "painel de decisão", layout A, 17/11/2026): o cabeçalho
+  (saudação, editais com etapa na semana, hora da carga, Filtros, Atualizar
+  e Exportar), os marcos do ano, os filtros (só abertos pelo botão; os chips
+  do recorte sempre à vista), as vagas, "Pede ação" (críticos e
+  pós-resultado) ao lado de "Em andamento, por fase", "Processos por
+  projeto" (só Projetos), o MAPA DA ÁREA e a tabela de processos, com os
+  detalhes numa gaveta.
 
   O MAPA DA ÁREA (`mapaDaVisaoGeral`):
   - Saúde Indígena: `<MapaSaudeIndigena>` (src/modulos/mapa-saude-indigena/),
@@ -126,6 +127,7 @@ export function TelaDaVisaoGeral({
   const textos = usarTextos(configuracoes);
   const mapa = mapaDaVisaoGeral(e.area);
   const [aberta, setAberta] = useState<string | null>(null);
+  const [filtrosAbertos, setFiltrosAbertos] = useState(false);
   // A linha aberta segue os dados: recarga atualiza a gaveta; se sumir, fecha.
   const abrir = (linha: LinhaDaVisaoGeral) => setAberta(String(linha.id));
   const linhaAberta = aberta
@@ -136,15 +138,31 @@ export function TelaDaVisaoGeral({
 
   return (
     <div className="ui-tela visao-geral-tela">
-      <BoasVindas obterPerfil={obterPerfil} agora={agora} />
+      <Cabecalho
+        e={e}
+        perfil={obterPerfil?.() || null}
+        agora={agora}
+        filtrosAbertos={filtrosAbertos}
+        aoAlternarFiltros={() => setFiltrosAbertos((valor) => !valor)}
+        aoExportar={estado.abrirMontador}
+      />
       <MarcosDoAno
         obterPerfil={obterPerfil}
         supabase={supabase}
         comemoracoesLigadas={comemoracoesLigadas}
       />
-      <Topo e={e} aoExportar={estado.abrirMontador} />
-      <Filtros e={e} estado={estado} textos={textos} />
-      <Indicadores e={e} estado={estado} textos={textos} />
+      <Filtros e={e} estado={estado} textos={textos} aberto={filtrosAbertos} />
+      <Vagas e={e} textos={textos} />
+      <div
+        className="ui-linha-de-cards visao-geral-decisao"
+        data-tour="visao-geral-fases-e-pos-resultado"
+      >
+        <PedeAcao e={e} estado={estado} textos={textos} />
+        <EmAndamento e={e} estado={estado} />
+      </div>
+      {temProcessosPorProjeto(e.area) ? (
+        <ProcessosPorProjeto e={e} estado={estado} />
+      ) : null}
       {mapa === MAPA_DOS_DSEIS ? (
         <MapaDaSaudeIndigena e={e} estado={estado} supabase={supabase} />
       ) : null}
@@ -161,16 +179,6 @@ export function TelaDaVisaoGeral({
           />
         </div>
       ) : null}
-      {temProcessosPorProjeto(e.area) ? (
-        <ProcessosPorProjeto e={e} estado={estado} />
-      ) : null}
-      <div
-        className="ui-linha-de-cards"
-        data-tour="visao-geral-fases-e-pos-resultado"
-      >
-        <Fases e={e} estado={estado} />
-        <PosResultado e={e} estado={estado} />
-      </div>
       <TabelaDeProcessos
         e={e}
         estado={estado}

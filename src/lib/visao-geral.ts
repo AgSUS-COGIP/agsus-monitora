@@ -702,6 +702,27 @@ export function fasesDosProcessos(linhas: readonly LinhaDoMonitoramento[]) {
   }));
 }
 
+/*
+  "Em andamento, por fase" (layout A, 17/11/2026): só as fases com edital em
+  andamento, sem as vazias; concluídos e cancelados vão para a linha de baixo.
+  Antes, as nove fases ficavam à vista, metade em zero, e "Concluído 81%"
+  tomava o bloco.
+*/
+const FASES_ENCERRADAS = new Set(["Concluído", "Cancelado"]);
+
+export function andamentoPorFase(linhas: readonly LinhaDoMonitoramento[]) {
+  const fases = fasesDosProcessos(linhas);
+  const quantosEm = (fase: string) =>
+    fases.find((f) => f.fase === fase)?.quantos || 0;
+  return {
+    emAndamento: fases
+      .filter((f) => !FASES_ENCERRADAS.has(f.fase) && f.quantos > 0)
+      .map(({ fase, quantos, tom }) => ({ fase, quantos, tom })),
+    concluidos: quantosEm("Concluído"),
+    cancelados: quantosEm("Cancelado"),
+  };
+}
+
 /**
  * "Pós-resultado": cada pendência com os editais que a têm.
  * `quantos`: editais; em Desistências, `pessoas` é o total de desistentes.

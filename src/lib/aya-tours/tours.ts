@@ -40,12 +40,12 @@ export const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
       passo(
         [t("visao-geral-filtros"), "#page-dashboard .visao-geral-filtros"],
         "Filtros",
-        "Unidade, Edital e Status ficam à vista; Etapa, Risco e UF, em Mais opções. Cada filtro recorta a página inteira.",
+        "O botão Filtros abre Ano, Unidade, Edital e Status; Fase e UF ficam em Mais opções. Cada filtro recorta a página inteira e aparece como etiqueta embaixo do cabeçalho.",
       ),
       passo(
         [t("visao-geral-kpis"), "#page-dashboard .visao-geral-kpis"],
-        "Indicadores",
-        "Processos, Vagas, Contratações, Vagas ociosas, Críticos e Inscritos, contados nos editais do recorte.",
+        "Vagas",
+        "As vagas imediatas e como se dividem: contratadas, em seleção e ociosas, com a barra da divisão. Embaixo, cadastro reserva e inscritos.",
       ),
       passo(
         t("visao-geral-mapa-saude-indigena"),
@@ -73,8 +73,8 @@ export const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
       ),
       passo(
         t("visao-geral-fases-e-pos-resultado"),
-        "Fases e pós-resultado",
-        "Em que fase estão os editais e o que vem depois do resultado: convocados, contratados e desistentes.",
+        "Pede ação e em andamento",
+        "Os críticos e as pendências depois do resultado; ao lado, em que fase estão os editais abertos. Cada item filtra a página.",
       ),
       passo(
         [t("visao-geral-tabela"), "[aria-labelledby='visaoGeralTabelaTitulo']"],

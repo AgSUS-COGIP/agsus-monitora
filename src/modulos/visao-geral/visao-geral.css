@@ -2,9 +2,9 @@
   O que é só da Visão geral (src/modulos/visao-geral/), só com tokens de
   src/styles/tokens.css — o tema escuro vem dos próprios tokens
   (`html[data-theme="dark"]`). Topo, filtros, chips, KPIs, cards, gráfico,
-  pendências, tabela e gaveta são de src/ui/ (ui.css). Aqui: boas-vindas e
-  marcos do ano, os campos dos filtros numa linha, os sete KPIs numa fileira,
-  as listas dos blocos, as linhas de Fases e de Processos por projeto, as
+  pendências, tabela e gaveta são de src/ui/ (ui.css). Aqui: o cabeçalho (saudação
+  e ações), os campos dos filtros numa linha, o
+  bloco das vagas, as fases em andamento, as linhas de Processos por projeto, as
   células da tabela (prazo, cronograma, taxa sem contratação, motivos,
   observação), as colunas presas, os cartões do celular e o andamento do
   cronograma na gaveta. O mapa da área
@@ -14,69 +14,63 @@
   Importado pelo src/main.ts, depois do ui.css.
 */
 
-/* ── Boas-vindas e marcos do ano ─────────────────────────────────────── */
+/* ── Cabeçalho: saudação e semana à esquerda, ações à direita ──────── */
 
-.boas-vindas {
+.visao-geral-cabecalho {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--border-subtle);
-  border-left: 3px solid var(--brand-primary);
-  border-radius: var(--radius-lg);
-  background: var(--surface-card);
-  color: var(--text-primary);
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
 }
-.boas-vindas__texto {
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  gap: var(--space-0-5);
+.visao-geral-saudacao {
+  display: grid;
+  gap: var(--space-1);
   min-width: 0;
 }
-.boas-vindas__texto strong {
-  font-size: var(--text-body);
-  line-height: var(--leading-body);
+.visao-geral-saudacao-titulo {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-h3);
+  line-height: var(--leading-h3);
   font-weight: var(--font-weight-semibold);
 }
-.boas-vindas__texto span {
+.visao-geral-saudacao-semana {
+  margin: 0;
   color: var(--text-secondary);
-  font-size: var(--text-body-sm);
-  line-height: var(--leading-body-sm);
+  font-size: var(--text-body);
 }
-.boas-vindas__acao,
-.boas-vindas__fechar {
-  flex: none;
+.visao-geral-link {
+  padding: 0;
   border: 0;
-  border-radius: var(--radius-md);
   background: transparent;
+  color: var(--color-text-link);
   font: inherit;
+  font-weight: var(--font-weight-medium);
+  text-decoration: underline;
+  text-underline-offset: 2px;
   cursor: pointer;
 }
-.boas-vindas__acao {
-  padding: var(--space-1) var(--space-2);
-  color: var(--state-info);
-  font-size: var(--text-body-sm);
-  font-weight: var(--font-weight-medium);
+.visao-geral-link:hover {
+  color: var(--color-text-link-hover);
 }
-.boas-vindas__acao:hover {
-  text-decoration: underline;
-}
-.boas-vindas__fechar {
-  width: 32px;
-  height: 32px;
-  color: var(--text-secondary);
-  font-size: var(--text-h3);
-  line-height: 1;
-}
-.boas-vindas__fechar:hover {
-  background: var(--surface-hover);
-  color: var(--text-primary);
-}
-.boas-vindas__acao:focus-visible,
-.boas-vindas__fechar:focus-visible {
+.visao-geral-link:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
+}
+.visao-geral-acoes {
+  flex-wrap: wrap;
+}
+/* Celular: as três ações numa linha, divididas por igual, e a hora acima delas. */
+@media (max-width: 640px) {
+  .visao-geral-acoes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+  .visao-geral-acoes .status-discreto {
+    grid-column: 1 / -1;
+  }
 }
 
 /* ── Filtros: Ano + três campos numa linha; a escolha múltipla no desenho de src/ui/ ── */
@@ -93,6 +87,17 @@
   .visao-geral-filtros-grade {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+.visao-geral-filtros {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.visao-geral-recorte {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
 }
 .visao-geral-filtros .multi-select-trigger {
   border-color: var(--border-control);
@@ -113,52 +118,147 @@
   box-shadow: var(--shadow-overlay);
 }
 
-/* ── KPIs: sete numa fileira em tela larga, quatro por linha no meio ──── */
+/* ── Vagas: as quatro parcelas, a barra da divisão e os outros números ── */
 
 /*
-  Duas dimensões na mesma fileira (12/11/2026): os quatro primeiros são as
-  vagas imediatas e as três parcelas delas (contratadas, em seleção,
-  ociosas); cadastro reserva, críticos e inscritos medem outra coisa e não
-  entram na soma. Em tela larga, um fio separa os dois grupos; no meio, cada
-  grupo já fica na sua linha (quatro e três).
+  As vagas imediatas e as três parcelas delas (contratadas, em seleção,
+  ociosas) somam; a barra mostra a divisão. Cadastro reserva e inscritos
+  medem outra coisa e ficam na linha de baixo, menores (layout A, 17/11/2026).
 */
-@media (min-width: 1280px) {
-  .visao-geral-kpis {
-    grid-template-columns:
-      repeat(4, minmax(0, 1fr)) 1px
-      repeat(3, minmax(0, 1fr));
-  }
-  .visao-geral-kpis::after {
-    content: "";
-    grid-row: 1;
-    grid-column: 5;
-    align-self: stretch;
-    background: var(--border-subtle);
-  }
-  .visao-geral-kpis > [data-kpi]:nth-child(5) {
-    grid-column: 6;
-  }
+.visao-geral-vagas {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
 }
-@media (min-width: 641px) and (max-width: 1279px) {
-  .visao-geral-kpis {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
+.visao-geral-vagas-numeros {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
 }
-/* Celular, duas colunas: o sétimo (Inscritos) ocupa a linha toda em vez de deixar um buraco. */
 @media (max-width: 640px) {
-  .visao-geral-kpis > :last-child:nth-child(odd) {
-    grid-column: 1 / -1;
+  .visao-geral-vagas {
+    padding: var(--space-4);
+  }
+  .visao-geral-vagas-numeros {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+.visao-geral-numero {
+  display: grid;
+  align-content: start;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+.visao-geral-numero-rotulo {
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+.visao-geral-numero-detalhe {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.visao-geral-numero .ui-kpi-valor {
+  margin-top: 0;
+}
+.visao-geral-numero[data-tom="sucesso"] .ui-kpi-valor {
+  color: var(--state-success);
+}
+.visao-geral-numero[data-tom="info"] .ui-kpi-valor {
+  color: var(--state-info);
+}
+.visao-geral-numero[data-tom="alerta"] .ui-kpi-valor {
+  color: var(--state-warning);
+}
+.visao-geral-divisao {
+  display: flex;
+  gap: 2px;
+  height: 10px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--state-neutral-soft);
+}
+.visao-geral-divisao i {
+  display: block;
+  min-width: 2px;
+}
+.visao-geral-divisao i[data-tom="sucesso"] {
+  background: var(--state-success);
+}
+.visao-geral-divisao i[data-tom="info"] {
+  background: var(--state-info);
+}
+.visao-geral-divisao i[data-tom="alerta"] {
+  background: var(--state-warning);
+}
+.visao-geral-vagas-outros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+}
+.visao-geral-vagas-outros .visao-geral-numero {
+  grid-auto-flow: column;
+  justify-content: start;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+.visao-geral-vagas-outros .ui-kpi-valor {
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+}
+.visao-geral-vagas-outros .ui-kpi-valor.ui-esqueleto {
+  height: var(--leading-body);
+}
 
-/* ── Blocos: listas que rolam dentro do card ─────────────────────────── */
+/* ── Pede ação e em andamento ─────────────────────────────────────────── */
 
-.visao-geral-pos-resultado .ui-pendencias {
+.visao-geral-pede-acao .ui-pendencias {
   max-height: 360px;
   overflow-y: auto;
 }
+.visao-geral-fases-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.visao-geral-fase {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  background: var(--color-bg-selected);
+  color: var(--color-text-brand);
+  font: inherit;
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+.visao-geral-fase:hover {
+  background: var(--color-action-secondary-hover);
+}
+.visao-geral-fase[aria-pressed="true"] {
+  border-color: var(--focus-ring);
+}
+.visao-geral-fase:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+@media (pointer: coarse) {
+  .visao-geral-fase {
+    min-height: 44px;
+  }
+}
+.visao-geral-encerrados {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
 
-/* ── Fases e projetos: linha com número (e barra) ────────────────────── */
+/* ── Processos por projeto: linha com número ─────────────────────────── */
 
 .visao-geral-itens {
   display: grid;
@@ -166,19 +266,6 @@
 }
 .visao-geral-itens-grade {
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-}
-/*
-  Fases em duas colunas na tela larga, lidas de cima para baixo (13/11/2026):
-  numa coluna só, as nove fases deixavam o cartão com o dobro da altura do
-  Pós-resultado ao lado. `--linhas-das-fases` (paineis.tsx) é metade delas.
-*/
-@media (min-width: 1100px) {
-  .visao-geral-fases-itens {
-    grid-auto-flow: column;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: repeat(var(--linhas-das-fases, 5), auto);
-    column-gap: var(--space-4);
-  }
 }
 .visao-geral-item {
   display: grid;
@@ -244,34 +331,6 @@
   font-size: var(--text-caption);
   font-weight: var(--font-weight-semibold);
   text-align: center;
-}
-.visao-geral-barra {
-  display: block;
-  height: 5px;
-  overflow: hidden;
-  border-radius: var(--radius-pill);
-  background: var(--state-neutral-soft);
-}
-.visao-geral-barra i {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--state-neutral);
-}
-.visao-geral-item[data-tom="sucesso"] .visao-geral-barra i {
-  background: var(--state-success);
-}
-.visao-geral-item[data-tom="info"] .visao-geral-barra i {
-  background: var(--state-info);
-}
-.visao-geral-item[data-tom="destaque"] .visao-geral-barra i {
-  background: var(--series-3);
-}
-.visao-geral-item[data-tom="alerta"] .visao-geral-barra i {
-  background: var(--state-warning);
-}
-.visao-geral-item[data-tom="perigo"] .visao-geral-barra i {
-  background: var(--state-danger);
 }
 
 /* ── Tabela ──────────────────────────────────────────────────────────── */
@@ -486,6 +545,26 @@
     min-width: 0;
     max-width: none;
   }
+  /*
+    Cartão curto (layout A): só as colunas que decidem — unidade, edital com
+    o prazo, vagas, inscritos, contratados, sem contratação, status e
+    atenção. As outras (datas, ciclo, admissões, fase…) ficam na gaveta, que
+    abre ao tocar no cartão; antes, cada edital ocupava uma tela inteira com
+    18 linhas, muitas com "—".
+  */
+  .visao-geral-tabela.mobile-card-table
+    td[data-campo]:not(
+      [data-campo="unidade"],
+      [data-campo="edital"],
+      [data-campo="vagas_total"],
+      [data-campo="inscritos"],
+      [data-campo="contratados"],
+      [data-campo="vagas_ociosas"],
+      [data-campo="status"],
+      [data-campo="atencao"]
+    ) {
+    display: none;
+  }
 }
 
 /* "Colunas": o menu sobre a tabela. */
@@ -568,9 +647,22 @@
 
 /* ── O lugar do mapa da área ─────────────────────────────────────────── */
 
-/* Sem altura própria: quem dá o tamanho é o mapa. */
+/*
+  Mais baixo que nas telas do mapa (layout A): ele divide a página com os
+  números e a tabela. Enquanto o módulo do mapa baixa, a reserva guarda a
+  altura dele, para a página não pular quando ele chega.
+*/
 .visao-geral-mapa {
+  --altura-do-mapa-na-visao-geral: clamp(480px, calc(100vh - 200px), 640px);
   min-width: 0;
+}
+.visao-geral-mapa .mapa-si {
+  --mapa-si-altura: var(--altura-do-mapa-na-visao-geral);
+}
+.visao-geral-mapa-reserva {
+  display: grid;
+  place-items: center;
+  min-height: var(--altura-do-mapa-na-visao-geral);
 }
 /* Sem mapa (fora do app) o lugar não deixa um vão na grade. */
 .visao-geral-mapa:empty {

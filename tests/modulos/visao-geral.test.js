@@ -245,6 +245,8 @@ const kpi = (chave) =>
   secao.querySelector(`.visao-geral-kpis [data-kpi="${chave}"]`);
 const valorDoKpi = (chave) =>
   kpi(chave)?.querySelector(".ui-kpi-valor")?.textContent;
+// Os críticos ficam em "Pede ação" (layout A), não na faixa das vagas.
+const criticos = () => secao.querySelector('[data-pendencia="criticos"]');
 const linhas = () =>
   secao.querySelectorAll(".visao-geral-tabela tbody tr.visao-geral-linha");
 const botao = (texto, raiz = document) =>
@@ -283,7 +285,7 @@ describe("a tela dentro do app", () => {
     expect(status[0].textContent).toBe("Carregando dados…");
   });
 
-  it("os sete KPIs da área atual fecham, com os rótulos de Configurações", async () => {
+  it("os números da área atual fecham, com os rótulos de Configurações", async () => {
     await montar({
       valores: {
         kpi_vagas_label: "Vagas Imediatas Previstas",
@@ -299,7 +301,6 @@ describe("a tela dentro do app", () => {
       "emSelecao",
       "ociosas",
       "cadastroReserva",
-      "criticos",
       "inscritos",
     ]);
     expect(valorDoKpi("vagas")).toBe("23");
@@ -307,7 +308,7 @@ describe("a tela dentro do app", () => {
     expect(valorDoKpi("emSelecao")).toBe("6");
     expect(valorDoKpi("ociosas")).toBe("0");
     expect(valorDoKpi("cadastroReserva")).toBe("0");
-    expect(valorDoKpi("criticos")).toBe("1");
+    expect(criticos().textContent).toContain("1 edital");
     expect(valorDoKpi("inscritos")).toBe("140");
     expect(kpi("vagas").textContent).toContain("Vagas Imediatas Previstas");
     // O rótulo antigo (imediatas + CR) não vale para Contratadas.
@@ -365,10 +366,10 @@ describe("a tela dentro do app", () => {
       ],
     ]);
     // 11/2025: sem etapa em curso desde 11/09 → parado há 20 dias.
-    expect(valorDoKpi("criticos")).toBe("2");
-    expect(
-      secao.querySelector(".visao-geral-pos-resultado").textContent,
-    ).toContain("Lista sem status");
+    expect(criticos().textContent).toContain("2 editais");
+    expect(secao.querySelector(".visao-geral-pede-acao").textContent).toContain(
+      "Lista sem status",
+    );
     // Filtro não pede de novo; outra carga das linhas, sim.
     await act(async () => estado.definirFiltro("uf", ["MT"]));
     await esperar();
@@ -451,7 +452,7 @@ describe("a tela dentro do app", () => {
     };
     await montar({ supabase });
     await esperar();
-    expect(valorDoKpi("criticos")).toBe("1");
+    expect(criticos().textContent).toContain("1 edital");
     expect(aviso).toHaveBeenCalled();
     aviso.mockRestore();
   });
@@ -486,9 +487,9 @@ describe("a tela dentro do app", () => {
 });
 
 describe("filtros e recorte", () => {
-  it("o KPI Críticos recorta pelos críticos calculados e tira no segundo clique", async () => {
+  it("Críticos (em Pede ação) recorta pelos críticos calculados e tira no segundo clique", async () => {
     await montar();
-    const alvo = kpi("criticos").querySelector("button");
+    const alvo = criticos();
     await clicar(alvo);
     expect(estado.obter().atalho).toBe("criticos");
     expect(alvo.getAttribute("aria-pressed")).toBe("true");
@@ -506,6 +507,9 @@ describe("filtros e recorte", () => {
 
   it("Ano escolhe os editais daquele ano; os filtros ficam guardados no navegador", async () => {
     await montar();
+    // Os campos ficam fechados até o botão "Filtros" do cabeçalho.
+    expect(secao.querySelector("#visaoGeralFiltroAno")).toBeNull();
+    await clicar(botao("Filtros", secao));
     const ano = secao.querySelector("#visaoGeralFiltroAno");
     expect([...ano.options].map((o) => o.value)).toEqual(["", "2026", "2025"]);
     await escolher(ano, "2026");
@@ -535,6 +539,7 @@ describe("filtros e recorte", () => {
 
   it("'Mais opções' guarda Fase e UF", async () => {
     await montar();
+    await clicar(botao("Filtros", secao));
     const mais = secao.querySelector("#visaoGeralMaisFiltros");
     expect(mais.hidden).toBe(true);
     expect(mais.querySelector("#visaoGeralFiltro-fase")).not.toBeNull();
@@ -592,23 +597,21 @@ describe("blocos", () => {
     expect(secao.querySelector(".visao-geral-atencao")).toBeNull();
   });
 
-  it("Fases: fixas, o clique filtra a fase; texto vindo do dado não vira HTML", async () => {
+  it("Em andamento: só as fases com edital aberto; o clique filtra; texto do dado não vira HTML", async () => {
     const alertas = vi.spyOn(window, "alert").mockImplementation(() => {});
     await montar();
     const fases = [
-      ...secao.querySelectorAll(".visao-geral-fases .visao-geral-item"),
+      ...secao.querySelectorAll(".visao-geral-fases .visao-geral-fase"),
     ];
-    expect(fases.map((b) => b.dataset.fase)).toEqual([
-      "Edital",
-      "Inscrições",
-      "Análise curricular",
-      "Recursos",
-      "Entrevistas",
-      "Resultado",
-      "Contratação",
-      "Concluído",
-      "Outra",
-    ]);
+    const nomes = fases.map((b) => b.dataset.fase);
+    expect(nomes).toContain("Entrevistas");
+    // Sem as vazias e sem as encerradas.
+    expect(nomes).not.toContain("Recursos");
+    expect(nomes).not.toContain("Concluído");
+    expect(nomes).not.toContain("Cancelado");
+    expect(secao.querySelector(".visao-geral-encerrados").textContent).toMatch(
+      /concluído/,
+    );
     // A etapa perigosa é "Outra" e fica como texto (title) na coluna Fase.
     expect(secao.querySelector("img")).toBeNull();
     const celula = [...secao.querySelectorAll("td")].find(
@@ -621,19 +624,17 @@ describe("blocos", () => {
     expect(entrevistas.getAttribute("aria-pressed")).toBe("true");
     expect(linhas()).toHaveLength(1);
     expect(toast).toHaveBeenLastCalledWith("Filtro de fase: Entrevistas");
-    // Fase sem edital não filtra.
-    expect(fases.find((b) => b.dataset.fase === "Recursos").disabled).toBe(
-      true,
-    );
     expect(alertas).not.toHaveBeenCalled();
     alertas.mockRestore();
   });
 
-  it("Pós-resultado: contratação abaixo de 50% filtra; sem pendência, estado vazio", async () => {
+  it("Pede ação: contratação abaixo de 50% aparece e filtra", async () => {
     await montar();
     expect(
-      secao.querySelector(".visao-geral-pos-resultado").textContent,
-    ).toContain("Nenhuma pendência.");
+      secao.querySelector(
+        '.visao-geral-pede-acao [data-pendencia="contratacao_baixa"]',
+      ),
+    ).toBeNull();
     await act(async () =>
       publicarLinhasDoMonitoramento([
         ...LINHAS,
@@ -651,7 +652,7 @@ describe("blocos", () => {
       ]),
     );
     const item = secao.querySelector(
-      '.visao-geral-pos-resultado [data-pendencia="contratacao_baixa"]',
+      '.visao-geral-pede-acao [data-pendencia="contratacao_baixa"]',
     );
     expect(item.textContent).toContain("Contratação abaixo de 50%");
     expect(item.textContent).toContain("1 edital");
@@ -815,9 +816,10 @@ describe("tabela de processos", () => {
     expect(selo.getAttribute("title")).toBe(selo.textContent);
     const contagem = () =>
       secao.querySelector("[data-tabela-contagem]").textContent;
-    expect(contagem()).toBe("3 processos");
+    // "Mostrando 3 de 3 registros" já diz tudo; o total da área só com recorte.
+    expect(contagem()).toBe("");
     await act(async () => estado.definirBusca("Yanomami"));
-    expect(contagem()).toBe("1 de 3 processos");
+    expect(contagem()).toBe("3 editais na área");
   });
 
   it("a linha abre os detalhes (clique ou Enter); 'Voltar à linha' fecha e destaca", async () => {
@@ -907,16 +909,21 @@ describe("tabela de processos", () => {
 describe("boas-vindas e marcos do ano", () => {
   // As comemorações são da casca; aqui, montadas como ela faz.
   comemoracoesNaPagina();
-  it("saúda quando o perfil e os editais chegaram, sem botão de fechar", async () => {
+  it("o cabeçalho saúda quando o perfil e os editais chegaram", async () => {
     await montar({ comPerfil: true });
-    const card = secao.querySelector(".boas-vindas");
-    expect(card.textContent).toContain("Bom dia, Ana");
-    expect(card.querySelector('[data-boas-vindas="fechar"]')).toBeNull();
+    const saudacao = secao.querySelector(".visao-geral-saudacao");
+    expect(saudacao.textContent).toContain("Bom dia, Ana");
+    expect(saudacao.textContent).toMatch(/próximos 7 dias/);
+    // O card antigo de boas-vindas saiu (o dos marcos do ano usa a mesma classe).
+    expect(secao.querySelector(".boas-vindas:not(.marcos-do-ano)")).toBeNull();
   });
 
-  it("sem perfil, sem card", async () => {
+  it("sem perfil, sem saudação (a semana continua)", async () => {
     await montar();
-    expect(secao.querySelector(".boas-vindas")).toBeNull();
+    expect(secao.querySelector(".visao-geral-saudacao-titulo")).toBeNull();
+    expect(
+      secao.querySelector(".visao-geral-saudacao-semana").textContent,
+    ).toMatch(/7 dias/);
   });
 
   it("primeira leitura em silêncio: o marco já alcançado não é anunciado", async () => {

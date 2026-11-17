@@ -85,6 +85,8 @@ export const RPC_ACOMPANHAMENTO =
 export const RPC_CRITICOS_MANUAIS = "listar_editais_criticos_manuais";
 /** Cargos das vagas e quadro de cada edital: as vagas reabertas (src/lib/vagas-reabertas.ts). */
 export const RPC_VAGAS_POR_CARGO = "listar_vagas_por_cargo_da_visao_geral";
+/** Quanto as vagas esperam o acompanhamento antes de aparecer sem o desconto das reabertas. */
+export const ESPERA_MAXIMA_DO_ACOMPANHAMENTO_MS = 10_000;
 
 const txt = (valor: unknown) => String(valor ?? "").trim();
 
@@ -273,6 +275,9 @@ export function criarEstadoDaVisaoGeral({
     linhas: LinhaDaVisaoGeral[];
   } = { chave: null, linhas: [] };
   let pedido: { linhas: readonly unknown[]; area: string } | null = null;
+  /* O pedido desta carga falhou ou passou do tempo: as vagas saem sem o desconto. */
+  let semAcompanhamento: { linhas: readonly unknown[]; area: string } | null =
+    null;
 
   const hoje = () => hojeEmBrasilia(new Date(agora()));
 
@@ -316,8 +321,23 @@ export function criarEstadoDaVisaoGeral({
   }
 
   /* O que a tela mostra, calculado uma vez por mudança. */
+  /*
+    Sem o acompanhamento da área, as vagas imediatas e as ociosas ainda não
+    têm o desconto das reabertas: por uns segundos a tela mostrava 2.453 e
+    790 e depois trocava para 2.092 e 429 (17/11/2026). Agora espera, até a
+    resposta, o erro ou o tempo-limite. Numa recarga, o acompanhamento
+    anterior da mesma área vale até o novo chegar, e não há espera.
+  */
+  function aguardandoVagas(linhas: readonly unknown[], area: string) {
+    if (!buscarAcompanhamento || !proprio.aberta) return false;
+    if (acompanhamentoAtual(area)) return false;
+    return !(
+      semAcompanhamento?.linhas === linhas && semAcompanhamento?.area === area
+    );
+  }
+
   function calcular() {
-    const { areaAtual, carregado, erro = "" } = dados.obter();
+    const { linhas, areaAtual, carregado, erro = "" } = dados.obter();
     const { daArea, acompanhamento, dia } = linhasEnriquecidas();
     const filtradas = recortar(daArea, {
       filtros: proprio.filtros,
@@ -349,6 +369,7 @@ export function criarEstadoDaVisaoGeral({
       quantosFiltros,
       criticosAtivo: proprio.atalho === "criticos",
       indicadores: indicadoresDaVisaoGeral(filtradas),
+      aguardandoVagas: carregado && aguardandoVagas(linhas, areaAtual),
     };
   }
 
@@ -407,6 +428,12 @@ export function criarEstadoDaVisaoGeral({
     const buscar = buscarAcompanhamento;
     const este = { linhas, area: areaAtual };
     pedido = este;
+    // Demorou demais: as vagas aparecem sem o desconto (e mudam se ele chegar).
+    setTimeout(() => {
+      if (pedido !== este) return;
+      semAcompanhamento = este;
+      avisarOuvintes();
+    }, ESPERA_MAXIMA_DO_ACOMPANHAMENTO_MS);
     const editais = linhasEnriquecidas()
       .daArea.map((linha) => txt(linha.id))
       .filter(Boolean);
@@ -444,7 +471,11 @@ export function criarEstadoDaVisaoGeral({
           });
         },
         (erro) => {
-          if (pedido === este) pedido = null;
+          if (pedido === este) {
+            pedido = null;
+            semAcompanhamento = este;
+            avisarOuvintes();
+          }
           console.warn(
             "Acompanhamento da Visão geral indisponível; usando só as linhas:",
             erro?.message || erro,
