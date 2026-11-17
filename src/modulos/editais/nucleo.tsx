@@ -39,6 +39,16 @@ import {
 import { formatNumberBR } from "../../lib/formatters";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { Selo, TabelaInfinita, TopoDoPainel } from "../../ui/index.ts";
+import { avisoDaListaDoEdital } from "../../lib/aprovados-por-edital.ts";
+import {
+  ORDEM_PADRAO_DOS_EDITAIS,
+  ordenarEditais,
+  proximaOrdemDosEditais,
+} from "../../lib/ordem-dos-editais.ts";
+import type {
+  ChaveDaOrdemDosEditais,
+  OrdemDosEditais,
+} from "../../lib/ordem-dos-editais.ts";
 import { criarEstadoDoNucleo } from "./estado.ts";
 import { PainelOperacional } from "./painel-operacional.tsx";
 import { ModalLinhaDoTempo } from "./modal-linha-do-tempo.tsx";
@@ -133,15 +143,26 @@ const SELO: Partial<Record<string, string>> = {
   cyan: "revisar",
 };
 
-const COLUNAS = [
-  { rotulo: "Unidade", largura: "16%" },
-  { rotulo: "Edital", largura: "12%" },
-  { rotulo: "Status", largura: "11%" },
-  { rotulo: "Etapa", largura: "19%" },
-  { rotulo: "Vagas", largura: "7%", numero: true },
-  { rotulo: "Contratados", largura: "8%", numero: true },
-  { rotulo: "Ociosas", largura: "7%", numero: true },
-  { rotulo: "Risco", largura: "8%" },
+/* As colunas; com `ordem`, o cabeçalho ordena por ela (src/lib/ordem-dos-editais.ts). */
+const COLUNAS: readonly {
+  rotulo: string;
+  largura: string;
+  numero?: boolean;
+  ordem?: ChaveDaOrdemDosEditais;
+}[] = [
+  { rotulo: "Unidade", largura: "16%", ordem: "unidade" },
+  { rotulo: "Edital", largura: "12%", ordem: "edital" },
+  { rotulo: "Status", largura: "11%", ordem: "status" },
+  { rotulo: "Etapa", largura: "19%", ordem: "etapa" },
+  { rotulo: "Vagas", largura: "7%", numero: true, ordem: "vagas" },
+  {
+    rotulo: "Contratados",
+    largura: "8%",
+    numero: true,
+    ordem: "contratados",
+  },
+  { rotulo: "Ociosas", largura: "7%", numero: true, ordem: "ociosas" },
+  { rotulo: "Risco", largura: "8%", ordem: "risco" },
   { rotulo: "Ações", largura: "12%" },
 ];
 
@@ -186,6 +207,15 @@ function LinhaDoEdital({
     estado.assinar,
     () => estado.obter().salvando,
   );
+  const aprovados = useSyncExternalStore(
+    estado.assinar,
+    () => estado.obter().aprovados,
+  );
+  // Cancelado/suspenso (vermelho) ou concluído sem aprovados (amarelo).
+  const aviso = podeListas
+    ? avisoDaListaDoEdital(aprovados, linha.id, linha.status)
+    : null;
+  const rotulo = [linha.edital, linha.unidade].filter(Boolean).join(" · ");
   const alerta =
     item && item.alerta_tipo !== "ok" ? alertaDoTipo(item.alerta_tipo) : null;
 
@@ -251,15 +281,21 @@ function LinhaDoEdital({
           ) : null}
           {podeListas ? (
             <button
-              className="btn icon outline"
+              className={`btn icon outline${aviso ? ` nucleo-listas-${aviso.tom}` : ""}`}
               type="button"
-              title="Lista de aprovados"
-              aria-label={`Lista de aprovados de ${nome}`}
+              title={aviso ? aviso.texto : "Lista de aprovados"}
+              aria-label={
+                aviso
+                  ? `${aviso.texto}: ${nome}`
+                  : `Lista de aprovados de ${nome}`
+              }
               onClick={() =>
-                abrirListasDoEdital(
-                  String(linha.id),
-                  [linha.edital, linha.unidade].filter(Boolean).join(" · "),
-                )
+                aviso
+                  ? estado.toast(
+                      aviso.texto,
+                      aviso.tom === "perigo" ? "error" : "warn",
+                    )
+                  : abrirListasDoEdital(String(linha.id), rotulo)
               }
             >
               <i className="fa-solid fa-file-arrow-up" aria-hidden="true" />
@@ -394,14 +430,37 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
   );
 
   const indice = useMemo(() => indexarResumo(nucleo.resumo), [nucleo.resumo]);
-  // A ordem é a de sempre (filtrarEditais ordena); a busca recorta depois.
+  // A ordem é a da tabela (abaixo); a busca recorta depois.
   const editais = useMemo(() => filtrarEditais(linhas, ""), [linhas]);
+  /*
+    A ordem da tabela: cronológica (mais recente primeiro) por padrão; o
+    cabeçalho de cada coluna ordena por ela, alternando o sentido.
+  */
+  const [ordem, setOrdem] = useState<OrdemDosEditais>(ORDEM_PADRAO_DOS_EDITAIS);
   const noFiltro = useMemo(
     () =>
-      editais
-        .map((linha) => ({ linha, item: resumoDoEdital(indice, linha) }))
-        .filter(({ item }) => passaNoFiltroOperacional(item, nucleo.filtro)),
-    [editais, indice, nucleo.filtro],
+      ordenarEditais(
+        editais
+          .map((linha) => ({ linha, item: resumoDoEdital(indice, linha) }))
+          .filter(({ item }) => passaNoFiltroOperacional(item, nucleo.filtro)),
+        ordem,
+        ({ linha }) => linha,
+      ),
+    [editais, indice, nucleo.filtro, ordem],
+  );
+  const colunas = useMemo(
+    () =>
+      COLUNAS.map(({ ordem: chave, ...coluna }) =>
+        chave
+          ? {
+              ...coluna,
+              ordem: ordem.chave === chave ? ordem.sentido : "",
+              aoOrdenar: () =>
+                setOrdem((atual) => proximaOrdemDosEditais(atual, chave)),
+            }
+          : coluna,
+      ),
+    [ordem],
   );
   const podeEditar = canManageEditais(nucleo.perfil);
 
@@ -450,7 +509,10 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
         tour="editais-topo"
         status={textoDoStatus(nucleo, carregado)}
         aoAtualizar={() =>
-          void estado.carregarResumo({ force: true }).catch(() => {})
+          void estado
+            .carregarResumo({ force: true })
+            .catch(() => {})
+            .then(() => estado.carregarAprovados())
         }
         idDaAtualizacao="nucleoOperationalRefresh"
         atualizarDesativado={nucleo.atualizandoResumo}
@@ -493,7 +555,7 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
         }
         itens={noFiltro}
         filtrarPelaBusca={pelaBusca}
-        colunas={COLUNAS}
+        colunas={colunas}
         classeDaTabela="editais-tabela"
         linha={({ linha, item }) => (
           <LinhaDoEdital
@@ -549,7 +611,12 @@ export function criarNucleo({
     /* Ao abrir a página: relê o perfil e pede o resumo (com cache curto). */
     render() {
       estado.sincronizarPerfil();
-      return estado.carregarResumo().catch(() => {});
+      // As listas mudam fora daqui (importação, Classificação): relê a cada
+      // abertura, depois do resumo (que é o que a tela mostra primeiro).
+      return estado
+        .carregarResumo()
+        .catch(() => {})
+        .then(() => estado.carregarAprovados());
     },
     abrirEdital: estado.abrirEdital,
   };

@@ -229,7 +229,13 @@ type RpcDoNucleo = (
 function supabaseFalso({
   resumo = RESUMO,
   cronogramas = CRONOGRAMAS,
-}: { resumo?: object[]; cronogramas?: Record<string, object> } = {}) {
+  listas = null,
+}: {
+  resumo?: object[];
+  cronogramas?: Record<string, object>;
+  /* As listas vigentes de aprovados; `null` = RPC indisponível (nada marcado). */
+  listas?: object[] | null;
+} = {}) {
   const auth: { ouvinte: OuvinteDaSessao | null } = { ouvinte: null };
   return {
     auth: authFalso("x", (ouvinte) => {
@@ -258,6 +264,8 @@ function supabaseFalso({
         };
       if (nome === "listar_unidades_por_area")
         return { data: UNIDADES_POR_AREA, error: null };
+      if (nome === "listar_listas_aprovados" && listas)
+        return { data: listas, error: null };
       if (nome === "mover_edital_de_area")
         return {
           data: {
@@ -428,6 +436,10 @@ const atualizar = () =>
   document.querySelector<HTMLButtonElement>(
     '#page-nucleo [data-acao="atualizar"]',
   );
+const pedidosDoResumo = (supabase: ReturnType<typeof supabaseFalso>) =>
+  supabase.rpc.mock.calls.filter(
+    ([nome]) => nome === "get_nucleo_cronograma_resumo",
+  );
 const abrirEdital = async (id: string) =>
   clicar(linha(id)?.querySelector<HTMLElement>('[aria-label^="Editar"]'));
 
@@ -454,9 +466,36 @@ describe("tabela de editais", () => {
     ).toBe("Carregando dados…");
   });
 
-  it("ordena pelo risco e, depois, por quem tem mais vagas ociosas", async () => {
+  it("por padrão, do edital mais recente para o mais antigo", async () => {
+    await montar({
+      linhas: LINHAS().map((linha, i) => ({
+        ...linha,
+        data_inicio: ["2026-05-01", "2026-03-01", "2026-07-01"][i],
+      })),
+    });
+    expect(linhasDaTabela()).toEqual(["3", "1", "2"]);
+    const edital = document.querySelector<HTMLElement>(
+      '#page-nucleo th[aria-sort="descending"]',
+    );
+    expect(edital?.textContent).toContain("Edital");
+  });
+
+  it("clicar na coluna ordena por ela: crescente, depois decrescente", async () => {
     await montar();
-    expect(linhasDaTabela()).toEqual(["2", "3", "1"]);
+    const ordenar = (rotulo: string) =>
+      clicar(
+        document.querySelector<HTMLElement>(
+          `#page-nucleo .ui-ordenar[title^="Ordenar por ${rotulo}"]`,
+        ),
+      );
+    // Vagas: 10 (1), 5 (2), 3 (3).
+    await ordenar("Vagas");
+    expect(linhasDaTabela()).toEqual(["3", "2", "1"]);
+    await ordenar("Vagas");
+    expect(linhasDaTabela()).toEqual(["1", "2", "3"]);
+    // Unidade: alfabética.
+    await ordenar("Unidade");
+    expect(linhasDaTabela()?.[0]).toBe("2");
   });
 
   it("colore status e risco, e só faz link de endereço http(s)", async () => {
@@ -527,6 +566,53 @@ describe("tabela de editais", () => {
           "10/2026 · DSEI Manaus",
         ),
       );
+    } finally {
+      registrarTelas({});
+    }
+  });
+
+  it("edital concluído sem aprovados: botão amarelo com o aviso, e o clique mostra o toast", async () => {
+    const aprovados = {
+      nome: "Lista de aprovados",
+      conteudo: null,
+      render() {},
+      openImportModal: vi.fn(),
+    };
+    registrarTelas({
+      approved: {
+        carregar: async () => telaDeMentira<"approved">(aprovados),
+      },
+    });
+    try {
+      // 2 é Concluído com a lista vazia; 1 (Em andamento) e 3 (Planejado) não têm lista.
+      const { toast } = await montar({
+        supabase: supabaseFalso({
+          listas: [{ edital_id: "2", total_candidatos: 0 }],
+        }),
+      });
+      const botao = (id: string) =>
+        linha(id)?.querySelector<HTMLElement>(
+          ".nucleo-row-actions .fa-file-arrow-up",
+        )?.parentElement;
+      // Edital ainda não concluído não é marcado, mesmo sem lista.
+      for (const id of ["1", "3"]) {
+        expect(botao(id)?.classList.contains("nucleo-listas-aviso")).toBe(
+          false,
+        );
+        expect(botao(id)?.getAttribute("title")).toBe("Lista de aprovados");
+      }
+      expect(botao("2")?.classList.contains("nucleo-listas-aviso")).toBe(true);
+      expect(botao("2")?.getAttribute("title")).toBe(
+        "Nenhum candidato foi aprovado neste edital",
+      );
+      await clicar(botao("2"));
+      expect(toast).toHaveBeenCalledWith(
+        "Nenhum candidato foi aprovado neste edital",
+        "warn",
+      );
+      // Só o aviso: o modal das listas não abre.
+      await esperar();
+      expect(aprovados.openImportModal).not.toHaveBeenCalled();
     } finally {
       registrarTelas({});
     }
@@ -752,7 +838,7 @@ describe("painel operacional", () => {
         definido(controlador).render(),
       ]),
     );
-    expect(supabase.rpc).toHaveBeenCalledTimes(1);
+    expect(pedidosDoResumo(supabase)).toHaveLength(1);
   });
 
   it("salvar um cronograma invalida o cache", async () => {
@@ -761,7 +847,7 @@ describe("painel operacional", () => {
       document.dispatchEvent(new CustomEvent("agsus:nucleo-cronograma-saved")),
     );
     await esperar(() => definido(controlador).render());
-    expect(supabase.rpc).toHaveBeenCalledTimes(2);
+    expect(pedidosDoResumo(supabase)).toHaveLength(2);
   });
 
   it("carregando não é zero (skeleton); vazio é curto", async () => {
@@ -831,7 +917,7 @@ describe("painel operacional", () => {
       supabase.trocarSessao("SIGNED_IN", { user: { id: "ana" } }),
     );
     expect(cartao("todos")).not.toBeNull();
-    expect(supabase.rpc).toHaveBeenCalledTimes(1);
+    expect(pedidosDoResumo(supabase)).toHaveLength(1);
   });
 });
 

@@ -11,10 +11,12 @@
 */
 
 import {
+  canImportApprovedList,
   canMoveEditalBetweenAreas,
   canManageEditais,
   isAdminGlobal,
 } from "../../lib/access-roles.ts";
+import { aprovadosPorEdital } from "../../lib/aprovados-por-edital.ts";
 import { ehEditalDeTreinamento } from "../../lib/edital-de-treinamento.ts";
 import { exigirSessao } from "../../lib/sessao";
 import {
@@ -69,6 +71,11 @@ export interface EstadoDoNucleo {
   modal: ModalDoNucleo | null;
   salvando: boolean;
   geracao: number;
+  /**
+   * edital_id → candidatos da lista vigente (`listar_listas_aprovados`);
+   * `null` enquanto não chegou (ou sem permissão/erro): nada é marcado.
+   */
+  aprovados: ReadonlyMap<string, number> | null;
 }
 
 /** A resposta de `get_monitoramento_cronograma`, com o que a linha do tempo lê. */
@@ -150,6 +157,7 @@ const RPC_MOVER_DE_AREA = "mover_edital_de_area";
 const RPC_QUADRO = "obter_quadro_de_vagas";
 const RPC_SALVAR_QUADRO = "salvar_quadro_de_vagas";
 const RPC_REINICIAR_TREINAMENTO = "reiniciar_edital_treinamento";
+const RPC_LISTAS_APROVADOS = "listar_listas_aprovados";
 export const EVENTO_CRONOGRAMA_SALVO = "agsus:nucleo-cronograma-saved";
 
 const txt = (valor: unknown) => String(valor ?? "").trim();
@@ -173,6 +181,7 @@ const ESTADO_INICIAL: EstadoDoNucleo = Object.freeze({
   salvando: false,
   /** Muda quando a sessão troca de usuário: o que foi pedido antes não vale. */
   geracao: 0,
+  aprovados: null,
 });
 
 /* Depois de salvar: o legado recarrega tudo (mapa incluído) e reabre a página. */
@@ -255,6 +264,26 @@ export function criarEstadoDoNucleo({
     return pendente;
   }
 
+  /*
+    Quantos aprovados cada edital tem (para marcar o botão "Lista de
+    aprovados" do edital sem nenhum). Só para quem abre as listas; erro deixa
+    `null` (nada marcado) e fica no console. Resposta de outra sessão é
+    descartada pela geração.
+  */
+  async function carregarAprovados(): Promise<void> {
+    if (!supabase || !canImportApprovedList(perfil())) return;
+    const geracao = estado.geracao;
+    try {
+      await exigirSessao(supabase);
+      const { data, error } = await supabase.rpc(RPC_LISTAS_APROVADOS);
+      if (error) throw error;
+      if (geracao !== estado.geracao) return;
+      publicar({ aprovados: aprovadosPorEdital(data) });
+    } catch (erro) {
+      console.warn("Não foi possível ler as listas de aprovados:", erro);
+    }
+  }
+
   /** O mesmo resumo, para a lista de "copiar cronograma de outro edital". */
   function editaisParaCopiar() {
     return resumo.get();
@@ -275,6 +304,7 @@ export function criarEstadoDoNucleo({
       carregadoEm: "",
       filtro: "todos",
       geracao: estado.geracao + 1,
+      aprovados: null,
     });
   }
 
@@ -599,6 +629,7 @@ export function criarEstadoDoNucleo({
     /* O perfil muda sem aviso do legado: a página relê a cada abertura. */
     sincronizarPerfil: () => publicar({ perfil: perfil() }),
     carregarResumo,
+    carregarAprovados,
     editaisParaCopiar,
     filtrarPor: (filtro: string | null | undefined) =>
       publicar({ filtro: filtro || "todos" }),
