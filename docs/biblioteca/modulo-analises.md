@@ -28,7 +28,7 @@ tabela.tsx      fila (TabelaInfinita: 50 por vez, Carregar mais, busca só da fi
 gaveta.tsx      detalhe: contexto, links (origem e PDF, só http/https), seções e parecer
 espelho-na-gaveta.tsx  linha da ficha concluída: nota autodeclarada × consolidada e, por critério,
                 Declarada / Após análise / Teto, com as justificativas do critério que mudou
-                (a conta: src/lib/espelho-do-painel-de-analises.ts)
+                (a conta: src/lib/analises/espelho-do-painel-de-analises.ts)
 estado.ts       store sem React: carga por área e escopo, cópia do navegador, porteiro, gaveta
                 (detalhamento sob demanda), pareceres em lote, CSV, comemorações
 consultas.ts    as RPCs (lista, porteiro, detalhamento, pareceres, ritmo) e a cópia no IndexedDB
@@ -36,11 +36,11 @@ marcos.ts       edital 100% analisado e fila zerada (escopo Ativo); meta de hoje
                 equipe (uma vez por dia por pessoa)
 ```
 
-Regras puras em `src/lib/analises-curriculares.ts` (janela e validação, filtros em cascata, KPIs,
+Regras puras em `src/lib/analises/analises-curriculares.ts` (janela e validação, filtros em cascata, KPIs,
 gráficos, pendências, recorte, gaveta, CSV), mais `area-do-painel-de-analises.ts`,
 `lista-do-painel-de-analises.ts`, `textos-do-painel-de-analises.ts` e
 `cache-do-painel-de-analises.ts`; o ritmo (etapa do cronograma, dias úteis, projeção) em
-`src/lib/ritmo-da-analise.ts`. Visual só de `src/ui/` (sem CSS próprio). `marcos.ts` também avisa o
+`src/lib/analises/ritmo-da-analise.ts`. Visual só de `src/ui/` (sem CSS próprio). `marcos.ts` também avisa o
 [[modulo-editais]].
 
 ## TypeScript

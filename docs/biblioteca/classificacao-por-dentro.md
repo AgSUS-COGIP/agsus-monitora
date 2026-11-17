@@ -29,7 +29,7 @@ Regras puras em `src/lib/classificacao/`: `motor.ts`, `regra.ts`, `edicao-da-reg
 `catalogo.ts`, `vagas.ts`, `numeros.ts`, `sorteio.ts`, `exportacao.ts`, `ajustes.ts` (o motor com os
 ajustes da pontuação aprovados em recurso e a prévia do recurso), `documento-sei.ts`,
 `documento-docx.ts`, `dados.ts`, `relatorio-de-desempate.ts`, `calculo-em-python.ts`. Fora da pasta:
-`src/lib/publicacao-de-aprovados.ts` e `src/lib/agenda-das-entrevistas.ts`.
+`src/lib/aprovados/publicacao-de-aprovados.ts` e `src/lib/entrevistas/agenda-das-entrevistas.ts`.
 
 ## Banco
 
@@ -71,8 +71,8 @@ silêncio:
   Preservados: nome público, timbrado, numeração, notas de desempate e de decisão, horários da
   agenda e formatos XML. O cache do logo considera URL e largura; conversão que falha pode ser
   tentada de novo.
-- **Publicação**: `src/lib/tipos-da-publicacao-de-aprovados.ts` e
-  `dados-da-publicacao-de-aprovados.ts`. **Agenda**: `src/lib/tipos-da-agenda.ts` e
+- **Publicação**: `src/lib/aprovados/tipos-da-publicacao-de-aprovados.ts` e
+  `dados-da-publicacao-de-aprovados.ts`. **Agenda**: `src/lib/entrevistas/tipos-da-agenda.ts` e
   `dados-da-agenda.ts`.
 - **Troca de edital, área ou usuário** invalida os efeitos locais de gravações e leituras: voltar ao
   mesmo ID não aceita resposta anterior (inclusive A → B → A; não altera dados, avisos nem botões);

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { montarListaDeConvocacao } from "../../src/lib/lista-convocacao-rules.ts";
-import { modeloEmBranco } from "../../src/lib/modelo-de-convocacao.ts";
-import type { CandidatoDaConvocacao } from "../../src/lib/tipos-da-lista-de-convocacao.ts";
+import { montarListaDeConvocacao } from "../../src/lib/aprovados/lista-convocacao-rules.ts";
+import { modeloEmBranco } from "../../src/lib/aprovados/carta-de-convocacao/modelo-de-convocacao.ts";
+import type { CandidatoDaConvocacao } from "../../src/lib/aprovados/tipos-da-lista-de-convocacao.ts";
 import { definido } from "../definido.ts";
 const calcular = (candidatos: CandidatoDaConvocacao[]) =>
   montarListaDeConvocacao(candidatos, () => ({

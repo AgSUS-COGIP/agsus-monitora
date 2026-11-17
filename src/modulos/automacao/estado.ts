@@ -3,15 +3,15 @@
   (`obter_chaves_da_automacao`), a mudança em curso e o aviso da última
   recusa. Ligar e desligar é uma chave por vez, com motivo
   (`alterar_chave_da_automacao`); o banco devolve a lista nova. Este arquivo
-  não importa React; as regras ficam em src/lib/chaves-da-automacao.ts.
+  não importa React; as regras ficam em src/lib/automacao/chaves-da-automacao.ts.
 */
-import { isAdminGlobal } from "../../lib/access-roles.ts";
+import { isAdminGlobal } from "../../lib/acessos/access-roles.ts";
 import {
   mensagemDaRecusa,
   motivoValido,
   normalizarChaves,
   type ChavesDaAutomacao,
-} from "../../lib/chaves-da-automacao.ts";
+} from "../../lib/automacao/chaves-da-automacao.ts";
 import { comTempoLimite, mensagemDeFalha } from "../../lib/carga/falha-de-rede";
 
 export const RPC_OBTER_CHAVES = "obter_chaves_da_automacao";

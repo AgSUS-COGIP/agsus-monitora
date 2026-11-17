@@ -29,7 +29,7 @@ import { PRAZO_DO_CALCULO_MS } from "../../lib/classificacao/calculo-em-python.t
 import { useEffect, useId, useMemo, useState } from "react";
 import { usarFiltrosNaUrl } from "../../app/usar-filtros-na-url.ts";
 import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
-import { copiarTexto } from "../../lib/convite-de-acesso.ts";
+import { copiarTexto } from "../../lib/acessos/convite-de-acesso.ts";
 import { formatNumberBR } from "../../lib/base/formatters";
 import {
   MOTIVOS_DE_ELIMINACAO,

@@ -24,7 +24,7 @@ import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
 import { irParaTela } from "../../app/ir-para-tela.ts";
 import type { JanelaDoApp } from "../../app/ir-para-tela.ts";
 import { ConvocacaoParaLeitura } from "./convocacao-para-leitura.tsx";
-import { copiarTexto } from "../../lib/convite-de-acesso.ts";
+import { copiarTexto } from "../../lib/acessos/convite-de-acesso.ts";
 import {
   bancasDaFila,
   buscarNaFila,
@@ -42,7 +42,7 @@ import {
   vagasDaFila,
   type Recorte,
   type SituacaoNaTela,
-} from "../../lib/fila-de-conducao.ts";
+} from "../../lib/entrevistas/fila-de-conducao.ts";
 import { importarComRecarga } from "../../lib/carga/importar-com-recarga";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import { comemorar } from "../../app/comemoracao-sob-demanda.ts";

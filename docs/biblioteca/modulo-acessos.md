@@ -15,10 +15,10 @@ teto do coordenador, "como a pessoa vê" e pedidos de acesso, em React. Pasta
 
 ## Perfis e permissões
 
-- `src/lib/access-roles.ts` — o que cada perfil pode e a **regra única de páginas e seções
+- `src/lib/acessos/access-roles.ts` — o que cada perfil pode e a **regra única de páginas e seções
   liberadas** (`paginasPermitidas`, `secaoDeConfiguracaoPermitida`), usada pela barra lateral e
   pelo "Ver como".
-- `src/lib/permissoes-recursos.ts` — módulos (recursos de permissão) e níveis.
+- `src/lib/acessos/permissoes-recursos.ts` — módulos (recursos de permissão) e níveis.
 - O menu por permissão e por área: `src/lib/navegacao/menu-lateral.ts` ([[modulo-barra-lateral]]).
 - **O perfil é relido a cada `render()`**: as permissões mudam sem aviso do legado.
 - Quem só lê não vê os controles de edição (sem selo "Somente consulta"; [[textos-da-interface]]).
@@ -65,11 +65,11 @@ formulários sobrevivem à troca de aba.
 - `estado.ts` — matriz, rascunho, solicitações, gaveta e ações (uma por vez); sem React. O rascunho
   mora aqui porque a guarda de saída (`navigate`) e a troca de seção perguntam (`confirmarSaida`).
 - `partes.tsx` (lista mestre, campo de motivo obrigatório em toda gravação, travas da matriz),
-  `tipos.ts` (regras e linhas das RPCs em `src/lib/tipos-dos-acessos.ts`), `acessos.css`.
+  `tipos.ts` (regras e linhas das RPCs em `src/lib/acessos/tipos-dos-acessos.ts`), `acessos.css`.
 
 ## Regras puras e banco
 
-`src/lib/matriz-de-acessos.ts` (rascunho; grupo × individual), `teto-de-acessos.ts` (teto do
+`src/lib/acessos/matriz-de-acessos.ts` (rascunho; grupo × individual), `teto-de-acessos.ts` (teto do
 coordenador), `grupos-e-coordenacoes.ts`, `ver-como.ts`, `solicitacao-de-acesso.ts` (pedido por
 área: listas, situação, validação, recusa; ver `src/app/entrada/`). Banco nas migrations
 `20260929121000`–`121300`, `190000`–`190200`, `20261021140000` e `20261022140100`; só as RPCs gravam

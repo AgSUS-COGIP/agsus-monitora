@@ -12,7 +12,7 @@ import type { MarcadorDoMapa } from "../../lib/tipos-do-mapa.ts";
 import type { MapaDoPainel } from "../mapa-saude-indigena/tipos-do-painel.ts";
 import { useEffect, useMemo, useState } from "react";
 import { usarTemaEscuro } from "../../app/tema.ts";
-import { podeEditarCoordenadas } from "../../lib/access-roles.ts";
+import { podeEditarCoordenadas } from "../../lib/acessos/access-roles.ts";
 import { aplicarCoordenada } from "../../lib/coordenadas-dos-projetos.ts";
 import { enquadramentoDoRecorte } from "../../lib/enquadramento-do-brasil.ts";
 import { OPACIDADE_DA_BOLHA } from "../../lib/mapa-render.ts";

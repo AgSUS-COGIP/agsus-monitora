@@ -1,6 +1,6 @@
 /*
   De onde a Aya tira os números das perguntas com dado ao vivo
-  (src/lib/dados-da-aya.ts). Só leitura, e só pelas RPCs que as telas já
+  (src/lib/aya/dados-da-aya.ts). Só leitura, e só pelas RPCs que as telas já
   chamam — com a sessão da própria pessoa, então o banco confere a permissão
   de novo em cada uma. Nenhuma RPC nova e nada de nome ou CPF na resposta: a
   Aya só conta.
@@ -13,9 +13,9 @@
   minuto, para a pergunta seguinte não chamar de novo.
 */
 import { telaCriada, telaPronta } from "../../app/registro-das-telas.ts";
-import { linhasDoPayload } from "../../lib/analises-curriculares.ts";
-import { parametroDeAreaDaRpc } from "../../lib/area-do-painel-de-analises.ts";
-import { normalizarPayload as payloadDasEntrevistas } from "../../lib/entrevistas-do-painel.ts";
+import { linhasDoPayload } from "../../lib/analises/analises-curriculares.ts";
+import { parametroDeAreaDaRpc } from "../../lib/analises/area-do-painel-de-analises.ts";
+import { normalizarPayload as payloadDasEntrevistas } from "../../lib/entrevistas/entrevistas-do-painel.ts";
 import { enriquecerRecursos } from "../../lib/recursos-dos-candidatos.ts";
 import { normalizarPayload as payloadDaSelecao } from "../../lib/selecao-do-painel.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";

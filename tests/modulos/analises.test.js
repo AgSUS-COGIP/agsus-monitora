@@ -8,7 +8,7 @@ import {
 import { EVENTO_TEMA_ALTERADO } from "../../src/lib/navegacao/eventos-da-barra-lateral.ts";
 import { urlDaPlanilhaGoogle } from "../../src/lib/base/planilhas.ts";
 import { pedirFiltro } from "../../src/app/pedido-de-filtro.ts";
-import { agoraEmBrasilia } from "../../src/lib/ritmo-da-analise.ts";
+import { agoraEmBrasilia } from "../../src/lib/analises/ritmo-da-analise.ts";
 import {
   clicar,
   digitar,

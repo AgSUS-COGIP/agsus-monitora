@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { camposDaSecao } from "../../lib/publicacao-de-configuracoes.ts";
+import { camposDaSecao } from "../../lib/configuracoes/publicacao-de-configuracoes.ts";
 import { CampoDaSecao, Grupo, PreviaDoAcesso } from "./partes.tsx";
 import type { EstadoDasConfiguracoes } from "./tipos.ts";
 

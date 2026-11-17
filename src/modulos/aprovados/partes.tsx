@@ -7,13 +7,13 @@ import type {
 import type {
   CandidatoDasRegrasDeAprovados,
   PaginaDosAprovados,
-} from "../../lib/tipos-das-regras-de-aprovados.ts";
+} from "../../lib/aprovados/tipos-das-regras-de-aprovados.ts";
 import type { CandidatoDaTabelaDeAprovados } from "./tipos-da-aba-de-aprovados.ts";
 type AtributosDaAcao = ButtonHTMLAttributes<HTMLButtonElement> & {
   [chave: `data-${string}`]: string | number | boolean | undefined;
 };
 import { useState } from "react";
-import { canChangeCandidateStatus } from "../../lib/access-roles.ts";
+import { canChangeCandidateStatus } from "../../lib/acessos/access-roles.ts";
 import { formatNumberBR } from "../../lib/base/formatters";
 import {
   alteracaoJudicial,
@@ -25,7 +25,7 @@ import {
   statusEhConvocado,
   statusTravado,
   tomDoStatus,
-} from "../../lib/lista-aprovados-rules.ts";
+} from "../../lib/aprovados/lista-aprovados-rules.ts";
 import { Icone } from "../../componentes/icone.tsx";
 import { classes, Selo } from "../../ui/index.ts";
 

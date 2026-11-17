@@ -5,9 +5,9 @@ import {
   motivoDaDesativacao,
   MOTIVO_NAO_REGISTRADO,
   valoresIniciaisDaReativacao,
-} from "../../lib/contas-desativadas.ts";
-import { gruposAtribuiveis } from "../../lib/teto-de-acessos.ts";
-import { explicacaoDoGrupo } from "../../lib/matriz-de-acessos.ts";
+} from "../../lib/acessos/contas-desativadas.ts";
+import { gruposAtribuiveis } from "../../lib/acessos/teto-de-acessos.ts";
+import { explicacaoDoGrupo } from "../../lib/acessos/matriz-de-acessos.ts";
 import {
   Aviso,
   BotaoDeAcao,
@@ -28,7 +28,7 @@ import {
   OpcoesDoGrupo,
   motivoValido,
 } from "./partes.tsx";
-import type { ValoresDaReativacao } from "../../lib/tipos-dos-acessos.ts";
+import type { ValoresDaReativacao } from "../../lib/acessos/tipos-dos-acessos.ts";
 import type {
   ContaDesativadaDosAcessos,
   EstadoDosAcessos,

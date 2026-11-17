@@ -9,10 +9,10 @@ import {
   validadeParaSalvar,
   validadeValida,
   vencimentoDoEdital,
-} from "../src/lib/validade-do-edital.ts";
-import type { ValidadeDoFormulario } from "../src/lib/validade-do-edital.ts";
-import { editalParaSalvar } from "../src/lib/editais-do-nucleo.ts";
-import { estadoComparavel } from "../src/lib/rascunho-do-edital.ts";
+} from "../src/lib/editais/validade-do-edital.ts";
+import type { ValidadeDoFormulario } from "../src/lib/editais/validade-do-edital.ts";
+import { editalParaSalvar } from "../src/lib/editais/editais-do-nucleo.ts";
+import { estadoComparavel } from "../src/lib/editais/rascunho-do-edital.ts";
 
 /*
   Cartão #57: validade do processo seletivo no formulário do edital. As

@@ -22,7 +22,7 @@ própria têm nota sua ([[modulo-acessos]], [[robos-e-agenda]], [[modulo-paineis
   [docs/arquitetura-react.md](../arquitetura-react.md). A barra, o Ctrl+S e o "Alterações não
   salvas" só valem nas seções da moldura, que têm campos (`SECOES_COM_BARRA_DE_SALVAR`); as de tela
   própria não mostram a barra.
-- Regras puras: `src/lib/publicacao-de-configuracoes.ts` (chaves de cada seção, comparação com o
+- Regras puras: `src/lib/configuracoes/publicacao-de-configuracoes.ts` (chaves de cada seção, comparação com o
   retrato do banco, validação de URL e domínio), `apresentacao-das-configuracoes.ts` (tom da faixa de
   aviso global e endereço de imagem aceito nas prévias), `marca-da-barra-lateral.ts` (logo e cor
   publicadas e em rascunho), `paineis-externos-das-configuracoes.ts`.
@@ -32,7 +32,7 @@ própria têm nota sua ([[modulo-acessos]], [[robos-e-agenda]], [[modulo-paineis
 O desenho, os marcos e as regras de quando comemorar estão em [[modulo-comemoracao]]. Aqui fica a
 seção que configura: `comemoracoes.tsx` (catálogo de marcos, personalizados, preferência pessoal) e
 `palco-de-testes.tsx` (efeito, intensidade, duração e som escolhidos na hora, sem gravar), sobre
-`src/lib/catalogo-de-comemoracoes.ts`. A frase fica só no aviso; fila zerada, vaga pronta e
+`src/lib/comemoracao/catalogo-de-comemoracoes.ts`. A frase fica só no aviso; fila zerada, vaga pronta e
 os personalizados são só o aviso (sem efeito, intensidade, duração nem som).
 
 - **Persistência.** Chave `comemoracoes_marcos` de `TB_CONFIGURACAO`, publicada pela barra fixa
@@ -47,7 +47,7 @@ os personalizados são só o aviso (sem efeito, intensidade, duração nem som).
   Supabase Realtime por área (broadcast `comemoracao` com `{ marco, texto }`).
 - **Respeita** `prefers-reduced-motion` (só o aviso), o liga/desliga geral (Módulos e abas
   › Sistema inteiro) e a preferência pessoal (`agsus_monitora_comemoracoes_desligadas` = `"1"`,
-  `CHAVE_COMEMORACOES_PESSOAIS` em `src/lib/preferencia-de-comemoracoes.ts`, a mesma da mascote).
+  `CHAVE_COMEMORACOES_PESSOAIS` em `src/lib/comemoracao/preferencia-de-comemoracoes.ts`, a mesma da mascote).
   "Testar" e o palco passam `teste: true`: ignoram configuração e preferência e não gravam.
 - **Marcos personalizados.** "Edital X chegou a N contratados" (soma de `contratados` das linhas do
   monitoramento, a cada carga/Realtime) e "a área passou de N análises concluídas no dia" (linhas de

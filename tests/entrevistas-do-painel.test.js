@@ -20,7 +20,7 @@ import {
   rotuloCurtoDoCriterio,
   textoDasFontesDoPainel,
   topUnidades,
-} from "../src/lib/entrevistas-do-painel.ts";
+} from "../src/lib/entrevistas/entrevistas-do-painel.ts";
 
 const CRITERIOS = [
   "HABILIDADE TÉCNICA INTERCULTURAL (Conhecimentos sobre a saúde indígena)",
@@ -384,9 +384,10 @@ describe("pendências, datas e CSV", () => {
 
 describe("registro da aba", async () => {
   const { ABAS_DO_MENU } = await import("../src/lib/navegacao/menu-lateral.ts");
-  const { RESOURCES } = await import("../src/lib/permissoes-recursos.ts");
+  const { RESOURCES } =
+    await import("../src/lib/acessos/permissoes-recursos.ts");
   const { canViewEntrevistas, paginasPermitidas } =
-    await import("../src/lib/access-roles.ts");
+    await import("../src/lib/acessos/access-roles.ts");
   const { NOMES_DE_ICONES } = await import("../src/modules/icones.ts");
 
   it("Painel de entrevistas fica em Acompanhar (depois do Painel de recursos); Entrevistas, no processo, entre Recursos e Classificação, como beta", () => {
@@ -437,7 +438,7 @@ describe("registro da aba", async () => {
 
 describe("cópia guardada", async () => {
   const { PAINEL_DE_ENTREVISTAS, payloadMudou } =
-    await import("../src/lib/entrevistas-do-painel.ts");
+    await import("../src/lib/entrevistas/entrevistas-do-painel.ts");
 
   it("chave por área, esquema 1 e payload com a lista", () => {
     expect(PAINEL_DE_ENTREVISTAS.chave({ area: "sede" })).toBe(

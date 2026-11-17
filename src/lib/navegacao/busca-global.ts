@@ -16,7 +16,7 @@ import {
   banco, até 12 resultados.
 */
 
-import { tomDoRisco } from "../editais-do-nucleo.ts";
+import { tomDoRisco } from "../editais/editais-do-nucleo.ts";
 
 export const LIMITE_DE_RESULTADOS = 12;
 

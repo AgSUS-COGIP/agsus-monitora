@@ -17,10 +17,10 @@ import {
   deveConvidar,
   geometriaDoHolofote,
   MARGEM_DO_HOLOFOTE,
-} from "../src/lib/aya-tours.ts";
+} from "../src/lib/aya/aya-tours.ts";
 
 /*
-  Os roteiros dos tours e das trilhas da Aya (src/lib/aya-tours.ts): cada
+  Os roteiros dos tours e das trilhas da Aya (src/lib/aya/aya-tours.ts): cada
   tela pedida tem tour, a Visão geral muda por área, as trilhas aparecem só
   para quem pode fazê-las, o progresso guardado é limpo e o balão fica
   sempre dentro da tela.

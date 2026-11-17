@@ -4,8 +4,8 @@ import {
   proximosDiasDaAgenda,
   type GrupoEmpatado,
   type ItemDaAgenda,
-} from "../../lib/painel-de-entrevistas.ts";
-import { rotuloDoDia } from "../../lib/fila-de-conducao.ts";
+} from "../../lib/entrevistas/painel-de-entrevistas.ts";
+import { rotuloDoDia } from "../../lib/entrevistas/fila-de-conducao.ts";
 import { Aviso } from "../../ui/index.ts";
 import { CarregandoConteudo } from "../../ui/index.ts";
 

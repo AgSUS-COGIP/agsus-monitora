@@ -1,5 +1,5 @@
 import { getSupabaseClient } from "../lib/sessao/supabaseClient";
-import { podeVerPessoasOnline } from "../lib/access-roles.ts";
+import { podeVerPessoasOnline } from "../lib/acessos/access-roles.ts";
 import {
   normalizeOnlinePresenceList,
   ondeEstaNoMonitora,

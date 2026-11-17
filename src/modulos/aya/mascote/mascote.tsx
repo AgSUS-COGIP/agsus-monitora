@@ -5,7 +5,7 @@
   (piscar a cada 3–7 s, arrepiar as penas da cabeça), Web Animations direto
   no elemento — nada disso passa pelo React a cada quadro.
 
-  Estados (src/lib/estado-da-aya.ts): parada, atenta, falando, pensando,
+  Estados (src/lib/aya/estado-da-aya.ts): parada, atenta, falando, pensando,
   comemorando, dormindo e acenando. Quem vence quando vários valem juntos é
   `resolverEstado`: estado fixo (prévia, fogos) > pedido global `aya:estado`
   > o do painel (falando/pensando) > momento local (aceno de boas-vindas) >
@@ -44,7 +44,7 @@ import {
   estadoVisivel,
   DURACAO_PADRAO_MS,
   type EstadoDaMascote,
-} from "../../../lib/estado-da-aya.ts";
+} from "../../../lib/aya/estado-da-aya.ts";
 /* Começa em 0 0: os pivôs do CSS (transform-box: view-box) contam da origem. */
 export const VIEWBOX = "0 0 200 190";
 

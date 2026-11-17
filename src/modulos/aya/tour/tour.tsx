@@ -3,7 +3,7 @@
 
   Escurece a página com um recorte (spotlight) no elemento da vez e mostra um
   balão curto ao lado dele: contador ("Passo 2 de 6"), título, uma ou duas frases e
-  os botões Pular · Anterior · Próximo. O roteiro vem de src/lib/aya-tours.ts.
+  os botões Pular · Anterior · Próximo. O roteiro vem de src/lib/aya/aya-tours.ts.
 
   - O passo aponta para um seletor estável (id, data-tour, data-*). Se o
     elemento não existe ou está escondido (sem permissão, tela vazia, aba
@@ -41,13 +41,13 @@ import {
   geometriaDoHolofote,
   posicaoDoBalao,
   rotuloDoPasso,
-} from "../../../lib/aya-tours.ts";
+} from "../../../lib/aya/aya-tours.ts";
 import type {
   AlvoDoPasso,
   GeometriaDoHolofote,
   PassoDoTour,
   PosicaoDoBalao,
-} from "../../../lib/aya-tours.ts";
+} from "../../../lib/aya/aya-tours.ts";
 import { haTelaCarregando } from "../../../lib/carga/carga-de-telas";
 
 /** Por que o tour acabou: chegou ao fim ou a pessoa pulou (Esc, Pular). */

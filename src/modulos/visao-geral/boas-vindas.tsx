@@ -11,7 +11,7 @@ import {
   lerArmazenamento,
   mensagemDoMarcoDoAno,
   proximoEstadoDoMarco,
-} from "../../lib/comemoracao.ts";
+} from "../../lib/comemoracao/comemoracao.ts";
 import { nomeDaArea } from "../../lib/navegacao/menu-lateral.ts";
 import { comemorar } from "../../app/comemoracao-sob-demanda.ts";
 import { lerMarcosDaArea } from "./marcos.ts";
@@ -26,7 +26,7 @@ import { lerMarcosDaArea } from "./marcos.ts";
     nunca de uma pessoa; uma leitura por área e por pessoa em cada entrada,
     só com as comemorações ligadas. A regra (linha de base em silêncio na
     primeira vez, marco novo contra o guardado, uma vez por marco) é de
-    src/lib/comemoracao.ts. Qualquer falha: nada aparece.
+    src/lib/comemoracao/comemoracao.ts. Qualquer falha: nada aparece.
 */
 
 const usarDados = () =>

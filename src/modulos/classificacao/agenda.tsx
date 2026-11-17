@@ -5,7 +5,7 @@ import type {
   HorarioDaAgenda,
   RegraDaAgenda,
   AvisoDaAgenda,
-} from "../../lib/tipos-da-agenda.ts";
+} from "../../lib/entrevistas/tipos-da-agenda.ts";
 import type {
   EstadoDaClassificacao,
   EstadoDaAgenda,
@@ -68,7 +68,7 @@ import {
   textoDosDias,
   trocarNaAgenda,
   validarRegraDaAgenda,
-} from "../../lib/agenda-das-entrevistas.ts";
+} from "../../lib/entrevistas/agenda-das-entrevistas.ts";
 import {
   Aviso,
   Campo,
@@ -89,7 +89,7 @@ import { CarregandoConteudo } from "../../ui/index.ts";
   edital (versionada) e a agenda dos convocados da lista "Convocação para
   entrevista" — a última registrada ou, sem lista gerada, o cálculo atual.
 
-  "Gerar" distribui pelo motor (src/lib/agenda-das-entrevistas.ts) num
+  "Gerar" distribui pelo motor (src/lib/entrevistas/agenda-das-entrevistas.ts) num
   rascunho; "Mudar" troca o horário/banca de alguém (horário livre ou troca
   com outro convocado); conflitos (mesma banca e horário, repetido) aparecem
   e impedem salvar; "Salvar agenda" grava (com histórico). Gerar de novo

@@ -7,8 +7,8 @@ import {
   etapaDaApi,
   respostaDoCronograma,
   respostaDosAprovados,
-} from "../src/lib/aprovados-e-cronograma-da-api.ts";
-import { RPC_DOS_EDITAIS } from "../src/lib/editais-da-api.ts";
+} from "../src/lib/aprovados/aprovados-e-cronograma-da-api.ts";
+import { RPC_DOS_EDITAIS } from "../src/lib/editais/editais-da-api.ts";
 import { CONTRATO_RPC } from "../src/lib/rpc-contrato.ts";
 
 /*

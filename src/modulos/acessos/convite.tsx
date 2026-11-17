@@ -3,7 +3,7 @@ import {
   copiarTexto,
   linkDoEmailDoConvite,
   mensagemDoConvite,
-} from "../../lib/convite-de-acesso.ts";
+} from "../../lib/acessos/convite-de-acesso.ts";
 import { Icone } from "../../componentes/icone.tsx";
 
 /*

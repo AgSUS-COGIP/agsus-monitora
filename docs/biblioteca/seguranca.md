@@ -26,7 +26,7 @@ convite ou por solicitação aprovada por um administrador, que define grupo e p
   crescente usa `esperaAntesDaTentativa`.
 - `src/app/sessao.ts` e `src/app/sistema.ts` — o contrato "Sessão ↔ sistema" entre a sessão e o
   resto do app ([docs/arquitetura-react.md](../arquitetura-react.md)).
-- `src/app/entrada/` — a tela de acesso e o pedido de acesso (`src/lib/solicitacao-de-acesso.ts`).
+- `src/app/entrada/` — a tela de acesso e o pedido de acesso (`src/lib/acessos/solicitacao-de-acesso.ts`).
   A marca da tela de acesso fica em `src/lib/entrada/access-branding.ts`, `access-branding-cache.ts` e
   `access-branding-publico.ts`; a da barra lateral, em `src/componentes/barra-lateral/marca.ts`.
 - `src/auth/callback.ts` (de `auth/callback.html`) — o retorno do OAuth. O login volta para

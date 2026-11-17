@@ -5,7 +5,7 @@ import {
   CHAVES_DAS_SECOES,
   linhasDasSecoes,
   normalizarValoresCarregados,
-} from "../src/lib/publicacao-de-configuracoes.ts";
+} from "../src/lib/configuracoes/publicacao-de-configuracoes.ts";
 import { LOGO_PADRAO_DA_BARRA } from "../src/lib/navegacao/marca-da-barra-lateral.ts";
 
 const app = fonteDoApp();

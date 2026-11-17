@@ -6,17 +6,17 @@ import type {
 } from "./tipos.ts";
 /*
   Estado da seção Status das atualizações, fora do React: a última leitura de
-  `get_saude_das_cargas` já normalizada (src/lib/saude-das-cargas.ts), o
+  `get_saude_das_cargas` já normalizada (src/lib/automacao/saude-das-cargas.ts), o
   perfil e o erro. A tela lê com `useSyncExternalStore`. Não importa React.
 
   "Rodar agora" (os robôs de ROBOS_DE_CARGA): a RPC disparar_robo pede ao
   banco, que chama o GitHub com a chave do Vault (20261008140000); `pedidos`
   e `avisos` guardam o último clique de cada carga nesta tela, e
   situacao_do_disparo_robo diz se o GitHub aceitou (ou se a chave falta ou
-  expirou). As regras do botão são de src/lib/robos-de-carga.ts.
+  expirou). As regras do botão são de src/lib/automacao/robos-de-carga.ts.
 
   "Rodar com opções" e as últimas execuções: `painel` guarda
-  get_painel_dos_robos (editais e histórico, src/lib/painel-dos-robos.ts);
+  get_painel_dos_robos (editais e histórico, src/lib/automacao/painel-dos-robos.ts);
   `buscarVagas` pede listar_vagas_dos_robos para as sugestões do formulário;
   `acompanhamentos` guarda o último pedido de cada robô (quando, qual modo,
   o id do pedido e a situação dele) e, enquanto ele não termina, a tela
@@ -33,13 +33,13 @@ import type {
   administrador". Sem a função no banco (ou com erro), `chaves` fica nulo e a
   tela segue como antes.
 */
-import { isAdminGlobal } from "../../lib/access-roles.ts";
+import { isAdminGlobal } from "../../lib/acessos/access-roles.ts";
 import { comTempoLimite, mensagemDeFalha } from "../../lib/carga/falha-de-rede";
 import {
   acompanhamentoDoPedido,
   normalizarPainel,
   normalizarVagas,
-} from "../../lib/painel-dos-robos.ts";
+} from "../../lib/automacao/painel-dos-robos.ts";
 import {
   inputsDoPedido,
   mensagemDoErroDoDisparo,
@@ -47,9 +47,9 @@ import {
   RPC_DISPARAR_ROBO,
   RPC_SITUACAO_DO_DISPARO,
   situacaoDoPedido,
-} from "../../lib/robos-de-carga.ts";
-import { normalizarSaude } from "../../lib/saude-das-cargas.ts";
-import { normalizarChaves } from "../../lib/chaves-da-automacao.ts";
+} from "../../lib/automacao/robos-de-carga.ts";
+import { normalizarSaude } from "../../lib/automacao/saude-das-cargas.ts";
+import { normalizarChaves } from "../../lib/automacao/chaves-da-automacao.ts";
 
 export const ESPERA_DEPOIS_DO_PEDIDO_MS = 60_000;
 /* O GitHub responde ao banco em 1 ou 2 s: a primeira conferência do pedido. */

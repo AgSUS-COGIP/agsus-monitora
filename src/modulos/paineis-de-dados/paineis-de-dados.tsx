@@ -35,7 +35,7 @@ import type {
   IdDoRelatorio,
   LinhaDoRelatorio,
 } from "../../lib/relatorios-dos-paineis.ts";
-import { podeBaixarAprovados } from "../../lib/access-roles.ts";
+import { podeBaixarAprovados } from "../../lib/acessos/access-roles.ts";
 import { textosDaVisaoGeral } from "../../lib/visao-geral.ts";
 import { recorteDaAreaInteira } from "../../lib/relatorio-da-visao-geral.ts";
 import type { RecorteDoRelatorio } from "../../lib/relatorio-da-visao-geral.ts";

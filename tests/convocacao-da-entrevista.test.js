@@ -10,7 +10,7 @@ import {
   textoDasVagas,
   textoDoLimite,
   vagasDaLista,
-} from "../src/lib/convocacao-da-entrevista.ts";
+} from "../src/lib/entrevistas/convocacao-da-entrevista.ts";
 import { instantaneoDaLista } from "../src/lib/classificacao/exportacao.ts";
 import { linkInterno } from "../src/lib/navegacao/link-interno.ts";
 

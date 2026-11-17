@@ -18,7 +18,7 @@ import {
   filtrarEtapas,
   proximasEtapas,
   FILTROS_VAZIOS,
-} from "../../src/lib/calendario-editais.ts";
+} from "../../src/lib/cronograma/calendario-editais.ts";
 import { soDosEditais } from "../../src/componentes/dados-do-monitoramento.ts";
 
 declare const clienteReal: SupabaseClient;

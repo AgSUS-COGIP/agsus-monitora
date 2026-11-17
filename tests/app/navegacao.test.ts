@@ -33,7 +33,7 @@ import {
   obterPaginaDaAya,
   redefinirPaginaDaAya,
 } from "../../src/modulos/aya/estado.ts";
-import type { PerfilDeAcesso } from "../../src/lib/tipos-dos-acessos.ts";
+import type { PerfilDeAcesso } from "../../src/lib/acessos/tipos-dos-acessos.ts";
 import { definido } from "../definido.ts";
 import { comAct, fontesFalsas, montarTelasNoTeste } from "./telas-no-teste.ts";
 import type { TelaFalsa } from "./telas-no-teste.ts";

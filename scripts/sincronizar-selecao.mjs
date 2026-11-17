@@ -28,7 +28,7 @@ import { PLANILHAS } from "../src/lib/base/planilhas.ts";
 import {
   emLotes,
   identificadorDaCarga,
-} from "../src/lib/entrevistas-da-planilha.ts";
+} from "../src/lib/entrevistas/entrevistas-da-planilha.ts";
 import { linhasDaAbaResultado } from "../src/lib/selecao-da-planilha.ts";
 import {
   argumentos,

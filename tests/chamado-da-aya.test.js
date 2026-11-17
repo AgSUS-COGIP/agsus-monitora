@@ -8,12 +8,12 @@ import {
   montarChamado,
   pedeSuporte,
   semDadosPessoais,
-} from "../src/lib/chamado-da-aya.ts";
+} from "../src/lib/aya/chamado-da-aya.ts";
 import {
   camposDaSecao,
   errosDasSecoes,
   normalizarValoresCarregados,
-} from "../src/lib/publicacao-de-configuracoes.ts";
+} from "../src/lib/configuracoes/publicacao-de-configuracoes.ts";
 
 /*
   "Abrir chamado" da Aya: um mailto: para o suporte, com assunto e corpo em

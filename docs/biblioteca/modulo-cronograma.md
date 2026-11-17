@@ -8,7 +8,7 @@ atualizado: 2026-11-17
 
 Tela de leitura dos cronogramas de Editais, montada em `#page-calendario`, rota
 `/<área>/cronograma`. Pasta `src/modulos/cronograma/`; regras puras em
-`src/lib/calendario-editais.ts`. O controlador chama `render()` ao abrir e `recarregar()` para
+`src/lib/cronograma/calendario-editais.ts`. O controlador chama `render()` ao abrir e `recarregar()` para
 ignorar o cache. A área vem do app e recorta os editais já carregados. Inclui o resumo do dia do
 responsável (o sininho do topo), que leva a esta tela.
 
@@ -66,7 +66,7 @@ por edital (`PGRST202`) e do cache. `listar_etapas_do_cronograma` ainda devolve 
 Itens da equipe (migration `20261104120000_cronograma_demandas_internas`): título, descrição, data
 ou período, área, edital opcional, responsáveis e conclusão. Chegam na mesma carga
 (`listar_demandas_internas`; sem a RPC, só as etapas) como etapas do tipo **Demanda interna**
-(`src/lib/demandas-internas.ts`). Em aberto com último dia no passado = **Atrasada**; "Ocultar
+(`src/lib/cronograma/demandas-internas.ts`). Em aberto com último dia no passado = **Atrasada**; "Ocultar
 concluídas". Concluir/Reabrir, Editar e Excluir (lógica) para quem pode (gestor da área ou admin
 global, decidido pelo banco em `pode_editar`/`pode_criar_em`). Responsáveis pelo edital ficam no
 formulário do edital (`src/modulos/editais/responsaveis-do-edital.tsx`).

@@ -88,7 +88,7 @@ import { CABECALHO_PADRAO } from "../base/cabecalho-dos-documentos.ts";
 import {
   MARCA_SEM_VALOR_OFICIAL,
   ehEditalDeTreinamento,
-} from "../edital-de-treinamento.ts";
+} from "../editais/edital-de-treinamento.ts";
 
 export { CABECALHO_PADRAO };
 export const LOCAL_PADRAO = "Brasília";

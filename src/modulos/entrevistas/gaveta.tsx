@@ -11,7 +11,7 @@ import {
   NOTA_MAXIMA_DO_CRITERIO,
   rotuloDoComparecimento,
   rotuloDoParecer,
-} from "../../lib/entrevistas-do-painel.ts";
+} from "../../lib/entrevistas/entrevistas-do-painel.ts";
 import { gruposAteOLimite } from "../../lib/carga/carga-continua.ts";
 import {
   EstadoVazio,

@@ -1,12 +1,12 @@
 import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseClient } from "../lib/sessao/supabaseClient";
-import { ordenarUnidades } from "../lib/editais-do-nucleo.ts";
+import { ordenarUnidades } from "../lib/editais/editais-do-nucleo.ts";
 import { erroAmigavel } from "../lib/base/erro-amigavel";
 import {
   canImportApprovedList,
   canViewCore,
   permissaoLegada,
-} from "../lib/access-roles.ts";
+} from "../lib/acessos/access-roles.ts";
 import {
   assinaturaDoAcesso,
   consultasDosDados,
@@ -24,7 +24,7 @@ import type {
 import type {
   PerfilDeAcesso,
   PermissaoLegada,
-} from "../lib/tipos-dos-acessos.ts";
+} from "../lib/acessos/tipos-dos-acessos.ts";
 import type { LinhaDoMonitoramento } from "../modulos/visao-geral/tipos.ts";
 import type { Configuracao } from "./configuracao.ts";
 import type { Navegacao } from "./navegacao.ts";

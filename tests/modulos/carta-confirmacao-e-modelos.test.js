@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { criarEstadoDaCarta } from "../../src/modulos/aprovados/carta-de-convocacao/estado.ts";
-import { lerModelosDoBanco } from "../../src/lib/carta-de-convocacao.ts";
+import { lerModelosDoBanco } from "../../src/lib/aprovados/carta-de-convocacao/carta-de-convocacao.ts";
 
 const modelo = () =>
   lerModelosDoBanco({

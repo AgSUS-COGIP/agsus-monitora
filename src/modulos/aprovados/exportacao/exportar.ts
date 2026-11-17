@@ -3,7 +3,7 @@ import type {
   FormatoDaExportacao,
   PedidoDaExportacao,
   RegistroDaExportacao,
-} from "../../../lib/exportacao-da-lista-de-aprovados.ts";
+} from "../../../lib/aprovados/exportacao/exportacao-da-lista-de-aprovados.ts";
 import type { ClienteDosAprovados } from "../tipos-do-estado.ts";
 import {
   argumentosDoRegistro,
@@ -13,7 +13,7 @@ import {
   nomeDoArquivoDaExportacao,
   registroDaResposta,
   xlsxDaExportacao,
-} from "../../../lib/exportacao-da-lista-de-aprovados.ts";
+} from "../../../lib/aprovados/exportacao/exportacao-da-lista-de-aprovados.ts";
 import { erroDeVersaoNova } from "../../../lib/carga/importar-com-recarga.ts";
 
 /*
@@ -85,7 +85,7 @@ const gerarPdfNaPagina: GerarPdf = async (
   const [{ carregarBibliotecasDoPdf }, { pdfDaExportacao }] = await Promise.all(
     [
       import("../../../lib/avaliacao-documental/espelho-em-pdf.ts"),
-      import("../../../lib/exportacao-da-lista-de-aprovados-em-pdf.ts"),
+      import("../../../lib/aprovados/exportacao/exportacao-da-lista-de-aprovados-em-pdf.ts"),
     ],
   ).catch((erro: unknown) => {
     throw erroDeVersaoNova(erro);

@@ -16,7 +16,7 @@ import { avisar as avisarPadrao } from "./avisos.ts";
 import {
   CHAVE_DAS_COMEMORACOES,
   definirConfiguracaoDasComemoracoes,
-} from "../lib/catalogo-de-comemoracoes.ts";
+} from "../lib/comemoracao/catalogo-de-comemoracoes.ts";
 
 /*
   A configuração do sistema (TB_CONFIGURACAO), sem React: carrega, guarda as

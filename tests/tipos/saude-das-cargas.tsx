@@ -6,11 +6,11 @@ import { criarEstadoDaSaude } from "../../src/componentes/saude-das-cargas/estad
 import {
   normalizarSaude,
   visaoSimples,
-} from "../../src/lib/saude-das-cargas.ts";
+} from "../../src/lib/automacao/saude-das-cargas.ts";
 import {
   normalizarPainel,
   normalizarVagas,
-} from "../../src/lib/painel-dos-robos.ts";
+} from "../../src/lib/automacao/painel-dos-robos.ts";
 import type {
   ClienteDaSaude,
   EstadoDaSaude,

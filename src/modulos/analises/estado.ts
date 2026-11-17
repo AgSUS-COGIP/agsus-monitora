@@ -35,22 +35,22 @@ import {
   normalizarEscopo,
   comIndicesDeBusca,
   prepararLinhas,
-} from "../../lib/analises-curriculares.ts";
+} from "../../lib/analises/analises-curriculares.ts";
 import {
   nomeDoCsvDeAnalises,
   rotuloDaAreaDoPainel,
-} from "../../lib/area-do-painel-de-analises.ts";
-import { chavesDoCacheAntigo } from "../../lib/cache-do-painel-de-analises.ts";
-import { editaisDasLinhas } from "../../lib/editais-das-linhas.ts";
+} from "../../lib/analises/area-do-painel-de-analises.ts";
+import { chavesDoCacheAntigo } from "../../lib/analises/cache-do-painel-de-analises.ts";
+import { editaisDasLinhas } from "../../lib/editais/editais-das-linhas.ts";
 import { ehErroDeAcesso } from "../../lib/carga/cache-de-payload";
 import { mensagemDeFalha } from "../../lib/carga/falha-de-rede";
 import { formatNumberBR } from "../../lib/base/formatters";
-import { linhaSemDetalhe } from "../../lib/lista-do-painel-de-analises.ts";
+import { linhaSemDetalhe } from "../../lib/analises/lista-do-painel-de-analises.ts";
 import {
   haLinhasSemParecer,
   linhaSemParecer,
   mesclarTextos,
-} from "../../lib/textos-do-painel-de-analises.ts";
+} from "../../lib/analises/textos-do-painel-de-analises.ts";
 import { criarConsultasDasAnalises } from "./consultas.ts";
 import { avaliarMarcosDasAnalises } from "./marcos.ts";
 

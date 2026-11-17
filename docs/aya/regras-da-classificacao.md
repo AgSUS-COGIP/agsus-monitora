@@ -58,7 +58,7 @@ dos PDFs oficiais).
 **perguntas:** desempate da entrevista na classificacao | empate na nota da entrevista | onde desempato a entrevista | editar na classificacao | criterios de desempate do roteiro sumiram | desempate do roteiro
 **resposta:** O desempate de quem empata na nota da entrevista é o da regra de classificação do edital: uma fonte só, aqui em Classificação › Regra (critérios do catálogo, a ordem e o empate final). O Painel de entrevistas marca os empatados e leva para cá; Conduzir entrevistas › Preparar e o editor do roteiro mostram os mesmos critérios só para ler, com "Editar na Classificação". O roteiro não tem mais critérios próprios (o texto antigo ficou guardado, sem uso). Na lista Resultado da entrevista, o empate que sobra fica na mesma posição; o desempate vale no resultado final.
 **fato:** O desempate da entrevista se configura em Classificação › Regra; o roteiro só mostra os critérios.
-**fonte:** src/lib/convocacao-da-entrevista.ts; src/modulos/entrevistas/conducao.tsx; supabase/migrations/20261008130000_conduzir_entrevistas_no_menu.sql
+**fonte:** src/lib/entrevistas/convocacao-da-entrevista.ts; src/modulos/entrevistas/conducao.tsx; supabase/migrations/20261008130000_conduzir_entrevistas_no_menu.sql
 **abrir:** classificacao
 
 ## Empate final e sorteio
@@ -205,14 +205,14 @@ dos PDFs oficiais).
 
 **perguntas:** vagas por modalidade na classificacao | classificacao e convocacao | configuracao de convocacao na classificacao | de onde vem o numero de vagas da classificacao
 **resposta:** A Classificação e a Lista de aprovados › Convocação usam a mesma conta das vagas por modalidade. Vale, nesta ordem: o quadro de vagas do edital quando traz a divisão; senão, a configuração de convocação do edital (quadro manual da vaga ou o total de vagas imediatas pelo modelo de cotas); senão, os percentuais da regra de classificação. A tela mostra de onde vieram as vagas da vaga e avisa quando os percentuais da regra e os do modelo de convocação divergem ou quando o total de vagas não bate. Quem fica em cada lista e para onde vai a vaga reservada sem candidato é da regra de classificação; a ordem de chamada para contratar é da Convocação.
-**fonte:** src/lib/classificacao/convocacao-do-edital.ts; src/lib/configuracao-de-convocacao.ts
+**fonte:** src/lib/classificacao/convocacao-do-edital.ts; src/lib/aprovados/carta-de-convocacao/configuracao-de-convocacao.ts
 **abrir:** classificacao
 
 ## Quem pode mudar a classificação
 
 **perguntas:** quem pode mudar a regra de classificacao | quem pode gerar a lista de classificacao | permissao classificacao | nao vejo a aba classificacao
 **resposta:** A aba Classificação usa a permissão "Classificação" (Configurações › Acessos): Leitor vê as listas, a regra e as explicações; Editor salva a regra do edital, gera e publica listas e registra sorteio ou decisão. Por padrão, o administrador é Administrador; gestor de edital e coordenador, Editor; contratador, usuário e jurídico, Leitor. Também vale a área e o recorte da coordenação do edital.
-**fonte:** supabase/migrations/20261002150000_classificacao.sql; src/lib/access-roles.ts
+**fonte:** supabase/migrations/20261002150000_classificacao.sql; src/lib/acessos/access-roles.ts
 **abrir:** config:acessos
 
 ## Nota alterada pelo recurso
@@ -227,14 +227,14 @@ dos PDFs oficiais).
 **perguntas:** botao publicar como lista de aprovados na classificacao | resultado final vira lista de aprovados | classificacao e lista de aprovados | a classificacao alimenta a lista de aprovados
 **resposta:** No Yeendé, o resultado final da Classificação é a fonte da Lista de aprovados. Em "Resultado final", o Editor de Classificação gera a lista e clica em "Publicar como lista de aprovados": a confirmação mostra, em relação à lista de aprovados vigente, quantos entram, saem e mudam de posição e o que é preservado (status, matrícula, sub judice, anexos); quem não foi reconhecido aparece para revisão. A lista nova entra em vigor com posição, nota, modalidade, vaga e situação (dentro das vagas ou cadastro reserva) de cada candidato; a anterior fica no histórico. "Marcar como publicada" continua sendo só o registro da publicação no SEI.
 **fato:** No Yeendé, o resultado final da Classificação vira a lista de aprovados pelo botão "Publicar como lista de aprovados".
-**fonte:** src/modulos/classificacao/publicar-aprovados.tsx; src/lib/publicacao-de-aprovados.ts; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql
+**fonte:** src/modulos/classificacao/publicar-aprovados.tsx; src/lib/aprovados/publicacao-de-aprovados.ts; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql
 **abrir:** classificacao
 
 ## Botões Gerar, exportar e publicar desabilitados
 
 **perguntas:** por que nao aparece o botao gerar | botao gerar nao aparece | botao publicar desabilitado | nao consigo publicar a lista de classificacao | copiar para o sei desabilitado | nao consigo exportar a classificacao | publicar como lista de aprovados nao aparece
 **resposta:** "Gerar", "Marcar como publicada" e "Publicar como lista de aprovados" só aparecem para quem tem Editor em Classificação, com a área e o edital; "Gerar" fica desabilitado enquanto o edital não tem regra salva. Copiar para o SEI, Como fica no SEI, Baixar DOCX, PDF e XLSX ficam desabilitados até existir uma lista gerada naquela etapa: gere primeiro. "Marcar como publicada" e "Publicar como lista de aprovados" ficam desabilitados enquanto houver empate esperando sorteio ou decisão, e "Publicar como lista de aprovados" só existe na lista Resultado final.
-**fonte:** src/modulos/classificacao/listas.tsx; src/lib/access-roles.ts (canEditClassificacao)
+**fonte:** src/modulos/classificacao/listas.tsx; src/lib/acessos/access-roles.ts (canEditClassificacao)
 **abrir:** classificacao
 
 ## Siglas das modalidades e cadastro reserva

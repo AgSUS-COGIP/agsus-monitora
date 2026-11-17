@@ -5,13 +5,13 @@ import type {
 import type {
   ConfiguracoesDaConvocacao,
   ModelosDaConvocacao,
-} from "../../lib/tipos-da-configuracao-de-convocacao.ts";
-import type { OpcaoDosAprovados } from "../../lib/tipos-das-regras-de-aprovados.ts";
+} from "../../lib/aprovados/carta-de-convocacao/tipos-da-configuracao-de-convocacao.ts";
+import type { OpcaoDosAprovados } from "../../lib/aprovados/tipos-das-regras-de-aprovados.ts";
 import type {
   ColunaDoResumo,
   ContagemDoResumo,
   ResumoPorCargoEStatus,
-} from "../../lib/resumo-por-cargo-e-status.ts";
+} from "../../lib/aprovados/exportacao/resumo-por-cargo-e-status.ts";
 import type { UIEvent } from "react";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import {
@@ -24,12 +24,12 @@ import {
   ROTULO_DA_COLUNA,
   ROTULO_DO_MOTIVO,
   situacoesNaFila,
-} from "../../lib/resumo-por-cargo-e-status.ts";
-import { configuracaoDaVaga } from "../../lib/configuracao-de-convocacao.ts";
+} from "../../lib/aprovados/exportacao/resumo-por-cargo-e-status.ts";
+import { configuracaoDaVaga } from "../../lib/aprovados/carta-de-convocacao/configuracao-de-convocacao.ts";
 import {
   OPCOES_DO_FILTRO_DE_STATUS,
   statusEfetivo,
-} from "../../lib/lista-aprovados-rules.ts";
+} from "../../lib/aprovados/lista-aprovados-rules.ts";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
 import { formatNumberBR } from "../../lib/base/formatters";
 import {
@@ -49,7 +49,7 @@ import { plural } from "./partes.tsx";
   vigente com os MESMOS filtros (edital, cargo, modalidade, situação), contada
   — e não um painel novo com outra base e outra permissão.
 
-  A conta é de src/lib/resumo-por-cargo-e-status.ts; o cadastro de reserva sai
+  A conta é de src/lib/aprovados/exportacao/resumo-por-cargo-e-status.ts; o cadastro de reserva sai
   da fila de convocação (a mesma conta da aba Convocação), calculada sobre a
   lista inteira das vagas no recorte de edital e cargo: modalidade e situação
   só escolhem quem é contado, não mudam a fila. Clicar num número abre os

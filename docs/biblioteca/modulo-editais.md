@@ -38,7 +38,7 @@ Tabela, alertas, formulário e linha do tempo. A tela é `nucleo.tsx`; o estado 
   (10 a 500 caracteres) e histórico em `TH_EDITAL_CRITICO`. Grava à parte do "Salvar"; a permissão
   vem do banco (`obter_critico_do_edital` → `pode_marcar`). Conta nos críticos da
   [[modulo-visao-geral]].
-- **Validade do processo seletivo** (#57, `src/lib/validade-do-edital.ts`): anos (0 a 10), meses
+- **Validade do processo seletivo** (#57, `src/lib/editais/validade-do-edital.ts`): anos (0 a 10), meses
   (0 a 11) e prorrogado, com o prazo calculado ao lado. O cálculo espelha
   `private."FC_VENCIMENTO_DO_EDITAL"` (data de encerramento + prazo em meses, em dobro se
   prorrogado; dia que não existe no mês de chegada vira o último dia dele; 0 = não vence) e
@@ -49,13 +49,13 @@ Tabela, alertas, formulário e linha do tempo. A tela é `nucleo.tsx`; o estado 
   a migration `20261111200000`; sem ela, a validade fica "não lida": aviso, campos vazios e só vai o
   que a pessoa preencher (nada gravado é sobrescrito). Valor fora do limite mostra a mensagem no
   campo e o Salvar não envia.
-- **Ordem da tabela** (`src/lib/ordem-dos-editais.ts`): por padrão cronológica, do edital mais
+- **Ordem da tabela** (`src/lib/editais/ordem-dos-editais.ts`): por padrão cronológica, do edital mais
   recente para o mais antigo (data de início e, sem ela, o NNN/AAAA). Clicar no cabeçalho ordena
   pela coluna: 1º clique crescente, 2º decrescente, alternando; números em ordem numérica, textos em
   alfabética, Risco pela gravidade; vazio sempre no fim.
 - Abre o modal de listas da Lista de aprovados por `carregarTela("approved")`
   (`openImportModal(id, rótulo)`; ver [[modulo-aprovados]]).
-- O botão de listas ganha aviso pelo status (`src/lib/aprovados-por-edital.ts`): Cancelado ou
+- O botão de listas ganha aviso pelo status (`src/lib/editais/aprovados-por-edital.ts`): Cancelado ou
   Suspenso → vermelho, "Edital cancelado" / "Edital suspenso"; Concluído sem candidato aprovado
   (sem lista vigente ou com ela vazia, por `listar_listas_aprovados`, relida a cada abertura e no
   Atualizar) → amarelo, "Nenhum candidato foi aprovado neste edital". O aviso é a legenda do botão,

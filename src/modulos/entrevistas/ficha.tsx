@@ -1,4 +1,7 @@
-import type { Avaliador, Convocado } from "../../lib/fila-de-conducao.ts";
+import type {
+  Avaliador,
+  Convocado,
+} from "../../lib/entrevistas/fila-de-conducao.ts";
 import type { DadosDoEdital } from "./tipos.ts";
 import type { Comparecimento } from "./cabecalho-da-ficha.tsx";
 import type { OpcaoDeNota } from "./campo-de-nota.tsx";
@@ -32,9 +35,9 @@ import {
   notasAlteradas,
   podeLancarPor,
   rotuloDoLancamento,
-} from "../../lib/conducao-de-entrevista.ts";
-import { textoDaEscala } from "../../lib/digitacao-de-notas.ts";
-import { listaBr } from "../../lib/resumo-da-entrevista.ts";
+} from "../../lib/entrevistas/conducao-de-entrevista.ts";
+import { textoDaEscala } from "../../lib/entrevistas/digitacao-de-notas.ts";
+import { listaBr } from "../../lib/entrevistas/resumo-da-entrevista.ts";
 import {
   lerNumero,
   maximoDaCompetencia,
@@ -43,7 +46,7 @@ import {
   opcoesDaEscala,
   pontuacaoMaxima,
   rotuloDoPeso,
-} from "../../lib/roteiro-de-entrevista.ts";
+} from "../../lib/entrevistas/roteiro-de-entrevista.ts";
 import { Aviso, classes, Segmentado } from "../../ui/index.ts";
 import { Popover } from "../../ui/popover.tsx";
 import { AbasDaFicha } from "./abas-da-ficha.tsx";
@@ -53,14 +56,14 @@ import { MatrizDeNotas } from "./matriz-de-notas.tsx";
 import {
   parecerPronto,
   textoDoParecerDaEntrevista,
-} from "../../lib/parecer-da-entrevista.ts";
+} from "../../lib/entrevistas/parecer-da-entrevista.ts";
 import { rotuloDaVersao } from "../../lib/base/nome-da-versao.ts";
-import { dataHoraBR } from "../../lib/entrevistas-do-painel.ts";
+import { dataHoraBR } from "../../lib/entrevistas/entrevistas-do-painel.ts";
 import {
   entrevistaConcluida,
   MOTIVOS_DA_REABERTURA_DA_ENTREVISTA,
   podeConcluirAEntrevista,
-} from "../../lib/reabertura-da-entrevista.ts";
+} from "../../lib/entrevistas/reabertura-da-entrevista.ts";
 import { ReabrirAFicha } from "../avaliacao-documental/ficha/reabrir-a-ficha.tsx";
 import { ParecerPronto } from "./parecer-pronto.tsx";
 import {

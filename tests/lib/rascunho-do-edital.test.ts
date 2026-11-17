@@ -7,8 +7,8 @@ import {
   horaDoRascunho,
   lerRascunho,
   usuarioDoPerfil,
-} from "../../src/lib/rascunho-do-edital.ts";
-import { novaEtapa } from "../../src/lib/cronograma-do-edital.ts";
+} from "../../src/lib/editais/rascunho-do-edital.ts";
+import { novaEtapa } from "../../src/lib/cronograma/cronograma-do-edital.ts";
 
 /* Rascunho do formulário do edital no navegador: chave, validade e falhas do armazenamento. */
 

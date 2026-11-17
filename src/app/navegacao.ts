@@ -22,7 +22,7 @@ import {
   isAdminGlobal,
   paginasPermitidas,
   secaoDeConfiguracaoPermitida,
-} from "../lib/access-roles.ts";
+} from "../lib/acessos/access-roles.ts";
 import {
   CHAVE_DA_TELA_GUARDADA,
   TELA_SEM_ACESSO,
@@ -68,7 +68,7 @@ import {
   guardarFiltrosDaTela,
 } from "./filtros-no-endereco.ts";
 import type { Endereco } from "./endereco.ts";
-import type { PerfilDeAcesso } from "../lib/tipos-dos-acessos.ts";
+import type { PerfilDeAcesso } from "../lib/acessos/tipos-dos-acessos.ts";
 import type { PaineisDaNavegacao } from "../lib/navegacao/navegacao";
 import type { ArvoreDoMenu } from "../componentes/barra-lateral/tipos.ts";
 
@@ -479,7 +479,7 @@ export function criarNavegacao({
   */
   function montarMenu() {
     const atual = perfil();
-    // As mesmas regras do "Ver como" de Acessos (src/lib/access-roles.ts).
+    // As mesmas regras do "Ver como" de Acessos (src/lib/acessos/access-roles.ts).
     const permitidas = paginasPermitidas(atual);
     // Seção "Acessos" só para quem gerencia acessos; as demais, para quem edita configurações.
     const secoes = SECOES.filter((secao) =>

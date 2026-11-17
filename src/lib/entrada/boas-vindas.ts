@@ -5,7 +5,7 @@
   Funções puras; o componente fica em `src/modulos/visao-geral/boas-vindas.tsx`.
 */
 
-import { hojeEmBrasilia } from "../cronograma-do-edital.ts";
+import { hojeEmBrasilia } from "../cronograma/cronograma-do-edital.ts";
 
 const texto = (valor: unknown): string => String(valor ?? "").trim();
 

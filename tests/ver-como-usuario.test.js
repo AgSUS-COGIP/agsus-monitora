@@ -4,17 +4,17 @@ import {
   contextoDepoisDeSalvar,
   menuDoContexto,
   resumoDoEscopo,
-} from "../src/lib/ver-como.ts";
+} from "../src/lib/acessos/ver-como.ts";
 import {
   paginasPermitidas,
   paineisPermitidos,
   secaoDeConfiguracaoPermitida,
-} from "../src/lib/access-roles.ts";
+} from "../src/lib/acessos/access-roles.ts";
 import {
   areasDoUsuario,
   montarArvoreDoMenu,
 } from "../src/lib/navegacao/menu-lateral.ts";
-import { registrarNoRascunho } from "../src/lib/matriz-de-acessos.ts";
+import { registrarNoRascunho } from "../src/lib/acessos/matriz-de-acessos.ts";
 
 const SECOES = [
   { id: "marca", rotulo: "Marca" },

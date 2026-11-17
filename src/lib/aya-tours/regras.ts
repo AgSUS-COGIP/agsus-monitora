@@ -3,8 +3,8 @@
 import {
   paginasPermitidas,
   secaoDeConfiguracaoPermitida,
-} from "../access-roles.ts";
-import type { PaginasPermitidas } from "../tipos-dos-acessos.ts";
+} from "../acessos/access-roles.ts";
+import type { PaginasPermitidas } from "../acessos/tipos-dos-acessos.ts";
 import type {
   AberturaDoTour,
   PassoDoTour,

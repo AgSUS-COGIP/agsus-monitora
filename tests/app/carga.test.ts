@@ -12,7 +12,7 @@ import type {
 } from "../../src/app/carga.ts";
 import type { OpcoesDaCargaDaConfiguracao } from "../../src/app/configuracao.ts";
 import type { CopiaDaSessao } from "../../src/lib/sessao/copia-da-sessao";
-import type { PerfilDeAcesso } from "../../src/lib/tipos-dos-acessos.ts";
+import type { PerfilDeAcesso } from "../../src/lib/acessos/tipos-dos-acessos.ts";
 import { definido } from "../definido.ts";
 import {
   assinaturaDoAcesso,

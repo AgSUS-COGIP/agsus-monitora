@@ -1,11 +1,11 @@
 import type { ReactNode } from "react";
 import { useEffect, useSyncExternalStore } from "react";
-import { resumoDoModelo } from "../../lib/configuracao-de-convocacao.ts";
+import { resumoDoModelo } from "../../lib/aprovados/carta-de-convocacao/configuracao-de-convocacao.ts";
 import { formatNumberBR } from "../../lib/base/formatters";
 import type {
   ConfiguracoesDaConvocacao,
   ModelosDaConvocacao,
-} from "../../lib/tipos-da-configuracao-de-convocacao.ts";
+} from "../../lib/aprovados/carta-de-convocacao/tipos-da-configuracao-de-convocacao.ts";
 import {
   BlocosEsqueleto,
   ErroAoCarregar,

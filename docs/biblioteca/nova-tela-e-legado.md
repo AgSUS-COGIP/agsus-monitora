@@ -47,7 +47,7 @@ inteira: `src/modulos/recursos/`, `selecao/`, `entrevistas/`, `analises/`. A not
   dentro de DOM feito à mão entra por `abrirPortalAvulso` (`src/app/portais-avulsos.tsx`). **Nada
   de `createRoot` novo.**
 - Página nova ou área nova no menu: `src/lib/navegacao/menu-lateral.ts` ([[modulo-barra-lateral]]); quem vê,
-  `src/lib/access-roles.ts` ([[modulo-acessos]]).
+  `src/lib/acessos/access-roles.ts` ([[modulo-acessos]]).
 
 ## Regras do componente
 

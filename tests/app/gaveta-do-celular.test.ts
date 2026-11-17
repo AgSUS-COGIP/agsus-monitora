@@ -229,7 +229,7 @@ describe("o que saiu com o menu do pé da tela", () => {
     for (const nome of ["aya-tours.ts", ...readdirSync("src/lib/aya-tours")]) {
       const caminho =
         nome === "aya-tours.ts"
-          ? "src/lib/aya-tours.ts"
+          ? "src/lib/aya/aya-tours.ts"
           : `src/lib/aya-tours/${nome}`;
       expect(ler(caminho)).not.toContain("mobileBottomNav");
     }

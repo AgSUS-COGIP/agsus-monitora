@@ -5,7 +5,7 @@ import {
   type ReactNode,
 } from "react";
 import { DEFAULT_ACCESS_BRANDING } from "../../lib/entrada/access-branding.ts";
-import { urlDeImagem } from "../../lib/apresentacao-das-configuracoes.ts";
+import { urlDeImagem } from "../../lib/configuracoes/apresentacao-das-configuracoes.ts";
 import {
   DESFOQUE_DO_VIDRO_EM_PX,
   ESTILO_VIDRO,

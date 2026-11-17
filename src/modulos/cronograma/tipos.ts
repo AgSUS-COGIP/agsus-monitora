@@ -1,4 +1,4 @@
-import type { DemandaInterna } from "../../lib/demandas-internas.ts";
+import type { DemandaInterna } from "../../lib/cronograma/demandas-internas.ts";
 import type { EstadoDoResumoDoDia } from "../resumo-do-dia/estado.ts";
 
 export type TipoDaEtapa = { id: string; rotulo: string; cor: string };
@@ -22,7 +22,7 @@ export type EtapaDoCalendario = {
   ordem: number;
   tipo: TipoDaEtapa;
   busca: string;
-  /** Só nas demandas internas vistas como etapa (src/lib/demandas-internas.ts). */
+  /** Só nas demandas internas vistas como etapa (src/lib/cronograma/demandas-internas.ts). */
   demandaId?: string;
   /** Demanda interna marcada como concluída. */
   concluida?: boolean;

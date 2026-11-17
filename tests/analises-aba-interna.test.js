@@ -3,13 +3,16 @@ import { readFileSync } from "node:fs";
 import { fonteDoApp } from "./fonte-do-app.ts";
 import { describe, expect, it } from "vitest";
 import { semOPainelAntigoDeAnalises } from "../src/lib/pagina-do-painel";
-import { RESOURCES } from "../src/lib/permissoes-recursos.ts";
-import { paginasPermitidas, permissaoLegada } from "../src/lib/access-roles.ts";
+import { RESOURCES } from "../src/lib/acessos/permissoes-recursos.ts";
+import {
+  paginasPermitidas,
+  permissaoLegada,
+} from "../src/lib/acessos/access-roles.ts";
 import { bloqueioDaTela, telaPermitida } from "../src/lib/navegacao/navegacao";
 import {
   linhasDosPaineis,
   normalizarPaineis,
-} from "../src/lib/paineis-externos-das-configuracoes.ts";
+} from "../src/lib/configuracoes/paineis-externos-das-configuracoes.ts";
 import { htmlDaPagina } from "./pagina-montada.ts";
 
 /*

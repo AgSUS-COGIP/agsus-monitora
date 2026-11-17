@@ -4,7 +4,7 @@
   coordenações), formulário, validação, envio, edição e cancelamento, tudo
   por RPC. Estado sem React (`obter`/`assinar`); o desenho é de
   solicitacao-de-acesso.tsx e as regras e listas, de
-  src/lib/solicitacao-de-acesso.ts. A análise dos pedidos é de
+  src/lib/acessos/solicitacao-de-acesso.ts. A análise dos pedidos é de
   Configurações › Acessos (src/modulos/acessos/).
 
   O sistema não concede acesso automático: sem perfil ativo, a pessoa pede, e
@@ -17,7 +17,7 @@ import {
   contaMarcadaComoDesativada,
   lembrarContaDesativada,
   marcarBoasVindasPendentes,
-} from "../../lib/acesso-liberado.ts";
+} from "../../lib/acessos/acesso-liberado.ts";
 import { mensagemDeFalha } from "../../lib/carga/falha-de-rede";
 import { normalizePlatformContext } from "../../lib/navegacao/platform-context";
 import {
@@ -33,7 +33,7 @@ import {
   type ErrosDaSolicitacao,
   type MinhaSolicitacao,
   type TelaDaSolicitacao,
-} from "../../lib/solicitacao-de-acesso.ts";
+} from "../../lib/acessos/solicitacao-de-acesso.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import { nomeDoUsuario } from "../sessao.ts";
 

@@ -4,7 +4,7 @@ import {
   useSyncExternalStore,
   type FormEvent,
 } from "react";
-import { isAdminGlobal } from "../../lib/access-roles.ts";
+import { isAdminGlobal } from "../../lib/acessos/access-roles.ts";
 import {
   MOTIVO_MAXIMO,
   REGRA_DO_MOTIVO,
@@ -16,8 +16,8 @@ import {
   ultimaExecucao,
   type ChaveDaAutomacao,
   type ChavesDaAutomacao,
-} from "../../lib/chaves-da-automacao.ts";
-import { dataHora } from "../../lib/saude-das-cargas.ts";
+} from "../../lib/automacao/chaves-da-automacao.ts";
+import { dataHora } from "../../lib/automacao/saude-das-cargas.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import {
   Aviso,

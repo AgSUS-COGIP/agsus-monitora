@@ -7,7 +7,7 @@ import {
   linhasDasVagas,
   listaBr,
   resumoDasRegrasDaEntrevista,
-} from "../src/lib/resumo-da-entrevista.ts";
+} from "../src/lib/entrevistas/resumo-da-entrevista.ts";
 
 /*
   O resumo das regras da entrevista em linguagem simples (Conduzir ›

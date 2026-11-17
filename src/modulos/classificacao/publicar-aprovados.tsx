@@ -1,9 +1,9 @@
-import type { ResultadoDaPublicacao } from "../../lib/tipos-da-publicacao-de-aprovados.ts";
+import type { ResultadoDaPublicacao } from "../../lib/aprovados/tipos-da-publicacao-de-aprovados.ts";
 import type {
   CasamentoDaLista,
   PessoaDaListaVigente,
   QuemEntra,
-} from "../../lib/casamento-da-lista.ts";
+} from "../../lib/aprovados/casamento-da-lista.ts";
 import type {
   EstadoDaClassificacao,
   ListaRegistrada,
@@ -26,12 +26,12 @@ type Props = {
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { formatarNota } from "../../lib/classificacao/numeros.ts";
-import { numerosDoCasamento } from "../../lib/casamento-da-lista.ts";
+import { numerosDoCasamento } from "../../lib/aprovados/casamento-da-lista.ts";
 import {
   MOTIVO_MAXIMO,
   motivoValido,
   origemDaLista,
-} from "../../lib/publicacao-de-aprovados.ts";
+} from "../../lib/aprovados/publicacao-de-aprovados.ts";
 import { Aviso, GradeDeKpis, Kpi, Modal } from "../../ui/index.ts";
 
 /*

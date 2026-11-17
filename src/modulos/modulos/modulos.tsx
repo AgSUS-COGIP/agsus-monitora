@@ -13,7 +13,7 @@ type SituacaoDoAlvo = (alvo: AlvoDosModulos) => EstadoDoModulo;
 type OpcaoDeEstado = { valor: EstadoDoModulo; rotulo: string };
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
-import { isAdminGlobal } from "../../lib/access-roles.ts";
+import { isAdminGlobal } from "../../lib/acessos/access-roles.ts";
 import {
   contarPendencias,
   estadoDoAlvo,

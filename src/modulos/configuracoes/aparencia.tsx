@@ -5,7 +5,7 @@ import {
   CHAVE_DO_LOGO_DA_BARRA,
   logoDaBarraSegura,
 } from "../../lib/navegacao/marca-da-barra-lateral.ts";
-import { camposDaSecao } from "../../lib/publicacao-de-configuracoes.ts";
+import { camposDaSecao } from "../../lib/configuracoes/publicacao-de-configuracoes.ts";
 import { aplicarMarcaDaBarraLateral } from "../../componentes/barra-lateral/marca.ts";
 import { Aviso, Selo } from "../../ui/index.ts";
 import { Icone } from "../../componentes/icone.tsx";

@@ -319,7 +319,7 @@ Testes: `tests/app/sessao.test.ts`, `tests/app/entrada.test.ts`, `tests/solicita
 | `logout`, `returnToLogin`, `clearLocalAuthState`, `aplicarSaida`                     | `sair()`, `limparSessao()`, `aplicarSaida()` na sessão                          |
 | `showAccessRequestState`, `submitAccessRequest`, `solicitacao-de-acesso.js` (legado) | `pedido-de-acesso.ts` + `solicitacao-de-acesso.tsx`                             |
 | `access-branding-boot.js`, marca e rodapé de `applyConfigToUi`                       | `src/app/entrada/marca.ts` (`definirMarcaDaConfiguracao`)                       |
-| marcas de conta desativada e de boas-vindas (`comemoracao-do-acesso.ts`)             | `src/lib/acesso-liberado.ts` (a comemoração continua no legado)                 |
+| marcas de conta desativada e de boas-vindas (`comemoracao-do-acesso.ts`)             | `src/lib/acessos/acesso-liberado.ts` (a comemoração continua no legado)                 |
 | `#loginMsg` escrito por `session-lifecycle.js`                                       | `installSessionLifecycle({ aoExpirar })` → `sessaoDoApp.mostrarMensagem`        |
 | `window.loginWithGoogle`, `logout`, `returnToLogin`, `submitAccessRequest`           | saíram; o Sair confirmado (`src/app/casca/saida.ts`) chama `sessaoDoApp.sair()` |
 

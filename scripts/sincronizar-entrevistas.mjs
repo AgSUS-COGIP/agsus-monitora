@@ -9,7 +9,7 @@
   Roda de hora em hora (o dia todo) pelo GitHub Actions (.github/workflows/sincronizar-entrevistas.yml).
 
   Onde está a planilha: `PLANILHAS.entrevistados` em src/lib/base/planilhas.ts.
-  Como a aba vira linhas: src/lib/entrevistas-da-planilha.ts.
+  Como a aba vira linhas: src/lib/entrevistas/entrevistas-da-planilha.ts.
   Credenciais e variáveis: scripts/carga-de-planilha.mjs.
   Guia para quem for operar: docs/sincronizacao-das-planilhas.md.
 
@@ -28,7 +28,7 @@ import {
   emLotes,
   identificadorDaCarga,
   linhasDaAbaEntrevistados,
-} from "../src/lib/entrevistas-da-planilha.ts";
+} from "../src/lib/entrevistas/entrevistas-da-planilha.ts";
 import {
   argumentos,
   carregarEnvLocal,

@@ -10,7 +10,7 @@ import {
   xlsxDoRelatorio,
 } from "../src/lib/relatorios-dos-paineis.ts";
 import type { ZiparRelatorio } from "../src/lib/relatorios-dos-paineis.ts";
-import { canManagePaineisDeDados } from "../src/lib/access-roles.ts";
+import { canManagePaineisDeDados } from "../src/lib/acessos/access-roles.ts";
 
 /*
   Fontes das colunas dos Painéis no front: a leitura tolerante do que as RPCs

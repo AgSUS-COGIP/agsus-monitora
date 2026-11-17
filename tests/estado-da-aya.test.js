@@ -16,9 +16,9 @@ import {
   lerPedido,
   piscadaDupla,
   resolverEstado,
-} from "../src/lib/estado-da-aya.ts";
+} from "../src/lib/aya/estado-da-aya.ts";
 
-/* A regra da mascote da Aya, sem DOM (src/lib/estado-da-aya.ts). */
+/* A regra da mascote da Aya, sem DOM (src/lib/aya/estado-da-aya.ts). */
 
 const sequencia = (...valores) => {
   let i = 0;

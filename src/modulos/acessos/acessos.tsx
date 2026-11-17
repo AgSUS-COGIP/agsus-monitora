@@ -5,14 +5,14 @@ import {
   type ReactNode,
 } from "react";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
-import { abasDeAcessos } from "../../lib/teto-de-acessos.ts";
+import { abasDeAcessos } from "../../lib/acessos/teto-de-acessos.ts";
 import { criarEstadoDosAcessos } from "./estado.ts";
 import { AbaUsuarios } from "./aba-usuarios.tsx";
 import { AbaGrupos } from "./aba-grupos.tsx";
 import { AbaCoordenacoes } from "./aba-coordenacoes.tsx";
 import { GavetaDoUsuario } from "./gaveta-do-usuario.tsx";
 import { Abas, ErroAoCarregar } from "../../ui/index.ts";
-import type { SecaoDeConfiguracaoDoMenu } from "../../lib/tipos-dos-acessos.ts";
+import type { SecaoDeConfiguracaoDoMenu } from "../../lib/acessos/tipos-dos-acessos.ts";
 import type { EstadoDosAcessos, OpcoesDoEstadoDosAcessos } from "./tipos.ts";
 
 /*

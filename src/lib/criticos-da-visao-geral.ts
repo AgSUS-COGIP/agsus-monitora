@@ -29,7 +29,7 @@
   Os limites ficam em LIMITES_DO_CRITICO (e em docs/aya/regras-da-visao-geral.md).
 */
 
-import { hojeEmBrasilia } from "./cronograma-do-edital.ts";
+import { hojeEmBrasilia } from "./cronograma/cronograma-do-edital.ts";
 import {
   motivoPareceTexto,
   textoLimpo,

@@ -4,7 +4,7 @@ import type {
   SnapshotDasEntrevistas,
   EntrevistaDoPainel,
 } from "./tipos-do-painel.ts";
-import type { ItemDaAgenda } from "../../lib/painel-de-entrevistas.ts";
+import type { ItemDaAgenda } from "../../lib/entrevistas/painel-de-entrevistas.ts";
 /*
   Estado da tela de Entrevistas (`#page-entrevistas`, visão "Resultados"),
   fora do React: o que o banco devolve para a área atual do app, a entrevista
@@ -28,7 +28,7 @@ import type { ItemDaAgenda } from "../../lib/painel-de-entrevistas.ts";
   usuário entrou na mesma aba: tudo volta ao início. Falha de rede usa a
   mensagem de src/lib/carga/falha-de-rede.ts.
 */
-import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.ts";
+import { hojeEmBrasilia } from "../../lib/cronograma/cronograma-do-edital.ts";
 import {
   criarCacheDePayload,
   ehErroDeAcesso,
@@ -47,7 +47,7 @@ import {
   normalizarAgendaDoPainel,
   PAINEL_DE_ENTREVISTAS,
   payloadMudou,
-} from "../../lib/entrevistas-do-painel.ts";
+} from "../../lib/entrevistas/entrevistas-do-painel.ts";
 import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.ts";
 import { avaliarMarcosDasEntrevistas } from "./marcos.ts";
 

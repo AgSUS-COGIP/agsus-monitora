@@ -4,7 +4,7 @@ import {
   atividadeLimpa,
   cronogramaParaSalvar,
   novaEtapa,
-} from "../src/lib/cronograma-do-edital.ts";
+} from "../src/lib/cronograma/cronograma-do-edital.ts";
 
 /*
   O cronograma colado do PDF da Cebraspe chega com espaços duplos

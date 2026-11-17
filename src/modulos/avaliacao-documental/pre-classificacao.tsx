@@ -38,7 +38,7 @@ import type { ConfiguracaoDaTriagem } from "../../lib/triagem/regra-da-triagem.t
 import { ResumoDaRegraDaTriagem } from "../triagem/resumo-da-regra.tsx";
 import { usarRegraDaTriagem } from "../triagem/usar-regra-da-triagem.ts";
 import { abrirRegrasDoEdital } from "../regras-do-edital/abrir.ts";
-import { ESPERA_DO_PEDIDO_MIN } from "../../lib/robos-de-carga.ts";
+import { ESPERA_DO_PEDIDO_MIN } from "../../lib/automacao/robos-de-carga.ts";
 import {
   Aviso,
   CabecalhoDaTela,

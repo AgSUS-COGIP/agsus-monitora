@@ -9,7 +9,7 @@ import {
   CHAVE_COMEMORACOES_PESSOAIS,
   definirEstadoDaAya,
   INATIVIDADE_PARA_DORMIR_MS,
-} from "../../src/lib/estado-da-aya.ts";
+} from "../../src/lib/aya/estado-da-aya.ts";
 
 /*
   A mascote da Aya (src/modulos/aya/mascote/): troca de estados, o evento

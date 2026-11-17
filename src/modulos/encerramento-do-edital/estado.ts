@@ -21,7 +21,7 @@ import {
   RPC_DO_VISTO,
   RPC_DOS_ENCERRAMENTOS,
   type EncerramentoDoEdital,
-} from "../../lib/encerramento-do-edital.ts";
+} from "../../lib/encerramento-do-edital/encerramento-do-edital.ts";
 
 type RespostaDaRpc = { data?: unknown; error?: unknown };
 export interface ClienteDoEncerramento {

@@ -11,7 +11,7 @@ import type {
 } from "../../lib/tipos-dos-recursos.ts";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { pedirFiltro, usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
-import { filtrosDeRecursos } from "../../lib/filtro-da-aya.ts";
+import { filtrosDeRecursos } from "../../lib/aya/filtro-da-aya.ts";
 import { usarTemaEscuro } from "../../app/tema.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";

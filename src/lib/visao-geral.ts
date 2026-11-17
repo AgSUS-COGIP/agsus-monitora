@@ -35,8 +35,8 @@ import type {
   exportação partem do mesmo recorte.
 */
 
-import { cicloPadronizado, numeroDoCiclo } from "./ciclo-do-edital.ts";
-import { hojeEmBrasilia } from "./cronograma-do-edital.ts";
+import { cicloPadronizado, numeroDoCiclo } from "./editais/ciclo-do-edital.ts";
+import { hojeEmBrasilia } from "./cronograma/cronograma-do-edital.ts";
 import {
   diaDoCalendario,
   gravidade,
@@ -45,7 +45,7 @@ import {
 } from "./criticos-da-visao-geral.ts";
 import type { MarcacaoDeCritico } from "./criticos-da-visao-geral.ts";
 import { sanitizeCsvCell } from "./seguranca/csv-security";
-import { tomDoStatusDoEdital } from "./editais-do-nucleo.ts";
+import { tomDoStatusDoEdital } from "./editais/editais-do-nucleo.ts";
 import {
   faseDoEdital,
   FASES,

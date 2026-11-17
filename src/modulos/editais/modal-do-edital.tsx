@@ -6,9 +6,12 @@ import {
   useSyncExternalStore,
 } from "react";
 import type { ChangeEvent } from "react";
-import { RESPONSAVEIS_DE_EDITAL } from "../../lib/responsavel-do-edital.ts";
-import { cicloPadronizado, opcoesDeCiclo } from "../../lib/ciclo-do-edital.ts";
-import { canMoveEditalBetweenAreas } from "../../lib/access-roles.ts";
+import { RESPONSAVEIS_DE_EDITAL } from "../../lib/editais/responsavel-do-edital.ts";
+import {
+  cicloPadronizado,
+  opcoesDeCiclo,
+} from "../../lib/editais/ciclo-do-edital.ts";
+import { canMoveEditalBetweenAreas } from "../../lib/acessos/access-roles.ts";
 import {
   AREAS_DO_SISTEMA,
   nomeDaArea,
@@ -24,18 +27,18 @@ import {
   rotuloDaUnidade,
   unidadesDaArea,
   valorDaUnidade,
-} from "../../lib/editais-do-nucleo.ts";
+} from "../../lib/editais/editais-do-nucleo.ts";
 import {
   analisarCronograma,
   estadoDoCronograma,
   novaEtapa,
-} from "../../lib/cronograma-do-edital.ts";
+} from "../../lib/cronograma/cronograma-do-edital.ts";
 import type {
   CronogramaDoFormulario,
   CronogramaNoBanco,
   EtapaDoCronograma,
-} from "../../lib/cronograma-do-edital.ts";
-import type { QuadroParaSalvar } from "../../lib/anexos-do-edital.ts";
+} from "../../lib/cronograma/cronograma-do-edital.ts";
+import type { QuadroParaSalvar } from "../../lib/editais/anexos-do-edital.ts";
 import {
   ANOS_MAXIMOS,
   MESES_MAXIMOS,
@@ -44,13 +47,13 @@ import {
   errosDaValidade,
   prazoDaValidade,
   validadeDoBanco,
-} from "../../lib/validade-do-edital.ts";
-import type { ValidadeDoFormulario } from "../../lib/validade-do-edital.ts";
+} from "../../lib/editais/validade-do-edital.ts";
+import type { ValidadeDoFormulario } from "../../lib/editais/validade-do-edital.ts";
 import {
   numeroDoFunil,
   textoDaFonteDoFunil,
-} from "../../lib/funil-do-edital.ts";
-import type { LinhaComFunil } from "../../lib/funil-do-edital.ts";
+} from "../../lib/editais/funil-do-edital.ts";
+import type { LinhaComFunil } from "../../lib/editais/funil-do-edital.ts";
 import {
   apagarRascunho,
   chaveDoRascunho,
@@ -59,7 +62,7 @@ import {
   horaDoRascunho,
   lerRascunho,
   usuarioDoPerfil,
-} from "../../lib/rascunho-do-edital.ts";
+} from "../../lib/editais/rascunho-do-edital.ts";
 import {
   areaDaLinha,
   assinarDadosDoMonitoramento,

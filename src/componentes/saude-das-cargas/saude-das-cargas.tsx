@@ -10,20 +10,20 @@ import type {
   PropsDoRobo,
 } from "./tipos.ts";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { isAdminGlobal } from "../../lib/access-roles.ts";
+import { isAdminGlobal } from "../../lib/acessos/access-roles.ts";
 import { formatNumberBR } from "../../lib/base/formatters";
 import {
   estadoDoBotao,
   OPCOES_DOS_ROBOS,
   roboDeCarga,
-} from "../../lib/robos-de-carga.ts";
+} from "../../lib/automacao/robos-de-carga.ts";
 import {
   dataHora,
   marcaDasConferencias,
   SITUACOES,
   textoDaIdade,
   visaoSimples,
-} from "../../lib/saude-das-cargas.ts";
+} from "../../lib/automacao/saude-das-cargas.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import { CartaoDeAvisos } from "../../modulos/conferencias/avisos-de-conferencia.tsx";
 import { Icone } from "../icone.tsx";
@@ -39,7 +39,7 @@ import { RodarComOpcoes } from "./rodar-com-opcoes.tsx";
   do banco), com o selo e "atualizado há X". Os detalhes técnicos — cada
   script ou tarefa, agenda, linhas e as últimas 10 execuções — ficam em
   "Detalhes". Só leitura: uma RPC, `get_saude_das_cargas`
-  (20261001120000_saude_das_cargas.sql); as regras em src/lib/saude-das-cargas.ts.
+  (20261001120000_saude_das_cargas.sql); as regras em src/lib/automacao/saude-das-cargas.ts.
 
   Abre pela seção (src/modulos/configuracoes/secoes.ts → `render()`), que relê a cada
   vez: o estado das cargas muda a cada poucos minutos.
@@ -51,7 +51,7 @@ import { RodarComOpcoes } from "./rodar-com-opcoes.tsx";
   "Rodar agora": o botão chama a RPC disparar_robo (o banco pede o workflow ao
   GitHub com a chave do Vault, 20261008140000) e acompanha por
   situacao_do_disparo_robo; fica desabilitado enquanto a carga roda
-  (src/lib/robos-de-carga.ts).
+  (src/lib/automacao/robos-de-carga.ts).
 
   Robô da Empregare, Triagem e Conferências têm também "Opções"
   (rodar-com-opcoes.tsx: editais, códigos de vaga, modo, limite e prévia).

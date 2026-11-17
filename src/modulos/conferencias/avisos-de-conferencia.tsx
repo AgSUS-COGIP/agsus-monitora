@@ -38,7 +38,7 @@ import {
   termoDeBusca,
   tomDoSelo,
   VIEW_DO_MODULO,
-} from "../../lib/avisos-de-conferencia.ts";
+} from "../../lib/conferencias/avisos-de-conferencia.ts";
 import { mensagemDeFalha } from "../../lib/carga/falha-de-rede";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import { formatNumberBR } from "../../lib/base/formatters";
@@ -93,7 +93,7 @@ const erroDaConsulta = (falha: unknown): string => {
   (análise, aprovado, entrevista; src/lib destinoDoCaso). No topo da lista, a
   busca em todos os avisos. Quem administra o módulo (ou o administrador
   global) ignora com motivo; o ignorado volta sozinho se a quantidade crescer.
-  As regras puras: src/lib/avisos-de-conferencia.ts.
+  As regras puras: src/lib/conferencias/avisos-de-conferencia.ts.
 */
 
 const ESPERA_DA_BUSCA_MS = 300;

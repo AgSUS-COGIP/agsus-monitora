@@ -1,4 +1,4 @@
-import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.ts";
+import { hojeEmBrasilia } from "../../lib/cronograma/cronograma-do-edital.ts";
 import { telaPronta } from "../../app/registro-das-telas.ts";
 import type { LinhaDaVisaoGeral } from "./tipos.ts";
 import { formatNumberBR } from "../../lib/base/formatters";
@@ -10,7 +10,7 @@ import {
 import {
   numeroDoFunil,
   textoDaFonteDoFunil,
-} from "../../lib/funil-do-edital.ts";
+} from "../../lib/editais/funil-do-edital.ts";
 import {
   dataCurta,
   linkSeguro,

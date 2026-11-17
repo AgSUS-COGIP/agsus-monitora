@@ -8,7 +8,7 @@ import {
   rebasearRascunho,
   registrarNoRascunho,
   resumoDoRascunho,
-} from "../src/lib/matriz-de-acessos.ts";
+} from "../src/lib/acessos/matriz-de-acessos.ts";
 
 const usuario = {
   id: "u1",

@@ -58,7 +58,7 @@ import type {
   do anterior fica na tela). Uma ação por vez (`executar`): o botão dela
   mostra o rótulo, os outros ficam desativados.
 */
-import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.ts";
+import { hojeEmBrasilia } from "../../lib/cronograma/cronograma-do-edital.ts";
 import { ehConflitoDeVersao } from "../../lib/base/conflito-de-versao.ts";
 import { csvDosRecursos } from "../../lib/recursos-dos-candidatos.ts";
 import {

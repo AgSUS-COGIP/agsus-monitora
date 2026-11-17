@@ -1,9 +1,9 @@
 import type { LinhaDaAnalise } from "./tipos.ts";
-import { mensagemDeAreaSemAnalises } from "../../lib/area-do-painel-de-analises.ts";
+import { mensagemDeAreaSemAnalises } from "../../lib/analises/area-do-painel-de-analises.ts";
 import {
   filtrarPelaBuscaDaFila,
   tomDoStatus,
-} from "../../lib/analises-curriculares.ts";
+} from "../../lib/analises/analises-curriculares.ts";
 import { formatNumberBR } from "../../lib/base/formatters";
 import { Selo, TabelaInfinita } from "../../ui/index.ts";
 

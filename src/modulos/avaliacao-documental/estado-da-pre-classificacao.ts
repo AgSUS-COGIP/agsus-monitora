@@ -60,7 +60,7 @@ import {
   textoParaSei,
 } from "../../lib/classificacao/documento-sei.ts";
 import { gerarDocxOficial } from "../../lib/classificacao/documento-docx.ts";
-import { ehEditalDeTreinamento } from "../../lib/edital-de-treinamento.ts";
+import { ehEditalDeTreinamento } from "../../lib/editais/edital-de-treinamento.ts";
 import { nomeDoArquivo } from "../../lib/classificacao/exportacao.ts";
 import { CABECALHO_PADRAO } from "../../lib/base/cabecalho-dos-documentos.ts";
 import { MIME_DOCX } from "../../lib/documento-da-resposta.ts";
@@ -73,7 +73,7 @@ import {
   RPC_DISPARAR_ROBO,
   RPC_SITUACAO_DO_DISPARO,
   situacaoDoPedido,
-} from "../../lib/robos-de-carga.ts";
+} from "../../lib/automacao/robos-de-carga.ts";
 import { baixarNoNavegador } from "../classificacao/estado.ts";
 import {
   copiarParaAreaDeTransferencia,

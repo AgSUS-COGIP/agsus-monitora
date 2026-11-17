@@ -51,8 +51,8 @@ import {
   respostaInalterada,
   versaoDoPacote,
 } from "../../lib/carga/versao-do-pacote";
-import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.ts";
-import { semTreinamento } from "../../lib/edital-de-treinamento.ts";
+import { hojeEmBrasilia } from "../../lib/cronograma/cronograma-do-edital.ts";
+import { semTreinamento } from "../../lib/editais/edital-de-treinamento.ts";
 import { chaveDoDsei } from "../../lib/mapa-saude-indigena/chaves.ts";
 import {
   acompanhamentoDaResposta,

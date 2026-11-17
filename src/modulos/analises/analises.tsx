@@ -9,7 +9,7 @@ import type {
 } from "./tipos.ts";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
-import { filtrosDasAnalises } from "../../lib/filtro-da-aya.ts";
+import { filtrosDasAnalises } from "../../lib/aya/filtro-da-aya.ts";
 import { usarTemaEscuro } from "../../app/tema.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
@@ -33,11 +33,11 @@ import {
   temMunicipio,
   temPeriodo,
   ultimaAtualizacao,
-} from "../../lib/analises-curriculares.ts";
+} from "../../lib/analises/analises-curriculares.ts";
 import { getLoadingStage } from "../../lib/entrada/loading-copy";
-import { textoDaConferencia } from "../../lib/texto-da-conferencia.ts";
+import { textoDaConferencia } from "../../lib/conferencias/texto-da-conferencia.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
-import { haLinhasSemParecer } from "../../lib/textos-do-painel-de-analises.ts";
+import { haLinhasSemParecer } from "../../lib/analises/textos-do-painel-de-analises.ts";
 import {
   Aviso,
   ChipDeFiltro,

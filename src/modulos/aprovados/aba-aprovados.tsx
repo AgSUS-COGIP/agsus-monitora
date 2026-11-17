@@ -7,7 +7,7 @@ import type { ConvocacoesDaTabela } from "./tipos-da-aba-de-convocacao.ts";
 import type {
   ChaveDaOrdemDosAprovados,
   OrdemDosAprovados,
-} from "../../lib/ordem-dos-aprovados.ts";
+} from "../../lib/aprovados/ordem-dos-aprovados.ts";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import {
   OPCOES_DO_FILTRO_DE_STATUS,
@@ -16,15 +16,15 @@ import {
   filterApprovedCandidates,
   nomeDosCandidatosFiltrados,
   summarizeApprovedCandidates,
-} from "../../lib/lista-aprovados-rules.ts";
+} from "../../lib/aprovados/lista-aprovados-rules.ts";
 import {
   SEM_ORDEM,
   ordenarAprovados,
   proximaOrdemDosAprovados,
-} from "../../lib/ordem-dos-aprovados.ts";
+} from "../../lib/aprovados/ordem-dos-aprovados.ts";
 import { formatNumberBR } from "../../lib/base/formatters";
-import { resumoDasOrigens } from "../../lib/publicacao-de-aprovados.ts";
-import { statusDoLotePara } from "../../lib/status-em-lote-dos-aprovados.ts";
+import { resumoDasOrigens } from "../../lib/aprovados/publicacao-de-aprovados.ts";
+import { statusDoLotePara } from "../../lib/aprovados/status-em-lote-dos-aprovados.ts";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
 import {
   BotaoDeAcao,

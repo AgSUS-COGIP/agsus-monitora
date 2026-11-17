@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { novaEtapa } from "../src/lib/cronograma-do-edital.ts";
+import { novaEtapa } from "../src/lib/cronograma/cronograma-do-edital.ts";
 import {
   bloqueioDaRetificacao,
   casarEtapas,
@@ -11,7 +11,7 @@ import {
   problemasDaComparacao,
   resumoDaComparacao,
   semelhancaDeAtividade,
-} from "../src/lib/retificacao-do-cronograma.ts";
+} from "../src/lib/cronograma/retificacao-do-cronograma.ts";
 
 /*
   Retificação do cronograma: o "Leia-se" lido do PDF (pela função Python)

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calcularKpis } from "../src/lib/analises-curriculares.ts";
+import { calcularKpis } from "../src/lib/analises/analises-curriculares.ts";
 import {
   aptosEEliminados,
   formatarTaxa,

@@ -71,7 +71,7 @@ trabalho). De cima para baixo:
   armazenamento não impede o uso da página.
 - Colunas padrão, para todos (13/11/2026): todas menos Observações. A chave guardada passou a
   `agsus_visible_cols_v3` (Ciclo, 1ª admissão e Última admissão), o que descartou uma vez as
-  escolhas antigas. O ciclo é padronizado como "Nº ciclo" (`src/lib/ciclo-do-edital.ts`), é
+  escolhas antigas. O ciclo é padronizado como "Nº ciclo" (`src/lib/editais/ciclo-do-edital.ts`), é
   filtro em "Mais opções" e voltou ao formulário do edital. Em 1280px a tabela rola de lado; Unidade e Edital ficam presas à esquerda
   (`classe` da coluna na `TabelaInfinita`). No celular, em cartões, rótulo e valor ficam na
   mesma linha e só a página rola.

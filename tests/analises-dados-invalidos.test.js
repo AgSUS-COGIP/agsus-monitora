@@ -3,7 +3,7 @@ import {
   linhasDoPayload,
   detalheDaAnalise,
   normalizarPayloadDasAnalises,
-} from "../src/lib/analises-curriculares.ts";
+} from "../src/lib/analises/analises-curriculares.ts";
 import { criarConsultasDasAnalises } from "../src/modulos/analises/consultas.ts";
 
 describe("dados externos de Análises curriculares", () => {

@@ -12,11 +12,11 @@ import {
   canConfigureCallList,
   canImportApprovedList,
   canReplaceApprovedList,
-} from "../../lib/access-roles.ts";
+} from "../../lib/acessos/access-roles.ts";
 import { formatNumberBR } from "../../lib/base/formatters";
 import { PLANILHAS } from "../../lib/base/planilhas.ts";
 import type { PreviaDaSubstituicao } from "./tipos-do-estado.ts";
-import { origemDaLista } from "../../lib/publicacao-de-aprovados.ts";
+import { origemDaLista } from "../../lib/aprovados/publicacao-de-aprovados.ts";
 import {
   Abas,
   Aviso,

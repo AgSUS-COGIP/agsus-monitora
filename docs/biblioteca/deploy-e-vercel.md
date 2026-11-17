@@ -75,9 +75,9 @@ Aya responde no navegador; o endpoint de IA e o bridge local foram retirados.
   terras indígenas, camada `Funai:tis_poligonais`; [[mapas-e-leaflet]]).
 - `anexos-do-edital.py` — Python (pdfplumber): lê o PDF de anexos do edital e devolve cronograma
   (Anexo I) e quadro de vagas (Anexo II) em JSON; não grava nada. Quem usa:
-  `src/lib/anexos-do-edital.ts`. Com `?tipo=retificacao`, lê a retificação do cronograma (nº,
+  `src/lib/editais/anexos-do-edital.ts`. Com `?tipo=retificacao`, lê a retificação do cronograma (nº,
   edital, SEI, assinatura, "Onde se lê" e "Leia-se", com as linhas em negrito e os avisos das
-  datas); quem usa: `src/lib/retificacao-do-cronograma.ts` (tela
+  datas); quem usa: `src/lib/cronograma/retificacao-do-cronograma.ts` (tela
   `src/modulos/editais/lancar-retificacao.tsx`). Só usuário logado: Bearer conferido em
   `/auth/v1/user` (sem token ou token recusado → 401; Auth fora do ar, lento ou variável faltando →
   503, para quem está logado não ler "entre no MONITORA").
@@ -87,10 +87,10 @@ Aya responde no navegador; o endpoint de IA e o bridge local foram retirados.
   fica em `_rota-com-chave.ts`.
   - `/api/editais`: `listar_editais_da_api` (migration `20261105170000`; unidade, edital, status,
     etapa, vagas, contratados, ociosas, risco, link e área; sem anexos), formato em
-    `src/lib/editais-da-api.ts`.
+    `src/lib/editais/editais-da-api.ts`.
   - `/api/aprovados` e `/api/cronograma`: `listar_aprovados_da_api` e `listar_cronograma_da_api` (só
     `service_role`; migration `20261105150000`), formato em
-    `src/lib/aprovados-e-cronograma-da-api.ts`. Aprovados tem dados pessoais (nome, matrícula;
+    `src/lib/aprovados/aprovados-e-cronograma-da-api.ts`. Aprovados tem dados pessoais (nome, matrícula;
     [[dados-pessoais]]).
   - As três trazem `area` (Saúde Indígena, SEDE, Projetos; migration `20261105190000`) e aceitam
     `?area=`. Como o outro sistema usa: comentário do topo de cada rota.

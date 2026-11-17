@@ -19,7 +19,7 @@ import {
   aplicarAjusteDoVidro,
   definirMarcaDaConfiguracao,
 } from "../src/app/entrada/marca.ts";
-import { CAMPOS_DAS_SECOES } from "../src/lib/publicacao-de-configuracoes.ts";
+import { CAMPOS_DAS_SECOES } from "../src/lib/configuracoes/publicacao-de-configuracoes.ts";
 
 /*
   A COR E O DESFOQUE DO VIDRO, EM CONFIGURAÇÕES (pedido de 13/11/2026)

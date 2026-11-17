@@ -19,12 +19,12 @@ import {
   TOM_DO_SELO_DO_RITMO,
   type EditalDoRitmo,
   type RitmoDoEdital,
-} from "../../lib/ritmo-da-analise.ts";
+} from "../../lib/analises/ritmo-da-analise.ts";
 import { GradeDeKpis, Kpi, Selo } from "../../ui/index.ts";
 
 /*
   Card "Ritmo da análise": um por edital com fichas no sistema (regras em
-  src/lib/ritmo-da-analise.ts). Em destaque, o bloco "Hoje" — meta do dia,
+  src/lib/analises/ritmo-da-analise.ts). Em destaque, o bloco "Hoje" — meta do dia,
   feito e quanto falta, com o selo que oscila ao longo do expediente
   (08:00–18:00) —; depois o edital (concluído e faltam) e, menores, a média
   dos últimos dias e a previsão de término.

@@ -1,5 +1,5 @@
 import { ABAS_DO_MENU, nomeDaArea } from "../navegacao/menu-lateral.ts";
-import { rotuloDoPerfil } from "../access-roles";
+import { rotuloDoPerfil } from "../acessos/access-roles";
 
 /** Uma pessoa online, pronta para a lista de "Pessoas online". */
 export interface PessoaOnline {

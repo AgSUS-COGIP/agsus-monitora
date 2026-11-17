@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import type { PessoaDaDemanda } from "../../lib/demandas-internas.ts";
-import { lerPessoas } from "../../lib/demandas-internas.ts";
+import type { PessoaDaDemanda } from "../../lib/cronograma/demandas-internas.ts";
+import { lerPessoas } from "../../lib/cronograma/demandas-internas.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
 import { Aviso, Campo } from "../../ui/index.ts";

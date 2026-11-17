@@ -1,5 +1,5 @@
-import { publicacaoDoEdital } from "../../lib/dados-do-historico-de-publicacoes.ts";
-import type { DadosDaPublicacaoDoEdital } from "../../lib/tipos-do-estado-de-aprovados.ts";
+import { publicacaoDoEdital } from "../../lib/aprovados/dados-do-historico-de-publicacoes.ts";
+import type { DadosDaPublicacaoDoEdital } from "../../lib/aprovados/tipos-do-estado-de-aprovados.ts";
 import type {
   SnapshotDosAprovados,
   OpcoesDoEstadoDosAprovados,
@@ -15,7 +15,7 @@ import type {
 import type {
   ModeloDaConvocacao,
   FormularioDaConvocacao,
-} from "../../lib/tipos-da-configuracao-de-convocacao.ts";
+} from "../../lib/aprovados/carta-de-convocacao/tipos-da-configuracao-de-convocacao.ts";
 import {
   candidatosDoPacote,
   listasDoEstado,
@@ -23,7 +23,7 @@ import {
   convocacoesDoEstado,
   resultadoDaMarcacao,
   registroDosAprovados,
-} from "../../lib/dados-do-estado-de-aprovados.ts";
+} from "../../lib/aprovados/dados-do-estado-de-aprovados.ts";
 /*
   Estado da Lista de Aprovados, fora do React: os candidatos, as listas e a
   configuração de convocação que o banco devolve, qual modal está aberto, e as
@@ -66,11 +66,11 @@ import {
 */
 const VERSAO_DA_COPIA = `1:${import.meta.url}`;
 
-import { readApprovedWorkbook } from "../../lib/aprovados-import.ts";
+import { readApprovedWorkbook } from "../../lib/aprovados/aprovados-import.ts";
 import {
   LISTA_DE_APROVADOS,
   pacoteInalterado,
-} from "../../lib/candidatos-aprovados-compactos.ts";
+} from "../../lib/aprovados/candidatos-aprovados-compactos.ts";
 import {
   versaoDoPacote,
   criarCacheDePayload,
@@ -87,7 +87,7 @@ import {
   canManageSubJudice,
   canReplaceApprovedList,
   canViewCore,
-} from "../../lib/access-roles.ts";
+} from "../../lib/acessos/access-roles.ts";
 import {
   canAlterarCandidatoSubJudice,
   canDesfazerAlteracaoSubJudice,
@@ -101,8 +101,8 @@ import {
   statusGuardaMatricula,
   statusNeedsMatricula,
   statusTravado,
-} from "../../lib/lista-aprovados-rules.ts";
-import { hojeEmBrasilia } from "../../lib/carta-de-convocacao.ts";
+} from "../../lib/aprovados/lista-aprovados-rules.ts";
+import { hojeEmBrasilia } from "../../lib/aprovados/carta-de-convocacao/carta-de-convocacao.ts";
 import {
   ehFalhaDeConexao,
   mensagemDeFalha,
@@ -110,7 +110,7 @@ import {
 import type {
   FormatoDaExportacao,
   PedidoDaExportacao,
-} from "../../lib/exportacao-da-lista-de-aprovados.ts";
+} from "../../lib/aprovados/exportacao/exportacao-da-lista-de-aprovados.ts";
 import {
   exportarListaDeAprovados,
   type GerarPdf,
@@ -119,7 +119,7 @@ import {
   exportarResumoPorCargo,
   type GerarPdfDoResumo,
 } from "./exportacao/exportar-resumo.ts";
-import type { ResumoPorCargoEStatus } from "../../lib/resumo-por-cargo-e-status.ts";
+import type { ResumoPorCargoEStatus } from "../../lib/aprovados/exportacao/resumo-por-cargo-e-status.ts";
 import {
   argumentosDaConfiguracao,
   fixarIdsNovos,
@@ -128,15 +128,15 @@ import {
   lerModelosDoBanco,
   modeloParaSalvar,
   somaDasReservas,
-} from "../../lib/configuracao-de-convocacao.ts";
+} from "../../lib/aprovados/carta-de-convocacao/configuracao-de-convocacao.ts";
 import { PLANILHAS } from "../../lib/base/planilhas.ts";
-import { motivoValido } from "../../lib/publicacao-de-aprovados.ts";
+import { motivoValido } from "../../lib/aprovados/publicacao-de-aprovados.ts";
 import {
   acompanharCasamento,
   INTERVALO_DO_CASAMENTO_MS,
   pedidoLido,
   PRAZO_DO_CASAMENTO_MS,
-} from "../../lib/casamento-da-lista.ts";
+} from "../../lib/aprovados/casamento-da-lista.ts";
 import type { PreviaDaSubstituicao } from "./tipos-do-estado.ts";
 import { irParaTela } from "../../app/ir-para-tela.ts";
 import { criarEstadoDaCarta } from "./carta-de-convocacao/estado.ts";
@@ -149,7 +149,7 @@ import {
   arquivoEmBase64,
   pdfDoBase64,
   problemaDosAnexos,
-} from "../../lib/anexos-do-candidato.ts";
+} from "../../lib/aprovados/anexos-do-candidato.ts";
 
 const BUCKET = PLANILHAS.listaAprovadosImportada.bucket;
 const LIMITE_DO_XLSX = 10 * 1024 * 1024;

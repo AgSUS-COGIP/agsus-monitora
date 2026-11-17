@@ -20,7 +20,7 @@ const aparencia = readFileSync(
   "utf8",
 );
 const publicacao = readFileSync(
-  "src/lib/publicacao-de-configuracoes.ts",
+  "src/lib/configuracoes/publicacao-de-configuracoes.ts",
   "utf8",
 );
 const governance = readFileSync("src/modulos/configuracoes/estado.ts", "utf8");

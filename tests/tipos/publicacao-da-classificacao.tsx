@@ -1,6 +1,6 @@
 import { ModalDePublicacaoDeAprovados } from "../../src/modulos/classificacao/publicar-aprovados.tsx";
 import type { EstadoDaClassificacao } from "../../src/modulos/classificacao/tipos-do-estado.ts";
-import type { VinculoDoPlano } from "../../src/lib/casamento-da-lista.ts";
+import type { VinculoDoPlano } from "../../src/lib/aprovados/casamento-da-lista.ts";
 
 export function conferirPublicacao(estado: EstadoDaClassificacao) {
   void estado.publicarComoListaDeAprovados({ pedidoId: "p1", motivo: "" });

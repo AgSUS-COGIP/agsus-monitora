@@ -4,7 +4,7 @@ import {
   identificadorDaCarga,
   linhasDaAbaEntrevistados,
   normalizarCabecalho,
-} from "../src/lib/entrevistas-da-planilha.ts";
+} from "../src/lib/entrevistas/entrevistas-da-planilha.ts";
 import { PLANILHAS } from "../src/lib/base/planilhas.ts";
 
 const CABECALHO = [

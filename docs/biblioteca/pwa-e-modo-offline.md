@@ -60,7 +60,7 @@ usam a cópia que guardaram no IndexedDB na última leitura com rede (o que leva
 - Gravar (notas, convocação, status) exige rede: lançar notas sem rede é a fase 3, ainda não feita.
 - **"Levar para o campo"** (Conduzir entrevistas, edital aberto): relê o edital com rede e confirma
   a cópia ("Pronto para o campo … neste aparelho até 19/11, 10:14"). Quem avalia leva só a sua banca;
-  a coordenação, o edital inteiro; o cálculo da convocação não vai (`src/lib/conducao-para-o-campo.ts`,
+  a coordenação, o edital inteiro; o cálculo da convocação não vai (`src/lib/entrevistas/conducao-para-o-campo.ts`,
   a mesma regra da cópia automática).
 
 ## Entrar sem rede

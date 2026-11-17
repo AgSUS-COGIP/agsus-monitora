@@ -13,8 +13,8 @@ import {
   ondeDoCaso,
   quemDoCaso,
   termoDeBusca,
-} from "../src/lib/avisos-de-conferencia.ts";
-import { filtrosDasAnalises } from "../src/lib/filtro-da-aya.ts";
+} from "../src/lib/conferencias/avisos-de-conferencia.ts";
+import { filtrosDasAnalises } from "../src/lib/aya/filtro-da-aya.ts";
 import { criarEstadoDosAvisos } from "../src/modulos/conferencias/estado.ts";
 
 /*

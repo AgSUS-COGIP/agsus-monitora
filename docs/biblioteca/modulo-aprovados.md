@@ -17,7 +17,7 @@ de chamada de cada vaga, pelo modelo de convocação e pelas vagas imediatas) e 
 candidatos: mudar um status redesenha ambas; decidir uma pendência recarrega a lista.
 
 **Filtros** (os mesmos nas abas Aprovados e Resumo por cargo): Edital, Localidade, Cargo, Modalidade
-e Situação. A **Localidade** (16/11/2026) sai do texto do cargo (`src/lib/localidade-da-vaga.ts`: o
+e Situação. A **Localidade** (16/11/2026) sai do texto do cargo (`src/lib/aprovados/localidade-da-vaga.ts`: o
 trecho com UF depois de barra, Polo, PB, CASAI, Distrital, Regional, Abrangência, Sede… ou nome de
 estado; "DSEI X" é a unidade, não a localidade). Só aparece quando os editais escolhidos têm duas ou
 mais localidades (não aparece na SEDE, cujos cargos não trazem lugar); escolhida, o filtro Cargo
@@ -53,7 +53,7 @@ formulario-de-convocacao.tsx, editor-de-modelo.tsx, previa-da-convocacao.tsx  co
 carta-de-convocacao/        estado.ts (modelos, versão, inativar, emitir SEI/DOCX/PDF registrando
                             uma vez por carta), modal-da-carta.tsx, modelos-da-carta.tsx, carta.css
 pendencias/                 aba Pendências (migration 20261026190000; detecção em
-                            scripts/aprovados/pendencias.py; regras em src/lib/pendencias-do-edital.ts)
+                            scripts/aprovados/pendencias.py; regras em src/lib/aprovados/pendencias-do-edital.ts)
 exportacao/                 "Exportar" da aba Aprovados: modal-da-exportacao.tsx, exportar.ts
                             (registro no banco → arquivo → download); exportar-resumo.ts, o
                             mesmo caminho para o Resumo por cargo
@@ -67,14 +67,14 @@ aprovados.css, convocacao.css
 Convocado (com a data), Contratado, Desistente, Migração e Documentação Rejeitada; "Fim de Fila" saiu
 (migration `20261005180000`). Status definido só o admin de Aprovados muda, exceto do Convocado para
 o seguinte (quem edita faz); deixar sem status é do admin. Contratados (Seleção e KPIs) = Contratado e
-Migração. Regras: `src/lib/lista-aprovados-rules.ts` (status, trava, resumo) e
-`src/lib/lista-convocacao-rules.ts` (ordem, "a convocar", CSV).
+Migração. Regras: `src/lib/aprovados/lista-aprovados-rules.ts` (status, trava, resumo) e
+`src/lib/aprovados/lista-convocacao-rules.ts` (ordem, "a convocar", CSV).
 
 **Status em lote** (11/11/2026): na aba Aprovados, quem muda status marca linhas (ou "Selecionar os N
 da tabela": os filtrados e buscados) e usa "Mudar status". Só Convocado (uma data para todos),
 Desistente, Documentação Rejeitada e, para o admin, sem status; Contratado e Migração pedem a
 matrícula de cada um e ficam na linha. A janela mostra quem muda, como está hoje e quem fica de fora
-e por quê (`src/lib/status-em-lote-dos-aprovados.ts`); o banco repete as regras, um a um
+e por quê (`src/lib/aprovados/status-em-lote-dos-aprovados.ts`); o banco repete as regras, um a um
 (`alterar_status_candidatos_aprovados`, migration `20261111180000`, até 500, histórico em
 `TH_CANDIDATO_APROVADO`). Mudar filtro ou busca limpa a seleção.
 
@@ -96,7 +96,7 @@ filtros, registros, data dos dados, data de emissão e o número do registro. N�
   treinamento e visíveis à coordenação (nenhum id de candidato); recalcula o total da lista vigente
   nos editais, cargos e modalidades e recusa (40001) se a tela tem outro número; grava
   `TL_EXPORTACAO_APROVADO` (sem dado de candidato) e devolve o id e a data de emissão.
-- **Depois, o arquivo, no navegador:** conteúdo em `src/lib/exportacao-da-lista-de-aprovados.ts`
+- **Depois, o arquivo, no navegador:** conteúdo em `src/lib/aprovados/exportacao/exportacao-da-lista-de-aprovados.ts`
   (linhas sem repetir, CSV por `csv-security.ts`, XLSX pelo `arquivosDoXlsx` da Classificação zipado
   com o fflate) e o PDF em `exportacao-da-lista-de-aprovados-em-pdf.ts`, desenhado por lotes
   (cede a vez à tela a cada 300 linhas e mostra o progresso no botão; um Web Worker duplicaria o
@@ -108,8 +108,8 @@ filtros, registros, data dos dados, data de emissão e o número do registro. N�
 ## Resumo por cargo e status (pedido da CORES)
 
 Aba **Resumo por cargo**, ao lado de Aprovados: a mesma lista vigente, os mesmos filtros e a mesma
-permissão, contados. Conta em `src/lib/resumo-por-cargo-e-status.ts` (uma estrutura para a tabela,
-o detalhe e o arquivo); arquivo em `src/lib/exportacao-do-resumo-por-cargo.ts`.
+permissão, contados. Conta em `src/lib/aprovados/exportacao/resumo-por-cargo-e-status.ts` (uma estrutura para a tabela,
+o detalhe e o arquivo); arquivo em `src/lib/aprovados/exportacao/exportacao-do-resumo-por-cargo.ts`.
 
 - **Grupos:** edital → cargo + regime + jornada → uma linha por vaga (código) e modalidade, subtotal
   do grupo, do edital (com mais de um) e total geral. Regime e jornada saem do texto do cargo por
@@ -135,8 +135,8 @@ o detalhe e o arquivo); arquivo em `src/lib/exportacao-do-resumo-por-cargo.ts`.
 
 Modelos por área (e, se quiser, por edital), versionados — motivo a partir da 2ª versão; inativar
 com motivo, nada se apaga. Edita quem tem Editor em Aprovados. Texto, preenchimento e validação:
-`src/lib/carta-de-convocacao.ts`; documento (HTML do SEI, texto, prévia/PDF, DOCX, ZIP):
-`src/lib/carta-de-convocacao-documento.ts`, que reaproveita o documento da Classificação
+`src/lib/aprovados/carta-de-convocacao/carta-de-convocacao.ts`; documento (HTML do SEI, texto, prévia/PDF, DOCX, ZIP):
+`src/lib/aprovados/carta-de-convocacao/carta-de-convocacao-documento.ts`, que reaproveita o documento da Classificação
 (`classificacao/documento-sei.ts`, `documento-docx.ts`, `documento-no-navegador.ts`). Cabeçalho de
 Configurações › Marca. Emissão sem identificador confirmado não gera saída nem repete o registro.
 
@@ -146,15 +146,15 @@ Campos: {NOME}, {CPF} (sempre mascarado; a lista não guarda CPF, sai em branco 
 
 ## Convocação e contratos (tudo em TypeScript)
 
-- Configuração: `src/lib/modelo-de-convocacao.ts`, `configuracao-de-convocacao.ts`; tipos em
+- Configuração: `src/lib/aprovados/carta-de-convocacao/modelo-de-convocacao.ts`, `configuracao-de-convocacao.ts`; tipos em
   `tipos-da-configuracao-de-convocacao.ts` (reusados pela Classificação). Precedência: quadro manual
   da vaga > total da vaga > padrão do edital; resposta malformada avisa e preserva os mapas.
 - Convocação: `tipos-da-lista-de-convocacao.ts`, `tipos-da-aba-de-convocacao.ts`. Sub judice sem
   código só se associa ao cargo com uma única vaga desse cargo no próprio edital.
 - Aprovados: `tipos-das-regras-de-aprovados.ts`, `tipos-da-aba-de-aprovados.ts`; campo editável não
   substitui o texto enquanto se digita. Estado e modais: `tipos-do-estado.ts`, `tipos-dos-modais.ts`,
-  `src/lib/tipos-do-estado-de-aprovados.ts`; marcar convocados exige confirmação de todos os IDs.
-- Carta: `src/lib/tipos-da-carta.ts`, `dados-da-carta.ts`; coleção de modelos malformada para a carga.
+  `src/lib/aprovados/tipos-do-estado-de-aprovados.ts`; marcar convocados exige confirmação de todos os IDs.
+- Carta: `src/lib/aprovados/carta-de-convocacao/tipos-da-carta.ts`, `dados-da-carta.ts`; coleção de modelos malformada para a carga.
 - Base: `aprovados-import.ts` (XLSX), `candidatos-aprovados-compactos.ts` (formatos 1 e 2),
   `anexos-do-candidato.ts` (PDFs: 2 MB, 5 por candidato; o banco repete), tipos em
   `tipos-da-importacao-de-aprovados.ts`.

@@ -1,7 +1,7 @@
 # Regras da Automação
 
 Configurações › Automação: uma chave por aba liga e desliga o que roda sozinho. Fontes:
-`src/modulos/automacao/`, `src/lib/chaves-da-automacao.ts` e a migration
+`src/modulos/automacao/`, `src/lib/automacao/chaves-da-automacao.ts` e a migration
 `20261022190000_chaves_da_automacao.sql`.
 
 ## Seção Automação

@@ -405,7 +405,7 @@ body:not(.access-request-mode) .login-screen,
   --mapa-simples-dsei-34: #8a5a44;
 
   /* Tipos de etapa do edital (domínio, não paleta): o campo `cor` de
-     `src/lib/etapas-de-edital.ts` escolhe um deles pelo `data-cor`
+     `src/lib/editais/etapas-de-edital.ts` escolhe um deles pelo `data-cor`
      (src/modulos/cronograma/cronograma.css). São só preenchimento — bolinha
      e barra —, nunca cor de texto. */
   --etapa-laranja: #d97706;
@@ -416,7 +416,7 @@ body:not(.access-request-mode) .login-screen,
   --etapa-violeta-claro: #8b5cf6;
   --etapa-verde: #22c55e;
   --etapa-azul-escuro: #2563eb;
-  /* Demanda interna do Cronograma (src/lib/demandas-internas.ts). */
+  /* Demanda interna do Cronograma (src/lib/cronograma/demandas-internas.ts). */
   --etapa-demanda: #0891b2;
 
   /* Cores que não mudam com o tema (de propósito): a folha de uma prévia de

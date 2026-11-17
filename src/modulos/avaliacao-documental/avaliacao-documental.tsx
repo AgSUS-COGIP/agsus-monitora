@@ -11,7 +11,7 @@ import { abasDoMenu, catalogoDoBanco } from "../../modules/catalogo-de-abas.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { SeletorDeEdital } from "../../componentes/seletor-de-edital.tsx";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
-import { editalEscolhido } from "../../lib/edital-de-treinamento.ts";
+import { editalEscolhido } from "../../lib/editais/edital-de-treinamento.ts";
 import {
   PAPEIS_DA_EQUIPE,
   rotuloDe,

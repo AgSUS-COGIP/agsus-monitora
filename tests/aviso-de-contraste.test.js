@@ -4,7 +4,7 @@ import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it } from "vitest";
 import { AvisoDeContraste } from "../src/modulos/configuracoes/partes.tsx";
-import { CAMPOS_DAS_SECOES } from "../src/lib/publicacao-de-configuracoes.ts";
+import { CAMPOS_DAS_SECOES } from "../src/lib/configuracoes/publicacao-de-configuracoes.ts";
 import {
   MINIMO_AA,
   MODO_AUTO,
@@ -209,7 +209,7 @@ describe("os dois campos de cor recebem o aviso", () => {
 describe("modo do texto sobre o painel", () => {
   const html = readFileSync("index.html", "utf8");
   const governanca = readFileSync(
-    "src/lib/publicacao-de-configuracoes.ts",
+    "src/lib/configuracoes/publicacao-de-configuracoes.ts",
     "utf8",
   );
   const boot = readFileSync("src/app/entrada/marca.ts", "utf8");

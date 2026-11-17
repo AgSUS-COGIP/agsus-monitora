@@ -22,7 +22,7 @@ bridge, túnel, sessão adicional ou endpoint `/api/aya`). O painel é a nota [[
 - **Todo número que a Aya precisa dizer tem de estar escrito lá.** É também onde mora a explicação
   das telas, que não entra como texto na interface ([[textos-da-interface]]).
 - A pasta não se reorganiza nem se renomeia: os testes leem os arquivos e
-  `src/lib/busca-da-aya.ts` liga cada `regras-*.md` à sua página.
+  `src/lib/aya/busca-da-aya.ts` liga cada `regras-*.md` à sua página.
 
 ## O verbete
 
@@ -43,7 +43,7 @@ Um verbete por assunto; a ordem dos campos não importa e o que falta é omitido
 | `resposta`  | texto devolvido pela busca da Aya, sem gerar conteúdo                                                                   |
 | `fato`      | referência complementar; a busca responde apenas com o campo `resposta`                                                 |
 | `fonte`     | de onde veio; obrigatório quando não for a própria interface                                                            |
-| `abrir`     | opcional: botão que leva à tela citada (`recursos`, `config:acessos`… — ver `ACOES_DA_AYA` em `src/lib/aya-paginas.ts`) |
+| `abrir`     | opcional: botão que leva à tela citada (`recursos`, `config:acessos`… — ver `ACOES_DA_AYA` em `src/lib/aya/aya-paginas.ts`) |
 
 Duas frases que a busca lê igual ("lista de aprovados" e "as listas dos aprovados") não podem estar
 em verbetes diferentes: pergunta igual a uma das `perguntas` recebe a resposta daquele verbete.
@@ -54,9 +54,9 @@ Se o conteúdo é sobre a interface do MONITORA, basta `fonte: interface do
 MONITORA` — a tela é a fonte. Para qualquer afirmação institucional, legal ou
 numérica, use um endereço oficial. As respostas são previamente conferidas; mantenha a fonte junto de cada verbete.
 
-## A busca (`src/lib/busca-da-aya.ts`)
+## A busca (`src/lib/aya/busca-da-aya.ts`)
 
-- **Termos** (`src/lib/termos-da-aya.ts`): sem acento e sem stopwords, no singular, com grupos de
+- **Termos** (`src/lib/aya/termos-da-aya.ts`): sem acento e sem stopwords, no singular, com grupos de
   sinônimos do domínio (também de várias palavras: "processo seletivo" = edital, "casa de apoio" =
   CASAI) e radical simples ("convocação", "convocar" e "convocados" juntos).
 - **Digitação:** palavra desconhecida é corrigida para a mais próxima da base ou dos sinônimos,
@@ -68,7 +68,7 @@ numérica, use um endereço oficial. As respostas são previamente conferidas; m
   termo do domínio, "Você quis dizer…?" com até três perguntas e chamado; abaixo de 0,3 sem termo do
   domínio, ou com metade ou mais das palavras desconhecidas, a mensagem de fora do escopo com
   sugestões da tela.
-- Antes da base vêm a conversa (`src/lib/conversa-da-aya.ts`: saudação, ajuda, agradecimento,
+- Antes da base vêm a conversa (`src/lib/aya/conversa-da-aya.ts`: saudação, ajuda, agradecimento,
   despedida) e os dados da tela; contagens só quando disponíveis no contexto, com o recorte
   indicado. A única resposta fora da busca é a composta do DSEI Alagoas e Sergipe
   (`curatedAnswerForQuestion` em `src/modules/aya-knowledge.ts`).

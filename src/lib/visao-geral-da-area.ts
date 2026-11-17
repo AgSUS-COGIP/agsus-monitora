@@ -31,10 +31,10 @@ import {
   coordenadasDaUf,
   coordenadasDoMunicipio,
 } from "./coordenadas-dos-municipios.ts";
-import { numeroDoEdital } from "./numero-do-edital.ts";
+import { numeroDoEdital } from "./editais/numero-do-edital.ts";
 import { raioDaBolha } from "./mapa-render.ts";
 import { nomeDaArea } from "./navegacao/menu-lateral.ts";
-import { AREA_SAUDE_INDIGENA } from "./responsavel-do-edital.ts";
+import { AREA_SAUDE_INDIGENA } from "./editais/responsavel-do-edital.ts";
 
 const num = (valor: unknown) => {
   if (typeof valor !== "number" && typeof valor !== "string") return 0;

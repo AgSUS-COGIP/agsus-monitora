@@ -37,7 +37,7 @@ import {
 } from "./paineis.tsx";
 import { TabelaDeProcessos } from "./tabela.tsx";
 import { MontadorDeRelatorio } from "./montador-de-relatorio.tsx";
-import { podeBaixarAprovados } from "../../lib/access-roles.ts";
+import { podeBaixarAprovados } from "../../lib/acessos/access-roles.ts";
 
 /*
   A Visão geral (view `dashboard`), um módulo do app: monta direto na

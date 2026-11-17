@@ -5,12 +5,12 @@ import {
   errosDaConfiguracao,
   rascunhoDaConfiguracao,
   rotuloDoLancamento,
-} from "../../lib/conducao-de-entrevista.ts";
+} from "../../lib/entrevistas/conducao-de-entrevista.ts";
 import { rotuloDaVersao } from "../../lib/base/nome-da-versao.ts";
-import { pendenciasDaConfiguracao } from "../../lib/passos-do-preparar.ts";
-import { frasesDaBanca } from "../../lib/resumo-da-entrevista.ts";
-import type { EntradaDoResumo } from "../../lib/resumo-da-entrevista.ts";
-import { textoDaPontuacao } from "../../lib/roteiro-de-entrevista.ts";
+import { pendenciasDaConfiguracao } from "../../lib/entrevistas/passos-do-preparar.ts";
+import { frasesDaBanca } from "../../lib/entrevistas/resumo-da-entrevista.ts";
+import type { EntradaDoResumo } from "../../lib/entrevistas/resumo-da-entrevista.ts";
+import { textoDaPontuacao } from "../../lib/entrevistas/roteiro-de-entrevista.ts";
 import { Aviso, EstadoVazio } from "../../ui/index.ts";
 import {
   BarraDaConfiguracao,

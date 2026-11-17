@@ -1,10 +1,10 @@
-import { permissaoLegada, roleLabel } from "../lib/access-roles.ts";
+import { permissaoLegada, roleLabel } from "../lib/acessos/access-roles.ts";
 import { profileDisplayName } from "../lib/navegacao/platform-context";
 import type { PerfilDaPlataforma } from "../lib/navegacao/platform-context";
 import type {
   PerfilDeAcesso,
   PermissaoLegada,
-} from "../lib/tipos-dos-acessos.ts";
+} from "../lib/acessos/tipos-dos-acessos.ts";
 import { sessaoDoApp } from "./sessao.ts";
 import type { EstadoDaSessaoDoApp } from "./sessao.ts";
 

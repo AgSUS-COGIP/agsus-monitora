@@ -20,7 +20,7 @@ curriculares e Seleção são módulos de `src/modulos/` (o carregamento é o da
   enquanto o site de fora não responde (`acompanharCarregamentoDoPainel`).
 - `src/lib/carregamento-do-painel.ts` — tempos, mensagens e origens a pré-conectar.
 - `src/lib/endereco-do-painel.ts` — o endereço em que o painel abre.
-- `src/lib/paineis-externos-das-configuracoes.ts` — a seção de Configurações sem DOM (a tela é
+- `src/lib/configuracoes/paineis-externos-das-configuracoes.ts` — a seção de Configurações sem DOM (a tela é
   `src/modulos/configuracoes/paineis-externos.tsx`).
 
 ## Comportamento

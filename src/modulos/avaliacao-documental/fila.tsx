@@ -14,9 +14,9 @@ import type {
   ValoresDosFiltros,
 } from "../../app/filtros-no-endereco.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
-import { parametroDeAreaDaRpc } from "../../lib/area-do-painel-de-analises.ts";
+import { parametroDeAreaDaRpc } from "../../lib/analises/area-do-painel-de-analises.ts";
 import { ordinal } from "../../lib/classificacao/numeros.ts";
-import { copiarTexto } from "../../lib/convite-de-acesso.ts";
+import { copiarTexto } from "../../lib/acessos/convite-de-acesso.ts";
 import { formatNumberBR } from "../../lib/base/formatters";
 import {
   aptasDaFila,

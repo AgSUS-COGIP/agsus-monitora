@@ -13,12 +13,12 @@ import {
   acompanharCasamento,
   pedidoLido,
   PRAZO_DO_CASAMENTO_MS,
-} from "../../lib/casamento-da-lista.ts";
-import { candidatosDaListaFinal } from "../../lib/publicacao-de-aprovados.ts";
+} from "../../lib/aprovados/casamento-da-lista.ts";
+import { candidatosDaListaFinal } from "../../lib/aprovados/publicacao-de-aprovados.ts";
 import {
   situacaoDaPublicacao,
   resultadoDaPublicacao,
-} from "../../lib/dados-da-publicacao-de-aprovados.ts";
+} from "../../lib/aprovados/dados-da-publicacao-de-aprovados.ts";
 import {
   objeto,
   textoDaClassificacao,
@@ -118,7 +118,7 @@ import {
   textoParaSei,
 } from "../../lib/classificacao/documento-sei.ts";
 import { gerarDocxOficial } from "../../lib/classificacao/documento-docx.ts";
-import { ehEditalDeTreinamento } from "../../lib/edital-de-treinamento.ts";
+import { ehEditalDeTreinamento } from "../../lib/editais/edital-de-treinamento.ts";
 import { LOGO_PADRAO_DA_BARRA } from "../../lib/navegacao/marca-da-barra-lateral.ts";
 import {
   copiarParaAreaDeTransferencia,
@@ -832,7 +832,7 @@ export function criarEstadoDaClassificacao({
     confere o retrato, lê a lista vigente do edital (e se a pessoa pode
     substituí-la) e pede o casamento das pessoas ao job Python
     (pedir_casamento_da_lista), com a revisão à mão (`manuais`); espera o
-    plano (src/lib/casamento-da-lista.ts). Sem permissão para substituir a
+    plano (src/lib/aprovados/casamento-da-lista.ts). Sem permissão para substituir a
     lista vigente, não pede nada: a tela avisa.
   */
   async function prepararPublicacaoDeAprovados(

@@ -9,7 +9,7 @@ import type {
 } from "./tipos-do-painel.ts";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
-import { filtrosDeEntrevistas } from "../../lib/filtro-da-aya.ts";
+import { filtrosDeEntrevistas } from "../../lib/aya/filtro-da-aya.ts";
 import { usarTemaEscuro } from "../../app/tema.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
@@ -22,15 +22,15 @@ import {
   opcoesDosFiltros,
   pendenciasDasEntrevistas,
   textoDasFontesDoPainel,
-} from "../../lib/entrevistas-do-painel.ts";
+} from "../../lib/entrevistas/entrevistas-do-painel.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import { Aviso } from "../../ui/index.ts";
-import { hojeEmBrasilia } from "../../lib/fila-de-conducao.ts";
+import { hojeEmBrasilia } from "../../lib/entrevistas/fila-de-conducao.ts";
 import {
   editalDoRecorte,
   gruposEmpatados,
   mapaDeEmpates,
-} from "../../lib/painel-de-entrevistas.ts";
+} from "../../lib/entrevistas/painel-de-entrevistas.ts";
 import { irParaTela } from "../../app/ir-para-tela.ts";
 import { AgendaDosProximosDias, AvisoDeEmpates } from "./agenda-e-empates.tsx";
 import { criarEstadoDasEntrevistas, MENSAGEM_SEM_ACESSO } from "./estado.ts";

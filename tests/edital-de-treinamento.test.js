@@ -6,17 +6,17 @@ import {
   ehEditalDeTreinamento,
   semTreinamento,
   sufixoDeTreinamento,
-} from "../src/lib/edital-de-treinamento.ts";
+} from "../src/lib/editais/edital-de-treinamento.ts";
 import {
   normalizarPainel,
   opcoesDosEditais,
-} from "../src/lib/painel-dos-robos.ts";
+} from "../src/lib/automacao/painel-dos-robos.ts";
 import { documentoOficial } from "../src/lib/classificacao/documento-sei.ts";
 import {
   instantaneoDaLista,
   nomeDoArquivo,
 } from "../src/lib/classificacao/exportacao.ts";
-import { editaisParaConduzir } from "../src/lib/conducao-de-entrevista.ts";
+import { editaisParaConduzir } from "../src/lib/entrevistas/conducao-de-entrevista.ts";
 import { editaisDaEscolha } from "../src/lib/avaliacao-documental/editais.ts";
 import { indicadoresDaVisaoGeral } from "../src/lib/visao-geral.ts";
 import { CONTRATO_RPC } from "../src/lib/rpc-contrato.ts";

@@ -6,7 +6,7 @@ import { montarTelasNoTeste } from "./telas-no-teste.ts";
 import type { TelaFalsa } from "./telas-no-teste.ts";
 import { criarNavegacao } from "../../src/app/navegacao.ts";
 import type { OpcoesDaNavegacao } from "../../src/app/navegacao.ts";
-import type { PerfilDeAcesso } from "../../src/lib/tipos-dos-acessos.ts";
+import type { PerfilDeAcesso } from "../../src/lib/acessos/tipos-dos-acessos.ts";
 import type { ArvoreDoMenu } from "../../src/componentes/barra-lateral/tipos.ts";
 import { definido } from "../definido.ts";
 import {

@@ -20,7 +20,7 @@
   `SITUACAO_PADRAO`: tudo ativo (e comemorações desligadas). A tela nunca
   tranca ninguém por falha de rede.
 */
-import { comemoracoesLigadasNaResposta } from "../comemoracao.ts";
+import { comemoracoesLigadasNaResposta } from "../comemoracao/comemoracao.ts";
 
 /** A manutenção de uma linha (sistema, área ou aba). */
 export interface ManutencaoDaLinha {
@@ -135,7 +135,7 @@ export function manutencaoDaLinha(
 export const SITUACAO_PADRAO: SituacaoDoSistema = Object.freeze({
   carregada: false,
   adminGlobal: false,
-  /* Sem resposta do banco, comemoração nenhuma (src/lib/comemoracao.ts). */
+  /* Sem resposta do banco, comemoração nenhuma (src/lib/comemoracao/comemoracao.ts). */
   comemoracoes: false,
   sistema: null,
   areas: Object.freeze([]),

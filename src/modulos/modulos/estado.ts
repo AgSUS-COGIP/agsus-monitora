@@ -25,7 +25,7 @@ import {
   há alteração não salva (`confirmarSaida`).
 */
 
-import { isAdminGlobal } from "../../lib/access-roles.ts";
+import { isAdminGlobal } from "../../lib/acessos/access-roles.ts";
 import { exigirSessao } from "../../lib/sessao/sessao";
 import { comTempoLimite, mensagemDeFalha } from "../../lib/carga/falha-de-rede";
 import {

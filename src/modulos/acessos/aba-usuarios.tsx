@@ -20,16 +20,16 @@ import {
   pendenciasDoUsuario,
   pessoasSemAreaNoRascunho,
   resumoDoRascunho,
-} from "../../lib/matriz-de-acessos.ts";
-import { situacaoDoAcesso } from "../../lib/convite-de-acesso.ts";
+} from "../../lib/acessos/matriz-de-acessos.ts";
+import { situacaoDoAcesso } from "../../lib/acessos/convite-de-acesso.ts";
 import {
   gruposAtribuiveis,
   opcoesDoModulo,
   podeEditarUsuario,
   podeMudarCoordenacao,
   valorDoSelect,
-} from "../../lib/teto-de-acessos.ts";
-import { rotuloDoNivel } from "../../lib/permissoes-recursos.ts";
+} from "../../lib/acessos/teto-de-acessos.ts";
+import { rotuloDoNivel } from "../../lib/acessos/permissoes-recursos.ts";
 import {
   Aviso,
   BotaoDeAcao,
@@ -49,13 +49,13 @@ import {
 } from "./partes.tsx";
 import { Solicitacoes } from "./solicitacoes.tsx";
 import { Desativadas } from "./contas-desativadas.tsx";
-import { resumoDeContas } from "../../lib/contas-desativadas.ts";
+import { resumoDeContas } from "../../lib/acessos/contas-desativadas.ts";
 import { ModalAdicionarPessoa } from "./modal-adicionar-pessoa.tsx";
 import { POR_PAGINA } from "./estado.ts";
 import type {
   ContaParaComparar,
   RascunhoDeAcessos,
-} from "../../lib/tipos-dos-acessos.ts";
+} from "../../lib/acessos/tipos-dos-acessos.ts";
 import type {
   EstadoDosAcessos,
   GrupoDosAcessos,

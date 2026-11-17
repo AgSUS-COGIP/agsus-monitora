@@ -5,8 +5,8 @@ import {
   acompanhamentoDoPedido,
   SITUACOES_DA_EXECUCAO,
   SITUACOES_DA_VAGA,
-} from "../../lib/painel-dos-robos.ts";
-import { dataHora } from "../../lib/saude-das-cargas.ts";
+} from "../../lib/automacao/painel-dos-robos.ts";
+import { dataHora } from "../../lib/automacao/saude-das-cargas.ts";
 import { Icone } from "../icone.tsx";
 
 /*
@@ -15,7 +15,7 @@ import { Icone } from "../icone.tsx";
       andamento e o resultado (por vaga: gravada, candidatos, com link),
       com o link da execução no GitHub (a seção é só do administrador global);
     - UltimasExecucoes: as 8 últimas, com os parâmetros usados e quem pediu.
-  Dados de get_painel_dos_robos (src/lib/painel-dos-robos.ts) e da situação
+  Dados de get_painel_dos_robos (src/lib/automacao/painel-dos-robos.ts) e da situação
   do pedido no banco (situacao_do_disparo_robo: aceito, recusado, sem chave).
 */
 

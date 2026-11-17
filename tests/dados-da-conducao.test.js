@@ -4,7 +4,7 @@ import {
   codigoDaFalhaDaConducao,
   dadosDoEditalDaConducao,
   roteirosDaConducao,
-} from "../src/lib/dados-da-conducao.ts";
+} from "../src/lib/entrevistas/dados-da-conducao.ts";
 
 describe("dados externos de Conduzir entrevistas", () => {
   it("preserva os campos antigos do roteiro e os retratos da Classificação", () => {
