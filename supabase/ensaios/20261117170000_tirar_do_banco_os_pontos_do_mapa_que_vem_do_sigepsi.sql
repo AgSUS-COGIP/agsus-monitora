@@ -1,5 +1,5 @@
 /*
-  ENSAIO de 20261117160000_tirar_do_banco_os_pontos_do_mapa_que_vem_do_sigepsi
+  ENSAIO de 20261117170000_tirar_do_banco_os_pontos_do_mapa_que_vem_do_sigepsi
 
   Dentro de begin; … rollback;: aplica a mudança (o mesmo corpo da migration), confere que cada
   DSEI ficou só com k, n, pop, ufs e sedeuf (os 34, na mesma ordem e com os mesmos valores), que

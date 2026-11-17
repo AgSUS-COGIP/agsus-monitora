@@ -28,8 +28,8 @@
 
   GUARDAS: as cópias não existem ainda; entre 30 e 40 DSEIs no lmap; até 1.200 unidades no
   rede_cnes; até 300 pendências.
-  Ensaio: supabase/ensaios/20261117160000_tirar_do_banco_os_pontos_do_mapa_que_vem_do_sigepsi.sql
-  Rollback: supabase/rollback/20261117160000_tirar_do_banco_os_pontos_do_mapa_que_vem_do_sigepsi.sql
+  Ensaio: supabase/ensaios/20261117170000_tirar_do_banco_os_pontos_do_mapa_que_vem_do_sigepsi.sql
+  Rollback: supabase/rollback/20261117170000_tirar_do_banco_os_pontos_do_mapa_que_vem_do_sigepsi.sql
             (volta lmap, rede_cnes e as pendências das cópias).
 */
 
@@ -68,14 +68,14 @@ begin
 
   insert into public."TB_CONFIG_MAPA_SAUDE_INDIG" (chave, payload, descricao)
   select chave || '_backup_20261117_pre_sigepsi', payload,
-         'Cópia antes de o mapa passar a ler tudo do SIGEPSI, 20261117160000'
+         'Cópia antes de o mapa passar a ler tudo do SIGEPSI, 20261117170000'
     from public."TB_CONFIG_MAPA_SAUDE_INDIG"
    where chave in ('lmap', 'rede_cnes');
 
   insert into public."TB_CONFIG_MAPA_SAUDE_INDIG" (chave, payload, descricao)
   select 'pendencias_coordenada_backup_20261117_pre_sigepsi',
          coalesce(jsonb_agg(to_jsonb(p) order by p."CO_SEQ_PENDENCIA"), '[]'::jsonb),
-         'Cópia de private."TB_PENDENCIA_COORDENADA_MAPA" antes de o editor sair, 20261117160000'
+         'Cópia de private."TB_PENDENCIA_COORDENADA_MAPA" antes de o editor sair, 20261117170000'
     from private."TB_PENDENCIA_COORDENADA_MAPA" p;
 
   -- Cada DSEI fica só com o que o mapa lê do banco; a lista casai sai.

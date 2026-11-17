@@ -90,7 +90,7 @@ Indígena (`mapaDaVisaoGeral(area) === MAPA_DOS_DSEIS`). Lê o MESMO estado
   mapa.
 - **Migrations** (aplicar depois da publicação):
   `supabase/migrations/20261117150000_tirar_do_mapa_as_casais_que_vem_do_sigepsi.sql` e
-  `20261117160000_tirar_do_banco_os_pontos_do_mapa_que_vem_do_sigepsi.sql`. O `lmap` fica só com
+  `20261117170000_tirar_do_banco_os_pontos_do_mapa_que_vem_do_sigepsi.sql`. O `lmap` fica só com
   `k`, `n`, `pop`, `ufs` e `sedeuf` por DSEI; a linha `rede_cnes` e as pendências de
   `private."TB_PENDENCIA_COORDENADA_MAPA"` saem (cópias `*_backup_20261117_*`). Ficam o histórico
   `private."TH_COORDENADA_MAPA_SAUDE_INDIG"` e o catálogo `TD_UNIDADE`.
