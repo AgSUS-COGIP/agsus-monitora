@@ -68,6 +68,12 @@ export type PropriedadesDaFicha = {
   convocados?: readonly Convocado[] | null;
   salvando: boolean;
   aoSalvar: (dados: PayloadDasNotas) => Promise<Resultado | void>;
+  /** Concluir (só leitura) e reabrir (coordenação, com motivo); 20261117050000. */
+  aoConcluir?: () => Promise<Resultado | void>;
+  aoReabrir?: (
+    motivo: string,
+    complemento: string | null,
+  ) => Promise<Resultado | void>;
   aoAbrir: (id: string) => void;
   aoFechar: () => void;
   copiar?: CopiarTexto;

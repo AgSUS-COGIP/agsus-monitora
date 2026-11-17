@@ -443,6 +443,8 @@ const EDITAL_DO_DIA = {
       compareceu: "S",
       parecer: "APTO",
       avaliacoes: todasAsNotas,
+      concluida_em: "2026-10-07T13:00:00Z",
+      concluida_por: "Secretaria",
     }),
     convocado(5),
   ],
@@ -2333,5 +2335,115 @@ describe("conduzir sem perder trabalho", () => {
     await clicar(cancelar(editor));
     expect(document.getElementById("entrevistasEditorDeRoteiro")).toBeNull();
     expect(guardaDeAlteracoes.comAlteracoes()).toBe(false);
+  });
+});
+
+describe("concluir e reabrir a entrevista (como a ficha da Avaliação documental)", () => {
+  const pronta = convocado(1, {
+    compareceu: "S",
+    parecer: "APTO",
+    avaliacoes: todasAsNotas,
+    justificativa: "Banca registrou o resultado.",
+  });
+  const concluida = {
+    ...pronta,
+    concluida_em: "2026-11-17T12:00:00Z",
+    concluida_por: "Ana",
+  };
+
+  it("resultado definido e salvo: Concluir grava e a ficha fica só leitura, com quem concluiu", async () => {
+    const edital = { ...EDITAL, convocados: [pronta] };
+    const supabase = supabaseDaConducao({
+      edital,
+      respostas: {
+        concluir_entrevista: () => ({
+          data: { ...edital, convocados: [concluida] },
+          error: null,
+        }),
+      },
+    });
+    await montar(supabase);
+    const ficha = await abrirAFicha("e1");
+    await clicar(ficha.querySelector('[data-acao="concluir-entrevista"]'));
+    await esperar();
+    expect(chamadas(supabase, "concluir_entrevista")).toEqual([
+      ["concluir_entrevista", { p_entrevista: "e1" }],
+    ]);
+    const depois = document.getElementById("entrevistasFichaDoCandidato");
+    expect(depois.textContent).toContain("Concluída por Ana em");
+    expect(depois.querySelectorAll("input.entrevistas-nota")).toHaveLength(0);
+    expect(depois.querySelector('button[type="submit"]')).toBeNull();
+    expect(
+      depois.querySelector('[data-acao="concluir-entrevista"]'),
+    ).toBeNull();
+    // Sem a coordenação, não há Reabrir.
+    expect(depois.querySelector('[data-acao="reabrir-motivo"]')).toBeNull();
+    expect(
+      [...depois.querySelectorAll("button")].some(
+        (b) => b.textContent.trim() === "Reabrir",
+      ),
+    ).toBe(false);
+  });
+
+  it("com notas por salvar, não aparece Concluir", async () => {
+    await montar(
+      supabaseDaConducao({ edital: { ...EDITAL, convocados: [pronta] } }),
+    );
+    const ficha = await abrirAFicha("e1");
+    expect(
+      ficha.querySelector('[data-acao="concluir-entrevista"]'),
+    ).not.toBeNull();
+    await digitar(notas(ficha)[0], "3");
+    expect(ficha.querySelector('[data-acao="concluir-entrevista"]')).toBeNull();
+  });
+
+  it("a coordenação reabre com o motivo da lista; sem motivo nada vai ao banco", async () => {
+    const edital = { ...EDITAL, pode_reabrir: true, convocados: [concluida] };
+    const supabase = supabaseDaConducao({
+      edital,
+      respostas: {
+        reabrir_entrevista: () => ({
+          data: { ...edital, convocados: [pronta] },
+          error: null,
+        }),
+      },
+    });
+    await montar(supabase);
+    const ficha = await abrirAFicha("e1");
+    expect(ficha.querySelectorAll("input.entrevistas-nota")).toHaveLength(0);
+    await clicar(
+      [...ficha.querySelectorAll("button")].find(
+        (b) => b.textContent.trim() === "Reabrir",
+      ),
+    );
+    const confirmar = () =>
+      clicar(ficha.querySelector('[data-acao="confirmar-reabrir"]'));
+    await confirmar();
+    expect(ficha.textContent).toContain("Escolha o motivo da reabertura.");
+    expect(chamadas(supabase, "reabrir_entrevista")).toEqual([]);
+    await escolher(
+      ficha.querySelector("[data-campo='motivo-da-reabertura']"),
+      "NOTA",
+    );
+    await digitar(
+      ficha.querySelector("[data-campo='complemento-da-reabertura']"),
+      "nota da competência 2",
+    );
+    await confirmar();
+    await esperar();
+    expect(chamadas(supabase, "reabrir_entrevista")).toEqual([
+      [
+        "reabrir_entrevista",
+        {
+          p_entrevista: "e1",
+          p_motivo: "NOTA",
+          p_complemento: "nota da competência 2",
+        },
+      ],
+    ]);
+    const depois = document.getElementById("entrevistasFichaDoCandidato");
+    expect(
+      depois.querySelectorAll("input.entrevistas-nota").length,
+    ).toBeGreaterThan(0);
   });
 });

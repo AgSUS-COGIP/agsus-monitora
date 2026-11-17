@@ -161,6 +161,8 @@ function ehConvocado(v: unknown): v is Convocado {
         "compareceu",
         "parecer",
         "justificativa",
+        "concluida_em",
+        "concluida_por",
       ],
       textoNulo,
     ) &&
@@ -201,6 +203,7 @@ export function dadosDoEditalDaConducao(v: unknown): DadosDoEdital | null {
     pode_editar: o.pode_editar === true,
     pode_gerar_lista: o.pode_gerar_lista === true,
     admin_global: o.admin_global === true,
+    pode_reabrir: o.pode_reabrir === true,
     meu_perfil: texto(o.meu_perfil) ? o.meu_perfil : null,
     configuracao: c
       ? {

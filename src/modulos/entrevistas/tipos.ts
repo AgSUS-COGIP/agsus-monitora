@@ -51,6 +51,8 @@ export type DadosDoEdital = {
   pode_editar?: boolean;
   pode_gerar_lista?: boolean;
   admin_global?: boolean;
+  /** Reabrir a entrevista concluída: a coordenação do edital (20261117050000). */
+  pode_reabrir?: boolean;
   meu_perfil?: string | null;
   configuracao: {
     roteiro?: RoteiroDoEdital | null;
@@ -101,7 +103,8 @@ export type TipoDaAcaoDaConducao =
   | "configurar"
   | "convocar"
   | "desconvocar"
-  | "notas";
+  | "notas"
+  | "conclusao";
 export type DadosDaConfiguracaoDaEntrevista = {
   roteiro: string;
   lancamento: "AVALIADOR" | "SECRETARIA";
@@ -143,6 +146,12 @@ export type EstadoDaConducaoComAcoes = {
   lancarNotas: (
     entrevista: string,
     dados: PayloadDasNotas,
+  ) => Promise<Resultado>;
+  concluirEntrevista: (entrevista: string) => Promise<Resultado>;
+  reabrirEntrevista: (
+    entrevista: string,
+    motivo: string,
+    complemento: string | null,
   ) => Promise<Resultado>;
   abrirFicha: (id: string | null) => void;
   configurar: (dados: DadosDaConfiguracaoDaEntrevista) => Promise<Resultado>;

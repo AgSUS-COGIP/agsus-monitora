@@ -7,9 +7,11 @@
 
   Situação na fila (as cores são as da Avaliação documental; `tom` é o do
   `Selo` de src/ui/):
-    - faltou       comparecimento "N" (amarelo);
-    - concluida    parecer APTO ou INAPTO, ou todas as notas esperadas
-                   lançadas (verde);
+    - faltou       comparecimento "N" (vermelho);
+    - concluida    a entrevista concluída (concluir_entrevista, só leitura;
+                   20261117050000) (verde);
+    - a_concluir   o resultado já definido (parecer APTO ou INAPTO, ou todas
+                   as notas esperadas lançadas), falta concluir (âmbar);
     - em_andamento compareceu ou já tem alguma nota (azul);
     - aguardando   nada lançado ainda (cinza).
   Concluída e faltou contam como "feitas" no contador do dia. Na tela, quem
@@ -22,7 +24,8 @@
 
 import { competenciasDoAvaliador } from "./conducao-de-entrevista.ts";
 
-export type Situacao = "aguardando" | "em_andamento" | "concluida" | "faltou";
+export type Situacao =
+  "aguardando" | "em_andamento" | "a_concluir" | "concluida" | "faltou";
 export type Recorte = "hoje" | "proximos" | "todos";
 
 export type Avaliacao = {
@@ -49,6 +52,9 @@ export type Convocado = {
   nota?: number | null;
   parecer?: string | null;
   avaliacoes?: Avaliacao[] | null;
+  /** Concluída (só leitura até a coordenação reabrir; 20261117050000). */
+  concluida_em?: string | null;
+  concluida_por?: string | null;
 };
 
 export type Avaliador = {
@@ -97,6 +103,7 @@ export const SITUACOES: Readonly<
 > = Object.freeze({
   aguardando: { rotulo: "Aguardando", tom: "neutro" },
   em_andamento: { rotulo: "Em andamento", tom: "revisar" },
+  a_concluir: { rotulo: "A concluir", tom: "pendente" },
   concluida: { rotulo: "Concluída", tom: "aprovado" },
   // Vermelho, como a faixa "Faltaram" da Fila do dia (era âmbar, 12/11/2026).
   faltou: { rotulo: "Faltou", tom: "reprovado" },
@@ -165,10 +172,11 @@ export function situacaoDoConvocado(
   progresso: { lancadas: number; esperadas: number },
 ): Situacao {
   if (texto(convocado.compareceu).toUpperCase() === "N") return "faltou";
+  if (convocado.concluida_em) return "concluida";
   const parecer = texto(convocado.parecer).toUpperCase();
-  if (parecer === "APTO" || parecer === "INAPTO") return "concluida";
+  if (parecer === "APTO" || parecer === "INAPTO") return "a_concluir";
   if (progresso.esperadas > 0 && progresso.lancadas >= progresso.esperadas)
-    return "concluida";
+    return "a_concluir";
   if (
     texto(convocado.compareceu).toUpperCase() === "S" ||
     progresso.lancadas > 0
@@ -338,6 +346,7 @@ export function resumoDasSituacoes(
   const resumo: Record<SituacaoNaTela, number> = {
     aguardando: 0,
     em_andamento: 0,
+    a_concluir: 0,
     concluida: 0,
     faltou: 0,
     sem_nota: 0,

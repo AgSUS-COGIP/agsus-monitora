@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   MOTIVO_OUTRO,
   MOTIVOS_DA_REABERTURA,
+  type MotivoDaReabertura,
   validarReabertura,
 } from "../../../lib/avaliacao-documental/motivos-da-reabertura.ts";
 import { Campo } from "../../../ui/index.ts";
@@ -10,7 +11,8 @@ import { Campo } from "../../../ui/index.ts";
   O "Reabrir" da coordenação no rodapé da ficha concluída ou em revisão: o motivo numa
   lista fixa (motivos-da-reabertura.ts), o complemento opcional e, em
   "Outro", a descrição obrigatória. O banco confere o mesmo em reabrir_ficha
-  (20261021110000).
+  (20261021110000). A ficha de entrevista usa o mesmo componente com a lista
+  dela (`motivos`; reabrir_entrevista, 20261117050000).
 */
 
 export type ResultadoDaReabertura = { ok: boolean; erro?: string };
@@ -22,7 +24,15 @@ export type LojaQueReabre = {
   ) => Promise<ResultadoDaReabertura>;
 };
 
-export function ReabrirAFicha({ loja }: { loja: LojaQueReabre }) {
+export function ReabrirAFicha({
+  loja,
+  motivos = MOTIVOS_DA_REABERTURA,
+  className = "avd-inline",
+}: {
+  loja: LojaQueReabre;
+  motivos?: readonly MotivoDaReabertura[];
+  className?: string;
+}) {
   const [aberto, setAberto] = useState(false);
   const [codigo, setCodigo] = useState("");
   const [complemento, setComplemento] = useState("");
@@ -40,7 +50,7 @@ export function ReabrirAFicha({ loja }: { loja: LojaQueReabre }) {
         Reabrir
       </button>
     );
-  const validacao = validarReabertura(codigo, complemento);
+  const validacao = validarReabertura(codigo, complemento, motivos);
   const outro = codigo === MOTIVO_OUTRO;
   // O erro do motivo só depois de tentar; o do texto assim que há texto.
   const erroDoMotivo =
@@ -70,7 +80,7 @@ export function ReabrirAFicha({ loja }: { loja: LojaQueReabre }) {
   }
 
   return (
-    <div className="avd-inline" data-acao="reabrir-motivo">
+    <div className={className} data-acao="reabrir-motivo">
       <Campo rotulo="Motivo da reabertura" obrigatorio erro={erroDoMotivo}>
         <select
           value={codigo}
@@ -78,7 +88,7 @@ export function ReabrirAFicha({ loja }: { loja: LojaQueReabre }) {
           data-campo="motivo-da-reabertura"
         >
           <option value="">Escolha o motivo</option>
-          {MOTIVOS_DA_REABERTURA.map((m) => (
+          {motivos.map((m) => (
             <option key={m.codigo} value={m.codigo}>
               {m.rotulo}
             </option>

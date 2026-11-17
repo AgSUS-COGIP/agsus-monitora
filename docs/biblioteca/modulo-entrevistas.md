@@ -100,6 +100,21 @@ FAIXA aceita o passo que o roteiro tiver ("Passo das notas" em Preparar › Rote
 nota com até duas casas. O roteiro do 93/2026 (também do 96/2025, concluído) passou a 0,01
 (`20261117040000`).
 
+## Concluir e reabrir a ficha
+
+Como a ficha da Avaliação documental (`20261117050000`): `TB_ENTREVISTA."DT_CONCLUSAO"` e
+`"CO_USUARIO_CONCLUSAO"`. `concluir_entrevista` (entrevistas ≥ editor; exige comparecimento, com
+presença o parecer calculado e, em Inapto ou falta, a justificativa) fecha a ficha;
+`lancar_notas_entrevista` recusa a concluída (55000). `reabrir_entrevista` é só da coordenação do
+edital (`FC_PAPEL_AVALIACAO` = COORDENADOR), com motivo de `private."FC_MOTIVO_REABERTURA_ENTREVISTA"`
+(a mesma lista em `src/lib/reabertura-da-entrevista.ts`, comparada no teste); o componente de
+reabrir é o da Avaliação documental (`ReabrirAFicha`, com `motivos`). Conclusão e reabertura vão
+para `TH_ENTREVISTA_AVALIACAO`. `obter_entrevistas_do_edital` traz `pode_reabrir` e, por convocado,
+`concluida_em` e `concluida_por`. Na fila, `a_concluir` (`fila-de-conducao.ts`) é o resultado
+definido sem conclusão; `concluida` é só a concluída. A lista gerada que ficou para trás já é
+avisada pela Classificação (`geracaoDesatualizada`). O 93/2026 entrou concluído (49 entrevistas
+conferidas com as planilhas da banca em 17/11/2026).
+
 ## Relacionadas
 
 - [[modulo-classificacao]] — convocação, desempate e agenda vêm de lá

@@ -8,6 +8,8 @@ export type RpcDaConducao =
   | "convocar_para_entrevista"
   | "desconvocar_da_entrevista"
   | "lancar_notas_entrevista"
+  | "concluir_entrevista"
+  | "reabrir_entrevista"
   | "listar_editais_entrevista"
   | "liberar_entrevista_edital"
   | "obter_previsao_entrevista_edital"
