@@ -580,7 +580,7 @@ export function EmAndamento({ e, estado }: PropsDoPainel) {
                 <button
                   key={fase}
                   type="button"
-                  className="visao-geral-fase"
+                  className="visao-geral-fase-chip"
                   data-tom={tom}
                   data-fase={fase}
                   aria-pressed={filtrada === fase}

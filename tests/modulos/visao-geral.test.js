@@ -601,7 +601,7 @@ describe("blocos", () => {
     const alertas = vi.spyOn(window, "alert").mockImplementation(() => {});
     await montar();
     const fases = [
-      ...secao.querySelectorAll(".visao-geral-fases .visao-geral-fase"),
+      ...secao.querySelectorAll(".visao-geral-fases .visao-geral-fase-chip"),
     ];
     const nomes = fases.map((b) => b.dataset.fase);
     expect(nomes).toContain("Entrevistas");
