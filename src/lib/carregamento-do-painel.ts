@@ -19,7 +19,7 @@ export const ESPERA_MAXIMA_DO_PAINEL_MS = 45_000;
 export const FOLGA_DO_AVISO_MS = 300;
 
 /*
-  O painel que avisa (docs/painel-externo-avisa-que-carregou.md): "carregando"
+  O painel que avisa (docs/biblioteca/modulo-paineis-externos.md, seção Protocolo): "carregando"
   no início, "pronto" quando os dados estão na tela e "erro" quando não vêm.
 */
 export const AVISO_DO_PAINEL_CARREGANDO = "agsus:painel-carregando";

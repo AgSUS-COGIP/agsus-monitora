@@ -2,7 +2,7 @@
 
 Status: **aprovada em 01/10/2026**. Etapa 1 (Fundação) feita; as demais, abaixo, em ordem.
 Complementa a proposta de 25/09/2026 (banco, áreas e permissões), arquivada em
-`docs/_arquivo/arquitetura.md`; as decisões que valem estão em `docs/biblioteca/areas-do-sistema.md`.
+`docs/_arquivo/arquitetura.md`; as decisões que valem estão em `docs/biblioteca/arquitetura-do-front.md`.
 
 ## Para onde o sistema vai
 
@@ -68,7 +68,7 @@ gera conflito com quem está trabalhando em paralelo.
 
 `src/modules/` **é** o legado; `src/analises/` já foi removida. O legado não muda de pasta aos
 poucos: uma pasta própria para ele só nasce numa mudança em bloco combinada antes
-(`docs/biblioteca/codigo-legado.md`).
+(`docs/biblioteca/nova-tela-e-legado.md`).
 
 ## Como criar um módulo novo
 

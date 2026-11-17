@@ -1,13 +1,13 @@
 ---
-tipo: modulo
+tipo: referencia
 area: modulo
 atualizado: 2026-11-17
 ---
 
-# Mapa da Saúde Indígena: TypeScript e fronteiras dos dados
+# Mapa da Saúde Indígena: tipos, fronteiras dos dados e legado
 
-Contratos e limites da tipagem do [[modulo-mapa-saude-indigena]] e da base que ele compartilha
-com o [[modulo-mapa-de-projetos]].
+Contratos e limites da tipagem do [[modulo-mapa-saude-indigena]] e da base que ele compartilha com
+o [[modulo-mapa-de-projetos]], e o que a migração para React tirou do legado (para não recriar).
 
 ## Base compartilhada
 
@@ -44,8 +44,29 @@ com o [[modulo-mapa-de-projetos]].
   DSEIs, sedes, polos, CASAIs, unidades e CASAIs nacionais (`casaisNacionais`); `localizacoes.ts`
   (no módulo) faz o pedido. Do banco entram só nome, população e UFs administrativas do `lmap`.
 - Sem o SIGEPSI não há mapa: a Visão geral mostra o erro com "Tentar novamente", sem plano B.
-- Não há mais edição de coordenadas neste mapa (o editor comum é só de Projetos), nem `rede_cnes`
-  nem reconciliação com o CNES. A tipagem não mudou contratos de RPC.
+- Não há edição de coordenadas neste mapa (o editor comum é só de Projetos), nem `rede_cnes` nem
+  reconciliação com o CNES. A tipagem não mudou contratos de RPC.
+
+## O que saiu do legado
+
+A migração (Etapa 5 da [[arquitetura-do-front]], parte "mapas") tirou de `index.html` o bloco do
+mapa inteiro (`section.health-map-pane`, `#map`, `#detailMap`, listas, legendas), de
+`legacy-app.js` o desenho dos dois mapas (`LMAP`, `REDE_CNES`, `initLeaflet`, `renderDetailMap`,
+`voltarAoBrasil`, `applyFilters`…; ficou `loadMapaConfig`, que publica no estado), os módulos
+`vinculos-territoriais.js`, `controles-do-mapa.js`, `legenda-das-terras.js` e
+`health-map-immersive-workspace.js`, e o CSS `health-map-*` e os `#map` de `app.css` e afins (os
+`--terra-*` foram para `tokens.css`). Não recrie nada disso.
+
+## O que mudou em relação ao legado
+
+- Sem o modo Calor (saiu em 02/10/2026, a pedido da gestão): a bolha só diz se há edital no recorte.
+- O DSEI ativo é verde com borda amarela, como a legenda diz (`CORES_DO_MAPA`); o legado pintava de
+  azul por cima.
+- O DSEI fecha por "← Voltar ao Brasil" (botão primário no topo do painel; o trilho
+  "Brasil › DSEI" saiu) ou por Esc.
+- Lista de unidades com a forma do tipo (a mesma da legenda), não ícone Font Awesome.
+- Sem textos de ajuda no mapa ("Escolha um DSEI…", "clique para abrir o território", avisos ao
+  voltar): foram para a Aya; estados vazios em uma linha ([[textos-da-interface]]).
 
 ## Testes
 
@@ -58,6 +79,8 @@ com o [[modulo-mapa-de-projetos]].
 
 ## Relacionadas
 
-- [[typescript-no-front]] — o estado da migração para TypeScript
+- [[modulo-mapa-saude-indigena]] — o mapa de hoje
+- [[regras-do-codigo]] — o estado da migração para TypeScript
+- [[nova-tela-e-legado]] — a regra de apagar o que a migração substituiu
 - [[mapas-e-leaflet]] — a fábrica do Leaflet e as guardas
-- [[modulo-editor-de-coordenadas]] — o editor comum
+- [[coordenadas]] — o editor comum de coordenadas (só Projetos)

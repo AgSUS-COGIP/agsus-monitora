@@ -104,7 +104,7 @@ dentro do ErrorBoundary da tela. O bootstrap, a navegação e a carga do monitor
 - Datas continuam como texto, com as regras existentes de calendário.
 - Os dados geográficos adicionais seguem como `unknown`: a tipagem não valida todo o schema dos
   mapas nem muda as permissões de edição. `checkJs` segue desligado; JSDoc descreve as
-  integrações em JavaScript que ainda restam (ver [[typescript-no-front]]).
+  integrações em JavaScript que ainda restam (ver [[regras-do-codigo]]).
 
 ## Verificação
 
@@ -120,7 +120,5 @@ dentro do ErrorBoundary da tela. O bootstrap, a navegação e a carga do monitor
 - [[modulo-mapa-saude-indigena]] — o mapa da área Saúde Indígena, ligado aqui
 - [[modulo-mapa-de-projetos]] — o mapa da área Projetos, ligado aqui
 - [[mapas-e-leaflet]] — regras comuns dos mapas
-- [[areas-do-sistema]] — o recorte por área
-- [[carga-da-entrada]] — de onde vêm as linhas do monitoramento
-- [[arquitetura-do-front]] — rotas e telas do app único
+- [[arquitetura-do-front]] — rotas do app único, o recorte por área e de onde vêm as linhas do monitoramento
 - [regras-da-visao-geral](../aya/regras-da-visao-geral.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)

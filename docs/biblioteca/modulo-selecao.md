@@ -51,9 +51,7 @@ continuam `unknown` e não recebem validação de formato.
 
 ## Relacionadas
 
-- [[cargas-de-planilha]] — a carga diária da planilha Auditoria
-- [[planilhas]] — onde fica o endereço da planilha
-- [[robos-e-agenda]] — quem dispara a carga
-- [[modulo-automacao]] — a chave "Seleção"
+- [[planilhas]] — a carga diária da planilha Auditoria e onde fica o endereço dela
+- [[robos-e-agenda]] — quem dispara a carga e a chave "Seleção"
 - [[componentes-padrao]] — TabelaInfinita, Kpi, filtros
 - [regras-da-selecao](../aya/regras-da-selecao.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)

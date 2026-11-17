@@ -81,7 +81,7 @@ das notas de [`docs/biblioteca/`](docs/biblioteca/), uma por assunto. Para abrir
 
 | Assunto                         | Nota                                                                                                                                                         |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Arquitetura do front            | [arquitetura-do-front](docs/biblioteca/arquitetura-do-front.md), [nova-tela-react](docs/biblioteca/nova-tela-react.md)                                       |
+| Arquitetura do front            | [arquitetura-do-front](docs/biblioteca/arquitetura-do-front.md), [nova-tela-e-legado](docs/biblioteca/nova-tela-e-legado.md)                                       |
 | Banco, migrations e RPCs        | [banco-e-migrations](docs/biblioteca/banco-e-migrations.md), [rpc-e-contrato](docs/biblioteca/rpc-e-contrato.md)                                             |
 | Segurança                       | [seguranca](docs/biblioteca/seguranca.md), [dados-pessoais](docs/biblioteca/dados-pessoais.md)                                                               |
 | Qualidade e CI                  | [ci-e-qualidade](docs/biblioteca/ci-e-qualidade.md), [testes](docs/biblioteca/testes.md)                                                                     |

@@ -41,7 +41,7 @@ gráficos, pendências, recorte, gaveta, CSV), mais `area-do-painel-de-analises.
 `lista-do-painel-de-analises.ts`, `textos-do-painel-de-analises.ts` e
 `cache-do-painel-de-analises.ts`; o ritmo (etapa do cronograma, dias úteis, projeção) em
 `src/lib/ritmo-da-analise.ts`. Visual só de `src/ui/` (sem CSS próprio). `marcos.ts` também avisa o
-[[modulo-encerramento-do-edital]].
+[[modulo-editais]].
 
 ## TypeScript
 
@@ -71,7 +71,7 @@ Explicações para quem usa: `docs/aya/regras-das-analises.md`.
 ## Relacionadas
 
 - [[modulo-avaliacao-documental]] — onde as fichas são feitas e publicadas aqui
-- [[cargas-de-planilha]] — as planilhas legadas que também alimentam o painel
-- [[carga-da-entrada]] — cópia no navegador (IndexedDB)
+- [[planilhas]] — as planilhas legadas que também alimentam o painel
+- [[arquitetura-do-front]] — cópia no navegador (IndexedDB)
 - [[componentes-padrao]] — TabelaInfinita, Kpi, gráficos
 - [regras-das-analises](../aya/regras-das-analises.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)

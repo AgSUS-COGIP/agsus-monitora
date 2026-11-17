@@ -30,7 +30,7 @@ triagem, classificação, pacotes dos painéis, contratação, casamento da list
 
 Regra prática: se pode passar de alguns segundos, mexer em muitas linhas ou precisar de biblioteca
 grande, é **job**. Função da Vercel é para o que a pessoa espera com a tela aberta
-([[funcoes-da-vercel]]).
+([[deploy-e-vercel]]).
 
 ## A base comum: `python/monitora/`
 

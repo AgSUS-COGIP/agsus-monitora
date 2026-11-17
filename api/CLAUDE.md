@@ -1,7 +1,7 @@
 # `api/` — funções serverless (Vercel)
 
 Cada `[[nome]]` é `docs/biblioteca/<nome>.md`. O que cada função faz e quem a usa:
-[[funcoes-da-vercel]].
+[[deploy-e-vercel]].
 
 Cada arquivo é um endpoint `/api/<nome>`; o que começa com `_` não é rota. As rotas só existem na
 Vercel (o `server/servidor.ts` não as tem).

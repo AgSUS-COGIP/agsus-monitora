@@ -21,7 +21,7 @@ também pode arrastar a largura das colunas e vê um ⓘ com a origem dos dados.
 
 **Tech Stack:** PostgreSQL/Supabase (plpgsql, pg_cron), PGlite nos testes, React 19 + TS, Vitest.
 
-**Spec:** `docs/superpowers/specs/2026-11-16-paineis-carregamento-e-tabela-design.md`
+**Spec:** `docs/_arquivo/planos/2026-11-16-paineis-carregamento-e-tabela-design.md`
 
 ## Global Constraints
 
@@ -31,7 +31,7 @@ também pode arrastar a largura das colunas e vê um ⓘ com a origem dos dados.
 - **Nomes MAD:** identificadores MAIÚSCULOS entre aspas, ≤ 30 caracteres, `PK_TB_<TABELA>`,
   `FK_`, `IN_`, `COMMENT ON` em tabela e coluna.
 - **Migration:** manual, com ensaio (`begin … rollback`, NOTICE `Ensaio <ts> ok`) e rollback
-  guardado conforme `docs/biblioteca/rollback-de-migration.md`. Tem md5 do `prosrc` antes de
+  guardado conforme `docs/biblioteca/banco-e-migrations.md`. Tem md5 do `prosrc` antes de
   trocar ou apagar função. É aplicada e registrada em `public.migracoes_aplicadas` na mesma
   transação. Nunca `supabase db push`. O timestamp não pode repetir nenhum da main.
 - **Visibilidade:** nenhuma linha de edital fora de `FC_EDITAIS_VISIVEIS()` chega à tela nem ao

@@ -66,7 +66,7 @@ também estão em TypeScript, com fonte discriminada, lista, seleção, desconvo
 liberação, vagas e desempate. A entrada normaliza os campos usados dos retratos e
 calcula grupos sem recalcular a ordem da Classificação. O módulo não tem arquivos
 JS/JSX; `marcos.ts` também tipa a integração do painel com as comemorações compartilhadas.
-Os limites de validação estão na nota [biblioteca/modulo-entrevistas.md](biblioteca/modulo-entrevistas.md).
+Os limites de validação estão na nota [biblioteca/modulo-entrevistas.md](../biblioteca/modulo-entrevistas.md).
 
 A infraestrutura de `src/lib/` também está em TypeScript: sessão e autenticação (`sessao.ts`,
 `session-lifecycle.ts`, `auth-flow.ts`, `supabaseClient.ts`, `estado-de-saida.ts`), `env.ts`,
@@ -157,52 +157,52 @@ atributos acessíveis e o bloqueio do botão durante ações.
 
 Seleção está migrada em `src/modulos/selecao/`, com contratos em `tipos.ts`.
 O escopo e as limitações estão em
-[biblioteca/modulo-selecao.md](biblioteca/modulo-selecao.md).
+[biblioteca/modulo-selecao.md](../biblioteca/modulo-selecao.md).
 Cronograma também está migrado; carga, contratos e limites estão em
-[biblioteca/modulo-cronograma.md](biblioteca/modulo-cronograma.md).
+[biblioteca/modulo-cronograma.md](../biblioteca/modulo-cronograma.md).
 
 Visão geral também está migrada; contratos e integração com os mapas estão em
-[biblioteca/modulo-visao-geral.md](biblioteca/modulo-visao-geral.md).
+[biblioteca/modulo-visao-geral.md](../biblioteca/modulo-visao-geral.md).
 
 Conferências também está migrado; contratos, normalização, paginação e limites estão em
-[biblioteca/modulo-conferencias.md](biblioteca/modulo-conferencias.md).
+[biblioteca/modulo-conferencias.md](../biblioteca/modulo-conferencias.md).
 
 Status das atualizações também está migrado; contratos e limites estão em
-[biblioteca/modulo-status-das-atualizacoes.md](biblioteca/modulo-status-das-atualizacoes.md).
+[biblioteca/robos-e-agenda.md](../biblioteca/robos-e-agenda.md).
 
 Análises curriculares também está migrado: estado, consultas, marcos, filtros,
 indicadores, gráficos, tabela, gaveta e regras em `src/lib/analises-curriculares.ts`.
 Contratos e limites estão em
-[biblioteca/modulo-analises.md](biblioteca/modulo-analises.md).
+[biblioteca/modulo-analises.md](../biblioteca/modulo-analises.md).
 
 Módulos e abas também está migrado: tela de Configurações, estado, revisão, histórico e
 regras do rascunho em `src/lib/modulos-e-abas.ts`. Contratos, validação da resposta e limites
-estão em [biblioteca/modulo-modulos-e-abas.md](biblioteca/modulo-modulos-e-abas.md).
+estão em [biblioteca/modulo-configuracoes.md](../biblioteca/modulo-configuracoes.md).
 
 A barra lateral também está migrada: estado, menu por área, seletor, painéis flutuantes,
 rodapé, recolhimento e hooks, com as regras em `src/lib/menu-lateral.ts`. Contratos e limites
-estão em [biblioteca/modulo-barra-lateral.md](biblioteca/modulo-barra-lateral.md).
+estão em [biblioteca/modulo-barra-lateral.md](../biblioteca/modulo-barra-lateral.md).
 
 A Busca global também está migrada: painel, atalhos, realce, seleção, montagem e regras
 em `src/lib/busca-global.ts`. Inclui o snapshot compartilhado do monitoramento, validação
 das linhas e unidades e o hook de área atual. Contratos e limites estão em
-[biblioteca/modulo-busca-global.md](biblioteca/modulo-busca-global.md).
+[biblioteca/modulo-barra-lateral.md](../biblioteca/modulo-barra-lateral.md).
 
 O Mapa de Projetos também está migrado; contratos, normalização dos municípios e limites
 da integração com as peças comuns estão em
-[biblioteca/modulo-mapa-de-projetos.md](biblioteca/modulo-mapa-de-projetos.md).
+[biblioteca/modulo-mapa-de-projetos.md](../biblioteca/modulo-mapa-de-projetos.md).
 
 A Avaliação documental também está migrada por inteiro (módulo e `src/lib/avaliacao-documental/`,
 sem JS/JSX): stores, abas Regra, Equipe, Triagem e Fila, a ficha e as regras de pontuação,
 triagem, distribuição e fila. Contratos e limites estão em
-[biblioteca/modulo-avaliacao-documental.md](biblioteca/modulo-avaliacao-documental.md).
+[biblioteca/modulo-avaliacao-documental.md](../biblioteca/modulo-avaliacao-documental.md).
 
 A Aya também está migrada (módulo, tour e as regras de `src/lib/` — páginas, tours, busca, termos,
 conversa, contexto, chamado, intenções, dados, filtros, permissões e perguntas sem resposta), sem JS/JSX
-fora da base gerada. Contratos e limites estão em [biblioteca/modulo-aya.md](biblioteca/modulo-aya.md).
+fora da base gerada. Contratos e limites estão em [biblioteca/modulo-aya.md](../biblioteca/modulo-aya.md).
 
 O editor de coordenadas também está migrado; contratos e limites estão em
-[biblioteca/modulo-editor-de-coordenadas.md](biblioteca/modulo-editor-de-coordenadas.md).
+[biblioteca/coordenadas.md](../biblioteca/coordenadas.md).
 
 Escolher um módulo por entrega, levantar os consumidores e manter o comportamento coberto
 pelos testes. Declarar contratos de dados e ações sem `any` ou supressões de erros. Atualizar
@@ -229,7 +229,7 @@ componente de ajuste também está em TSX: itens, proposta, validação e prévi
 TypeScript, com contratos em `tests/tipos/ajuste-dos-recursos.tsx`. A pasta Recursos já tem
 todos os componentes e o estado tipados; o motor compartilhado de Classificação também
 está em TypeScript, com contratos na entrada e na saída. Contratos e limites em
-[biblioteca/modulo-recursos.md](biblioteca/modulo-recursos.md).
+[biblioteca/modulo-recursos.md](../biblioteca/modulo-recursos.md).
 
 A entrada e o estado de Classificação também estão migrados: seletor de edital, carga,
 versões de regra, registros e publicação de listas, desempate, hora de nascimento e
@@ -237,7 +237,7 @@ exportação. Dados usados pelo estado são validados; respostas antigas não at
 dados, avisos ou flags após troca de edital, área ou usuário. Os contratos estão em
 `tests/tipos/tela-estado-da-classificacao.tsx`; utilitários de impressão e área de transferência no navegador
 também estão em TypeScript. Contratos e limites em
-[biblioteca/modulo-classificacao.md](biblioteca/modulo-classificacao.md).
+[biblioteca/modulo-classificacao.md](../biblioteca/modulo-classificacao.md).
 
 A publicação do resultado final como lista de aprovados também está em TypeScript/TSX:
 modal de confirmação, extração dos candidatos do retrato, casamento por análise, nome ou

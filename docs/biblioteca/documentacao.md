@@ -1,7 +1,7 @@
 ---
 tipo: regra
 area: operacao
-atualizado: 2026-11-10
+atualizado: 2026-11-17
 ---
 
 # Documentação: como a biblioteca funciona
@@ -25,9 +25,12 @@ A documentação do MONITORA é um vault do Obsidian com a raiz do repositório 
 
 ## Regras
 
-- **Uma nota por assunto**, de 30 a 120 linhas, com cabeçalho YAML: `tipo` (regra, guia, modulo,
-  decisao, referencia), `area` (front, banco, seguranca, testes, operacao, modulo) e
-  `atualizado` (AAAA-MM-DD). Comece pelo modelo de `docs/_templates/`.
+- **Uma nota por assunto**, de preferência até ~180 linhas (uma tela grande pode passar), com
+  cabeçalho YAML: `tipo` (regra, guia, modulo, decisao, referencia), `area` (front, banco,
+  seguranca, testes, operacao, modulo) e `atualizado` (AAAA-MM-DD). Comece pelo modelo de `docs/_templates/`.
+- **Junte antes de criar.** Assunto que cabe numa nota existente vira seção dela; nota satélite
+  ("arquivos e testes de X", "modo Y de X") não se cria: a tela tem uma nota só. Lista de arquivos
+  fica curta (a pasta, o que exige cuidado, onde estão os testes); o resto o grep acha.
 - **Nome único no vault.** Uma nota não pode ter o nome de outro `.md` visível (por exemplo
   `docs/python-no-monitora.md` ou `docs/aya/assistente-aya.md`): o `[[link]]` ficaria ambíguo.
 - **Toda nota é ligada por outra** (ou pelo índice) e todo `[[link]]` aponta para uma nota que
@@ -57,7 +60,7 @@ A documentação do MONITORA é um vault do Obsidian com a raiz do repositório 
 
 ### As cores do gráfico
 
-`.obsidian/graph.json` (versionado) traz os grupos, os modelos escondidos (`-path:docs/_templates`)
+`.obsidian/graph.json` (versionado) traz os grupos, as pastas escondidas (`-path:docs/_templates -path:docs/_arquivo`)
 e os nomes visíveis de mais longe. Ao mexer no gráfico (zoom, forças), o Obsidian regrava o
 arquivo: não commite essa mudança, só a de grupos e filtros. Para editar o `graph.json` fora do
 Obsidian, feche-o antes: aberto, ele grava a configuração da memória por cima.
@@ -68,11 +71,10 @@ Obsidian, feche-o antes: aberto, ele grava a configuração da memória por cima
 | azul    | notas de tela (`modulo-*`)                           |
 | verde   | as outras notas da biblioteca                        |
 | laranja | a base da Aya (`docs/aya/`)                          |
-| ciano   | documentos longos (`docs/`, `README`, `LEIA-ME`) |
-| cinza   | o que saiu de uso (`docs/_arquivo/`)                 |
+| ciano   | documentos longos (`docs/`, `README`, `LEIA-ME`)     |
 
 Nenhum documento fica solto: cada `regras-*.md` da Aya é ligado pela nota da tela (e todos por
-[[aya-base-de-conhecimento]]), e o arquivo pela lista abaixo.
+[[aya-base-de-conhecimento]]); o arquivo sai do gráfico e é listado abaixo.
 
 ## O que saiu de uso (`docs/_arquivo/`)
 
@@ -81,11 +83,14 @@ Guardado como histórico; não descreve o sistema de hoje.
 - [arquitetura](../_arquivo/arquitetura.md) e [arquitetura-evolucao](../_arquivo/arquitetura-evolucao.md) — propostas de arquitetura anteriores ao app React único
 - [auditoria-sedes-dsei-2026-09-16](../_arquivo/auditoria-sedes-dsei-2026-09-16.md) — a auditoria das sedes dos DSEIs (a atual está em [[coordenadas]])
 - [handoff-codex-mapas](../_arquivo/handoff-codex-mapas.md) — passagem de trabalho dos mapas
-- [padronizacao_nomenclatura_mapa](../_arquivo/padronizacao_nomenclatura_mapa.md) e [padronizacao_nomenclatura_ajustes_frontend](../_arquivo/padronizacao_nomenclatura_ajustes_frontend.md) — a troca de nomes para o padrão MAD, já aplicada ([[nomenclatura-mad]])
+- [auditoria-geografica](../_arquivo/auditoria-geografica.md) — diagnóstico das coordenadas da época do `legacy-app.js` (a vigente está em [[coordenadas]])
+- [typescript-no-frontend](../_arquivo/typescript-no-frontend.md) — inventário da migração do front para TypeScript, tela por tela (o vigente está em [[regras-do-codigo]])
+- [planos/](../_arquivo/planos/) — planos e desenhos já executados: acabamento visual (#797), fontes das colunas dos Painéis (#829), carregamento dos Painéis (#836) e testes mais rápidos (#839)
+- [padronizacao_nomenclatura_mapa](../_arquivo/padronizacao_nomenclatura_mapa.md) e [padronizacao_nomenclatura_ajustes_frontend](../_arquivo/padronizacao_nomenclatura_ajustes_frontend.md) — a troca de nomes para o padrão MAD, já aplicada ([[banco-e-migrations]])
 
 ## Relacionadas
 
 - [[mapa-do-repositorio]] — as pastas e os arquivos que não se leem inteiros
-- [[scripts-e-checagens]] — onde está o `check:docs`
-- [[fluxo-git-e-prs]] — documentação muda no mesmo PR do código
+- [[ci-e-qualidade]] — onde está o `check:docs`
+- [[deploy-e-vercel]] — documentação muda no mesmo PR do código
 - [biblioteca.base](../biblioteca.base) — a tabela das notas no Obsidian (Bases), por tipo, área e data

@@ -38,7 +38,7 @@ Lógica pura em `src/lib/`:
 ## Regras
 
 - **Celebra o processo e a equipe, nunca uma pessoa** (não há ranking). A exceção é quem fecha a
-  última ficha do edital, que ganha a própria comemoração ([[modulo-encerramento-do-edital]]).
+  última ficha do edital, que ganha a própria comemoração ([[modulo-editais]]).
 - **Uma vez por pessoa e navegador.** A primeira leitura é linha de base, em silêncio; comemora a
   transição vista depois (`avaliarMarco` em `src/app/comemoracao-sob-demanda.ts`).
 - **Frases sem emoji.** O aviso já tem o ícone de festa (Design System, seção 14: nenhum emoji no lugar de

@@ -187,8 +187,7 @@ convocação, anexos, convocações e pendências; erro por parte em `erros.<par
 ## Relacionadas
 
 - [[modulo-classificacao]] — publica a lista e empresta o documento SEI/DOCX
-- [[modulo-regras-do-edital]] — Chamada para contratação
+- [[modulo-editais]] — Chamada para contratação e o modal de listas
 - [[python-e-jobs]] — contratação, casamento da lista e pendências
 - [[dados-pessoais]] — CPF mascarado, anexos do candidato
-- [[modulo-editais]] — abre o modal de listas
 - [regras-da-lista-de-aprovados](../aya/regras-da-lista-de-aprovados.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)

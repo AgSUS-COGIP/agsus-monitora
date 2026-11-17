@@ -43,7 +43,7 @@ cumprir a norma que já existe, tela por tela, e travar para não regredir.
 - Regras do `CLAUDE.md`: token em vez de hex, sem `!important` ou `#id` novos, sem dependência
   nova, sem `MutationObserver` nem remendo, HTML só pelos sanitizadores.
 - `main` é produção: um assunto por PR, CI verde, sem mover arquivos em massa
-  (`docs/biblioteca/fluxo-git-e-prs.md`).
+  (`docs/biblioteca/deploy-e-vercel.md`).
 - Mudança que o usuário percebe ganha nota em `src/lib/novidades.ts`.
 
 ## Abordagens consideradas

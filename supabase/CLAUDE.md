@@ -1,7 +1,7 @@
 # `supabase/` — banco
 
-Cada `[[nome]]` é `docs/biblioteca/<nome>.md`. Processo completo: [[banco-e-migrations]];
-rollback: [[rollback-de-migration]].
+Cada `[[nome]]` é `docs/biblioteca/<nome>.md`. Processo completo, rollback e
+nomenclatura: [[banco-e-migrations]].
 
 - `migrations/` — só as migrations que ainda importam: `AAAAMMDDHHMMSS_descricao_em_portugues.sql`
   (14 dígitos, timestamp único). **Nunca editar migration já aplicada**: crie outra. Aplicação
@@ -24,7 +24,7 @@ Regras:
 
 - O app só fala por **RPC** `SECURITY DEFINER`; criou/alterou RPC → `src/lib/rpc-contrato.ts`
   ([[rpc-e-contrato]]). RLS ligada; não desligar para "resolver" permissão.
-- Nomes no padrão MAD; a skill `mad-ddl-review` revisa o DDL ([[nomenclatura-mad]]).
+- Nomes no padrão MAD; a skill `mad-ddl-review` revisa o DDL ([[banco-e-migrations]]).
 - Banco valida a gravação de uma linha e guarda; cálculo em lote é do Python ([[python-e-jobs]]).
 - Validar: `npm run check:rpc-contract:db`, `npm run db:capturar-baseline`,
   `node --env-file=.env.local scripts/estado-das-migrations.mjs` e o `scripts/validar-migration-*.mjs`

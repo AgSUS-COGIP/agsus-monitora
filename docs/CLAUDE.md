@@ -7,15 +7,14 @@ Leia **só a nota ou o documento do assunto**. Nada aqui é carregado pelo build
 | -------------------------------------------------------- | ------------------------------------------------------------------------ |
 | `biblioteca/`                                            | notas curtas, uma por assunto; índice no `CLAUDE.md` da raiz             |
 | `_templates/`                                            | modelos de nota (`nota.md`, `modulo.md`, `decisao.md`)                   |
-| `_arquivo/`                                              | o que saiu de uso (auditorias datadas, passagens, propostas superadas)  |
+| `_arquivo/`                                              | o que saiu de uso (auditorias datadas, passagens, planos já executados); fora do grafo |
 | `aya/`                                                   | **base de conhecimento da Aya**, compilada para o app ([[aya-base-de-conhecimento]]) |
 | `arquitetura-react.md`                                   | alvo do front ([[arquitetura-do-front]])                                 |
-| `typescript-no-frontend.md`                              | estado da migração para TypeScript ([[typescript-no-front]])            |
 | `banco-de-dados.md`                                      | modelo de dados e história do banco, por seção ([[banco-e-migrations]]) |
 | `design-system-agsus.md`                                 | norma visual institucional ([[design-e-tokens]])                         |
 | `python-no-monitora.md`, `agenda-dos-robos.md`, `robo-empregare.md`, `leitura-dos-arquivos.md` | robôs e jobs ([[python-e-jobs]], [[robos-e-agenda]]) |
-| `sincronizacao-das-planilhas.md`, `painel-externo-avisa-que-carregou.md` | cargas e painéis externos ([[cargas-de-planilha]])   |
-| `coordenadas/`                                           | auditorias e origem das coordenadas do mapa ([[coordenadas]])            |
+| `sincronizacao-das-planilhas.md`                         | cargas das planilhas ([[planilhas]])                                     |
+| `coordenadas/`                                           | auditoria vigente e origem das coordenadas do mapa ([[coordenadas]])     |
 | `analises-no-monitora/regras-dos-editais-recentes.md`, `historias-de-usuario/`, `recursos/parecer-em-blocos.md` | regras dos editais e histórias das telas da seleção |
 | `propostas/`                                             | SQL proposto, ainda não virou migration                                  |
 
