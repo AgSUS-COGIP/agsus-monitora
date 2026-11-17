@@ -33,7 +33,7 @@ import {
   tendenciaDiaria,
 } from "../../lib/analises/analises-curriculares.ts";
 import { formatNumberBR } from "../../lib/base/formatters";
-import { paletaDoPainel } from "../../lib/tema-do-painel";
+import { paletaDoPainel } from "../../lib/paineis/tema-do-painel";
 import {
   Campo,
   CardDeGrafico,

@@ -1,9 +1,9 @@
-import { sanitizeCsvCell } from "./seguranca/csv-security.ts";
-import { arquivosDoXlsx, MIME_XLSX } from "./classificacao/exportacao.ts";
+import { sanitizeCsvCell } from "../seguranca/csv-security.ts";
+import { arquivosDoXlsx, MIME_XLSX } from "../classificacao/exportacao.ts";
 import type {
   CelulaDaPlanilha,
   PlanilhaDaClassificacao,
-} from "./classificacao/tipos-dos-documentos.ts";
+} from "../classificacao/tipos-dos-documentos.ts";
 import type { FonteDaColuna } from "./fontes-dos-paineis.ts";
 
 /*

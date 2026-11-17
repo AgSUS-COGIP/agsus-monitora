@@ -3,12 +3,12 @@ import type {
   RespostaDoRecurso,
   ModeloDaResposta,
   ModeloEscolhivel,
-} from "../../lib/tipos-da-resposta-do-recurso.ts";
+} from "../../lib/recursos/tipos-da-resposta-do-recurso.ts";
 import type {
   IdentificadorDoRecurso,
   OrigemDoRecurso,
-} from "../../lib/tipos-dos-recursos.ts";
-import type { BotaoDaResposta } from "../../lib/resposta-do-recurso.ts";
+} from "../../lib/recursos/tipos-dos-recursos.ts";
+import type { BotaoDaResposta } from "../../lib/recursos/resposta-do-recurso.ts";
 type PropsDaResposta = Omit<PropsDaSecaoDoRecurso, "detalhe"> & {
   resposta: RespostaDoRecurso | null;
 };
@@ -23,12 +23,12 @@ import {
   renderizarModelo,
   valoresDoRecurso,
   MARCADORES,
-} from "../../lib/modelos-de-resposta.ts";
+} from "../../lib/recursos/modelos-de-resposta.ts";
 import {
   acoesDaResposta,
   erroDoComentario,
   podeEditarTexto,
-} from "../../lib/resposta-do-recurso.ts";
+} from "../../lib/recursos/resposta-do-recurso.ts";
 import { Aviso, Kv, Secao } from "../../ui/index.ts";
 import { dataHora } from "./partes.ts";
 import { SeloDaResposta } from "./tabela.tsx";

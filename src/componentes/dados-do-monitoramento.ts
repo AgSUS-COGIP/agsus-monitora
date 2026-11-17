@@ -6,7 +6,7 @@ import {
   identificacaoDoMonitoramento,
   normalizarLinhasDoMonitoramento,
   normalizarUnidadesDoCatalogo,
-} from "../lib/linhas-do-monitoramento.ts";
+} from "../lib/visao-geral/linhas-do-monitoramento.ts";
 
 /*
   Os dados de monitoramento que o app carrega, para os componentes React.

@@ -1,4 +1,4 @@
-import { formatarNota } from "./aprovados/lista-aprovados-rules.ts";
+import { formatarNota } from "../aprovados/lista-aprovados-rules.ts";
 import { dataCurta } from "./visao-geral.ts";
 
 /*

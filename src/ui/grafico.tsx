@@ -14,7 +14,7 @@ import { carregarChart, chartCarregado } from "../lib/base/chartjs-global.ts";
   no momento do desenho — o tema escuro (`html[data-theme="dark"]`) troca os
   tokens e a paleta vem junto. No claro, as séries usam o tom sólido de cada
   estado; no escuro, o `--state-*` (já clareado para o fundo escuro). Sem o
-  CSS carregado (testes), vale a paleta de reserva (src/lib/tema-do-painel.js).
+  CSS carregado (testes), vale a paleta de reserva (src/lib/paineis/tema-do-painel.js).
 */
 const TOKENS_DA_PALETA = {
   claro: {

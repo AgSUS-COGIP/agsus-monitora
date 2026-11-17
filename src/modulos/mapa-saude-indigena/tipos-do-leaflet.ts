@@ -1,6 +1,6 @@
-import type { CoordenadasDoMapa } from "../../lib/tipos-do-mapa.ts";
+import type { CoordenadasDoMapa } from "../../lib/mapas/tipos-do-mapa.ts";
 import type { CaixaDaTerra } from "../../lib/mapa-saude-indigena/tipos.ts";
-import type { MapaNacional } from "../../lib/tipos-do-mapa.ts";
+import type { MapaNacional } from "../../lib/mapas/tipos-do-mapa.ts";
 
 export interface LimitesDoLeaflet {
   isValid?(): boolean;

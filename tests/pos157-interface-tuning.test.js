@@ -74,7 +74,7 @@ describe("overview inicial dos mapas", () => {
     expect(mapGuard).toContain("map.__agsusOverviewMode = true");
     expect(mapGuard).toContain("HEALTH_MAP_OVERVIEW_MAX_ZOOM = 4.5");
     expect(mapGuard).toContain("maxZoom: HEALTH_MAP_OVERVIEW_MAX_ZOOM");
-    // A folga cobre a maior bolha (src/lib/enquadramento-do-brasil.ts).
+    // A folga cobre a maior bolha (src/lib/mapas/enquadramento-do-brasil.ts).
     expect(mapGuard).toContain("padding: folgaDoBrasil");
     expect(mapGuard).toContain("isBrazilOverviewBounds");
   });

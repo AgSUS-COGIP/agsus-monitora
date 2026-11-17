@@ -148,8 +148,8 @@ describe("enquadramento do Brasil medido no contorno real", () => {
     tests/mapa-saude-indigena.test.js.
   */
   it("a guarda do mapa usa a medição, não um retângulo à mão", () => {
-    expect(mapGuard).toContain(
-      'import { BRASIL_BOUNDS, NAVEGACAO_BOUNDS } from "../../lib/brasil-bounds.ts"',
+    expect(mapGuard).toMatch(
+      /import\s*\{\s*BRASIL_BOUNDS,\s*NAVEGACAO_BOUNDS,?\s*\}\s*from "\.\.\/\.\.\/lib\/mapas\/brasil-bounds\.ts"/,
     );
     expect(semComentarios(mapGuard)).not.toContain("-34.9");
     expect(semComentarios(mapGuard)).not.toContain("-74.2");

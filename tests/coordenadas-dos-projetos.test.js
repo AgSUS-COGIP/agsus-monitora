@@ -5,21 +5,21 @@ import {
   gravidadeDoLugar,
   pontosEditaveisDosProjetos,
   sugestoesDoLugar,
-} from "../src/lib/coordenadas-dos-projetos.ts";
+} from "../src/lib/mapas/coordenadas-dos-projetos.ts";
 import {
   filaDoEditor,
   listaDeSugestoes,
   nivelDaGravidade,
-} from "../src/lib/editor-de-coordenadas.ts";
+} from "../src/lib/mapas/editor-de-coordenadas.ts";
 import {
   municipiosDaResposta,
   pontosDosMunicipios,
-} from "../src/lib/visao-geral-da-area.ts";
+} from "../src/lib/visao-geral/visao-geral-da-area.ts";
 
 /*
   As regras do editor de coordenadas no mapa de Projetos
-  (src/lib/coordenadas-dos-projetos.ts) e as partes comuns aos dois mapas
-  que elas usam (src/lib/editor-de-coordenadas.js).
+  (src/lib/mapas/coordenadas-dos-projetos.ts) e as partes comuns aos dois mapas
+  que elas usam (src/lib/mapas/editor-de-coordenadas.js).
 */
 
 // Linhas como a RPC listar_municipios_das_vagas_da_area devolve depois da

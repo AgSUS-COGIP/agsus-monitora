@@ -8,14 +8,14 @@ import type {
   CorrecaoDoLugar,
   PontoEditavelDoProjeto,
 } from "./tipos.ts";
-import type { MarcadorDoMapa } from "../../lib/tipos-do-mapa.ts";
+import type { MarcadorDoMapa } from "../../lib/mapas/tipos-do-mapa.ts";
 import type { MapaDoPainel } from "../mapa-saude-indigena/tipos-do-painel.ts";
 import { useEffect, useMemo, useState } from "react";
 import { usarTemaEscuro } from "../../app/tema.ts";
 import { podeEditarCoordenadas } from "../../lib/acessos/access-roles.ts";
-import { aplicarCoordenada } from "../../lib/coordenadas-dos-projetos.ts";
-import { enquadramentoDoRecorte } from "../../lib/enquadramento-do-brasil.ts";
-import { OPACIDADE_DA_BOLHA } from "../../lib/mapa-render.ts";
+import { aplicarCoordenada } from "../../lib/mapas/coordenadas-dos-projetos.ts";
+import { enquadramentoDoRecorte } from "../../lib/mapas/enquadramento-do-brasil.ts";
+import { OPACIDADE_DA_BOLHA } from "../../lib/mapas/mapa-render.ts";
 import {
   MAPA_DOS_MUNICIPIOS,
   TEXTOS_DO_MAPA,
@@ -23,7 +23,7 @@ import {
   plural,
   pontosDosMunicipios,
   projetosDosMunicipios,
-} from "../../lib/visao-geral-da-area.ts";
+} from "../../lib/visao-geral/visao-geral-da-area.ts";
 import { classes } from "../../ui/index.ts";
 import { LegendaFlutuante } from "../mapa-saude-indigena/legenda.tsx";
 import {
@@ -63,7 +63,7 @@ import { CorDoProjeto, ListaDeMunicipios } from "./lista.tsx";
   os projetos — município, ou o meio do estado quando o edital só diz a UF —,
   na cor do projeto, com o tamanho pelas vagas (a regra da bolha do DSEI), e a
   lista "Municípios por vagas", com filtro e agrupamento por projeto. Lógica
-  pura em src/lib/visao-geral-da-area.ts.
+  pura em src/lib/visao-geral/visao-geral-da-area.ts.
 
   Os filtros da Visão geral valem aqui como na Saúde Indígena: com recorte
   (`filtroAtivo`), só os lugares com algum edital das `linhas` recortadas
@@ -79,7 +79,7 @@ import { CorDoProjeto, ListaDeMunicipios } from "./lista.tsx";
   As coordenadas vêm do banco (public."TB_COORDENADA_LOCAL_VAGA", na resposta da
   RPC). O administrador global e o Gestor veem "Coordenadas": o editor comum
   (src/modulos/editor-de-coordenadas/, aqui com as regras de
-  src/lib/coordenadas-dos-projetos.ts) toma o lugar da lista; o que ele grava
+  src/lib/mapas/coordenadas-dos-projetos.ts) toma o lugar da lista; o que ele grava
   vale na hora no mapa e no cache do carregador.
 */
 

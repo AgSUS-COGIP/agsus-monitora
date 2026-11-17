@@ -29,7 +29,7 @@ import { faseDoEdital } from "./fases-do-processo.ts";
 import type {
   Indicadores,
   LinhaDoMonitoramento,
-} from "../modulos/visao-geral/tipos.ts";
+} from "../../modulos/visao-geral/tipos.ts";
 
 type Linha = LinhaDoMonitoramento | null | undefined;
 

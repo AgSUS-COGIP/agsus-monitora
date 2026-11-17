@@ -5,7 +5,7 @@ import {
   filtrarVagas,
   formatarQuantidade,
   rotuloDaUnidade,
-} from "../../lib/selecao-do-painel.ts";
+} from "../../lib/selecao/selecao-do-painel.ts";
 import { TabelaInfinita } from "../../ui/index.ts";
 
 /*

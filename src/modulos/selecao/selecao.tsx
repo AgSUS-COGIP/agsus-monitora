@@ -20,7 +20,7 @@ import {
   filtrarVagas,
   observacoesDoRecorte,
   opcoesDosFiltros,
-} from "../../lib/selecao-do-painel.ts";
+} from "../../lib/selecao/selecao-do-painel.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import { Aviso } from "../../ui/index.ts";
 import { textoDaConferencia } from "../../lib/conferencias/texto-da-conferencia.ts";

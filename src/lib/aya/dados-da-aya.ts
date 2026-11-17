@@ -16,13 +16,13 @@
 import { calcularKpis } from "../analises/analises-curriculares.ts";
 import { isAdminGlobal, paginasPermitidas } from "../acessos/access-roles.ts";
 import { calcularIndicadores as indicadoresDasEntrevistas } from "../entrevistas/entrevistas-do-painel.ts";
-import { calcularIndicadores as indicadoresDosRecursos } from "../recursos-dos-candidatos.ts";
+import { calcularIndicadores as indicadoresDosRecursos } from "../recursos/recursos-dos-candidatos.ts";
 import {
   normalizarSaude,
   SITUACOES,
   visaoSimples,
 } from "../automacao/saude-das-cargas.ts";
-import { calcularIndicadores as indicadoresDaSelecao } from "../selecao-do-painel.ts";
+import { calcularIndicadores as indicadoresDaSelecao } from "../selecao/selecao-do-painel.ts";
 import {
   acaoDaIntencao,
   mesmoEdital,
@@ -44,7 +44,7 @@ import type {
 } from "../../modulos/entrevistas/tipos-do-painel.ts";
 import type { VagaDaSelecao } from "../../modulos/selecao/tipos.ts";
 import type { PaginasPermitidas } from "../acessos/tipos-dos-acessos.ts";
-import type { RecursoDoPainel } from "../tipos-dos-recursos.ts";
+import type { RecursoDoPainel } from "../recursos/tipos-dos-recursos.ts";
 
 /** O recorte das contas: o edital pedido ("93/2026", "93" ou ""). */
 export interface RecorteDaConta {

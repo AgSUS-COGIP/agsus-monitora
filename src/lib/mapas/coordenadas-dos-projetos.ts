@@ -1,7 +1,7 @@
 import type {
   MunicipioDoMapa,
   PontoEditavelDoProjeto,
-} from "../modulos/mapa-de-projetos/tipos.ts";
+} from "../../modulos/mapa-de-projetos/tipos.ts";
 import type {
   PendenciaDoEditor,
   OpcoesDaFila,
@@ -20,7 +20,7 @@ import {
   listaDeSugestoes,
   nivelDaGravidade,
 } from "./editor-de-coordenadas.ts";
-import { rotuloDoLugar } from "./visao-geral-da-area.ts";
+import { rotuloDoLugar } from "../visao-geral/visao-geral-da-area.ts";
 
 /*
   COORDENADAS DO MAPA DE PROJETOS — as regras deste mapa no editor

@@ -85,7 +85,7 @@ import {
   (documento-docx.js); PDF = impressão da página "Como fica no SEI". O
   cabeçalho da agência vem de Configurações › Marca (`documento_cabecalho`).
 */
-import { MIME_DOCX } from "../../lib/documento-da-resposta.ts";
+import { MIME_DOCX } from "../../lib/recursos/documento-da-resposta.ts";
 import {
   gerarXlsx,
   gerarXlsxDaLista,

@@ -16,8 +16,8 @@ import { telaCriada, telaPronta } from "../../app/registro-das-telas.ts";
 import { linhasDoPayload } from "../../lib/analises/analises-curriculares.ts";
 import { parametroDeAreaDaRpc } from "../../lib/analises/area-do-painel-de-analises.ts";
 import { normalizarPayload as payloadDasEntrevistas } from "../../lib/entrevistas/entrevistas-do-painel.ts";
-import { enriquecerRecursos } from "../../lib/recursos-dos-candidatos.ts";
-import { normalizarPayload as payloadDaSelecao } from "../../lib/selecao-do-painel.ts";
+import { enriquecerRecursos } from "../../lib/recursos/recursos-dos-candidatos.ts";
+import { normalizarPayload as payloadDaSelecao } from "../../lib/selecao/selecao-do-painel.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import type { SupabaseClient } from "@supabase/supabase-js";
 

@@ -6,7 +6,7 @@ import {
   contratacoesDoCadastroReserva,
   contratadasImediatas,
   vagasSemContratacao,
-} from "../../lib/indicadores-do-monitoramento.ts";
+} from "../../lib/visao-geral/indicadores-do-monitoramento.ts";
 import {
   numeroDoFunil,
   textoDaFonteDoFunil,
@@ -16,7 +16,7 @@ import {
   linkSeguro,
   statusCanonico,
   urgenciaDoCronograma,
-} from "../../lib/visao-geral.ts";
+} from "../../lib/visao-geral/visao-geral.ts";
 import { Gaveta, GradeDeKv, Kv, Secao } from "../../ui/index.ts";
 
 /*

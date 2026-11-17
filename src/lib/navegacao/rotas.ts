@@ -14,7 +14,7 @@
   A `view` é o nome interno de sempre (o do menu, das permissões e do
   catálogo de abas); o caminho é o nome que a pessoa lê no endereço.
 */
-import { etapaDasRegras } from "../regras-do-edital.ts";
+import { etapaDasRegras } from "../regras-do-edital/regras-do-edital.ts";
 
 /** Para onde ir: a tela (view) e o que vai com ela. */
 export interface DestinoDaRota {
@@ -56,7 +56,7 @@ export interface TelaDaRota {
 
 /*
   As telas de página inteira das áreas. A Visão geral também é uma delas
-  (título próprio, da área: src/lib/visao-geral-da-area.ts).
+  (título próprio, da área: src/lib/visao-geral/visao-geral-da-area.ts).
 */
 const TELAS: TelaDaRota[] = [
   { view: "dashboard", caminho: "visao-geral", titulo: "Visão geral" },

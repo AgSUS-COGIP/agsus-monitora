@@ -3558,7 +3558,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "O Painel da Seleção do Yeendé mostra o funil de cada vaga, a partir da planilha Auditoria carregada de hora em hora no banco. Os sete indicadores são inscritos, aptos, triados, convocados, aprovados, contratados e a taxa de contratação. Ela é só de consulta e mostra a área escolhida no menu. Os quatro filtros (DSEI ou unidade, edital, cargo e vaga) aceitam vários valores, e as opções de cada um seguem os outros já escolhidos. Clicar numa barra do ranking de unidades filtra a tela por aquela unidade; clicar de novo tira o filtro. A busca da tabela vale só para a tabela.",
     fato: "",
-    fonte: "src/modulos/selecao/; src/lib/selecao-do-painel.ts",
+    fonte: "src/modulos/selecao/; src/lib/selecao/selecao-do-painel.ts",
     abrir: "selecao",
   },
   {
@@ -3589,7 +3589,7 @@ export const VERBETES_AYA = Object.freeze([
       'Na Seleção, os convocados para entrevista vêm das entrevistas registradas no Yeendé quando o edital as tem (a vaga sem nenhuma entrevista fica com 0); quando o edital não tem, vêm da planilha Auditoria, que é o dado antigo. O CSV exportado traz a origem de cada vaga na coluna "Origem dos convocados".',
     fato: "",
     fonte:
-      "supabase/migrations/20261001130000_selecao_aprovados_outras_bancas.sql; src/lib/selecao-do-painel.ts",
+      "supabase/migrations/20261001130000_selecao_aprovados_outras_bancas.sql; src/lib/selecao/selecao-do-painel.ts",
   },
   {
     arquivo: "regras-da-selecao.md",
@@ -3617,7 +3617,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'Na Seleção, a taxa de contratação é o número de contratados dividido pelo número de aprovados, em porcentagem. Sem aprovados no recorte, a taxa aparece como 0%. O medidor "Contratados" mostra a mesma conta, com quantos foram contratados de quantos aprovados.',
     fato: "",
-    fonte: "src/lib/selecao-do-painel.ts",
+    fonte: "src/lib/selecao/selecao-do-painel.ts",
   },
   {
     arquivo: "regras-da-selecao.md",
@@ -3630,7 +3630,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'Na Seleção, os eliminados antes da análise são a soma de três grupos: os cancelados, os reprovados por não finalizar o questionário e os eliminados por nota. O gráfico "Aptos na análise e eliminados" compara os aptos para análise com o total de eliminados, e "Triados e reprovados na análise" mostra o resultado da análise curricular.',
     fato: "",
-    fonte: "src/lib/selecao-do-painel.ts",
+    fonte: "src/lib/selecao/selecao-do-painel.ts",
   },
   {
     arquivo: "regras-da-selecao.md",
@@ -3643,7 +3643,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "Na Seleção, os alertas identificados no recorte são as observações da coluna Observação da planilha Auditoria. Cada observação aparece uma vez, sem diferenciar maiúsculas, com quantas vagas a têm e em quais unidades e editais.",
     fato: "",
-    fonte: "src/lib/selecao-do-painel.ts",
+    fonte: "src/lib/selecao/selecao-do-painel.ts",
   },
   {
     arquivo: "regras-da-selecao.md",
@@ -3675,7 +3675,7 @@ export const VERBETES_AYA = Object.freeze([
       'A vaga que saiu da planilha Auditoria fica inativa e some da tela; na Saúde Indígena só entram as vagas de DSEI e CASAI (as outras vão para SEDE ou Projetos pelo edital). Aprovados e contratados vêm da lista de aprovados vigente — contratado é Contratado ou Migração, e Convocado não conta —, e sem lista a vaga não soma nenhum dos dois. A carga roda pelo "Rodar agora" (a agenda automática está desligada desde 16/10/2026) e o topo mostra "Conferido às …". Confira também os quatro filtros e a barra do ranking de unidades que estiver clicada.',
     fato: "",
     fonte:
-      "supabase/migrations/20261001090000_selecao.sql; supabase/migrations/20261001100000_selecao_area_pelos_editais.sql; src/lib/selecao-do-painel.ts; .github/workflows/sincronizar-selecao.yml",
+      "supabase/migrations/20261001090000_selecao.sql; supabase/migrations/20261001100000_selecao_area_pelos_editais.sql; src/lib/selecao/selecao-do-painel.ts; .github/workflows/sincronizar-selecao.yml",
     abrir: "selecao",
   },
   {
@@ -3712,7 +3712,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'Na Visão geral, o bloco das vagas conta os editais do recorte e fecha: Vagas imediatas = Contratadas + Em seleção + Ociosas, com a porcentagem de cada parte e uma barra da divisão; Cadastro reserva e Inscritos ficam na linha de baixo. Os números aparecem só depois que a conta das vagas reabertas chega (até 10 segundos), para não trocarem na frente de quem lê. Vagas imediatas é a soma das vagas do cadastro do edital, contando uma vez só a vaga reaberta: a vaga que ficou sem contratação num edital com resultado e voltou num edital mais novo da mesma unidade, para o mesmo cargo, conta só no edital novo (o número embaixo do indicador diz quantas saíram da soma). Contratadas são as contratações de cada edital limitadas às vagas imediatas dele (o que passa disso é Cadastro reserva, mostrado à parte). Em seleção são as vagas ainda sem contratação dos editais sem resultado (em andamento, planejados ou sem cronograma). Ociosas são as vagas sem contratação dos editais com resultado (concluídos ou na fase Contratação). Editais cancelados não entram em nenhum indicador, nem em Inscritos. Críticos (em "Pede ação") conta os editais com algum motivo de atenção e Inscritos soma os inscritos. Os rótulos podem ser trocados em Configurações › Página inicial.',
     fato: "Na Visão geral, Vagas imediatas = Contratadas (contratações limitadas às vagas de cada edital) + Em seleção (editais sem resultado) + Ociosas (editais concluídos ou na fase Contratação); contratações além das vagas são Cadastro reserva; cancelados não entram.",
-    fonte: "src/lib/indicadores-do-monitoramento.ts",
+    fonte: "src/lib/visao-geral/indicadores-do-monitoramento.ts",
   },
   {
     arquivo: "regras-da-visao-geral.md",
@@ -3732,7 +3732,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'O mesmo DSEI abre vários processos seletivos para a mesma vaga: o edital termina com vagas sem contratação (deserto, sem aprovados, desistência antes da contratação) e o posto volta num edital novo. Na Visão geral, essa vaga conta uma vez só, no edital mais novo. Vale quando os dois editais são da mesma unidade, o novo começou depois do fim do anterior, o anterior já tinha resultado e os dois têm o mesmo cargo (pelos cargos das vagas da Seleção e pelo quadro de vagas; na Saúde Indígena, pelo cadastro oficial de cargos, que junta as grafias diferentes do mesmo cargo, como "AISAN" e "Agente Indígena de Saneamento"). O edital novo reabre até as vagas dele nesses cargos, pelo quadro; sem quadro, até o total dele. No edital antigo, as vagas reabertas saem das vagas imediatas e das ociosas; as contratadas continuam nele, e a conta Vagas imediatas = Contratadas + Em seleção + Ociosas segue fechando. O indicador Vagas imediatas mostra embaixo quantas reabertas saíram da soma; os detalhes do edital dizem "N vagas reabertas no edital X" (no antigo) e "Reabre N vagas do edital Y" (no novo). A tabela continua com as vagas que cada edital publicou. Não conta como reaberta a reposição de quem foi contratado e saiu (é contratação nova), o mesmo cargo em outra unidade nem edital cancelado. O código da vaga não serve para ligar os editais: a Empregare dá código novo a cada edital.',
     fato: "Na Visão geral, a vaga sem contratação de um edital com resultado, reaberta num edital mais novo da mesma unidade e do mesmo cargo, conta só no edital novo; o indicador Vagas imediatas mostra quantas saíram da soma.",
-    fonte: "src/lib/vagas-reabertas.ts",
+    fonte: "src/lib/visao-geral/vagas-reabertas.ts",
   },
   {
     arquivo: "regras-da-visao-geral.md",
@@ -3755,7 +3755,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'Na Visão geral, um edital é crítico quando foi marcado como crítico ou quando tem um motivo calculado (o risco preenchido no edital não entra). Marcar é de quem responde pelo edital: o gestor, o coordenador ou o administrador global, no formulário do edital em Editais ("Edital crítico"), sempre com motivo (de 10 a 500 caracteres); desmarcar também pede motivo, e tudo fica no histórico. Quem só vê lê quem marcou, quando e por quê. A marcação é o motivo mais grave ("Marcado como crítico por …") e os motivos calculados continuam valendo junto. Um edital aberto também é crítico quando: o fim do cronograma já passou e o edital não concluiu ("Etapa atrasada há N dias"); está em andamento, sem etapa em curso e sem mudança de etapa (início ou fim de uma etapa do cronograma) há 15 dias ou mais ("Parado há N dias"); ou está em andamento, já depois das inscrições, com 0 inscritos ("Sem inscritos"). Um edital concluído é crítico quando as contratadas ficam abaixo de 50% das vagas imediatas ("Contratação abaixo de 50%"). Cancelado nunca é crítico. Etapa chegando (próxima em até 3 dias) é agenda, não problema: não faz o edital crítico — aparece no cabeçalho ("N editais têm etapa nos próximos 7 dias") e em vermelho na coluna de cronograma da tabela. Críticos em "Pede ação", os detalhes do processo e a ordem da tabela usam os mesmos motivos; clicar em Críticos filtra a página pelos críticos e clicar de novo tira.',
     fato: "Crítico na Visão geral: marcado como crítico (com motivo) pelo gestor, coordenador ou administrador global, cronograma vencido sem concluir, parado há 15 dias ou mais, em andamento sem inscritos depois das inscrições, ou concluído com menos de 50% das vagas imediatas contratadas.",
-    fonte: "src/lib/criticos-da-visao-geral.ts",
+    fonte: "src/lib/visao-geral/criticos-da-visao-geral.ts",
   },
   {
     arquivo: "regras-da-visao-geral.md",
@@ -3817,7 +3817,7 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'A fase do edital na Visão geral vem primeiro do status (cancelado é Cancelado, concluído é Concluído, planejado é Edital) e, nos demais, do texto da atividade do cronograma (a de hoje, ou a etapa mostrada), sem acento nem caixa: contratação, admissão ou posse é Contratação; prazo ou abertura de recurso é Recursos; resultado final ou homologação do resultado é Resultado; outro recurso é Recursos; entrevista é Entrevistas; análise curricular, documental, títulos, prova ou resultado preliminar é Análise curricular; inscrição é Inscrições; outro resultado é Resultado; edital, impugnação ou publicação é Edital. "Aguardando: X" conta como a fase de X; texto que nenhuma regra reconhece fica em Outra e "Cronograma pendente" em Sem cronograma.',
     fato: "",
-    fonte: "src/lib/fases-do-processo.ts",
+    fonte: "src/lib/visao-geral/fases-do-processo.ts",
   },
   {
     arquivo: "regras-da-visao-geral.md",
@@ -3887,7 +3887,7 @@ export const VERBETES_AYA = Object.freeze([
       "Os números de cada edital (inscritos, aptos, cancelados, eliminados, reprovados e aprovados na análise, entrevistados e contratados) são recalculados pelo banco no fim de cada carga da Seleção e, de novo, às 10h de Brasília. Valem para todo edital ativo que tem a fonte, com ou sem vaga na Seleção: as vagas da planilha Auditoria ligadas ao edital somadas, a lista de aprovados vigente do edital (Contratado ou Migração), as entrevistas do edital com parecer e as análises com status Aprovado do mesmo número de edital (ou do mesmo nome, para editais sem número, quando o nome é único na área). Sem a fonte, o valor anterior fica. As Vagas e o cronograma continuam vindo do cadastro do edital, em Editais. A Visão geral soma esses números dos editais do recorte.",
     fato: "Os KPIs dos editais na Visão geral são recalculados pelo banco no fim de cada carga da Seleção e às 10h de Brasília, para todo edital ativo que tem a fonte (Seleção, lista de aprovados vigente, entrevistas, análises); sem a fonte, o valor anterior fica; as vagas vêm do cadastro do edital.",
     fonte:
-      "supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; src/lib/indicadores-do-monitoramento.ts",
+      "supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; src/lib/visao-geral/indicadores-do-monitoramento.ts",
   },
   {
     arquivo: "regras-da-visao-geral.md",
@@ -3903,7 +3903,7 @@ export const VERBETES_AYA = Object.freeze([
       "Os números de cada edital são recalculados pelo banco no fim de cada carga da Seleção e, de novo, às 10h; entre uma carga e outra, a lista de aprovados pode já ter mudado. Contratadas ficam limitadas às vagas imediatas de cada edital (o excedente vai para Cadastro reserva), editais cancelados não entram em nenhum indicador e as Vagas vêm do cadastro do edital, em Editais. Confira também a área atual, os filtros (guardados no navegador) e a busca, que valem para a página toda.",
     fato: "",
     fonte:
-      "src/lib/indicadores-do-monitoramento.ts; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql",
+      "src/lib/visao-geral/indicadores-do-monitoramento.ts; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql",
     abrir: "dashboard",
   },
   {
@@ -5510,7 +5510,7 @@ export const VERBETES_AYA = Object.freeze([
       'Quem é responsável por algum edital ou demanda interna vê, no primeiro acesso do dia, o resumo "seus editais hoje": o que começa ou termina hoje, nos próximos 7 dias e as demandas atrasadas. O sininho no topo mostra o número de pendências e reabre o resumo quando quiser. "Fechar" não deixa o resumo voltar sozinho no mesmo dia; "Ver no cronograma" abre o Cronograma só com os seus editais e demandas ("Ver todos" volta ao normal); "Concluir" fecha uma demanda atrasada, para quem pode. Para não abrir mais ao entrar, desmarque "Mostrar ao entrar" no próprio resumo: o sininho continua. Sem pendências, o resumo não abre.',
     fato: "",
     fonte:
-      "src/modulos/resumo-do-dia/resumo-do-dia.tsx; src/lib/resumo-do-dia.ts",
+      "src/modulos/resumo-do-dia/resumo-do-dia.tsx; src/lib/resumo-do-dia/resumo-do-dia.ts",
     abrir: "calendario",
   },
   {
@@ -6610,7 +6610,7 @@ export const VERBETES_AYA = Object.freeze([
       'Em Editais, o botão Regras do edital (lista com marcas) da linha do edital abre, no lugar da tabela, uma página com todas as regras daquele edital, na ordem das etapas: 1 Triagem (requisitos e motivos de eliminação, nota da lista, desempate e formação do lote), 2 Avaliação documental (o que vale, o que elimina, como a experiência é contada e comprovada, no assistente ou no modo avançado), 3 Entrevista (o resumo de quem é chamado, como a nota sai, quem avalia e o desempate e, embaixo, "Roteiro e banca": o roteiro do edital e a banca, com "Editar roteiro e banca" e "Salvar configuração"; os roteiros da área — editar, duplicar, criar — continuam em Conduzir entrevistas › Preparar), 4 Classificação (composição da nota, notas mínimas, desempate — os critérios marcados usam o que a Avaliação documental comprovou —, cotas e convocação para entrevista) e 5 Chamada para contratação (o tipo de convocação, o modelo de regras com a prévia e as vagas imediatas de cada vaga, com "Salvar convocação"). Quem edita cada etapa é quem já editava (coordenação do edital, gestor da Classificação, quem configura a entrevista, quem importa a lista de aprovados, administrador global); os outros veem a regra travada. As telas da Triagem, da Avaliação documental (Configurações › Regras e critérios), de Conduzir entrevistas › Preparar (passos Roteiro e Banca), da Classificação (Regra) e o modal "Listas do edital" da Lista de aprovados (aba Lista de convocação) mostram a regra resumida com "Editar nas Regras do edital", que abre a página já na etapa. O "voltar" do navegador fecha a página e volta à tabela de Editais (trocar de etapa não conta como página nova). Salvar cria versão nova com motivo e não recalcula nada. A Provisória por ART e o lote saíram da regra da Avaliação documental — também do assistente: o corte por pontos mínimos, a base da nota do lote e o desempate da lista ficam só na Triagem.',
     fato: "",
     fonte:
-      "src/modulos/regras-do-edital/; src/lib/regras-do-edital.ts; src/modulos/entrevistas/editor-da-configuracao.tsx; src/modulos/aprovados/chamada-para-contratacao.tsx",
+      "src/modulos/regras-do-edital/; src/lib/regras-do-edital/regras-do-edital.ts; src/modulos/entrevistas/editor-da-configuracao.tsx; src/modulos/aprovados/chamada-para-contratacao.tsx",
     abrir: "nucleo",
   },
   {
@@ -6627,7 +6627,7 @@ export const VERBETES_AYA = Object.freeze([
       'Na Visão geral de Projetos, o mapa mostra um ponto por lugar das vagas de todos os projetos (Caminhoneiros, Saúde nas Fronteiras, Escritório Distrital e Regional, Rio Doce, MFC e CCE), na cor do projeto, com legenda, filtro e agrupamento por projeto; o tamanho do ponto segue as vagas. Os lugares foram lidos dos PDFs dos editais (município do IBGE ou só a UF, com o arquivo e a página como prova) e se juntam aos "UBS móvel" do nome da vaga. Lugar só com UF aparece como estado e não tem candidatos. A SEDE não tem mapa.',
     fato: "",
     fonte:
-      "supabase/migrations/20261001180000_locais_das_vagas_dos_projetos.sql; src/lib/visao-geral-da-area.ts; src/modulos/mapa-de-projetos/mapa-de-projetos.tsx",
+      "supabase/migrations/20261001180000_locais_das_vagas_dos_projetos.sql; src/lib/visao-geral/visao-geral-da-area.ts; src/modulos/mapa-de-projetos/mapa-de-projetos.tsx",
   },
   {
     arquivo: "regras-dos-mapas.md",
@@ -6643,7 +6643,7 @@ export const VERBETES_AYA = Object.freeze([
       'Clique num ponto do mapa, ou num lugar da lista "Municípios por vagas", para ver o projeto, o edital, as vagas publicadas, as lotações e os candidatos daquele lugar; o mapa aproxima e abre o resumo. A lista vem ordenada pelas vagas e a barra mostra a parte aprovada entre os já analisados. Cada lugar mostra o nome e as vagas na primeira linha e os projetos como selos na segunda (com o filtro de um projeto ou agrupada, os selos saem, porque seriam iguais). Os candidatos só aparecem quando o nome da vaga nas análises diz o lugar (como "UBS móvel Irati/PR"); vagas como as dos escritórios não dizem o município, então o lugar fica sem a contagem, em vez de mostrar um zero que não é real. Com dois ou mais projetos, o campo "Projeto" mostra só os lugares de um projeto (o mapa reenquadra) e "Agrupar por projeto" separa a lista em um bloco por projeto — um lugar de dois projetos aparece nos dois. Ponto com contorno tracejado tem mais de um projeto; lugar sem coordenada aparece na lista, mas não no mapa. "Brasil" volta ao país inteiro e "Tela cheia" amplia o painel (Esc sai).',
     fato: "",
     fonte:
-      "src/modulos/mapa-de-projetos/mapa-de-projetos.tsx; src/modulos/mapa-de-projetos/lista.tsx; src/lib/visao-geral-da-area.ts",
+      "src/modulos/mapa-de-projetos/mapa-de-projetos.tsx; src/modulos/mapa-de-projetos/lista.tsx; src/lib/visao-geral/visao-geral-da-area.ts",
   },
   {
     arquivo: "regras-dos-mapas.md",
@@ -6659,7 +6659,7 @@ export const VERBETES_AYA = Object.freeze([
       'O mapa de Projetos segue as mesmas regras do mapa da Saúde Indígena. Os filtros e a busca da Visão geral valem para ele: com algum filtro, só ficam os lugares que têm edital no recorte, e cada lugar mostra só esses editais; sem nenhum, a lista diz "Nenhum município no recorte.". Sem filtro, o mapa mostra o Brasil inteiro; com filtro da página ou com um projeto escolhido no campo "Projeto", ele aproxima do único lugar que sobrou ou enquadra todos os que sobraram. "Agrupar por projeto" não muda o enquadramento, e "Brasil" volta ao país inteiro. O tamanho do ponto segue as vagas do lugar com a mesma escala da bolha do DSEI e não muda quando se filtra. Lugares que caem no mesmo ponto abrem em leque, com um traço até a posição real.',
     fato: "",
     fonte:
-      "docs/biblioteca/modulo-mapa-de-projetos.md; src/lib/enquadramento-do-brasil.ts; src/lib/visao-geral-da-area.ts",
+      "docs/biblioteca/modulo-mapa-de-projetos.md; src/lib/mapas/enquadramento-do-brasil.ts; src/lib/visao-geral/visao-geral-da-area.ts",
   },
   {
     arquivo: "regras-dos-mapas.md",
@@ -6675,7 +6675,7 @@ export const VERBETES_AYA = Object.freeze([
       'Cada ponto do mapa de Projetos é um lugar das vagas, e a coordenada dele fica no banco do Yeendé. Na carga inicial, o município vai para a sede municipal do IBGE (pelo código do IBGE do edital ou pelo nome do "UBS móvel" da vaga) e o lugar que o edital só diz a UF (a CCE, por exemplo) vai para o centro do estado, calculado pela média das sedes municipais. Depois disso, quem muda a posição é o administrador global ou o Gestor, pelo editor de coordenadas, e cada alteração fica registrada com autoria e motivo. Lugar sem coordenada no banco aparece na lista, mas não no mapa.',
     fato: "",
     fonte:
-      "supabase/migrations/20261002190000_coordenadas_mapa_projetos.sql; supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql; src/lib/visao-geral-da-area.ts",
+      "supabase/migrations/20261002190000_coordenadas_mapa_projetos.sql; supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql; src/lib/visao-geral/visao-geral-da-area.ts",
   },
   {
     arquivo: "regras-dos-mapas.md",
@@ -6707,7 +6707,7 @@ export const VERBETES_AYA = Object.freeze([
       'A fila do editor de Projetos começa em "Só pendentes": são os lugares cuja posição ainda não foi conferida pelo administrador global ou por um Gestor. Na carga inicial, todo município aparece porque o ponto é só a sede do município (o edital diz o município, não o endereço), e todo lugar só com UF aparece porque o ponto é o centro do estado. Também ficam pendentes o lugar sem coordenada, o município cujo nome, código ou UF não batem, o mesmo município com coordenadas diferentes e o ponto fora do Brasil. A gravidade compara a posição com a referência do lugar (a sede do município pelo IBGE ou o centro da UF): "Provável erro" quando falta a coordenada, o motivo já é um erro ou a referência está a mais de 10 km; "Revisar" quando ela está entre 2 e 10 km, ou quando a lotação é um escritório e o edital só diz a UF; "Só confirmar" quando a posição é a da referência; e "Sem sugestão" quando não há posição candidata. As sugestões são a sede do município (IBGE), o centro da UF, a sede do DSEI do mapa da Saúde Indígena (para escritório distrital) e os outros lugares das vagas na mesma UF.',
     fato: "",
     fonte:
-      "src/lib/coordenadas-dos-projetos.ts; src/lib/editor-de-coordenadas.ts; supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql",
+      "src/lib/mapas/coordenadas-dos-projetos.ts; src/lib/mapas/editor-de-coordenadas.ts; supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql",
   },
   {
     arquivo: "regras-dos-mapas.md",
@@ -6832,7 +6832,8 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       "A página Painéis, no bloco Dados do menu, reúne relatórios para conferir os dados da área escolhida, cada um numa aba: Resumo dos editais, Editais por cargo e Aprovados. Cada tabela pode ser baixada em CSV ou XLSX, com as mesmas linhas da tela. O sistema recalcula os relatórios de hora em hora; o botão Sincronizar, no topo, recalcula na hora o relatório aberto (no máximo uma vez por minuto), e ao lado dele aparece quando o cálculo foi feito. O ícone de informação ao lado dos botões diz de onde vêm os dados de cada relatório. Quem vê é quem o administrador libera em Painéis, na tela de Acessos.",
     fato: "",
-    fonte: "src/modulos/paineis-de-dados/; src/lib/relatorios-dos-paineis.ts",
+    fonte:
+      "src/modulos/paineis-de-dados/; src/lib/paineis/relatorios-dos-paineis.ts",
     abrir: "paineis-de-dados",
   },
   {
@@ -6976,7 +6977,7 @@ export const VERBETES_AYA = Object.freeze([
       'No Yeendé, o recurso nasce Registrado: quem edita Recursos cadastra os dados, anexa documentos e escreve o rascunho da resposta, e então o envia para parecer jurídico (Em análise jurídica). Só quem tem a permissão "Parecer jurídico (Recursos)" decide: defere, defere parcialmente ou indefere, sempre com o texto do parecer (10 a 20.000 caracteres), ou devolve para ajuste com um comentário. Quem decidiu, quando e o parecer ficam gravados, e cada passo vai para o histórico do recurso.',
     fato: "No Yeendé, o recurso vai de Registrado a Em análise jurídica e só quem tem a permissão Parecer jurídico decide (Deferido, Deferido parcialmente ou Indeferido); o nível Administrador de Recursos não decide.",
     fonte:
-      "supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/lib/recursos-dos-candidatos.ts",
+      "supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/lib/recursos/recursos-dos-candidatos.ts",
   },
   {
     arquivo: "regras-dos-recursos.md",
@@ -7011,7 +7012,7 @@ export const VERBETES_AYA = Object.freeze([
       'No Yeendé, "Aguardando parecer" conta os recursos Em análise jurídica: já enviados ao jurídico e ainda sem decisão. Clicar no indicador filtra a tela por eles. No detalhe, quem não tem o parecer jurídico (e todos no Painel de recursos) vê "Aguardando parecer jurídico" no lugar dos botões de decisão.',
     fato: "",
     fonte:
-      "src/modulos/recursos/paineis.tsx; src/lib/recursos-dos-candidatos.ts",
+      "src/modulos/recursos/paineis.tsx; src/lib/recursos/recursos-dos-candidatos.ts",
   },
   {
     arquivo: "regras-dos-recursos.md",
@@ -7081,7 +7082,8 @@ export const VERBETES_AYA = Object.freeze([
     resposta:
       'O prazo do recurso vem do cronograma do edital: é o fim da atividade de resposta aos recursos daquela origem (análise curricular, entrevista ou resultado final); havendo mais de uma, vale a mais tardia. Sem atividade de resposta, usa o fim do prazo de abertura dos recursos (o prazo estimado, com asterisco). Sem nenhuma das duas, entra a pendência "Prazo não encontrado no cronograma". "Prazo vencido" é o recurso sem resposta enviada com o prazo já passado; "vencendo" é o que vence hoje ou nos próximos dois dias.',
     fato: "",
-    fonte: "src/lib/prazo-do-recurso.ts; src/lib/recursos-dos-candidatos.ts",
+    fonte:
+      "src/lib/recursos/prazo-do-recurso.ts; src/lib/recursos/recursos-dos-candidatos.ts",
   },
   {
     arquivo: "regras-dos-recursos.md",
@@ -7098,7 +7100,7 @@ export const VERBETES_AYA = Object.freeze([
       'No Yeendé, o Painel de recursos tem quatro indicadores: Aguardando parecer, Prazo vencido, Deferidos (com os parcialmente) e Indeferidos; cada um filtra a tela. O total está na contagem da fila; a taxa de decisão, no recorte ("% decididos"); sem processo SEI, sem resposta, respostas em revisão, aprovadas ou devolvidas, mudança de nota, prazo vencendo e registrados sem envio estão nas Pendências prioritárias e nos gráficos.',
     fato: "",
     fonte:
-      "src/modulos/recursos/paineis.tsx; src/lib/recursos-dos-candidatos.ts",
+      "src/modulos/recursos/paineis.tsx; src/lib/recursos/recursos-dos-candidatos.ts",
   },
   {
     arquivo: "regras-dos-recursos.md",
@@ -7114,7 +7116,7 @@ export const VERBETES_AYA = Object.freeze([
       'No Yeendé, "Prazo não encontrado no cronograma" quer dizer que o cronograma do edital não traz o prazo de recurso daquela origem; "Candidato fora das análises" é o recurso cadastrado com os dados digitados, que vale conferir; "Mudança de nota ou classificação" junta a nota mudou (a nota atual da análise difere da guardada no cadastro do recurso) e a classificação mudada pelo ajuste da pontuação aprovado, para conferir no resultado final; "Prazo vence em até 2 dias" é o recurso sem resposta cujo prazo vence hoje ou nos próximos dois dias; "Devolvidos pelo jurídico" são os que voltaram para ajuste.',
     fato: "",
     fonte:
-      "src/lib/recursos-dos-candidatos.ts; supabase/migrations/20260929120000_recursos.sql",
+      "src/lib/recursos/recursos-dos-candidatos.ts; supabase/migrations/20260929120000_recursos.sql",
   },
   {
     arquivo: "regras-dos-recursos.md",
@@ -7183,7 +7185,7 @@ export const VERBETES_AYA = Object.freeze([
       'No Yeendé, "O recurso mudou a classificação" deixou de ser uma caixa marcada à mão: é marcada automaticamente quando o ajuste da pontuação aprovado muda a posição ou a situação do candidato (pela prévia calculada na aprovação) e desmarcada quando esse ajuste é cancelado. Os recursos marcados à mão antes dessa mudança continuam como estavam. A marca alimenta a pendência "Mudança de nota ou classificação", o filtro e o CSV.',
     fato: "",
     fonte:
-      "supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql; src/lib/recursos-dos-candidatos.ts",
+      "supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql; src/lib/recursos/recursos-dos-candidatos.ts",
     abrir: "recursos",
   },
   {

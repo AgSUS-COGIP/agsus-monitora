@@ -19,7 +19,7 @@ import {
   taxaDeContratacao,
   topUnidades,
   triadosEReprovados,
-} from "../src/lib/selecao-do-painel.ts";
+} from "../src/lib/selecao/selecao-do-painel.ts";
 
 /* O formato de get_selecao_da_area (20261001090000_selecao.sql). */
 const PAYLOAD = {

@@ -25,8 +25,8 @@ export type ErrosDoModelo = Partial<
   virar marcador nem HTML. Quem desenha (a gaveta, a página de impressão, o
   .docx) põe o texto como texto — nada de innerHTML.
 */
-import { hojeEmBrasilia } from "./entrevistas/agenda-das-entrevistas.ts";
-import { formatNumberBR } from "./base/formatters";
+import { hojeEmBrasilia } from "../entrevistas/agenda-das-entrevistas.ts";
+import { formatNumberBR } from "../base/formatters";
 import { rotuloDaOrigem, situacaoDecidida } from "./recursos-dos-candidatos.ts";
 
 export const MARCADORES = Object.freeze([

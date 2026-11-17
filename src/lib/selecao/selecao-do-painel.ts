@@ -14,12 +14,12 @@
   tem (senão, da coluna V da planilha); aprovados e contratados vêm da lista de
   aprovados vigente (nulos, "—", sem lista).
 */
-import { sanitizeCsvCell } from "./seguranca/csv-security";
+import { sanitizeCsvCell } from "../seguranca/csv-security";
 import {
   dataHoraBR,
   normalizarBusca,
-} from "./entrevistas/entrevistas-do-painel.ts";
-import { formatNumberBR } from "./base/formatters";
+} from "../entrevistas/entrevistas-do-painel.ts";
+import { formatNumberBR } from "../base/formatters";
 
 import type {
   CampoDoFiltro,
@@ -30,7 +30,7 @@ import type {
   ObservacaoDaSelecao,
   OpcoesDosFiltros,
   VagaDaSelecao,
-} from "../modulos/selecao/tipos.ts";
+} from "../../modulos/selecao/tipos.ts";
 export { dataHoraBR };
 
 /** JSON externo só é lido após verificar que é um objeto. */

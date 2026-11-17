@@ -1,10 +1,13 @@
-import type { ItemDoResumo, ResumoDoDia } from "../../lib/resumo-do-dia.ts";
+import type {
+  ItemDoResumo,
+  ResumoDoDia,
+} from "../../lib/resumo-do-dia/resumo-do-dia.ts";
 import {
   chaveDoVisto,
   lerResumoDoDia,
   semDemanda,
   totalDoResumo,
-} from "../../lib/resumo-do-dia.ts";
+} from "../../lib/resumo-do-dia/resumo-do-dia.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 
 /*

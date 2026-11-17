@@ -83,7 +83,7 @@ sua assinatura e o recorte por área (`linhasDaArea`, `soDosEditais`). Listas s�
 demanda: só as páginas de `src/lib/navegacao/telas-com-linhas.ts` (via `src/app/pagina-aberta.ts`) ou
 `usarLinhasDoMonitoramento` fazem a carga lê-las.
 
-- A publicação valida com `src/lib/linhas-do-monitoramento.ts`: aceita registros, ids numéricos
+- A publicação valida com `src/lib/visao-geral/linhas-do-monitoramento.ts`: aceita registros, ids numéricos
   finitos ou texto não vazio, campos textuais conhecidos como texto ou ausentes. Nulos viram
   ausentes; registros malformados são descartados; colunas extras ficam `unknown`. Não substitui os
   contratos das consultas de cada módulo.

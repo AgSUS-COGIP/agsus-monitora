@@ -20,7 +20,7 @@ Tipos e fronteiras dos dados (e o que saiu do legado): [[mapa-saude-indigena-con
 - **Não há editor de coordenadas neste mapa.** Os pontos vêm do SIGEPSI e se corrigem lá. O editor
   comum ([[coordenadas]]) é só do mapa de Projetos. `TopoDoMapa` e `classesDoPainel`
   (`painel-do-mapa.tsx`) aceitam `modo` opcional.
-- **Dicas e popups.** `criarMapa` liga `manterDicasDentroDoMapa` (`src/lib/dica-dentro-do-mapa.ts`):
+- **Dicas e popups.** `criarMapa` liga `manterDicasDentroDoMapa` (`src/lib/mapas/dica-dentro-do-mapa.ts`):
   perto da borda a dica troca de direção, com largura máxima relativa ao mapa (`.dica-no-mapa`);
   o popup tem `autoPan` com folga, `keepInView` e tamanhos relativos ao mapa.
 
@@ -28,7 +28,7 @@ Tipos e fronteiras dos dados (e o que saiu do legado): [[mapa-saude-indigena-con
 
 - `mapa-saude-indigena.tsx` (`<MapaSaudeIndigena>`: estado, contas memorizadas, um mapa principal
   de cada vez), `mapa-nacional.tsx` (bolhas, CASAIs nacionais, leque, "Territórios por vagas";
-  a escolha de recolher em `src/lib/mapa-recolhido.ts`) e `mapa-do-dsei.tsx` (unidades agrupadas
+  a escolha de recolher em `src/lib/mapas/mapa-recolhido.ts`) e `mapa-do-dsei.tsx` (unidades agrupadas
   por proximidade + leque, sede, vínculos externos, filtros por tipo, Terras Indígenas e povos).
 - Peças comuns aos dois mapas: `leaflet.ts`, `painel-do-mapa.tsx`, `legenda.tsx`
   (`<LegendaFlutuante>`), `tela-cheia.tsx` (`travarRolagemDaPagina` é contada: tela cheia e edição
@@ -139,7 +139,7 @@ Terceiro botão do seletor do fundo, só no `#map` (`map-base-layer-switcher.ts`
   (`defaultPrevented`), só sai no segundo.
 - **Enquadramento do Brasil.** Por `BRASIL_BOUNDS` (contorno real, não o retângulo antigo que
   cortava a ponta leste), com folga da maior bolha (raio + traço + 12 px) e zoom mínimo que desce
-  em quartos até o país caber (`src/lib/enquadramento-do-brasil.ts`, também da guarda do mapa). Os
+  em quartos até o país caber (`src/lib/mapas/enquadramento-do-brasil.ts`, também da guarda do mapa). Os
   mapas React têm `enquadramentoProprio` (a guarda não reenquadra por cima) e reenquadram ao mudar
   de tamanho até a pessoa mexer (`criarMapaDoBrasil`).
 

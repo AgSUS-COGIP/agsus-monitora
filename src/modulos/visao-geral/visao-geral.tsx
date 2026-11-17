@@ -12,12 +12,12 @@ import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import {
   temProcessosPorProjeto,
   textosDaVisaoGeral,
-} from "../../lib/visao-geral.ts";
+} from "../../lib/visao-geral/visao-geral.ts";
 import {
   MAPA_DOS_DSEIS,
   MAPA_DOS_MUNICIPIOS,
   mapaDaVisaoGeral,
-} from "../../lib/visao-geral-da-area.ts";
+} from "../../lib/visao-geral/visao-geral-da-area.ts";
 import { criarCarregadorDeMunicipios } from "../mapa-de-projetos/carregador.ts";
 // Os mapas (e o Leaflet) baixam quando montam: ./mapas-sob-demanda.tsx.
 import { MapaDeProjetos, MapaSaudeIndigena } from "./mapas-sob-demanda.tsx";

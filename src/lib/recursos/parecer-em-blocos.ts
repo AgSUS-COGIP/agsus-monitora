@@ -32,7 +32,7 @@ export {
   REFERENCIAS_DO_EDITAL,
   REFERENCIAS_PADRAO,
   referenciasDoEdital,
-} from "./parecer-em-blocos/etapas-e-referencias.ts";
+} from "../parecer-em-blocos/etapas-e-referencias.ts";
 export type {
   EtapaDoParecer,
   DefinicaoDaEtapa,
@@ -41,16 +41,16 @@ export type {
   ReferenciasDoEdital,
   RegraParaOParecer,
   FonteDaReferencia,
-} from "./parecer-em-blocos/etapas-e-referencias.ts";
+} from "../parecer-em-blocos/etapas-e-referencias.ts";
 export {
   TEXTOS_PADRAO,
   textosDoModelo,
   CORRECOES_DO_SIMULADOR,
-} from "./parecer-em-blocos/modelo.ts";
+} from "../parecer-em-blocos/modelo.ts";
 export type {
   ChaveDoTexto,
   TextosDoModelo,
-} from "./parecer-em-blocos/modelo.ts";
+} from "../parecer-em-blocos/modelo.ts";
 export {
   NIVEIS_DA_VAGA,
   TITULOS_POR_NIVEL,
@@ -62,14 +62,14 @@ export {
   OPCOES_DO_PCD,
   DOCUMENTOS_DA_ALDEIA,
   DOCUMENTOS_DO_QUILOMBOLA,
-} from "./parecer-em-blocos/catalogos.ts";
+} from "../parecer-em-blocos/catalogos.ts";
 export type {
   NivelDaVaga,
   TituloDaFormacao,
   MotivoDaFormacao,
   CriterioDaExperiencia,
   OpcaoDoPcd,
-} from "./parecer-em-blocos/catalogos.ts";
+} from "../parecer-em-blocos/catalogos.ts";
 export {
   CATALOGO_DE_BLOCOS,
   blocosDaEtapa,
@@ -80,7 +80,7 @@ export {
   blocoVazio,
   rascunhoVazio,
   blocoDo,
-} from "./parecer-em-blocos/rascunho.ts";
+} from "../parecer-em-blocos/rascunho.ts";
 export type {
   CodigoDoBloco,
   DefinicaoDoBloco,
@@ -96,34 +96,34 @@ export type {
   Decisao,
   Assinatura,
   RascunhoDoParecer,
-} from "./parecer-em-blocos/rascunho.ts";
+} from "../parecer-em-blocos/rascunho.ts";
 export {
   DIAS_POR_MES,
   mesesDaExperiencia,
   totalSemSobreposicao,
   dataDoParecer,
   pontosDoParecer,
-} from "./parecer-em-blocos/meses-e-formatacao.ts";
+} from "../parecer-em-blocos/meses-e-formatacao.ts";
 export {
   preencher,
   comporParecer,
   linhasDeTexto,
   textoDoParecer,
-} from "./parecer-em-blocos/composicao.ts";
+} from "../parecer-em-blocos/composicao.ts";
 export type {
   Trecho,
   LinhaDoDocumento,
   DocumentoDoParecer,
-} from "./parecer-em-blocos/composicao.ts";
+} from "../parecer-em-blocos/composicao.ts";
 export {
   ROTULO_DA_FONTE,
   dataEHoraDeBrasilia,
   rascunhoInicial,
   periodoDeInterposicao,
-} from "./parecer-em-blocos/pre-preenchimento.ts";
+} from "../parecer-em-blocos/pre-preenchimento.ts";
 export type {
   FonteDoCampo,
   FichaParaOParecer,
   DadosParaOParecer,
   FonteDoParecer,
-} from "./parecer-em-blocos/pre-preenchimento.ts";
+} from "../parecer-em-blocos/pre-preenchimento.ts";

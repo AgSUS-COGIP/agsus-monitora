@@ -7,7 +7,7 @@ import type {
 import {
   identificacaoDoMonitoramento,
   normalizarLinhaDoMonitoramento,
-} from "../linhas-do-monitoramento.ts";
+} from "../visao-geral/linhas-do-monitoramento.ts";
 
 /*
   Busca global (Ctrl+K / Cmd+K): a lógica pura do componente

@@ -11,7 +11,7 @@ import {
   normalizarPayload,
   somar,
   opcoesDosFiltros,
-} from "../../src/lib/selecao-do-painel.ts";
+} from "../../src/lib/selecao/selecao-do-painel.ts";
 import { Filtros, Indicadores } from "../../src/modulos/selecao/paineis.tsx";
 import {
   TelaDeSelecao,

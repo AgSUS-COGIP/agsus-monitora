@@ -1,4 +1,4 @@
-import type { CoordenadasDoMapa } from "../tipos-do-mapa.ts";
+import type { CoordenadasDoMapa } from "../mapas/tipos-do-mapa.ts";
 import type {
   DseiDoMapa,
   RegistroDoDsei,
@@ -22,7 +22,7 @@ import {
   VINCULO_EXTERNO,
   VINCULO_INDETERMINADO,
   classificarVinculoTerritorial,
-} from "../uf-ibge.ts";
+} from "../mapas/uf-ibge.ts";
 import { formatarNumero, temCoordenada, texto } from "./chaves.ts";
 import {
   TIPO_CASAI,

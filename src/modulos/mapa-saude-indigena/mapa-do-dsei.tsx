@@ -15,7 +15,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   agruparPorProximidadeNaTela,
   posicoesSpiderfy,
-} from "../../lib/mapa-render.ts";
+} from "../../lib/mapas/mapa-render.ts";
 import { formatarNumero } from "../../lib/mapa-saude-indigena/chaves.ts";
 import {
   CORES_DO_MAPA,

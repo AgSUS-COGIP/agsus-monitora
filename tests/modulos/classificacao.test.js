@@ -998,7 +998,7 @@ describe("tela de Classificação", () => {
     );
     // O resumo baixa as regras por import() (fora do pacote de entrada).
     await act(async () => {
-      await import("../../src/lib/regras-do-edital-resumos.ts");
+      await import("../../src/lib/regras-do-edital/regras-do-edital-resumos.ts");
     });
     const resumo = secao.querySelector("[data-tour='classificacao-regra']");
     expect(resumo.textContent).toContain("Composição da nota");

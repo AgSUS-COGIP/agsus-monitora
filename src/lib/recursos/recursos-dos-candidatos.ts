@@ -25,8 +25,8 @@ import type {
   mesmos indicadores e pendências — agora com prazo, dias em aberto e "a nota
   mudou" calculados, sem digitar.
 */
-import { hojeEmBrasilia } from "./cronograma/cronograma-do-edital.ts";
-import { sanitizeCsvCell } from "./seguranca/csv-security";
+import { hojeEmBrasilia } from "../cronograma/cronograma-do-edital.ts";
+import { sanitizeCsvCell } from "../seguranca/csv-security";
 import {
   cronogramasPorEdital,
   decididoNoPrazo,

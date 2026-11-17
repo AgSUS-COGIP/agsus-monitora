@@ -286,7 +286,7 @@ só fica no módulo.
 O modo "no quadro" (`<PainelNoQuadro>`, a marcação do antigo painel de análises para as telas que
 rodavam em iframe) saiu com a Seleção, a última delas, ao fim da Etapa 2 — junto com o CSS que
 sobrava em `src/analises/` e o `pagina-do-painel.js` de `src/modules/` (o que restou dele é o
-`src/lib/pagina-do-painel.ts`). Nenhuma tela do app abre mais em
+`src/lib/paineis/pagina-do-painel.ts`). Nenhuma tela do app abre mais em
 iframe; só os painéis externos (`TB_PAINEL_EXTERNO`) continuam no quadro.
 
 ## Etapa 6 — login e entrada

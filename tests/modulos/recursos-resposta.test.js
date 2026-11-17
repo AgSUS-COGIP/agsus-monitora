@@ -7,7 +7,7 @@ import {
   escolher,
   esperar,
 } from "../componentes/interacoes.ts";
-import { proximoEstado } from "../../src/lib/resposta-do-recurso.ts";
+import { proximoEstado } from "../../src/lib/recursos/resposta-do-recurso.ts";
 import { montarTela } from "../montar-tela.ts";
 
 /*

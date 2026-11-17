@@ -22,7 +22,7 @@ import { mesmoEdital } from "./intencoes-da-aya.ts";
 import type {
   CampoDoFiltroDosRecursos,
   FiltrosDosRecursos,
-} from "../tipos-dos-recursos.ts";
+} from "../recursos/tipos-dos-recursos.ts";
 
 /** Uma opção de filtro: o texto ou `{ valor, rotulo }`. */
 export type OpcaoDoFiltro =

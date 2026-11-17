@@ -18,7 +18,7 @@ import {
 } from "../src/lib/classificacao/exportacao.ts";
 import { editaisParaConduzir } from "../src/lib/entrevistas/conducao-de-entrevista.ts";
 import { editaisDaEscolha } from "../src/lib/avaliacao-documental/editais.ts";
-import { indicadoresDaVisaoGeral } from "../src/lib/visao-geral.ts";
+import { indicadoresDaVisaoGeral } from "../src/lib/visao-geral/visao-geral.ts";
 import { CONTRATO_RPC } from "../src/lib/rpc-contrato.ts";
 import { COLUNAS_DO_MONITORAMENTO } from "../src/app/carga.ts";
 

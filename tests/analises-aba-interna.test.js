@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { fonteDoApp } from "./fonte-do-app.ts";
 import { describe, expect, it } from "vitest";
-import { semOPainelAntigoDeAnalises } from "../src/lib/pagina-do-painel";
+import { semOPainelAntigoDeAnalises } from "../src/lib/paineis/pagina-do-painel";
 import { RESOURCES } from "../src/lib/acessos/permissoes-recursos.ts";
 import {
   paginasPermitidas,

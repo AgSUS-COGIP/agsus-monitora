@@ -725,7 +725,7 @@ describe("tema", () => {
 /*
   "O mapa quebra o nome quando passo o mouse ou clico em algum extremo": a
   dica centrada acima de um ponto na borda saía do contêiner do mapa. Os dois
-  mapas (nacional e do DSEI) ligam src/lib/dica-dentro-do-mapa.ts.
+  mapas (nacional e do DSEI) ligam src/lib/mapas/dica-dentro-do-mapa.ts.
 */
 describe("dicas e popups dentro do mapa", () => {
   /* Mede como o navegador: contêiner 600 × 400, dica 268 × 58. */

@@ -8,7 +8,7 @@ import {
   ESTADOS_DA_RESPOSTA,
   podeEditarTexto,
   proximoEstado,
-} from "../src/lib/resposta-do-recurso.ts";
+} from "../src/lib/recursos/resposta-do-recurso.ts";
 
 /*
   A máquina de estados da resposta ao recurso e quem pode fazer cada

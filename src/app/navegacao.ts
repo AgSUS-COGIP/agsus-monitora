@@ -42,7 +42,7 @@ import {
 } from "../lib/navegacao/rotas.ts";
 import type { DestinoDaRota } from "../lib/navegacao/rotas.ts";
 import { definirPaginaDaAba } from "../lib/sessao/identidade-da-aba";
-import { cabecalhoDaVisaoGeral } from "../lib/visao-geral-da-area.ts";
+import { cabecalhoDaVisaoGeral } from "../lib/visao-geral/visao-geral-da-area.ts";
 import {
   assinarDadosDoMonitoramento,
   definirAreaAtual,
@@ -54,7 +54,7 @@ import {
   marcarItemAtivoNoMenu,
 } from "../componentes/barra-lateral/estado.ts";
 import { SECOES } from "../modulos/configuracoes/secoes.ts";
-import { etapaDasRegras } from "../lib/regras-do-edital.ts";
+import { etapaDasRegras } from "../lib/regras-do-edital/regras-do-edital.ts";
 import {
   confirmarSaidaDaSecao,
   confirmarSaidaDasSecoes,

@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 import { tomDoAviso } from "../../lib/configuracoes/apresentacao-das-configuracoes.ts";
 import { camposDaSecao } from "../../lib/configuracoes/publicacao-de-configuracoes.ts";
-import { INDICADORES } from "../../lib/visao-geral.ts";
+import { INDICADORES } from "../../lib/visao-geral/visao-geral.ts";
 import { GradeDeKpis, Kpi } from "../../ui/index.ts";
 import { Icone } from "../../componentes/icone.tsx";
 import { CampoDaSecao, Grupo, Previa } from "./partes.tsx";

@@ -32,7 +32,7 @@ import {
   Este arquivo não importa React.
 */
 
-import { MIME_DOCX } from "../../../lib/documento-da-resposta.ts";
+import { MIME_DOCX } from "../../../lib/recursos/documento-da-resposta.ts";
 import { CABECALHO_PADRAO } from "../../../lib/base/cabecalho-dos-documentos.ts";
 import { canChangeCandidateStatus } from "../../../lib/acessos/access-roles.ts";
 import { ehConflitoDeVersao } from "../../../lib/base/conflito-de-versao.ts";

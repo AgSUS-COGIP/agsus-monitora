@@ -1,4 +1,4 @@
-import { objetoDosRecursos as objeto } from "../dados-dos-recursos.ts";
+import { objetoDosRecursos as objeto } from "../recursos/dados-dos-recursos.ts";
 export { objeto };
 export const textoDaAgenda = (v: unknown) => (typeof v === "string" ? v : "");
 export function registrosDaAgenda(v: unknown): Record<string, unknown>[] {

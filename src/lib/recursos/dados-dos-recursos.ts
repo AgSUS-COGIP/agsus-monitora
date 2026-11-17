@@ -8,7 +8,7 @@ import type {
   DetalheDoRecurso,
   CandidatoDoRecurso,
   RegistroDosRecursos,
-} from "../modulos/recursos/tipos-do-estado.ts";
+} from "../../modulos/recursos/tipos-do-estado.ts";
 import type {
   ModeloDaResposta,
   RespostaDoRecurso,

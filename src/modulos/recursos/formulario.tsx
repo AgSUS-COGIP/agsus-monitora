@@ -9,7 +9,7 @@ import type {
   DadosDoRecurso,
   OrigemDoRecurso,
   RascunhoDoRecurso,
-} from "../../lib/tipos-dos-recursos.ts";
+} from "../../lib/recursos/tipos-dos-recursos.ts";
 type RascunhoDoFormulario = Omit<RascunhoDoRecurso, "analise"> & {
   analise:
     | CandidatoDoRecurso
@@ -39,7 +39,7 @@ import {
   RASCUNHO_VAZIO,
   rascunhoDoRecurso,
   recursoDuplicado,
-} from "../../lib/recursos-dos-candidatos.ts";
+} from "../../lib/recursos/recursos-dos-candidatos.ts";
 import {
   Aviso,
   Campo,

@@ -19,7 +19,10 @@ import { retratoParaDocumento } from "./dados-dos-documentos.ts";
   SpreadsheetML mínimo, duas planilhas — Classificação e Eliminados) e o
   nome do arquivo.
 */
-import { escaparXml, zipSemCompressao } from "../documento-da-resposta.ts";
+import {
+  escaparXml,
+  zipSemCompressao,
+} from "../recursos/documento-da-resposta.ts";
 import {
   MOTIVOS_DE_ELIMINACAO,
   TIPOS_DE_LISTA,

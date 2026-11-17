@@ -78,7 +78,7 @@ Como o sistema faz:
 
 - **Tela sem rolagem lateral:** `.ui-tela` é uma grade com `minmax(0, 1fr)`; sem isso, a tabela
   mais larga alargava a página inteira (Painéis chegou a 924px num celular de 375px).
-- **Rótulos de gráfico em linhas:** `rotuloEmLinhas` (`src/lib/rotulo-em-linhas.ts`) quebra o
+- **Rótulos de gráfico em linhas:** `rotuloEmLinhas` (`src/lib/selecao/rotulo-em-linhas.ts`) quebra o
   rótulo do eixo para o Chart.js, que desenha um array como várias linhas.
 - **Legenda do mapa** e **convite da Aya**: a legenda começa recolhida abaixo de 768px; o convite
   "Primeira vez em…?" fica menor no celular e some ao rolar a página.

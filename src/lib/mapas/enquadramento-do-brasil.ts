@@ -21,7 +21,7 @@ import { RAIO_MAXIMO as RAIO_DA_BOLHA } from "./mapa-render.ts";
 
 /*
   O maior ponto dos mapas: o raio da bolha do DSEI e o traço dela. O ponto de
-  Projetos não passa do raio da bolha (src/lib/visao-geral-da-area.ts; o
+  Projetos não passa do raio da bolha (src/lib/visao-geral/visao-geral-da-area.ts; o
   teste confere).
 */
 export const TRACO_MAXIMO = 3;

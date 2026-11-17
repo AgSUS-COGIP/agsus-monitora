@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState } from "react";
-import type { RecursoDoPainel } from "../../../lib/tipos-dos-recursos.ts";
+import type { RecursoDoPainel } from "../../../lib/recursos/tipos-dos-recursos.ts";
 import { Secao, Selo } from "../../../ui/index.ts";
 
 /*

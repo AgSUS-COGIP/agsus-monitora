@@ -3,20 +3,23 @@ import type {
   EscolhaDoRelatorio,
   FormatoDoRelatorio,
   RecorteDoRelatorio,
-} from "../../lib/relatorio-da-visao-geral.ts";
+} from "../../lib/visao-geral/relatorio-da-visao-geral.ts";
 import type { ClienteDoRelatorio } from "./dados-da-diretoria.ts";
 import { useEffect, useRef, useState } from "react";
 import { Modal, Segmentado } from "../../ui/index.ts";
 import { CHAVE_DO_CABECALHO } from "../../lib/base/cabecalho-dos-documentos.ts";
 import { erroDeVersaoNova } from "../../lib/carga/importar-com-recarga.ts";
 import { nomeDaArea } from "../../lib/navegacao/menu-lateral.ts";
-import { csvDaVisaoGeral, nomeDoCsv } from "../../lib/visao-geral.ts";
+import {
+  csvDaVisaoGeral,
+  nomeDoCsv,
+} from "../../lib/visao-geral/visao-geral.ts";
 import {
   aprovadosNoRecorte,
   LIMITE_DE_APROVADOS_NO_PDF,
   linhasDeAprovados,
   linhasPorCargo,
-} from "../../lib/relatorio-da-diretoria.ts";
+} from "../../lib/visao-geral/relatorio-da-diretoria.ts";
 import {
   alternarNaEscolha,
   COLUNAS_DO_RELATORIO,
@@ -29,7 +32,7 @@ import {
   SECOES_DO_RELATORIO,
   secoesPermitidas,
   xlsxDoRelatorio,
-} from "../../lib/relatorio-da-visao-geral.ts";
+} from "../../lib/visao-geral/relatorio-da-visao-geral.ts";
 import {
   baixarAprovadosDaDiretoria,
   lerVagasPorCargo,
@@ -45,8 +48,8 @@ import {
   2 e 3 do relatório da diretoria) são lidas do banco ao gerar; "Aprovados" só
   aparece para quem tem acesso à Lista de aprovados, e o banco registra cada
   download. A lógica está em
-  src/lib/relatorio-da-visao-geral.ts; o PDF, em
-  src/lib/relatorio-da-visao-geral-em-pdf.ts.
+  src/lib/visao-geral/relatorio-da-visao-geral.ts; o PDF, em
+  src/lib/visao-geral/relatorio-da-visao-geral-em-pdf.ts.
 */
 
 export const CHAVE_DA_ESCOLHA = "yeende_relatorio_visao_geral_v1";
@@ -84,7 +87,7 @@ async function gerarPdf(
   const [{ carregarBibliotecasDoPdf }, { pdfDoRelatorio }, { logoEmPng }] =
     await Promise.all([
       import("../../lib/avaliacao-documental/espelho-em-pdf.ts"),
-      import("../../lib/relatorio-da-visao-geral-em-pdf.ts"),
+      import("../../lib/visao-geral/relatorio-da-visao-geral-em-pdf.ts"),
       import("../classificacao/documento-no-navegador.ts"),
     ]).catch((erro: unknown) => {
       throw erroDeVersaoNova(erro);

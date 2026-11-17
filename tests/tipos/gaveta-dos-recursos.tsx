@@ -1,7 +1,7 @@
 import { GavetaDoRecurso } from "../../src/modulos/recursos/gaveta.tsx";
 import { SecaoDoParecer } from "../../src/modulos/recursos/parecer.tsx";
 import { SecaoDeAnexos } from "../../src/modulos/recursos/anexos.tsx";
-import { acoesDoParecer } from "../../src/lib/parecer-do-recurso.ts";
+import { acoesDoParecer } from "../../src/lib/recursos/parecer-do-recurso.ts";
 import type {
   PropsDaGavetaDoRecurso,
   PropsDaSecaoDoRecurso,

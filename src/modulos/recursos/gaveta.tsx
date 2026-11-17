@@ -2,15 +2,15 @@ import type {
   PropsDaGavetaDoRecurso,
   HistoricoDoRecurso,
 } from "./tipos-da-gaveta.ts";
-import type { OrigemDoRecurso } from "../../lib/tipos-dos-recursos.ts";
+import type { OrigemDoRecurso } from "../../lib/recursos/tipos-dos-recursos.ts";
 import { useState, useSyncExternalStore } from "react";
 import { formatNumberBR } from "../../lib/base/formatters";
 import {
   ETAPAS,
   rotuloDaOrigem,
   rotuloDaSituacao,
-} from "../../lib/recursos-dos-candidatos.ts";
-import { rotuloDoEstado } from "../../lib/resposta-do-recurso.ts";
+} from "../../lib/recursos/recursos-dos-candidatos.ts";
+import { rotuloDoEstado } from "../../lib/recursos/resposta-do-recurso.ts";
 import {
   Aviso,
   Carregando,

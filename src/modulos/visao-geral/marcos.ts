@@ -1,5 +1,5 @@
 import type { ClienteDosMarcos, MarcoDoAno } from "./tipos.ts";
-import { registroDaVisaoGeral } from "../../lib/visao-geral.ts";
+import { registroDaVisaoGeral } from "../../lib/visao-geral/visao-geral.ts";
 /*
   Os marcos do ano da equipe na Visão geral: a leitura do banco
   (`obter_marcos_da_area`, contrato em src/lib/rpc-contrato.ts). Números só da

@@ -15,7 +15,7 @@ import type {
   Indicadores,
   ChaveDoIndicador,
   TextosDaVisaoGeral,
-} from "../modulos/visao-geral/tipos.ts";
+} from "../../modulos/visao-geral/tipos.ts";
 /*
   A VISÃO GERAL (página `dashboard`), sem DOM nem rede — as regras que
   moravam em `legacy-app.js` (applyFilters, renderKpis, renderTable,
@@ -35,8 +35,8 @@ import type {
   exportação partem do mesmo recorte.
 */
 
-import { cicloPadronizado, numeroDoCiclo } from "./editais/ciclo-do-edital.ts";
-import { hojeEmBrasilia } from "./cronograma/cronograma-do-edital.ts";
+import { cicloPadronizado, numeroDoCiclo } from "../editais/ciclo-do-edital.ts";
+import { hojeEmBrasilia } from "../cronograma/cronograma-do-edital.ts";
 import {
   diaDoCalendario,
   gravidade,
@@ -44,8 +44,8 @@ import {
   motivosDeAtencao,
 } from "./criticos-da-visao-geral.ts";
 import type { MarcacaoDeCritico } from "./criticos-da-visao-geral.ts";
-import { sanitizeCsvCell } from "./seguranca/csv-security";
-import { tomDoStatusDoEdital } from "./editais/editais-do-nucleo.ts";
+import { sanitizeCsvCell } from "../seguranca/csv-security";
+import { tomDoStatusDoEdital } from "../editais/editais-do-nucleo.ts";
 import {
   faseDoEdital,
   FASES,
@@ -56,7 +56,7 @@ import {
   linhaAtende,
   opcoesDoCampo,
   podarSelecoes,
-} from "./filtros-do-mapa.ts";
+} from "../mapas/filtros-do-mapa.ts";
 import {
   contratadasImediatas,
   ehCancelado,
@@ -372,7 +372,7 @@ export function duracaoEmDias(linha: LinhaDoMonitoramento): number | null {
 /**
  * Cada linha com `fase`, `vagas_reabertas` e `textos_da_reabertura` (as vagas
  * sem contratação que um edital mais novo da mesma unidade reabriu, pela conta
- * `acompanhamento.reaberturas`, de src/lib/vagas-reabertas.ts), `atencao` (motivos do crítico), `pos_resultado`
+ * `acompanhamento.reaberturas`, de src/lib/visao-geral/vagas-reabertas.ts), `atencao` (motivos do crítico), `pos_resultado`
  * (pendências), `desistentes`, `aprovados` e `cadastro_reserva` (da lista
  * vigente), `ciclo` padronizado e `primeira_admissao`, `ultima_admissao` e
  * `admissoes` (conciliadas com o RH). `hoje`: "AAAA-MM-DD".

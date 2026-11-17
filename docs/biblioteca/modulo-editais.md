@@ -72,7 +72,7 @@ datas). Ver [[deploy-e-vercel]].
 
 Página aberta em Editais, no lugar da tabela: por edital, todas as regras do processo na ordem das
 etapas — 1 Triagem, 2 Avaliação documental, 3 Entrevista, 4 Classificação e 5 Chamada para
-contratação (lista em `ETAPAS_DAS_REGRAS`, `src/lib/regras-do-edital.ts`).
+contratação (lista em `ETAPAS_DAS_REGRAS`, `src/lib/regras-do-edital/regras-do-edital.ts`).
 
 - Cada etapa usa o editor (e as RPCs) que já existia na tela da etapa, com a mesma loja; nada aqui
   calcula ou grava por conta própria. Salvar não recalcula nada (o 114/2026 segue congelado).
@@ -93,7 +93,7 @@ contratação (lista em `ETAPAS_DAS_REGRAS`, `src/lib/regras-do-edital.ts`).
   Editais e põe o endereço.
 - `resumo-da-regra-da-etapa.tsx`: a regra só para ler no topo da tela da etapa (Avaliação
   documental, Classificação): versão, situação, uma linha por regra; sem regra, aviso curto e o
-  mesmo botão. As linhas vêm de `src/lib/regras-do-edital-resumos.ts`, por `import()` na primeira
+  mesmo botão. As linhas vêm de `src/lib/regras-do-edital/regras-do-edital-resumos.ts`, por `import()` na primeira
   vez (até lá, esqueleto).
 
 ## Encerramento do edital

@@ -1,4 +1,4 @@
-import type { AcaoDaResposta } from "../modulos/recursos/tipos-do-estado.ts";
+import type { AcaoDaResposta } from "../../modulos/recursos/tipos-do-estado.ts";
 import type { RespostaDoRecurso } from "./tipos-da-resposta-do-recurso.ts";
 import type { IdentificadorDoRecurso } from "./tipos-dos-recursos.ts";
 interface RegraDaResposta {

@@ -63,7 +63,7 @@ import { gerarDocxOficial } from "../../lib/classificacao/documento-docx.ts";
 import { ehEditalDeTreinamento } from "../../lib/editais/edital-de-treinamento.ts";
 import { nomeDoArquivo } from "../../lib/classificacao/exportacao.ts";
 import { CABECALHO_PADRAO } from "../../lib/base/cabecalho-dos-documentos.ts";
-import { MIME_DOCX } from "../../lib/documento-da-resposta.ts";
+import { MIME_DOCX } from "../../lib/recursos/documento-da-resposta.ts";
 import { comTempoLimite, mensagemDeFalha } from "../../lib/carga/falha-de-rede";
 import { LOGO_PADRAO_DA_BARRA } from "../../lib/navegacao/marca-da-barra-lateral.ts";
 import {

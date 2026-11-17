@@ -31,7 +31,7 @@ type EscalaDeBarras = NonNullable<ChartOptions<"bar">["scales"]>[string];
 import { useEffect, useMemo, useRef } from "react";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
 import { formatNumberBR } from "../../lib/base/formatters";
-import { rotuloEmLinhas } from "../../lib/rotulo-em-linhas.ts";
+import { rotuloEmLinhas } from "../../lib/selecao/rotulo-em-linhas.ts";
 import {
   aptosEEliminados,
   CAMPOS_DO_FILTRO,
@@ -42,8 +42,8 @@ import {
   rotuloDaUnidade,
   topUnidades,
   triadosEReprovados,
-} from "../../lib/selecao-do-painel.ts";
-import { paletaDoPainel } from "../../lib/tema-do-painel";
+} from "../../lib/selecao/selecao-do-painel.ts";
+import { paletaDoPainel } from "../../lib/paineis/tema-do-painel";
 import {
   CardDeGrafico,
   ChipDeFiltro,

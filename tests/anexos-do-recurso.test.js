@@ -11,7 +11,7 @@ import {
   TIPOS_DE_ARQUIVO,
   tipoDoArquivo,
   validarArquivoDoAnexo,
-} from "../src/lib/anexos-do-recurso.ts";
+} from "../src/lib/recursos/anexos-do-recurso.ts";
 
 /*
   Anexos do recurso: o caminho que as políticas do Storage leem, a validação

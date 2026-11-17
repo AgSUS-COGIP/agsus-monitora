@@ -35,7 +35,7 @@ import {
   type GravacaoDoRascunho,
   type RascunhoGuardado,
   type TipoDeRegra,
-} from "../lib/rascunho-da-regra.ts";
+} from "../lib/regras-do-edital/rascunho-da-regra.ts";
 import {
   guardaDeAlteracoes,
   type GuardaDeAlteracoes,

@@ -21,9 +21,9 @@ import type {
   `corrigirCoordenada(lugar, latitude, longitude)`: o editor de coordenadas
   gravou a posição de um lugar; o cache passa a ter a nova (sem novo pedido).
 */
-import { aplicarCoordenada } from "../../lib/coordenadas-dos-projetos.ts";
+import { aplicarCoordenada } from "../../lib/mapas/coordenadas-dos-projetos.ts";
 import { exigirSessao } from "../../lib/sessao/sessao";
-import { municipiosDaResposta } from "../../lib/visao-geral-da-area.ts";
+import { municipiosDaResposta } from "../../lib/visao-geral/visao-geral-da-area.ts";
 
 export const RPC_DOS_MUNICIPIOS = "listar_municipios_das_vagas_da_area";
 export const CACHE_TTL_MS = 5 * 60_000;

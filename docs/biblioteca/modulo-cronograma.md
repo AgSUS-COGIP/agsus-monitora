@@ -78,7 +78,7 @@ Sininho no topo (`src/app/casca/topo.tsx`) e popup "Bom dia, {nome} — seus edi
 (`RL_RESPONSAVEL_EDITAL`) ou demanda interna (`RL_DEMANDA_INTERNA_RESPONSAVEL`). Pasta
 `src/modulos/resumo-do-dia/` (`estado.ts` com o store `resumoDoDia`, `resumo-do-dia.tsx`, e o CSS,
 em que a cor de cada linha é a do tipo no Cronograma, `data-cor`); regras puras em
-`src/lib/resumo-do-dia.ts`; migration `20261104130000_resumo_do_dia_do_responsavel`.
+`src/lib/resumo-do-dia/resumo-do-dia.ts`; migration `20261104130000_resumo_do_dia_do_responsavel`.
 
 - **Uma chamada** (`obter_meu_resumo_do_dia`) ao entrar (`src/app/sistema.ts`) e outra a cada
   clique no sininho; sem polling. O sininho mostra o número de pendências.

@@ -7,8 +7,8 @@ import {
   avaliarAcaoDoParecer,
   erroDoTextoDoParecer,
   proximaSituacao,
-} from "../src/lib/parecer-do-recurso.ts";
-import { SITUACOES } from "../src/lib/recursos-dos-candidatos.ts";
+} from "../src/lib/recursos/parecer-do-recurso.ts";
+import { SITUACOES } from "../src/lib/recursos/recursos-dos-candidatos.ts";
 
 /*
   O fluxo do parecer jurídico sem DOM — espelho de

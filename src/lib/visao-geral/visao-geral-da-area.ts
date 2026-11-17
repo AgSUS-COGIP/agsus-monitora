@@ -4,8 +4,8 @@ import type {
   ProjetoDoMapa,
   ProjetoComLugares,
   EditalDoLugar,
-} from "../modulos/mapa-de-projetos/tipos.ts";
-import type { LinhaDoMonitoramento } from "../componentes/tipos-do-monitoramento.ts";
+} from "../../modulos/mapa-de-projetos/tipos.ts";
+import type { LinhaDoMonitoramento } from "../../componentes/tipos-do-monitoramento.ts";
 /*
   A Visão geral de cada área, sem DOM nem rede.
 
@@ -30,11 +30,11 @@ import type { LinhaDoMonitoramento } from "../componentes/tipos-do-monitoramento
 import {
   coordenadasDaUf,
   coordenadasDoMunicipio,
-} from "./coordenadas-dos-municipios.ts";
-import { numeroDoEdital } from "./editais/numero-do-edital.ts";
-import { raioDaBolha } from "./mapa-render.ts";
-import { nomeDaArea } from "./navegacao/menu-lateral.ts";
-import { AREA_SAUDE_INDIGENA } from "./editais/responsavel-do-edital.ts";
+} from "../mapas/coordenadas-dos-municipios.ts";
+import { numeroDoEdital } from "../editais/numero-do-edital.ts";
+import { raioDaBolha } from "../mapas/mapa-render.ts";
+import { nomeDaArea } from "../navegacao/menu-lateral.ts";
+import { AREA_SAUDE_INDIGENA } from "../editais/responsavel-do-edital.ts";
 
 const num = (valor: unknown) => {
   if (typeof valor !== "number" && typeof valor !== "string") return 0;
@@ -170,7 +170,7 @@ const numeroOuNulo = (valor: unknown) => {
   corrigida no editor de coordenadas). `coordenada` é `{ latitude, longitude,
   origem }`, `null` quando o banco ainda não tem a do lugar, ou `undefined`
   quando a resposta não traz o campo (banco antes da migration: o mapa usa a
-  tabela de src/lib/coordenadas-dos-municipios.ts — tirar depois de aplicada).
+  tabela de src/lib/mapas/coordenadas-dos-municipios.ts — tirar depois de aplicada).
 */
 const coordenadaDaLinha = (linha: Record<string, unknown>) => {
   if (!linha || !Object.hasOwn(linha, "latitude")) return undefined;
@@ -381,7 +381,7 @@ export function lugaresDoRecorte(
   cor dele; sem filtro, a cor é a do primeiro projeto do lugar e
   `variosProjetos` diz que há outros (o ponto ganha contorno tracejado).
 
-  O raio é a regra da bolha do DSEI (`raioDaBolha`, src/lib/mapa-render.ts:
+  O raio é a regra da bolha do DSEI (`raioDaBolha`, src/lib/mapas/mapa-render.ts:
   raiz do valor, de 5 a 15 px), medido nas vagas do lugar inteiro contra o
   maior de `todos` (os lugares antes do recorte): filtrar não muda o tamanho
   de quem fica, como filtrar não muda a bolha do DSEI (a população).

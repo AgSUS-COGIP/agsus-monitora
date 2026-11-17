@@ -22,8 +22,8 @@ fontes-dos-dados.tsx  a gaveta "Fontes dos dados" (uma coluna por bloco: Origem,
 paineis-de-dados.css  a alça de largura e o painel do ⓘ
 ```
 
-Regras puras em `src/lib/relatorios-dos-paineis.ts` (colunas, leitura da página, CSV, XLSX, nome do
-arquivo, largura arrastada e texto da origem) e `src/lib/fontes-dos-paineis.ts` (leitura das fontes).
+Regras puras em `src/lib/paineis/relatorios-dos-paineis.ts` (colunas, leitura da página, CSV, XLSX, nome do
+arquivo, largura arrastada e texto da origem) e `src/lib/paineis/fontes-dos-paineis.ts` (leitura das fontes).
 RPCs no contrato (`src/lib/rpc-contrato.ts`): `ler_relatorio_do_painel`,
 `sincronizar_relatorio_do_painel`, `listar_fontes_do_painel` e `salvar_fonte_da_coluna`.
 
@@ -62,7 +62,7 @@ RPCs no contrato (`src/lib/rpc-contrato.ts`): `ler_relatorio_do_painel`,
 - **Montar relatório** (16/11/2026; antes no menu da conta): o botão no topo abre o montador da
   Visão geral (`src/modulos/visao-geral/montador-de-relatorio.tsx`, [[modulo-visao-geral]]) com
   todos os editais da área, sem os filtros da Visão geral (`recorteDaAreaInteira`, em
-  `src/lib/relatorio-da-visao-geral.ts`). As linhas são as do estado da Visão geral, lidas no
+  `src/lib/visao-geral/relatorio-da-visao-geral.ts`). As linhas são as do estado da Visão geral, lidas no
   clique; "Aprovados" só para quem tem acesso à Lista de aprovados.
 - Largura das colunas: a alça na borda direita do cabeçalho (arrastar, ou ←/→ com foco nela) muda
   a largura; no primeiro arraste a tabela vai a layout fixo. A largura fica só em memória:

@@ -5,15 +5,15 @@ import type {
   Indicadores,
   LinhaDaVisaoGeral,
   TextosDaVisaoGeral,
-} from "../modulos/visao-geral/tipos.ts";
+} from "../../modulos/visao-geral/tipos.ts";
 import type {
   CelulaDaPlanilha,
   PlanilhaDaClassificacao,
-} from "./classificacao/tipos-dos-documentos.ts";
-import type { ZiparComCompressao } from "./aprovados/exportacao/exportacao-da-lista-de-aprovados.ts";
+} from "../classificacao/tipos-dos-documentos.ts";
+import type { ZiparComCompressao } from "../aprovados/exportacao/exportacao-da-lista-de-aprovados.ts";
 import type { LinhaPorCargo } from "./relatorio-da-diretoria.ts";
-import { arquivosDoXlsx } from "./classificacao/exportacao.ts";
-import { hojeEmBrasilia } from "./cronograma/cronograma-do-edital.ts";
+import { arquivosDoXlsx } from "../classificacao/exportacao.ts";
+import { hojeEmBrasilia } from "../cronograma/cronograma-do-edital.ts";
 import {
   contratacoesDoCadastroReserva,
   contratadasImediatas,

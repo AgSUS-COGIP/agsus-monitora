@@ -38,7 +38,7 @@ import {
   ehCancelado,
   temResultado,
 } from "./indicadores-do-monitoramento.ts";
-import type { LinhaDoMonitoramento } from "../modulos/visao-geral/tipos.ts";
+import type { LinhaDoMonitoramento } from "../../modulos/visao-geral/tipos.ts";
 
 /** Um cargo do edital: o oficial (se casou), o texto e as vagas do quadro (nulo: sem quadro). */
 export interface CargoDoEdital {

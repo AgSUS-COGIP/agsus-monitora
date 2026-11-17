@@ -45,7 +45,7 @@ quem edita Recursos ou dá o parecer jurídico (`canAnalisarRecursos`); o menu v
 
 Tudo em TypeScript/TSX. O que vem do banco é validado antes de usar:
 
-- `src/lib/dados-dos-recursos.ts` valida os campos do painel e do formulário (conserva campos
+- `src/lib/recursos/dados-dos-recursos.ts` valida os campos do painel e do formulário (conserva campos
   adicionais; permissões só quando booleanas) e, no detalhe, histórico, autores das etapas, textos
   do parecer e metadados dos anexos.
 - Resposta e modelos: identificadores, versões, textos, histórico e escopo. Modelo com área/origem
@@ -78,8 +78,8 @@ componente desmonta.
   duplicidade, formulário, CSV), `prazo-do-recurso.ts`, `parecer-do-recurso.ts` (botões permitidos),
   `resposta-do-recurso.ts` (transições e revisão), `modelos-de-resposta.ts`,
   `anexos-do-recurso.ts`, `documento-da-resposta.ts`.
-- Contratos: `src/lib/tipos-dos-recursos.ts`, `tipos-do-estado.ts`, `tipos-da-gaveta.ts`,
-  `src/lib/tipos-da-resposta-do-recurso.ts`, `src/lib/classificacao/tipos-dos-ajustes.ts`.
+- Contratos: `src/lib/recursos/tipos-dos-recursos.ts`, `tipos-do-estado.ts`, `tipos-da-gaveta.ts`,
+  `src/lib/recursos/tipos-da-resposta-do-recurso.ts`, `src/lib/classificacao/tipos-dos-ajustes.ts`.
 - `parecer-em-blocos/`: PROTÓTIPO "Montar parecer" (desligado), o simulador de pareceres da Saúde
   Indígena em blocos por etapa, com prévia. Fontes do pré-preenchimento, tabelas e RPCs propostas em
   [recursos/parecer-em-blocos.md](../recursos/parecer-em-blocos.md).

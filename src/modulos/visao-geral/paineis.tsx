@@ -11,7 +11,7 @@ import {
   anoDaSelecao,
   anosDosEditais,
   editaisDoAno,
-} from "../../lib/atalhos-de-filtro.ts";
+} from "../../lib/visao-geral/atalhos-de-filtro.ts";
 import {
   editaisComEtapaNaSemana,
   primeiroNome,
@@ -25,7 +25,7 @@ import {
   posResultado,
   processosPorProjeto,
   rotuloDoAtalho,
-} from "../../lib/visao-geral.ts";
+} from "../../lib/visao-geral/visao-geral.ts";
 import {
   ChipDeFiltro,
   ChipsDeFiltro,
@@ -352,7 +352,7 @@ export function Filtros({
 
 /* ── Vagas ──────────────────────────────────────────────────────────── */
 
-/* De onde vem o desconto das vagas imediatas (src/lib/vagas-reabertas.ts). */
+/* De onde vem o desconto das vagas imediatas (src/lib/visao-geral/vagas-reabertas.ts). */
 const TITULO_DAS_REABERTAS =
   "Cada vaga conta uma vez: a vaga sem contratação reaberta em edital mais novo da mesma unidade, para o mesmo cargo, conta só no edital novo.";
 

@@ -30,15 +30,15 @@ import {
   linhasDaOrigem,
   paginaDaTabela,
   textoDaCelula,
-} from "../../lib/relatorios-dos-paineis.ts";
+} from "../../lib/paineis/relatorios-dos-paineis.ts";
 import type {
   IdDoRelatorio,
   LinhaDoRelatorio,
-} from "../../lib/relatorios-dos-paineis.ts";
+} from "../../lib/paineis/relatorios-dos-paineis.ts";
 import { podeBaixarAprovados } from "../../lib/acessos/access-roles.ts";
-import { textosDaVisaoGeral } from "../../lib/visao-geral.ts";
-import { recorteDaAreaInteira } from "../../lib/relatorio-da-visao-geral.ts";
-import type { RecorteDoRelatorio } from "../../lib/relatorio-da-visao-geral.ts";
+import { textosDaVisaoGeral } from "../../lib/visao-geral/visao-geral.ts";
+import { recorteDaAreaInteira } from "../../lib/visao-geral/relatorio-da-visao-geral.ts";
+import type { RecorteDoRelatorio } from "../../lib/visao-geral/relatorio-da-visao-geral.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { estadoDaVisaoGeral } from "../visao-geral/estado.ts";
 import { MontadorDeRelatorio } from "../visao-geral/montador-de-relatorio.tsx";
@@ -64,7 +64,7 @@ import type {
   por aba, em tabela, com o download em CSV e XLSX do que está na tabela.
   Recurso de permissão `paineis_dados`; aba `paineis-de-dados` no catálogo
   (`src/lib/navegacao/menu-lateral.ts`). As colunas e os arquivos são de
-  `src/lib/relatorios-dos-paineis.ts`; o estado, de `./estado.ts`. Título e
+  `src/lib/paineis/relatorios-dos-paineis.ts`; o estado, de `./estado.ts`. Título e
   área ficam no cabeçalho da casca.
 
   "Montar relatório" (no topo, desde 16/11/2026; antes ficava no menu da

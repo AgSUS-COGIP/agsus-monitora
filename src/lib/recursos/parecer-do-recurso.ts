@@ -1,4 +1,4 @@
-import type { AcaoDoParecer } from "../modulos/recursos/tipos-do-estado.ts";
+import type { AcaoDoParecer } from "../../modulos/recursos/tipos-do-estado.ts";
 export type TipoDoTextoDoParecer = "parecer" | "obrigatorio" | "opcional";
 interface RegraDoParecer {
   rotulo: string;

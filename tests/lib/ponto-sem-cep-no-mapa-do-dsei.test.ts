@@ -9,7 +9,7 @@ import {
   VINCULO_EXTERNO,
   VINCULO_INDETERMINADO,
   VINCULO_NORMAL,
-} from "../../src/lib/uf-ibge.ts";
+} from "../../src/lib/mapas/uf-ibge.ts";
 
 /*
   PONTO DO SIGEPSI SEM CEP: VÍNCULO NÃO CLASSIFICADO

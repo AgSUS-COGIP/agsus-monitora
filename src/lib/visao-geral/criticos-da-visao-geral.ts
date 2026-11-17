@@ -29,11 +29,11 @@
   Os limites ficam em LIMITES_DO_CRITICO (e em docs/aya/regras-da-visao-geral.md).
 */
 
-import { hojeEmBrasilia } from "./cronograma/cronograma-do-edital.ts";
+import { hojeEmBrasilia } from "../cronograma/cronograma-do-edital.ts";
 import {
   motivoPareceTexto,
   textoLimpo,
-} from "./avaliacao-documental/qualidade-do-motivo.ts";
+} from "../avaliacao-documental/qualidade-do-motivo.ts";
 import { faseDoEdital } from "./fases-do-processo.ts";
 import {
   contratadasImediatas,
@@ -44,7 +44,7 @@ import type {
   EtapaDoAcompanhamento,
   LinhaDoMonitoramento,
   Motivo,
-} from "../modulos/visao-geral/tipos.ts";
+} from "../../modulos/visao-geral/tipos.ts";
 
 /** Os limites do crítico (`LIMITES_DO_CRITICO`, ou outros no teste). */
 export interface LimitesDoCritico {

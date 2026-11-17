@@ -687,7 +687,7 @@ updated_at, updated_by) e a linha do painel idênticas.
 Cuidado: restaurar no Histórico de configurações uma versão anterior a esta
 migration reativa a linha (`ativo`), e a coluna `painel:<analises>` volta à
 matriz. O front ignora o painel `analises` de qualquer jeito
-(`semOPainelAntigoDeAnalises`, em `src/lib/pagina-do-painel.ts`).
+(`semOPainelAntigoDeAnalises`, em `src/lib/paineis/pagina-do-painel.ts`).
 
 ## 9. Catálogo de abas (etapa 1 do "tudo vira aba")
 
@@ -754,7 +754,7 @@ com o mesmo md5). Sem migração de dados: a aba começa vazia. O painel externo
   leitor; gravar e buscar candidato, editor.
 - Catálogo: aba `recursos` (ícone `scale`, ordem 6) nas três áreas.
 - O prazo de resposta é classificado no front a partir das etapas do
-  cronograma (`src/lib/prazo-do-recurso.ts`); nada é guardado no banco.
+  cronograma (`src/lib/recursos/prazo-do-recurso.ts`); nada é guardado no banco.
 
 ## 11. CCE e Escritório Distrital e Regional são Projetos
 
@@ -879,7 +879,7 @@ Migration `20260929230000_recursos_modelos_anexos_respostas.sql` (rollback em
 - **Modelos de resposta**: `TB_MODELO_RESPOSTA_RECURSO`, uma linha por versão
   (PK modelo + versão, `ST_VIGENTE`); área e origem nulas = todas. Editar grava
   a versão seguinte; a resposta guarda a versão usada. Marcadores aceitos em
-  `private."FC_MARCADORES_MODELO_RESPOSTA"()` (= `src/lib/modelos-de-resposta.ts`).
+  `private."FC_MARCADORES_MODELO_RESPOSTA"()` (= `src/lib/recursos/modelos-de-resposta.ts`).
   Seis modelos iniciais (deferido, indeferido, parcialmente indeferido ×
   análise curricular, entrevista). Manutenção só com `recursos` = admin, na
   gaveta "Modelos de resposta" do painel de recursos.
@@ -889,7 +889,7 @@ Migration `20260929230000_recursos_modelos_anexos_respostas.sql` (rollback em
   opcional, mas depois de ir à revisão quem escreveu ou enviou não aprova;
   aprovar exige o recurso decidido com a situação do modelo; marcar enviada
   marca a etapa `resposta_candidato` do recurso. Regras espelhadas em
-  `src/lib/resposta-do-recurso.ts`.
+  `src/lib/recursos/resposta-do-recurso.ts`.
 - `TH_RECURSO_CANDIDATO` passa a aceitar `anexo` e `resposta` em `TP_ACAO`.
 - RPCs: `listar_modelos_resposta_recurso`, `salvar_modelo_resposta_recurso`,
   `arquivar_modelo_resposta_recurso`, `salvar_resposta_recurso`,

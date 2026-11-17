@@ -61,8 +61,8 @@ import type {
 } from "./estado.ts";
 import { importarComRecarga } from "../../lib/carga/importar-com-recarga.ts";
 import { BlocosEsqueleto } from "../../ui/index.ts";
-import { etapaDasRegras } from "../../lib/regras-do-edital.ts";
-import type { EtapaDasRegras } from "../../lib/regras-do-edital.ts";
+import { etapaDasRegras } from "../../lib/regras-do-edital/regras-do-edital.ts";
+import type { EtapaDasRegras } from "../../lib/regras-do-edital/regras-do-edital.ts";
 import type { ClienteDasRegras } from "../regras-do-edital/regras-do-edital.tsx";
 import type { EstadoDosAprovados } from "../aprovados/tipos-do-estado.ts";
 

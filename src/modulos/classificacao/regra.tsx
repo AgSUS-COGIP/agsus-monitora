@@ -21,7 +21,7 @@ import type {
   RegraEmEdicao,
   NumeroEmEdicao,
 } from "../../lib/classificacao/edicao-da-regra.ts";
-import { objetoDosRecursos } from "../../lib/dados-dos-recursos.ts";
+import { objetoDosRecursos } from "../../lib/recursos/dados-dos-recursos.ts";
 
 import { useId, useMemo, useState } from "react";
 import {
@@ -63,7 +63,7 @@ import { usarRascunhoDaRegra } from "../../app/usar-rascunho-da-regra.ts";
 import {
   dataEHoraCurtas,
   textoDaGravacao,
-} from "../../lib/rascunho-da-regra.ts";
+} from "../../lib/regras-do-edital/rascunho-da-regra.ts";
 import { CarregandoConteudo } from "../../ui/index.ts";
 
 /*

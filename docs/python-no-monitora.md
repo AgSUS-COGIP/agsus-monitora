@@ -562,7 +562,7 @@ tarefas deixava todo o resto lento.
    Mesmas RPCs de gravação; leitura da planilha pela conta de serviço do Google (JWT RS256 —
    precisa de `google-auth` ou `cryptography` no `requirements.txt` do job, a base `monitora` é só
    biblioteca padrão); as regras de `src/lib/entrevistas/entrevistas-da-planilha.ts` e
-   `src/lib/selecao-da-planilha.ts` portadas com casos dourados compartilhados. Não alivia o banco
+   `src/lib/selecao/selecao-da-planilha.ts` portadas com casos dourados compartilhados. Não alivia o banco
    (o custo é das RPCs), mas junta as cargas no mesmo lugar dos outros jobs. Junto: a carga das
    Entrevistas passar a gravar só a linha que mudou (hoje regrava as ~3.400 linhas e o `CO_SYNC` a
    cada hora, o que remonta o pacote e gera WAL). Estimativa: 3–4 dias; risco baixo.

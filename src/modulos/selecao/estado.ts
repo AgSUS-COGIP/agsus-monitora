@@ -34,7 +34,7 @@ import {
   normalizarPayload,
   PAINEL_DE_SELECAO,
   payloadMudou,
-} from "../../lib/selecao-do-painel.ts";
+} from "../../lib/selecao/selecao-do-painel.ts";
 import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.ts";
 import type {
   EstadoDaSelecao,

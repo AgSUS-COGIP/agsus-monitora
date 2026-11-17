@@ -2,13 +2,13 @@ import type { jsPDF as TipoJsPdf } from "jspdf";
 import type {
   BibliotecasDoPdf,
   MarcaDoPdf,
-} from "./avaliacao-documental/espelho-em-pdf.ts";
+} from "../avaliacao-documental/espelho-em-pdf.ts";
 import type {
   ConteudoDoRelatorio,
   TabelaDoRelatorio,
 } from "./relatorio-da-visao-geral.ts";
-import { textoParaOPdf } from "./avaliacao-documental/espelho-em-pdf.ts";
-import { CABECALHO_PADRAO } from "./base/cabecalho-dos-documentos.ts";
+import { textoParaOPdf } from "../avaliacao-documental/espelho-em-pdf.ts";
+import { CABECALHO_PADRAO } from "../base/cabecalho-dos-documentos.ts";
 
 /*
   O PDF do montador de relatório da Visão geral (A4 deitado): o timbrado

@@ -280,7 +280,7 @@ describe("o mapa", () => {
     await esperar(() => carregarContornos());
     expect([...mapa.camadas].some((c) => c.tipo === "tileLayer")).toBe(true);
     expect(leaflet.desenhadas(mapa, "geoJSON")).toHaveLength(2);
-    // Dicas e popups ficam dentro do mapa (src/lib/dica-dentro-do-mapa.ts).
+    // Dicas e popups ficam dentro do mapa (src/lib/mapas/dica-dentro-do-mapa.ts).
     expect(mapa.ouvintes("tooltipopen")).toBe(1);
     expect(mapa.ouvintes("popupopen")).toBe(1);
     // Desmontar remove o Leaflet.

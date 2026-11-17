@@ -16,7 +16,7 @@ import type {
   RegistroDoDsei,
   ContagemDoDsei,
 } from "../../src/lib/mapa-saude-indigena/tipos.ts";
-import type { CoordenadasDoMapa } from "../../src/lib/tipos-do-mapa.ts";
+import type { CoordenadasDoMapa } from "../../src/lib/mapas/tipos-do-mapa.ts";
 import { TIPO_POLO } from "../../src/lib/mapa-saude-indigena/formas.ts";
 
 const dsei: DseiDoMapa = {

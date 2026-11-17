@@ -8,7 +8,7 @@ import type {
   CampoDoFiltroDosRecursos,
   FiltrosDosRecursos,
   IdentificadorDoRecurso,
-} from "../../lib/tipos-dos-recursos.ts";
+} from "../../lib/recursos/tipos-dos-recursos.ts";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { pedirFiltro, usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
 import { filtrosDeRecursos } from "../../lib/aya/filtro-da-aya.ts";
@@ -24,7 +24,7 @@ import {
   opcoesDosFiltros,
   ORIGENS_PADRAO,
   pendenciasPrioritarias,
-} from "../../lib/recursos-dos-candidatos.ts";
+} from "../../lib/recursos/recursos-dos-candidatos.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import { Aviso, EstadoVazio } from "../../ui/index.ts";
 import { irParaTela } from "../../app/ir-para-tela.ts";

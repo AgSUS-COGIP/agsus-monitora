@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { LinhaDoMonitoramento } from "../../componentes/tipos-do-monitoramento.ts";
-import type { CoordenadasDoMapa } from "../tipos-do-mapa.ts";
+import type { CoordenadasDoMapa } from "../mapas/tipos-do-mapa.ts";
 import type { tipoDaUnidade } from "./formas.ts";
 import type { VoltaDoDsei } from "../../modulos/mapa-saude-indigena/tipos-do-painel.ts";
 

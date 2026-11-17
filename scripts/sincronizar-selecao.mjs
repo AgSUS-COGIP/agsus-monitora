@@ -10,7 +10,7 @@
   Roda de hora em hora (o dia todo) pelo GitHub Actions (.github/workflows/sincronizar-selecao.yml).
 
   Onde está a planilha: `PLANILHAS.auditoriaDaSelecao` em src/lib/base/planilhas.ts.
-  Como a aba vira linhas: src/lib/selecao-da-planilha.ts.
+  Como a aba vira linhas: src/lib/selecao/selecao-da-planilha.ts.
   Credenciais e variáveis: scripts/carga-de-planilha.mjs.
   Guia para quem for operar: docs/sincronizacao-das-planilhas.md.
 
@@ -29,7 +29,7 @@ import {
   emLotes,
   identificadorDaCarga,
 } from "../src/lib/entrevistas/entrevistas-da-planilha.ts";
-import { linhasDaAbaResultado } from "../src/lib/selecao-da-planilha.ts";
+import { linhasDaAbaResultado } from "../src/lib/selecao/selecao-da-planilha.ts";
 import {
   argumentos,
   carregarEnvLocal,

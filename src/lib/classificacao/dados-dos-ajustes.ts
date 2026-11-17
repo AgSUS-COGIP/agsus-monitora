@@ -1,7 +1,7 @@
 import {
   objetoDosRecursos as objeto,
   idDosRecursos as id,
-} from "../dados-dos-recursos.ts";
+} from "../recursos/dados-dos-recursos.ts";
 import type {
   DadosDosAjustes,
   DadosParaPreviaDoAjuste,

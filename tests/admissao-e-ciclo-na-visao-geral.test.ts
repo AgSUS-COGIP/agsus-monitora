@@ -14,7 +14,7 @@ import {
   enriquecerLinhas,
   filtrosVazios,
   valorParaOrdenar,
-} from "../src/lib/visao-geral.ts";
+} from "../src/lib/visao-geral/visao-geral.ts";
 
 /*
   A 1ª E A ÚLTIMA ADMISSÃO E O CICLO NA VISÃO GERAL (pedido de 13/11/2026)

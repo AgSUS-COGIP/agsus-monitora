@@ -40,9 +40,9 @@ e o Gestor o abrem.** O mapa de Projetos o liga no seu `editor-de-coordenadas.ts
 ([[modulo-mapa-de-projetos]]); o adaptador e as regras da Saúde Indígena saíram em 17/11/2026.
 
 - **Contratos.** Interface e fontes em `tipos.ts`; regras puras em
-  `src/lib/tipos-do-editor-de-coordenadas.ts`. Cada fonte fornece as RPCs, a identidade do ponto,
+  `src/lib/mapas/tipos-do-editor-de-coordenadas.ts`. Cada fonte fornece as RPCs, a identidade do ponto,
   as regras da fila, as sugestões e os argumentos de gravação; o tipo genérico preserva os campos
-  próprios do ponto. `src/lib/editor-de-coordenadas.ts` reúne as regras comuns: validação,
+  próprios do ponto. `src/lib/mapas/editor-de-coordenadas.ts` reúne as regras comuns: validação,
   ordenação, distância, sugestões repetidas, histórico e folga do enquadramento
   (`folgaDoEnquadramento`).
 - **Fronteira dos dados.** As respostas das RPCs entram como dados externos: pendências precisam

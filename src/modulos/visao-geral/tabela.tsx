@@ -12,7 +12,7 @@ import {
   contratacoesDoCadastroReserva,
   contratadasImediatas,
   vagasSemContratacao,
-} from "../../lib/indicadores-do-monitoramento.ts";
+} from "../../lib/visao-geral/indicadores-do-monitoramento.ts";
 import {
   COLUNAS_DA_TABELA,
   dataCurta,
@@ -25,7 +25,7 @@ import {
   seloDoStatus,
   taxaDeOciosidade,
   urgenciaDoCronograma,
-} from "../../lib/visao-geral.ts";
+} from "../../lib/visao-geral/visao-geral.ts";
 import { classes, Selo, TabelaInfinita } from "../../ui/index.ts";
 
 /*

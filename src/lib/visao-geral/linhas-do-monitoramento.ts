@@ -1,7 +1,7 @@
 import type {
   LinhaDoMonitoramento,
   UnidadeDoCatalogo,
-} from "../componentes/tipos-do-monitoramento.ts";
+} from "../../componentes/tipos-do-monitoramento.ts";
 
 const CAMPOS_TEXTUAIS = [
   "CO_AREA",

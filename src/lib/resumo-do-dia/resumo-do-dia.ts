@@ -1,5 +1,5 @@
-import { classificarEtapa } from "./editais/etapas-de-edital.ts";
-import { TIPO_DEMANDA_INTERNA } from "./cronograma/demandas-internas.ts";
+import { classificarEtapa } from "../editais/etapas-de-edital.ts";
+import { TIPO_DEMANDA_INTERNA } from "../cronograma/demandas-internas.ts";
 
 /*
   Resumo do dia do responsável (migration 20261104130000): o que a RPC

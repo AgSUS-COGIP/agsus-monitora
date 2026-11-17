@@ -8,10 +8,10 @@ import {
   COMPONENTES_DA_NOTA,
   CRITERIO_POR_CODIGO,
   METODOS_DE_EMPATE_FINAL,
-} from "./classificacao/catalogo.ts";
-import { ACUMULOS, normalizarRegra } from "./classificacao/regra.ts";
-import { resumoDaRegra } from "./avaliacao-documental/resumo-da-regra.ts";
-import type { RegraAnalise } from "./avaliacao-documental/tipos-da-regra.ts";
+} from "../classificacao/catalogo.ts";
+import { ACUMULOS, normalizarRegra } from "../classificacao/regra.ts";
+import { resumoDaRegra } from "../avaliacao-documental/resumo-da-regra.ts";
+import type { RegraAnalise } from "../avaliacao-documental/tipos-da-regra.ts";
 import type { LinhaDoResumo } from "./regras-do-edital.ts";
 
 /*
