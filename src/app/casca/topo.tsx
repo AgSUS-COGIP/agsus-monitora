@@ -16,6 +16,11 @@ import {
   13/11/2026). No celular, uma linha só, com o ☰ da gaveta antes
   do título.
 
+  Nas telas com título próprio (`tituloNaTela` em src/lib/rotas.ts: Conduzir
+  entrevistas, Classificação, Avaliação documental e Triagem), o título daqui
+  fica só para o leitor de tela e a faixa fica compacta (`data-compacto`):
+  sobra só a conta, menor, com o perfil dentro do menu (17/11/2026).
+
   O título da página vem da navegação (src/app/navegacao.ts), pelo contexto
   da raiz. Os outros textos ainda são escritos de fora: nome, e-mail e perfil
   por `src/app/perfil.ts`, os rótulos configuráveis por
@@ -27,10 +32,11 @@ import {
   lateral e entra por portal no `.title-row` até 900px (`alca-de-recolher.tsx`).
 */
 export function Topo() {
+  const naTela = usarTituloNaTela();
   return (
-    <header className="top">
+    <header className="top" data-compacto={naTela ? "" : undefined}>
       <div className="title-row">
-        <TituloDaPagina />
+        <TituloDaPagina naTela={naTela} />
       </div>
       <div className="actions">
         {/* Resumo do dia do responsável (src/modulos/resumo-do-dia/) */}
@@ -41,11 +47,15 @@ export function Topo() {
   );
 }
 
+/* A tela aberta tem título próprio? Com um aviso no lugar da página, a tela não está lá. */
+function usarTituloNaTela() {
+  const { view, aviso } = usarEstadoDaNavegacao();
+  return !aviso && Boolean(telaDaRota(view)?.tituloNaTela);
+}
+
 /* Nas telas com título próprio (`tituloNaTela`), o daqui fica só para o leitor de tela. */
-function TituloDaPagina() {
-  const { titulo, subtitulo, view, aviso } = usarEstadoDaNavegacao();
-  // Com um aviso no lugar da página, a tela não está lá: o título fica à vista.
-  const naTela = !aviso && Boolean(telaDaRota(view)?.tituloNaTela);
+function TituloDaPagina({ naTela }: { naTela: boolean }) {
+  const { titulo, subtitulo } = usarEstadoDaNavegacao();
   return (
     <div className={naTela ? "page-title sr-only" : "page-title"}>
       <h1 id="pageTitle">{titulo}</h1>

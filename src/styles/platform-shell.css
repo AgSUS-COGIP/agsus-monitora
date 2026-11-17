@@ -573,6 +573,9 @@ html[data-theme="dark"] .sidebar {
   font-size: var(--text-caption);
   font-weight: 600;
 }
+.user-profile-badge:empty {
+  display: none;
+}
 
 @media (max-width: 1360px) and (min-width: 901px) {
   .top {

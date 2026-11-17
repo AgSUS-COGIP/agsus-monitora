@@ -39,6 +39,11 @@ linha por componente) está em [docs/arquitetura-react.md](../arquitetura-react.
 | Telas da seleção | `CabecalhoDaTela`, `BarraDaLista`, `FaixaDeSituacao`, `CardDaLista`                                                                                |
 | Utilitários      | `usarEstadoDaSessao` (filtros voltam no F5), `classes(...)`                                                                                        |
 
+Nas telas com `CabecalhoDaTela` (`tituloNaTela` em `src/lib/rotas.ts`: Conduzir entrevistas,
+Classificação, Avaliação documental e Triagem), a faixa do topo do app (`header.top`) fica compacta
+(`data-compacto`, só a partir de 901px): sem o título, que é o da tela, e com a conta menor, o perfil
+só dentro do menu (`src/app/casca/topo.tsx`).
+
 Peças de layout só em CSS: `.ui-tela`, `.ui-card`, `.ui-titulo`, `.ui-linha-de-cards`,
 `.ui-pilha`, `.ui-grade-de-campos`, `.ui-acoes`, `.ui-barra-de-salvar`, `.ui-gaveta-*`,
 `.ui-texto-principal`/`.ui-texto-secundario`, `.ui-secao-texto`/`.ui-secao-vazio`, `.ui-esqueleto`,

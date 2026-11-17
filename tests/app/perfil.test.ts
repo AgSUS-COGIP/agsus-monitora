@@ -81,6 +81,8 @@ describe("perfil", () => {
     sessao.definir({ usuario: ANA, perfil: GESTOR });
     perfil.mostrarNaBarra();
     expect(document.getElementById("userEmail")?.textContent).toBe(ANA.email);
+    // Sem estilo escrito no elemento: mostrar é do CSS (a faixa compacta o esconde).
+    expect(document.getElementById("userProfileBadge")?.style.display).toBe("");
     expect(document.getElementById("userProfileBadge")?.textContent).toBe(
       "Gestor",
     );
