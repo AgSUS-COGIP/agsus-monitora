@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -23,92 +22,8 @@ import { aplicarEstiloDoPainel } from "../src/app/entrada/marca.ts";
 */
 
 const RAIZ = path.resolve(import.meta.dirname, "..");
-const NOME = "20261112180000_vidro_no_painel_de_acesso";
 const ler = (relativo: string) =>
   fs.readFileSync(path.join(RAIZ, relativo), "utf8").replace(/\r\n/g, "\n");
-
-/* O corpo entre `as $$` e `$$;` da função criada no arquivo. */
-function corpoDaFuncao(sql: string): string {
-  const inicio = sql.indexOf(
-    "create or replace function public.obter_branding_acesso_publico()",
-  );
-  expect(inicio).toBeGreaterThan(-1);
-  const abre = sql.indexOf("as $$", inicio) + "as $$".length;
-  return sql.slice(abre, sql.indexOf("$$;", abre));
-}
-
-const md5 = (texto: string) => createHash("md5").update(texto).digest("hex");
-
-describe("migration 20261112180000: a chave do estilo na leitura pública", () => {
-  const migration = ler(`supabase/migrations/${NOME}.sql`);
-  const ensaio = ler(`supabase/ensaios/${NOME}.sql`);
-  const rollback = ler(`supabase/rollback/${NOME}.sql`);
-  const retrato = ler("supabase/esquema-atual.sql");
-  /* O retrato (supabase/esquema-atual.sql) já tem a migration aplicada (12/11/2026). */
-  const retratado = (() => {
-    const inicio = retrato.indexOf(
-      "CREATE FUNCTION public.obter_branding_acesso_publico()",
-    );
-    const abre = retrato.indexOf("AS $$", inicio) + "AS $$".length;
-    return retrato.slice(abre, retrato.indexOf("$$;", abre));
-  })();
-  const novo = corpoDaFuncao(migration);
-  const vigente = corpoDaFuncao(rollback);
-
-  /*
-    13/11/2026: a migration 20261113150000 (aplicada) só acrescentou a cor e
-    o desfoque do vidro à lista; tirando as duas, o retrato é o desta.
-  */
-  it("o retrato mostra a função como a migration a deixou", () => {
-    expect(
-      retratado.replace(
-        ",\n    'auth_access_vidro_cor',\n    'auth_access_vidro_desfoque'",
-        "",
-      ),
-    ).toBe(novo);
-  });
-
-  it("só acrescenta a chave nova à lista fixa", () => {
-    expect(novo).toBe(
-      vigente.replace(
-        "    'auth_access_texto_modo'\n",
-        "    'auth_access_texto_modo',\n    'auth_access_painel_estilo'\n",
-      ),
-    );
-  });
-
-  it("as guardas usam o md5 do corpo de antes e do de depois", () => {
-    expect(migration).toContain(`is distinct from '${md5(vigente)}'`);
-    expect(migration).toContain(`if v_md5 = '${md5(novo)}'`);
-    expect(rollback).toContain(`is distinct from '${md5(novo)}'`);
-    expect(ensaio).toContain(`is distinct from '${md5(vigente)}'`);
-    expect(ensaio).toContain(`is distinct from '${md5(novo)}'`);
-  });
-
-  /*
-    O corpo vigente no banco foi gravado com CRLF (12/11/2026): o md5 do
-    prosrc com `
-` nunca bateria com o do retrato. A primeira versão da
-    guarda parou o ensaio por isso, sem gravar nada.
-  */
-  it("as guardas comparam o corpo sem \r (o banco o guarda com CRLF)", () => {
-    for (const sql of [migration, ensaio, rollback]) {
-      expect(sql).not.toMatch(/md5\(\(select prosrc/);
-      expect(sql).toContain(
-        "md5(replace((select prosrc from pg_proc where oid = to_regprocedure('public.obter_branding_acesso_publico()')), chr(13), ''))",
-      );
-    }
-  });
-
-  it("o ensaio aplica o mesmo corpo e termina em rollback; o rollback volta ao de antes", () => {
-    expect(corpoDaFuncao(ensaio)).toBe(novo);
-    expect(ensaio.trimEnd().endsWith("rollback;")).toBe(true);
-    for (const sql of [migration, ensaio, rollback]) {
-      expect(sql).toContain("security definer");
-      expect(sql).toContain("set search_path to ''");
-    }
-  });
-});
 
 describe("o estilo do painel", () => {
   it("normaliza: só 'vidro' é vidro", () => {

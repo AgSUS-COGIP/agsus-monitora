@@ -4,20 +4,18 @@ import {
   type Banco,
   bancoDeHoje,
   EDITAL,
-  ENSAIO,
   entrar,
   erroDe,
-  funcaoDoRetrato,
   MIGRATION,
   novaVersaoDaRegra,
   REGRA,
   retratoDaTriagem,
-  ROLLBACK,
   rpc,
 } from "./apoio/banco-do-fundamento.ts";
 
 /*
-  Migration 20261110215930 (issue #593): o fundamento normativo das eliminações da
+  Migration 20261110215930 (issue #593, já aplicada; o SQL em
+  tests/fixtures/sql-do-banco/): o fundamento normativo das eliminações da
   Triagem é escolhido e conferido SÓ pelo gestor ou coordenador do edital, ou pelo
   administrador global; nada é presumido; a conferência é auditada e imutável; o
   comunicado (conferir_eliminados_pre_classificacao) leva o item só quando conferido; e
@@ -104,87 +102,6 @@ async function migrado(): Promise<Banco> {
   await db.exec(MIGRATION);
   return db;
 }
-
-describe("fundamento da eliminação: migration", () => {
-  it(
-    "aplica sobre o retrato de hoje (guarda md5) sem criar fundamento nem mudar a Triagem",
-    async () => {
-      const db = await bancoDeHoje();
-      const antes = await retratoDaTriagem(db);
-      await db.exec(MIGRATION);
-      expect(await retratoDaTriagem(db)).toBe(antes);
-      const n = await db.query<{ n: number }>(
-        `select count(*)::int as n from public."TH_FUNDAMENTO_ELIMINACAO"`,
-      );
-      expect(n.rows[0]?.n).toBe(0);
-      await entrar(db, "gestor");
-      for (const c of await comunicados(db)) expect(c.fundamento).toBeNull();
-    },
-    LONGO,
-  );
-
-  it(
-    "recusa um banco cuja conferência dos eliminados mudou depois do retrato, sem aplicar nada",
-    async () => {
-      const db = await bancoDeHoje();
-      await db.exec(
-        funcaoDoRetrato("public.conferir_eliminados_pre_classificacao")
-          .replace("CREATE FUNCTION", "CREATE OR REPLACE FUNCTION")
-          .replace("No máximo 10.000 por vez.", "No máximo 10 mil por vez."),
-      );
-      const erro = await erroDe(db.exec(MIGRATION));
-      expect(erro?.mensagem).toMatch(/mudou depois do retrato/);
-      await db.exec("rollback");
-      const t = await db.query(
-        `select to_regclass('public."TH_FUNDAMENTO_ELIMINACAO"') as t`,
-      );
-      expect(t.rows[0]).toEqual({ t: null });
-    },
-    LONGO,
-  );
-
-  it(
-    "o ensaio traz o corpo da migration igual ao arquivo, roda e termina em rollback",
-    async () => {
-      const corpo = MIGRATION.slice(
-        MIGRATION.indexOf("\nbegin;\n") + 8,
-        MIGRATION.lastIndexOf("\ncommit;\n") + 1,
-      );
-      expect(ENSAIO).toContain(
-        `-- >>> corpo da migration\n${corpo}-- <<< corpo da migration`,
-      );
-      expect(ENSAIO.trimEnd().endsWith("rollback;")).toBe(true);
-      const db = await bancoDeHoje();
-      await db.exec(ENSAIO);
-      const t = await db.query(
-        `select to_regclass('public."TH_FUNDAMENTO_ELIMINACAO"') as t`,
-      );
-      expect(t.rows[0]).toEqual({ t: null });
-    },
-    LONGO,
-  );
-
-  it(
-    "o ensaio percorre o Edital 114/2026 até a conferência simulada chegar ao comunicado",
-    async () => {
-      const marco = "114/2026: conferência simulada ok";
-      expect(ENSAIO).toContain(`raise notice '${marco}`);
-      const db = await bancoDeHoje();
-      const erro = await erroDe(
-        db.exec(
-          ENSAIO.replace(
-            `raise notice '${marco}`,
-            `raise exception 'CHEGOU: ${marco}`,
-          ),
-        ),
-      );
-      expect(erro?.mensagem).toMatch(
-        /^CHEGOU: 114\/2026: conferência simulada ok/,
-      );
-    },
-    LONGO,
-  );
-});
 
 describe("fundamento da eliminação: quem confere", () => {
   let db: Banco;
@@ -442,38 +359,4 @@ describe("fundamento da eliminação: até o comunicado", () => {
     ).toMatch(/Confira a regra da Triagem/);
     expect(await retratoDaTriagem(db)).toBe(antes);
   });
-});
-
-describe("fundamento da eliminação: rollback", () => {
-  it(
-    "com conferências gravadas, só roda com a exportação declarada; volta a conferência dos eliminados de antes",
-    async () => {
-      const db = await bancoDeHoje();
-      const md5 = `select md5(prosrc) as m from pg_proc where oid = to_regprocedure('public.conferir_eliminados_pre_classificacao(uuid, text[])')`;
-      const corpoDeAntes = (await db.query<{ m: string }>(md5)).rows[0]?.m;
-      await db.exec(MIGRATION);
-      await entrar(db, "admin");
-      await conferir(db, "QUESTIONARIO", "6.4");
-
-      const erro = await erroDe(db.exec(ROLLBACK));
-      expect(erro?.mensagem).toMatch(/Exporte TH_FUNDAMENTO_ELIMINACAO/);
-      await db.exec("rollback");
-
-      await db.exec(`set agsus.descartar_fundamentos_exportados = 'sim'`);
-      await db.exec(ROLLBACK);
-      expect((await db.query<{ m: string }>(md5)).rows[0]?.m).toBe(
-        corpoDeAntes,
-      );
-      const restos = await db.query(
-        `select to_regclass('public."TH_FUNDAMENTO_ELIMINACAO"') as t,
-                to_regprocedure('public.conferir_fundamento_da_eliminacao(uuid, text, integer, text, text, text)') as c,
-                to_regprocedure('public.obter_fundamentos_da_eliminacao(uuid)') as o,
-                to_regprocedure('private."FC_FUNDAMENTO_DA_ELIMINACAO"(uuid, text)') as f`,
-      );
-      expect(restos.rows[0]).toEqual({ t: null, c: null, o: null, f: null });
-      // E a migration volta a aplicar (a guarda reconhece o corpo de antes).
-      await db.exec(MIGRATION);
-    },
-    LONGO,
-  );
 });

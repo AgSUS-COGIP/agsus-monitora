@@ -107,10 +107,10 @@ Sincronizar, downloads, gaveta de fontes, largura das colunas, ⓘ e Montar rela
 (colunas, página lida, arquivos, largura, origem), `tests/fontes-dos-paineis.test.ts` (leitura das
 fontes, permissão, aba Fontes), `tests/fontes-dos-paineis-no-banco.test.ts` (o núcleo das fontes em
 PGlite), `tests/relatorios-prontos-dos-paineis-no-banco.test.ts` (resultado pronto em PGlite: página,
-recorte da coordenação, Sincronizar 1/min, troca de fonte que falha, cálculo de todos, rollback) e
-`tests/relatorios-prontos-dos-paineis-migration.test.ts` (md5 das guardas, rollback e ensaio) e
-`tests/vagas-imediatas-dos-paineis-no-banco.test.ts` (a ordem das fontes das vagas imediatas,
-guarda e rollback de `20261116180000`).
+recorte da coordenação, Sincronizar 1/min, troca de fonte que falha, cálculo de todos) e
+`tests/vagas-imediatas-dos-paineis-no-banco.test.ts` (a ordem das fontes das vagas imediatas, de
+`20261116180000`). As migrations aplicadas que montam esses bancos ficam em
+`tests/fixtures/sql-do-banco/`.
 
 ## Relacionadas
 

@@ -6,18 +6,17 @@ import { erroDe, uma } from "./apoio/banco-dos-robos.ts";
 import { moldeDeBanco } from "./apoio/molde-de-banco.ts";
 
 /*
-  Migration 20261110190000 (exportação da Lista de aprovados) num Postgres de
-  verdade (PGlite). As tabelas da lista são as colunas que a RPC lê; a sessão e
-  as permissões são imitações que leem configurações do teste (teste.uid,
-  teste.nivel, teste.areas, teste.visiveis). Dados fictícios.
+  Migration 20261110190000 (exportação da Lista de aprovados, já aplicada; o SQL
+  dela está em tests/fixtures/sql-do-banco/) num Postgres de verdade (PGlite).
+  As tabelas da lista são as colunas que a RPC lê; a sessão e as permissões são
+  imitações que leem configurações do teste (teste.uid, teste.nivel,
+  teste.areas, teste.visiveis). Dados fictícios.
 */
 
 const NOME = "20261110190000_exportacao_da_lista_de_aprovados.sql";
 const ler = (caminho: string) =>
   readFileSync(caminho, "utf8").replace(/\r\n/g, "\n");
-const MIGRATION = ler(`supabase/migrations/${NOME}`);
-const ROLLBACK = ler(`supabase/rollback/${NOME}`);
-const ENSAIO = ler(`supabase/ensaios/${NOME}`);
+const MIGRATION = ler(`tests/fixtures/sql-do-banco/${NOME}`);
 
 const USUARIO = "11111111-1111-1111-1111-111111111111";
 const EDITAL_A1 = "a0000000-0000-0000-0000-0000000000a1";
@@ -312,48 +311,5 @@ describe("registrar_exportacao_aprovados (PGlite)", () => {
       autenticado: true,
       rls: true,
     });
-  });
-
-  it("a migration recusa ser aplicada duas vezes", async () => {
-    expect(await erroDe(db.exec(MIGRATION))).toMatchObject({
-      mensagem: expect.stringContaining("já foi aplicada"),
-    });
-  });
-});
-
-describe("rollback e ensaio de 20261110190000", () => {
-  it("o rollback volta ao estado de antes e recusa descartar registros sem confirmação", async () => {
-    const db = await bancoComLista();
-    await db.exec(MIGRATION);
-    await como(db);
-    await registrar(db);
-    expect(await erroDe(db.exec(ROLLBACK))).toMatchObject({
-      mensagem: expect.stringContaining("1 exportações registradas"),
-    });
-    await db.exec("rollback");
-    await db.exec(`set agsus.rollback_descartar_exportacoes = 'sim'`);
-    await db.exec(ROLLBACK);
-    const r = await uma<Record<string, unknown>>(
-      db,
-      `select to_regclass('public."TL_EXPORTACAO_APROVADO"') as tabela,
-              to_regproc('public.registrar_exportacao_aprovados') as funcao`,
-    );
-    expect(r).toEqual({ tabela: null, funcao: null });
-    expect(await erroDe(db.exec(ROLLBACK))).toMatchObject({
-      mensagem: expect.stringContaining("não está aplicada"),
-    });
-    await db.exec("rollback");
-    // E a migration volta a aplicar.
-    await db.exec(MIGRATION);
-  });
-
-  it("o ensaio traz o corpo da migration letra por letra", () => {
-    const ini = MIGRATION.indexOf("\nbegin;\n") + "\nbegin;\n".length;
-    const corpo = MIGRATION.slice(
-      ini,
-      MIGRATION.lastIndexOf("\ncommit;"),
-    ).trim();
-    expect(ENSAIO).toContain(corpo);
-    expect(ENSAIO.trimEnd().endsWith("rollback;")).toBe(true);
   });
 });

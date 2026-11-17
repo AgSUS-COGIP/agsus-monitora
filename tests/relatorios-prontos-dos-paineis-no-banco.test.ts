@@ -1,24 +1,18 @@
 // @vitest-environment node
-import { createHash } from "node:crypto";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   type Banco,
   bancoComRelatoriosProntos,
-  corpoDaFuncao,
   entrar,
   erroDe,
   rollbackDosLimites,
-  rollbackDosProntos,
-  RPCS_ANTIGAS,
-  rpcsAntigas,
-  salvarDeAntes,
   uma,
   USUARIO_ADMIN,
 } from "./apoio/banco-dos-paineis.ts";
 
 /*
-  Relatórios prontos dos Painéis (migration 20261116160000) num Postgres de
-  verdade (PGlite): o resultado calculado fica guardado por área e relatório,
+  Relatórios prontos dos Painéis (migration 20261116160000, já aplicada; o SQL
+  em tests/fixtures/sql-do-banco/) num Postgres de verdade (PGlite): o resultado calculado fica guardado por área e relatório,
   a leitura pagina e aplica o recorte da coordenação, o Sincronizar recalcula
   no máximo uma vez por minuto, a troca de fonte recalcula na mesma transação
   e o cálculo de todos (o cron de hora em hora) segue quando um falha. O
@@ -31,7 +25,6 @@ const A = "aaaaaaaa-0000-0000-0000-00000000000a";
 const B = "aaaaaaaa-0000-0000-0000-00000000000b";
 const C = "aaaaaaaa-0000-0000-0000-00000000000c";
 const POR_CARGO = "editais-por-cargo";
-const md5 = (texto: string) => createHash("md5").update(texto).digest("hex");
 
 const FONTE_DE_TESTE = `
 create table public.fonte_vaga (edital uuid, vaga text, qt integer);
@@ -323,56 +316,6 @@ describe("limites de tempo (20261116170000)", () => {
       for (const rpc of RPCS)
         expect((await config(rpc))?.c ?? []).toEqual(['search_path=""']);
       const erro = await erroDe(db.exec(rollbackDosLimites()));
-      await db.exec("rollback");
-      expect(erro?.mensagem).toMatch(/não está aplicada/);
-    },
-    LONGO,
-  );
-});
-
-describe("rollback", () => {
-  it(
-    "o rollback volta ao banco de antes",
-    async () => {
-      await ler(1, 50);
-      await db.exec(rollbackDosLimites());
-      await db.exec(rollbackDosProntos());
-      expect(
-        await uma(
-          db,
-          `select to_regclass('public."TB_LINHA_RELATORIO_PAINEL"') as linhas,
-                  to_regclass('public."TB_CALCULO_RELATORIO_PAINEL"') as calculo,
-                  to_regprocedure('public.ler_relatorio_do_painel(text, text, integer, integer)') as ler,
-                  to_regprocedure('private."FC_CALCULAR_PAINEIS"()') as todos`,
-        ),
-      ).toEqual({ linhas: null, calculo: null, ler: null, todos: null });
-      const antigas = rpcsAntigas();
-      for (const [i, nome] of RPCS_ANTIGAS.entries()) {
-        expect(
-          await uma(
-            db,
-            `select md5(prosrc) as m from pg_proc where oid = to_regprocedure($1)`,
-            [`public.${nome}(text)`],
-          ),
-        ).toEqual({ m: md5(corpoDaFuncao(antigas[i]!)) });
-      }
-      expect(
-        await uma(
-          db,
-          `select md5(prosrc) as m from pg_proc
-            where oid = to_regprocedure('public.salvar_fonte_da_coluna(text, text, text, text, text, text)')`,
-        ),
-      ).toEqual({ m: md5(corpoDaFuncao(salvarDeAntes())) });
-    },
-    LONGO,
-  );
-
-  it(
-    "o rollback aborta se a migration não estiver aplicada",
-    async () => {
-      await db.exec(rollbackDosLimites());
-      await db.exec(rollbackDosProntos());
-      const erro = await erroDe(db.exec(rollbackDosProntos()));
       await db.exec("rollback");
       expect(erro?.mensagem).toMatch(/não está aplicada/);
     },

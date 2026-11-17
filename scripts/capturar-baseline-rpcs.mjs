@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import pg from "pg";
@@ -176,6 +176,8 @@ const grants = definicoes
   )
   .join("\n");
 
+// Sem migration pendente, a pasta não está no Git.
+mkdirSync("supabase/migrations", { recursive: true });
 writeFileSync(
   caminho,
   `${cabecalho}${corpo}\n-- Concessoes tal como estao no banco hoje.\n${grants}\n\ncommit;\n`,

@@ -49,10 +49,12 @@ python -m pytest                           # Python (tests/python/)
 
 `tests/apoio/banco-dos-robos.ts` monta o banco dos robôs e das chaves com as funções reais e
 imitações de pg_cron, Vault, pg_net e sessão; roda dentro do processo, sem rede. Arquivo com
-`// @vitest-environment node`. Modelo de migration testada antes × depois × rollback:
-`tests/catalogo-dos-robos-no-banco.test.ts` ([[rollback-de-migration]]). Como as migrations
-aplicadas saíram do repositório, o "antes" fica em fixture (`tests/fixtures/sql-de-dados/`,
-`tests/fixtures/banco-antes-do-catalogo-dos-robos.sql`).
+`// @vitest-environment node`. Modelo de migration testada antes × depois:
+`tests/catalogo-dos-robos-no-banco.test.ts`. Como as migrations aplicadas saíram do repositório,
+o "antes" fica em fixture (`tests/fixtures/sql-de-dados/`,
+`tests/fixtures/banco-antes-do-catalogo-dos-robos.sql`), e a migration aplicada que monta o banco
+de um teste de comportamento fica, sem mudança, em `tests/fixtures/sql-do-banco/<mesmo nome>.sql`
+(só para os testes; o rollback e o ensaio saem com ela, e os testes deles também).
 
 **Limitação conhecida:** os testes de banco são, na maioria, estáticos (leem o texto das
 migrations, rollbacks e ensaios); o CI não sobe o banco do projeto. O comportamento no banco é
