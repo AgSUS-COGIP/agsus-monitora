@@ -65,6 +65,6 @@ npm run test:e2e                         # Playwright (muito lento, só se pedid
 ## Relacionadas
 
 - [[testes]] — os comandos de teste
-- [[scripts-e-checagens]] — os outros `npm run`
+- [[ci-e-qualidade]] — os outros `npm run`
 - [[servidor-web]] — o servidor de `npm run dev`
 - [[seguranca]] — onde os segredos ficam

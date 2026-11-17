@@ -25,6 +25,26 @@ export const NOVIDADES_PUBLICADAS = 5;
 
 export const NOVIDADES: readonly Novidade[] = [
   {
+    id: "2026-11-17-visao-geral-painel-de-decisao",
+    data: "2026-11-17",
+    texto:
+      "visão geral nova: vagas, o que pede ação e as fases em andamento no topo",
+    visivel: true,
+  },
+  {
+    id: "2026-11-17-comemoracoes-so-ocasioes-reais",
+    data: "2026-11-17",
+    texto:
+      "comemorações só em ocasiões reais, uma por dia e sem a frase no meio da tela",
+    visivel: true,
+  },
+  {
+    id: "2026-11-17-responsivo-pente-fino",
+    data: "2026-11-17",
+    texto: "busca pela lupa do topo e telas sem rolagem lateral no celular",
+    visivel: true,
+  },
+  {
     id: "2026-11-17-editais-ordem-e-aviso-das-listas",
     data: "2026-11-17",
     texto:

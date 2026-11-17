@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-11
+atualizado: 2026-11-17
 ---
 
 # Módulo: Recursos dos candidatos
@@ -24,54 +24,75 @@ análise, "Ver no painel". Levam o pedido por `pedirFiltro` e navegam por `irPar
 quem edita Recursos ou dá o parecer jurídico (`canAnalisarRecursos`); o menu vem do banco
 (`20261009230000_analisar_recursos_no_menu.sql`).
 
-## Arquivos
-
-```
-recursos.tsx    <TelaDeRecursos modo>, montarRecursos() e montarAnaliseDeRecursos() (área, controlador)
-estado.ts       store sem React: carga da área, gaveta, formulário, escritas (RPC e Storage)
-paineis.tsx     topo (status e ações), filtros, 4 KPIs, recorte, gráficos, pendências
-tabela.tsx      fila (TabelaInfinita), selos de situação, resposta e prazo
-gaveta.tsx      detalhe: parecer, etapas, resposta, anexos, resultado, prazo, observação, histórico
-parecer.tsx     parecer jurídico: enviar, deferir/deferir parcialmente/indeferir, devolver, reabrir
-ajuste.tsx      ajuste da pontuação no recurso deferido: componentes da regra, prévia da posição,
-                propor, aprovar (prévia recalculada), cancelar, versões
-formulario.tsx  cadastro e edição (candidato buscado nas análises do edital)
-resposta.tsx    resposta ao candidato: modelo, prévia, revisão, documento
-anexos.tsx      anexos com download registrado (URL assinada de 60 s)
-modelos.tsx     modelos de resposta (administração)
-partes.ts       dataHora e nota
-parecer-em-blocos/  PROTÓTIPO "Montar parecer" (desligado): o simulador de pareceres da Saúde
-                Indígena em blocos por etapa, com prévia
-recursos.css    só o que é desta tela (tokens); o resto vem de src/ui/
-```
-
-Regras puras em `src/lib/` (`recursos-dos-candidatos.ts`, `prazo-do-recurso.ts`,
-`resposta-do-recurso.ts`, `parecer-do-recurso.ts`, `anexos-do-recurso.ts`, `modelos-de-resposta.ts`,
-`documento-da-resposta.ts`). Protótipo "Montar parecer": fontes do pré-preenchimento, tabelas e RPCs
-propostas em [recursos/parecer-em-blocos.md](../recursos/parecer-em-blocos.md).
-
 ## Regras
 
 - Decidir é só de quem tem `recursos_parecer` (Acessos › "Parecer jurídico (Recursos)", grupo
-  "Jurídico"); o banco confere (`20261001170000_recursos_parecer_juridico.sql`).
+  "Jurídico"); o banco confere (`20261001170000_recursos_parecer_juridico.sql`). Sem ninguém no
+  grupo, só os administradores dão o parecer.
 - Ajuste da pontuação (`20261005130000_recurso_ajusta_pontuacao.sql`): propor e aprovar são do
   parecer jurídico; aprovar exige o recurso deferido; reabrir/indeferir/devolver/excluir cancela
-  (gatilho). A conta da prévia é a da Classificação (`src/lib/classificacao/ajustes.ts`); a nota da
-  planilha nunca muda. "O recurso mudou a classificação" é automática (aprovação do ajuste).
-- As regras explicadas à pessoa ficam com a Aya (`docs/aya/regras-dos-recursos.md`).
+  (gatilho). A conta da prévia é a da Classificação (`src/lib/classificacao/ajustes.ts`, que mantém
+  totais pela soma das diferenças e recalcula a prévia antes da aprovação); a nota da planilha nunca
+  muda. "O recurso mudou a classificação" é automática (aprovação do ajuste).
+- Resposta ao candidato: a versão usada continua escolhível quando arquivada ou substituída; os
+  marcadores são preenchidos uma única vez, como texto puro. A autoria restringe aprovação e
+  devolução, e a decisão do recurso é exigida para aprovar e marcar o envio.
+- Anexos com download registrado (URL assinada de 60 s).
+- As regras explicadas à pessoa ficam com a Aya
+  ([regras-dos-recursos](../aya/regras-dos-recursos.md)), não na interface.
 
-Contratos TypeScript, validações e o comportamento na troca de área: [[recursos-contratos]].
+## Validação na fronteira
 
-## Testes
+Tudo em TypeScript/TSX. O que vem do banco é validado antes de usar:
 
-`tests/modulos/recursos*.test.js`; os demais (dados, contexto e contratos de compilação) estão em
-[[recursos-contratos]].
+- `src/lib/dados-dos-recursos.ts` valida os campos do painel e do formulário (conserva campos
+  adicionais; permissões só quando booleanas) e, no detalhe, histórico, autores das etapas, textos
+  do parecer e metadados dos anexos.
+- Resposta e modelos: identificadores, versões, textos, histórico e escopo. Modelo com área/origem
+  malformada é ignorado; resposta com identificador, revisão ou estado inválido é sinalizada sem
+  abrir um novo rascunho.
+- Ajuste: versões, itens, permissões e resumos de prévia em
+  `src/lib/classificacao/dados-dos-ajustes.ts`; coleções malformadas da Classificação são
+  sinalizadas antes de calcular, propor ou aprovar. A configuração da regra continua interpretada
+  pelo motor (`src/lib/classificacao/motor.ts`).
+- Prazo e dias restantes podem ser nulos; os gráficos protegem callbacks sem elemento e dicas vazias.
+
+## Troca de área ou usuário
+
+Invalida consultas de detalhe, ajustes, prévias e modelos, e os efeitos locais de ações em curso:
+não fecha o formulário novo, não mostra avisos antigos nem libera a ação da nova área. Upload
+concluído depois da troca não inicia registro; assinatura antiga não abre download. **Não cancela**
+escrita ou upload já enviado ao banco/Storage: o arquivo de um upload interrompido depois de enviado
+pode ficar sem registro. A busca de candidato descarta o resultado quando o campo muda ou o
+componente desmonta.
+
+## Código e testes
+
+- `recursos.tsx` (`<TelaDeRecursos modo>`, `montarRecursos()`, `montarAnaliseDeRecursos()`),
+  `estado.ts` (store sem React: carga da área, gaveta, formulário, escritas por RPC e Storage),
+  `gaveta.tsx` (detalhe), `parecer.tsx` (enviar, deferir/deferir parcialmente/indeferir, devolver,
+  reabrir), `ajuste.tsx` (componentes da regra, prévia da posição, propor, aprovar, cancelar,
+  versões), `formulario.tsx` (candidato buscado nas análises do edital), `resposta.tsx`,
+  `modelos.tsx` (administração), `recursos.css` (só tokens; o resto vem de `src/ui/`).
+- Regras puras em `src/lib/`: `recursos-dos-candidatos.ts` (enriquecimento, busca, indicadores,
+  duplicidade, formulário, CSV), `prazo-do-recurso.ts`, `parecer-do-recurso.ts` (botões permitidos),
+  `resposta-do-recurso.ts` (transições e revisão), `modelos-de-resposta.ts`,
+  `anexos-do-recurso.ts`, `documento-da-resposta.ts`.
+- Contratos: `src/lib/tipos-dos-recursos.ts`, `tipos-do-estado.ts`, `tipos-da-gaveta.ts`,
+  `src/lib/tipos-da-resposta-do-recurso.ts`, `src/lib/classificacao/tipos-dos-ajustes.ts`.
+- `parecer-em-blocos/`: PROTÓTIPO "Montar parecer" (desligado), o simulador de pareceres da Saúde
+  Indígena em blocos por etapa, com prévia. Fontes do pré-preenchimento, tabelas e RPCs propostas em
+  [recursos/parecer-em-blocos.md](../recursos/parecer-em-blocos.md).
+- Testes: `tests/modulos/recursos*.test.js`, `tests/dados-dos-recursos.test.js`,
+  `tests/lib/classificacao-ajustes.test.js`, `tests/lib/dados-dos-ajustes.test.js` e os contratos de
+  compilação em `tests/tipos/` (`painel-de-recursos.tsx`, `estado-dos-recursos.tsx`,
+  `gaveta-dos-recursos.tsx`, `resposta-e-modelos-dos-recursos.tsx`, `ajuste-dos-recursos.tsx`).
 
 ## Relacionadas
 
 - [[modulo-classificacao]] — motor e ajustes da pontuação
-- [[permissoes-e-perfis]] — `recursos_parecer` e o grupo Jurídico
-- [[modulo-acessos]] — onde se concede o parecer jurídico
+- [[modulo-avaliacao-documental]] — a ficha que o ajuste não altera; "Ver ficha" pendente (F6)
+- [[modulo-acessos]] — `recursos_parecer`, o grupo Jurídico e onde se concede
 - [[dados-pessoais]] — anexos com download registrado
 - [[modulo-entrevistas]] — o mesmo padrão acompanhar × fazer
-- [regras-dos-recursos](../aya/regras-dos-recursos.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)
+- [[regras-do-codigo]] — TypeScript e validação na fronteira

@@ -1,33 +1,42 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-16
+atualizado: 2026-11-17
 ---
 
-# Módulo: Editais (Equipe Núcleo)
+# Módulo: Editais (cadastro, regras e encerramento)
 
-Cadastro do edital e do cronograma, com tabela, alertas, formulário e linha do tempo, em React.
-Rota `/<área>/editais` (`src/app/telas.tsx`); pasta `src/modulos/editais/`. Dela abre a página
-[[modulo-regras-do-edital|Regras do edital]] (`/<área>/editais/<edital>/regras/<etapa>`).
+O ciclo do edital em três peças React: o cadastro com o cronograma (Equipe Núcleo), a página de
+regras de cada etapa e a tela de encerramento quando o lote termina.
 
-## O que faz
+| Peça                 | Pasta                                 | Onde aparece                                   |
+| -------------------- | ------------------------------------- | ---------------------------------------------- |
+| Cadastro (Núcleo)    | `src/modulos/editais/`                | rota `/<área>/editais`                         |
+| Regras do edital     | `src/modulos/regras-do-edital/`       | rota `/<área>/editais/<edital>/regras/<etapa>` |
+| Encerramento e selos | `src/modulos/encerramento-do-edital/` | moldura (`src/app/sistema.ts`), menu da conta  |
+
+## Cadastro do edital
+
+Tabela, alertas, formulário e linha do tempo. A tela é `nucleo.tsx`; o estado fica fora do React em
+`estado.ts` (trocar de usuário na mesma aba apaga o que era da sessão anterior).
 
 - Cadastro do edital e do cronograma; importa cronograma e quadro de vagas do PDF de anexos.
 - **Acompanhamento operacional** no topo da fila: oito indicadores (total, ativos, inativos, em
   andamento, sem cronograma, incompletos, próximos 7 dias, excepcionais); cada um filtra a fila.
+  Vêm de `resumo.ts` (`get_nucleo_cronograma_resumo`, uma linha por edital): UMA carga, cache curto,
+  invalidada ao salvar um cronograma; a mesma carga serve o "copiar cronograma".
 - Retificação do cronograma a partir do PDF da errata (`lancar-retificacao.tsx`).
 - A atividade vai ao banco sem espaços repetidos (`cronogramaParaSalvar`): o texto colado do PDF
   da Cebraspe vinha com espaços duplos e escondia a etapa de resultado final (16/11/2026;
   migration `20261116150000` limpou 04/2026, 96/2025 e 97/2025).
-- Responsáveis pelo edital (`responsaveis-do-edital.tsx`, migration `20261104120000`): pessoas do
-  sistema em `RL_RESPONSAVEL_EDITAL`; grava sozinho, à parte do "Salvar" do edital (que exige
-  motivo para mexer no cronograma). A coluna antiga "responsavel" (USI/CORES) segue intocada.
-  Quem pode editar vem do banco (`pode_editar`: gestor da área ou administrador global); banco sem
-  as RPCs: o bloco não aparece.
+- **Responsáveis** (`responsaveis-do-edital.tsx`, migration `20261104120000`): pessoas do sistema
+  em `RL_RESPONSAVEL_EDITAL`; grava sozinho, à parte do "Salvar" do edital (que exige motivo para
+  mexer no cronograma). A coluna antiga "responsavel" (USI/CORES) segue intocada. Quem edita vem do
+  banco (`pode_editar`: gestor da área ou administrador global); banco sem as RPCs: o bloco some.
 - **Edital crítico** (`critico-do-edital.tsx`, #721, migration `20261110150000`): gestor,
   coordenador ou administrador global marca, altera o motivo ou desmarca, sempre com motivo
-  (10 a 500 caracteres) e histórico em `TH_EDITAL_CRITICO`. Grava à parte do "Salvar"; a
-  permissão vem do banco (`obter_critico_do_edital` → `pode_marcar`). Conta nos críticos da
+  (10 a 500 caracteres) e histórico em `TH_EDITAL_CRITICO`. Grava à parte do "Salvar"; a permissão
+  vem do banco (`obter_critico_do_edital` → `pode_marcar`). Conta nos críticos da
   [[modulo-visao-geral]].
 - **Validade do processo seletivo** (#57, `src/lib/validade-do-edital.ts`): anos (0 a 10), meses
   (0 a 11) e prorrogado, com o prazo calculado ao lado. O cálculo espelha
@@ -40,9 +49,9 @@ Rota `/<área>/editais` (`src/app/telas.tsx`); pasta `src/modulos/editais/`. Del
   a migration `20261111200000`; sem ela, a validade fica "não lida": aviso, campos vazios e só vai o
   que a pessoa preencher (nada gravado é sobrescrito). Valor fora do limite mostra a mensagem no
   campo e o Salvar não envia.
-- Ordem da tabela (`src/lib/ordem-dos-editais.ts`): por padrão cronológica, do edital mais recente
-  para o mais antigo (data de início e, sem ela, o NNN/AAAA). Clicar no cabeçalho ordena pela
-  coluna: 1º clique crescente, 2º decrescente, alternando; números em ordem numérica, textos em
+- **Ordem da tabela** (`src/lib/ordem-dos-editais.ts`): por padrão cronológica, do edital mais
+  recente para o mais antigo (data de início e, sem ela, o NNN/AAAA). Clicar no cabeçalho ordena
+  pela coluna: 1º clique crescente, 2º decrescente, alternando; números em ordem numérica, textos em
   alfabética, Risco pela gravidade; vazio sempre no fim.
 - Abre o modal de listas da Lista de aprovados por `carregarTela("approved")`
   (`openImportModal(id, rótulo)`; ver [[modulo-aprovados]]).
@@ -52,59 +61,85 @@ Rota `/<área>/editais` (`src/app/telas.tsx`); pasta `src/modulos/editais/`. Del
   Atualizar) → amarelo, "Nenhum candidato foi aprovado neste edital". O aviso é a legenda do botão,
   e o clique o mostra num toast em vez de abrir as listas.
 
-## Arquivos
-
-```
-nucleo.tsx                 a tela; Regras do edital entram por lazy() (fora do pacote principal)
-estado.ts                  estado fora do React: resumo, filtro do painel, modal aberto e ações
-                           (as linhas e o catálogo de unidades vêm de dados-do-monitoramento.ts);
-                           trocar de usuário na mesma aba apaga o que era da sessão anterior
-resumo.ts                  get_nucleo_cronograma_resumo: uma linha por edital (alerta, nº de
-                           etapas); alimenta indicadores e "copiar cronograma" com UMA carga, cache
-                           curto, invalidada ao salvar um cronograma
-painel-operacional.tsx     os indicadores
-modal-do-edital.tsx        formulário e payload (de editais-do-nucleo.ts)
-editor-de-cronograma.tsx   etapas do cronograma
-importar-anexos.tsx        anexos do edital (PDF)
-lancar-retificacao.tsx     retificação do cronograma
-modal-linha-do-tempo.tsx   linha do tempo do edital
-responsaveis-do-edital.tsx responsáveis (acima)
-editais.css
-```
-
-## Regras puras (`src/lib/`)
-
-- `editais-do-nucleo.ts` — a página sem DOM: ordem da fila (risco, vagas ociosas), tons de status e
-  risco (também usados pelo mapa), unidades do formulário (catálogo + as que só existem nos
-  editais, USI × CORES), rascunho e payload do edital, índice do resumo e filtro dos indicadores.
-- `cronograma-do-edital.ts` — estado calculado pelas datas, validação antes de salvar (erros e
-  avisos), modelo padrão, datas coladas em lote e situação na linha do tempo.
-- `retificacao-do-cronograma.ts` — retificação em PDF (lida por `api/anexos-do-edital.py`):
-  casamento das etapas do "Leia-se" com as gravadas, comparação (igual, data muda, nova, sumiu),
-  ajustes, cronograma novo, número da errata e motivo com o SEI.
-- `validade-do-edital.ts` — validade do processo seletivo: leitura, validação, payload e prazo.
-- `responsavel-do-edital.ts`, `etapas-de-edital.ts`, `editais-das-linhas.ts`,
-  `anexos-do-edital.ts`.
-
-## Leitura do PDF (`api/anexos-do-edital.py`)
+### Leitura do PDF (`api/anexos-do-edital.py`)
 
 Função Python da Vercel (pdfplumber): lê o PDF de anexos e devolve cronograma (Anexo I) e quadro
 de vagas (Anexo II) em JSON. Só usuário logado; não grava nada. Com `?tipo=retificacao`, lê a
 retificação (nº, edital, SEI, assinatura, "Onde se lê" e "Leia-se", linhas em negrito e avisos das
-datas). Ver [[funcoes-da-vercel]].
+datas). Ver [[deploy-e-vercel]].
 
-## Guias e histórias
+## Regras do edital
 
-- [Histórias de usuário de Editais](../historias-de-usuario/editais.md) (ED-1, ED-2), citadas em
-  `tests/componentes/nucleo.test.ts` e `tests/editais-do-nucleo.test.js`.
-- Explicações para quem usa: `docs/aya/regras-dos-editais.md` ([[aya-base-de-conhecimento]]).
+Página aberta em Editais, no lugar da tabela: por edital, todas as regras do processo na ordem das
+etapas — 1 Triagem, 2 Avaliação documental, 3 Entrevista, 4 Classificação e 5 Chamada para
+contratação (lista em `ETAPAS_DAS_REGRAS`, `src/lib/regras-do-edital.ts`).
+
+- Cada etapa usa o editor (e as RPCs) que já existia na tela da etapa, com a mesma loja; nada aqui
+  calcula ou grava por conta própria. Salvar não recalcula nada (o 114/2026 segue congelado).
+- A permissão é a de sempre, e o banco decide: coordenação do edital, gestor da classificação,
+  quem configura a entrevista ou a convocação, ou o administrador global. Quem não pode vê a regra
+  travada.
+- A Entrevista edita o roteiro e a banca (`entrevistas/editor-da-configuracao.tsx`, loja de
+  condução); a Chamada para contratação, a configuração de convocação
+  (`aprovados/chamada-para-contratacao.tsx`, loja da Lista de aprovados). As etapas sem editor
+  próprio, na pasta da Triagem, são montadas por `etapas.tsx`.
+- `lojas.ts` cria as MESMAS lojas das telas (Avaliação documental, Entrevista, Classificação) uma
+  vez por cliente do banco; cada loja escuta a troca de sessão, e o rascunho guardado também é o
+  mesmo (tipos ANALISE e CLASSIFICACAO, `src/app/rascunho-da-regra.ts`).
+- Carrega sob demanda: o pacote dos editores só baixa quando a página abre (`lazy()` em
+  `editais/nucleo.tsx`). O "voltar" do navegador fecha a página (histórico, em `editais/estado.ts`).
+- `abrir.ts` → `abrirRegrasDoEdital(edital, etapa)`: o "Editar nas Regras do edital" das telas das
+  etapas; navega por `window.navigate("nucleo", {edital, regras})`, que confere a permissão de
+  Editais e põe o endereço.
+- `resumo-da-regra-da-etapa.tsx`: a regra só para ler no topo da tela da etapa (Avaliação
+  documental, Classificação): versão, situação, uma linha por regra; sem regra, aviso curto e o
+  mesmo botão. As linhas vêm de `src/lib/regras-do-edital-resumos.ts`, por `import()` na primeira
+  vez (até lá, esqueleto).
+
+## Encerramento do edital
+
+Peça, não tela de rota: a tela de fim de edital (uma vez por pessoa e edital) e os selos no menu da
+conta, avisados pelos marcos de `src/modulos/analises/marcos.ts`. Banco: migration
+`20261021180000` (`obter_encerramentos_do_edital`, `marcar_encerramento_visto`).
+
+- A tela abre quando o lote chega a 100% (regra e números do banco; o banco decide quando o edital
+  está encerrado). Em cima, os totais do edital e o agradecimento à equipe; embaixo, só a parte de
+  quem está vendo. Sem ranking, sem números de outras pessoas.
+- Os fogos são os do catálogo ([[modulo-comemoracao]]): respeitam a configuração, a preferência
+  pessoal e `prefers-reduced-motion`. A tela só abre com as comemorações ligadas no sistema;
+  desligadas, nada é marcado e a tela aparece quando religarem.
+- Selos no perfil (`selos-do-edital.tsx`): um por edital encerrado em que a pessoa concluiu ao menos
+  uma ficha ("114/2026"); quem fechou o edital leva "fechou o 114". Sem edital encerrado, nada
+  aparece; a marca no avatar só diz que há selo.
+- `estado.ts` (sem React, lido por `useSyncExternalStore`): `verificar()` lê
+  `obter_encerramentos_do_edital` ao abrir o sistema e quando os marcos de Análises avisam que um
+  edital zerou (função ausente ou erro: nada a mostrar, sem aviso); `fechar()` grava o visto e abre
+  o próximo. Leitura já a caminho não reabre o que a pessoa fechou.
+
+## Código e testes
+
+- Cadastro: `modal-do-edital.tsx` (formulário e payload), `editor-de-cronograma.tsx`,
+  `importar-anexos.tsx`, `modal-linha-do-tempo.tsx`, `painel-operacional.tsx`, `editais.css`.
+- Regras puras em `src/lib/`: `editais-do-nucleo.ts` (a página sem DOM: ordem da fila, tons de
+  status e risco também usados pelo mapa, unidades do formulário USI × CORES, rascunho, payload e
+  filtro dos indicadores), `cronograma-do-edital.ts` (estado pelas datas, validação, modelo padrão,
+  datas coladas em lote), `retificacao-do-cronograma.ts` (casa o "Leia-se" com as etapas gravadas:
+  igual, data muda, nova, sumiu; número da errata e motivo com o SEI), `validade-do-edital.ts`,
+  `regras-do-edital.ts`, `encerramento-do-edital.ts` (leitura, tela a mostrar, selos e fogos).
+- Testes: `tests/componentes/nucleo.test.ts` e `tests/editais-do-nucleo.test.js` citam as
+  [histórias de usuário de Editais](../historias-de-usuario/editais.md) (ED-1, ED-2).
+- Explicações para quem usa: [regras-dos-editais](../aya/regras-dos-editais.md) (a explicação mora
+  lá, não na interface).
 
 ## Relacionadas
 
-- [[modulo-regras-do-edital]] — regras de cada etapa, abertas a partir de Editais
 - [[modulo-cronograma]] — leitura dos cronogramas; salvar aqui invalida o cache de lá
-- [[modulo-aprovados]] — modal de listas do edital
-- [[funcoes-da-vercel]] — `anexos-do-edital.py` e a API `/api/editais`
-- [[areas-do-sistema]] — o edital pertence a uma área
-- [[nova-tela-react]] — como a tela é montada como rota
-- [regras-dos-editais](../aya/regras-dos-editais.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)
+- [[modulo-triagem]], [[modulo-avaliacao-documental]], [[modulo-entrevistas]],
+  [[modulo-classificacao]] — as etapas cujos editores aparecem nas Regras do edital
+- [[modulo-aprovados]] — modal de listas e Chamada para contratação
+- [[modulo-analises]] — os marcos que avisam o encerramento
+- [[modulo-configuracoes]] — liga e desliga as comemorações
+- [[modulo-acessos]] — quem edita cada etapa
+- [[deploy-e-vercel]] — `anexos-do-edital.py` e a API `/api/editais`
+- [[arquitetura-do-front]] — o edital pertence a uma área; como a tela entra como rota
+- [[aya-base-de-conhecimento]] — onde ficam as explicações da Aya

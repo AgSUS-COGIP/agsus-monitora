@@ -1,7 +1,7 @@
 /* Fogos: o show inteiro (API pública em src/lib/fogos.ts). */
 
 import { dancaDaAya, trajetoDaAya } from "./fogos-cena.ts";
-import { pontosDaForma, pontosDoLetreiro } from "./fogos-formas.ts";
+import { pontosDaForma } from "./fogos-formas.ts";
 import type { AmostrarTexto } from "./fogos-formas.ts";
 import {
   brasa,
@@ -12,7 +12,6 @@ import {
 } from "./fogos-fisica.ts";
 import { paletaDosFogos } from "./fogos-paleta.ts";
 import {
-  LETREIRO,
   LIMITE_DE_PARTICULAS,
   MARCO,
   PASSO_MAXIMO_S,
@@ -38,9 +37,8 @@ import type {
  * O estado inicial do show para uma tela e intensidade. `comAya` põe a Aya
  * voando (e soltando o primeiro foguete) e, fora do Suave, dançando no fim;
  * `forma` (ver fogos-formas.ts) é o marco desenhado no estouro do marco;
- * `letreiro`, o texto do marco escrito no céu no grande final (fora do
- * Suave); `amostrarTexto`, quem desenha texto em pixels (o canvas fora da
- * tela, no navegador).
+ * `amostrarTexto`, quem desenha texto em pixels (o canvas fora da tela, no
+ * navegador).
  */
 export function criarShow({
   largura = 800,
@@ -51,7 +49,6 @@ export function criarShow({
   limite = LIMITE_DE_PARTICULAS,
   comAya = false,
   forma = null,
-  letreiro = null,
   amostrarTexto = null,
   duracaoMs = null,
 }: {
@@ -63,7 +60,6 @@ export function criarShow({
   limite?: number;
   comAya?: boolean;
   forma?: unknown;
-  letreiro?: string | null;
   amostrarTexto?: AmostrarTexto | null;
   duracaoMs?: number | null;
 } = {}): ShowDeFogos {
@@ -77,14 +73,6 @@ export function criarShow({
     quantidade: Math.round(MARCO.pontos * Math.max(0.75, fator)),
     amostrarTexto,
   });
-  const pontosDoTexto = nivel.letreiro
-    ? pontosDoLetreiro(letreiro, {
-        largura,
-        altura,
-        quantidade: Math.round(LETREIRO.pontos * Math.max(0.75, fator)),
-        amostrarTexto,
-      })
-    : [];
   return {
     t: 0,
     duracao,
@@ -97,7 +85,6 @@ export function criarShow({
     danca: nivel.danca ? dancaDaAya(aya, { largura, altura, duracao }) : null,
     confeteSolto: false,
     pontos,
-    letreiro: pontosDoTexto,
     planos: planejarShow({
       largura,
       altura,
@@ -106,7 +93,6 @@ export function criarShow({
       aleatorio,
       aya,
       pontos,
-      letreiro: pontosDoTexto,
       duracaoMs,
     }),
     proximo: 0,

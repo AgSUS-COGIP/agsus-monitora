@@ -1,5 +1,5 @@
 import { erroParaATela } from "../../lib/erro-na-tela.ts";
-import { rotuloDaCopia } from "../../lib/cache-de-payload";
+import { rotuloDaCopia } from "../../lib/rotulo-da-copia.ts";
 import type {
   EstadoDasAnalises,
   SnapshotDasAnalises,
@@ -395,9 +395,6 @@ function TelaDaArea({
         editais={e.ritmo}
         linhas={e.carregado ? e.linhas : null}
         conferidoEm={e.conferidoEm}
-        {...(estado.comemoracoesLigadas
-          ? { ligadas: estado.comemoracoesLigadas }
-          : {})}
       />
       <LinhaDoRecorte
         texto={descricaoDoRecorte({

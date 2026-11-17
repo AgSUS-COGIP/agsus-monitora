@@ -97,7 +97,12 @@ function MapaSobDemanda<P extends object>({
         aoTentar={tentar}
       />
     );
-  return <Carregando />;
+  // O lugar do mapa já com a altura dele: sem isto, a página pulava ~800px quando o mapa chegava.
+  return (
+    <div className="visao-geral-mapa-reserva">
+      <Carregando />
+    </div>
+  );
 }
 
 export function MapaSaudeIndigena(props: ComponentProps<MapaSI>) {

@@ -22,7 +22,6 @@ import {
   INTENSIDADES,
   intensidadeDoShow,
   lancarFoguete,
-  LETREIRO,
   LIMITE_DE_PARTICULAS,
   MARCO,
   moverFoguete,
@@ -637,12 +636,7 @@ describe("formatos novos: coração, estrela, cometa e crepitante", () => {
   });
 });
 
-describe("rajadas, letreiro e apoteose", () => {
-  const letreiroDeTeste = Array.from({ length: 60 }, (_, i) => ({
-    x: 300 + i * 11,
-    y: 470 + (i % 6) * 5,
-  }));
-
+describe("rajadas e apoteose", () => {
   it("rajadas: tiros pequenos em leque, do mesmo ponto, um atrás do outro, antes do marco", () => {
     for (const intensidade of Object.keys(INTENSIDADES)) {
       const { rajadas, tiros } = INTENSIDADES[intensidade];
@@ -715,85 +709,6 @@ describe("rajadas, letreiro e apoteose", () => {
         tela.largura * 0.44,
       );
     }
-  });
-
-  it("letreiro: estoura pouco antes do marco, escreve o texto e fica legível até perto do fim", () => {
-    const duracao = INTENSIDADES.festa.duracaoMs / 1000;
-    const planos = planejarShow({
-      ...tela,
-      intensidade: "festa",
-      pontos: pontosDeTeste,
-      letreiro: letreiroDeTeste,
-      aleatorio: criarAleatorio(2),
-    });
-    const [marco] = planos.filter((p) => p.papel === "marco");
-    const letreiros = planos.filter((p) => p.papel === "letreiro");
-    expect(letreiros).toHaveLength(1);
-    const [letreiro] = letreiros;
-    expect(letreiro.formato).toBe("marco");
-    expect(letreiro.pontos).toBe(letreiroDeTeste);
-    expect(letreiro.assobia).toBe(true);
-    expect(letreiro.estouro).toBeCloseTo(duracao - LETREIRO.estouraAntes, 9);
-    // Chega antes da forma e fica junto com ela até o fim: mais de 1 s legível.
-    expect(letreiro.estouro).toBeLessThan(marco.estouro);
-    expect(letreiro.fimDaForma).toBeGreaterThan(marco.fimDaForma);
-    expect(
-      letreiro.fimDaForma - (letreiro.estouro + MARCO.convergencia),
-    ).toBeGreaterThan(1);
-    expect(letreiro.fimDaForma).toBeCloseTo(duracao - LETREIRO.desfazAntes, 9);
-    // O grande final estoura acima do texto.
-    for (const p of planos.filter((q) => q.papel === "final"))
-      expect(p.yAlvo).toBeLessThanOrEqual(tela.altura * 0.5);
-    // As faíscas do letreiro vão, cada uma, para um ponto do texto.
-    const alvos = estourar(letreiro, {
-      x: letreiro.xAlvo,
-      y: letreiro.yAlvo,
-      aleatorio: criarAleatorio(1),
-    }).filter((p) => p.tipo === "alvo");
-    expect(alvos.map((p) => [p.xa, p.ya])).toEqual(
-      letreiroDeTeste.map((p) => [p.x, p.y]),
-    );
-  });
-
-  it("o show escreve o letreiro (do canvas) no Normal e no Festa; no Suave, não", () => {
-    // Um "canvas" que devolve o texto como um bloco cheio de pixels.
-    const amostrarTexto = () => {
-      const width = 200;
-      const height = 60;
-      const data = new Uint8ClampedArray(width * height * 4);
-      for (let y = 10; y < 50; y += 1)
-        for (let x = 10; x < 190; x += 1) data[(y * width + x) * 4 + 3] = 255;
-      return { data, width, height };
-    };
-    for (const [intensidade, escreve] of [
-      ["pequeno", false],
-      ["cheio", true],
-      ["festa", true],
-    ]) {
-      const show = criarShow({
-        ...tela,
-        intensidade,
-        letreiro: "Parabéns!",
-        amostrarTexto,
-        aleatorio: criarAleatorio(4),
-      });
-      expect(show.letreiro.length > 30).toBe(escreve);
-      expect(show.planos.some((p) => p.papel === "letreiro")).toBe(escreve);
-      // O texto fica abaixo da forma do marco.
-      if (escreve)
-        expect(Math.min(...show.letreiro.map((p) => p.y))).toBeGreaterThan(
-          tela.altura * 0.55,
-        );
-    }
-    // Sem texto, ou sem canvas e com letras (a fonte de pontos só tem
-    // algarismos e sinais), nada no céu: o show segue sem letreiro.
-    expect(
-      criarShow({ ...tela, letreiro: "", amostrarTexto }).letreiro,
-    ).toHaveLength(0);
-    expect(criarShow({ ...tela, letreiro: "Oba" }).letreiro).toHaveLength(0);
-    expect(
-      criarShow({ ...tela, letreiro: "100%" }).letreiro.length,
-    ).toBeGreaterThan(30);
   });
 });
 

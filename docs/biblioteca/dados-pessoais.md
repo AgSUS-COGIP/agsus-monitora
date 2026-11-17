@@ -21,7 +21,7 @@ e os logs do GitHub Actions são **públicos**: nada pessoal sai em log, artefat
 | Nome do parente (P20)                 | analista, revisor e coordenação            | mascarado como o CPF                                                               |
 
 Os registros de acesso (`TL_ACESSO_FICHA_ANALISE`) ficam só para a coordenação e o administrador
-global. Decisões da Avaliação documental em [[avaliacao-documental-pendencias]],
+global. Decisões da Avaliação documental em [[modulo-avaliacao-documental]],
 seção 10.
 
 ## No aparelho (cópias para abrir rápido e sem rede)
@@ -48,7 +48,7 @@ do que o banco mandou, para abrir na hora e para consultar sem rede.
   na leitura) e quando outro usuário entra (`apagarCacheDePayload`, `src/app/sistema.ts`).
 - Sem rede, a tela mostra a cópia só para consulta, com "Dados de 17/11, 10:14" no topo; gravar
   exige rede.
-- A cópia da sessão (banco `agsus-monitora`, [[carga-da-entrada]]) não leva dado de candidato e
+- A cópia da sessão (banco `agsus-monitora`, `src/lib/copia-da-sessao.ts`) não leva dado de candidato e
   segue com 7 dias.
 
 ## Nos robôs e jobs
@@ -68,7 +68,7 @@ do que o banco mandou, para abrir na hora e para consultar sem rede.
 ## Em outros lugares
 
 - A API `/api/aprovados` entrega nome e matrícula: só com a chave do outro sistema
-  ([[funcoes-da-vercel]]).
+  ([[deploy-e-vercel]]).
 - O relatório da diretoria (aba Aprovados do montador da Visão geral) entrega nome e matrícula só a
   quem é leitor da Lista de aprovados; `exportar_aprovados_da_diretoria` grava cada download em
   `TL_EXPORTACAO_APROVADO` antes de devolver ([[modulo-visao-geral]]).

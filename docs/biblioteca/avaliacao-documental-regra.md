@@ -7,7 +7,7 @@ atualizado: 2026-11-10
 # Avaliação documental: a regra
 
 A aba Regra da [[modulo-avaliacao-documental]]. O editor é montado em Editais › Regras do edital,
-etapa 2 ([[modulo-regras-do-edital]]); sem Provisória nem lote, que são da [[modulo-triagem]].
+etapa 2 ([[modulo-editais]]); sem Provisória nem lote, que são da [[modulo-triagem]].
 
 ## Assistente da regra
 

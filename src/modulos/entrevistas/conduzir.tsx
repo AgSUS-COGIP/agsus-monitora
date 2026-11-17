@@ -80,9 +80,9 @@ import { CarregandoConteudo } from "../../ui/index.ts";
     ou código, vaga e banca) e a tabela em ordem de horário
     (fila-do-dia.tsx). A ação da linha abre a ficha de notas em tela cheia
     (ficha.tsx), com "Salvar e abrir o próximo" na ordem da tabela. Concluir
-    o dia (todas as de hoje concluídas ou com falta) solta os fogos
-    (src/modulos/comemoracao/, com o liga/desliga das comemorações do app),
-    uma vez, na passagem.
+    o dia (todas as de hoje concluídas ou com falta) mostra o aviso
+    (src/modulos/comemoracao/, sem efeito, com o liga/desliga das
+    comemorações do app), uma vez, na passagem.
     Na URL (src/app/usar-filtros-na-url.ts): a seção (?aba=preparar), o
     período, a situação, a vaga e a banca; a busca, não.
   - Preparar: o resumo das regras e os passos Roteiro, Banca, Convocação e
@@ -157,11 +157,7 @@ function criarVisao() {
 }
 type EstadoDaVisao = ReturnType<typeof criarVisao>;
 
-type Comemorar = (opcoes: {
-  texto: string;
-  confete: string;
-  forma: string;
-}) => unknown;
+type Comemorar = (opcoes: { texto: string; confete: false }) => unknown;
 
 function TelaDeConducao({
   conducao,
@@ -345,10 +341,10 @@ function TelaDeConducao({
       contador.completo &&
       comemoracoesLigadas()
     )
+      // Só o aviso: efeito fica para as quatro ocasiões do catálogo.
       aoComemorar({
-        texto: `Entrevistas de hoje concluídas: ${contador.feitas} de ${contador.total}!`,
-        confete: "fogos",
-        forma: "check",
+        texto: `Entrevistas de hoje concluídas: ${contador.feitas} de ${contador.total}.`,
+        confete: false,
       });
   }, [editalId, hoje, contador, comemoracoesLigadas, aoComemorar]);
 

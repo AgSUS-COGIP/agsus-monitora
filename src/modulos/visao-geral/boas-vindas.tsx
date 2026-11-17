@@ -1,100 +1,38 @@
-import type { PropsDasBoasVindas, PropsDosMarcos } from "./tipos.ts";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import type { PropsDosMarcos } from "./tipos.ts";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import {
   assinarDadosDoMonitoramento,
-  linhasDaArea,
   obterDadosDoMonitoramento,
 } from "../../componentes/dados-do-monitoramento.ts";
 import {
-  editaisComEtapaNaSemana,
-  primeiroNome,
-  resumoDoDia,
-  saudacao,
-} from "../../lib/boas-vindas.ts";
-import {
-  agradecimentoDoMarco,
   chaveDoMarco,
   formaDoMarco,
-  letreiroDoMarcoDoAno,
   gravarArmazenamento,
   lerArmazenamento,
   mensagemDoMarcoDoAno,
   proximoEstadoDoMarco,
 } from "../../lib/comemoracao.ts";
-import { semTreinamento } from "../../lib/edital-de-treinamento.ts";
 import { nomeDaArea } from "../../lib/menu-lateral.ts";
 import { comemorar } from "../../app/comemoracao-sob-demanda.ts";
 import { lerMarcosDaArea } from "./marcos.ts";
-import { linhasDaResposta } from "../../lib/visao-geral.ts";
 
 /*
-  O topo da Visão geral (a mesma página nas três áreas), antes do resto:
+  Os marcos do ano da Visão geral (a saudação e a semana ficam no cabeçalho
+  da tela, paineis.tsx, desde o layout A de 17/11/2026):
 
-  - Boas-vindas: aparece quando o perfil e os editais já chegaram, sem botão
-    de fechar — é onde fica a conta dos editais da área atual com etapa na
-    semana (o bloco "Próximos 7 dias" saiu por isso); "Ver cronograma" abre o
-    Cronograma da área pelo item do menu.
-  - Marcos do ano: "Em 2026, a equipe da Saúde Indígena já concluiu 7.500
-    análises.", num card igual, com ×, e os fogos do marco (o
-    número desenhado no céu e "7.500 análises concluídas em 2026. Obrigado,
-    equipe da Saúde Indígena!"). Números só da equipe
-    (obter_marcos_da_area), nunca de uma pessoa; uma leitura por área e por
-    pessoa em cada entrada, só com as comemorações ligadas. A regra (linha de
-    base na primeira vez, marco novo contra o guardado, uma vez por marco) é
-    de src/lib/comemoracao.ts. Qualquer falha: o card não aparece.
+  - Marcos do ano: sem card na tela; só o aviso da comemoração ("Saúde
+    Indígena: 7.500 análises concluídas em 2026.") com os fogos do marco (o
+    número desenhado no céu). Números só da equipe (obter_marcos_da_area),
+    nunca de uma pessoa; uma leitura por área e por pessoa em cada entrada,
+    só com as comemorações ligadas. A regra (linha de base em silêncio na
+    primeira vez, marco novo contra o guardado, uma vez por marco) é de
+    src/lib/comemoracao.ts. Qualquer falha: nada aparece.
 */
-
-/* Abre o Cronograma da área pelo item do menu (troca a área e a tela). */
-function abrirCronogramaDaArea(area: string) {
-  document
-    .querySelector<HTMLElement>(
-      `.menu-item[data-view="calendario"][data-area="${area}"]`,
-    )
-    ?.click();
-}
 
 const usarDados = () =>
   useSyncExternalStore(assinarDadosDoMonitoramento, obterDadosDoMonitoramento);
 
-export function BoasVindas({ obterPerfil, agora }: PropsDasBoasVindas) {
-  const { linhas, carregado, areaAtual } = usarDados();
-  const perfil = obterPerfil();
-  if (!perfil || !carregado) return null;
-
-  const nome = primeiroNome(perfil.nome || perfil.email?.split("@")[0]);
-  const quantidade = editaisComEtapaNaSemana(
-    semTreinamento(linhasDaArea(linhasDaResposta(linhas), areaAtual)),
-    agora(),
-  );
-  const titulo = [saudacao(agora().getHours()), nome]
-    .filter(Boolean)
-    .join(", ");
-  return (
-    <div
-      className="boas-vindas"
-      role="status"
-      aria-live="polite"
-      data-tour="visao-geral-boas-vindas"
-    >
-      <div className="boas-vindas__texto">
-        <strong>{titulo}</strong>
-        <span>{resumoDoDia(quantidade)}</span>
-      </div>
-      {quantidade ? (
-        <button
-          type="button"
-          className="boas-vindas__acao"
-          data-boas-vindas="cronograma"
-          data-tour="visao-geral-ver-cronograma"
-          onClick={() => abrirCronogramaDaArea(areaAtual)}
-        >
-          Ver cronograma
-        </button>
-      ) : null}
-    </div>
-  );
-}
-
+/* Não desenha nada: lê o marco do ano da área e solta a comemoração. */
 export function MarcosDoAno({
   obterPerfil,
   supabase,
@@ -102,10 +40,6 @@ export function MarcosDoAno({
   armazenamento = globalThis.window?.localStorage,
 }: PropsDosMarcos) {
   const { carregado, areaAtual } = usarDados();
-  const [mensagem, setMensagem] = useState<{
-    area: string;
-    texto: string;
-  } | null>(null);
   const consultadas = useRef(new Set<string>());
   const montado = useRef(false);
   const perfil = obterPerfil();
@@ -148,36 +82,18 @@ export function MarcosDoAno({
         JSON.stringify(estado),
       );
       if (!gravou || !novo || !montado.current) return;
-      const marco = {
-        nomeDaArea: nomeDaArea(area),
-        marco: novo,
-        ano: estado.ano,
-      };
-      setMensagem({ area, texto: mensagemDoMarcoDoAno(marco) });
-      // Os fogos do marco: o número desenhado no céu e o agradecimento à equipe.
+      // O aviso com o fato e os fogos do marco (o número desenhado no céu).
       void comemorar({
-        texto: agradecimentoDoMarco(marco),
+        texto: mensagemDoMarcoDoAno({
+          nomeDaArea: nomeDaArea(area),
+          marco: novo,
+          ano: estado.ano,
+        }),
         marco: "marco-do-ano",
         forma: formaDoMarco(novo),
-        letreiro: letreiroDoMarcoDoAno(novo),
       });
     })().catch((erro) => console.warn("Marcos do ano indisponíveis:", erro));
   }, [pode, usuarioId, areaAtual, supabase, armazenamento]);
 
-  if (!pode || !mensagem || mensagem.area !== areaAtual) return null;
-  return (
-    <div className="boas-vindas marcos-do-ano" role="status" aria-live="polite">
-      <div className="boas-vindas__texto">
-        <strong>{mensagem.texto}</strong>
-      </div>
-      <button
-        type="button"
-        className="boas-vindas__fechar"
-        aria-label="Fechar marco da equipe"
-        onClick={() => setMensagem(null)}
-      >
-        ×
-      </button>
-    </div>
-  );
+  return null;
 }

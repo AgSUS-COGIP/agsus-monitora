@@ -49,8 +49,6 @@ import type {
   PointerEvent,
   RefObject,
 } from "react";
-import { comemorar } from "../../app/comemoracao-sob-demanda.ts";
-import { mensagemDoFimDoTour } from "../../lib/comemoracao.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { Icone } from "../../componentes/icone.tsx";
 import {
@@ -851,6 +849,9 @@ const perfilDoLegado = () => globalThis.window?.getMonitoraProfile?.() || null;
 
 export const ID_DOS_PRIMEIROS_PASSOS = "primeiros-passos";
 
+/* Quanto rolar (px) para o convite ignorado sumir. */
+const DISTANCIA_QUE_FECHA_O_CONVITE = 160;
+
 export function Aya({
   perguntar = perguntarPadrao,
   navegar = navegarPelaJanela,
@@ -958,6 +959,20 @@ export function Aya({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- convida pela tela (chave) e pelo que ocupa a Aya; o resto se lê no momento.
   }, [chaveDaTela, temTourNaTela, temPerfil, tour, oferta]);
 
+  // Ignorado, o convite sai do caminho: rolou a página, ele some (no celular
+  // ficava parado por cima dos gráficos e das tabelas).
+  const temConvite = Boolean(convite);
+  useEffect(() => {
+    if (!temConvite || !janela) return undefined;
+    const inicio = janela.scrollY;
+    const aoRolar = () => {
+      if (Math.abs(janela.scrollY - inicio) > DISTANCIA_QUE_FECHA_O_CONVITE)
+        setConvite(null);
+    };
+    janela.addEventListener("scroll", aoRolar, { passive: true });
+    return () => janela.removeEventListener("scroll", aoRolar);
+  }, [temConvite, janela]);
+
   /* Leva à tela do passo da trilha; diz se precisou trocar de tela. */
   const irParaOPasso = useCallback(
     (passo: PassoDoTour) => {
@@ -971,19 +986,6 @@ export function Aya({
     },
     [navegar, abrirSecao],
   );
-
-  function celebrarFimDoTour(concluido: TourEmCurso | null): void {
-    if (!concluido) return;
-    const nome = String(concluido.rotulo || "").replace(/^(Tour|Trilha): /, "");
-    void comemorar({
-      texto: mensagemDoFimDoTour({ trilha: Boolean(concluido.trilha), nome }),
-      // Efeito e intensidade: Configurações › Comemorações (padrão: fogos;
-      // festa na trilha).
-      marco: concluido.trilha ? "fim-da-trilha" : "fim-do-tour",
-      // A trilha inteira ganha uma estrela no céu.
-      forma: concluido.trilha ? "estrela" : null,
-    });
-  }
 
   function comecarTour(novo: TourEmCurso): void {
     setOferta(false);
@@ -1037,8 +1039,6 @@ export function Aya({
     (motivo: MotivoDoFimDoTour) => {
       if (tour?.trilha && motivo === "concluiu")
         setProgresso(concluirTrilha(janela, tour.trilha));
-      // Fim do tour com "Concluir": fogos; fim de uma trilha inteira: a festa.
-      if (motivo === "concluiu") celebrarFimDoTour(tour);
       devolverFocoAArara.current = true;
       setTour(null);
     },

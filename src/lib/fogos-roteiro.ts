@@ -11,7 +11,6 @@ import {
   FORMATOS_DA_RAJADA,
   FORMATOS_DO_FINAL,
   GRAVIDADE_DO_FOGUETE,
-  LETREIRO,
   MARCO,
   NOMES_DOS_FORMATOS,
   RAJADA,
@@ -153,8 +152,7 @@ function planoDoFoguete(
 /**
  * O roteiro: um foguete por estouro, ordenado pelo lançamento. `aya` (de
  * trajetoDaAya) faz o primeiro foguete nascer dela; `pontos` (de
- * pontosDaForma) fazem do estouro do marco o desenho; `letreiro` (de
- * pontosDoLetreiro), o texto do marco escrito no céu logo depois. Estouros
+ * pontosDaForma) fazem do estouro do marco o desenho. Estouros
  * comuns escalonados e espalhados pela largura (uma faixa para cada), as
  * rajadas (tiros pequenos em leque, um atrás do outro), o marco no centro,
  * o grande final dos lados e a apoteose no alto, todos terminando a tempo
@@ -168,7 +166,6 @@ export function planejarShow({
   aleatorio = Math.random,
   aya = null,
   pontos = [],
-  letreiro = [],
   duracaoMs = null,
 }: {
   largura?: number;
@@ -178,7 +175,6 @@ export function planejarShow({
   aleatorio?: Aleatorio;
   aya?: TrajetoDaAya | null;
   pontos?: readonly PontoDaForma[];
-  letreiro?: readonly PontoDaForma[];
   duracaoMs?: number | null;
 } = {}): PlanoDoFoguete[] {
   const base = intensidadeDoShow(intensidade);
@@ -268,7 +264,6 @@ export function planejarShow({
     marco.fimDaForma = duracao - MARCO.desfazAntes;
   }
 
-  const comLetreiro = Array.isArray(letreiro) && letreiro.length > 0;
   // O grande final: `final` estouros quase juntos, dos lados do marco.
   const inicioDoFinal = duracao - 1.6;
   const fimDoFinal = duracao - 1.2;
@@ -294,16 +289,12 @@ export function planejarShow({
         ),
         papel: "final",
         xAlvo: largura * (fracao + entre(aleatorio, -0.03, 0.03)),
-        // Com letreiro, o final fica acima dele.
-        yAlvo:
-          altura *
-          entre(aleatorio, 0.1, comForma ? (comLetreiro ? 0.5 : 0.6) : 0.42),
+        yAlvo: altura * entre(aleatorio, 0.1, comForma ? 0.6 : 0.42),
       },
       contexto,
     );
   });
 
-  const letreiros = comLetreiro ? [planoDoLetreiro(letreiro, contexto)] : [];
   const rajadas = planosDasRajadas({
     quantas: base.rajadas,
     tiros: base.tiros,
@@ -313,47 +304,9 @@ export function planejarShow({
   });
   const apoteose = planosDaApoteose(base.apoteose, contexto);
 
-  return [
-    ...comuns,
-    ...rajadas,
-    marco,
-    ...letreiros,
-    ...finais,
-    ...apoteose,
-  ].sort((a, b) => a.lancamento - b.lancamento);
-}
-
-/*
-  O letreiro: um foguete do pé da tela, no centro, que estoura pouco antes
-  do marco; as faíscas escrevem o texto e ficam até quase o fim, por baixo
-  do grande final e da apoteose.
-*/
-function planoDoLetreiro(
-  pontos: readonly PontoDaForma[],
-  contexto: ContextoDoPlano,
-): PlanoDoFoguete {
-  const { duracao, paleta } = contexto;
-  const x = pontos.reduce((s, p) => s + p.x, 0) / pontos.length;
-  const y = pontos.reduce((s, p) => s + p.y, 0) / pontos.length;
-  return {
-    ...planoDoFoguete(
-      {
-        formato: "peonia",
-        estouro: duracao - LETREIRO.estouraAntes,
-        papel: "letreiro",
-        xAlvo: x,
-        yAlvo: y,
-      },
-      contexto,
-    ),
-    formato: "marco",
-    xBase: x,
-    cor: paleta.dourado,
-    cor2: paleta.area || paleta.centelha,
-    assobia: true,
-    pontos,
-    fimDaForma: duracao - LETREIRO.desfazAntes,
-  };
+  return [...comuns, ...rajadas, marco, ...finais, ...apoteose].sort(
+    (a, b) => a.lancamento - b.lancamento,
+  );
 }
 
 /*
@@ -413,7 +366,7 @@ function planosDasRajadas({
 
 /*
   A apoteose: depois do grande final, `quantos` estouros quase juntos no
-  alto, de ponta a ponta (com coração e estrela), enquanto o letreiro brilha.
+  alto, de ponta a ponta (com coração e estrela).
 */
 function planosDaApoteose(
   quantos: number,

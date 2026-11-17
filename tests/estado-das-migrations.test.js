@@ -1,4 +1,13 @@
-import { readFileSync, readdirSync } from "node:fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   caminhoRegistado,
@@ -147,17 +156,32 @@ describe("as históricas", () => {
   });
 
   it("o disco as lê com o caminho do registro", () => {
-    const noDisco = ficheirosNoDisco("supabase");
-    expect(
-      noDisco.find((f) =>
-        f.arquivo.endsWith("_catalogo_dos_robos_e_chave_unica.sql"),
-      ),
-    ).toMatchObject({
-      caminho: "migrations/20261109180000_catalogo_dos_robos_e_chave_unica.sql",
-      historica: false,
-    });
-    // Só migrations/ (as pastas de legado saíram); ensaios e rollbacks não entram na conta.
-    expect(noDisco.every((f) => f.diretorio === "migrations")).toBe(true);
+    // Uma pasta supabase/ de mentira: a de verdade fica vazia sem migration pendente.
+    const raiz = mkdtempSync(join(tmpdir(), "estado-das-migrations-"));
+    try {
+      for (const pasta of ["migrations", "ensaios", "rollback"]) {
+        mkdirSync(join(raiz, pasta));
+        writeFileSync(
+          join(
+            raiz,
+            pasta,
+            "20261109180000_catalogo_dos_robos_e_chave_unica.sql",
+          ),
+          "begin; commit;",
+        );
+      }
+      const noDisco = ficheirosNoDisco(raiz);
+      expect(noDisco).toHaveLength(1);
+      expect(noDisco[0]).toMatchObject({
+        caminho:
+          "migrations/20261109180000_catalogo_dos_robos_e_chave_unica.sql",
+        historica: false,
+      });
+      // Só migrations/ (as pastas de legado saíram); ensaios e rollbacks não entram na conta.
+      expect(noDisco.every((f) => f.diretorio === "migrations")).toBe(true);
+    } finally {
+      rmSync(raiz, { recursive: true, force: true });
+    }
   });
 });
 
@@ -220,10 +244,6 @@ describe("o literal que vai para o SQL", () => {
 
 describe("contra os ficheiros deste repositório", () => {
   const noDisco = ficheirosNoDisco("supabase");
-
-  it("encontra as migrations", () => {
-    expect(noDisco.some((f) => f.diretorio === "migrations")).toBe(true);
-  });
 
   it("cada ficheiro tem caminho único", () => {
     const vistos = new Set(noDisco.map((f) => f.caminho));

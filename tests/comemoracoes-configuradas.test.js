@@ -7,6 +7,7 @@ import {
 } from "../src/app/marcos-personalizados.ts";
 import {
   CHAVE_DA_PREFERENCIA_PESSOAL,
+  CHAVE_DO_EFEITO_DO_DIA,
   definirConfiguracaoDasComemoracoes,
   normalizarConfiguracao,
 } from "../src/lib/catalogo-de-comemoracoes.ts";
@@ -100,36 +101,40 @@ describe("comemorar com a configuração dos marcos", () => {
     definirConfiguracaoDasComemoracoes(
       JSON.stringify({
         marcos: {
-          "vaga-pronta": {
+          "edital-concluido": {
             efeito: "confete",
             intensidade: "festa",
             duracaoS: 3,
             som: true,
-            mensagem: "Vaga pronta, equipe!",
+            mensagem: "Edital concluído.",
           },
         },
       }),
     );
     const { janela } = janelaFalsa();
-    expect(planoDaComemoracao({ marco: "vaga-pronta", janela })).toEqual({
+    expect(
+      planoDaComemoracao({
+        marco: "edital-concluido",
+        janela,
+        hoje: "2026-11-17",
+      }),
+    ).toEqual({
       efeito: "confete",
       intensidade: "festa",
       duracaoMs: 3000,
       som: true,
-      mensagem: "Vaga pronta, equipe!",
-      // O texto no céu do marco (só os fogos escrevem; aqui, confete).
-      letreiro: "Vaga pronta!",
+      mensagem: "Edital concluído.",
     });
     const { doc, janela: outra } = janelaFalsa();
     comemorar({
-      texto: "Vaga X pronta.",
-      marco: "vaga-pronta",
+      texto: "Edital X: as 3 fichas foram analisadas.",
+      marco: "edital-concluido",
       doc,
       janela: outra,
       aleatorio: criarAleatorio(1),
     });
     const aviso = avisoDe(doc);
-    expect(aviso.textContent).toContain("Vaga pronta, equipe!");
+    expect(aviso.textContent).toContain("Edital concluído.");
     // Som configurado: o botão já nasce ligado (toca depois da interação).
     expect(
       aviso.querySelector(".comemoracao__som").getAttribute("aria-pressed"),
@@ -137,42 +142,74 @@ describe("comemorar com a configuração dos marcos", () => {
     // Confete: um canvas, sem véu escuro.
     expect(canvases(doc)).toBe(1);
     expect(veus(doc)).toBe(0);
+    // A frase fica só no aviso: nada de letreiro no meio da tela.
+    expect(doc.querySelector(".comemoracao__letreiro")).toBeNull();
   });
 
-  it("o letreiro (texto no céu): o do marco, o pedido ou, no Festa, Parabéns!", () => {
-    const { janela } = janelaFalsa();
-    expect(planoDaComemoracao({ marco: "fila-zerada", janela }).letreiro).toBe(
-      "Fila zerada!",
-    );
-    // O marco do número já escreve o número: sem letreiro próprio (no Festa,
-    // o padrão).
-    expect(planoDaComemoracao({ marco: "marco-do-ano", janela }).letreiro).toBe(
-      "Parabéns!",
-    );
-    const direto = (opcoes) =>
-      planoDaComemoracao({ teste: true, efeito: "fogos", janela, ...opcoes })
-        .letreiro;
-    expect(direto({ intensidade: "festa" })).toBe("Parabéns!");
-    expect(direto({ intensidade: "normal" })).toBeNull();
-    expect(direto({ intensidade: "normal", letreiro: "Valeu!" })).toBe(
-      "Valeu!",
-    );
-    // Letreiro vazio pedido: nenhum, nem no Festa.
-    expect(direto({ intensidade: "festa", letreiro: "" })).toBeNull();
-    // Sem efeito (só o aviso), sem letreiro.
-    expect(
-      planoDaComemoracao({ teste: true, confete: false, janela }).letreiro,
-    ).toBeNull();
-    // A configuração salva continua valendo do mesmo jeito (o letreiro não
-    // é gravado: vem do catálogo).
+  it("fila zerada e vaga pronta: só o aviso, mesmo com efeito na configuração antiga", () => {
     definirConfiguracaoDasComemoracoes(
-      JSON.stringify({ marcos: { "fila-zerada": { intensidade: "festa" } } }),
+      JSON.stringify({
+        marcos: { "fila-zerada": { efeito: "fogos", intensidade: "festa" } },
+      }),
     );
-    expect(planoDaComemoracao({ marco: "fila-zerada", janela })).toMatchObject({
-      efeito: "fogos",
-      intensidade: "festa",
-      letreiro: "Fila zerada!",
+    const { doc, janela, guardado } = janelaFalsa();
+    expect(planoDaComemoracao({ marco: "fila-zerada", janela })).toEqual({
+      efeito: null,
+      intensidade: null,
+      duracaoMs: null,
+      som: false,
+      mensagem: "",
     });
+    comemorar({
+      texto: "Vaga 1 (Químico): todas as entrevistas têm parecer.",
+      marco: "vaga-pronta",
+      doc,
+      janela,
+    });
+    expect(avisoDe(doc).textContent).toContain("todas as entrevistas");
+    expect(canvases(doc)).toBe(0);
+    expect(avisoDe(doc).querySelector(".comemoracao__pular")).toBeNull();
+    // Só o aviso não gasta o efeito do dia.
+    expect(guardado.has(CHAVE_DO_EFEITO_DO_DIA)).toBe(false);
+  });
+
+  it("uma comemoração com efeito por dia: a segunda sai só como aviso; o teste não conta", () => {
+    const { janela, guardado } = janelaFalsa();
+    const pedido = (hoje) =>
+      planoDaComemoracao({ marco: "marco-do-ano", janela, hoje });
+    expect(pedido("2026-11-17").efeito).toBe("fogos");
+    expect(guardado.get(CHAVE_DO_EFEITO_DO_DIA)).toBe("2026-11-17");
+    expect(pedido("2026-11-17")).toMatchObject({ efeito: null });
+    // O Testar e o Soltar de Configurações: sempre com efeito, sem gastar.
+    expect(
+      planoDaComemoracao({ marco: "marco-do-ano", teste: true, janela }).efeito,
+    ).toBe("fogos");
+    expect(
+      planoDaComemoracao({ teste: true, efeito: "baloes", janela }).efeito,
+    ).toBe("baloes");
+    // Outro dia: de novo com efeito.
+    expect(pedido("2026-11-18").efeito).toBe("fogos");
+    // Na tela: o primeiro do dia com canvas, o segundo sem.
+    const outra = janelaFalsa();
+    const hoje = (j) => j.janela.localStorage.getItem(CHAVE_DO_EFEITO_DO_DIA);
+    comemorar({
+      texto: "Primeiro",
+      marco: "acesso-liberado",
+      doc: outra.doc,
+      janela: outra.janela,
+      aleatorio: criarAleatorio(7),
+    });
+    expect(canvases(outra.doc)).toBe(1);
+    expect(hoje(outra)).not.toBeNull();
+    const antes = canvases(outra.doc);
+    comemorar({
+      texto: "Segundo",
+      marco: "edital-concluido",
+      doc: outra.doc,
+      janela: outra.janela,
+    });
+    expect(canvases(outra.doc)).toBe(antes);
+    expect(outra.doc.body.textContent).toContain("Segundo");
   });
 
   it("preferência pessoal desligada: nada, nem sem marco; o teste aparece", () => {
@@ -357,8 +394,7 @@ describe("marcos personalizados no app", () => {
     expect(avaliar(9)).toEqual([]);
     expect(avaliar(10).map((p) => p.id)).toEqual(["pessoal-1"]);
     expect(comemorarFalso).toHaveBeenCalledWith({
-      texto: "Edital 012/2026 chegou a 10 contratados!",
-      itens: [],
+      texto: "Edital 012/2026: 10 contratados.",
       marco: "pessoal-1",
     });
     expect(avaliar(12)).toEqual([]);

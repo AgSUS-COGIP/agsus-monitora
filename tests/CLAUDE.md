@@ -1,7 +1,7 @@
 # `tests/`
 
-Cada `[[nome]]` é `docs/biblioteca/<nome>.md`. Guia completo: [[testes]] (Vitest, PGlite, pytest)
-e [[testes-de-navegador]] (Playwright).
+Cada `[[nome]]` é `docs/biblioteca/<nome>.md`. Guia completo: [[testes]] (Vitest, PGlite, pytest
+e Playwright).
 
 - **Teste novo é `.ts`** (`.tsx` só com JSX), checado por `npm run typecheck:testes` (strict). Sem
   `any`, `@ts-ignore`/`@ts-nocheck` nem `as unknown as`: tipe o mock com `Partial<>`/`Pick<>`,
@@ -12,8 +12,10 @@ e [[testes-de-navegador]] (Playwright).
   controlado com `digitar`, `escolher`, `clicar` e `teclar` de `tests/componentes/interacoes.ts`.
   Modelo: `tests/componentes/barra-lateral.test.ts`.
 - **Rede bloqueada** em todo teste unitário (`setup/rede-bloqueada.ts`): não desligue; use mock.
-- **Postgres de verdade** em `apoio/banco-dos-robos.ts` (PGlite, `// @vitest-environment node`);
-  modelo antes × depois × rollback: `catalogo-dos-robos-no-banco.test.ts`.
+- **Postgres de verdade** em `apoio/banco-dos-robos.ts`, `apoio/banco-dos-paineis.ts` e
+  `apoio/banco-do-fundamento.ts` (PGlite, `// @vitest-environment node`); modelo antes × depois:
+  `catalogo-dos-robos-no-banco.test.ts`. A migration já aplicada que monta o banco fica, sem
+  mudança, em `fixtures/sql-do-banco/<mesmo nome>.sql` (rollback e ensaio não vêm junto).
 - Teste novo de tela com sessão vai em `sessao-simulada.spec.js`, simulando as RPCs.
 - Spec do Playwright continua `.spec.js` (o `playwright.config.js` só casa esse padrão); o apoio que ele importa fica em `apoio/` (`sessao-simulada.js`).
 - Nome do arquivo descreve o comportamento em português. Bug corrigido → teste que falharia antes.

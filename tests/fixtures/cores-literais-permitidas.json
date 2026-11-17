@@ -22,8 +22,6 @@
     "src/modulos/aya/mascote/desenho.tsx": "marca: desenho da mascote AYA",
     "src/modulos/classificacao/documento-no-navegador.ts": "documento: fundo branco do papel ao rasterizar a prévia",
     "src/modulos/comemoracao/desenho.ts": "efeito de comemoração (canvas)",
-    "src/modulos/comemoracao/letreiro.ts": "letreiro da comemoração: placa escura fixa nos dois temas (contraste testado)",
-    "src/modulos/comemoracao/letreiro.tsx": "letreiro da comemoração: placa escura fixa nos dois temas (contraste testado)",
     "src/modulos/configuracoes/partes.tsx": "valor padrão gravado da cor do painel da tela de acesso (configuração, não tema)",
     "src/modulos/mapa-saude-indigena/leaflet.ts": "mapa: contorno branco dos marcadores sobre a base do mapa",
     "src/modulos/mapa-saude-indigena/legenda.tsx": "mapa: legenda com o mesmo contorno dos marcadores",
@@ -223,15 +221,6 @@
       "rgba(255,255,255,0.55)": 1,
       "rgba(255,255,255,0)": 1,
       "rgba(0,0,0,${alfadorastro(dt)": 1
-    },
-    "src/modulos/comemoracao/letreiro.ts": {
-      "#0b1530": 2,
-      "#ffffff": 2,
-      "#ffe08a": 1,
-      "#000000": 1
-    },
-    "src/modulos/comemoracao/letreiro.tsx": {
-      "rgb(${rgb(cores_do_letreiro.placa)": 1
     },
     "src/modulos/configuracoes/partes.tsx": {
       "#c296eb": 1

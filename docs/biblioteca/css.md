@@ -36,7 +36,7 @@ Depois, confira no navegador com `getComputedStyle(el).prop`, e não no arquivo.
   foram dissolvidos nas fontes (02/10/2026): não recrie.
 - Cor, raio, sombra, espaço e z-index **só por token**. Nenhum `!important` ou `#id` novo.
 - Tema escuro: `[data-theme="dark"]`. Não escreva regra nova com `body.dark-mode` (é um espelho).
-- Anime só `opacity`/`transform`. Breakpoints: 420, 640, 900, 1220 ([[mobile]]).
+- Anime só `opacity`/`transform`. Breakpoints: 420, 640, 900, 1220 ([[acessibilidade-e-mobile]]).
 - Não redefina `.btn` em CSS de módulo. A fase final é `@layer`, mas só depois que o legado for
   envolvido (CSS fora de camada vence qualquer camada): não comece por aí.
 

@@ -1,5 +1,5 @@
 import { erroParaATela } from "../../lib/erro-na-tela.ts";
-import { rotuloDaCopia } from "../../lib/cache-de-payload";
+import { rotuloDaCopia } from "../../lib/rotulo-da-copia.ts";
 import type {
   EstadoDasEntrevistas,
   SnapshotDasEntrevistas,

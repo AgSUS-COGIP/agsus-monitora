@@ -15,6 +15,8 @@
 
 .ui-tela {
   display: grid;
+  /* Sem isto a coluna cresce até a tabela mais larga e a página rola de lado (Painéis no celular). */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
   min-width: 0;
   color: var(--text-primary);
@@ -2138,5 +2140,33 @@ button.ui-faixa-item:hover {
   .ui-faixa-numero {
     font-size: var(--text-h2);
     line-height: var(--leading-h2);
+  }
+}
+
+/*
+  Toque (Design System, seção 16): com ponteiro grosso, os controles das telas
+  têm no mínimo 44px. Antes, Mais filtros, Limpar tudo, Colunas, Carregar mais,
+  os segmentados e os botões do mapa tinham 28–32px no celular. No mouse,
+  nada muda. `.ui-tela-da-selecao .btn.small` entra na lista para vencer a
+  regra mais específica da Seleção.
+*/
+@media (pointer: coarse) {
+  :is(.ui-tela, .ui-gaveta, .modal, .mapa-si)
+    :is(
+      .btn,
+      .btn.small,
+      .ui-tela-da-selecao .btn.small,
+      .ui-segmentado-opcao,
+      .ui-cabecalho-acoes .ui-segmentado-opcao,
+      .ui-lista-selecao .btn,
+      .ui-chip,
+      .ui-tabela-busca,
+      select
+    ) {
+    min-height: 44px;
+  }
+  :is(.ui-menu-reticencias, .ui-gaveta-fechar) {
+    width: 44px;
+    height: 44px;
   }
 }

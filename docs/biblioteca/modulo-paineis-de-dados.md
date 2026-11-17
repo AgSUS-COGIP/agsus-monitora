@@ -32,7 +32,7 @@ RPCs no contrato (`src/lib/rpc-contrato.ts`): `ler_relatorio_do_painel`,
 - Permissão: recurso `paineis_dados` (Painéis (Dados)), liberado em Acessos; aba
   `paineis-de-dados` em `TB_ABA`, nas três áreas (migration `20261113200000_paineis_no_bloco_dados.sql`).
 - **Resultado pronto** (migration `20261116160000_relatorios_dos_paineis_prontos.sql`; desenho em
-  `docs/superpowers/specs/2026-11-16-paineis-carregamento-e-tabela-design.md`): o banco guarda o
+  `docs/_arquivo/planos/2026-11-16-paineis-carregamento-e-tabela-design.md`): o banco guarda o
   último cálculo de cada relatório por área (`TB_CALCULO_RELATORIO_PAINEL` e
   `TB_LINHA_RELATORIO_PAINEL`, sem grant para a API). O cálculo é o SQL das leituras de
   `20261113240000` (`private."FC_LINHAS_*_DO_PAINEL"`), para a área inteira: só editais ativos e
@@ -89,7 +89,7 @@ RPCs no contrato (`src/lib/rpc-contrato.ts`): `ler_relatorio_do_painel`,
 - Paginação no banco: 50 linhas por página (25 ou 100), acima da tabela; setas travadas enquanto a
   página carrega.
 - **Fontes dos dados** (migrations `20261113220000`, `20261113230000`, `20261113240000`; desenho em
-  `docs/superpowers/specs/2026-11-13-fontes-das-colunas-dos-paineis-design.md`): as 11 colunas
+  `docs/_arquivo/planos/2026-11-13-fontes-das-colunas-dos-paineis-design.md`): as 11 colunas
   editáveis (vagas, datas, inscritos, aprovados, nota, classificação, status, matrícula, data de
   admissão) podem vir, **por área**, de outra fonte conferida — visões `VW_<EDITAL|VAGA|APROVADO>_*`
   do schema `painel` (sem grant para a API), com a chave do grão e `COMMENT` na visão e na coluna.
@@ -107,13 +107,16 @@ Sincronizar, downloads, gaveta de fontes, largura das colunas, ⓘ e Montar rela
 (colunas, página lida, arquivos, largura, origem), `tests/fontes-dos-paineis.test.ts` (leitura das
 fontes, permissão, aba Fontes), `tests/fontes-dos-paineis-no-banco.test.ts` (o núcleo das fontes em
 PGlite), `tests/relatorios-prontos-dos-paineis-no-banco.test.ts` (resultado pronto em PGlite: página,
-recorte da coordenação, Sincronizar 1/min, troca de fonte que falha, cálculo de todos, rollback) e
-`tests/relatorios-prontos-dos-paineis-migration.test.ts` (md5 das guardas, rollback e ensaio) e
-`tests/vagas-imediatas-dos-paineis-no-banco.test.ts` (a ordem das fontes das vagas imediatas,
-guarda e rollback de `20261116180000`).
+recorte da coordenação, Sincronizar 1/min, troca de fonte que falha, cálculo de todos) e
+`tests/vagas-imediatas-dos-paineis-no-banco.test.ts` (a ordem das fontes das vagas imediatas, de
+`20261116180000`). As migrations aplicadas que montam esses bancos ficam em
+`tests/fixtures/sql-do-banco/`.
 
 ## Relacionadas
 
-- [[nova-tela-react]] — como a tela entra no app
-- [[permissoes-e-perfis]] — quem vê
+- [[nova-tela-e-legado]] — como a tela entra no app
+- [[modulo-acessos]] — quem vê
 - [[modulo-barra-lateral]] — o bloco Dados do menu
+- [regras-dos-paineis](../aya/regras-dos-paineis.md) — o que a Aya responde sobre a tela
+- [Desenho das fontes das colunas](../_arquivo/planos/2026-11-13-fontes-das-colunas-dos-paineis-design.md) e [plano](../_arquivo/planos/2026-11-13-fontes-das-colunas-dos-paineis.md) — feito no #829
+- [Desenho do carregamento rápido](../_arquivo/planos/2026-11-16-paineis-carregamento-e-tabela-design.md) e [plano](../_arquivo/planos/2026-11-16-paineis-carregamento-e-tabela.md) — feito no #836

@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-11
+atualizado: 2026-11-17
 ---
 
 # Módulo: Cronograma (Calendário de editais)
@@ -9,23 +9,19 @@ atualizado: 2026-11-11
 Tela de leitura dos cronogramas de Editais, montada em `#page-calendario`, rota
 `/<área>/cronograma`. Pasta `src/modulos/cronograma/`; regras puras em
 `src/lib/calendario-editais.ts`. O controlador chama `render()` ao abrir e `recarregar()` para
-ignorar o cache. A área vem do app e recorta os editais já carregados.
+ignorar o cache. A área vem do app e recorta os editais já carregados. Inclui o resumo do dia do
+responsável (o sininho do topo), que leva a esta tela.
 
-## Arquivos
+## Onde fica
 
-| Arquivo                                   | Responsabilidade                                                      |
-| ----------------------------------------- | --------------------------------------------------------------------- |
-| `calendario-editais.tsx`                  | tela, mês aberto, filtros, dia selecionado e edital da linha do tempo |
-| `partes.tsx`                              | grade, seletor, próximas etapas, linha do tempo e modal do dia        |
-| `vistas.tsx`                              | vistas Lista e Semana do card do calendário                           |
-| `estado.ts`                               | store externo, sessão, carga, cache e aviso de falhas parciais        |
-| `tipos.ts`                                | cliente de leitura, snapshot, filtros, etapas e células normalizadas  |
-| `demandas-internas.tsx`                   | card, detalhe, formulário e exclusão das demandas internas            |
-| `cronograma.css`, `demandas-internas.css` | estilos (demanda: cor `--etapa-demanda`)                              |
-
-`calendario-editais.ts`: etapas por dia (conta no início e no fim, não no meio), filtros, grade de
-42 células, próximas etapas. Classificação de etapas e plausibilidade das datas ficam em
-`etapas-de-edital.ts` e `datas-do-cronograma.ts`.
+- `calendario-editais.tsx` (tela, mês aberto, filtros, dia selecionado, edital da linha do tempo),
+  `partes.tsx` (grade, seletor, próximas etapas, linha do tempo, modal do dia), `vistas.tsx`
+  (Lista e Semana), `estado.ts` (store externo, sessão, carga, cache, aviso de falhas parciais),
+  `tipos.ts` e `demandas-internas.tsx`. CSS em `cronograma.css` e `demandas-internas.css` (cor da
+  demanda: `--etapa-demanda`).
+- `calendario-editais.ts`: etapas por dia (conta no início e no fim, não no meio), filtros, grade
+  de 42 células, próximas etapas. Classificação de etapas e plausibilidade das datas em
+  `etapas-de-edital.ts` e `datas-do-cronograma.ts`.
 
 ## Vistas
 
@@ -75,23 +71,42 @@ concluídas". Concluir/Reabrir, Editar e Excluir (lógica) para quem pode (gesto
 global, decidido pelo banco em `pode_editar`/`pode_criar_em`). Responsáveis pelo edital ficam no
 formulário do edital (`src/modulos/editais/responsaveis-do-edital.tsx`).
 
-## Só os meus (`?visao=meus`)
+## Resumo do dia do responsável
 
-"Ver no cronograma" do [[modulo-resumo-do-dia]] abre `/<área>/cronograma?visao=meus`:
-`abrirVisao("meus")` liga o recorte (`definirRecorte`) e mostra só editais e demandas de que a
-pessoa é responsável, com "Ver todos" para voltar.
+Sininho no topo (`src/app/casca/topo.tsx`) e popup "Bom dia, {nome} — seus editais hoje" (o
+`Modal` de [[componentes-padrao]]), para quem é responsável por algum edital
+(`RL_RESPONSAVEL_EDITAL`) ou demanda interna (`RL_DEMANDA_INTERNA_RESPONSAVEL`). Pasta
+`src/modulos/resumo-do-dia/` (`estado.ts` com o store `resumoDoDia`, `resumo-do-dia.tsx`, e o CSS,
+em que a cor de cada linha é a do tipo no Cronograma, `data-cor`); regras puras em
+`src/lib/resumo-do-dia.ts`; migration `20261104130000_resumo_do_dia_do_responsavel`.
+
+- **Uma chamada** (`obter_meu_resumo_do_dia`) ao entrar (`src/app/sistema.ts`) e outra a cada
+  clique no sininho; sem polling. O sininho mostra o número de pendências.
+- **Abre sozinho** só ao entrar, se há o que mostrar, "Mostrar ao entrar" está ligado
+  (`TB_PREFERENCIA_USUARIO`), não foi fechado hoje neste navegador (`localStorage`
+  `agsus:resumo-do-dia:visto:<perfil>:<dia>`) e a tela está livre (nenhum modal aberto nem campo
+  em digitação). Senão, fica só o sininho.
+- **Blocos**: Hoje, Próximos 7 dias e Atrasadas (demandas vencidas em aberto); até cinco por bloco
+  e "e mais N".
+- **Concluir** (demanda atrasada, se `pode_concluir`) usa `concluir_demanda_interna` e avisa o
+  Cronograma (`agsus:nucleo-cronograma-saved`).
+- **Ver no cronograma** abre `/<área>/cronograma?visao=meus`: `abrirVisao("meus")` liga o recorte
+  (`definirRecorte`) e mostra só editais e demandas de que a pessoa é responsável, com "Ver todos"
+  para voltar.
 
 ## Testes
 
 `tests/tipos/cronograma.tsx` (no `typecheck:frontend`), `tests/componentes/calendario-editais.test.ts`
 (mês, área, cache, filtros, modal, foco), `tests/calendario-editais.test.js` (normalização,
 intervalos, concorrência, falhas), `tests/calendario-editais-lista.test.js` (Lista, Semana, marcos,
-bordas de mês e fuso), `tests/cronograma-sem-suspensos.test.ts` (edital suspenso fora de todas as vias), `tests/etapas-de-edital.test.js`, `tests/datas-do-cronograma.test.js`.
+bordas de mês e fuso), `tests/cronograma-sem-suspensos.test.ts` (edital suspenso fora de todas as
+vias), `tests/etapas-de-edital.test.js`, `tests/datas-do-cronograma.test.js`. Resumo do dia:
+`tests/resumo-do-dia.test.js` e `tests/componentes/resumo-do-dia.test.ts`.
 
 ## Relacionadas
 
-- [[modulo-editais]] — onde o cronograma é cadastrado
-- [[modulo-resumo-do-dia]] — "Ver no cronograma"
-- [[acessibilidade]] — cor nunca é o único sinal
-- [[areas-do-sistema]] — recorte por área
+- [[modulo-editais]] — onde o cronograma e o responsável do edital são cadastrados
+- [[componentes-padrao]] — o `Modal` do resumo do dia
+- [[acessibilidade-e-mobile]] — cor nunca é o único sinal
+- [[arquitetura-do-front]] — recorte por área
 - [regras-do-cronograma](../aya/regras-do-cronograma.md) — o que a Aya responde sobre a tela (a explicação mora lá, não na interface)

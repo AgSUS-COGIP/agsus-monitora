@@ -6,7 +6,8 @@
   histórico, catálogo, aplicação das fontes e as RPCs de fontes) e a guarda
   private."FC_EXIGIR_PAINEIS_DA_AREA", na fixture
   tests/fixtures/banco-antes-das-fontes-dos-paineis.sql (copiada da migration
-  20261113210000, aplicada).
+  20261113210000, aplicada). As migrations aplicadas que montam o banco estão
+  em tests/fixtures/sql-do-banco/, com o mesmo nome.
 
   O que é imitação (o Supabase tem, o PGlite não, ou é de outro assunto): os
   papéis, a sessão (auth.uid() lê teste.uid), o nível em paineis_dados
@@ -25,8 +26,10 @@ export const NOME_DA_MIGRATION =
 
 const ler = (caminho: string) =>
   readFileSync(caminho, "utf8").replace(/\r\n/g, "\n");
-export const migration = () => ler(`supabase/migrations/${NOME_DA_MIGRATION}`);
-export const rollback = () => ler(`supabase/rollback/${NOME_DA_MIGRATION}`);
+/** Uma migration aplicada, guardada em tests/fixtures/sql-do-banco/ para montar o banco. */
+export const sqlDoBanco = (nome: string) =>
+  ler(`tests/fixtures/sql-do-banco/${nome}`);
+export const migration = () => sqlDoBanco(NOME_DA_MIGRATION);
 
 /*
   A guarda dos relatórios, do jeito que está no banco: a migration 20261113210000 foi aplicada
@@ -117,10 +120,7 @@ export async function entrar(
 
 export const NOME_DOS_PRONTOS =
   "20261116160000_relatorios_dos_paineis_prontos.sql";
-export const migrationDosProntos = () =>
-  ler(`supabase/migrations/${NOME_DOS_PRONTOS}`);
-export const rollbackDosProntos = () =>
-  ler(`supabase/rollback/${NOME_DOS_PRONTOS}`);
+export const migrationDosProntos = () => sqlDoBanco(NOME_DOS_PRONTOS);
 
 const COM_FONTES = "20261113240000_relatorios_dos_paineis_com_fontes.sql";
 export const RPCS_ANTIGAS = [
@@ -136,21 +136,13 @@ export function blocoDaFuncao(sql: string, inicio: string): string {
   const fim = sql.indexOf("$function$;", sql.indexOf("as $function$", i) + 13);
   return sql.slice(i, fim + "$function$;".length);
 }
-/** O corpo (prosrc) de um bloco: o texto entre `as $function$` e `$function$`. */
-export function corpoDaFuncao(bloco: string): string {
-  const de = bloco.indexOf("as $function$") + "as $function$".length;
-  return bloco.slice(de, bloco.lastIndexOf("$function$"));
-}
 /** As três RPCs dos relatórios como estão no banco (20261113240000). */
 export const rpcsAntigas = () => {
-  const sql = ler(`supabase/migrations/${COM_FONTES}`);
+  const sql = sqlDoBanco(COM_FONTES);
   return RPCS_ANTIGAS.map((n) =>
     blocoDaFuncao(sql, `create or replace function public.${n}(p_area text)`),
   );
 };
-/** salvar_fonte_da_coluna como 20261113220000 a criou. */
-export const salvarDeAntes = () =>
-  blocoDaFuncao(migration(), "create function public.salvar_fonte_da_coluna(");
 
 const RECORTE_DA_COORDENACAO = `
 create function private."FC_EDITAIS_VISIVEIS"() returns uuid[]

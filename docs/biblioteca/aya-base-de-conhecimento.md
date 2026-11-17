@@ -128,4 +128,4 @@ Regras de cada tela (cada uma ligada também à nota `modulo-*` da tela):
 ## Relacionadas
 
 - [[modulo-aya]] — o painel, a mascote e o tour
-- [[scripts-e-checagens]] — o compilador
+- [[ci-e-qualidade]] — o compilador

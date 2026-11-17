@@ -4,16 +4,15 @@ import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   type Banco,
   bancoComRelatoriosProntos,
-  erroDe,
   uma,
 } from "./apoio/banco-dos-paineis.ts";
 
 /*
-  Migration 20261116235500 num Postgres de verdade (PGlite): o recálculo dos
-  relatórios dos Painéis grava só a posição que mudou. As linhas guardadas
-  depois do recálculo são as mesmas que o delete + insert de antes deixaria
-  (o que o painel mostra não muda), e a linha igual não ganha versão nova
-  (ctid igual). O cálculo é a imitação de tests/apoio/banco-dos-paineis.ts
+  Migration 20261116235500 (já aplicada; o SQL em tests/fixtures/sql-do-banco/)
+  num Postgres de verdade (PGlite): o recálculo dos relatórios dos Painéis
+  grava só a posição que mudou. As linhas guardadas depois do recálculo são as
+  mesmas que o delete + insert de antes deixaria (o que o painel mostra não
+  muda), e a linha igual não ganha versão nova (ctid igual). O cálculo é a imitação de tests/apoio/banco-dos-paineis.ts
   (lê public.linha_de_teste).
 */
 
@@ -21,14 +20,12 @@ const LONGO = 60_000;
 const NOME = "20261116235500_relatorios_dos_paineis_gravam_so_o_que_mudou.sql";
 const ler = (caminho: string) =>
   readFileSync(caminho, "utf8").replace(/\r\n/g, "\n");
-const migration = () => ler(`supabase/migrations/${NOME}`);
-const rollback = () => ler(`supabase/rollback/${NOME}`);
+const migration = () => ler(`tests/fixtures/sql-do-banco/${NOME}`);
 
 const SI = "saude-indigena";
 const REL = "editais-por-cargo";
 const A = "aaaaaaaa-0000-0000-0000-00000000000a";
 const B = "aaaaaaaa-0000-0000-0000-00000000000b";
-const MD5_ANTES = "6310777671e9060e9a891ec3012cd42a";
 
 type Guardada = { n: number; edital: string; linha: Record<string, unknown> };
 
@@ -69,15 +66,6 @@ const versoes = async () =>
       )
     ).rows.map((r) => [r.n, r.v]),
   );
-const md5DaFuncao = async () =>
-  (
-    await uma<{ m: string }>(
-      db,
-      `select md5(prosrc) as m from pg_proc
-        where oid = to_regprocedure('private."FC_CALCULAR_RELATORIO_PAINEL"(text, text, uuid, interval)')`,
-    )
-  )?.m;
-
 /** O que o delete + insert de antes deixaria: as linhas de teste na ordem, de 1 em diante. */
 const esperado = async () =>
   (
@@ -89,22 +77,6 @@ const esperado = async () =>
   ).rows;
 
 describe("recálculo grava só o que mudou", () => {
-  it(
-    "a guarda reconhece o corpo de 20261116160000 e a migration aplica",
-    async () => {
-      expect(await md5DaFuncao()).toBe(MD5_ANTES);
-      await db.exec(migration());
-      expect(await md5DaFuncao()).not.toBe(MD5_ANTES);
-      expect(
-        await uma(
-          db,
-          `select reloptions from pg_class where oid = 'public."TB_LINHA_RELATORIO_PAINEL"'::regclass`,
-        ),
-      ).toEqual({ reloptions: ["fillfactor=90"] });
-    },
-    LONGO,
-  );
-
   it(
     "sem mudança, nenhuma linha é regravada",
     async () => {
@@ -163,40 +135,6 @@ describe("recálculo grava só o que mudou", () => {
           [SI, REL],
         ),
       ).toEqual({ qt: 0 });
-    },
-    LONGO,
-  );
-});
-
-describe("rollback", () => {
-  it(
-    "volta o corpo de antes e o fillfactor padrão",
-    async () => {
-      await db.exec(migration());
-      await db.exec(rollback());
-      expect(await md5DaFuncao()).toBe(MD5_ANTES);
-      expect(
-        await uma(
-          db,
-          `select reloptions from pg_class where oid = 'public."TB_LINHA_RELATORIO_PAINEL"'::regclass`,
-        ),
-      ).toEqual({ reloptions: null });
-      await calcular();
-      expect(await guardadas()).toEqual(await esperado());
-    },
-    LONGO,
-  );
-
-  it(
-    "aborta se a migration não estiver aplicada, e a migration não aplica duas vezes",
-    async () => {
-      const semMigration = await erroDe(db.exec(rollback()));
-      await db.exec("rollback");
-      expect(semMigration?.mensagem).toMatch(/não está aplicada/);
-      await db.exec(migration());
-      const duasVezes = await erroDe(db.exec(migration()));
-      await db.exec("rollback");
-      expect(duasVezes?.mensagem).toMatch(/md5/);
     },
     LONGO,
   );

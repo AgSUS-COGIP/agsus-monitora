@@ -24,11 +24,10 @@ export const NOME_DA_MIGRATION =
 
 const ler = (caminho: string) =>
   readFileSync(caminho, "utf8").replace(/\r\n/g, "\n");
-export const lerMigration = (arquivo: string) =>
-  ler(`supabase/migrations/${arquivo}`);
-export const MIGRATION = lerMigration(NOME_DA_MIGRATION);
-export const ROLLBACK = ler(`supabase/rollback/${NOME_DA_MIGRATION}`);
-export const ENSAIO = ler(`supabase/ensaios/${NOME_DA_MIGRATION}`);
+/* A migration aplicada, guardada em tests/fixtures/sql-do-banco/ só para montar o banco. */
+export const MIGRATION = ler(
+  `tests/fixtures/sql-do-banco/${NOME_DA_MIGRATION}`,
+);
 
 const escapar = (s: string) => s.replace(/[.*+?^${}()|[\]\\"]/g, "\\$&");
 
@@ -73,7 +72,7 @@ export const FUNCOES_DE_HOJE: readonly string[] = [
 
 /*
   O "comment on" de cada objeto antes desta migration: o banco de teste fica com os
-  comentários de hoje, e o teste do rollback confere que eles voltam.
+  comentários de antes dela.
 */
 const LITERAL = String.raw`'(?:[^']|'')*'`;
 function comentarioVigente(objeto: string): string {

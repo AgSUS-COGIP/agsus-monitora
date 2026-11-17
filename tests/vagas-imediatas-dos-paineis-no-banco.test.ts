@@ -1,17 +1,16 @@
 // @vitest-environment node
-import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   type Banco,
   bancoComRelatoriosProntos,
-  erroDe,
   uma,
 } from "./apoio/banco-dos-paineis.ts";
 
 /*
-  Vagas imediatas de Painéis › Editais por cargo (migration 20261116180000)
-  num Postgres de verdade (PGlite), com o cálculo de verdade
+  Vagas imediatas de Painéis › Editais por cargo (migration 20261116180000, já
+  aplicada; o SQL em tests/fixtures/sql-do-banco/) num Postgres de verdade
+  (PGlite), com o cálculo de verdade
   (private."FC_LINHAS_POR_CARGO_DO_PAINEL") lendo tabelas mínimas dos editais,
   da Seleção, do quadro de vagas, da convocação e dos locais das vagas.
 
@@ -29,9 +28,7 @@ const SI = "saude-indigena";
 const NOME = "20261116180000_vagas_imediatas_dos_paineis_pelo_quadro.sql";
 const ler = (caminho: string) =>
   readFileSync(caminho, "utf8").replace(/\r\n/g, "\n");
-const migration = () => ler(`supabase/migrations/${NOME}`);
-const rollback = () => ler(`supabase/rollback/${NOME}`);
-const md5 = (texto: string) => createHash("md5").update(texto).digest("hex");
+const migration = () => ler(`tests/fixtures/sql-do-banco/${NOME}`);
 
 const COM_QUADRO = "bbbbbbbb-0000-0000-0000-000000000001";
 const SEM_QUADRO = "bbbbbbbb-0000-0000-0000-000000000002";
@@ -146,36 +143,6 @@ async function vagasPorCodigo() {
   );
 }
 
-const corpoNoBanco = async (assinatura: string) =>
-  (
-    await uma<{ m: string }>(
-      db,
-      `select md5(replace(prosrc, chr(13), '')) as m from pg_proc where oid = to_regprocedure($1)`,
-      [assinatura],
-    )
-  )?.m;
-
-describe("antes da migration", () => {
-  it(
-    "só o título da vaga: o que não traz o número fica vazio",
-    async () => {
-      expect(await vagasPorCodigo()).toEqual({
-        "101": 2,
-        "102": null,
-        "103": null,
-        "104": null,
-        "105": null,
-        "201": 4,
-        "202": null,
-        "203": 0,
-        "301": null,
-        "302": null,
-      });
-    },
-    LONGO,
-  );
-});
-
 describe("depois da migration", () => {
   it(
     "quadro > convocação > local > título",
@@ -212,60 +179,6 @@ describe("depois da migration", () => {
         `select count(*)::integer as n from public."TB_CALCULO_RELATORIO_PAINEL" where "CO_RELATORIO" = 'editais-por-cargo'`,
       );
       expect(k?.n).toBe(3);
-    },
-    LONGO,
-  );
-
-  it(
-    "a guarda recusa aplicar sobre um corpo diferente",
-    async () => {
-      await db.exec(migration());
-      const erro = await erroDe(db.exec(migration()));
-      expect(erro?.mensagem).toContain("FC_LINHAS_POR_CARGO_DO_PAINEL");
-    },
-    LONGO,
-  );
-
-  it(
-    "o rollback devolve os corpos de antes",
-    async () => {
-      const antes = {
-        porCargo: await corpoNoBanco(
-          'private."FC_LINHAS_POR_CARGO_DO_PAINEL"(text)',
-        ),
-        colunas: await corpoNoBanco(
-          'private."FC_COLUNAS_EDITAVEIS_DO_PAINEL"()',
-        ),
-      };
-      expect(antes).toEqual({
-        porCargo: "38e165ab4b70d613c90ae93cf8abeabb",
-        colunas: "7bd9516677d22de06f99aa61603b3754",
-      });
-      await db.exec(migration());
-      await db.exec(rollback());
-      expect({
-        porCargo: await corpoNoBanco(
-          'private."FC_LINHAS_POR_CARGO_DO_PAINEL"(text)',
-        ),
-        colunas: await corpoNoBanco(
-          'private."FC_COLUNAS_EDITAVEIS_DO_PAINEL"()',
-        ),
-      }).toEqual(antes);
-      expect((await vagasPorCodigo())["102"]).toBeNull();
-    },
-    LONGO,
-  );
-
-  it(
-    "o corpo novo é o que o rollback espera (md5 no arquivo)",
-    () => {
-      const sql = migration();
-      const i = sql.indexOf(
-        'CREATE OR REPLACE FUNCTION private."FC_LINHAS_POR_CARGO_DO_PAINEL"',
-      );
-      const a = sql.indexOf("$function$", i) + "$function$".length;
-      const corpo = sql.slice(a, sql.indexOf("$function$", a));
-      expect(rollback()).toContain(md5(corpo));
     },
     LONGO,
   );

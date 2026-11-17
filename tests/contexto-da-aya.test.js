@@ -15,9 +15,9 @@ describe("contexto da tela para a Aya", () => {
           <button class="ui-chip"><b>UF</b> AM</button>
           <button class="ui-chip"><b>Edital</b> 01/2026</button>
         </div></div>
-        <section class="ui-kpis visao-geral-kpis">
-          <article class="ui-kpi">Vagas 120</article>
-          <article class="ui-kpi">Ociosas 35</article>
+        <section class="visao-geral-kpis">
+          <div data-kpi="vagas">Vagas 120</div>
+          <div data-kpi="ociosas">Ociosas 35</div>
         </section>
         <input class="ui-tabela-busca" value="Xavante" />
       </section>

@@ -1,11 +1,11 @@
 # `src/componentes/` — a moldura React
 
 Cada `[[nome]]` é `docs/biblioteca/<nome>.md`. Como o legado fala com os componentes:
-[[legado-fala-com-react]].
+[[nova-tela-e-legado]].
 
 Aqui fica só a moldura: barra lateral ([[modulo-barra-lateral]]), busca global
-([[modulo-busca-global]]), Status das atualizações (`saude-das-cargas/`,
-[[modulo-status-das-atualizacoes]]), Pessoas online, aviso de versão, ícone, seleção múltipla,
+([[modulo-barra-lateral]]), Status das atualizações (`saude-das-cargas/`,
+[[robos-e-agenda]]), Pessoas online, aviso de versão, ícone, seleção múltipla,
 seletor de edital, selo de treinamento e os dados compartilhados do monitoramento
 (`dados-do-monitoramento.ts`, `usar-area-atual.ts`). As telas são de `src/modulos/`; as pastas
 daqui mudam para lá módulo a módulo ([[arquitetura-do-front]], [[componentes-padrao]]).

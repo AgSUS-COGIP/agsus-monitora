@@ -640,8 +640,8 @@ describe("a tela de Conduzir entrevistas", () => {
     ).toContain("Candidato 3");
     expect(aoComemorar).toHaveBeenCalledTimes(1);
     expect(aoComemorar.mock.calls[0][0]).toMatchObject({
-      texto: "Entrevistas de hoje concluídas: 4 de 4!",
-      forma: "check",
+      texto: "Entrevistas de hoje concluídas: 4 de 4.",
+      confete: false,
     });
     await clicar(document.querySelector('[data-acao="voltar-a-lista"]'));
     expect(contador()).toBe("4 de 4 hoje");

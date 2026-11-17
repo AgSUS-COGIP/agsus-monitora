@@ -101,20 +101,40 @@ describe("seção Comemorações", () => {
       janela: janelaFalsa(),
       previa: false,
     });
-    expect(host.querySelectorAll(".comemoracoes-marco")).toHaveLength(9);
+    expect(host.querySelectorAll(".comemoracoes-marco")).toHaveLength(6);
     expect(
       [...host.querySelectorAll(".comemoracoes-grupo__titulo")].map(
         (h) => h.textContent,
       ),
-    ).toEqual(["Análises", "Entrevistas", "Visão geral", "Acesso", "Aya"]);
+    ).toEqual(["Análises", "Entrevistas", "Visão geral", "Acesso"]);
     expect(
-      marco("vaga-pronta").querySelector('[role="radio"][aria-checked="true"]')
-        .dataset.valor,
+      marco("acesso-liberado").querySelector(
+        '[role="radio"][aria-checked="true"]',
+      ).dataset.valor,
     ).toBe("suave");
     // Detalhes fechados: sem duração nem mensagem na linha.
     expect(
+      host.querySelector("#comemoracoesMarco-acesso-liberado-duracao"),
+    ).toBeNull();
+    // Só aviso: sem efeito nem intensidade, e nos detalhes só a mensagem.
+    for (const id of ["fila-zerada", "vaga-pronta"]) {
+      expect(
+        marco(id).querySelector(`#comemoracoesMarco-${id}-efeito`),
+      ).toBeNull();
+      expect(marco(id).querySelector('[role="radio"]')).toBeNull();
+    }
+    await clicar(
+      host.querySelector(
+        '[aria-label="Detalhes: Vaga pronta para a Classificação"]',
+      ),
+    );
+    expect(
+      host.querySelector("#comemoracoesMarco-vaga-pronta-mensagem"),
+    ).not.toBeNull();
+    expect(
       host.querySelector("#comemoracoesMarco-vaga-pronta-duracao"),
     ).toBeNull();
+    expect(host.querySelector("#comemoracoesMarco-vaga-pronta-som")).toBeNull();
     // O palco vem antes dos marcos.
     expect(
       host.querySelector(".comemoracoes-palco + .comemoracoes-bloco"),
@@ -130,40 +150,42 @@ describe("seção Comemorações", () => {
       previa: false,
     });
     await escolher(
-      host.querySelector("#comemoracoesMarco-fila-zerada-efeito"),
+      host.querySelector("#comemoracoesMarco-edital-concluido-efeito"),
       "estrelas",
     );
     await clicar(
-      marco("fila-zerada").querySelector('[role="radio"][data-valor="festa"]'),
+      marco("edital-concluido").querySelector(
+        '[role="radio"][data-valor="normal"]',
+      ),
+    );
+    await clicar(
+      host.querySelector('[aria-label="Detalhes: Edital 100% analisado"]'),
+    );
+    await digitar(
+      host.querySelector("#comemoracoesMarco-edital-concluido-duracao"),
+      "9",
     );
     await clicar(
       host.querySelector('[aria-label="Detalhes: Fila de análises zerada"]'),
     );
-    await digitar(
-      host.querySelector("#comemoracoesMarco-fila-zerada-duracao"),
-      "9",
-    );
-    await clicar(
-      host.querySelector('[aria-label="Detalhes: Tour da Aya concluído"]'),
-    );
     expect(
-      host.querySelector("#comemoracoesMarco-fila-zerada-duracao"),
+      host.querySelector("#comemoracoesMarco-edital-concluido-duracao"),
     ).toBeNull();
     expect(
-      host.querySelector("#comemoracoesMarco-fim-do-tour-mensagem"),
+      host.querySelector("#comemoracoesMarco-fila-zerada-mensagem"),
     ).not.toBeNull();
-    await clicar(host.querySelector("#comemoracoesMarco-fim-do-tour-ligado"));
+    await clicar(host.querySelector("#comemoracoesMarco-fila-zerada-ligado"));
     expect(JSON.parse(estado.atual())).toEqual({
       marcos: {
-        "fila-zerada": {
+        "edital-concluido": {
           efeito: "estrelas",
-          intensidade: "festa",
+          intensidade: "normal",
           duracaoS: 9,
         },
-        "fim-do-tour": { ligado: false },
+        "fila-zerada": { ligado: false },
       },
     });
-    expect(marco("fim-do-tour").dataset.ligado).toBe("false");
+    expect(marco("fila-zerada").dataset.ligado).toBe("false");
   });
 
   it("duração: dá para digitar 12 (o 1 do caminho não vira 2) e o limite entra ao sair", async () => {
@@ -175,21 +197,23 @@ describe("seção Comemorações", () => {
       previa: false,
     });
     await clicar(
-      host.querySelector('[aria-label="Detalhes: Fila de análises zerada"]'),
+      host.querySelector(
+        '[aria-label="Detalhes: Marco do ano da área (1.000, 2.500… análises)"]',
+      ),
     );
     const campo = () =>
-      host.querySelector("#comemoracoesMarco-fila-zerada-duracao");
+      host.querySelector("#comemoracoesMarco-marco-do-ano-duracao");
     await digitar(campo(), "1");
     expect(campo().value).toBe("1");
     await digitar(campo(), "12");
     expect(campo().value).toBe("12");
-    expect(JSON.parse(estado.atual()).marcos["fila-zerada"].duracaoS).toBe(12);
+    expect(JSON.parse(estado.atual()).marcos["marco-do-ano"].duracaoS).toBe(12);
     await digitar(campo(), "1");
     await act(async () =>
       campo().dispatchEvent(new FocusEvent("focusout", { bubbles: true })),
     );
     expect(campo().value).toBe("2");
-    expect(JSON.parse(estado.atual()).marcos["fila-zerada"].duracaoS).toBe(2);
+    expect(JSON.parse(estado.atual()).marcos["marco-do-ano"].duracaoS).toBe(2);
   });
 
   it("Testar solta com as opções da tela e não toca no rascunho", async () => {
@@ -204,13 +228,19 @@ describe("seção Comemorações", () => {
       marco("edital-concluido").querySelector(".comemoracoes-testar"),
     );
     expect(testar).toHaveBeenCalledWith({
-      texto: "Edital 12/2026 · DSEI Xingu: todas as análises concluídas!",
+      texto:
+        "Edital 114/2026 (Rio de Janeiro): as 1.512 fichas foram analisadas.",
       efeito: "coracoes",
-      intensidade: "normal",
+      intensidade: "festa",
       duracaoMs: null,
       som: true,
       forma: "coracao",
-      letreiro: "100%!",
+    });
+    // Marco só de aviso: o Testar pede só o aviso.
+    await clicar(marco("fila-zerada").querySelector(".comemoracoes-testar"));
+    expect(testar).toHaveBeenLastCalledWith({
+      texto: "Nenhuma ficha pendente na SEDE.",
+      efeito: null,
     });
     expect(estado.mudarCampo).not.toHaveBeenCalled();
   });

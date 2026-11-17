@@ -1,7 +1,7 @@
 # `scripts/` — ferramentas Node (`*.mjs`) e jobs Python
 
 Cada `[[nome]]` é `docs/biblioteca/<nome>.md`. A tabela dos grupos de scripts e o que cada um gera:
-[[scripts-e-checagens]].
+[[ci-e-qualidade]].
 
 Cada script documenta o próprio uso no comentário do topo: leia só as primeiras ~30 linhas
 (`sed -n '1,30p'`) antes de rodar. Prefira o `npm run` equivalente quando houver.
@@ -18,4 +18,4 @@ Regras:
   explícito** ([[banco-e-migrations]]).
 - Jobs Python seguem [[python-e-jobs]]: banco só por RPC, nada de dado pessoal no log (o log do
   Actions é público), saída 0/2/1. Robôs e agenda: [[robos-e-agenda]]; cargas de planilha:
-  [[cargas-de-planilha]].
+  [[planilhas]].

@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -34,66 +33,8 @@ import { CAMPOS_DAS_SECOES } from "../src/lib/publicacao-de-configuracoes.ts";
 */
 
 const RAIZ = path.resolve(import.meta.dirname, "..");
-const NOME = "20261113150000_vidro_ajustavel_no_painel_de_acesso";
 const ler = (relativo: string) =>
   fs.readFileSync(path.join(RAIZ, relativo), "utf8").replace(/\r\n/g, "\n");
-const md5 = (texto: string) => createHash("md5").update(texto).digest("hex");
-
-function corpoDaFuncao(sql: string): string {
-  const inicio = sql.indexOf(
-    "create or replace function public.obter_branding_acesso_publico()",
-  );
-  expect(inicio).toBeGreaterThan(-1);
-  const abre = sql.indexOf("as $$", inicio) + "as $$".length;
-  return sql.slice(abre, sql.indexOf("$$;", abre));
-}
-
-describe("migration 20261113150000: a cor e o desfoque na leitura pública", () => {
-  const migration = ler(`supabase/migrations/${NOME}.sql`);
-  const ensaio = ler(`supabase/ensaios/${NOME}.sql`);
-  const rollback = ler(`supabase/rollback/${NOME}.sql`);
-  const novo = corpoDaFuncao(migration);
-  const vigente = corpoDaFuncao(rollback);
-
-  it("só acrescenta as duas chaves à lista fixa", () => {
-    expect(novo).toBe(
-      vigente.replace(
-        "    'auth_access_painel_estilo'\n",
-        "    'auth_access_painel_estilo',\n    'auth_access_vidro_cor',\n    'auth_access_vidro_desfoque'\n",
-      ),
-    );
-  });
-
-  // Aplicada e registrada em 13/11/2026: o retrato mostra o corpo desta.
-  it("o retrato mostra a função como esta migration a deixou", () => {
-    const retrato = ler("supabase/esquema-atual.sql");
-    const inicio = retrato.indexOf(
-      "CREATE FUNCTION public.obter_branding_acesso_publico()",
-    );
-    const abre = retrato.indexOf("AS $$", inicio) + "AS $$".length;
-    const retratado = retrato.slice(abre, retrato.indexOf("$$;", abre));
-    expect(retratado).toBe(novo);
-  });
-
-  it("as guardas usam o md5 do corpo de antes e do de depois, sem CR", () => {
-    expect(migration).toContain(`is distinct from '${md5(vigente)}'`);
-    expect(migration).toContain(`if v_md5 = '${md5(novo)}'`);
-    expect(rollback).toContain(`is distinct from '${md5(novo)}'`);
-    expect(ensaio).toContain(`is distinct from '${md5(vigente)}'`);
-    expect(ensaio).toContain(`is distinct from '${md5(novo)}'`);
-    for (const sql of [migration, ensaio, rollback])
-      expect(sql).toContain("chr(13), ''))");
-  });
-
-  it("o ensaio aplica o mesmo corpo e termina em rollback", () => {
-    expect(corpoDaFuncao(ensaio)).toBe(novo);
-    expect(ensaio.trimEnd().endsWith("rollback;")).toBe(true);
-    for (const sql of [migration, ensaio, rollback]) {
-      expect(sql).toContain("security definer");
-      expect(sql).toContain("set search_path to ''");
-    }
-  });
-});
 
 describe("os valores", () => {
   it("cor no vidro: 0 a 90, de 10 em 10; o resto vira 0", () => {

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   acompanhamentoDaResposta,
   alternarColuna,
+  andamentoPorFase,
   compararValoresDoFiltro,
   csvDaVisaoGeral,
   dataCurta,
@@ -366,6 +367,22 @@ describe("blocos", () => {
       tom: "info",
     });
     expect(fases.reduce((s, f) => s + f.quantos, 0)).toBe(LINHAS.length);
+  });
+
+  it("Em andamento: só as fases com edital aberto; concluídos e cancelados à parte", () => {
+    const a = andamentoPorFase(LINHAS);
+    const fases = fasesDosProcessos(LINHAS);
+    const quantos = (fase) => fases.find((f) => f.fase === fase).quantos;
+    expect(a.emAndamento.every((f) => f.quantos > 0)).toBe(true);
+    expect(a.emAndamento.map((f) => f.fase)).not.toContain("Concluído");
+    expect(a.emAndamento.map((f) => f.fase)).not.toContain("Cancelado");
+    expect(a.concluidos).toBe(quantos("Concluído"));
+    expect(a.cancelados).toBe(quantos("Cancelado"));
+    expect(
+      a.emAndamento.reduce((s, f) => s + f.quantos, 0) +
+        a.concluidos +
+        a.cancelados,
+    ).toBe(LINHAS.length);
   });
 
   it("Pós-resultado: com e sem o resumo das listas", () => {

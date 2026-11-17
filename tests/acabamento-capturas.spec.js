@@ -25,7 +25,7 @@ import {
   vazio e de erro) é conferido por olho, nas imagens.
 
   Roda só sob demanda (`CAPTURAS=1`): são 56 capturas, e o que elas dão é para
-  olhar. Comando em docs/biblioteca/testes-de-navegador.md.
+  olhar. Comando em docs/biblioteca/testes.md.
 
   O tema é o do app: a chave `agsus_dark_mode_v1` = "1" no armazenamento, que o
   <head> lê antes do primeiro quadro e marca `html[data-theme="dark"]`.

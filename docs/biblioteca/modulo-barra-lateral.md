@@ -1,42 +1,42 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-10
+atualizado: 2026-11-17
 ---
 
-# Módulo: Barra lateral
+# Módulo: Barra lateral e busca global (Ctrl+K)
 
-O menu do app: marca, áreas (Saúde Indígena, SEDE, Projetos), Painéis e Administração, trilho e
-rodapé, em React e TypeScript. Pasta `src/componentes/barra-lateral/`, filha da casca
-(`src/app/casca/casca.tsx`). O legado alimenta por `buildNav`/`setActiveNav`.
+A moldura de navegação do app: o menu lateral (marca, áreas Saúde Indígena, SEDE e Projetos,
+Painéis e Administração, trilho e rodapé) e a busca global nos editais. Os dois em React e
+TypeScript, em `src/componentes/`, fora das telas.
 
-## Arquivos
+## Barra lateral
 
-```
-barra-lateral.tsx     <BarraLateral>: marca e montagem síncrona
-estado.ts             estado externo (sem React): o app empurra a árvore e o item ativo
-                      (atualizarMenuLateral, marcarItemAtivoNoMenu), a barra lê com
-                      useSyncExternalStore
-menu-de-areas.tsx     áreas (acordeão; recolhida, painel flutuante) e itens
-alca-de-recolher.tsx  o botão único de recolher: na marca (> 900px) ou no cabeçalho (portal)
-rodape.tsx            seletor Claro/Escuro (seletor-de-tema.ts), Sair e versão
-usar-ambiente.ts      hooks do que o legado controla: classe de body e largura (tema: src/app/tema.ts)
-integracao.ts         resolve as ações da janela na hora do clique, com as confirmações de saída
-marca.ts              a logo (#sideLogo), lida de Configurações › Marca
-tipos.ts              contratos da árvore, do catálogo, das opções de navegação e dos eventos
-```
+Pasta `src/componentes/barra-lateral/`, filha da casca (`src/app/casca/casca.tsx`). O legado
+alimenta por `buildNav`/`setActiveNav`.
 
-## Regras
+- `barra-lateral.tsx` (`<BarraLateral>`: marca e montagem síncrona) e `estado.ts` (estado externo,
+  sem React: o app empurra a árvore e o item ativo com `atualizarMenuLateral` e
+  `marcarItemAtivoNoMenu`; a barra lê com `useSyncExternalStore`).
+- `menu-de-areas.tsx` (acordeão; recolhida, painel flutuante), `alca-de-recolher.tsx` (o botão único
+  de recolher: na marca acima de 900 px ou no cabeçalho, por portal), `rodape.tsx` (seletor
+  Claro/Escuro de `seletor-de-tema.ts`, Sair e versão), `marca.ts` (a logo `#sideLogo`, de
+  Configurações › Marca).
+- `integracao.ts` resolve as ações da janela na hora do clique, com as confirmações de saída;
+  `usar-ambiente.ts` traz o que o legado controla (classe do `body` e largura; o tema é
+  `src/app/tema.ts`); contratos em `tipos.ts`.
+
+### Regras
 
 - Regras puras em `src/lib/menu-lateral.ts`: catálogo dos grupos e abas, árvore por páginas
   permitidas, áreas do usuário, blocos da área (Acompanhamento e Processo seletivo,
   `BLOCOS_DA_AREA`/`blocoDaAba`), manutenção, beta, item ativo (considera a área atual), troca de
-  área, áreas abertas por padrão, transbordo e posicionamento do flutuante. Área ou página nova
-  entra lá. Eventos entre o legado e a barra: `src/lib/eventos-da-barra-lateral.ts`.
+  área, áreas abertas por padrão, transbordo e posicionamento do flutuante. **Área ou página nova
+  entra lá.** Eventos entre o legado e a barra: `src/lib/eventos-da-barra-lateral.ts`.
 - `abasDoCatalogo` recebe `unknown`, ignora linhas sem identificação, rótulo ou view textuais e
   áreas sem identificação textual; sem abas válidas devolve `null` e o app usa o catálogo do código.
   Ordens aceitam números finitos ou texto numérico. Não substitui as permissões: a navegação decide
-  quais páginas entram.
+  quais páginas entram (`paginasPermitidas`, [[modulo-acessos]]).
 - Ids e atributos usados pelo menu no celular, branding, versão, mapas e tours são preservados
   (`#nav [data-view]`, `data-area`, `data-rotulo`, `data-icone`, `aria-current`, `#sideLogo`,
   `#sidebarLogoutBtn.side-logout`, `#globalSidebarToggle`). O texto de `#sidebarVersion` é escrito
@@ -45,7 +45,7 @@ tipos.ts              contratos da árvore, do catálogo, das opções de navega
 - Hooks limpam eventos, observador de tamanho e temporizadores ao desmontar. Áreas fechadas são lidas
   como `unknown` (só lista de ids textuais); erro de armazenamento deixa o menu aberto por padrão.
 
-## Desenho
+### Desenho
 
 - **Expandida:** acordeão com todas as áreas abertas por padrão; só a seta gira, a altura não anima.
   Guarda-se só a lista das áreas fechadas, então área nova nasce aberta; abrir uma página reabre a
@@ -60,18 +60,54 @@ tipos.ts              contratos da árvore, do catálogo, das opções de navega
   aceita, [[design-e-tokens]]). Hover e ativo são o próprio texto em baixa opacidade (`color-mix` com
   `currentColor`); o flutuante (`--menu-flutuante-*`) fica fora da cor configurada. A coluna não anima
   a largura.
+- Manutenção e beta das abas vêm de Configurações › Módulos e abas ([[modulo-configuracoes]]).
+
+## Busca global (Ctrl+K)
+
+Busca nos editais do monitoramento, filha da raiz React. Pasta `src/componentes/busca-global/`
+(`busca-global.tsx`: painel, atalhos, seleção por teclado e mouse, realce e montagem; contratos em
+`tipos.ts`); regras puras em `src/lib/busca-global.ts`.
+
+- Ctrl+K ou Cmd+K abre a busca com sessão conectada; a lupa do topo (`src/app/casca/topo.tsx`)
+  abre pelo evento `agsus:abrir-busca-global` (`EVENTO_ABRIR_BUSCA`), o único caminho no celular
+  e no tablet, que não têm Ctrl+K. Pesquisa os nove campos do monitoramento, em todas as áreas, sem diferenciar maiúsculas e acentos; mantém a ordem da fonte e para em 12.
+- O campo começa vazio; setas e Enter escolhem, Esc e o fundo fecham; o modal mantém e devolve o foco.
+- A escolha publica `agsus:busca-global-escolhida` com `detail.id`. A navegação em `src/app/` cuida
+  das permissões, da área e dos filtros da tela. **A busca não concede acesso** a dado que a carga
+  ou a RLS não entregaram.
+
+### Dados compartilhados do monitoramento
+
+`src/componentes/dados-do-monitoramento.ts`, `tipos-do-monitoramento.ts` e `usar-area-atual.ts`
+declaram o snapshot compartilhado (linhas de `TB_MONITORAMENTO_INDIGENA` e catálogo `TD_UNIDADE`),
+sua assinatura e o recorte por área (`linhasDaArea`, `soDosEditais`). Listas só leitura. Carga sob
+demanda: só as páginas de `src/lib/telas-com-linhas.ts` (via `src/app/pagina-aberta.ts`) ou
+`usarLinhasDoMonitoramento` fazem a carga lê-las.
+
+- A publicação valida com `src/lib/linhas-do-monitoramento.ts`: aceita registros, ids numéricos
+  finitos ou texto não vazio, campos textuais conhecidos como texto ou ausentes. Nulos viram
+  ausentes; registros malformados são descartados; colunas extras ficam `unknown`. Não substitui os
+  contratos das consultas de cada módulo.
+- Linhas sem id alimentam indicadores, mas não viram resultado selecionável nem id de recorte.
+- A área usa `CO_AREA` e mantém a regra de Saúde Indígena para cache antigo sem a coluna. Sair limpa
+  linhas e estado de carga, mantendo a área da aba; a área é corrigida quando chegam as permissões
+  do próximo perfil.
 
 ## Testes
 
-`tests/componentes/barra-lateral.test.ts` (modelo de teste React do projeto), testes da navegação,
-do catálogo e do menu no celular (sem banco); `tests/tipos/barra-lateral.tsx` no compilador estrito
-(não verifica consumidores JavaScript nem o perfil em tempo de execução).
+- Barra: `tests/componentes/barra-lateral.test.ts` (modelo de teste React do projeto), testes da
+  navegação, do catálogo e do menu no celular (sem banco); `tests/tipos/barra-lateral.tsx` no
+  compilador estrito (não verifica consumidores JavaScript nem o perfil em tempo de execução).
+- Busca: `tests/busca-global.test.js`, `tests/componentes/busca-global.test.ts`,
+  `tests/componentes/area-atual.test.ts`, `tests/componentes/dados-do-monitoramento.test.ts`;
+  contratos em `tests/tipos/busca-global.tsx`.
 
 ## Relacionadas
 
-- [[legado-fala-com-react]] — estado externo e eventos, nunca o DOM do componente
-- [[permissoes-e-perfis]] — páginas liberadas (`paginasPermitidas`)
-- [[areas-do-sistema]] — as áreas do menu
-- [[modulo-modulos-e-abas]] — manutenção e beta das abas
-- [[mobile]] — gaveta abaixo de 900 px
-- [[modulo-configuracoes]] — logo e cor da barra
+- [[nova-tela-e-legado]] — estado externo e eventos, nunca o DOM do componente
+- [[modulo-acessos]] — páginas liberadas (`paginasPermitidas`)
+- [[arquitetura-do-front]] — as áreas do menu, o recorte por área e a carga das linhas
+- [[modulo-configuracoes]] — logo, cor, manutenção e beta das abas
+- [[modulo-paineis-externos]] — o grupo Painéis
+- [[acessibilidade-e-mobile]] — gaveta abaixo de 900 px; foco e teclado no modal
+- [[design-e-tokens]] — os tokens `--menu-*`

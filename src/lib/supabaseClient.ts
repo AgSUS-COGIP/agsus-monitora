@@ -12,7 +12,6 @@ import {
   type SinalDeTelaAntiga,
 } from "./versao-do-sistema.ts";
 import { comNovasTentativas, criarOrcamento } from "./novas-tentativas.ts";
-import { sessaoSemRede } from "./sessao-sem-rede.ts";
 
 type ArmazenamentoDaSessao = ReturnType<typeof createSafeAuthStorage>;
 
@@ -121,10 +120,20 @@ export function getSupabaseClient(): SupabaseClient | null {
 function lerSessaoTambemSemRede(cliente: SupabaseClient) {
   const auth = cliente.auth;
   const daBiblioteca = auth.getSession.bind(auth);
-  auth.getSession = (async () =>
-    sessaoSemRede(await daBiblioteca(), {
-      guardada: getSupabaseAuthStorage().getItem(SUPABASE_AUTH_STORAGE_KEY),
-      agora: Date.now(),
-      online: globalThis.navigator?.onLine !== false,
-    })) as typeof auth.getSession;
+  auth.getSession = (async () => {
+    const lida = await daBiblioteca();
+    // Com sessão, ou sem erro (não há sessão), segue como veio. A regra só
+    // baixa quando a leitura falhou: fora do pedaço da entrada.
+    if (lida.data.session || !lida.error) return lida;
+    try {
+      const { sessaoSemRede } = await import("./sessao-sem-rede.ts");
+      return sessaoSemRede(lida, {
+        guardada: getSupabaseAuthStorage().getItem(SUPABASE_AUTH_STORAGE_KEY),
+        agora: Date.now(),
+        online: globalThis.navigator?.onLine !== false,
+      });
+    } catch {
+      return lida;
+    }
+  }) as typeof auth.getSession;
 }

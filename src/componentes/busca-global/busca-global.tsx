@@ -26,6 +26,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import {
   buscarLinhas,
   ehAtalhoDaBusca,
+  EVENTO_ABRIR_BUSCA,
   EVENTO_ESCOLHA_DA_BUSCA,
   partesRealcadas,
   proximoIndice,
@@ -196,8 +197,16 @@ export function BuscaGlobal({ estaConectado, aoEscolher }: OpcoesDaBusca) {
       evento.preventDefault();
       setAberta((atual) => (atual ? false : Boolean(estaConectado())));
     }
+    // A lupa do topo (celular e tablet não têm Ctrl+K).
+    function aoPedirAbertura() {
+      if (estaConectado()) setAberta(true);
+    }
     document.addEventListener("keydown", aoTeclar);
-    return () => document.removeEventListener("keydown", aoTeclar);
+    document.addEventListener(EVENTO_ABRIR_BUSCA, aoPedirAbertura);
+    return () => {
+      document.removeEventListener("keydown", aoTeclar);
+      document.removeEventListener(EVENTO_ABRIR_BUSCA, aoPedirAbertura);
+    };
   }, [estaConectado]);
 
   if (!aberta) return null;

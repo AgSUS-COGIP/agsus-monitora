@@ -4,13 +4,11 @@ import {
   VALIDADE_DO_CACHE_MS,
   criarCacheDePayload,
   registroVencido,
-  rotuloDaCopia,
 } from "../src/lib/cache-de-payload";
+import { rotuloDaCopia } from "../src/lib/rotulo-da-copia.ts";
 import type { ArmazenamentoDoCache } from "../src/lib/cache-de-payload";
-import {
-  apagarCopiasVencidas,
-  armazenamentoDePayload,
-} from "../src/modules/cache-de-payload-indexeddb.ts";
+import { armazenamentoDePayload } from "../src/modules/cache-de-payload-indexeddb.ts";
+import { apagarCopiasVencidas } from "../src/app/varredura-das-copias.ts";
 import { indexedDBFalso } from "./indexeddb-falso.js";
 
 /*

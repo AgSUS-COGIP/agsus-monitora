@@ -28,5 +28,5 @@ Regras puras em `src/lib/<nome>.ts`. RPCs no contrato (`src/lib/rpc-contrato.ts`
 
 ## Relacionadas
 
-- [[nova-tela-react]] — como a tela entra no app
-- [[permissoes-e-perfis]] — quem vê
+- [[nova-tela-e-legado]] — como a tela entra no app
+- [[modulo-acessos]] — quem vê

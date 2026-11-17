@@ -1,4 +1,4 @@
-import { rotuloDaCopia } from "../../lib/cache-de-payload";
+import { rotuloDaCopia } from "../../lib/rotulo-da-copia.ts";
 import {
   naLocalidade,
   opcoesDeLocalidade,

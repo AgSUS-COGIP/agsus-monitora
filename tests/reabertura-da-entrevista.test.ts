@@ -9,19 +9,18 @@ import {
 
 /*
   Concluir e reabrir a entrevista (20261117050000): a lista de motivos da
-  tela é a mesma do banco (private."FC_MOTIVO_REABERTURA_ENTREVISTA"), as
-  regras do texto são as da Avaliação documental e o Concluir só aparece
-  com o resultado definido e tudo salvo.
+  tela é a mesma do banco (private."FC_MOTIVO_REABERTURA_ENTREVISTA", lida no
+  retrato de produção), as regras do texto são as da Avaliação documental e o
+  Concluir só aparece com o resultado definido e tudo salvo.
 */
 
-const MIGRATION =
-  "supabase/migrations/20261117050000_concluir_e_reabrir_a_entrevista.sql";
+const RETRATO = "supabase/esquema-atual.sql";
 
 describe("motivos da reabertura da entrevista", () => {
   it("a lista da tela é a do banco (códigos, rótulos e ordem)", () => {
-    const sql = readFileSync(MIGRATION, "utf8");
+    const sql = readFileSync(RETRATO, "utf8");
     const corpo = sql.slice(
-      sql.indexOf('create function private."FC_MOTIVO_REABERTURA_ENTREVISTA"'),
+      sql.indexOf('CREATE FUNCTION private."FC_MOTIVO_REABERTURA_ENTREVISTA"'),
     );
     const doBanco = [
       ...corpo

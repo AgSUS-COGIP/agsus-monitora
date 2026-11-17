@@ -93,8 +93,7 @@ lê o que o job gravou (`src/lib/avaliacao-documental/tela-da-pre-classificacao.
 quem usa: `docs/aya/regras-da-avaliacao-documental.md` (Abas, Regras e Provisória da Triagem).
 
 Testes: `tests/modulos/avaliacao-documental-pre-classificacao.test.js`,
-`tests/fundamento-da-eliminacao-no-banco.test.ts` (PGlite: quem confere, auditoria, comunicado,
-ensaio e rollback), `tests/lib/fundamento-da-eliminacao.test.ts`,
+`tests/fundamento-da-eliminacao-no-banco.test.ts` (PGlite: quem confere, auditoria, comunicado), `tests/lib/fundamento-da-eliminacao.test.ts`,
 `tests/modulos/avaliacao-documental-fundamentos-da-eliminacao.test.ts`,
 `tests/python/test_pre_classificacao.py`,
 `tests/python/test_pre_classificacao_job.py`.
@@ -102,8 +101,7 @@ ensaio e rollback), `tests/lib/fundamento-da-eliminacao.test.ts`,
 ## Relacionadas
 
 - [[modulo-avaliacao-documental]] — a etapa seguinte; a tela da Triagem mora na pasta dela
-- [[modulo-regras-do-edital]] — onde a regra da Triagem se edita (etapa 1)
+- [[modulo-editais]] — onde a regra da Triagem se edita (etapa 1)
 - [[modulo-classificacao]] — exporta as listas PROVISORIA e LOTE
 - [[python-e-jobs]] — o job da triagem
-- [[robos-e-agenda]] — robô da Empregare e o "Recalcular"
-- [[modulo-automacao]] — chave "Triagem automática"
+- [[robos-e-agenda]] — robô da Empregare, o "Recalcular" e a chave "Triagem automática"

@@ -3,10 +3,7 @@ import {
   areaParaLocalizar,
 } from "../lib/busca-global.ts";
 import { codigoDoPainel } from "../lib/navegacao";
-import {
-  apagarCacheDePayload,
-  apagarCopiasVencidas,
-} from "../modules/cache-de-payload-indexeddb.ts";
+import { apagarCacheDePayload } from "../modules/cache-de-payload-indexeddb.ts";
 import { comemorarAcessoLiberado } from "../modules/comemoracao-do-acesso.ts";
 import {
   esquecerSituacaoDoSistema,
@@ -317,7 +314,9 @@ async function antesDeSair() {
 /** Liga tudo (uma vez, importado por src/main.ts antes de montar as telas). */
 export function ligarSistema() {
   // Cópias de payload com mais de 48 h saem do aparelho (dados de candidatos).
-  void apagarCopiasVencidas();
+  void import("./varredura-das-copias.ts")
+    .then((m) => m.apagarCopiasVencidas())
+    .catch(() => {});
   // A moldura é um store; a casca a leva para a página (src/app/casca/pecas.tsx).
   moldura.aplicarTemaGuardado();
   moldura.ajustarBarra();

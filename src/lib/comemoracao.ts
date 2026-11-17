@@ -1,15 +1,17 @@
 /*
-  Comemorações do MONITORA, sem DOM: a regra de QUANDO comemorar e O QUE dizer.
+  Comemorações do Yeendé, sem DOM: a regra de QUANDO comemorar e O QUE dizer.
   O desenho (fogos de artifício em <canvas>, a Aya voando e o aviso) é de
   src/modulos/comemoracao/; o roteiro e a física dos fogos, de src/lib/fogos.ts
   (com a cena em fogos-cena.ts e o marco desenhado no céu em fogos-formas.ts).
-  Cada comemoração diz que FORMA o estouro do marco desenha: coração (edital
-  100% analisado), estrela (fila zerada), o número (marco do ano), visto
-  (acesso liberado).
+  Cada comemoração com efeito diz que FORMA o estouro do marco desenha:
+  coração (edital 100% analisado), o número (marco do ano), visto (acesso
+  liberado).
 
-  Comemora-se o PROCESSO e a EQUIPE, nunca uma pessoa (nada de ranking):
-    - edital 100% analisado e fila de análises zerada (painel de análises);
-    - vaga pronta para o resultado final (painel de entrevistas);
+  Só ocasiões reais, ditas com o fato e o número, sem exclamação nem
+  agradecimento; nunca ranking:
+    - edital 100% analisado (com efeito) e fila de análises zerada (só o
+      aviso), no painel de análises;
+    - vaga pronta para a Classificação (só o aviso), no painel de entrevistas;
     - marcos do ano da área (1.000, 2.500, 5.000, 7.500, 10.000 e, dali em
       diante, a cada 5.000 análises concluídas);
     - o acesso liberado (src/lib/acesso-liberado.ts).
@@ -265,29 +267,39 @@ export function filaZerou(anterior: unknown, pendentes: number): boolean {
   return Number(anterior) > 0 && pendentes === 0;
 }
 
+export const formatarInteiro = (numero: unknown): string =>
+  Math.floor(Number(numero) || 0).toLocaleString("pt-BR");
+
+/** "Edital 114/2026 (Rio de Janeiro): as 1.512 fichas foram analisadas." */
 export function mensagemDoEditalConcluido({
   edital,
   unidade,
+  total,
 }: {
   edital?: unknown;
   unidade?: unknown;
+  total?: unknown;
 }): string {
-  const nome = [texto(edital), texto(unidade)].filter(Boolean).join(" · ");
-  return `Edital ${nome}: todas as análises concluídas!`;
+  const local = texto(unidade) ? ` (${texto(unidade)})` : "";
+  const n = Math.floor(Number(total) || 0);
+  const fichas =
+    n === 1
+      ? "a ficha foi analisada"
+      : `as ${formatarInteiro(n)} fichas foram analisadas`;
+  return `Edital ${texto(edital)}${local}: ${fichas}.`;
 }
 
-/*
-  "equipe da Saúde Indígena", "equipe da SEDE", "equipe de Projetos" — o
-  agradecimento é sempre à equipe da área, nunca a uma pessoa.
-*/
-export function equipeDaArea(nomeDaArea: unknown): string {
+/* "na Saúde Indígena", "na SEDE", "em Projetos"; sem nome, "". */
+export function naArea(nomeDaArea: unknown): string {
   const nome = texto(nomeDaArea);
-  if (!nome) return "equipe";
-  return `equipe ${/^projetos$/i.test(nome) ? "de" : "da"} ${nome}`;
+  if (!nome) return "";
+  return `${/^projetos$/i.test(nome) ? "em" : "na"} ${nome}`;
 }
 
+/** "Nenhuma ficha pendente na SEDE." */
 export function mensagemDaFilaZerada(nomeDaArea: unknown): string {
-  return `Fila zerada, nenhuma análise pendente. Obrigado, ${equipeDaArea(nomeDaArea)}!`;
+  const onde = naArea(nomeDaArea);
+  return `Nenhuma ficha pendente${onde ? ` ${onde}` : ""}.`;
 }
 
 /**
@@ -400,6 +412,7 @@ export function vagasProntas(
     .map(([, v]) => v);
 }
 
+/** "Vaga 179698 (Químico): todas as entrevistas têm parecer. Já pode seguir para a Classificação." */
 export function mensagemDaVagaPronta({
   vaga,
   cargo,
@@ -407,8 +420,8 @@ export function mensagemDaVagaPronta({
   vaga?: unknown;
   cargo?: unknown;
 }): string {
-  const nome = [texto(vaga), texto(cargo)].filter(Boolean).join(" · ");
-  return `Vaga ${nome} pronta para o resultado final: toda entrevista tem parecer.`;
+  const funcao = texto(cargo) ? ` (${texto(cargo)})` : "";
+  return `Vaga ${texto(vaga)}${funcao}: todas as entrevistas têm parecer. Já pode seguir para a Classificação.`;
 }
 
 export function comemoracaoDasEntrevistas({
@@ -439,8 +452,8 @@ export function marcoAlcancado(quantidade: unknown): number {
 
 /**
  * O marco novo desta leitura, ou 0. `anterior` é `{ ano, marco }` guardado;
- * sem ele (primeira vez da pessoa), anuncia o marco já alcançado no ano — é
- * notícia da equipe, não uma pendência antiga (pedido de 30/09). Guardado de um ano
+ * sem ele (primeira vez da pessoa), é linha de base em silêncio, como os
+ * outros marcos: o marco já alcançado não é anunciado. Guardado de um ano
  * anterior: a contagem recomeçou, e o ano novo parte de zero para quem já
  * acompanhava.
  */
@@ -448,8 +461,7 @@ export function marcoNovo(
   anterior: unknown,
   { ano, quantidade }: { ano: unknown; quantidade: unknown },
 ): number {
-  if (!anterior || typeof anterior !== "object")
-    return marcoAlcancado(quantidade);
+  if (!anterior || typeof anterior !== "object") return 0;
   const anoAnterior = Number((anterior as { ano?: unknown }).ano);
   if (anoAnterior > Number(ano)) return 0;
   const jaVisto =
@@ -484,9 +496,7 @@ export function proximoEstadoDoMarco(
   };
 }
 
-export const formatarMarco = (numero: unknown): string =>
-  Math.floor(Number(numero) || 0).toLocaleString("pt-BR");
-
+/** "Saúde Indígena: 7.500 análises concluídas em 2026." */
 export function mensagemDoMarcoDoAno({
   nomeDaArea,
   marco,
@@ -496,47 +506,12 @@ export function mensagemDoMarcoDoAno({
   marco: unknown;
   ano: unknown;
 }): string {
-  return `Em ${ano}, a ${equipeDaArea(nomeDaArea)} já concluiu ${formatarMarco(marco)} análises.`;
-}
-
-/** O agradecimento dos fogos do marco do ano: "1.000 análises concluídas em 2026. Obrigado, equipe de Projetos!" */
-export function agradecimentoDoMarco({
-  nomeDaArea,
-  marco,
-  ano,
-}: {
-  nomeDaArea: unknown;
-  marco: unknown;
-  ano: unknown;
-}): string {
-  return `${formatarMarco(marco)} análises concluídas em ${ano}. Obrigado, ${equipeDaArea(nomeDaArea)}!`;
-}
-
-/**
- * O letreiro do marco do ano: "1.000 análises" (cabe nos 14 caracteres do
- * letreiro); a partir de 10.000, só o número com exclamação ("10.000!").
- */
-export function letreiroDoMarcoDoAno(marco: unknown): string {
-  const numero = formatarMarco(marco);
-  const comPalavra = `${numero} análises`;
-  return comPalavra.length <= 14 ? comPalavra : `${numero}!`;
-}
-
-/** A frase do fim de um tour (uma tela) ou de uma trilha da Aya. */
-export function mensagemDoFimDoTour({
-  trilha,
-  nome,
-}: {
-  trilha: boolean;
-  nome: string;
-}): string {
-  return trilha
-    ? `Trilha "${nome}" concluída.`
-    : `Tour da tela ${nome} concluído.`;
+  const area = texto(nomeDaArea);
+  return `${area ? `${area}: ` : ""}${formatarInteiro(marco)} análises concluídas em ${ano}.`;
 }
 
 /** A forma do marco do ano no céu: o número ("1.000", "2.500"). */
 export const formaDoMarco = (marco: unknown): FormaDoMarco => ({
   tipo: "numero",
-  texto: formatarMarco(marco),
+  texto: formatarInteiro(marco),
 });

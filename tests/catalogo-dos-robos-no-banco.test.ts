@@ -4,14 +4,11 @@ import {
   type Banco,
   bancoDeHoje,
   constraintsDe,
-  corposDasFuncoes,
-  ENSAIO,
   entrar,
   erroDe,
   TAREFAS,
   estadoDoCron,
   MIGRATION,
-  ROLLBACK,
   rodarArquivo,
   uma,
   USUARIO_COMUM,
@@ -20,23 +17,21 @@ import {
 import { CATALOGO_DOS_ROBOS } from "./fixtures/catalogo-dos-robos.ts";
 
 /*
-  Migration 20261109180000 (catálogo dos robôs e chave única) num Postgres de
-  verdade (PGlite). Duas metades:
+  Migration 20261109180000 (catálogo dos robôs e chave única, já aplicada) num
+  Postgres de verdade (PGlite); o SQL dela está em tests/fixtures/sql-do-banco/.
+  Duas metades:
 
-  1. NADA QUEBRA. Três bancos iguais ao de hoje: um fica como está, outro recebe
-     a migration, outro recebe a migration e o rollback. As mesmas perguntas vão
-     aos três e as respostas têm de ser as mesmas: cada workflow × origem ×
-     entrada em FC_DISPARAR_ROBO (com o pedido que vai ao GitHub, letra por letra),
-     com chave ligada e desligada, sem a chave do Vault e com o pg_net fora;
-     registrar_disparo_externo; FC_CHAVE_DO_WORKFLOW e FC_CHAVE_DA_TAREFA de todo
-     nome; alterar_chave_da_automacao numa sequência com todos os erros;
+  1. NADA QUEBRA. Dois bancos iguais ao de antes: um fica como está, o outro
+     recebe a migration. As mesmas perguntas vão aos dois e as respostas têm de
+     ser as mesmas: cada workflow × origem × entrada em FC_DISPARAR_ROBO (com o
+     pedido que vai ao GitHub, letra por letra), com chave ligada e desligada,
+     sem a chave do Vault e com o pg_net fora; registrar_disparo_externo;
+     FC_CHAVE_DO_WORKFLOW e FC_CHAVE_DA_TAREFA de todo nome;
+     alterar_chave_da_automacao numa sequência com todos os erros;
      obter_chaves_da_automacao; automacao_ligada; disparar_robo (Rodar agora).
-     O rollback devolve ainda o corpo de cada função, as constraints e os
-     comentários como eram.
 
-  2. O QUE MUDA DE PROPÓSITO, com as guardas: o catálogo, a chave estrangeira,
-     o alinhador da chave com o pg_cron, a tarefa nova, o RPC do catálogo, e a
-     migration e o rollback que recusam o estado que não conhecem sem aplicar nada.
+  2. O QUE MUDA DE PROPÓSITO: o catálogo, a chave estrangeira, o alinhador da
+     chave com o pg_cron, a tarefa nova e o RPC do catálogo.
 */
 
 const LONGO = 120_000;
@@ -493,64 +488,18 @@ async function todasAsBaterias(db: Banco) {
   };
 }
 
-async function comentarios(db: Banco) {
-  return (
-    await db.query(
-      `select p.oid::regprocedure::text as objeto, obj_description(p.oid, 'pg_proc') as texto
-         from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-        where n.nspname in ('public', 'private')
-       union all
-       select 'constraint ' || conname, obj_description(oid, 'pg_constraint')
-         from pg_constraint where conrelid = 'public."TL_DISPARO_ROBO"'::regclass
-       union all
-       select 'coluna NO_WORKFLOW', col_description('public."TL_DISPARO_ROBO"'::regclass, 2)
-       order by 1`,
-    )
-  ).rows;
-}
-
-async function tabelas(db: Banco) {
-  return (
-    await db.query<{ t: string }>(
-      `select schemaname || '.' || tablename as t from pg_tables
-        where schemaname in ('public', 'private') order by 1`,
-    )
-  ).rows.map((l) => l.t);
-}
-
-describe("nada quebra: hoje × depois da migration × depois do rollback", () => {
+describe("nada quebra: hoje × depois da migration", () => {
   let hoje: Banco;
   let migrado: Banco;
-  let desfeito: Banco;
   const fotos: Record<string, Record<string, unknown>> = {};
 
   beforeAll(async () => {
     hoje = await bancoDeHoje();
     migrado = await bancoDeHoje();
     await rodarArquivo(migrado, MIGRATION);
-    desfeito = await bancoDeHoje();
-    await rodarArquivo(desfeito, MIGRATION);
-    await rodarArquivo(desfeito, ROLLBACK);
-    fotos.estrutura = {
-      hoje: {
-        funcoes: await corposDasFuncoes(hoje),
-        constraints: await constraintsDe(hoje, "TL_DISPARO_ROBO"),
-        comentarios: await comentarios(hoje),
-        tabelas: await tabelas(hoje),
-        cron: await estadoDoCron(hoje),
-      },
-      desfeito: {
-        funcoes: await corposDasFuncoes(desfeito),
-        constraints: await constraintsDe(desfeito, "TL_DISPARO_ROBO"),
-        comentarios: await comentarios(desfeito),
-        tabelas: await tabelas(desfeito),
-        cron: await estadoDoCron(desfeito),
-      },
-    };
     for (const [nome, db] of [
       ["hoje", hoje],
       ["migrado", migrado],
-      ["desfeito", desfeito],
     ] as const)
       fotos[nome] = await todasAsBaterias(db);
   }, 600_000);
@@ -564,9 +513,6 @@ describe("nada quebra: hoje × depois da migration × depois do rollback", () =>
   ]) {
     it(`${parte}: a migration responde igual a hoje`, () => {
       expect(semAlinhador(fotos.migrado?.[parte])).toEqual(fotos.hoje?.[parte]);
-    });
-    it(`${parte}: depois do rollback, responde igual a hoje`, () => {
-      expect(fotos.desfeito?.[parte]).toEqual(fotos.hoje?.[parte]);
     });
   }
 
@@ -607,18 +553,6 @@ describe("nada quebra: hoje × depois da migration × depois do rollback", () =>
     const respostas = Object.values(disparos).map((d) => d.resposta);
     expect(respostas).toContain("nulo"); // agenda com chave desligada
     expect(respostas.some((r) => r.startsWith("erro 22023"))).toBe(true);
-  });
-
-  it("o rollback devolve cada função (corpo, volatilidade, definer), as constraints, os comentários e as tabelas", () => {
-    const { hoje: h, desfeito: d } = fotos.estrutura as Record<
-      string,
-      Record<string, unknown>
-    >;
-    expect(d?.funcoes).toEqual(h?.funcoes);
-    expect(d?.constraints).toEqual(h?.constraints);
-    expect(d?.comentarios).toEqual(h?.comentarios);
-    expect(d?.tabelas).toEqual(h?.tabelas);
-    expect(d?.cron).toEqual(h?.cron);
   });
 });
 
@@ -1028,182 +962,6 @@ describe("o que muda de propósito", () => {
   });
 
   it(
-    "aplicar com chave desligada e tarefa ativa: a migration desliga a tarefa e deixa no histórico",
-    async () => {
-      const db = await bancoDeHoje({
-        chaves: { paineis: "N" },
-        tarefas: {},
-      });
-      await rodarArquivo(db, MIGRATION);
-      const cron = await estadoDoCron(db);
-      expect(cron.agsus_analises_cache_do_painel).toBe(false);
-      expect(cron.agsus_aprovados_cache_por_area).toBe(false);
-      expect(cron.agsus_entrevistas_cache_do_painel).toBe(false);
-      expect(
-        await uma(
-          db,
-          `select "CO_CHAVE", "DS_TAREFAS" from public."TH_CHAVE_AUTOMACAO" order by "CO_EVENTO" desc limit 1`,
-        ),
-      ).toEqual({
-        CO_CHAVE: "paineis",
-        DS_TAREFAS: [
-          "agsus_analises_cache_do_painel",
-          "agsus_aprovados_cache_por_area",
-          "agsus_entrevistas_cache_do_painel",
-        ],
-      });
-    },
-    LONGO,
-  );
-
-  describe("a migration recusa o estado que não conhece, sem aplicar nada", () => {
-    const naoAplicou = async (db: Banco, antes: Record<string, string>) => {
-      expect(
-        await uma(db, `select to_regclass('public."TB_ROBO_WORKFLOW"') as t`),
-      ).toEqual({ t: null });
-      expect(await corposDasFuncoes(db)).toEqual(antes);
-      expect(
-        (await constraintsDe(db, "TL_DISPARO_ROBO")).some((c) =>
-          c.startsWith("CK_DISPROBO_NOWORKFLOW"),
-        ),
-      ).toBe(true);
-    };
-
-    it(
-      "chave ligada com tarefa parada: pede decisão e diz qual tarefa",
-      async () => {
-        const db = await bancoDeHoje({
-          tarefas: { agsus_fila_estatisticas: false },
-        });
-        const antes = await corposDasFuncoes(db);
-        const erro = await erroDe(rodarArquivo(db, MIGRATION));
-        expect(erro?.mensagem).toContain(
-          "agsus_fila_estatisticas (chave manutencao)",
-        );
-        await db.exec("rollback");
-        await naoAplicou(db, antes);
-        expect((await estadoDoCron(db)).agsus_fila_estatisticas).toBe(false);
-      },
-      LONGO,
-    );
-
-    it(
-      "função mudada depois de 20261103213000 (md5 diferente)",
-      async () => {
-        const db = await bancoDeHoje();
-        await db.exec(`create or replace function private."FC_CHAVE_DO_WORKFLOW"(p_workflow text)
-        returns text language sql immutable set search_path to '' as $function$ select null::text $function$;`);
-        const antes = await corposDasFuncoes(db);
-        const erro = await erroDe(rodarArquivo(db, MIGRATION));
-        expect(erro?.mensagem).toContain("mudou depois de 20261103213000");
-        await db.exec("rollback");
-        await naoAplicou(db, antes);
-      },
-      LONGO,
-    );
-
-    it(
-      "pedido no log com workflow fora do catálogo",
-      async () => {
-        const db = await bancoDeHoje();
-        await db.exec(`alter table public."TL_DISPARO_ROBO" drop constraint "CK_DISPROBO_NOWORKFLOW";
-        insert into public."TL_DISPARO_ROBO" ("NO_WORKFLOW", "TP_ORIGEM", "TP_SITUACAO") values ('antigo.yml', 'MANUAL', 'FALHOU');
-        alter table public."TL_DISPARO_ROBO" add constraint "CK_DISPROBO_NOWORKFLOW" check ("NO_WORKFLOW" <> '') not valid;`);
-        const erro = await erroDe(rodarArquivo(db, MIGRATION));
-        expect(erro?.mensagem).toContain("antigo.yml");
-        await db.exec("rollback");
-        expect(
-          await uma(db, `select to_regclass('public."TB_ROBO_WORKFLOW"') as t`),
-        ).toEqual({ t: null });
-      },
-      LONGO,
-    );
-
-    it(
-      "aplicada de novo",
-      async () => {
-        const db = await bancoDeHoje();
-        await rodarArquivo(db, MIGRATION);
-        const erro = await erroDe(rodarArquivo(db, MIGRATION));
-        expect(erro?.mensagem).toContain("já foi aplicada");
-        await db.exec("rollback");
-      },
-      LONGO,
-    );
-  });
-
-  describe("o rollback", () => {
-    it(
-      "recusa banco sem a migration",
-      async () => {
-        const db = await bancoDeHoje();
-        expect((await erroDe(rodarArquivo(db, ROLLBACK)))?.mensagem).toContain(
-          "não está aplicada",
-        );
-        await db.exec("rollback");
-      },
-      LONGO,
-    );
-
-    it(
-      "recusa pedido de workflow que o CHECK de antes não aceitaria, sem desfazer nada",
-      async () => {
-        const db = await bancoDeHoje();
-        await rodarArquivo(db, MIGRATION);
-        await db.exec(`insert into public."TB_ROBO_WORKFLOW" ("NO_WORKFLOW", "NO_ROBO", "DS_INPUT_ACEITO", "ST_DISPARAVEL", "ST_REGISTRO_EXTERNO")
-        values ('robo-novo.yml', 'Robô novo', '{modo}', 'S', 'N')`);
-        await db.query(
-          `select private."FC_DISPARAR_ROBO"('robo-novo.yml', '{}'::jsonb)`,
-        );
-        const antes = await corposDasFuncoes(db);
-        expect((await erroDe(rodarArquivo(db, ROLLBACK)))?.mensagem).toContain(
-          "robo-novo.yml",
-        );
-        await db.exec("rollback");
-        expect(await corposDasFuncoes(db)).toEqual(antes);
-        expect(
-          await uma(
-            db,
-            `select count(*)::int as n from public."TB_ROBO_WORKFLOW"`,
-          ),
-        ).toEqual({ n: 12 });
-      },
-      LONGO,
-    );
-
-    it(
-      "mantém o que a chave decidiu (tarefa desligada) e o histórico; depois, a migration aplica de novo",
-      async () => {
-        const db = await bancoDeHoje({ chaves: { manutencao: "N" } });
-        await rodarArquivo(db, MIGRATION);
-        const historico = await uma(
-          db,
-          `select count(*)::int as n from public."TH_CHAVE_AUTOMACAO"`,
-        );
-        await rodarArquivo(db, ROLLBACK);
-        expect((await estadoDoCron(db)).agsus_fila_estatisticas).toBe(false);
-        expect(
-          await uma(
-            db,
-            `select count(*)::int as n from public."TH_CHAVE_AUTOMACAO"`,
-          ),
-        ).toEqual(historico);
-        expect(
-          (await estadoDoCron(db)).agsus_alinhar_chaves_da_automacao,
-        ).toBeUndefined();
-        await rodarArquivo(db, MIGRATION);
-        expect(
-          await uma(
-            db,
-            `select count(*)::int as n from public."TB_ROBO_WORKFLOW"`,
-          ),
-        ).toEqual({ n: 11 });
-      },
-      LONGO,
-    );
-  });
-
-  it(
     "obter_catalogo_dos_robos: só o administrador global; nomes dos workflows e das tarefas",
     async () => {
       const db = await bancoDeHoje();
@@ -1243,69 +1001,4 @@ describe("o que muda de propósito", () => {
     },
     LONGO,
   );
-
-  describe("o ensaio", () => {
-    it(
-      "passa no banco de hoje e não deixa nada",
-      async () => {
-        const db = await bancoDeHoje();
-        const antes = {
-          funcoes: await corposDasFuncoes(db),
-          log: await uma(
-            db,
-            `select count(*)::int as n from public."TL_DISPARO_ROBO"`,
-          ),
-          rede: await uma(db, `select count(*)::int as n from net."PEDIDO"`),
-          cron: await estadoDoCron(db),
-        };
-        await rodarArquivo(db, ENSAIO);
-        expect({
-          funcoes: await corposDasFuncoes(db),
-          log: await uma(
-            db,
-            `select count(*)::int as n from public."TL_DISPARO_ROBO"`,
-          ),
-          rede: await uma(db, `select count(*)::int as n from net."PEDIDO"`),
-          cron: await estadoDoCron(db),
-        }).toEqual(antes);
-        // Nenhum pedido foi ao pg_net (o ensaio força SEM_TOKEN).
-        expect(antes.rede).toEqual({ n: 0 });
-        expect(
-          await uma(db, `select to_regclass('public."TB_ROBO_WORKFLOW"') as t`),
-        ).toEqual({ t: null });
-      },
-      LONGO,
-    );
-
-    it(
-      "reprova uma regressão: sem um input no catálogo, as respostas mudam e o ensaio para",
-      async () => {
-        const db = await bancoDeHoje();
-        const quebrado = ENSAIO.replace("'{modo,listas}'", "'{modo}'");
-        expect(quebrado).not.toBe(ENSAIO);
-        const erro = await erroDe(rodarArquivo(db, quebrado));
-        expect(erro?.mensagem).toContain("Respostas mudaram com a migration");
-        expect(erro?.mensagem).toContain("classificacao.yml");
-        await db.exec("rollback");
-      },
-      LONGO,
-    );
-
-    it(
-      "reprova uma regressão: workflow sem registro externo",
-      async () => {
-        const db = await bancoDeHoje();
-        const quebrado = ENSAIO.replace(
-          "('leitura-de-arquivos.yml', 'Leitura dos arquivos', null, '{}', 'N', 'S')",
-          "('leitura-de-arquivos.yml', 'Leitura dos arquivos', null, '{}', 'N', 'N')",
-        );
-        expect(quebrado).not.toBe(ENSAIO);
-        expect((await erroDe(rodarArquivo(db, quebrado)))?.mensagem).toContain(
-          "externo:leitura-de-arquivos.yml",
-        );
-        await db.exec("rollback");
-      },
-      LONGO,
-    );
-  });
 });

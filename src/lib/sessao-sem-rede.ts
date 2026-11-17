@@ -27,7 +27,17 @@
   O risco aceito: quem teve o acesso revogado ainda vê, sem rede, o que já
   estava no aparelho, por até 48 h.
 */
-import { ehFalhaTransitoria } from "./sessao";
+/*
+  Só o classificador da biblioteca (e não src/lib/sessao.ts): este arquivo baixa
+  sob demanda, quando a leitura da sessão falha, e não pode puxar outro pedaço
+  para a entrada.
+*/
+import { isAuthRetryableFetchError } from "@supabase/supabase-js";
+
+/* Falha de transporte: a biblioteca diz, ou o fetch rejeitou (TypeError). */
+const ehFalhaDeRede = (erro: unknown) =>
+  isAuthRetryableFetchError(erro) ||
+  (erro as { name?: unknown } | null)?.name === "TypeError";
 
 export const LIMITE_SEM_REDE_MS = 48 * 60 * 60 * 1000;
 
@@ -72,7 +82,7 @@ export function sessaoSemRede<S>(
   const erro = resposta?.error;
   // Sem erro, a leitura funcionou: não há sessão (saiu ou nunca entrou).
   if (!erro) return resposta;
-  if (online && !ehFalhaTransitoria(erro)) return resposta;
+  if (online && !ehFalhaDeRede(erro)) return resposta;
   const sessao = lerGuardada(guardada);
   const venceEm = Number(sessao?.expires_at) * 1000;
   if (

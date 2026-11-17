@@ -1,7 +1,7 @@
 ---
 tipo: regra
 area: front
-atualizado: 2026-11-12
+atualizado: 2026-11-17
 ---
 
 # Design e tokens
@@ -59,7 +59,7 @@ contam; a cor só conta em valor de declaração (seletor `#abc` não), e `borde
   `node scripts/check-acabamento-so-encolhe.mjs --atualizar --aceitar-subida="<motivo>"`, e o
   motivo vai na mensagem do commit.
 - **Exceção da comemoração:** `src/styles/comemoracao.css` é uma coreografia deliberada (entrada
-  com mola, selo, letreiro, brilho), fora da norma 7.1 ("sem movimento decorativo"): durações e
+  com mola, selo que pula, véu), fora da norma 7.1 ("sem movimento decorativo"): durações e
   curvas próprias, com `permitido(curva)` por animação e a justificativa em um comentário de bloco
   no topo do arquivo. `prefers-reduced-motion` a desliga.
 
@@ -85,7 +85,7 @@ contam; a cor só conta em valor de declaração (seletor `#abc` não), e `borde
   decisão (a norma separa 500 e 510). Valem os do projeto; o porquê está no comentário de
   `src/styles/app.css` (bloco `--z-*`).
 - Cores de etapa do calendário: `--etapa-*`. Terras Indígenas têm cores de domínio, não de paleta
-  ([[terras-indigenas]]).
+  ([[mapas-e-leaflet]]).
 
 ## Paleta do rio
 
@@ -141,7 +141,7 @@ redefina `.btn` em CSS de módulo.
 ## Relacionadas
 
 - [[css]] — onde escrever CSS, a cascata e a dívida
-- [[acessibilidade]] — contraste, foco, teclado
-- [[mobile]] — breakpoints e responsividade
-- [[icones]] — Lucide e o registro único
+- [[acessibilidade-e-mobile]] — contraste, foco, teclado, breakpoints e responsividade
+- [[componentes-padrao]] — Lucide e o registro único
 - [[textos-da-interface]] — a linguagem da tela
+- [Desenho do acabamento visual](../_arquivo/planos/2026-11-11-acabamento-visual-design.md) e [plano dos lotes 0 e 1](../_arquivo/planos/2026-11-11-acabamento-lotes-0-e-1.md) — feito no #797
