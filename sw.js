@@ -14,6 +14,20 @@ const APP_SHELL = [
   "/icons/agsus-monitora.svg",
   "/icons/agsus-monitora-maskable.svg",
 ];
+/*
+  Trocada a cada build pela lista dos arquivos publicados (vite.config.js,
+  src/lib/cache-do-service-worker.ts): código, estilos, fontes e imagens de
+  todas as telas, guardados na instalação para que qualquer tela abra sem rede,
+  também a que nunca foi aberta.
+*/
+const PRECACHE = [];
+
+/*
+  O Vary (o `vite preview` manda `Vary: Origin`) não muda o arquivo estático:
+  sem ignorá-lo, o pedido de um módulo com Origin não achava a cópia guardada
+  na instalação, que foi buscada sem Origin.
+*/
+const MATCH_OPTIONS = { ignoreVary: true };
 
 const BLOCKED_PATH_PREFIXES = [
   "/auth/",
@@ -23,8 +37,16 @@ const BLOCKED_PATH_PREFIXES = [
   "/functions/",
 ];
 
-const { getRequestStrategy, isResponseCacheable, entriesBeyondLimit } =
-  self.AgSUSPwaCachePolicy;
+const {
+  getRequestStrategy,
+  isResponseCacheable,
+  entriesBeyondLimit,
+  isHashedAsset,
+} = self.AgSUSPwaCachePolicy;
+
+const FIXED_URLS = [...APP_SHELL, ...PRECACHE].map(
+  (path) => new URL(path, self.location.origin).href,
+);
 
 function isCacheableRequest(request, url) {
   if (request.method !== "GET") return false;
@@ -48,18 +70,15 @@ async function storeResponse(request, response) {
 
 async function trimCache(cache) {
   const keys = await cache.keys();
-  const keep = APP_SHELL.map(
-    (path) => new URL(path, self.location.origin).href,
-  );
   const excess = entriesBeyondLimit(
     keys.map((key) => key.url),
-    { limit: CACHE_LIMIT, keep },
+    { limit: CACHE_LIMIT, keep: FIXED_URLS },
   );
   await Promise.all(excess.map((url) => cache.delete(url)));
 }
 
 async function cacheFirst(request) {
-  const cached = await caches.match(request);
+  const cached = await caches.match(request, MATCH_OPTIONS);
   if (cached) return cached;
 
   const response = await fetch(request);
@@ -73,21 +92,45 @@ async function networkFirst(request, fallbackRequest = request) {
     await storeResponse(request, response);
     return response;
   } catch {
-    return caches.match(fallbackRequest);
+    return caches.match(fallbackRequest, MATCH_OPTIONS);
   }
 }
 
 async function networkFirstNavigation(request) {
   return (
     (await networkFirst(request)) ||
-    (await caches.match("/index.html")) ||
-    (await caches.match(OFFLINE_URL))
+    (await caches.match("/index.html", MATCH_OPTIONS)) ||
+    (await caches.match(OFFLINE_URL, MATCH_OPTIONS))
   );
+}
+
+/*
+  Um arquivo com hash que a versão anterior já guardou vem dessa cópia, sem
+  gastar a rede de novo (o nome muda quando o conteúdo muda). Os demais vêm da
+  rede. Um arquivo que falhar não impede a instalação: a casca já está
+  guardada, e o que faltar entra no cache quando a tela for aberta com rede.
+*/
+async function precacheFile(cache, path) {
+  const url = new URL(path, self.location.origin).href;
+  const hashed = isHashedAsset(url);
+  const previous = hashed && (await caches.match(url, MATCH_OPTIONS));
+  if (previous) {
+    await cache.put(url, previous);
+    return;
+  }
+  const response = await fetch(url, { cache: hashed ? "default" : "no-cache" });
+  if (!response.ok) throw new Error(`${response.status} em ${path}`);
+  await cache.put(url, response);
 }
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => cache.addAll(APP_SHELL)),
+    caches.open(STATIC_CACHE).then(async (cache) => {
+      await cache.addAll(APP_SHELL);
+      await Promise.allSettled(
+        PRECACHE.map((path) => precacheFile(cache, path)),
+      );
+    }),
   );
 });
 

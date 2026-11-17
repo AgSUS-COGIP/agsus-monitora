@@ -77,7 +77,7 @@ npm run test:e2e                         # Playwright (muito lento, só se pedid
 
 **Operação**
 - [[comandos-e-ambiente]] · [[fluxo-git-e-prs]] · [[deploy-e-vercel]] · [[funcoes-da-vercel]] ·
-  [[servidor-web]]
+  [[servidor-web]] · [[pwa-e-modo-offline]]
 - [[robos-e-agenda]] · [[cargas-de-planilha]] · [[planilhas]] · [[documentacao]]
 
 **Módulos e telas**

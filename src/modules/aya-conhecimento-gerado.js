@@ -5776,6 +5776,25 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-do-sistema.md",
+    titulo: "Sem internet",
+    perguntas: [
+      "funciona sem internet",
+      "sem internet",
+      "sem conexao",
+      "offline",
+      "modo offline",
+      "abrir sem rede",
+      "instalar o yeende",
+      "usar no campo",
+    ],
+    resposta:
+      'Depois de aberto uma vez com internet, o Yeendé guarda no aparelho o necessário para abrir todas as telas, mesmo as que você ainda não abriu: sem conexão, aparece o aviso "Sem conexão com a internet" e você continua trocando de tela e recarregando a página. Os dados vêm do banco: sem internet, só aparecem os que a tela já tinha guardado. Mapas de terras e DSEIs precisam de internet. Quando a conexão volta, aparece "Conexão restabelecida". O Yeendé se instala pelo navegador, no celular e no computador; não há aplicativo de loja.',
+    fato: "",
+    fonte:
+      "sw.js; sw-policy.js; src/lib/cache-do-service-worker.ts; src/app/casca/aviso-de-conexao.tsx",
+  },
+  {
+    arquivo: "regras-do-sistema.md",
     titulo: "Busca global",
     perguntas: [
       "busca global",
