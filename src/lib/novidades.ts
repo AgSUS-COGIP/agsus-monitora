@@ -25,6 +25,13 @@ export const NOVIDADES_PUBLICADAS = 5;
 
 export const NOVIDADES: readonly Novidade[] = [
   {
+    id: "2026-11-17-editais-ordem-e-aviso-das-listas",
+    data: "2026-11-17",
+    texto:
+      "editais em ordem cronológica, ordenação por coluna e aviso de edital sem aprovados",
+    visivel: true,
+  },
+  {
     id: "2026-11-17-mapa-so-do-sigepsi",
     data: "2026-11-17",
     texto: "mapa da Saúde Indígena só com os dados do SIGEPSI",

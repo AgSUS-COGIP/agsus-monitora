@@ -32,6 +32,20 @@
   gap: var(--space-2);
   white-space: nowrap;
 }
+/*
+  "Lista de aprovados" com aviso: amarelo (concluído sem aprovados) ou
+  vermelho (edital cancelado ou suspenso).
+*/
+.nucleo-row-actions .btn.nucleo-listas-aviso {
+  border-color: var(--state-warning);
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+}
+.nucleo-row-actions .btn.nucleo-listas-perigo {
+  border-color: var(--state-danger);
+  background: var(--state-danger-soft);
+  color: var(--state-danger);
+}
 /* Reiniciar o edital de treinamento: a confirmação fica na própria linha. */
 .nucleo-confirma-reinicio {
   display: flex;
