@@ -5,7 +5,13 @@ import {
   hojeEmBrasilia,
   situacaoNaLinhaDoTempo,
 } from "../../lib/cronograma-do-edital.ts";
-import { BlocosEsqueleto, ErroAoCarregar, Modal } from "../../ui/index.ts";
+import { avisosDeSequencia } from "../../lib/sequencia-do-cronograma.ts";
+import {
+  Aviso,
+  BlocosEsqueleto,
+  ErroAoCarregar,
+  Modal,
+} from "../../ui/index.ts";
 import type { CronogramaLido } from "./estado.ts";
 
 /** O que a linha do tempo usa do estado da página (`estado.ts`). */
@@ -61,6 +67,8 @@ function Conteudo({
   const etapas = Array.isArray(dados.etapas) ? dados.etapas : [];
   const historico = Array.isArray(dados.historico) ? dados.historico : [];
   const hoje = hojeEmBrasilia(agora());
+  // Recurso depois do preliminar e antes do final: aviso, quem corrige é Editais.
+  const sequencia = avisosDeSequencia(etapas);
 
   return (
     <>
@@ -108,6 +116,15 @@ function Conteudo({
           <span>Linha do tempo</span>
           <strong>{etapas.length} etapa(s)</strong>
         </div>
+        {sequencia.length ? (
+          <Aviso tom="warning" papel="status">
+            <i
+              className="fa-solid fa-triangle-exclamation"
+              aria-hidden="true"
+            />{" "}
+            <span>{sequencia.join(" ")}</span>
+          </Aviso>
+        ) : null}
         <div className="nucleo-timeline-list">
           {etapas.length ? (
             etapas.map((etapa, indice) => {
