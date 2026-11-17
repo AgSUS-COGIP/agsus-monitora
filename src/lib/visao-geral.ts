@@ -64,6 +64,7 @@ import {
   ehCritica,
   indicadoresDoMonitoramento,
   temResultado,
+  vagasEfetivas,
   vagasSemContratacao,
 } from "./indicadores-do-monitoramento.ts";
 
@@ -369,7 +370,9 @@ export function duracaoEmDias(linha: LinhaDoMonitoramento): number | null {
 }
 
 /**
- * Cada linha com `fase`, `atencao` (motivos do crítico), `pos_resultado`
+ * Cada linha com `fase`, `vagas_reabertas` e `textos_da_reabertura` (as vagas
+ * sem contratação que um edital mais novo da mesma unidade reabriu, pela conta
+ * `acompanhamento.reaberturas`, de src/lib/vagas-reabertas.ts), `atencao` (motivos do crítico), `pos_resultado`
  * (pendências), `desistentes`, `aprovados` e `cadastro_reserva` (da lista
  * vigente), `ciclo` padronizado e `primeira_admissao`, `ultima_admissao` e
  * `admissoes` (conciliadas com o RH). `hoje`: "AAAA-MM-DD".
@@ -391,19 +394,28 @@ export function enriquecerLinhas(
   } = {},
 ): LinhaDaVisaoGeral[] {
   const temListas = Boolean(acompanhamento?.listasPorEdital);
-  return (Array.isArray(linhas) ? linhas : []).map((linha) => {
+  const comFases = (Array.isArray(linhas) ? linhas : []).map((linha) => ({
+    ...linha,
+    fase: faseDoEdital(linha),
+  }));
+  const reaberturas = acompanhamento?.reaberturas?.(comFases);
+  return comFases.map((comFase) => {
+    const reabertura = reaberturas?.get(txt(comFase.id));
+    const linha = {
+      ...comFase,
+      vagas_reabertas: reabertura?.reabertas ?? 0,
+      textos_da_reabertura: reabertura?.textos ?? [],
+    };
     const id = txt(linha?.id);
-    const fase = faseDoEdital(linha);
-    const comFase = { ...linha, fase };
     const etapas = acompanhamento?.etapasPorEdital?.get(id) || null;
     const lista = acompanhamento?.listasPorEdital?.get(id) || null;
     const marcacao = acompanhamento?.criticosPorEdital?.get(id) || null;
     const admissoes = acompanhamento?.admissoesPorEdital?.get(id) || null;
     return {
-      ...comFase,
+      ...linha,
       ciclo: cicloPadronizado(linha?.ciclo),
-      atencao: motivosDeAtencao(comFase, { hoje, etapas, limites, marcacao }),
-      pos_resultado: pendenciasDaLinha(comFase, lista, temListas, limites),
+      atencao: motivosDeAtencao(linha, { hoje, etapas, limites, marcacao }),
+      pos_resultado: pendenciasDaLinha(linha, lista, temListas, limites),
       desistentes: lista ? num(lista.desistentes) : 0,
       ...resultadoDaLista(lista),
       primeira_admissao: admissoes?.primeira ?? null,
@@ -744,7 +756,7 @@ export function processosPorProjeto(linhas: readonly LinhaDoMonitoramento[]) {
     item.processos += 1;
     if (!ehCancelado(linha) && !ehConcluido(linha)) item.abertos += 1;
     if (!ehCancelado(linha)) {
-      item.vagas += num(linha?.vagas_total);
+      item.vagas += vagasEfetivas(linha);
       item.contratadas += contratadasImediatas(linha);
     }
     porProjeto.set(projeto, item);
@@ -972,7 +984,7 @@ export function seloDoCronograma(
 
 /** A taxa de vagas sem contratação da linha: `{ pct, nivel }` (low, medium, high, critical). */
 export function taxaDeOciosidade(linha: LinhaDoMonitoramento) {
-  const vagas = num(linha?.vagas_total);
+  const vagas = vagasEfetivas(linha);
   const taxa =
     vagas > 0 ? Math.round((vagasSemContratacao(linha) * 100) / vagas) : 0;
   const nivel =

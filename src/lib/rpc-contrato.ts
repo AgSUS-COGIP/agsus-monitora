@@ -744,7 +744,7 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     argumentos: ["p_area", "p_editais"],
     critica: false,
     resumo:
-      "Aba 2 do relatório da diretoria: vagas da Seleção com inscritos, quadro de vagas do edital e aprovados da lista vigente por vaga, dos editais pedidos que a pessoa vê. Sem dado pessoal. Recurso dashboard (migration 20261116120000).",
+      "Aba 2 do relatório da diretoria e cargos das vagas reabertas da Visão geral: vagas da Seleção com inscritos, quadro de vagas do edital e aprovados da lista vigente por vaga, dos editais pedidos que a pessoa vê; vagas e quadro com co_cargo (cargo oficial pela grafia, nulo fora da Saúde Indígena; migration 20261117130000). Sem dado pessoal. Recurso dashboard (migration 20261116120000).",
   },
   registrar_carta_convocacao: {
     argumentos: [

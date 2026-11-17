@@ -95,6 +95,11 @@ export function GavetaDoProcesso({
               <span>{textoDaFonteDoFunil(linha)}</span>
             </p>
           ) : null}
+          {(linha.textos_da_reabertura || []).map((texto) => (
+            <p key={texto} className="visao-geral-progresso-texto">
+              <span>{texto}</span>
+            </p>
+          ))}
         </Secao>
 
         <Secao icone="fa-route" titulo="Cronograma" secao="cronograma">

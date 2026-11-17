@@ -85,6 +85,7 @@ const LINHAS = [
 const INDICADORES: Indicadores = {
   processos: 2,
   vagas: 69,
+  reabertas: 0,
   contratadas: 63,
   emSelecao: 0,
   ociosas: 6,

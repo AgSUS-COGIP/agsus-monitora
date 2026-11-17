@@ -11,6 +11,7 @@ import { formatNumberBR } from "../../lib/formatters";
 import {
   contratacoesDoCadastroReserva,
   contratadasImediatas,
+  vagasSemContratacao,
 } from "../../lib/indicadores-do-monitoramento.ts";
 import {
   COLUNAS_DA_TABELA,
@@ -294,7 +295,7 @@ function celula(
       const taxa = taxaDeOciosidade(linha);
       return (
         <td key={campo} className="num">
-          {fmt(linha.vagas_ociosas)}
+          {fmt(vagasSemContratacao(linha))}
           <span
             className="visao-geral-taxa"
             data-nivel={taxa.nivel}

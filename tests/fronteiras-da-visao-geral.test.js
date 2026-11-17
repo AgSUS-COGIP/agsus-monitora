@@ -141,6 +141,62 @@ describe("fronteiras externas da Visão geral", () => {
     expect(buscar).toHaveBeenCalledTimes(2);
   });
 
+  it("com os cargos na resposta, o estado carrega a conta e desconta a vaga reaberta", async () => {
+    const velho = {
+      ...linha,
+      id: "e1",
+      edital: "1/2025",
+      status: "Concluído",
+      data_inicio: "2025-06-09",
+      data_fim: "2025-08-20",
+      vagas_total: 10,
+      contratados: 4,
+    };
+    const novo = {
+      ...linha,
+      id: "e2",
+      edital: "2/2026",
+      data_inicio: "2026-06-16",
+      vagas_total: 5,
+      contratados: 0,
+    };
+    const snapshot = {
+      linhas: [velho, novo],
+      areaAtual: "sede",
+      carregado: true,
+    };
+    const buscar = vi.fn(async () => ({
+      etapas: [],
+      listas: [],
+      vagas_por_cargo: {
+        vagas: [
+          { monitoramento_id: "e1", cargo: "Analista" },
+          { monitoramento_id: "e2", cargo: "Analista" },
+        ],
+      },
+    }));
+    const estado = criarEstadoDaVisaoGeral({
+      dados: { obter: () => snapshot, assinar: () => () => {} },
+      armazenamento: null,
+    });
+    estado.definirBuscaDoAcompanhamento(buscar);
+    await vi.waitFor(() =>
+      expect(estado.obter().indicadores.reabertas).toBe(5),
+    );
+    // Os editais da área vão junto, para a leitura dos cargos.
+    expect(buscar).toHaveBeenCalledWith("sede", ["e1", "e2"]);
+    expect(estado.obter().indicadores).toMatchObject({
+      vagas: 10,
+      contratadas: 4,
+      emSelecao: 5,
+      ociosas: 1,
+    });
+    expect(
+      estado.obter().linhasDaArea.find((l) => l.id === "e1")
+        .textos_da_reabertura,
+    ).toEqual(["5 vagas reabertas no edital 2/2026"]);
+  });
+
   it("o acompanhamento pergunta pela versão que já tem; inalterado, volta o mesmo", async () => {
     const primeiro = {
       etapas: [],
@@ -169,6 +225,38 @@ describe("fronteiras externas da Visão geral", () => {
         )
         .map(([, argumentos]) => argumentos.p_versao),
     ).toEqual([null, "v1"]);
+  });
+
+  it("lê os cargos dos editais da área para as vagas reabertas; se falhar, segue sem eles", async () => {
+    const cargos = { vagas: [{ monitoramento_id: "e1", cargo: "Enfermeiro" }] };
+    let falhar = false;
+    const rpc = vi.fn(async (nome) => {
+      if (nome === "listar_editais_criticos_manuais")
+        return { data: [], error: null };
+      if (nome === "listar_vagas_por_cargo_da_visao_geral")
+        return falhar
+          ? { data: null, error: { message: "fora do ar" } }
+          : { data: cargos, error: null };
+      return { data: { etapas: [], listas: [], versao: "v1" }, error: null };
+    });
+    const buscar = buscarAcompanhamentoNoSupabase({ rpc });
+    expect(await buscar("area-dos-cargos", ["e1", "e2"])).toMatchObject({
+      vagas_por_cargo: cargos,
+    });
+    expect(rpc).toHaveBeenCalledWith("listar_vagas_por_cargo_da_visao_geral", {
+      p_area: "area-dos-cargos",
+      p_editais: ["e1", "e2"],
+    });
+    falhar = true;
+    expect(await buscar("area-dos-cargos", ["e1"])).not.toHaveProperty(
+      "vagas_por_cargo",
+    );
+    // Sem editais, não pergunta.
+    rpc.mockClear();
+    await buscar("area-sem-editais");
+    expect(rpc.mock.calls.map(([nome]) => nome)).not.toContain(
+      "listar_vagas_por_cargo_da_visao_geral",
+    );
   });
 
   it("repassa o erro da RPC e não aceita números de marcos malformados", async () => {

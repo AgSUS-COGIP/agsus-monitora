@@ -38,6 +38,7 @@ import {
   contratadasImediatas,
   ehCancelado,
   temResultado,
+  vagasEfetivas,
   vagasSemContratacao,
 } from "../indicadores-do-monitoramento.ts";
 
@@ -70,7 +71,8 @@ export function contarPorDsei(
     const atual = contagens.get(chave) || { ...VAZIO };
     atual.editais += 1;
     if (!ehCancelado(linha)) {
-      atual.vagas += numero(linha.vagas_total);
+      // A vaga reaberta em edital mais novo do DSEI conta só no novo.
+      atual.vagas += vagasEfetivas(linha);
       atual.contratadas += contratadasImediatas(linha);
       if (temResultado(linha)) atual.ociosas += vagasSemContratacao(linha);
     }

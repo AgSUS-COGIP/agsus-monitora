@@ -231,6 +231,10 @@ export function Filtros({ e, estado, textos }: PropsComTextos) {
 
 /* ── Indicadores ────────────────────────────────────────────────────── */
 
+/* De onde vem o desconto das vagas imediatas (src/lib/vagas-reabertas.ts). */
+const TITULO_DAS_REABERTAS =
+  "Cada vaga conta uma vez: a vaga sem contratação reaberta em edital mais novo da mesma unidade, para o mesmo cargo, conta só no edital novo.";
+
 export function Indicadores({ e, estado, textos }: PropsComTextos) {
   return (
     <GradeDeKpis
@@ -249,6 +253,12 @@ export function Indicadores({ e, estado, textos }: PropsComTextos) {
             rotulo={textos.rotulos[chave]}
             valor={fmt(e.indicadores[VALOR_DO_INDICADOR[chave]])}
             carregando={!e.carregado}
+            {...(chave === "kpi_vagas_label" && e.indicadores.reabertas > 0
+              ? {
+                  detalhe: `sem ${fmt(e.indicadores.reabertas)} reabertas`,
+                  titulo: TITULO_DAS_REABERTAS,
+                }
+              : {})}
             {...(critico
               ? {
                   titulo: "Filtrar pelos críticos",

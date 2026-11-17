@@ -98,6 +98,20 @@ describe("contagens e bolhas do mapa nacional", () => {
     expect(contagens.get("YANOMAMI").editais).toBe(1);
   });
 
+  it("a vaga reaberta em edital mais novo do DSEI conta uma vez só, como no KPI", () => {
+    // O 78/2025 terminou com 6 vagas sem contratação, reabertas no 79/2026.
+    const contagens = contarPorDsei([
+      { ...edital("DSEI Altamira", 10, 4, "Concluído"), vagas_reabertas: 6 },
+      edital("DSEI Altamira", 50, 0, "Em andamento"),
+    ]);
+    expect(contagens.get("ALTAMIRA")).toEqual({
+      editais: 2,
+      vagas: 54,
+      contratadas: 4,
+      ociosas: 0,
+    });
+  });
+
   it("conta como os KPIs: cancelado sem vagas, em seleção sem ociosas", () => {
     // DSEI Xavante, 10/11/2026: o 88/2026 cancelado (43 vagas) somava 43
     // ociosas na bolha, e as vagas dos editais em seleção também viravam

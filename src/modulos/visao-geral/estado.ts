@@ -83,6 +83,8 @@ export const RPC_ACOMPANHAMENTO =
   "listar_acompanhamento_da_visao_geral_se_mudou";
 /** Os editais marcados à mão como críticos (gestor, coordenador, admin global). */
 export const RPC_CRITICOS_MANUAIS = "listar_editais_criticos_manuais";
+/** Cargos das vagas e quadro de cada edital: as vagas reabertas (src/lib/vagas-reabertas.ts). */
+export const RPC_VAGAS_POR_CARGO = "listar_vagas_por_cargo_da_visao_geral";
 
 const txt = (valor: unknown) => String(valor ?? "").trim();
 
@@ -99,7 +101,7 @@ const acompanhamentosConhecidos = new Map<string, unknown>();
 */
 const entreguesPorArea = new Map<
   string,
-  { pacote: unknown; marcacao: string; entregue: unknown }
+  { pacote: unknown; marcacao: string; cargos: string; entregue: unknown }
 >();
 
 /*
@@ -119,14 +121,26 @@ export function esquecerVisaoGeral(
 export function buscarAcompanhamentoNoSupabase(
   supabase: ClienteDoAcompanhamento,
 ) {
-  return async (area: string) => {
+  return async (area: string, editais: readonly string[] = []) => {
     const conhecido = acompanhamentosConhecidos.get(area) ?? null;
-    const [{ data, error }, criticos] = await Promise.all([
+    const [{ data, error }, criticos, cargos] = await Promise.all([
       supabase.rpc(RPC_ACOMPANHAMENTO, {
         p_area: area,
         p_versao: versaoDoPacote(conhecido),
       }),
       supabase.rpc(RPC_CRITICOS_MANUAIS, { p_area: area }),
+      /*
+        Os cargos de cada edital, para contar uma vez só a vaga reaberta. Se
+        falhar, as vagas ficam como cada edital publicou.
+      */
+      editais.length
+        ? Promise.resolve(
+            supabase.rpc(RPC_VAGAS_POR_CARGO, {
+              p_area: area,
+              p_editais: editais.slice(0, 1000),
+            }),
+          ).catch(() => null)
+        : null,
     ]);
     if (error) throw error;
     let pacote = data;
@@ -141,12 +155,28 @@ export function buscarAcompanhamentoNoSupabase(
       !criticos?.error && Array.isArray(criticos?.data) ? criticos.data : [];
     if (!pacote || typeof pacote !== "object" || Array.isArray(pacote))
       return pacote;
+    const vagasPorCargo =
+      cargos && !cargos.error && cargos.data ? cargos.data : null;
     const marcacao = JSON.stringify(marcados);
+    const assinaturaDosCargos = JSON.stringify(vagasPorCargo);
     const anterior = entreguesPorArea.get(area);
-    if (anterior?.pacote === pacote && anterior.marcacao === marcacao)
+    if (
+      anterior?.pacote === pacote &&
+      anterior.marcacao === marcacao &&
+      anterior.cargos === assinaturaDosCargos
+    )
       return anterior.entregue;
-    const entregue = { ...pacote, criticos_manuais: marcados };
-    entreguesPorArea.set(area, { pacote, marcacao, entregue });
+    const entregue = {
+      ...pacote,
+      criticos_manuais: marcados,
+      ...(vagasPorCargo ? { vagas_por_cargo: vagasPorCargo } : {}),
+    };
+    entreguesPorArea.set(area, {
+      pacote,
+      marcacao,
+      cargos: assinaturaDosCargos,
+      entregue,
+    });
     return entregue;
   };
 }
@@ -377,10 +407,30 @@ export function criarEstadoDaVisaoGeral({
     const buscar = buscarAcompanhamento;
     const este = { linhas, area: areaAtual };
     pedido = este;
+    const editais = linhasEnriquecidas()
+      .daArea.map((linha) => txt(linha.id))
+      .filter(Boolean);
     Promise.resolve()
-      .then(() => buscar(areaAtual))
+      .then(() => buscar(areaAtual, editais))
+      .then(async (resposta) => {
+        const acompanhamento = acompanhamentoDaResposta(resposta);
+        /*
+          As vagas reabertas: o módulo chega sob demanda, só com os cargos na
+          resposta (fora do pacote de entrada). Sem ele, as vagas ficam como
+          cada edital publicou.
+        */
+        const cargos = (resposta as { vagas_por_cargo?: unknown } | null)
+          ?.vagas_por_cargo;
+        if (acompanhamento && cargos)
+          acompanhamento.reaberturas =
+            await import("../../lib/vagas-reabertas.ts").then(
+              (modulo) => modulo.reaberturasDosCargos(cargos),
+              () => undefined,
+            );
+        return acompanhamento;
+      })
       .then(
-        (resposta) => {
+        (acompanhamento) => {
           if (pedido !== este) return;
           pedido = null;
           const atual = dados.obter();
@@ -389,7 +439,7 @@ export function criarEstadoDaVisaoGeral({
             acompanhamento: {
               area: areaAtual,
               linhas,
-              dados: acompanhamentoDaResposta(resposta),
+              dados: acompanhamento,
             },
           });
         },
