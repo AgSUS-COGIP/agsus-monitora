@@ -88,22 +88,29 @@ export function registrosDoDsei(
   if (!dsei?.k) return [];
   const rede = redeCnes?.rede?.[dsei.k] || { u: [], c: [] };
 
+  // Com as CASAIs do SIGEPSI, as do CNES (`c` e as que se chamam CASAI) saem.
+  const casaisDoSigepsi = redeCnes?.casais_do_sigepsi === true;
   const estabelecimentos = [
-    ...(rede.c || []).map((item) => ({ item, forcado: TIPO_CASAI })),
+    ...(casaisDoSigepsi ? [] : rede.c || []).map((item) => ({
+      item,
+      forcado: TIPO_CASAI,
+    })),
     ...(rede.u || []).map((item) => ({ item, forcado: null })),
-  ].map(({ item, forcado }) => {
-    const e = abrirEstabelecimento(item);
-    return {
-      nome: e.n,
-      cnes: e.cnes,
-      chave: e.cnes || `${e.n}|${e.lat}|${e.lon}`,
-      lat: e.lat,
-      lon: e.lon,
-      municipio: e.mun,
-      uf: e.uf,
-      _tipoVisual: forcado || tipoDaUnidade(e.n),
-    };
-  });
+  ]
+    .map(({ item, forcado }) => {
+      const e = abrirEstabelecimento(item);
+      return {
+        nome: e.n,
+        cnes: e.cnes,
+        chave: e.cnes || `${e.n}|${e.lat}|${e.lon}`,
+        lat: e.lat,
+        lon: e.lon,
+        municipio: e.mun,
+        uf: e.uf,
+        _tipoVisual: forcado || tipoDaUnidade(e.n),
+      };
+    })
+    .filter((e) => !casaisDoSigepsi || e._tipoVisual !== TIPO_CASAI);
 
   // O CNES não pode se repetir a si próprio antes de reconciliar com os polos.
   const { estabelecimentos: unicos } =

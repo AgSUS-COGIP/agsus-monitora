@@ -5549,7 +5549,7 @@ export const VERBETES_AYA = Object.freeze([
       "clicar na casai nacional",
     ],
     resposta:
-      'No Yeendé, o losango roxo marca as CASAIs de referência nacional (Brasília e São Paulo), desenhadas a partir do cadastro do CNES. Clicar nele filtra a página pela busca "CASAI" mais o nome da cidade. Com filtro ativo, a CASAI só aparece se tiver edital no resultado.',
+      'No Yeendé, o losango roxo marca as CASAIs de referência nacional (Brasília e São Paulo), desenhadas a partir do SIGEPSI. Clicar nele filtra a página pela busca "CASAI" mais o nome da cidade. Com filtro ativo, a CASAI só aparece se tiver edital no resultado.',
     fato: "",
     fonte: "interface do Yeendé",
   },
@@ -5610,7 +5610,7 @@ export const VERBETES_AYA = Object.freeze([
       "ponto do polo esta certo",
     ],
     resposta:
-      'No Yeendé, o popup de cada ponto do mapa do DSEI traz só o que a unidade é: tipo, nome, município e UF e o código CNES (quando há). Não há mais frases como "Localização em validação", "Fontes discordam" ou "validada": elas vinham de uma validação de 22/09/2026 anterior à auditoria oficial e foram retiradas em 02/10/2026. A lista de DSEIs e a sede, os polos base, as CASAIs e as unidades de lotação de cada um vêm do SIGEPSI, a fonte verdadeira (do banco, só a população e as UFs de cada DSEI), lidos a cada abertura do mapa (se o SIGEPSI não responder, valem os do banco); os estabelecimentos do CNES vêm do rede_cnes, no banco, auditada em 01 e 02/10/2026 contra fontes oficiais (CNES, IBGE, Funai, PDSI e OpenStreetMap); os pontos que a auditoria não confirmou (92 polos e 156 UBSI/postos) ficam numa fila de conferência que só o administrador global e o Gestor veem, no editor de coordenadas; o popup não mostra essa situação. Se um ponto parecer errado, a correção é feita pelo editor, que grava no banco; a sede e os pontos que vêm do SIGEPSI não aparecem no editor e são corrigidos no próprio SIGEPSI.',
+      'No Yeendé, o popup de cada ponto do mapa do DSEI traz só o que a unidade é: tipo, nome, município e UF e o código CNES (quando há). Não há mais frases como "Localização em validação", "Fontes discordam" ou "validada": elas vinham de uma validação de 22/09/2026 anterior à auditoria oficial e foram retiradas em 02/10/2026. A lista de DSEIs, a sede, os polos base, as CASAIs (todas, inclusive as nacionais) e as unidades de lotação de cada um vêm do SIGEPSI, a fonte verdadeira (do banco, só a população e as UFs de cada DSEI), lidos a cada abertura do mapa (se o SIGEPSI não responder, valem os do banco); os estabelecimentos do CNES vêm do rede_cnes, no banco, auditada em 01 e 02/10/2026 contra fontes oficiais (CNES, IBGE, Funai, PDSI e OpenStreetMap); os pontos que a auditoria não confirmou (92 polos e 156 UBSI/postos) ficam numa fila de conferência que só o administrador global e o Gestor veem, no editor de coordenadas; o popup não mostra essa situação. Se um ponto parecer errado, a correção é feita pelo editor, que grava no banco; a sede e os pontos que vêm do SIGEPSI não aparecem no editor e são corrigidos no próprio SIGEPSI.',
     fato: "",
     fonte:
       "docs/coordenadas/auditoria-oficial-das-coordenadas-2026-10-01.md; src/lib/mapa-saude-indigena/mapa-do-dsei.ts",

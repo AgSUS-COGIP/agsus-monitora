@@ -24,7 +24,10 @@ import { criarCarregadorDeMunicipios } from "../mapa-de-projetos/carregador.ts";
 // Os mapas (e o Leaflet) baixam quando montam: ./mapas-sob-demanda.tsx.
 import { MapaDeProjetos, MapaSaudeIndigena } from "./mapas-sob-demanda.tsx";
 import { usarLocalizacoesDoSigepsi } from "../mapa-saude-indigena/localizacoes.ts";
-import { aplicarLocalizacoes } from "../../lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts";
+import {
+  aplicarCasaisDoSigepsi,
+  aplicarLocalizacoes,
+} from "../../lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts";
 import { BoasVindas, MarcosDoAno } from "./boas-vindas.tsx";
 import {
   buscarAcompanhamentoNoSupabase,
@@ -84,19 +87,23 @@ function MapaDaSaudeIndigena({
   perfil,
   supabase,
 }: PropsDoPainel & { perfil: Perfil | null; supabase: SupabaseClient | null }) {
-  const { lmap: lmapDoBanco, redeCnes } = e.mapa || {};
+  const { lmap: lmapDoBanco, redeCnes: redeDoBanco } = e.mapa || {};
   /*
-    A lista de DSEIs, as sedes e os pontos são os do SIGEPSI; do `lmap` do
-    banco vêm população e UFs. Enquanto o SIGEPSI não responde, o mapa espera
-    (não mostra a lista do banco para trocá-la em seguida); sem SIGEPSI, fica
-    a do banco.
+    A lista de DSEIs, as sedes, os pontos e as CASAIs são os do SIGEPSI; do
+    `lmap` do banco vêm população e UFs, e do `rede_cnes` as unidades do CNES
+    que não são CASAI. Enquanto o SIGEPSI não responde, o mapa espera (não
+    mostra o banco para trocá-lo em seguida); sem SIGEPSI, fica o banco.
   */
   const localizacoes = usarLocalizacoesDoSigepsi(supabase);
   const esperando = localizacoes.estado === "carregando";
+  const dados = localizacoes.dados;
   const lmap = useMemo(
-    () =>
-      esperando ? null : aplicarLocalizacoes(lmapDoBanco, localizacoes.dseis),
-    [esperando, lmapDoBanco, localizacoes.dseis],
+    () => (esperando ? null : aplicarLocalizacoes(lmapDoBanco, dados?.dseis)),
+    [esperando, lmapDoBanco, dados],
+  );
+  const redeCnes = useMemo(
+    () => aplicarCasaisDoSigepsi(redeDoBanco, dados?.casaisNacionais),
+    [redeDoBanco, dados],
   );
   return (
     <div
