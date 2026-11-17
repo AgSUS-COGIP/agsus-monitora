@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-10
+atualizado: 2026-11-17
 ---
 
 # Módulo: Busca global (Ctrl+K)
@@ -12,7 +12,9 @@ Busca nos editais do monitoramento, filha da raiz React. Pasta `src/componentes/
 
 ## Como funciona
 
-- Ctrl+K ou Cmd+K abre a busca com sessão conectada. Pesquisa os nove campos do monitoramento, em
+- Ctrl+K ou Cmd+K abre a busca com sessão conectada; a lupa do topo (`src/app/casca/topo.tsx`)
+  abre pelo evento `agsus:abrir-busca-global` (`EVENTO_ABRIR_BUSCA`), o único caminho no celular
+  e no tablet, que não têm Ctrl+K. Pesquisa os nove campos do monitoramento, em
   todas as áreas, sem diferenciar maiúsculas e acentos; mantém a ordem da fonte e para em 12.
 - O campo começa vazio; setas e Enter escolhem, Esc e o fundo fecham; o modal mantém e devolve o foco.
 - A escolha publica `agsus:busca-global-escolhida` com `detail.id`. A navegação em `src/app/` cuida
