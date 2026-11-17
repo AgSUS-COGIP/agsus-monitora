@@ -13,7 +13,7 @@ import { describe, expect, it } from "vitest";
 */
 
 const RAIZ = path.resolve(import.meta.dirname, "..");
-const NOME = "20261117160000_validade_dos_editais_pelo_texto_do_edital";
+const NOME = "20261117190000_validade_dos_editais_pelo_texto_do_edital";
 const ler = (relativo: string) =>
   fs.readFileSync(path.join(RAIZ, relativo), "utf8").replace(/\r\n/g, "\n");
 
