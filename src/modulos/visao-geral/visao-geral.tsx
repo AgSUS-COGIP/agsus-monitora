@@ -2,7 +2,6 @@ import type {
   Configuracoes,
   LinhaDaVisaoGeral,
   OpcoesDaTela,
-  Perfil,
   PropsDaTela,
   PropsDoPainel,
 } from "./tipos.ts";
@@ -10,7 +9,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { getSupabaseClient } from "../../lib/supabaseClient";
-import { apagarCopiaDaSessao } from "../../modules/copia-da-sessao-indexeddb.ts";
 import {
   temProcessosPorProjeto,
   textosDaVisaoGeral,
@@ -79,30 +77,20 @@ import { podeBaixarAprovados } from "../../lib/access-roles.ts";
 function MapaDaSaudeIndigena({
   e,
   estado,
-  perfil,
   supabase,
-}: PropsDoPainel & { perfil: Perfil | null; supabase: SupabaseClient | null }) {
-  // O `lmap` e o `rede_cnes` do banco; o SIGEPSI entra por cima dentro do
-  // mapa, que baixa sob demanda (mapa-saude-indigena/mapa-com-sigepsi.tsx).
-  const { lmap, redeCnes } = e.mapa || {};
+}: PropsDoPainel & { supabase: SupabaseClient | null }) {
+  // Só o `lmap` do banco (nome, população e UFs de cada DSEI); o SIGEPSI, o
+  // resto e o erro sem ele ficam dentro do mapa, que baixa sob demanda
+  // (mapa-saude-indigena/mapa-com-sigepsi.tsx).
+  const lmap = e.mapa?.lmap;
   return (
     <div
       className="visao-geral-mapa"
       data-tour="visao-geral-mapa-saude-indigena"
     >
       <MapaSaudeIndigena
-        perfil={perfil}
         supabase={supabase}
-        aoAtualizarMapa={(configuracao) => {
-          if (!configuracao?.lmap || !configuracao?.rede_cnes) return;
-          estado.definirDadosDoMapa({
-            lmap: configuracao.lmap,
-            redeCnes: configuracao.rede_cnes,
-          });
-          void apagarCopiaDaSessao();
-        }}
         lmap={lmap}
-        redeCnes={redeCnes}
         linhas={e.filtradas}
         filtroAtivo={e.temRecorte}
         dseiSelecionado={e.dsei.chave || null}
@@ -158,12 +146,7 @@ export function TelaDaVisaoGeral({
       <Filtros e={e} estado={estado} textos={textos} />
       <Indicadores e={e} estado={estado} textos={textos} />
       {mapa === MAPA_DOS_DSEIS ? (
-        <MapaDaSaudeIndigena
-          e={e}
-          estado={estado}
-          perfil={obterPerfil?.()}
-          supabase={supabase}
-        />
+        <MapaDaSaudeIndigena e={e} estado={estado} supabase={supabase} />
       ) : null}
       {mapa === MAPA_DOS_MUNICIPIOS ? (
         <div className="visao-geral-mapa" data-tour="visao-geral-mapa-projetos">

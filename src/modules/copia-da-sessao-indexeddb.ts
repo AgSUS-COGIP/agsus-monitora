@@ -1,7 +1,7 @@
 /*
   Onde a cópia da sessão mora: um registro só, no IndexedDB do navegador.
 
-  IndexedDB e não `localStorage`: o mapa (`lmap`, `rede_cnes`) passa com folga
+  IndexedDB e não `localStorage`: o mapa (`lmap`) passa com folga
   do limite de alguns megabytes do `localStorage`. As regras de quando a cópia
   serve estão em `src/lib/copia-da-sessao.ts`.
 

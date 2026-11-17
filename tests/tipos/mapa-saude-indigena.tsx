@@ -9,7 +9,7 @@ const dados: unknown = {};
 const distritos: DseiDoMapa[] = configuracaoDoMapa(dados).dsei;
 const props: PropsDoMapaSaudeIndigena = {
   lmap: dados,
-  redeCnes: dados,
+  casaisNacionais: dados,
   aoEscolherDsei(dsei) {
     const chave: string = dsei.k;
     void chave;

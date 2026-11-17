@@ -17,7 +17,7 @@ import type {
   BolhaDoDsei,
   ContagemDoDsei,
   DseiDoMapa,
-  EstabelecimentoCompacto,
+  CasaiNacionalCompacta,
   TerritorioDoMapa,
   CasaiNacionalDoMapa,
   EnquadramentoDoMapa,
@@ -171,8 +171,8 @@ export function territoriosPorVagas(
 }
 
 /*
-  CASAIs nacionais (Brasília, São Paulo…): direto do `rede_cnes.nac`, a fonte
-  de verdade, não da lista fixa do `lmap`. O clique filtra a página pela busca
+  CASAIs nacionais (Brasília, São Paulo): as localizações 131 e 132 do
+  SIGEPSI (`casaisNacionaisDoSigepsi`). O clique filtra a página pela busca
   "CASAI <cidade>", como antes.
 */
 
@@ -181,13 +181,11 @@ export function casaisNacionais({
   contagens = new Map(),
   filtroAtivo = false,
 }: {
-  nac?: readonly EstabelecimentoCompacto[];
+  nac?: readonly CasaiNacionalCompacta[];
   contagens?: ReadonlyMap<string, ContagemDoDsei>;
   filtroAtivo?: boolean;
 } = {}): CasaiNacionalDoMapa[] {
-  const lista: readonly EstabelecimentoCompacto[] = Array.isArray(nac)
-    ? nac
-    : [];
+  const lista: readonly CasaiNacionalCompacta[] = Array.isArray(nac) ? nac : [];
   return lista
     .filter((a) => Array.isArray(a) && temCoordenada(a[2], a[3]))
     .map((a) => {

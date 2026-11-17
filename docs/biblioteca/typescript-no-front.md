@@ -1,7 +1,7 @@
 ---
 tipo: referencia
 area: front
-atualizado: 2026-11-10
+atualizado: 2026-11-17
 ---
 
 # TypeScript no front
@@ -18,11 +18,11 @@ servidor também é TypeScript ([[servidor-web]]).
   Módulos e abas, barra lateral, Busca global, dados compartilhados do monitoramento e os
   componentes de `src/ui/`.
 - O Mapa de Projetos, incluindo carga, lista, balões e integração do editor; o editor compartilhado
-  pelos dois mapas (fila, sugestões, histórico, modo de edição e regras comuns); a base
+  por Projetos (fila, sugestões, histórico, modo de edição e regras comuns); a base
   compartilhada dos mapas (painel, legenda, tela cheia, retorno ao Brasil e hooks).
 - As telas principal, nacional e por DSEI da Saúde Indígena, em TSX, com dados de entrada
-  validados; as regras nacionais e distritais, com contratos JSDoc na fronteira da reconciliação
-  compartilhada; a integração comum com o Leaflet, com contratos em `tipos-do-leaflet.ts`.
+  validados; as regras nacionais e distritais, com os dados do SIGEPSI em `localizacoes-do-sigepsi.ts`;
+  a integração comum com o Leaflet, com contratos em `tipos-do-leaflet.ts`.
 - O Painel de entrevistas (entrada, estado, normalização e apresentação), com contratos em
   `tipos-do-painel.ts`.
 - A Avaliação documental (módulo e lib), com contratos em `tipos-do-estado.ts` e

@@ -31,7 +31,7 @@ não voltam ao cache. O cliente só declara as duas RPCs de leitura consumidas p
 continuam como `unknown`, e notas e vínculos ausentes são anuláveis. Os casos compilados
 estão em `tests/tipos/painel-de-entrevistas.tsx`. O Mapa de Projetos está em TypeScript, incluindo carregador,
 cache, mapa, lista, balões, integração do editor e regras em `src/lib/visao-geral-da-area.ts`.
-O editor compartilhado pelos dois mapas também está em TypeScript: fila, sugestões, histórico,
+O editor compartilhado (hoje só o mapa de Projetos o usa) também está em TypeScript: fila, sugestões, histórico,
 prévia, gravação, modo de edição e regras em `src/lib/editor-de-coordenadas.ts`. As telas principal, nacional e por DSEI da Saúde Indígena também estão em TSX.
 As regras nacionais e distritais de contagens, bolhas, CASAIs, unidades, vínculos,
 resumos e enquadramento estão em `src/lib/mapa-saude-indigena/chaves.ts`, `mapa-nacional.ts`
@@ -115,8 +115,7 @@ edital, etapas e datas do cronograma, responsável, edital de treinamento, anexo
 recurso, rascunho, documento da resposta, cabeçalho dos documentos, área, cache, lista e textos do
 Painel das análises, data de análise, atalhos de filtro, críticos da Visão geral, fases do processo,
 indicadores do monitoramento, modalidades de concorrência, situação dos módulos, texto da
-conferência, planilhas, entrevistas e seleção da planilha, robôs de carga, reconciliação de
-unidades e `uf-ibge.ts`. Os scripts de sincronização e de coordenadas em `scripts/` importam
+conferência, planilhas, entrevistas e seleção da planilha, robôs de carga e `uf-ibge.ts`. Os scripts de sincronização e de coordenadas em `scripts/` importam
 algumas dessas regras direto no Node 24 (remoção de tipos), por isso elas usam só sintaxe
 apagável e imports relativos com extensão.
 
@@ -212,11 +211,9 @@ em tempo de execução quando necessária: uma anotação TypeScript não valida
 
 Manter o servidor com seu `tsconfig.json`; configurações de DOM e JSX pertencem ao frontend.
 
-As regras de coordenadas dos dois mapas e o adaptador do editor da Saúde Indígena
-também estão migrados. Os contratos dos alvos indígenas estão em
-`src/lib/tipos-das-coordenadas-do-mapa.ts`; o catálogo editável valida entradas
-externas sem alterar os índices conferidos pelo banco. As telas recebem a entrada geográfica validada por `dados-do-mapa.ts`; a edição conserva
-os dados originais para preservar os alvos usados pelo banco.
+As regras de coordenadas do mapa de Projetos também estão migradas. O adaptador do editor da
+Saúde Indígena e seus tipos saíram em 17/11/2026 (os pontos vêm do SIGEPSI). As telas recebem a
+entrada geográfica validada por `dados-do-mapa.ts` e `localizacoes-do-sigepsi.ts`.
 
 O painel de Recursos também está migrado: filtros, indicadores, gráficos, recorte e fila,
 com regras de prazos, enriquecimento, busca e CSV em TypeScript. Os contratos incluem etapas,
@@ -391,10 +388,9 @@ módulo; o detalhe de cada um está nas seções acima e na nota do módulo em `
   compactos e anexos PDF. Todos os componentes e estados da pasta tipados; confirmações
   incompletas de convocação não mudam os status locais.
 - **Mapas**: Mapa de Projetos (carga, cache, lista, filtros, balões), editor de coordenadas
-  compartilhado (fila, sugestões, histórico, modo de edição, adaptador da Saúde Indígena), telas
+  compartilhado (fila, sugestões, histórico, modo de edição; só Projetos o usa), telas
   principal, nacional e por DSEI da Saúde Indígena em TSX, regras nacionais e distritais, integração
-  com o Leaflet e a base comum dos mapas (painel, legenda, tela cheia, retorno ao Brasil, hooks). A
-  reconciliação compartilhada mantém contratos JSDoc.
+  com o Leaflet e a base comum dos mapas (painel, legenda, tela cheia, retorno ao Brasil, hooks).
 - **Entrevistas**: ficha de notas de Conduzir entrevistas (estado, permissões, matriz, atalhos,
   prévia, salvamento), editor de roteiros e composição da banca em TSX, estado da condução com
   contratos das RPCs, regras de roteiro e condução, convocação e Painel de entrevistas (entrada,

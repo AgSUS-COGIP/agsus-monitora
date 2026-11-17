@@ -86,8 +86,8 @@ import type { InicioDaSessao, PartesDoInicio } from "./inicio-da-sessao.ts";
 */
 
 /*
-  O mapa da Saúde Indígena (`lmap` e `rede_cnes` de TB_CONFIG_MAPA_SAUDE_INDIG,
-  ~150 kB) vem por RPC com versão (migration 20261015000100): a entrada manda
+  O mapa da Saúde Indígena (`lmap` de TB_CONFIG_MAPA_SAUDE_INDIG: nome,
+  população e UFs de cada DSEI; os pontos vêm do SIGEPSI) vem por RPC com versão (migration 20261015000100): a entrada manda
   a versão que já tem (da memória ou da cópia da sessão) e, sem mudança, o
   banco responde só `{ inalterado: true }`.
 */
@@ -362,7 +362,7 @@ export function criarCarga(
     conhecidas: ConhecidasDaCarga = linhasConhecidas(),
   ) => consultaComVersao(RPC_DO_MONITORAMENTO, conhecidas);
 
-  /* `lmap` e `rede_cnes` (~150 kB): `[{ chave, payload }]`, como a tabela. */
+  /* `lmap`: `[{ chave, payload }]`, como a tabela. */
   const consultaDoMapa = (conhecido: ConhecidasDaCarga = mapaAtual) =>
     consultaComVersao(RPC_DO_MAPA, conhecido);
 
@@ -468,12 +468,8 @@ export function criarCarga(
         porChave.lmap && Array.isArray(porChave.lmap.dsei)
           ? porChave.lmap
           : anteriores.lmap,
-      redeCnes:
-        porChave.rede_cnes && porChave.rede_cnes.rede
-          ? porChave.rede_cnes
-          : anteriores.redeCnes,
     });
-    const completo = !!(porChave.lmap && porChave.rede_cnes);
+    const completo = !!porChave.lmap;
     if (!completo && pode("config"))
       avisar("Configuração do mapa incompleta no Supabase.", "warn");
     return completo;

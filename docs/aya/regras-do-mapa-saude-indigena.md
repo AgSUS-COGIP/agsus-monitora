@@ -58,20 +58,20 @@ modo Calor saiu em 02/10/2026.
 ## Vínculo fora da área do DSEI
 
 **perguntas:** vinculo fora da area | linha pontilhada no mapa | mostrar vinculos externos | unidade fora da area do dsei
-**resposta:** No Yeendé, a UF de cada unidade vem do CNES; quando ela não está entre as UFs de abrangência do DSEI, a unidade fica no lugar verdadeiro com um anel tracejado e uma linha pontilhada até a sede. A linha é vínculo administrativo, não trajeto. O mapa abre enquadrando só o território; "Mostrar vínculos externos" amplia para incluir essas unidades. Unidade sem UF no CNES não é tratada como externa.
+**resposta:** No Yeendé, a UF de cada unidade vem do SIGEPSI (pelo CEP do ponto); quando ela não está entre as UFs de abrangência do DSEI, a unidade fica no lugar verdadeiro com um anel tracejado e uma linha pontilhada até a sede. A linha é vínculo administrativo, não trajeto. O mapa abre enquadrando só o território; "Mostrar vínculos externos" amplia para incluir essas unidades. Unidade sem UF no SIGEPSI não é tratada como externa.
 **fonte:** interface do Yeendé
 
 ## Polos base e pontos no mapa
 
 **perguntas:** polos base e pontos no mapa | por que o numero de polos diverge | no mapa pontos | contagem da dica do dsei
-**resposta:** No Yeendé, a dica do DSEI responde a duas perguntas: "Polos base" é quantos polos base o distrito tem no SIGEPSI (ou, se o SIGEPSI não responder, no cadastro do mapa no banco, o lmap); "No mapa" é quantos pontos o mapa desenha (polos, unidades e CASAIs). Os números podem divergir porque o mapa também desenha CASAIs, unidades de lotação e estabelecimentos do CNES. Quando o mesmo ponto está no SIGEPSI e no CNES, vale o SIGEPSI: o mapa desenha um ponto só, com o nome, a posição, o município e a UF do SIGEPSI.
+**resposta:** No Yeendé, a dica do DSEI responde a duas perguntas: "Polos base" é quantos polos base o distrito tem no SIGEPSI; "No mapa" é quantos pontos o mapa desenha (polos, ROTA, unidades e CASAIs, todos do SIGEPSI). Os números podem divergir porque o mapa também desenha as CASAIs e as unidades de lotação, e a ROTA conta como polo.
 **fonte:** interface do Yeendé
 
 ## O que o popup de uma unidade mostra
 
 **perguntas:** popup da unidade | o que o popup mostra | localizacao validada | fontes discordam | localizacao em validacao | coordenada confirmada | ponto do polo esta certo
-**resposta:** No Yeendé, o popup de cada ponto do mapa do DSEI traz só o que a unidade é: tipo, nome, município e UF e o código CNES (quando há). Não há mais frases como "Localização em validação", "Fontes discordam" ou "validada": elas vinham de uma validação de 22/09/2026 anterior à auditoria oficial e foram retiradas em 02/10/2026. A lista de DSEIs, a sede, os polos base, as CASAIs (todas, inclusive as nacionais) e as unidades de lotação de cada um vêm do SIGEPSI, a fonte verdadeira (do banco, só a população e as UFs de cada DSEI), lidos a cada abertura do mapa (se o SIGEPSI não responder, valem os do banco); os estabelecimentos do CNES vêm do rede_cnes, no banco, auditada em 01 e 02/10/2026 contra fontes oficiais (CNES, IBGE, Funai, PDSI e OpenStreetMap); os pontos que a auditoria não confirmou (92 polos e 156 UBSI/postos) ficam numa fila de conferência que só o administrador global e o Gestor veem, no editor de coordenadas; o popup não mostra essa situação. Se um ponto parecer errado, a correção é feita pelo editor, que grava no banco; a sede e os pontos que vêm do SIGEPSI não aparecem no editor e são corrigidos no próprio SIGEPSI.
-**fonte:** docs/coordenadas/auditoria-oficial-das-coordenadas-2026-10-01.md; src/lib/mapa-saude-indigena/mapa-do-dsei.ts
+**resposta:** No Yeendé, o popup de cada ponto do mapa do DSEI traz só o que a unidade é: tipo, nome, município e UF e o código CNES (quando há). Não há frases como "Localização em validação", "Fontes discordam" ou "validada". A lista de DSEIs, a sede, os polos base, as CASAIs (todas, inclusive as nacionais) e as unidades de lotação de cada um vêm do SIGEPSI, a fonte verdadeira dos pontos, lidos a cada abertura do mapa; do banco do Yeendé vêm só o nome bem grafado, a população (o tamanho da bolha) e as UFs administrativas de cada DSEI. Se um ponto parecer errado, a correção é feita no próprio SIGEPSI: o mapa não tem editor de coordenadas.
+**fonte:** src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts; src/lib/mapa-saude-indigena/mapa-do-dsei.ts
 
 ## Terras Indígenas no mapa
 
@@ -93,30 +93,12 @@ modo Calor saiu em 02/10/2026.
 
 ## Corrigir coordenadas de um ponto
 
-**perguntas:** corrigir coordenadas | editar latitude e longitude | arrastar o pin | mover ponto no mapa | alterar localizacao da unidade | como usar o editor de coordenadas
-**resposta:** O administrador global e o Gestor podem usar "Coordenadas" no mapa da Saúde Indígena, no Brasil ou dentro de um DSEI. O mapa entra no modo de edição (veja "Modo de edição das coordenadas"): busque pelo nome, CNES, município ou DSEI e clique no ponto — o mapa enquadra o ponto e a sugestão mais provável na parte que o editor não cobre e aparece um pin de prévia. Para ajustar a posição, digite latitude e longitude ou arraste o pin de prévia; a posição atual só muda depois de confirmar. Confira a posição atual e a prévia, informe o motivo e a fonte da correção, clique em "Salvar coordenada" e depois em "Confirmar correção". "Desfazer prévia" volta à posição atual sem salvar. Se outra pessoa já mudou o ponto, atualize o mapa antes de tentar novamente. Essa opção não aparece para os demais perfis.
-**fonte:** src/modulos/mapa-saude-indigena/editor-de-coordenadas.tsx; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql
+**perguntas:** corrigir coordenadas | editar latitude e longitude | arrastar o pin | mover ponto no mapa | alterar localizacao da unidade | como usar o editor de coordenadas | botao coordenadas | pontos pendentes | marcar como conferido
+**resposta:** No mapa da Saúde Indígena os pontos (sede, polos base, CASAIs e unidades) vêm do SIGEPSI, e o mapa não tem editor de coordenadas nem botão "Coordenadas", fila de pendências ou "Conferido". Para corrigir um ponto, peça a correção no próprio SIGEPSI; o mapa passa a mostrar a posição nova na abertura seguinte. O editor de coordenadas existe só no mapa de Projetos (veja as regras do mapa de Projetos).
+**fonte:** src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts; src/modulos/mapa-saude-indigena/localizacoes.ts
 
-## Modo de edição das coordenadas
+## Quando o SIGEPSI não responde
 
-**perguntas:** modo de edicao das coordenadas | mapa pequeno no editor | recolher editor | abrir editor | sair do editor de coordenadas | editor de coordenadas no celular | painel do editor cobre o mapa
-**resposta:** No Yeendé, "Coordenadas" (nos mapas da Saúde Indígena e de Projetos) leva o mapa para a tela inteira, como a tela cheia: o mapa ocupa quase tudo e o editor fica num painel à direita, com rolagem própria; no celular, o mapa fica em cima e o editor numa folha embaixo. "Recolher editor" deixa só uma faixa estreita para ver e arrastar o pin com o mapa inteiro — o ponto escolhido, a prévia e o motivo continuam lá — e "Abrir editor" volta. Ao escolher um ponto, o mapa enquadra o ponto e a sugestão na parte visível, sem escondê-los atrás do painel. No painel, a busca e "Só pendentes" ficam numa linha, a contagem e os níveis de gravidade na seguinte, e a lista ocupa o resto; com um ponto escolhido, Sugestões, Correção e Histórico são seções que abrem e fecham pelo título (o Histórico começa fechado, com a contagem). Para sair, use "Voltar à lista", o botão "Coordenadas" ou Esc (num campo, o Esc fica com o campo); o mapa volta ao tamanho de sempre da Visão geral. Se o mapa estava em tela cheia, ele continua em tela cheia depois de sair do editor.
-**fonte:** src/modulos/editor-de-coordenadas/modo-de-edicao.tsx; src/modulos/editor-de-coordenadas/editor-de-coordenadas.tsx
-
-## Pontos pendentes de conferência
-
-**perguntas:** pontos pendentes | filtro so pendentes | provavel erro | gravidade das pendencias | so confirmar | fila de coordenadas | conferir coordenada | marcar como conferido | botao conferido | 248 pendencias | 249 pendencias | 93 polos e 156 ubsi | ponto em validacao
-**resposta:** A auditoria das coordenadas de 01 e 02/10/2026 não conseguiu confirmar 248 pontos com duas fontes independentes: 92 polos base e 156 UBSI/postos (a auditoria conta 93 + 156 = 249 porque o posto Aldeia Linha 10, de Porto Velho, entrou nas duas rodadas). No editor de coordenadas, "Só pendentes" vem ligado e mostra só esses pontos, ordenados por DSEI, com a contagem ("N pendentes"). Para cada um, confira a posição com o DSEI ou com as fontes sugeridas e clique em "Conferido" — a posição pode continuar a mesma (às vezes já está certa) ou ser ajustada antes. É preciso informar o motivo e confirmar. Depois de conferido, o ponto sai de "Só pendentes"; desligando o filtro, ele aparece com o selo "Conferido". O mapa público não mostra "em validação": a situação só aparece no editor. A fila separa as pendências por gravidade, com a contagem de cada uma e o provável erro primeiro: Provável erro (o ponto está na sede do município, num ponto coletor, na posição do nome do município ou numa aldeia de mesmo nome fora do DSEI, ou a aldeia sugerida mais perto está a mais de 10 km), Revisar (aldeia sugerida entre 2 e 10 km, ou só o CNES), Sem sugestão (nenhuma posição candidata: buscar a aldeia à mão) e Só confirmar (há aldeia sugerida a até 2 km: a posição bate e falta só o Conferido). O CNES não serve de régua porque quase sempre é a própria posição atual. Ao escolher um ponto, as sugestões aparecem no mapa (aldeias em laranja, CNES em azul) e a mais provável fica ligada à posição atual por uma linha tracejada; clicar numa sugestão do mapa ou em Usar esta preenche a prévia.
-**fonte:** src/lib/coordenadas-do-mapa.ts; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql; supabase/correcoes/20261002-pendencias-das-coordenadas-do-mapa.sql
-
-## Sugestões de posição de um ponto pendente
-
-**perguntas:** sugestoes de posicao | usar esta | candidatos da coordenada | posicao do cnes | aldeia do ibge | aldeia da funai | distancia da posicao atual
-**resposta:** Ao escolher um ponto pendente, o editor mostra por que a auditoria não o confirmou e as posições candidatas: primeiro a do cadastro CNES (DATASUS), depois aldeias e lugares com o mesmo nome (IBGE, Funai, OpenStreetMap, PDSI) e, quando conhecida, a sede do município, cada uma com a distância até a posição atual. "Usar esta" só leva a posição para a prévia (o pin se move); nada é gravado até "Salvar coordenada" ou "Conferido" serem confirmados. Candidato não é prova: confira com o DSEI quando as fontes divergirem.
-**fonte:** src/lib/coordenadas-do-mapa.ts; src/modulos/editor-de-coordenadas/sugestoes-do-ponto.tsx
-
-## Histórico e desfazer de uma correção
-
-**perguntas:** historico da coordenada | quem mudou o ponto | desfazer correcao | desfazer conferencia | voltar posicao anterior
-**resposta:** Na seção Histórico, abaixo da Correção (fechada de início; clique no título para abrir), o editor mostra as últimas alterações do ponto: o tipo (Correção, Conferido ou Desfeito), quem fez, quando, a posição de antes e a de depois e o motivo. "Desfazer última alteração" volta a mais recente — a posição e, se for o caso, a conferência —, pede um motivo e grava isso como uma alteração nova: o histórico nunca é apagado. Só a última alteração de cada ponto pode ser desfeita, uma vez só; um desfazer não se desfaz (corrija a posição de novo).
-**fonte:** src/modulos/editor-de-coordenadas/historico-do-ponto.tsx; supabase/migrations/20261002160000_conferir_coordenadas_mapa.sql
+**perguntas:** nao foi possivel carregar o mapa da saude indigena | o sigepsi nao respondeu | tentar novamente no mapa | mapa em branco | erro no mapa dos dseis | mapa carregando
+**resposta:** No Yeendé, o mapa da Saúde Indígena depende do SIGEPSI para a lista de DSEIs e para todos os pontos e não tem plano B. Enquanto o SIGEPSI não responde, o mapa fica em "carregando". Se ele falhar, a Visão geral mostra "Não foi possível carregar o mapa da Saúde Indígena: o SIGEPSI não respondeu", com o botão "Tentar novamente"; o mesmo vale no servidor local, que não tem a rota do SIGEPSI. DSEI que só existe no cadastro do banco, sem aparecer no SIGEPSI, não é desenhado.
+**fonte:** src/modulos/visao-geral/visao-geral.tsx; src/modulos/mapa-saude-indigena/localizacoes.ts

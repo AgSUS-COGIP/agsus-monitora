@@ -1,7 +1,7 @@
 ---
 tipo: guia
 area: front
-atualizado: 2026-11-10
+atualizado: 2026-11-17
 ---
 
 # Mapas e Leaflet
@@ -32,7 +32,7 @@ marcadores, lista de unidades) é explicado pela Aya, em `docs/aya/regras-dos-ma
 - `src/lib/filtros-do-mapa.ts` — a regra dos filtros da página do mapa: comparação sem acento,
   opções sem duplicata, poda até estabilizar. A Visão geral guarda o estado e delega para cá;
   avisa pelo evento `agsus:filtros-alterados`.
-- Editor de coordenadas comum aos dois mapas: [[modulo-editor-de-coordenadas]].
+- Editor de coordenadas (só o mapa de Projetos): [[modulo-editor-de-coordenadas]].
 
 ## Regras de comportamento
 
@@ -50,7 +50,7 @@ marcadores, lista de unidades) é explicado pela Aya, em `docs/aya/regras-dos-ma
   rede ou acesso aos fornecedores, não dados.
 - Em aberto: se os termos do ArcGIS World Imagery permitem o uso como base, se vale ter chave da
   CARTO e se o OpenStreetMap continua primário (a política dele desaconselha tráfego de aplicação).
-- **As coordenadas vêm só do banco** ([[coordenadas]]).
+- **Os pontos da Saúde Indígena vêm só do SIGEPSI; os de Projetos, do banco** ([[coordenadas]]).
 - Cores de série dos projetos: `--series-*` ([[design-e-tokens]]).
 
 ## Relacionadas

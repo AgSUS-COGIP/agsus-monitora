@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-10
+atualizado: 2026-11-17
 ---
 
 # Módulo: Mapa da Saúde Indígena
@@ -16,20 +16,13 @@ Sub-notas: [[mapa-saude-indigena-modo-dseis]] (terceiro fundo, "Mapa DSEIs"),
 [[mapa-saude-indigena-legado]] (o que saiu e o que mudou) e
 [[mapa-saude-indigena-contratos]] (TypeScript e fronteiras dos dados).
 
-## Controles, tela cheia e edição
+## Controles e tela cheia
 
 - Os controles ficam no cabeçalho, acima do mapa e da lista lateral. Em tela cheia, o painel cobre
   o shell, mantém "Sair da tela cheia" visível e bloqueia a rolagem até sair (botão ou Esc).
-- O editor de coordenadas (admin global e Gestor) abre o **modo de edição**
-  (`src/modulos/editor-de-coordenadas/modo-de-edicao.tsx`): o painel cobre a página, o mapa ocupa o
-  corpo e o editor flutua à direita (no celular, numa folha embaixo, com o mapa em ≥ 55% da
-  altura), recolhível; o enquadramento do ponto desconta o painel (`folgaDoEnquadramento`).
-  "Voltar à lista", "Coordenadas" ou Esc voltam ao layout (`--mapa-si-altura` não muda).
-- Fila de pontos (busca, "Só pendentes" com as pendências da auditoria), "Conferido", sugestões e
-  histórico com "Desfazer": RPCs da migration `20261002160000_conferir_coordenadas_mapa`, regras em
-  `src/lib/coordenadas-do-mapa.ts`. O editor é comum ([[modulo-editor-de-coordenadas]]); aqui fica
-  só `editor-de-coordenadas.tsx`, com os pontos do `lmap`/`rede_cnes` e as RPCs
-  `*_coordenada_mapa_saude_indigena` (`FONTE_DA_SAUDE_INDIGENA`).
+- **Não há editor de coordenadas neste mapa.** Os pontos vêm do SIGEPSI e se corrigem lá. O editor
+  de coordenadas comum ([[modulo-editor-de-coordenadas]]) é só do mapa de Projetos.
+  `TopoDoMapa` e `classesDoPainel` (`painel-do-mapa.tsx`) aceitam `modo` opcional.
 
 ## Arquivos
 
@@ -45,8 +38,11 @@ Sub-notas: [[mapa-saude-indigena-modo-dseis]] (terceiro fundo, "Mapa DSEIs"),
 - `leaflet.ts` — fábrica (`criarMapa`, `criarMapaDoBrasil`), fundo com recurso, contornos,
   `enquadrar`, `criarLeque`, ícones/popup/dica em DOM seguro (os dois mapas).
 - `painel-do-mapa.tsx` — peças comuns: `usarMapaDoBrasil`, `TopoDoMapa`, `MolduraDoMapa`,
-  `ListaDoMapa`, `propsDoEditor`.
-- `tela-cheia.tsx` — `usarTelaCheia` e `travarRolagemDaPagina` (contada: tela cheia e edição).
+  `ListaDoMapa`, `propsDoEditor` (esta, para o mapa de Projetos).
+- `localizacoes.ts` — `usarLocalizacoesDoSigepsi` (o pedido a `/api/dseis`) e `aplicarLocalizacoes`;
+  as regras puras ficam em `src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts`.
+- `tela-cheia.tsx` — `usarTelaCheia` e `travarRolagemDaPagina` (contada: tela cheia e edição de
+  Projetos).
 - `ordem-da-lista.tsx` — "Ordenar" (Vagas, A–Z, Nº do DSEI, % preenchidas, Ociosas), escolha
   guardada no navegador; regras em `src/lib/mapa-saude-indigena/ordem-dos-territorios.ts`.
 - `volta-ao-brasil.ts` (`usarVoltaDoDsei`, `usarEscParaVoltar`), `usar-ultimo.ts` (ref com a
@@ -54,47 +50,50 @@ Sub-notas: [[mapa-saude-indigena-modo-dseis]] (terceiro fundo, "Mapa DSEIs"),
 
 Regras puras em `src/lib/mapa-saude-indigena/`: `chaves` (chave do DSEI), `formas` (formas, cores,
 tipos), `mapa-nacional` (contagens, bolhas, CASAIs, territórios por vagas, enquadramento,
-dicas/popups), `mapa-do-dsei` (prioridade lmap → reconciliação → rede_cnes, vínculo, tipos,
-enquadramentos) e `contornos` (`UF_GEO`, `BR_OUTLINE`). Para quem usa:
+dicas/popups), `mapa-do-dsei` (pontos do SIGEPSI, vínculo, tipos, enquadramentos), `localizacoes-do-sigepsi`
+(a API do SIGEPSI virando DSEIs, sedes, polos, CASAIs e unidades) e `contornos` (`UF_GEO`, `BR_OUTLINE`). Para quem usa:
 `docs/aya/regras-do-mapa-saude-indigena.md`.
 
 ## Ligação na Visão geral
 
 Em `src/modulos/visao-geral/visao-geral.tsx` (`MapaDaSaudeIndigena`), só quando a área é a Saúde
 Indígena (`mapaDaVisaoGeral(area) === MAPA_DOS_DSEIS`). Lê o MESMO estado
-(`src/modulos/visao-geral/estado.ts`). Props: `lmap` (`TB_CONFIG_MAPA_SAUDE_INDIG`, chave "lmap",
-com as Lotações), `redeCnes` (chave "rede_cnes"), `linhas` (editais recortados), `filtroAtivo`,
-`dseiSelecionado` (chave normalizada), `carregando`, `aoEscolherDsei` (`estado.definirDsei`),
-`aoSairDoDsei` (`estado.tirarDsei`) e `aoFiltrarPorBusca` (CASAI nacional: "CASAI <cidade>").
+(`src/modulos/visao-geral/estado.ts`). Props: `lmap` (`TB_CONFIG_MAPA_SAUDE_INDIG`, chave "lmap"),
+`casaisNacionais` (as CASAIs nacionais do SIGEPSI, para o losango do mapa nacional), `linhas`
+(editais recortados), `filtroAtivo`, `dseiSelecionado` (chave normalizada), `carregando`,
+`aoEscolherDsei` (`estado.definirDsei`), `aoSairDoDsei` (`estado.tirarDsei`) e `aoFiltrarPorBusca`
+(CASAI nacional: "CASAI <cidade>").
 
-- **Dados.** `carregarMapa` (`src/app/carga.ts`) lê a tabela (faz parte da cópia da sessão e da
-  recarga) e publica `estado.definirDadosDoMapa({ lmap, redeCnes })`.
-- **SIGEPSI, a fonte verdadeira da lista de DSEIs e dos pontos.** `MapaSaudeIndigenaComSigepsi`
-  (`mapa-com-sigepsi.tsx`, no pedaço do mapa baixado sob demanda, fora da entrada) pede
-  `/api/dseis` ([[funcoes-da-vercel]]) por `usarLocalizacoesDoSigepsi` (`localizacoes.ts`, um pedido
-  a cada 10 min para a página) e fica em "carregando" até a resposta (não mostra a lista do banco
-  para trocá-la em seguida). `aplicarLocalizacoes` monta a lista de DSEIs com a do SIGEPSI: DSEI só
-  do banco não entra; do DSEI de mesma chave no `lmap` vêm só `k` (liga ao `rede_cnes`), `n`,
-  população, UFs e `indice_no_banco` (o editor confere a sede do banco por ele); DSEI só do SIGEPSI
-  entra com `origem: "sigepsi"`, o nome legível de `NO_DSEI` e a UF da sede. A sede (`lat`/`lon`,
-  onde fica a bolha nacional, `sede_municipio`, `sede_uf`, `sede_origem: "sigepsi"`) e os `polos`
-  são os do SIGEPSI. `TP_UNIDADE`: POLO BASE e ROTA →
-  `polo`; CASAI → `casai`; SEDE → a sede; UNIDADE DE LOTAÇÃO → `unidade` (ou polo/CASAI, se o nome
-  disser), desenhada pelo nome (UBSI ou Unidade). UF pelo CEP.
-- **Repetido com o CNES, vale o SIGEPSI.** A reconciliação une `unidade` com UBSI/posto/outro de
-  mesmo nome (`tiposCompativeis`), e o ponto unido fica com nome, posição, município e UF do
-  SIGEPSI (do CNES, só o código). O estabelecimento do CNES que sobrar a até 200 m de um ponto do
-  SIGEPSI de tipo compatível sai do mapa, mesmo sem palavra em comum (só contra o SIGEPSI).
-- **CASAIs só do SIGEPSI.** As nacionais são as localizações 131 (CASAI DF) e 132 (CASAI São
-  Paulo) (`CODIGOS_DAS_CASAIS_NACIONAIS`): `casaisNacionaisDoSigepsi` as põe no `nac` do
-  `rede_cnes` (o losango do mapa nacional) e não viram DSEI. `aplicarCasaisDoSigepsi` marca o
-  `rede_cnes` com `casais_do_sigepsi: true` (`redeCnesDoMapa` preserva): as CASAIs do CNES (`c` e
-  as unidades com nome de CASAI) saem do mapa do DSEI e do editor, sem recortar as listas (o editor
-  confere cada ponto pela posição nelas). As do banco saíram com a migration `20261117150000`
-  (cópias `*_backup_20261117_pre_casais_do_sigepsi`).
-- O editor de coordenadas não oferece a sede, o DSEI, as CASAIs nem os pontos do SIGEPSI
-  (corrige-se lá). Falha na API ou servidor local (sem `/api`): o mapa usa a lista e os dados do
-  banco (sem CASAI, depois da migration).
+- **Dados do banco.** `carregarMapa` (`src/app/carga.ts`, RPC `listar_mapa_da_saude_indigena`) lê a
+  tabela (faz parte da cópia da sessão e da recarga) e publica `estado.definirDadosDoMapa`. Do
+  `lmap` o mapa lê só, de cada DSEI, o nome bem grafado (`n`), a população (`pop`, tamanho da
+  bolha) e as UFs administrativas (`ufs`/`sedeuf`, o vínculo externo). Não há mais `rede_cnes`
+  (estabelecimentos do CNES) no front.
+- **SIGEPSI, a única fonte dos pontos.** `MapaSaudeIndigenaComSigepsi` (`mapa-com-sigepsi.tsx`,
+  no pedaço do mapa baixado sob demanda, fora da entrada; a Visão geral só passa o `lmap`) pede
+  `/api/dseis` ([[funcoes-da-vercel]]) por `usarLocalizacoesDoSigepsi` (`localizacoes.ts`, um pedido a cada
+  10 min para a página). `aplicarLocalizacoes` monta a lista de DSEIs com a do SIGEPSI: DSEI só do
+  banco não aparece; DSEI só do SIGEPSI aparece (nome legível de `NO_DSEI`, UF da sede); do DSEI de
+  mesma chave no `lmap` vêm só nome, população e UFs administrativas. Do SIGEPSI vêm a sede (`lat`/`lon`,
+  onde fica a bolha nacional, município e UF), os polos base, a ROTA (como polo), as CASAIs e as
+  unidades de lotação. `TP_UNIDADE`: POLO BASE e ROTA → `polo`; CASAI → `casai`; SEDE → a sede;
+  UNIDADE DE LOTAÇÃO → `unidade` (ou polo/CASAI, se o nome disser), desenhada pelo nome (UBSI ou
+  Unidade). UF dos pontos pelo CEP.
+- **CASAIs nacionais.** São as localizações 131 (CASAI DF) e 132 (CASAI São Paulo)
+  (`CODIGOS_DAS_CASAIS_NACIONAIS`); `casaisNacionaisDoSigepsi` as entrega como `casaisNacionais`
+  (o losango do mapa nacional) e elas não viram DSEI.
+- **Sem plano B.** Se o SIGEPSI não responde (ou no servidor local, sem `/api`), o mapa mostra
+  o erro "Não foi possível carregar o mapa da Saúde Indígena: o SIGEPSI não respondeu" com
+  "Tentar novamente" (`ErroAoCarregar`, em `mapa-com-sigepsi.tsx`). Enquanto não responde, o mapa fica em
+  "carregando"; a lista do banco não é usada no lugar.
+- **Corrigir um ponto é no SIGEPSI.** Não há botão "Coordenadas" nem reconciliação com o CNES neste
+  mapa.
+- **Migrations** (aplicar depois da publicação):
+  `supabase/migrations/20261117150000_tirar_do_mapa_as_casais_que_vem_do_sigepsi.sql` e
+  `20261117160000_tirar_do_banco_os_pontos_do_mapa_que_vem_do_sigepsi.sql`. O `lmap` fica só com
+  `k`, `n`, `pop`, `ufs` e `sedeuf` por DSEI; a linha `rede_cnes` e as pendências de
+  `private."TB_PENDENCIA_COORDENADA_MAPA"` saem (cópias `*_backup_20261117_*`). Ficam o histórico
+  `private."TH_COORDENADA_MAPA_SAUDE_INDIG"` e o catálogo `TD_UNIDADE`.
 - **DSEI.** `definirDsei` guarda `chaveDoDsei(chave)`; o recorte compara com
   `chaveDoDsei(linha.unidade)`. O chip "DSEI X ×", "← Voltar ao Brasil" e Esc chamam `tirarDsei`
   (os filtros ficam); "Limpar tudo", a busca global e a troca de área tiram o DSEI.
@@ -112,10 +111,10 @@ com as Lotações), `redeCnes` (chave "rede_cnes"), `linhas` (editais recortados
   o popup tem `autoPan` com folga, `keepInView` e tamanhos relativos ao mapa.
 
 Testes: `tests/mapa-saude-indigena.test.js` (fixture real das Lotações),
+`tests/coordenadas-so-do-sigepsi.test.js`, `tests/lib/localizacoes-do-sigepsi.test.ts`,
 `tests/modulos/mapa-saude-indigena.test.js` (Leaflet falso em `tests/modulos/leaflet-falso.js`),
-`tests/modulos/visao-geral.test.js`, `tests/dica-dentro-do-mapa.test.js`,
-`tests/coordenadas-do-mapa.test.js`, `tests/modulos/editor-de-coordenadas.test.js` e
-`tests/modulos/modo-de-edicao.test.js`.
+`tests/modulos/visao-geral.test.js`, `tests/dica-dentro-do-mapa.test.js` e
+`tests/modulos/modo-de-edicao.test.js` (o modo de edição, hoje só de Projetos).
 
 ## Relacionadas
 

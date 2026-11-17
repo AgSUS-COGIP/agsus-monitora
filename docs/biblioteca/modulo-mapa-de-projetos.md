@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-10
+atualizado: 2026-11-17
 ---
 
 # Módulo: Mapa de Projetos
@@ -58,7 +58,7 @@ Indígena** ([[modulo-mapa-saude-indigena]]) e usa as mesmas peças: muda o que 
 - **Recorte.** `lugaresDoRecorte` fica com o lugar que tem algum edital do recorte (pelo id da
   linha do monitoramento ou pelo número do edital), só com esses editais (projetos e vagas
   publicadas recontados); as contagens das análises (candidatos, aprovados) são do lugar e ficam.
-- **Dados.** A Saúde Indígena recebe o `lmap`/`rede_cnes` que o legado publica; Projetos busca pela
+- **Dados.** A Saúde Indígena recebe o `lmap` (nome, população, UFs) do banco e o resto da API do SIGEPSI; Projetos busca pela
   RPC no carregador (estados "indisponível" e erro próprios). Terras Indígenas e abrangência só na
   Saúde Indígena; sem volta animada.
 

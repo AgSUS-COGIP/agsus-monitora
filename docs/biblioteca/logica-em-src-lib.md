@@ -1,7 +1,7 @@
 ---
 tipo: referencia
 area: front
-atualizado: 2026-11-10
+atualizado: 2026-11-17
 ---
 
 # Lógica em `src/lib/`
@@ -51,7 +51,7 @@ junto. A UI pertence a `src/modulos/` (e, no legado, a `src/modules/`).
 **Mapas e geografia**
 
 - `fabrica-do-leaflet.ts` (único lugar que cria mapa Leaflet), `filtros-do-mapa.ts`,
-  `reconciliacao-unidades.ts`, `uf-ibge.ts`, `brasil-bounds.ts` — [[mapas-e-leaflet]],
+  `uf-ibge.ts`, `brasil-bounds.ts`, `mapa-saude-indigena/localizacoes-do-sigepsi.ts` — [[mapas-e-leaflet]],
   [[coordenadas]].
 
 **Planilhas, robôs e versão**

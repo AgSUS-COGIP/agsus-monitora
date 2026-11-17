@@ -33,9 +33,9 @@ import type {
 
   O mapa da Saúde Indígena (src/modulos/mapa-saude-indigena/) lê daqui: as
   linhas recortadas (`filtradas`), `temRecorte`, o DSEI aberto (`dsei`) e
-  os dados do mapa (`mapa.lmap`, `mapa.redeCnes`), que o legado carrega
-  (`loadMapaConfig`, com a cópia da sessão) e publica em
-  `definirDadosDoMapa`. O DSEI de cada linha é `chaveDoDsei(linha.unidade)`.
+  o `lmap` do banco (`mapa.lmap`: nome, população e UFs de cada DSEI; os
+  pontos vêm do SIGEPSI), que a carga (src/app/carga.ts, com a cópia da
+  sessão) publica em `definirDadosDoMapa`. O DSEI de cada linha é `chaveDoDsei(linha.unidade)`.
   O mapa pede `definirDsei` (bolha, ranking), `tirarDsei` ("Voltar
   ao Brasil" ou Esc) e `definirBusca` (CASAI nacional).
 
@@ -247,7 +247,7 @@ export function criarEstadoDaVisaoGeral({
     busca: "",
     dsei: { chave: "", nome: "" },
     atalho: "",
-    mapa: { lmap: null, redeCnes: null },
+    mapa: { lmap: null },
     ordenacao: { campo: "", direcao: "" },
     colunas: normalizarColunas(lerGuardado(armazenamento, CHAVE_DAS_COLUNAS)),
     /* { area, linhas, dados } — o acompanhamento vale para aquela carga. */
@@ -603,9 +603,8 @@ export function criarEstadoDaVisaoGeral({
     /* O DSEI aberto no mapa (chave do `lmap` ou nome; guarda a chave normalizada). */
     definirDsei: (chave, nome = "") =>
       publicar({ dsei: { chave: chaveDoDsei(chave), nome: txt(nome) } }),
-    /* `lmap` e `rede_cnes` de TB_CONFIG_MAPA_SAUDE_INDIG (o legado carrega). */
-    definirDadosDoMapa: ({ lmap = null, redeCnes = null } = {}) =>
-      publicar({ mapa: { lmap, redeCnes } }),
+    /* `lmap` de TB_CONFIG_MAPA_SAUDE_INDIG (a carga publica). */
+    definirDadosDoMapa: ({ lmap = null } = {}) => publicar({ mapa: { lmap } }),
     ordenarPor: (campo) =>
       publicar({ ordenacao: proximaOrdenacao(proprio.ordenacao, campo) }),
     alternarColuna(campo, visivel) {

@@ -401,3 +401,198 @@ describe("Coordenadas no mapa de Projetos", () => {
     expect(host.textContent).toContain("Alteração desfeita.");
   });
 });
+
+describe("Coordenadas no mapa de Projetos: respostas malformadas", () => {
+  it("descarta pendências sem registro e candidatos sem posição sem derrubar o editor", async () => {
+    respostas[RPC_PENDENCIAS] = () => ({
+      data: [
+        null,
+        [],
+        {
+          lugar: "lugar novo/AM",
+          nome: "Lugar Novo/AM",
+          uf: "AM",
+          motivo: {},
+          candidatos: {},
+        },
+      ],
+      error: null,
+    });
+    await montar();
+    await abrirEditor();
+    await escolher("Lugar Novo/AM");
+    expect(host.querySelector('[aria-label="Correção"]')).not.toBeNull();
+    expect(host.textContent).toContain("Sem posição candidata.");
+  });
+
+  it("não oferece desfazer uma alteração antiga quando a mais recente é inválida", async () => {
+    respostas[RPC_HISTORICO] = () => ({
+      data: [null, ...HISTORICO()],
+      error: null,
+    });
+    await montar();
+    await abrirEditor();
+    await escolher("Seropédica/RJ");
+    expect(host.textContent).toContain("Sem alterações.");
+    expect(botao("Desfazer última alteração")).toBeUndefined();
+  });
+
+  it("exibe erro e não atualiza o mapa nem o cache quando a gravação devolve resposta inválida", async () => {
+    respostas[RPC_SALVAR] = () => ({ data: { latitude: [] }, error: null });
+    await montar();
+    await abrirEditor();
+    await escolher("Seropédica/RJ");
+    await digitar(latitude(), "-22,8");
+    await digitar(motivo(), "Ajuste conforme fonte oficial");
+    await clicar(botao("Salvar coordenada"));
+    await clicar(botao("Confirmar correção"));
+    await aguardar();
+    expect(chamadas(RPC_SALVAR)).toHaveLength(1);
+    expect(host.querySelector('[role="alert"]').textContent).toContain(
+      "Resposta inválida ao salvar coordenada.",
+    );
+    expect(host.textContent).not.toContain("Coordenada salva.");
+    const noCache = carregador
+      .emCache("projetos")
+      .municipios.find((m) => m.lugar === "seropedica/RJ");
+    expect(noCache.coordenada.latitude).toBe(-22.7526);
+  });
+});
+
+describe("Coordenadas no mapa de Projetos: prévia", () => {
+  it("arrasta só o pin de prévia, desfaz sem gravar e exige confirmação antes de salvar", async () => {
+    await montar();
+    await abrirEditor();
+    await escolher("Seropédica/RJ");
+    const pin = [...mapaVivo().camadas].find((c) => c.opcoes?.draggable);
+    await act(async () => {
+      pin.setLatLng([-22.9, -43.7155]);
+      pin.fire("dragend");
+    });
+    expect(latitude().value).toBe("-22.900000");
+    expect(
+      carregador
+        .emCache("projetos")
+        .municipios.find((m) => m.lugar === "seropedica/RJ").coordenada
+        .latitude,
+    ).toBe(-22.7526);
+    await clicar(botao("Desfazer prévia"));
+    expect(pin.latlng).toEqual([-22.7526, -43.7155]);
+    expect(chamadas(RPC_SALVAR)).toHaveLength(0);
+    await digitar(latitude(), "-22,8");
+    await digitar(motivo(), "Ajuste conforme fonte oficial");
+    await clicar(botao("Salvar coordenada"));
+    expect(chamadas(RPC_SALVAR)).toHaveLength(0);
+    await clicar(botao("Confirmar correção"));
+    expect(chamadas(RPC_SALVAR).at(-1)[1]).toMatchObject({
+      p_lugar: "seropedica/RJ",
+      p_latitude: -22.8,
+      p_longitude: -43.7155,
+      p_latitude_anterior: -22.7526,
+      p_longitude_anterior: -43.7155,
+      p_conferido: false,
+    });
+    expect(host.textContent).toContain("Coordenada salva.");
+    // Corrigir sem marcar "Conferido" não tira o lugar das pendências.
+    expect(
+      host.querySelector(".mapa-si-coordenadas__contagem").textContent,
+    ).toBe("3 pendentes");
+  });
+
+  it("preserva a prévia e comunica conflito sem anunciar sucesso", async () => {
+    respostas[RPC_SALVAR] = () => ({
+      error: {
+        message: "Coordenada alterada por outra pessoa. Atualize o mapa.",
+      },
+    });
+    await montar();
+    await abrirEditor();
+    await escolher("Seropédica/RJ");
+    await digitar(latitude(), "-22,8");
+    await digitar(motivo(), "Nova fonte oficial consultada");
+    await clicar(botao("Salvar coordenada"));
+    await clicar(botao("Confirmar correção"));
+    expect(host.querySelector('[role="alert"]').textContent).toContain(
+      "outra pessoa",
+    );
+    expect(host.textContent).not.toContain("Coordenada salva.");
+    expect(latitude().value).toBe("-22,8");
+    expect(
+      carregador
+        .emCache("projetos")
+        .municipios.find((m) => m.lugar === "seropedica/RJ").coordenada
+        .latitude,
+    ).toBe(-22.7526);
+  });
+
+  it("não tem os parágrafos de instrução genérica nem o select antigo", async () => {
+    await montar();
+    await abrirEditor();
+    await escolher("Seropédica/RJ");
+    expect(host.textContent).not.toMatch(/Escolha um ponto para ajustar/);
+    expect(host.textContent).not.toMatch(/Arraste o pin de prévia/);
+    expect(host.querySelector("select")).toBeNull();
+  });
+});
+
+describe("Coordenadas no mapa de Projetos: fila e sugestões", () => {
+  it("filtra por gravidade e desliga o filtro ao clicar de novo", async () => {
+    await montar();
+    await abrirEditor();
+    const revisar = host.querySelector('[data-nivel="revisar"]');
+    expect(revisar.textContent).toContain("1");
+    expect(host.querySelector('[data-nivel="erro"]').disabled).toBe(true);
+    await clicar(revisar);
+    expect(revisar.getAttribute("aria-pressed")).toBe("true");
+    expect(itens()).toEqual(["Pará (estado)"]);
+    await clicar(revisar);
+    expect(revisar.getAttribute("aria-pressed")).toBe("false");
+    expect(itens()).toHaveLength(3);
+  });
+
+  it("avisa quando as pendências não carregam e a lista completa continua", async () => {
+    respostas[RPC_PENDENCIAS] = () => ({ error: { message: "Sem rede." } });
+    await montar();
+    await abrirEditor();
+    expect(host.querySelector('[role="alert"]').textContent).toBe("Sem rede.");
+    await clicar(
+      host.querySelector('.mapa-si-coordenadas__caixa input[type="checkbox"]'),
+    );
+    expect(itens()).toHaveLength(3);
+  });
+
+  it("a dica do círculo de sugestão é texto: nome de base externa não vira HTML", async () => {
+    respostas[RPC_PENDENCIAS] = () => {
+      const pendencias = PENDENCIAS();
+      pendencias[1].candidatos[1].n = '<img src=x onerror="alert(1)">';
+      return { data: pendencias, error: null };
+    };
+    await montar();
+    await abrirEditor();
+    await escolher("Pará (estado)");
+    const circulos = leaflet
+      .desenhadas(mapaVivo(), "circleMarker")
+      .filter((c) => c.dica);
+    expect(circulos.length).toBeGreaterThan(0);
+    for (const c of circulos) expect(typeof c.dica).not.toBe("string");
+    const dicas = circulos.map((c) => c.dica.textContent).join(" ");
+    expect(dicas).toContain('<img src=x onerror="alert(1)">');
+  });
+});
+
+describe("Coordenadas no mapa de Projetos: desfazer", () => {
+  it("não oferece desfazer de um desfazer nem de alteração já desfeita", async () => {
+    respostas[RPC_HISTORICO] = () => ({
+      data: [
+        { ...HISTORICO()[0], id: 10, acao: "DESFAZER", desfaz: 9 },
+        { ...HISTORICO()[0], desfeito: true },
+      ],
+      error: null,
+    });
+    await montar();
+    await abrirEditor();
+    await escolher("Seropédica/RJ");
+    expect(host.textContent).toContain("(desfeita)");
+    expect(botao("Desfazer última alteração")).toBeUndefined();
+  });
+});

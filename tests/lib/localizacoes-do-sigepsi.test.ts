@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  aplicarCasaisDoSigepsi,
   aplicarLocalizacoes,
   casaisNacionaisDoSigepsi,
   localizacoesPorDsei,
@@ -11,12 +10,8 @@ import {
   registrosDoDsei,
   resumoDaRede,
 } from "../../src/lib/mapa-saude-indigena/mapa-do-dsei.ts";
-import { pontosEditaveisDoMapa } from "../../src/lib/coordenadas-do-mapa.ts";
-import { redeCnesDoMapa } from "../../src/lib/mapa-saude-indigena/dados-do-mapa.ts";
-import type {
-  DseiDoMapa,
-  EstabelecimentoCompacto,
-} from "../../src/lib/mapa-saude-indigena/tipos.ts";
+import { casaisNacionaisDoMapa } from "../../src/lib/mapa-saude-indigena/dados-do-mapa.ts";
+import type { DseiDoMapa } from "../../src/lib/mapa-saude-indigena/tipos.ts";
 import type {
   PedidoDaVercel,
   RespostaDaVercel,
@@ -105,19 +100,11 @@ describe("CASAIs só do SIGEPSI", () => {
     ).toEqual([]);
   });
 
-  it("o rede_cnes marca as CASAIs do SIGEPSI e troca as nacionais", () => {
-    const rede = {
-      rede: { X: { u: [], c: [["CASAI DO CNES", "1", 1, 1]] } },
-      nac: [["CASAI BRASÍLIA", "2", 1, 1]],
-    };
-    const nacionais = casaisNacionaisDoSigepsi([CASAI_DF]);
-    const novo = aplicarCasaisDoSigepsi(rede, nacionais);
-    expect(novo).toEqual({ ...rede, nac: nacionais, casais_do_sigepsi: true });
-    // A validação dos dados do mapa preserva a marca.
-    expect(redeCnesDoMapa(novo).casais_do_sigepsi).toBe(true);
-    expect(redeCnesDoMapa(rede)).not.toHaveProperty("casais_do_sigepsi");
-    // Sem SIGEPSI, fica o banco.
-    expect(aplicarCasaisDoSigepsi(rede, null)).toBe(rede);
+  it("a validação do mapa aceita as CASAIs nacionais e ignora lixo", () => {
+    const nacionais = casaisNacionaisDoSigepsi([CASAI_DF, CASAI_SP]);
+    expect(casaisNacionaisDoMapa([...nacionais, "x", [null], null])).toEqual(
+      nacionais,
+    );
   });
 });
 
@@ -196,15 +183,15 @@ describe("aplicarLocalizacoes", () => {
         lon: -35.7,
         pop: 12000,
         ufs: ["AL", "SE"],
+        sedeuf: "AL",
         sede_municipio: "Maceió",
         polos: [{ n: "POLO ANTIGO", lat: -9, lon: -36, uf: "AL" }],
       },
     ],
-    casai: [],
+    casai: [{ n: "CASAI Nacional Brasília" }],
   };
-  type Lista = { dsei: DseiDoMapa[]; casai?: unknown };
 
-  it("a lista de DSEIs é a do SIGEPSI; do banco, só chave, nome, população e UFs", () => {
+  it("a lista é a do SIGEPSI; do banco, só nome, população e UFs", () => {
     const porDsei = localizacoesPorDsei([
       CASAI,
       linha(),
@@ -218,162 +205,77 @@ describe("aplicarLocalizacoes", () => {
         CG_LONGITUDE: "-64.71",
       }),
     ]);
-    const novo = aplicarLocalizacoes(lmap, porDsei) as Lista;
-    // Yanomami (só no banco) sai; o DSEI só do SIGEPSI entra.
-    expect(novo.dsei.map((d) => d.n)).toEqual([
-      "Alagoas e Sergipe",
-      "Médio Rio Solimões e Afluentes",
-    ]);
-    expect(novo.dsei[0]).toMatchObject({
-      k: "ALAGOAS E SERGIPE",
-      pop: 12000,
-      ufs: ["AL", "SE"],
-      lat: -9.60197,
-      lon: -35.7481,
-      sede_municipio: "MACEIO",
-      sede_uf: "AL",
-      sede_origem: "sigepsi",
-      indice_no_banco: 1,
+    const novo = aplicarLocalizacoes(lmap, porDsei);
+    // Yanomami (só no banco) sai; o DSEI só do SIGEPSI entra; nada mais do banco.
+    expect(novo).toEqual({
+      dsei: [
+        {
+          k: "ALAGOAS E SERGIPE",
+          n: "Alagoas e Sergipe",
+          pop: 12000,
+          ufs: ["AL", "SE"],
+          sedeuf: "AL",
+          polos: porDsei["ALAGOAS SERGIPE"]?.polos,
+          lat: -9.60197,
+          lon: -35.7481,
+          sede_municipio: "MACEIO",
+          sede_uf: "AL",
+        },
+        {
+          k: "MÉDIO RIO SOLIMÕES E AFLUENTES",
+          n: "Médio Rio Solimões e Afluentes",
+          ufs: ["AM"],
+          sedeuf: "AM",
+          polos: [],
+          lat: -3.35,
+          lon: -64.71,
+          sede_municipio: "TEFE",
+          sede_uf: "AM",
+        },
+      ],
     });
-    expect(novo.dsei[0]?.polos?.map((p) => p.n)).toEqual([
-      "CASAI DSEI AL/SE",
-      "PB ACONÃ",
-    ]);
-    expect(novo.dsei[1]).toMatchObject({
-      k: "MÉDIO RIO SOLIMÕES E AFLUENTES",
-      ufs: ["AM"],
-      sedeuf: "AM",
-      lat: -3.35,
-      origem: "sigepsi",
-      polos: [],
-    });
-    expect(novo.dsei[1]).not.toHaveProperty("pop");
-    expect(novo.casai).toBe(lmap.casai);
   });
 
-  it("sem sede na API, a sede do banco fica", () => {
-    const novo = aplicarLocalizacoes(
+  it("sem sede no SIGEPSI, o DSEI fica sem posição (a do banco não vale)", () => {
+    const [dsei] = aplicarLocalizacoes(
       lmap,
       localizacoesPorDsei([linha()]),
-    ) as Lista;
-    expect(novo.dsei[0]).toMatchObject({ lat: -9.6, sede_municipio: "Maceió" });
-    expect(novo.dsei[0]).not.toHaveProperty("sede_origem");
+    ).dsei;
+    expect(dsei).not.toHaveProperty("lat");
+    expect(dsei).not.toHaveProperty("sede_municipio");
   });
 
   it("sem o banco, a lista do SIGEPSI basta", () => {
-    const novo = aplicarLocalizacoes(
-      null,
-      localizacoesPorDsei([SEDE]),
-    ) as Lista;
-    expect(novo.dsei).toEqual([
-      expect.objectContaining({
-        k: "ALAGOAS E SERGIPE",
-        n: "Alagoas e Sergipe",
-      }),
-    ]);
-  });
-
-  it("sem resposta do SIGEPSI, devolve o lmap do banco", () => {
-    expect(aplicarLocalizacoes(lmap, null)).toBe(lmap);
-    expect(aplicarLocalizacoes(lmap, {})).toBe(lmap);
-  });
-
-  it("o editor confere a sede do banco pela posição dela no banco", () => {
-    const novo = aplicarLocalizacoes(
-      lmap,
-      localizacoesPorDsei([linha()]),
-    ) as Lista;
-    expect(
-      pontosEditaveisDoMapa(novo, null).map((p) => [
-        p.alvo.tipo,
-        p.alvo.indice,
-      ]),
-    ).toEqual([["sede", 1]]);
+    expect(aplicarLocalizacoes(null, localizacoesPorDsei([SEDE])).dsei).toEqual(
+      [expect.objectContaining({ n: "Alagoas e Sergipe", ufs: ["AL"] })],
+    );
   });
 });
 
-describe("no mapa do DSEI e no editor", () => {
-  const lmap = aplicarLocalizacoes(
-    {
-      dsei: [{ k: "ALAGOAS E SERGIPE", n: "Alagoas e Sergipe", sedeuf: "AL" }],
-    },
-    localizacoesPorDsei([CASAI, linha(), LOTACAO, SEDE]),
+describe("no mapa do DSEI", () => {
+  const { dsei } = aplicarLocalizacoes(
+    { dsei: [{ k: "ALAGOAS E SERGIPE", n: "Alagoas e Sergipe" }] },
+    localizacoesPorDsei([
+      CASAI,
+      linha(),
+      LOTACAO,
+      linha({ NO_LOTACAO: "UBSI BANANAL", TP_UNIDADE: "UNIDADE DE LOTAÇÃO" }),
+      SEDE,
+    ]),
   ) as { dsei: DseiDoMapa[] };
-  const dsei = lmap.dsei[0]!;
-  const cnes = (
-    codigo: string,
-    nome: string,
-    lat: number,
-    lon: number,
-  ): EstabelecimentoCompacto => [nome, codigo, lat, lon, "OUTRO NOME", "SE"];
+  const distrito = dsei[0]!;
 
-  it("CASAI do SIGEPSI é CASAI; lotação não conta como polo base", () => {
-    const registros = registrosDoDsei(dsei, { rede: {}, nac: [] });
-    expect(registros.map((r) => [r.name, r.type.key, r.uf])).toEqual([
-      ["CASAI DSEI AL/SE", "casai", "AL"],
-      ["PB ACONÃ", "polo", "AL"],
-      ["NOVO DIA", "unit", "AL"],
-    ]);
-    expect(resumoDaRede(dsei, registros)[0]).toBe("Polos base: 1");
-  });
-
-  it("repetido no CNES: um ponto só, com nome, posição, município e UF do SIGEPSI", () => {
-    const registros = registrosDoDsei(dsei, {
-      rede: {
-        [dsei.k]: {
-          u: [
-            cnes("1", "UBSI NOVO DIA", -10.3, -36.9),
-            cnes("2", "POLO BASE ACONA", -9.98, -37.01),
-            // Só no CNES: continua no mapa.
-            cnes("3", "UBSI MATA DA CAFURNA", -9.5, -36.6),
-          ],
-          // Mesmo lugar, nenhuma palavra em comum: o SIGEPSI prevalece.
-          c: [cnes("4", "CASAI ALAGOAS", -9.62718, -35.73629)],
-        },
-      },
-      nac: [],
-    });
+  it("só os pontos do SIGEPSI, com o tipo de TP_UNIDADE e do nome", () => {
+    const registros = registrosDoDsei(distrito);
     expect(
-      registros.map((r) => [r.name, r.type.key, r.lat, r.city, r.uf, r.cnes]),
+      registros.map((r) => [r.name, r.type.key, r.city, r.uf, r.origens]),
     ).toEqual([
-      ["PB ACONÃ", "polo", -9.971, "TRAIPU", "AL", "2"],
-      ["NOVO DIA", "ubsi", -10.1, "PORTO REAL DO COLEGIO", "AL", "1"],
-      ["CASAI DSEI AL/SE", "casai", -9.62718, "MACEIO", "AL", ""],
-      ["UBSI MATA DA CAFURNA", "ubsi", -9.5, "OUTRO NOME", "SE", "3"],
+      ["CASAI DSEI AL/SE", "casai", "MACEIO", "AL", ["sigepsi"]],
+      ["PB ACONÃ", "polo", "TRAIPU", "AL", ["sigepsi"]],
+      ["NOVO DIA", "unit", "PORTO REAL DO COLEGIO", "AL", ["sigepsi"]],
+      ["UBSI BANANAL", "ubsi", "TRAIPU", "AL", ["sigepsi"]],
     ]);
-  });
-
-  it("com as CASAIs do SIGEPSI, as do CNES saem do mapa e do editor", () => {
-    const rede = {
-      rede: {
-        [dsei.k]: {
-          u: [
-            cnes("5", "CASA DE SAUDE INDIGENA LONGE", -9.0, -36.0),
-            cnes("6", "UBSI LONGE", -9.1, -36.1),
-          ],
-          c: [cnes("7", "CASAI OUTRO LUGAR", -9.2, -36.2)],
-        },
-      },
-      nac: [],
-    };
-    const sem = registrosDoDsei(dsei, rede).map((r) => r.name);
-    expect(sem).toContain("CASAI OUTRO LUGAR");
-    const comSigepsi = { ...rede, casais_do_sigepsi: true };
-    const com = registrosDoDsei(dsei, comSigepsi);
-    expect(
-      com.filter((r) => r.type.key === "casai").map((r) => r.name),
-    ).toEqual(["CASAI DSEI AL/SE"]);
-    expect(com.map((r) => r.name)).toContain("UBSI LONGE");
-    expect(
-      pontosEditaveisDoMapa(
-        { dsei: [dsei], casai: [{ n: "CASAI Nacional", lat: 1, lon: 1 }] },
-        { ...comSigepsi, nac: [["CASAI DF", "131", 1, 1, "", "DF"]] },
-      ).map((p) => p.nome),
-    ).toEqual(["Unidade CNES · UBSI LONGE"]);
-  });
-
-  it("o editor não oferece a sede nem os pontos do SIGEPSI", () => {
-    expect(pontosEditaveisDoMapa({ dsei: [dsei] }, null, dsei.k)).toEqual([]);
+    expect(resumoDaRede(distrito, registros)[0]).toBe("Polos base: 1");
   });
 });
 

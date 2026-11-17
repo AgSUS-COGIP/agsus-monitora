@@ -25,6 +25,12 @@ export const NOVIDADES_PUBLICADAS = 5;
 
 export const NOVIDADES: readonly Novidade[] = [
   {
+    id: "2026-11-17-mapa-so-do-sigepsi",
+    data: "2026-11-17",
+    texto: "mapa da Saúde Indígena só com os dados do SIGEPSI",
+    visivel: true,
+  },
+  {
     id: "2026-11-17-dseis-do-sigepsi",
     data: "2026-11-17",
     texto: "DSEIs, sedes, polos, CASAIs e unidades do mapa vindos do SIGEPSI",

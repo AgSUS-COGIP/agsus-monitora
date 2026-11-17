@@ -215,7 +215,7 @@ export type EstadoProprio = {
   busca: string;
   dsei: { chave: string; nome: string };
   atalho: Atalho;
-  mapa: { lmap: unknown; redeCnes: unknown };
+  mapa: { lmap: unknown };
   ordenacao: Ordenacao;
   colunas: readonly ColunaDaTabela[];
   acompanhamento: {
@@ -274,7 +274,7 @@ export type EstadoDaVisaoGeral = {
   destacar: (id: string | number | undefined) => void;
   definirBusca: (busca: string) => void;
   definirDsei: (chave: string, nome?: string) => void;
-  definirDadosDoMapa: (dados?: { lmap?: unknown; redeCnes?: unknown }) => void;
+  definirDadosDoMapa: (dados?: { lmap?: unknown }) => void;
   ordenarPor: (campo: ColunaDaTabela) => void;
   alternarColuna: (campo: ColunaDaTabela, visivel: boolean) => void;
   exportarCsv: () => void;

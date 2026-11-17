@@ -18,17 +18,17 @@ import {
 } from "../src/lib/mapa-saude-indigena/mapa-nacional.ts";
 
 /*
-  O BANCO É A ÚNICA FONTE DE COORDENADA DO MAPA DA SAÚDE INDÍGENA
+  O SIGEPSI É A ÚNICA FONTE DE COORDENADA DO MAPA DA SAÚDE INDÍGENA
 
-  Em 01–02/10/2026 a auditoria contra fontes oficiais corrigiu 162 polos e 2
-  CASAIs direto no banco (`lmap` e `rede_cnes` de TB_CONFIG_MAPA_SAUDE_INDIG).
-  O front desfazia parte disso: os vereditos da validação de 22/09 trocavam a
-  posição do polo, e a planilha de Lotações (com erros, sem versão corrigida)
-  preenchia coordenada e acrescentava pontos. Os dois saíram.
+  Desde 17/11/2026 a sede e os pontos de cada DSEI (polos, CASAIs, unidades
+  de lotação) e as CASAIs nacionais vêm da API do SIGEPSI
+  (`aplicarLocalizacoes`, `casaisNacionaisDoSigepsi`). Antes, o banco; antes
+  ainda, os vereditos da validação de 22/09 e a planilha de Lotações, que
+  trocavam a posição e acrescentavam pontos — saíram em 02/10/2026.
 
-  Os dados abaixo carregam de propósito os campos que aquele caminho gravava
-  (`coord_lmap`, `coord_lotacoes`, `veredicto_localizacao`, a meta na posição
-  9 do `rede_cnes`): se alguém voltar a lê-los, o teste cai.
+  Os dados abaixo carregam de propósito os campos que aqueles caminhos
+  gravavam (`coord_lmap`, `coord_lotacoes`, `veredicto_localizacao`): se
+  alguém voltar a lê-los, o teste cai.
 */
 
 const VEREDITO_ANTIGO = {
@@ -68,63 +68,28 @@ const dsei = {
       coord_lmap: { lat: -4, lon: -4 },
       veredicto_localizacao: VEREDITO_ANTIGO,
     },
-  ],
-};
-
-const metaAntiga = {
-  veredicto_localizacao: { estado: "conflito", km: 101 },
-  validacao_coordenada: "validada",
-  confirmacao_independente: true,
-  coordenadas: { lotacoes: { lat: -6, lon: -6 } },
-};
-
-const redeCnes = {
-  rede: {
-    TESTE: {
-      u: [
-        [
-          "POLO BASE XITEI",
-          "111",
-          -9.9,
-          -36.0,
-          "TRAIPU",
-          27,
-          "",
-          "",
-          "",
-          metaAntiga,
-        ],
-        [
-          "UBSI ALDEIA",
-          "222",
-          -10.1,
-          -36.4,
-          "PORTO REAL",
-          27,
-          "",
-          "",
-          "",
-          metaAntiga,
-        ],
-      ],
-      c: [["CASAI AL/SE", "333", -9.62, -35.73, "MACEIO", 27]],
+    {
+      n: "UBSI ALDEIA",
+      lat: -10.1,
+      lon: -36.4,
+      uf: "AL",
+      tipo: "unidade",
+      municipio: "PORTO REAL",
+      coord_lotacoes: { lat: -6, lon: -6 },
     },
-  },
-  nac: [
-    [
-      "CASAI BRASÍLIA",
-      "7898215",
-      -15.75,
-      -47.71,
-      "BRASÍLIA",
-      53,
-      "",
-      "",
-      "",
-      metaAntiga,
-    ],
+    {
+      n: "CASAI AL/SE",
+      lat: -9.62,
+      lon: -35.73,
+      uf: "AL",
+      tipo: "casai",
+      municipio: "MACEIO",
+    },
   ],
 };
+
+/* As CASAIs nacionais do SIGEPSI (localização 131). */
+const casaisDoSigepsi = [["CASAI DF", "131", -15.75, -47.71, "BRASILIA", "DF"]];
 
 const TEXTO_DE_VALIDACAO =
   /valida|apurad|confirmad|discorda|em valida|fonte|verific/i;
@@ -134,53 +99,50 @@ const textos = (conteudo) =>
     .filter(Boolean)
     .join("\n");
 
-describe("a coordenada desenhada é exatamente a do banco", () => {
-  const registros = registrosDoDsei(dsei, redeCnes);
+describe("a coordenada desenhada é exatamente a do SIGEPSI", () => {
+  const registros = registrosDoDsei(dsei);
   const porNome = (trecho) => registros.find((r) => r.name.includes(trecho));
 
-  it("polo reconciliado com o CNES: posição do lmap (lat/lon do polo), sem veredito nem coord_lmap", () => {
+  it("polo: a posição do SIGEPSI, sem veredito nem coord_lmap", () => {
     const xitei = porNome("XITEI");
     expect([xitei.lat, xitei.lon]).toEqual([-9.91, -36.01]);
   });
 
-  it("polo sem par no CNES: posição do lmap", () => {
+  it("outro polo: a posição do SIGEPSI", () => {
     const solto = porNome("SOLTO");
     expect([solto.lat, solto.lon]).toEqual([-9.3, -36.3]);
   });
 
-  it("estabelecimento do rede_cnes: a coordenada da linha, não a da planilha", () => {
+  it("UBSI e CASAI do DSEI: a coordenada do SIGEPSI, não a da planilha", () => {
     const ubsi = porNome("ALDEIA");
     expect([ubsi.lat, ubsi.lon]).toEqual([-10.1, -36.4]);
     const casai = porNome("CASAI");
     expect([casai.lat, casai.lon]).toEqual([-9.62, -35.73]);
   });
 
-  it("só desenha o que está no lmap ou no rede_cnes", () => {
+  it("só desenha o que veio do SIGEPSI", () => {
     expect(registros.map((r) => r.name).sort()).toEqual(
-      ["CASAI AL/SE", "POLO BASE XITEI", "SOLTO", "UBSI ALDEIA"].sort(),
+      ["CASAI AL/SE", "SOLTO", "UBSI ALDEIA", "XITEI"].sort(),
     );
     expect(registros.some((r) => "veredicto" in r)).toBe(false);
   });
 
-  it("sede e bolha do DSEI usam a lat/lon do lmap", () => {
+  it("sede e bolha do DSEI usam a lat/lon da sede (do SIGEPSI)", () => {
     const sede = registroDaSede(dsei);
     expect([sede.lat, sede.lon]).toEqual([-9.6, -35.7]);
     const [bolha] = bolhasDosDsei({ dseis: [dsei] });
     expect([bolha.lat, bolha.lon]).toEqual([-9.6, -35.7]);
   });
 
-  it("CASAI nacional: a coordenada do rede_cnes.nac", () => {
-    const [casai] = casaisNacionais({ nac: redeCnes.nac });
+  it("CASAI nacional: a coordenada do SIGEPSI", () => {
+    const [casai] = casaisNacionais({ nac: casaisDoSigepsi });
     expect([casai.lat, casai.lon]).toEqual([-15.75, -47.71]);
   });
 });
 
 describe("popups e dicas sem texto de validação", () => {
-  it("unidade: nome, tipo, município/UF e CNES — e nada mais", () => {
-    const classificados = classificarRegistros(
-      registrosDoDsei(dsei, redeCnes),
-      dsei,
-    );
+  it("unidade: nome, tipo e município/UF — e nada mais", () => {
+    const classificados = classificarRegistros(registrosDoDsei(dsei), dsei);
     for (const registro of classificados) {
       const popup = popupDoRegistro(registro);
       expect(popup.nota).toBeUndefined();
@@ -192,7 +154,7 @@ describe("popups e dicas sem texto de validação", () => {
     const ubsi = classificados.find((r) => r.name === "UBSI ALDEIA");
     expect(popupDoRegistro(ubsi)).toEqual({
       titulo: "UBSI",
-      linhas: ["UBSI ALDEIA", "PORTO REAL – AL", "CNES: 222"],
+      linhas: ["UBSI ALDEIA", "PORTO REAL – AL"],
     });
   });
 
@@ -200,7 +162,7 @@ describe("popups e dicas sem texto de validação", () => {
     expect(textos(popupDaSede(dsei))).not.toMatch(TEXTO_DE_VALIDACAO);
     const [bolha] = bolhasDosDsei({ dseis: [dsei] });
     expect(textos(dicaDaBolha(bolha))).not.toMatch(TEXTO_DE_VALIDACAO);
-    const [casai] = casaisNacionais({ nac: redeCnes.nac });
+    const [casai] = casaisNacionais({ nac: casaisDoSigepsi });
     expect(textos(popupDaCasaiNacional(casai))).not.toMatch(TEXTO_DE_VALIDACAO);
     expect(textos(dicaDaCasaiNacional(casai))).not.toMatch(TEXTO_DE_VALIDACAO);
   });

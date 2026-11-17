@@ -1,9 +1,8 @@
 import type {
   ConfiguracaoDoMapa,
   DseiDoMapa,
-  EstabelecimentoCompacto,
+  CasaiNacionalCompacta,
   PoloDoMapa,
-  RedeCnesDoMapa,
   TerraDoMapa,
 } from "./tipos.ts";
 
@@ -78,8 +77,9 @@ export function configuracaoDoMapa(valor: unknown): ConfiguracaoDoMapa {
   return { ...valor, dsei };
 }
 
-function estabelecimentos(valor: unknown): EstabelecimentoCompacto[] {
-  return lista(valor).flatMap((item): EstabelecimentoCompacto[] => {
+/* As CASAIs nacionais do SIGEPSI, validadas: [nome, código, lat, lon, município, UF]. */
+export function casaisNacionaisDoMapa(valor: unknown): CasaiNacionalCompacta[] {
+  return lista(valor).flatMap((item): CasaiNacionalCompacta[] => {
     if (!Array.isArray(item) || typeof item[0] !== "string" || !item[0].trim())
       return [];
     const codigo =
@@ -99,23 +99,6 @@ function estabelecimentos(valor: unknown): EstabelecimentoCompacto[] {
       ],
     ];
   });
-}
-export function redeCnesDoMapa(valor: unknown): RedeCnesDoMapa {
-  const raiz = registro(valor) ? valor : {};
-  const rede = registro(raiz.rede) ? raiz.rede : {};
-  return {
-    rede: Object.fromEntries(
-      Object.entries(rede).map(([chave, valor]) => {
-        const distrito = registro(valor) ? valor : {};
-        return [
-          chave,
-          { u: estabelecimentos(distrito.u), c: estabelecimentos(distrito.c) },
-        ];
-      }),
-    ),
-    nac: estabelecimentos(raiz.nac),
-    ...(raiz.casais_do_sigepsi === true ? { casais_do_sigepsi: true } : {}),
-  };
 }
 export function terrasDoMapa(valor: unknown): TerraDoMapa[] {
   return lista(valor).flatMap((item): TerraDoMapa[] => {

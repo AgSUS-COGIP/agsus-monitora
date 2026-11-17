@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-10
+atualizado: 2026-11-17
 ---
 
 # Mapa da Saúde Indígena: TypeScript e fronteiras dos dados
@@ -35,27 +35,24 @@ com o [[modulo-mapa-de-projetos]].
 - `obterLeaflet` valida as fábricas essenciais e preserva o namespace original; contornos
   continuam opcionais. `tipos-do-leaflet.ts` declara a API mínima usada e verifica a presença dos
   métodos, sem alterá-lo; não valida os retornos internos do Leaflet nem substitui a API completa.
-- A conversão de UF, a reconciliação compartilhada, as guardas globais e o recuo de tiles
-  permanecem em JavaScript, com contratos JSDoc na integração.
-- A fronteira da reconciliação está em `src/lib/tipos-da-reconciliacao.ts`: mantém as chaves CNES
-  numéricas ou textuais e preserva os campos de apresentação ao unir estabelecimentos repetidos.
-  A anotação não valida o JavaScript internamente.
+- A conversão de UF, as guardas globais e o recuo de tiles permanecem em JavaScript, com contratos
+  JSDoc na integração.
 
-## Edição de coordenadas
+## SIGEPSI como fonte dos pontos
 
-- O adaptador do editor e as regras específicas de coordenadas estão em TypeScript. O catálogo
-  editável recebe dados externos como `unknown`, ignora entradas inválidas e preserva os índices,
-  nomes e códigos usados para conferir o alvo no banco. Posições vazias ou inválidas ficam nulas.
-- A edição recebe `lmap` e `rede_cnes` originais, sem compactação de listas, nas duas visões.
-- A tipagem não mudou contratos de RPC nem dados geográficos.
+- `src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts` transforma a resposta de `/api/dseis` em
+  DSEIs, sedes, polos, CASAIs, unidades e CASAIs nacionais (`casaisNacionais`); `localizacoes.ts`
+  (no módulo) faz o pedido. Do banco entram só nome, população e UFs administrativas do `lmap`.
+- Sem o SIGEPSI não há mapa: a Visão geral mostra o erro com "Tentar novamente", sem plano B.
+- Não há mais edição de coordenadas neste mapa (o editor comum é só de Projetos), nem `rede_cnes`
+  nem reconciliação com o CNES. A tipagem não mudou contratos de RPC.
 
 ## Testes
 
 - Ciclo de vida, StrictMode, legendas, Escape, foco, tela cheia e modo de edição: testes dos dois
   mapas.
-- Dados: `tests/dados-do-mapa-saude-indigena.test.js`. Interações:
-  `tests/modulos/mapa-saude-indigena.test.js`. Identidade da edição:
-  `tests/modulos/editor-de-coordenadas.test.js`.
+- Dados: `tests/dados-do-mapa-saude-indigena.test.js`, `tests/coordenadas-so-do-sigepsi.test.js` e
+  `tests/lib/localizacoes-do-sigepsi.test.ts`. Interações: `tests/modulos/mapa-saude-indigena.test.js`.
 - Contratos: `tests/tipos/mapa-saude-indigena.tsx`, `tests/tipos/base-dos-mapas.tsx`,
   `tests/tipos/regras-geograficas.tsx` e `tests/tipos/integracao-do-leaflet.tsx`.
 

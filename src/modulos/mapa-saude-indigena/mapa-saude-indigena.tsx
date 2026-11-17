@@ -3,8 +3,8 @@ import type {
   DseiDoMapa,
 } from "../../lib/mapa-saude-indigena/tipos.ts";
 import {
+  casaisNacionaisDoMapa,
   configuracaoDoMapa,
-  redeCnesDoMapa,
 } from "../../lib/mapa-saude-indigena/dados-do-mapa.ts";
 import { leafletDoMapa } from "./tipos-do-leaflet.ts";
 import { useCallback, useMemo, useRef } from "react";
@@ -38,13 +38,13 @@ import { usarEscParaVoltar, usarVoltaDoDsei } from "./volta-ao-brasil.ts";
   escolhido é controlado pelo pai: o clique pede (`aoEscolherDsei`) e o pai,
   que recorta a página pelo DSEI, devolve em `dseiSelecionado`.
 
-  Não busca dados: recebe o `lmap` e o `rede_cnes` (TB_CONFIG_MAPA_SAUDE_INDIG,
-  já com as Lotações) e os editais do recorte. Contrato em
-  docs/biblioteca/modulo-mapa-saude-indigena.md.
+  Não busca dados: recebe os DSEIs (`lmap`, já montado com o SIGEPSI por
+  `aplicarLocalizacoes`), as CASAIs nacionais do SIGEPSI e os editais do
+  recorte. Contrato em docs/biblioteca/modulo-mapa-saude-indigena.md.
 */
 export function MapaSaudeIndigena({
   lmap,
-  redeCnes,
+  casaisNacionais: casaisDoSigepsi,
   linhas = [],
   filtroAtivo = false,
   dseiSelecionado = null,
@@ -56,15 +56,15 @@ export function MapaSaudeIndigena({
   aoSairDoDsei,
   aoFiltrarPorBusca,
   aoEscolherUnidade,
-  perfil,
-  supabase,
-  aoAtualizarMapa,
 }: PropsDoMapaSaudeIndigena) {
   const escuroDoApp = usarTemaEscuro();
   const escuro = tema ? tema === "escuro" : escuroDoApp;
   const L = leafletDoMapa(obterLeaflet());
   const configuracao = useMemo(() => configuracaoDoMapa(lmap), [lmap]);
-  const rede = useMemo(() => redeCnesDoMapa(redeCnes), [redeCnes]);
+  const nac = useMemo(
+    () => casaisNacionaisDoMapa(casaisDoSigepsi),
+    [casaisDoSigepsi],
+  );
   const [telaCheia, botaoDeTelaCheia] = usarTelaCheia();
   const [recolhido, botaoDeRecolher] = usarMapaRecolhido();
   /*
@@ -104,8 +104,8 @@ export function MapaSaudeIndigena({
     [dseis, contagens, filtroAtivo],
   );
   const casais = useMemo(
-    () => casaisNacionais({ nac: rede.nac, contagens, filtroAtivo }),
-    [rede, contagens, filtroAtivo],
+    () => casaisNacionais({ nac, contagens, filtroAtivo }),
+    [nac, contagens, filtroAtivo],
   );
   const territorios = useMemo(() => territoriosPorVagas(bolhas), [bolhas]);
   const enquadramento = useMemo(
@@ -117,15 +117,15 @@ export function MapaSaudeIndigena({
     O resumo da dica conta o que o mapa do DSEI desenha (mesma função): fica
     guardado por DSEI até chegarem dados novos (11 ms para os 34, medido).
   */
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- `dseis` e `rede` só zeram o guardado quando chegam dados novos.
-  const resumos = useMemo(() => new Map<string, string[]>(), [dseis, rede]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- `dseis` só zera o guardado quando chegam dados novos.
+  const resumos = useMemo(() => new Map<string, string[]>(), [dseis]);
   const resumoDaRedeDoDsei = useCallback(
     (d: DseiDoMapa) => {
       if (!resumos.has(d.k))
-        resumos.set(d.k, resumoDaRede(d, registrosDoDsei(d, rede)));
+        resumos.set(d.k, resumoDaRede(d, registrosDoDsei(d)));
       return resumos.get(d.k) || [];
     },
-    [resumos, rede],
+    [resumos],
   );
 
   return (
@@ -141,11 +141,6 @@ export function MapaSaudeIndigena({
       role="region"
     >
       <MapaNacional
-        lmap={lmap}
-        redeCnes={redeCnes}
-        perfil={perfil}
-        supabase={supabase}
-        aoAtualizarMapa={aoAtualizarMapa}
         L={L}
         idDoMapa={idDoMapaNacional}
         visivel={!dsei}
@@ -163,15 +158,10 @@ export function MapaSaudeIndigena({
       />
       {dsei ? (
         <MapaDoDsei
-          lmap={lmap}
-          perfil={perfil}
-          supabase={supabase}
-          aoAtualizarMapa={aoAtualizarMapa}
           key={dsei.k}
           L={L}
           idDoMapa={idDoMapaDoDsei}
           dsei={dsei}
-          redeCnes={redeCnes}
           telaCheia={telaCheia}
           aoVoltarAoBrasil={voltarAoBrasil}
           aoEscolherUnidade={aoEscolherUnidade}
