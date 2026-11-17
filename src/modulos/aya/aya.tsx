@@ -49,8 +49,6 @@ import type {
   PointerEvent,
   RefObject,
 } from "react";
-import { comemorar } from "../../app/comemoracao-sob-demanda.ts";
-import { mensagemDoFimDoTour } from "../../lib/comemoracao.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { Icone } from "../../componentes/icone.tsx";
 import {
@@ -972,19 +970,6 @@ export function Aya({
     [navegar, abrirSecao],
   );
 
-  function celebrarFimDoTour(concluido: TourEmCurso | null): void {
-    if (!concluido) return;
-    const nome = String(concluido.rotulo || "").replace(/^(Tour|Trilha): /, "");
-    void comemorar({
-      texto: mensagemDoFimDoTour({ trilha: Boolean(concluido.trilha), nome }),
-      // Efeito e intensidade: Configurações › Comemorações (padrão: fogos;
-      // festa na trilha).
-      marco: concluido.trilha ? "fim-da-trilha" : "fim-do-tour",
-      // A trilha inteira ganha uma estrela no céu.
-      forma: concluido.trilha ? "estrela" : null,
-    });
-  }
-
   function comecarTour(novo: TourEmCurso): void {
     setOferta(false);
     setConvite(null);
@@ -1037,8 +1022,6 @@ export function Aya({
     (motivo: MotivoDoFimDoTour) => {
       if (tour?.trilha && motivo === "concluiu")
         setProgresso(concluirTrilha(janela, tour.trilha));
-      // Fim do tour com "Concluir": fogos; fim de uma trilha inteira: a festa.
-      if (motivo === "concluiu") celebrarFimDoTour(tour);
       devolverFocoAArara.current = true;
       setTour(null);
     },

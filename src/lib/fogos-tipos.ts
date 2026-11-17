@@ -25,7 +25,6 @@ export interface IntensidadeDoShow {
   /** A Aya volta para dançar no fim (e solta confete). */
   danca: boolean;
   /** O texto do marco escrito no céu no grande final. */
-  letreiro: boolean;
 }
 
 export type NomeDoFormato =
@@ -83,7 +82,7 @@ export interface PaletaDosFogos {
 }
 
 export type PapelDoEstouro =
-  "aya" | "comum" | "rajada" | "marco" | "letreiro" | "final" | "apoteose";
+  "aya" | "comum" | "rajada" | "marco" | "final" | "apoteose";
 
 /** Um foguete do roteiro. `formato` é um NomeDoFormato ou "marco". */
 export interface PlanoDoFoguete {
@@ -192,8 +191,6 @@ export interface ShowDeFogos {
   /** O confete da dança já saiu. */
   confeteSolto: boolean;
   pontos: PontoDaForma[];
-  /** O letreiro: o texto do marco escrito no céu. */
-  letreiro: PontoDaForma[];
   planos: PlanoDoFoguete[];
   proximo: number;
   foguetes: FogueteNoAr[];

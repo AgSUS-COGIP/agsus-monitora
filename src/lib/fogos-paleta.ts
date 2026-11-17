@@ -21,8 +21,8 @@ const VIVAS = ["#59f2c8", "#4fdcff", "#ff7a59", "#c38cff"];
 
 /*
   A cor de cada área (src/styles/barra-lateral.css, [data-cor-da-area]): o
-  token que o tema dá a ela. Os fogos puxam essa cor para a forma, o
-  letreiro e parte dos estouros.
+  token que o tema dá a ela. Os fogos puxam essa cor para a forma e
+  parte dos estouros.
 */
 export const TOKENS_DAS_AREAS: Readonly<Record<string, string>> = Object.freeze(
   {

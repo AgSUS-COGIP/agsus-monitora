@@ -66,13 +66,6 @@
     carga. Sem ranking acumulado e sem a contagem de quem ficou fora do
     pódio: o banco só manda os do pódio e os que chegaram ao mínimo do selo,
     e a tela só mostra medalhistas e selos.
-
-  COMEMORAÇÃO DA EQUIPE
-    Quando o selo do dia vira "Meta de hoje batida", a tela solta a
-    comemoração (marco "meta-do-dia" do catálogo, que respeita Configurações ›
-    Comemorações, a preferência pessoal e o prefers-reduced-motion) uma vez
-    por dia por pessoa: o dia fica guardado neste navegador
-    (`lerMetaComemorada`/`gravarMetaComemorada`).
 */
 
 import { quandoFoi } from "./texto-da-conferencia.ts";
@@ -891,45 +884,3 @@ export function gravarRitmoRecolhido(
     /* sem armazenamento: só não lembra */
   }
 }
-
-/* ── Comemoração da meta do dia (uma vez por dia, por pessoa) ───────── */
-
-const CHAVE_DA_META_COMEMORADA = "monitora.analises.meta-comemorada";
-const chaveDaMeta = (usuario: string | null | undefined) =>
-  `${CHAVE_DA_META_COMEMORADA}:${usuario || "anonimo"}`;
-
-/** O dia (AAAA-MM-DD) da última comemoração da meta desta pessoa; "" se nunca. */
-export function lerMetaComemorada(usuario: string | null | undefined): string {
-  try {
-    return globalThis.localStorage?.getItem(chaveDaMeta(usuario)) || "";
-  } catch {
-    return "";
-  }
-}
-
-export function gravarMetaComemorada(
-  usuario: string | null | undefined,
-  dia: string,
-): void {
-  try {
-    globalThis.localStorage?.setItem(chaveDaMeta(usuario), dia);
-  } catch {
-    /* sem armazenamento: pode repetir na próxima carga, sem prejuízo */
-  }
-}
-
-/** O edital cuja meta de hoje a equipe bateu (o primeiro), ou null. */
-export function metaDaEquipeBatida(
-  ritmos: readonly RitmoDoEdital[],
-): RitmoDoEdital | null {
-  return (
-    ritmos.find(
-      (r) =>
-        r.situacao !== "concluido" &&
-        r.dia.situacao === "batida" &&
-        r.dia.meta > 0,
-    ) ?? null
-  );
-}
-
-export const TEXTO_DA_META_BATIDA = "Meta de hoje batida! Obrigado, equipe.";

@@ -138,7 +138,7 @@ describe("tela de encerramento", () => {
     expect(comemorar).toHaveBeenCalledWith({
       marco: "edital-concluido",
       forma: "coracao",
-      texto: "Edital 114/2026 concluído! Obrigado, equipe.",
+      texto: "Edital 114/2026 concluído.",
     });
 
     await act(async () => clicar(t.querySelector(".encerramento-acoes .btn")));

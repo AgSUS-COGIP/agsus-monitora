@@ -175,7 +175,7 @@ const limitar = (valor: number, min: number, max: number): number =>
 /**
  * A cena de um efeito para uma tela. `intensidade`: suave, normal ou festa;
  * `duracaoMs`: 2–15 s (fogos: 4–15 s; vazio, a padrão de cada um);
- * `forma`, `letreiro`, `comAya` e `amostrarTexto` vão para os fogos
+ * `forma`, `comAya` e `amostrarTexto` vão para os fogos
  * (fogos.ts).
  */
 export function criarCena({
@@ -187,7 +187,6 @@ export function criarCena({
   paleta = paletaDosFogos(),
   aleatorio = Math.random,
   forma = null,
-  letreiro = null,
   comAya = true,
   amostrarTexto = null,
   limite = LIMITE_DO_MOTOR,
@@ -200,7 +199,6 @@ export function criarCena({
   paleta?: PaletaDosFogos;
   aleatorio?: Aleatorio;
   forma?: unknown;
-  letreiro?: string | null;
   comAya?: boolean;
   amostrarTexto?: AmostrarTexto | null;
   limite?: number;
@@ -225,7 +223,6 @@ export function criarCena({
         aleatorio,
         comAya: comAya !== false,
         forma,
-        letreiro,
         amostrarTexto,
         duracaoMs: pedida,
       })

@@ -62,7 +62,6 @@ export {
   FORMATOS_DO_FINAL,
   duracaoDoFormato,
   MARCO,
-  LETREIRO,
   RAJADA,
   APOTEOSE,
   criarAleatorio,

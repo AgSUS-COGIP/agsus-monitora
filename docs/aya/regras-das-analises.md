@@ -83,8 +83,8 @@ e `20260930234000_cache_sem_atropelo.sql` e `20261111150000_editais_de_analise_f
 
 ## Destaques de hoje (medalhas)
 
-**perguntas:** destaques de hoje | medalha | medalhas | ouro prata bronze | podio | quem mais concluiu hoje | selo precisao | alvo precisao | ficha reaberta | ranking dos avaliadores | comemoracao da meta | meta batida pela equipe
-**resposta:** No card "Ritmo da análise", "Destaques de hoje" mostra 🥇🥈🥉 para os três que mais concluíram fichas hoje (empate leva a mesma medalha) e o selo 🎯 Precisão para quem concluiu ao menos 10 fichas hoje sem nenhuma reaberta (reabrir uma ficha concluída hoje, pela coordenação ou pela própria pessoa, tira o selo do dia; reiniciar o edital não conta). Zera todo dia, à meia-noite de Brasília: não há ranking acumulado, e só aparecem os medalhistas e quem tem o selo. Quando a equipe bate a meta de hoje, cada pessoa vê uma comemoração uma vez por dia, se as comemorações estiverem ligadas (Configurações › Comemorações, "Meta de hoje batida pela equipe", e a sua preferência pessoal).
+**perguntas:** destaques de hoje | medalha | medalhas | ouro prata bronze | podio | quem mais concluiu hoje | selo precisao | alvo precisao | ficha reaberta | ranking dos avaliadores | meta batida pela equipe
+**resposta:** No card "Ritmo da análise", "Destaques de hoje" mostra 🥇🥈🥉 para os três que mais concluíram fichas hoje (empate leva a mesma medalha) e o selo 🎯 Precisão para quem concluiu ao menos 10 fichas hoje sem nenhuma reaberta (reabrir uma ficha concluída hoje, pela coordenação ou pela própria pessoa, tira o selo do dia; reiniciar o edital não conta). Zera todo dia, à meia-noite de Brasília: não há ranking acumulado, e só aparecem os medalhistas e quem tem o selo. Quando a equipe bate a meta de hoje, o selo do dia vira "Meta de hoje batida"; não há comemoração.
 **fonte:** src/lib/ritmo-da-analise.ts; supabase/migrations/20261021100000_medalhas_do_dia.sql
 **abrir:** analises
 

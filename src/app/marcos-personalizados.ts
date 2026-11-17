@@ -3,6 +3,7 @@ import {
   configuracaoDasComemoracoes,
   estadoDosPersonalizados,
   hojeComoChave,
+  maiorPersonalizado,
   mensagemDoPersonalizado,
   personalizadosAlcancados,
 } from "../lib/catalogo-de-comemoracoes.ts";
@@ -30,7 +31,8 @@ import type { SnapshotDoMonitoramento } from "../componentes/tipos-do-monitorame
   Mesma regra dos outros marcos (src/lib/comemoracao.ts): linha de base em
   silêncio na primeira leitura, comemora a TRANSIÇÃO vista por esta pessoa
   neste navegador, uma vez. Desligadas (Módulos e abas), o estado segue
-  guardado sem comemorar.
+  guardado sem comemorar. Só o aviso, sem efeito; vários alcançados na
+  mesma leitura (200, 300 e 400 análises no dia), só o maior.
 */
 
 export interface OpcoesDosMarcosPersonalizados {
@@ -55,7 +57,7 @@ export interface DependenciasDosMarcosDosEditais {
 
 /**
  * Avalia os personalizados de um `tipo` com `linhas`. Devolve os marcos
- * comemorados (o primeiro no aviso, os demais na lista) ou [].
+ * alcançados nesta leitura (o aviso diz só o maior) ou [].
  */
 export function avaliarMarcosPersonalizados({
   tipo,
@@ -88,13 +90,9 @@ export function avaliarMarcosPersonalizados({
       atual,
       personalizados,
     );
-    const [primeiro, ...demais] = alcancados;
-    if (!primeiro) return [];
-    void comemorar({
-      texto: mensagemDoPersonalizado(primeiro),
-      itens: demais.map(mensagemDoPersonalizado),
-      marco: primeiro.id,
-    });
+    const maior = maiorPersonalizado(alcancados);
+    if (!maior) return [];
+    void comemorar({ texto: mensagemDoPersonalizado(maior), marco: maior.id });
     return alcancados;
   } catch (erro) {
     // Comemoração nunca atrapalha a tela.

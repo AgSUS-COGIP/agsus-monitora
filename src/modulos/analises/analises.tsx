@@ -393,9 +393,6 @@ function TelaDaArea({
         editais={e.ritmo}
         linhas={e.carregado ? e.linhas : null}
         conferidoEm={e.conferidoEm}
-        {...(estado.comemoracoesLigadas
-          ? { ligadas: estado.comemoracoesLigadas }
-          : {})}
       />
       <LinhaDoRecorte
         texto={descricaoDoRecorte({
