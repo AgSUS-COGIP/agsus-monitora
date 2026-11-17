@@ -1,5 +1,5 @@
 /*
-  ROLLBACK de 20261117170000_tirar_do_banco_os_pontos_do_mapa_que_vem_do_sigepsi
+  ROLLBACK de 20261117180000_tirar_do_banco_os_pontos_do_mapa_que_vem_do_sigepsi
 
   Volta, das cópias *_backup_20261117_pre_sigepsi: o lmap inteiro, a linha rede_cnes e as
   pendências de coordenada (com os mesmos códigos). Para o mapa voltar a ler o banco, é preciso
@@ -17,7 +17,7 @@ update public."TB_CONFIG_MAPA_SAUDE_INDIG" m
  where m.chave = 'lmap' and b.chave = 'lmap_backup_20261117_pre_sigepsi';
 
 insert into public."TB_CONFIG_MAPA_SAUDE_INDIG" (chave, payload, descricao)
-select 'rede_cnes', b.payload, 'Rede CNES (volta do rollback de 20261117170000)'
+select 'rede_cnes', b.payload, 'Rede CNES (volta do rollback de 20261117180000)'
   from public."TB_CONFIG_MAPA_SAUDE_INDIG" b
  where b.chave = 'rede_cnes_backup_20261117_pre_sigepsi'
 on conflict (chave) do update set payload = excluded.payload, updated_at = now();
