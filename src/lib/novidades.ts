@@ -27,8 +27,7 @@ export const NOVIDADES: readonly Novidade[] = [
   {
     id: "2026-11-17-dseis-do-sigepsi",
     data: "2026-11-17",
-    texto:
-      "sedes, polos, CASAIs e unidades dos DSEIs atualizados pelo SIGEPSI no mapa",
+    texto: "DSEIs, sedes, polos, CASAIs e unidades do mapa vindos do SIGEPSI",
     visivel: true,
   },
   {
