@@ -1,7 +1,7 @@
 ---
 tipo: referencia
 area: operacao
-atualizado: 2026-11-10
+atualizado: 2026-11-17
 ---
 
 # Servidor web (`server/servidor.ts`)
@@ -64,3 +64,4 @@ Variáveis: `HOST` (padrão `127.0.0.1`; o container usa `0.0.0.0`), `PORT` (pad
 
 - [[comandos-e-ambiente]] — rodar na máquina
 - [[seguranca]] — cabeçalhos e o que não se serve
+- [[pwa-e-modo-offline]] — o que o service worker (`sw.js`) guarda e o que abre sem rede
