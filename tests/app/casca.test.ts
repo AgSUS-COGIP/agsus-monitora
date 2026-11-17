@@ -4,6 +4,11 @@ import { act } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { createElement } from "react";
 import { Casca } from "../../src/app/casca/casca.tsx";
+import { Topo } from "../../src/app/casca/topo.tsx";
+import { ContextoDoApp } from "../../src/app/contexto-do-app.ts";
+import { avisar } from "../../src/app/avisos.ts";
+import { ESTADO_INICIAL_DA_NAVEGACAO } from "../../src/app/navegacao.ts";
+import type { EstadoDaNavegacao } from "../../src/app/navegacao.ts";
 import { TELAS_DA_CASCA } from "../../src/app/telas.tsx";
 import { definido } from "../definido.ts";
 import { desenharNoTeste } from "../montar-tela.ts";
@@ -166,6 +171,62 @@ describe("Casca", () => {
   it("não tem onclick inline: as ações são do React", () => {
     montar();
     expect(document.querySelectorAll("#appScreen [onclick]")).toHaveLength(0);
+  });
+});
+
+describe("faixa do topo", () => {
+  /* O topo sozinho com uma navegação falsa parada na tela pedida. */
+  function topoNa(view: string, aviso: EstadoDaNavegacao["aviso"] = "") {
+    document.body.innerHTML = '<div id="raiz"></div>';
+    const estado: EstadoDaNavegacao = {
+      ...ESTADO_INICIAL_DA_NAVEGACAO,
+      view,
+      aviso,
+      titulo: "Título",
+    };
+    const navegacao = {
+      obter: () => estado,
+      assinar: () => () => {},
+      esquecerEditalEVisao: () => {},
+      abrirRegrasDoEdital: () => false,
+      fecharRegrasDoEdital: () => {},
+      irParaInicio: () => {},
+    };
+    casca = desenharNoTeste(
+      definido(document.getElementById("raiz")),
+      createElement(
+        ContextoDoApp.Provider,
+        { value: { navegacao, avisar, pecas: null } },
+        createElement(Topo),
+      ),
+      { sincrono: true },
+    );
+    return definido(document.querySelector("header.top"));
+  }
+
+  it("nas telas com título próprio fica compacta, com o título só para o leitor de tela", () => {
+    const topo = topoNa("classificacao");
+    expect(topo.hasAttribute("data-compacto")).toBe(true);
+    expect(topo.querySelector(".page-title")?.classList).toContain("sr-only");
+  });
+
+  it("nas outras telas (e com aviso no lugar da página) fica como sempre", () => {
+    expect(topoNa("dashboard").hasAttribute("data-compacto")).toBe(false);
+    act(() => casca?.desmontar());
+    expect(
+      topoNa("classificacao", "sem-acesso").hasAttribute("data-compacto"),
+    ).toBe(false);
+  });
+
+  it("o CSS compacto vale só fora do celular e tira o perfil do botão", () => {
+    const css = readFileSync("src/styles/app.css", "utf8");
+    const bloco = css.slice(
+      css.indexOf("@media (min-width: 901px) {\n  .top[data-compacto]"),
+    );
+    expect(bloco).toContain(
+      ".top[data-compacto] .top-user-compact-copy .user-profile-badge",
+    );
+    expect(bloco.slice(0, bloco.indexOf("\n}\n"))).toContain("display: none");
   });
 });
 

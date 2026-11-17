@@ -75,8 +75,8 @@ export function criarPerfil({
     const selo = $("userProfileBadge");
     if (selo && perfil?.perfil) {
       const rotulo = roleLabel(perfil);
+      // Mostrar ou não é do CSS (vazio some; na faixa compacta, só no menu).
       selo.textContent = rotulo;
-      selo.style.display = "inline-block";
       escrever("topUserPopoverProfile", rotulo);
     }
   }

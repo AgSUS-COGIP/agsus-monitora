@@ -904,6 +904,28 @@ body.external-clean #externalReturnBar {
   gap: 16px;
   padding: 12px 18px 12px 14px;
 }
+/*
+  Telas com título próprio (tituloNaTela): a faixa só tem a conta. Compacta,
+  com o avatar menor e o perfil só dentro do menu. No celular a faixa já é
+  uma linha só (com o ☰), por isso só a partir de 901px.
+*/
+@media (min-width: 901px) {
+  .top[data-compacto] {
+    padding-block: var(--space-1-5);
+  }
+  .top[data-compacto] .top-user-button {
+    min-height: var(--space-8);
+    padding-block: var(--space-0-5);
+  }
+  .top[data-compacto] .top-user-avatar {
+    width: var(--space-6);
+    height: var(--space-6);
+    flex-basis: var(--space-6);
+  }
+  .top[data-compacto] .top-user-compact-copy .user-profile-badge {
+    display: none;
+  }
+}
 .title-row {
   display: flex;
   gap: 12px;
