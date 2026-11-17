@@ -2050,10 +2050,17 @@ declare
   v_media numeric;
   v_nota numeric;
   v_minimo numeric;
+  -- MEDIA (16/11/2026): a média dos avaliadores arredondada em 2 casas antes do peso, a nota da
+  -- competência sem arredondar na soma e no mínimo, o total em 2 casas (como a planilha da banca).
+  v_pela_media boolean;
+  v_exata numeric;
 begin
   select * into v_e from public."TB_ENTREVISTA" where "CO_ENTREVISTA" = p_entrevista for update;
   if v_e."CO_ROTEIRO" is null then return; end if;
   select * into v_r from public."TB_ROTEIRO_ENTREVISTA" where "CO_ROTEIRO" = v_e."CO_ROTEIRO";
+  select coalesce(ee."TP_ARREDONDAMENTO", 'NOTA') = 'MEDIA' into v_pela_media
+    from public."TB_ENTREVISTA_EDITAL" ee where ee."CO_MONITORAMENTO" = v_e."CO_MONITORAMENTO";
+  v_pela_media := coalesce(v_pela_media, false);
   select count(*) into v_qt_aspectos from public."TB_ROTEIRO_ASPECTO" s where s."CO_ROTEIRO" = v_r."CO_ROTEIRO";
 
   -- A média é de quem lançou e avalia a competência; com aspectos, de quem lançou todos os aspectos.
@@ -2083,8 +2090,12 @@ begin
        where "CO_ENTREVISTA" = p_entrevista and "NU_ORDEM" = c.ord;
       continue;
     end if;
-    v_nota := round(v_media * c."VL_PESO", 2);
-    v_total := v_total + v_nota;
+    if v_pela_media then
+      v_media := round(v_media, 2);
+    end if;
+    v_exata := v_media * c."VL_PESO";
+    v_nota := round(v_exata, 2);
+    v_total := v_total + case when v_pela_media then v_exata else v_nota end;
     v_bruto := v_bruto + v_media * c."VL_PESO";
     insert into public."TB_ENTREVISTA_NOTA" ("CO_ENTREVISTA", "NU_ORDEM", "DS_CRITERIO", "VL_NOTA")
     values (p_entrevista, c.ord, left(c."NO_COMPETENCIA", 600), v_nota)
@@ -2092,7 +2103,7 @@ begin
     if c."VL_MINIMO" is not null then
       v_minimo := case when c."TP_MINIMO" = 'PERCENTUAL'
                        then c."VL_NOTA_MAXIMA" * c."VL_PESO" * c."VL_MINIMO" / 100.0 else c."VL_MINIMO" end;
-      if v_nota < v_minimo then v_reprova := true; end if;
+      if (case when v_pela_media then v_exata else v_nota end) < v_minimo then v_reprova := true; end if;
     end if;
     -- Notas eliminatórias são valores exatos (ex.: 0 e 1): só sem aspectos (com aspectos vale o mínimo).
     if v_qt_aspectos = 0 and exists (select 1 from jsonb_array_elements_text(v_r."DS_NOTAS_ELIMINATORIAS") x
@@ -31816,7 +31827,8 @@ begin
     'meu_perfil', v_eu,
     'configuracao', case when v_cfg."CO_MONITORAMENTO" is null then null else json_build_object(
         'roteiro', private."FC_ROTEIRO_JSON"(v_cfg."CO_ROTEIRO"), 'banca', v_cfg."DS_BANCA",
-        'lancamento', v_cfg."TP_LANCAMENTO", 'atualizado_em', v_cfg."DT_ATUALIZACAO") end,
+        'lancamento', v_cfg."TP_LANCAMENTO", 'atualizado_em', v_cfg."DT_ATUALIZACAO",
+        'arredondamento', coalesce(v_cfg."TP_ARREDONDAMENTO", 'NOTA')) end,
     'regra_classificacao', (
       select json_build_object('versao', r."NU_VERSAO_VIGENTE", 'convocacao', h."DS_CONFIGURACAO" -> 'convocacao',
                                'desempate', h."DS_CONFIGURACAO" -> 'desempate',
@@ -37444,6 +37456,14 @@ begin
   end if;
   if jsonb_typeof(v_f."DS_LANCAMENTO") is distinct from 'object' or jsonb_typeof(v_f."DS_RESULTADO") is distinct from 'object' then
     return jsonb_build_object('alterada', false, 'motivo', 'ficha sem lançamento ou resultado');
+  end if;
+  -- Importada da planilha (importar_avaliacao_da_planilha) e não reaberta depois: a análise foi
+  -- feita lá, a ficha não tem os itens marcados e não tem pendência a conferir (16/11/2026).
+  if jsonb_typeof(v_f."DS_LANCAMENTO" -> 'importada_da_planilha') = 'object'
+     and not exists (select 1 from public."TH_FICHA_ANALISE" h
+                      where h."CO_FICHA_ANALISE" = p_ficha and h."TP_ACAO" = 'REABRIR'
+                        and h."NU_VERSAO" > coalesce(public.jsonb_int_or_null(v_f."DS_LANCAMENTO" -> 'importada_da_planilha', 'versao'), 0)) then
+    return jsonb_build_object('alterada', false, 'motivo', 'ficha importada da planilha');
   end if;
   v_cargo := (select pv."NO_CARGO" from public."TB_PRE_CLASSIF_VAGA" pv
                where pv."CO_MONITORAMENTO" = v_f."CO_MONITORAMENTO" and pv."CO_VAGA" = v_f."CO_VAGA");
@@ -47720,7 +47740,9 @@ CREATE TABLE public."TB_ENTREVISTA_EDITAL" (
     "TP_LANCAMENTO" text DEFAULT 'SECRETARIA'::text NOT NULL,
     "DT_ATUALIZACAO" timestamp with time zone DEFAULT now() NOT NULL,
     "CO_USUARIO_ATUALIZACAO" uuid,
+    "TP_ARREDONDAMENTO" character varying(5) DEFAULT 'NOTA'::character varying NOT NULL,
     CONSTRAINT "CK_ENTREVISTAEDITAL_JSON" CHECK (((jsonb_typeof("DS_CONVOCACAO") = 'object'::text) AND (jsonb_typeof("DS_BANCA") = 'array'::text))),
+    CONSTRAINT "CK_ENTREVISTAEDITAL_TPARREDONDAMENTO" CHECK ((("TP_ARREDONDAMENTO")::text = ANY (ARRAY['NOTA'::text, 'MEDIA'::text]))),
     CONSTRAINT "CK_ENTREVISTAEDITAL_TPLANCAMENTO" CHECK (("TP_LANCAMENTO" = ANY (ARRAY['AVALIADOR'::text, 'SECRETARIA'::text])))
 );
 
@@ -47772,11 +47794,25 @@ COMMENT ON COLUMN public."TB_ENTREVISTA_EDITAL"."DT_ATUALIZACAO" IS 'Última alt
 
 COMMENT ON COLUMN public."TB_ENTREVISTA_EDITAL"."CO_USUARIO_ATUALIZACAO" IS 'Autor da última alteração.';
 
+
+--
+-- Name: COLUMN "TB_ENTREVISTA_EDITAL"."TP_ARREDONDAMENTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_ENTREVISTA_EDITAL"."TP_ARREDONDAMENTO" IS 'Como a nota da entrevista arredonda: NOTA (padrão) = cada competência (média × peso) em 2 casas e o total = soma; MEDIA = a média dos avaliadores em 2 casas antes do peso, a nota da competência sem arredondar na soma e no mínimo, o total em 2 casas (como a planilha da banca; 20261117020000).';
+
 --
 -- Name: CONSTRAINT "CK_ENTREVISTAEDITAL_JSON" ON "TB_ENTREVISTA_EDITAL"; Type: COMMENT; Schema: public; Owner: -
 --
 
 COMMENT ON CONSTRAINT "CK_ENTREVISTAEDITAL_JSON" ON public."TB_ENTREVISTA_EDITAL" IS 'Formatos json.';
+
+--
+-- Name: CONSTRAINT "CK_ENTREVISTAEDITAL_TPARREDONDAMENTO" ON "TB_ENTREVISTA_EDITAL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_ENTREVISTAEDITAL_TPARREDONDAMENTO" ON public."TB_ENTREVISTA_EDITAL" IS 'Modos de arredondamento.';
+
 
 --
 -- Name: CONSTRAINT "CK_ENTREVISTAEDITAL_TPLANCAMENTO" ON "TB_ENTREVISTA_EDITAL"; Type: COMMENT; Schema: public; Owner: -

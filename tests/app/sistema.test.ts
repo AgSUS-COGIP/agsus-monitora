@@ -29,7 +29,6 @@ describe("ligarSistema", () => {
       "monitoraToast",
       "monitoraLoader",
       "exitExternalPanel",
-      "exportPDF",
       "navigate",
       "refreshData",
       "reloadExternal",

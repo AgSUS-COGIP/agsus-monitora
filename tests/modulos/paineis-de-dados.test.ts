@@ -3,6 +3,8 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { criarPaineisDeDados } from "../../src/modulos/paineis-de-dados/paineis-de-dados.tsx";
+import type { ApoioDoRelatorio } from "../../src/modulos/paineis-de-dados/paineis-de-dados.tsx";
+import type { LinhaDaVisaoGeral } from "../../src/modulos/visao-geral/tipos.ts";
 import {
   MENSAGEM_SEM_PERMISSAO,
   MENSAGEM_SEM_PUBLICACAO,
@@ -129,7 +131,13 @@ const RESUMO: Resposta = {
   error: null,
 };
 
-async function montar(respostas: Record<string, Resposta> = {}) {
+/* O mesmo objeto a cada leitura (useSyncExternalStore). */
+const SEM_CONFIGURACOES = {};
+
+async function montar(
+  respostas: Record<string, Resposta> = {},
+  relatorio: Partial<ApoioDoRelatorio> = {},
+) {
   const supabase = supabaseFalso(respostas);
   const salvos: { arquivo: Blob; nome: string }[] = [];
   const tela = criarPaineisDeDados({
@@ -137,6 +145,17 @@ async function montar(respostas: Record<string, Resposta> = {}) {
     areaAtual: () => "saude-indigena",
     salvar: (arquivo, nome) => salvos.push({ arquivo, nome }),
     agora: () => new Date("2026-11-13T15:04:00Z"),
+    relatorio: {
+      linhasDaArea: () => [],
+      configuracoes: {
+        assinar: () => () => {},
+        obter: () => SEM_CONFIGURACOES,
+      },
+      obterPerfil: () => null,
+      agora: () => new Date("2026-11-13T15:04:00Z"),
+      supabase: null,
+      ...relatorio,
+    },
   });
   caixa = document.createElement("div");
   document.body.append(caixa);
@@ -786,5 +805,38 @@ describe("largura das colunas e origem dos dados", () => {
     expect(painel?.textContent).toContain(
       "Fonte trocada nesta área: Total de vagas imediatas → Quadro de vagas do edital › Vagas imediatas (soma do quadro)",
     );
+  });
+
+  it("Montar relatório (antes no menu da conta) abre o montador com a área inteira", async () => {
+    const linha = (id: string, edital: string): LinhaDaVisaoGeral => ({
+      id,
+      edital,
+      unidade: "DSEI Teste",
+      fase: "Concluído",
+      atencao: [],
+      pos_resultado: [],
+      desistentes: 0,
+      aprovados: null,
+      cadastro_reserva: null,
+      primeira_admissao: null,
+      ultima_admissao: null,
+      admissoes: 0,
+    });
+    const linhasDaArea = vi.fn(() => [
+      linha("e1", "01/2099"),
+      linha("e2", "02/2099"),
+    ]);
+    await montar({ "resumo-dos-editais": RESUMO }, { linhasDaArea });
+    expect(document.getElementById("visaoGeralRelatorio")).toBeNull();
+    await clicar(botao("Montar relatório"));
+    const janela = document.getElementById("visaoGeralRelatorio");
+    expect(janela?.textContent).toContain("2 processos da área");
+    expect(linhasDaArea).toHaveBeenCalledTimes(1);
+    await clicar(
+      [...(janela?.querySelectorAll("button") ?? [])].find(
+        (b) => b.textContent?.trim() === "Cancelar",
+      ),
+    );
+    expect(document.getElementById("visaoGeralRelatorio")).toBeNull();
   });
 });

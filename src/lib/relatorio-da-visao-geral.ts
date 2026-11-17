@@ -25,7 +25,9 @@ import {
   COLUNAS_INICIAIS,
   dataCurta,
   duracaoEmDias,
+  filtrosVazios,
   INDICADORES,
+  indicadoresDaVisaoGeral,
   resumoDoRelatorio,
   taxaDeOciosidade,
 } from "./visao-geral.ts";
@@ -246,6 +248,35 @@ export interface TabelaDoRelatorio {
   colunas: readonly { rotulo: string; direita: boolean; peso: number }[];
   linhas: readonly (readonly string[])[];
   vazio: string;
+}
+
+/*
+  O que o montador lê do recorte: as linhas (já enriquecidas), a área, os
+  filtros, a busca, o atalho e os indicadores. Na Visão geral é o recorte da
+  tela; nos Painéis, a área inteira (`recorteDaAreaInteira`).
+*/
+export interface RecorteDoRelatorio {
+  area: string;
+  filtradas: readonly LinhaDaVisaoGeral[];
+  filtros: Readonly<FiltrosDaVisaoGeral>;
+  busca: string;
+  atalho: Atalho;
+  indicadores: Indicadores;
+}
+
+/** Todos os editais da área, sem filtro, busca nem atalho (o montador nos Painéis). */
+export function recorteDaAreaInteira(
+  area: string,
+  linhas: readonly LinhaDaVisaoGeral[],
+): RecorteDoRelatorio {
+  return {
+    area,
+    filtradas: linhas,
+    filtros: filtrosVazios(),
+    busca: "",
+    atalho: "",
+    indicadores: indicadoresDaVisaoGeral(linhas),
+  };
 }
 
 /** As seções que a pessoa pode gerar: "Aprovados" só com acesso à Lista de aprovados. */

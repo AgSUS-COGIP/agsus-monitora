@@ -1341,3 +1341,27 @@ cuja data da fonte acompanha a última gravação das vagas na Seleção). Uns 5
   9.144 apagados (17,9 MB de dados), 2.048 ficam. O rollback não devolve os registros.
 - O espaço em disco só volta com `VACUUM FULL` de `TH_MONITORAMENTO`, à mão, fora do horário dos
   robôs (trava a tabela por segundos).
+- **`20261116235500_relatorios_dos_paineis_gravam_so_o_que_mudou.sql`**: o recálculo de hora em
+  hora de `TB_LINHA_RELATORIO_PAINEL` (34.731 linhas) deixou de apagar e regravar tudo; grava só a
+  posição que mudou (`fillfactor` 90). Ensaio: 0 linhas regravadas sem mudança; no primeiro
+  recálculo depois, 1.168 atualizadas.
+- As três migrations foram aplicadas em 16/11/2026 (18:41 UTC) e registradas em
+  `public.migracoes_aplicadas`; na aplicação, 9.144 registros saíram e 2.049 ficaram.
+
+**Compactação de 16/11/2026, 21h51 (Brasília).** Um comando por vez, com `lock_timeout` de 5 s,
+fora do horário dos robôs e dos crons. Cada trava durou de 1 a 16 s.
+
+| Relação                                                                                     | Antes        | Depois       |
+| ------------------------------------------------------------------------------------------- | ------------ | ------------ |
+| `VACUUM FULL` `TB_ANALISE_CURRICULAR`                                                       | 65,4 MB      | 46,6 MB      |
+| `VACUUM FULL` `TB_PRE_CLASSIFICACAO`                                                        | 20,1 MB      | 12,2 MB      |
+| `VACUUM FULL` `TB_EMPREGARE_CANDIDATO`                                                      | 37,1 MB      | 34,3 MB      |
+| `VACUUM FULL` `TH_MONITORAMENTO`                                                            | 27,3 MB      | 4,7 MB       |
+| `VACUUM FULL` `TB_LINHA_RELATORIO_PAINEL`                                                   | 40,5 MB      | 22,4 MB      |
+| `REINDEX INDEX CONCURRENTLY lista_aprovados_candidatos_lista_idx` (`TB_CANDIDATO_APROVADO`) | 43,6 MB      | 38,6 MB      |
+| **Banco (`pg_database_size`)**                                                              | **358,5 MB** | **283,5 MB** |
+
+Foram liberados 75 MB, e a folga até os 500 MB passou para uns 215 MB. Não ficou índice inválido.
+Daqui em diante, o histórico do edital só cresce com mudança de conteúdo, e os Painéis não geram
+mais 35 mil linhas mortas por hora. O crescimento passa a vir do dado novo (análises, Empregare,
+entrevistas). Meça de novo em uma semana com `pg_database_size` para saber o ritmo real.

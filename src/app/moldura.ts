@@ -7,14 +7,11 @@ import {
   assinarDadosDoMonitoramento,
   obterDadosDoMonitoramento,
 } from "../componentes/dados-do-monitoramento.ts";
-import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.ts";
 import { avisar as avisarPadrao } from "./avisos.ts";
-import { irParaTela } from "./ir-para-tela.ts";
 
 /*
   A moldura do app como store: a barra lateral recolhida (e aberta por cima
-  no celular), o tema claro/escuro e a tela cheia; e o "Montar relatório" do
-  menu da conta, que abre o montador da Visão geral. Sem DOM nas ações: elas
+  no celular), o tema claro/escuro e a tela cheia. Sem DOM nas ações: elas
   só mudam o estado.
 
   Quem leva o estado para a página é a casca (src/app/casca/pecas.tsx,
@@ -34,8 +31,9 @@ import { irParaTela } from "./ir-para-tela.ts";
   primeiro quadro (barra e tema da visita anterior).
 
   Contratos: `window.toggleSidebar`, `toggleDarkMode`, `toggleBrowserFullscreen`
-  e `exportPDF` (o "Montar relatório"; casca em src/app/casca/ e barra lateral React), publicados por
-  src/app/sistema.ts.
+  (casca em src/app/casca/ e barra lateral React), publicados por
+  src/app/sistema.ts. O "Montar relatório" saiu do menu da conta em
+  16/11/2026: fica no topo dos Painéis (src/modulos/paineis-de-dados/).
 */
 
 export const CHAVE_DA_BARRA_RECOLHIDA = "agsus_monitora_sidebar_collapsed_v1";
@@ -58,10 +56,6 @@ export interface OpcoesDaMoldura {
   armazenamento?: () => Storage | null | undefined;
   avisar?: (texto: string, tom?: string) => void;
   alvoDaTelaCheia?: () => Element | null | undefined;
-  /** A Visão geral está aberta? (o montador abre nela) */
-  naVisaoGeral?: () => boolean;
-  irParaVisaoGeral?: () => unknown;
-  abrirMontador?: () => void;
   areaAtual?: () => string;
 }
 
@@ -102,9 +96,6 @@ export function criarMoldura({
   armazenamento = () => globalThis.localStorage,
   avisar = avisarPadrao,
   alvoDaTelaCheia = () => null,
-  naVisaoGeral = () => estadoDaVisaoGeral.obter().aberta,
-  irParaVisaoGeral = () => irParaTela({ view: "dashboard" }),
-  abrirMontador = () => estadoDaVisaoGeral.abrirMontador(),
   areaAtual = () => obterDadosDoMonitoramento().areaAtual,
 }: OpcoesDaMoldura = {}) {
   // O que o primeiro quadro (index.html) já pintou.
@@ -238,18 +229,6 @@ export function criarMoldura({
     if (estado.telaCheiaDoApp) telaCheiaDoApp(false);
   }
 
-  // ── Relatório (o montador da Visão geral) ──────────────────────────────
-
-  /*
-    "Montar relatório" no menu da conta (13/11/2026): abre o montador da Visão
-    geral (src/modulos/visao-geral/montador-de-relatorio.tsx), indo para ela
-    se a pessoa está em outra tela. Antes, imprimia a tela inteira.
-  */
-  function montarRelatorio() {
-    if (!naVisaoGeral()) irParaVisaoGeral();
-    abrirMontador();
-  }
-
   // ── A página ──────────────────────────────────────────────────────────
 
   /**
@@ -322,7 +301,6 @@ export function criarMoldura({
     aplicarTemaGuardado,
     alternarTelaCheia,
     sairDaTelaCheia,
-    montarRelatorio,
   };
 }
 

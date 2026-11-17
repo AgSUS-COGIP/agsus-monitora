@@ -226,7 +226,7 @@ export type EstadoProprio = {
   aberta: boolean;
   /** Já foi aberta nesta visita: até lá a tela não monta mapas nem marcos. */
   visitada: boolean;
-  /** O montador de relatório está aberto (botão Exportar ou menu da conta). */
+  /** O montador de relatório está aberto (botão Exportar). */
   montador: boolean;
 };
 export type SnapshotDaVisaoGeral = Readonly<
