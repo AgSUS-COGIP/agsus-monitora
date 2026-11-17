@@ -7,9 +7,10 @@ import { describe, expect, it } from "vitest";
   Migration 20261110203000: em get_selecao_da_area, quem foi contratado pela
   outra linha do edital (ampla × cota) contava duas vezes em Aprovados e uma
   em Não contratados (auditoria dos cálculos de 10/11/2026). O teste confere o
-  trio sem banco: o corpo da migration é o do ensaio; o do rollback é o
-  retrato de produção (supabase/esquema-atual.sql); as guardas usam os md5
-  certos; e só as duas contagens de "total" mudaram.
+  trio sem banco: o corpo da migration é o do ensaio e, desde que foi
+  aplicada, o do retrato de produção (supabase/esquema-atual.sql); o do
+  rollback é o de antes (md5 conferido contra o retrato até a aplicação); as
+  guardas usam os md5 certos; e só as duas contagens de "total" mudaram.
 */
 
 const RAIZ = path.resolve(import.meta.dirname, "..");
@@ -44,11 +45,12 @@ const corpoDoRetrato = corpo(
 );
 const corpoNovo = corpo(migration);
 const DEPOIS = md5(corpoNovo);
+const corpoDeAntes = corpo(rollback);
 
 describe("migration 20261110203000 (Seleção conta uma vez quem está em outra lista)", () => {
-  it("o rollback volta ao corpo do retrato de produção", () => {
-    expect(md5(corpoDoRetrato)).toBe(ANTES);
-    expect(corpo(rollback)).toBe(corpoDoRetrato);
+  it("aplicada: o retrato de produção tem o corpo da migration; o rollback, o de antes", () => {
+    expect(corpoDoRetrato).toBe(corpoNovo);
+    expect(md5(corpoDeAntes)).toBe(ANTES);
   });
 
   it("o ensaio aplica exatamente o corpo da migration", () => {
@@ -82,7 +84,7 @@ describe("migration 20261110203000 (Seleção conta uma vez quem está em outra 
           ),
       )
       .join("\n");
-    const semAsAntigas = corpoDoRetrato
+    const semAsAntigas = corpoDeAntes
       .split("\n")
       .filter((linha) => linha.trim() !== "count(*)::integer as total,")
       .join("\n");

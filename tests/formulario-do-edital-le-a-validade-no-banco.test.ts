@@ -6,9 +6,10 @@ import { describe, expect, it } from "vitest";
 /*
   Migration 20261111200000 (cartão #57): get_monitoramento_cronograma passa a
   devolver a validade do processo seletivo no objeto 'monitoramento'. O teste
-  confere o trio sem banco: o corpo da migration é o do ensaio; o do rollback é
-  o retrato de produção (supabase/esquema-atual.sql); as guardas usam os md5
-  certos; e só entraram as três chaves.
+  confere o trio sem banco: o corpo da migration é o do ensaio e, desde que
+  foi aplicada, o do retrato de produção (supabase/esquema-atual.sql); o do
+  rollback é o de antes (md5 conferido contra o retrato até a aplicação); as
+  guardas usam os md5 certos; e só entraram as três chaves.
 */
 
 const RAIZ = path.resolve(import.meta.dirname, "..");
@@ -42,6 +43,7 @@ const corpoDoRetrato = corpo(
 );
 const corpoNovo = corpo(migration);
 const DEPOIS = md5(corpoNovo);
+const corpoDeAntes = corpo(rollback);
 
 const LINHAS_NOVAS = [
   "        'cronograma_ultima_errata', m.cronograma_ultima_errata,",
@@ -52,14 +54,14 @@ const LINHAS_NOVAS = [
 ];
 
 describe("migration 20261111200000 (formulário do edital lê a validade)", () => {
-  it("o rollback volta ao corpo do retrato de produção, sem COMMENT", () => {
-    expect(md5(corpoDoRetrato)).toBe(ANTES);
-    expect(corpo(rollback)).toBe(corpoDoRetrato);
+  it("aplicada: o retrato tem o corpo e o COMMENT da migration; o rollback volta ao de antes, sem COMMENT", () => {
+    expect(corpoDoRetrato).toBe(corpoNovo);
+    expect(retrato).toMatch(
+      /COMMENT ON FUNCTION public\.get_monitoramento_cronograma\(p_monitoramento_id uuid\) IS 'Leitura do formulário do edital/,
+    );
+    expect(md5(corpoDeAntes)).toBe(ANTES);
     expect(rollback).toContain(
       "comment on function public.get_monitoramento_cronograma(uuid) is null;",
-    );
-    expect(retrato).not.toMatch(
-      /COMMENT ON FUNCTION public\.get_monitoramento_cronograma\(p_monitoramento_id uuid\)/,
     );
   });
 
@@ -81,7 +83,7 @@ describe("migration 20261111200000 (formulário do edital lê a validade)", () =
     const semAsNovas = linhas
       .filter((linha) => !LINHAS_NOVAS.includes(linha))
       .join("\n");
-    const semAAntiga = corpoDoRetrato
+    const semAAntiga = corpoDeAntes
       .split("\n")
       .filter(
         (linha) =>

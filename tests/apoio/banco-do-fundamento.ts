@@ -2,12 +2,14 @@
   Banco de teste do fundamento conferido da eliminação (migration 20261110215930,
   issue #593), num Postgres de verdade (PGlite).
 
-  O que é de verdade, copiado letra por letra do retrato de produção
-  (supabase/esquema-atual.sql): a sessão e os papéis — private.is_master,
+  O que é de verdade, copiado letra por letra do retrato de produção de antes
+  da aplicação (tests/fixtures/banco-antes-do-fundamento-da-eliminacao.sql: a
+  migration já está aplicada e o retrato atual tem os corpos de depois): a
+  sessão e os papéis — private.is_master,
   private.current_profile, private."FC_GESTOR_DO_EDITAL" (gestor OU coordenador),
   private."FC_PAPEL_AVALIACAO", private."FC_EXIGIR_COORD_AVALIACAO" — e
   private."FC_MOTIVO_COM_SENTIDO" e public.conferir_eliminados_pre_classificacao de
-  hoje (a guarda md5 da migration confere que são os mesmos do retrato).
+  antes (a guarda md5 da migration confere que são esses).
 
   O que é imitação: auth.uid()/auth.jwt() leem request.jwt.claims, como no Supabase;
   o nível de cada pessoa na Avaliação documental e se ela vê o edital vêm de
@@ -26,7 +28,9 @@ const ler = (caminho: string) =>
 export const MIGRATION = ler(`supabase/migrations/${NOME_DA_MIGRATION}`);
 export const ROLLBACK = ler(`supabase/rollback/${NOME_DA_MIGRATION}`);
 export const ENSAIO = ler(`supabase/ensaios/${NOME_DA_MIGRATION}`);
-const RETRATO = ler("supabase/esquema-atual.sql");
+const RETRATO = ler(
+  "tests/fixtures/banco-antes-do-fundamento-da-eliminacao.sql",
+);
 
 /** A definição de uma função no retrato, do CREATE até o "$$;" (executável). */
 export function funcaoDoRetrato(cabecalho: string): string {
