@@ -53,7 +53,7 @@ export function carregarLocalizacoes(
       });
       if (!resposta.ok) {
         console.warn(
-          `SIGEPSI indisponível (${resposta.status}); o mapa usa os dados do banco.`,
+          `SIGEPSI indisponível (${resposta.status}); o mapa mostra o erro.`,
         );
         return null;
       }

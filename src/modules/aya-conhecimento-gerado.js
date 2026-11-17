@@ -5621,7 +5621,7 @@ export const VERBETES_AYA = Object.freeze([
       "unidade fora da area do dsei",
     ],
     resposta:
-      'No Yeendé, a UF de cada unidade vem do SIGEPSI (pelo CEP do ponto); quando ela não está entre as UFs de abrangência do DSEI, a unidade fica no lugar verdadeiro com um anel tracejado e uma linha pontilhada até a sede. A linha é vínculo administrativo, não trajeto. O mapa abre enquadrando só o território; "Mostrar vínculos externos" amplia para incluir essas unidades. Unidade sem UF no SIGEPSI não é tratada como externa.',
+      'No Yeendé, a UF de cada unidade vem do SIGEPSI (pelo CEP do ponto); quando ela não está entre as UFs de abrangência do DSEI, a unidade fica no lugar verdadeiro com um anel tracejado e uma linha pontilhada até a sede. A linha é vínculo administrativo, não trajeto. O mapa abre enquadrando só o território; "Mostrar vínculos externos" amplia para incluir essas unidades. Unidade sem UF no SIGEPSI (sem CEP) não é tratada como externa nem herda a UF da sede: a dica avisa que o vínculo não foi classificado.',
     fato: "",
     fonte: "interface do Yeendé",
   },

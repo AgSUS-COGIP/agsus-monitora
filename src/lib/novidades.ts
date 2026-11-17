@@ -28,7 +28,7 @@ export const NOVIDADES: readonly Novidade[] = [
     id: "2026-11-17-editais-ordem-e-aviso-das-listas",
     data: "2026-11-17",
     texto:
-      "editais em ordem cronológica, ordenação por coluna e aviso de edital sem aprovados",
+      "editais em ordem cronológica, colunas ordenáveis e aviso de edital sem aprovados",
     visivel: true,
   },
   {
