@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-16
+atualizado: 2026-11-17
 ---
 
 # Módulo: Visão geral
@@ -16,13 +16,35 @@ dentro do ErrorBoundary da tela. O bootstrap, a navegação e a carga do monitor
 - `estado.ts`: recorte por área, filtros, busca, DSEI, atalhos, colunas, ordenação, exportação e
   acompanhamento dos editais. Não importa React.
 - `visao-geral.tsx`: composição da tela e integração com os mapas.
-- `paineis.tsx`, `tabela.tsx` e `gaveta.tsx`: filtros, indicadores, fases, pós-resultado,
+- `paineis.tsx`, `tabela.tsx` e `gaveta.tsx`: cabeçalho, filtros, vagas, pede ação, em andamento,
   processos por projeto, tabela e detalhes.
-- `boas-vindas.tsx` e `marcos.ts`: saudação, etapas da semana e marcos anuais da equipe.
+- `boas-vindas.tsx` e `marcos.ts`: os marcos anuais da equipe (só a comemoração, sem card).
 - `tipos.ts`: contratos do estado, callbacks, dados de leitura e componentes.
 - `src/lib/visao-geral.ts`: normalização, enriquecimento, recorte, ordenação e CSV.
 - Filtros do mapa e da tabela: lógica pura em `src/lib/filtros-do-mapa.ts`; o estado fica aqui;
   o evento é `agsus:filtros-alterados`.
+
+## Layout: painel de decisão (17/11/2026)
+
+Escolhido entre três prévias (A, painel de decisão; B, mapa em primeiro plano; C, semana de
+trabalho). De cima para baixo:
+
+- **Cabeçalho** (`Cabecalho`): saudação e "N editais têm etapa nos próximos 7 dias · Ver
+  cronograma" à esquerda; hora da carga, "Filtros (n)", Atualizar e Exportar à direita. Substituiu
+  o card de boas-vindas, o topo separado e o card "Filtros" quase vazio.
+- **Filtros** (`Filtros`): os campos abrem pelo botão; os chips do recorte e "Limpar tudo" ficam à
+  vista com o painel fechado.
+- **Vagas** (`Vagas`, `.visao-geral-kpis`): as imediatas e as três parcelas, com a porcentagem e a
+  barra da divisão; cadastro reserva e inscritos embaixo. Esperam o acompanhamento
+  (`aguardandoVagas` no estado, até `ESPERA_MAXIMA_DO_ACOMPANHAMENTO_MS`): antes, a tela mostrava
+  as vagas sem o desconto das reabertas e trocava segundos depois.
+- **Pede ação** (`PedeAcao`) ao lado de **Em andamento, por fase** (`EmAndamento`,
+  `andamentoPorFase` em `src/lib/visao-geral.ts`): críticos e pós-resultado numa lista; só as fases
+  com edital aberto, sem as vazias, e concluídos e cancelados numa linha.
+- **Mapa** mais baixo que na tela do mapa (`--altura-do-mapa-na-visao-geral`), com a altura
+  reservada enquanto o módulo baixa (`.visao-geral-mapa-reserva`).
+- **Tabela**: a contagem não repete o total; no celular, o cartão mostra só unidade, edital,
+  vagas, inscritos, contratados, sem contratação, status e atenção (`data-campo` nas células).
 
 ## Dados e carregamento
 
