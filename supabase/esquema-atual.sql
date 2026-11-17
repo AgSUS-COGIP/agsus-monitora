@@ -8457,6 +8457,31 @@ $$;
 COMMENT ON FUNCTION private."FC_MOTIVO_REABERTURA"(p_codigo text) IS 'Rótulo do motivo de reabertura da ficha pelo código (lista fixa, 20261021110000), ou null fora da lista. Os mesmos de MOTIVOS_DA_REABERTURA (src/lib/avaliacao-documental/motivos-da-reabertura.ts).';
 
 --
+-- Name: FC_MOTIVO_REABERTURA_ENTREVISTA(text); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_MOTIVO_REABERTURA_ENTREVISTA"(p_motivo text) RETURNS text
+    LANGUAGE sql IMMUTABLE
+    SET search_path TO ''
+    AS $$
+  select case p_motivo
+    when 'NOTA' then 'Correção de nota'
+    when 'COMPARECIMENTO' then 'Correção do comparecimento'
+    when 'BANCA' then 'Correção da banca ou dos avaliadores'
+    when 'JUSTIFICATIVA' then 'Correção da justificativa da banca'
+    when 'RECURSO' then 'Recurso deferido'
+    when 'OUTRO' then 'Outro'
+  end;
+$$;
+
+
+--
+-- Name: FUNCTION "FC_MOTIVO_REABERTURA_ENTREVISTA"(p_motivo text); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_MOTIVO_REABERTURA_ENTREVISTA"(p_motivo text) IS 'Rótulo do motivo de reabertura da entrevista (lista fixa; nulo = código inválido). Mesma lista em src/lib/reabertura-da-entrevista.ts (20261117050000).';
+
+--
 -- Name: FC_MOTIVO_RECUSA_SOLICITACAO(text); Type: FUNCTION; Schema: private; Owner: -
 --
 
@@ -20250,6 +20275,50 @@ $$;
 COMMENT ON FUNCTION public.concluir_demanda_interna(p_id uuid, p_concluida boolean) IS 'Conclui (true) ou reabre (false) uma demanda interna, com quem e quando. Gestor da área ou administrador global; grava TH_DEMANDA_INTERNA. 20261104120000.';
 
 --
+-- Name: concluir_entrevista(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.concluir_entrevista(p_entrevista uuid) RETURNS json
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+  v_e public."TB_ENTREVISTA";
+begin
+  select * into v_e from public."TB_ENTREVISTA"
+   where "CO_ENTREVISTA" = p_entrevista and "TP_ORIGEM" = 'sistema' and "ST_ATIVO" = 'S'
+   for update;
+  if v_e."CO_ENTREVISTA" is null then raise exception 'Convocado não encontrado' using errcode = '22023'; end if;
+  perform private."FC_EXIGIR_ENTREVISTAS_EDITAL"(v_e."CO_MONITORAMENTO", 2);
+  if v_e."DT_CONCLUSAO" is not null then
+    raise exception 'Esta entrevista já está concluída.' using errcode = '55000';
+  end if;
+  if v_e."ST_COMPARECEU" is null then
+    raise exception 'Informe o comparecimento antes de concluir.' using errcode = '23514';
+  end if;
+  if v_e."ST_COMPARECEU" = 'S' and v_e."TP_PARECER" = 'SEM_PARECER' then
+    raise exception 'Lance todas as notas antes de concluir.' using errcode = '23514';
+  end if;
+  if (v_e."TP_PARECER" = 'INAPTO' or v_e."ST_COMPARECEU" = 'N') and v_e."DS_JUSTIFICATIVA_BANCA" is null then
+    raise exception 'Escreva a justificativa da banca antes de concluir.' using errcode = '23514';
+  end if;
+  update public."TB_ENTREVISTA"
+     set "DT_CONCLUSAO" = now(), "CO_USUARIO_CONCLUSAO" = (select auth.uid()), "DT_ATUALIZACAO" = now()
+   where "CO_ENTREVISTA" = p_entrevista;
+  insert into public."TH_ENTREVISTA_AVALIACAO" ("CO_ENTREVISTA", "DS_CAMPO", "DS_VALOR_ANTERIOR", "DS_VALOR_NOVO", "CO_USUARIO")
+  values (p_entrevista, 'conclusao', 'aberta', 'concluída', (select auth.uid()));
+  return public.obter_entrevistas_do_edital(v_e."CO_MONITORAMENTO");
+end;
+$$;
+
+
+--
+-- Name: FUNCTION concluir_entrevista(p_entrevista uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.concluir_entrevista(p_entrevista uuid) IS 'Conclui a entrevista (só leitura até reabrir): entrevistas >= editor; exige o comparecimento, com presença todas as notas (parecer calculado) e, em Inapto ou falta, a justificativa da banca. Devolve obter_entrevistas_do_edital (20261117050000).';
+
+--
 -- Name: concluir_ficha(uuid, integer, integer, jsonb, jsonb, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -26774,6 +26843,11 @@ declare
 begin
   select * into v_e from public."TB_ENTREVISTA" where "CO_ENTREVISTA" = p_entrevista and "TP_ORIGEM" = 'sistema' and "ST_ATIVO" = 'S';
   if v_e."CO_ENTREVISTA" is null then raise exception 'Convocado não encontrado' using errcode = '22023'; end if;
+  -- Concluída (concluir_entrevista, 17/11/2026): só leitura até a coordenação reabrir.
+  if v_e."DT_CONCLUSAO" is not null then
+    raise exception 'Entrevista concluída: só leitura. Para mudar, a coordenação do edital reabre a ficha.'
+      using errcode = '55000';
+  end if;
   perform private."FC_EXIGIR_ENTREVISTAS_EDITAL"(v_e."CO_MONITORAMENTO", 2);
   select * into v_cfg from public."TB_ENTREVISTA_EDITAL" where "CO_MONITORAMENTO" = v_e."CO_MONITORAMENTO";
   select * into v_r from public."TB_ROTEIRO_ENTREVISTA" where "CO_ROTEIRO" = v_e."CO_ROTEIRO";
@@ -31824,6 +31898,9 @@ begin
     'pode_editar', private.pode_recurso('entrevistas', 2),
     'pode_gerar_lista', private.pode_recurso('classificacao', 2),
     'admin_global', private.is_master(),
+    -- Reabrir a entrevista concluída: a coordenação do edital (como na Avaliação documental).
+    'pode_reabrir', private.pode_recurso('entrevistas', 2)
+                    and coalesce(private."FC_PAPEL_AVALIACAO"(p_edital) = 'COORDENADOR', false),
     'meu_perfil', v_eu,
     'configuracao', case when v_cfg."CO_MONITORAMENTO" is null then null else json_build_object(
         'roteiro', private."FC_ROTEIRO_JSON"(v_cfg."CO_ROTEIRO"), 'banca', v_cfg."DS_BANCA",
@@ -31857,6 +31934,9 @@ begin
                'modalidade', e."DS_MODALIDADE", 'banca', e."NU_BANCA", 'compareceu', e."ST_COMPARECEU",
                'nota', e."VL_NOTA_TOTAL", 'parecer', e."TP_PARECER", 'nota_analise', a.nota_final_ajustada,
                'justificativa', e."DS_JUSTIFICATIVA_BANCA",
+               'concluida_em', e."DT_CONCLUSAO",
+               'concluida_por', (select coalesce(nullif(btrim(u.nome), ''), u.email) from public."TB_PERFIL_USUARIO" u
+                                  where e."CO_USUARIO_CONCLUSAO" is not null and u.user_id = e."CO_USUARIO_CONCLUSAO" limit 1),
                'observacoes', coalesce((select json_agg(json_build_object('avaliador', o."CO_AVALIADOR", 'texto', o."DS_OBSERVACAO",
                       'atualizado_em', o."DT_ATUALIZACAO") order by o."DT_ATUALIZACAO")
                    from public."TB_ENTREVISTA_OBSERVACAO_AVALIADOR" o where o."CO_ENTREVISTA" = e."CO_ENTREVISTA"), '[]'::json),
@@ -35381,6 +35461,59 @@ $$;
 --
 
 COMMENT ON FUNCTION public.publicar_lista_classificacao(p_lista uuid) IS 'Marca uma lista gerada como publicada (quem e quando). Lista com empate pendente não publica (22023). Exige classificacao >= editor no edital da lista.';
+
+--
+-- Name: reabrir_entrevista(uuid, text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.reabrir_entrevista(p_entrevista uuid, p_motivo text, p_complemento text DEFAULT NULL::text) RETURNS json
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+  v_e public."TB_ENTREVISTA";
+  v_rotulo text := private."FC_MOTIVO_REABERTURA_ENTREVISTA"(p_motivo);
+  v_complemento text := nullif(btrim(coalesce(p_complemento, '')), '');
+begin
+  select * into v_e from public."TB_ENTREVISTA"
+   where "CO_ENTREVISTA" = p_entrevista and "TP_ORIGEM" = 'sistema' and "ST_ATIVO" = 'S'
+   for update;
+  if v_e."CO_ENTREVISTA" is null then raise exception 'Convocado não encontrado' using errcode = '22023'; end if;
+  perform private."FC_EXIGIR_ENTREVISTAS_EDITAL"(v_e."CO_MONITORAMENTO", 2);
+  if private."FC_PAPEL_AVALIACAO"(v_e."CO_MONITORAMENTO") is distinct from 'COORDENADOR' then
+    raise exception 'Só a coordenação do edital reabre a entrevista concluída.' using errcode = '42501';
+  end if;
+  if v_e."DT_CONCLUSAO" is null then
+    raise exception 'Esta entrevista não está concluída.' using errcode = '55000';
+  end if;
+  if v_rotulo is null then
+    raise exception 'Escolha o motivo da reabertura na lista. Se a lista não aparece, recarregue a página.' using errcode = '22023';
+  end if;
+  if length(coalesce(v_complemento, '')) > 500 then
+    raise exception 'Complemento com até 500 caracteres.' using errcode = '22023';
+  end if;
+  if p_motivo = 'OUTRO' and (length(coalesce(v_complemento, '')) < 15
+       or coalesce(array_length(regexp_split_to_array(v_complemento, '\s+'), 1), 0) < 3) then
+    raise exception 'Em "Outro", descreva o motivo com pelo menos 15 caracteres e 3 palavras.' using errcode = '22023';
+  end if;
+  update public."TB_ENTREVISTA"
+     set "DT_CONCLUSAO" = null, "CO_USUARIO_CONCLUSAO" = null, "DT_ATUALIZACAO" = now()
+   where "CO_ENTREVISTA" = p_entrevista;
+  insert into public."TH_ENTREVISTA_AVALIACAO" ("CO_ENTREVISTA", "DS_CAMPO", "DS_VALOR_ANTERIOR", "DS_VALOR_NOVO", "CO_USUARIO")
+  values (p_entrevista, 'reabertura',
+          'concluída em ' || to_char(v_e."DT_CONCLUSAO" at time zone 'America/Sao_Paulo', 'DD/MM/YYYY HH24:MI'),
+          left(v_rotulo || coalesce(' — ' || v_complemento, ''), 2000),
+          (select auth.uid()));
+  return public.obter_entrevistas_do_edital(v_e."CO_MONITORAMENTO");
+end;
+$$;
+
+
+--
+-- Name: FUNCTION reabrir_entrevista(p_entrevista uuid, p_motivo text, p_complemento text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.reabrir_entrevista(p_entrevista uuid, p_motivo text, p_complemento text) IS 'Reabre a entrevista concluída: só a coordenação do edital (FC_PAPEL_AVALIACAO = COORDENADOR); motivo da lista (FC_MOTIVO_REABERTURA_ENTREVISTA), complemento opcional até 500 e, em OUTRO, a descrição (15 caracteres e 3 palavras). Histórico em TH_ENTREVISTA_AVALIACAO. Devolve obter_entrevistas_do_edital (20261117050000).';
 
 --
 -- Name: reabrir_ficha(uuid, integer, text, text); Type: FUNCTION; Schema: public; Owner: -
@@ -47266,6 +47399,9 @@ CREATE TABLE public."TB_ENTREVISTA" (
     "CO_ROTEIRO" uuid,
     "NU_BANCA" smallint,
     "DS_JUSTIFICATIVA_BANCA" text,
+    "DT_CONCLUSAO" timestamp with time zone,
+    "CO_USUARIO_CONCLUSAO" uuid,
+    CONSTRAINT "CK_ENTREVISTA_CONCLUSAO" CHECK ((("DT_CONCLUSAO" IS NOT NULL) OR ("CO_USUARIO_CONCLUSAO" IS NULL))),
     CONSTRAINT "CK_ENTREVISTA_DSJUSTIFICATIVABANCA" CHECK ((COALESCE(length("DS_JUSTIFICATIVA_BANCA"), 0) <= 4000)),
     CONSTRAINT "CK_ENTREVISTA_STATIVO" CHECK ((("ST_ATIVO")::text = ANY (ARRAY[('S'::character varying)::text, ('N'::character varying)::text]))),
     CONSTRAINT "CK_ENTREVISTA_STCOMPARECEU" CHECK ((("ST_COMPARECEU")::text = ANY (ARRAY[('S'::character varying)::text, ('N'::character varying)::text]))),
@@ -47430,6 +47566,27 @@ COMMENT ON COLUMN public."TB_ENTREVISTA"."NU_BANCA" IS 'Banca que entrevistou (q
 --
 
 COMMENT ON COLUMN public."TB_ENTREVISTA"."DS_JUSTIFICATIVA_BANCA" IS 'Justificativa da banca para o parecer (entrevista feita no sistema). Opcional para APTO; obrigatória, em gravação nova pela ficha de notas, quando o parecer é INAPTO ou o candidato faltou (lancar_notas_entrevista). Nula nas entrevistas gravadas antes e nas da planilha.';
+
+
+--
+-- Name: COLUMN "TB_ENTREVISTA"."DT_CONCLUSAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_ENTREVISTA"."DT_CONCLUSAO" IS 'Quando a entrevista foi concluída (concluir_entrevista): com data, a ficha é só leitura até a coordenação reabrir (reabrir_entrevista). Nulo = aberta (20261117050000).';
+
+
+--
+-- Name: COLUMN "TB_ENTREVISTA"."CO_USUARIO_CONCLUSAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_ENTREVISTA"."CO_USUARIO_CONCLUSAO" IS 'auth.uid de quem concluiu a entrevista (nulo se aberta).';
+
+--
+-- Name: CONSTRAINT "CK_ENTREVISTA_CONCLUSAO" ON "TB_ENTREVISTA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_ENTREVISTA_CONCLUSAO" ON public."TB_ENTREVISTA" IS 'Quem concluiu só com a data da conclusão.';
+
 
 --
 -- Name: CONSTRAINT "CK_ENTREVISTA_DSJUSTIFICATIVABANCA" ON "TB_ENTREVISTA"; Type: COMMENT; Schema: public; Owner: -
@@ -70413,6 +70570,12 @@ REVOKE ALL ON FUNCTION private."FC_MOTIVO_PARECE_TEXTO"(p_texto text, p_minimo_p
 REVOKE ALL ON FUNCTION private."FC_MOTIVO_REABERTURA"(p_codigo text) FROM PUBLIC;
 
 --
+-- Name: FUNCTION "FC_MOTIVO_REABERTURA_ENTREVISTA"(p_motivo text); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_MOTIVO_REABERTURA_ENTREVISTA"(p_motivo text) FROM PUBLIC;
+
+--
 -- Name: FUNCTION "FC_MOTIVO_RECUSA_SOLICITACAO"(p_codigo text); Type: ACL; Schema: private; Owner: -
 --
 
@@ -71760,6 +71923,14 @@ GRANT ALL ON FUNCTION public.comparar_analises_incremental_v2(p_sync_id uuid, p_
 
 REVOKE ALL ON FUNCTION public.concluir_demanda_interna(p_id uuid, p_concluida boolean) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.concluir_demanda_interna(p_id uuid, p_concluida boolean) TO authenticated;
+
+--
+-- Name: FUNCTION concluir_entrevista(p_entrevista uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.concluir_entrevista(p_entrevista uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.concluir_entrevista(p_entrevista uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.concluir_entrevista(p_entrevista uuid) TO service_role;
 
 --
 -- Name: FUNCTION concluir_ficha(p_ficha uuid, p_versao integer, p_versao_regra integer, p_lancamento jsonb, p_resultado jsonb, p_parecer text); Type: ACL; Schema: public; Owner: -
@@ -73421,6 +73592,14 @@ GRANT ALL ON FUNCTION public.propor_ajuste_pontuacao(p_recurso uuid, p_dados jso
 REVOKE ALL ON FUNCTION public.publicar_lista_classificacao(p_lista uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.publicar_lista_classificacao(p_lista uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.publicar_lista_classificacao(p_lista uuid) TO service_role;
+
+--
+-- Name: FUNCTION reabrir_entrevista(p_entrevista uuid, p_motivo text, p_complemento text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.reabrir_entrevista(p_entrevista uuid, p_motivo text, p_complemento text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.reabrir_entrevista(p_entrevista uuid, p_motivo text, p_complemento text) TO authenticated;
+GRANT ALL ON FUNCTION public.reabrir_entrevista(p_entrevista uuid, p_motivo text, p_complemento text) TO service_role;
 
 --
 -- Name: FUNCTION reabrir_ficha(p_ficha uuid, p_versao integer, p_motivo text, p_complemento text); Type: ACL; Schema: public; Owner: -
