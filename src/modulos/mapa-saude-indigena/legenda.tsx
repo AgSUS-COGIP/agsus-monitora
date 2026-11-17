@@ -120,8 +120,11 @@ export function Amostra({ tipo, cor }: { tipo: string; cor?: string }) {
   só o botão "Legenda" — também no computador: aberta, ela tapava parte do
   Sul e do Sudeste no enquadramento do Brasil. Usada pelos mapas nacionais da
   Saúde Indígena e de Projetos. A do Mapa DSEIs começa aberta
-  (`abertaDeInicio`): ela tem o "Colorir por" e as faixas da cor.
+  (`abertaDeInicio`): ela tem o "Colorir por" e as faixas da cor. Abaixo de
+  768px começa sempre recolhida: aberta, cobria metade do mapa no celular.
 */
+const TELA_ESTREITA = "(max-width: 767px)";
+
 export function LegendaFlutuante({
   children,
   abertaDeInicio = false,
@@ -129,7 +132,10 @@ export function LegendaFlutuante({
   children: ReactNode;
   abertaDeInicio?: boolean;
 }) {
-  const [aberta, definirAberta] = useState(abertaDeInicio);
+  const [aberta, definirAberta] = useState(
+    () =>
+      abertaDeInicio && !globalThis.window?.matchMedia?.(TELA_ESTREITA).matches,
+  );
   const idDoCorpo = useId();
   return (
     <div className="mapa-si-legenda mapa-si-legenda--flutuante">

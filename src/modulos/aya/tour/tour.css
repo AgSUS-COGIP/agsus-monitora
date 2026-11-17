@@ -316,6 +316,24 @@
   }
 }
 
+/* Celular: balão menor, para cobrir menos da tela (some ao rolar, aya.tsx). */
+@media (max-width: 640px) {
+  .aya-oferta--balao {
+    width: min(240px, calc(100vw - 32px));
+    padding: 10px 12px;
+  }
+  .aya-oferta--balao .aya-oferta__texto {
+    font-size: var(--text-body-sm);
+  }
+}
+
+/* Toque: os botões do convite com 44px (Design System, seção 16). */
+@media (pointer: coarse) {
+  .aya-oferta__acoes button {
+    min-height: 44px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .aya-oferta--balao {
     animation: none;

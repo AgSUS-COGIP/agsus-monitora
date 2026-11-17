@@ -849,6 +849,9 @@ const perfilDoLegado = () => globalThis.window?.getMonitoraProfile?.() || null;
 
 export const ID_DOS_PRIMEIROS_PASSOS = "primeiros-passos";
 
+/* Quanto rolar (px) para o convite ignorado sumir. */
+const DISTANCIA_QUE_FECHA_O_CONVITE = 160;
+
 export function Aya({
   perguntar = perguntarPadrao,
   navegar = navegarPelaJanela,
@@ -955,6 +958,20 @@ export function Aya({
     setConvite({ chave: chaveDaTela, titulo: tituloDoTourDaTela });
     // eslint-disable-next-line react-hooks/exhaustive-deps -- convida pela tela (chave) e pelo que ocupa a Aya; o resto se lê no momento.
   }, [chaveDaTela, temTourNaTela, temPerfil, tour, oferta]);
+
+  // Ignorado, o convite sai do caminho: rolou a página, ele some (no celular
+  // ficava parado por cima dos gráficos e das tabelas).
+  const temConvite = Boolean(convite);
+  useEffect(() => {
+    if (!temConvite || !janela) return undefined;
+    const inicio = janela.scrollY;
+    const aoRolar = () => {
+      if (Math.abs(janela.scrollY - inicio) > DISTANCIA_QUE_FECHA_O_CONVITE)
+        setConvite(null);
+    };
+    janela.addEventListener("scroll", aoRolar, { passive: true });
+    return () => janela.removeEventListener("scroll", aoRolar);
+  }, [temConvite, janela]);
 
   /* Leva à tela do passo da trilha; diz se precisou trocar de tela. */
   const irParaOPasso = useCallback(
