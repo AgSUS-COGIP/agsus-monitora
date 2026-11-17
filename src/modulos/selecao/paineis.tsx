@@ -31,6 +31,7 @@ type EscalaDeBarras = NonNullable<ChartOptions<"bar">["scales"]>[string];
 import { useEffect, useMemo, useRef } from "react";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
 import { formatNumberBR } from "../../lib/formatters";
+import { rotuloEmLinhas } from "../../lib/rotulo-em-linhas.ts";
 import {
   aptosEEliminados,
   CAMPOS_DO_FILTRO,
@@ -326,7 +327,19 @@ function opcoesDeBarras(
   } = {},
 ): ChartOptions<"bar"> {
   const categorias: EscalaDeBarras = {
-    ticks: { color: p.text, maxRotation: 0, autoSkip: false },
+    ticks: {
+      color: p.text,
+      maxRotation: 0,
+      autoSkip: false,
+      // Em linhas: no celular os rótulos se sobrepunham ou saíam cortados.
+      callback(valor) {
+        return rotuloEmLinhas(
+          this.getLabelForValue(Number(valor)),
+          deitado ? 18 : 14,
+          deitado ? 2 : 3,
+        );
+      },
+    },
     grid: { display: false },
   };
   const valores: EscalaDeBarras = {
@@ -340,6 +353,8 @@ function opcoesDeBarras(
     maintainAspectRatio: false,
     animation: { duration: 380 },
     indexAxis: deitado ? "y" : "x",
+    // O número ao lado da barra deitada ("13.270") saía cortado à direita.
+    layout: deitado ? { padding: { right: 48 } } : undefined,
     interaction: { mode: "index", intersect: false },
     plugins: {
       legend: { display: false },
