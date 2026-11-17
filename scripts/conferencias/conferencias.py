@@ -129,6 +129,7 @@ def conferir(chamar, dias_convocado):
     fichas concluídas com pendência)."""
     contexto = chamar("conferencia_ler_contexto", {}) or {}
     editais = {e["id"]: e for e in contexto.get("editais") or []}
+    versoes = {r.get("edital"): r.get("versao") for r in contexto.get("regras") or []}
     acumulador = regras.Acumulador(editais)
     pendentes = []
     da_classificacao = regras.AnalisesDaClassificacao()
@@ -138,7 +139,7 @@ def conferir(chamar, dias_convocado):
             chamar("conferencia_ler_entrevistas", {}) or {}, contexto, acumulador
         ),
         "classificacao": lambda: regras.conferir_classificacao(
-            chamar("conferencia_ler_listas_e_quadros", {}) or {}, acumulador, da_classificacao, editais
+            chamar("conferencia_ler_listas_e_quadros", {}) or {}, acumulador, da_classificacao, editais, versoes
         ),
         "aprovados": lambda: regras.conferir_aprovados(
             chamar("conferencia_ler_aprovados", {}) or {}, contexto, acumulador, dias_convocado
