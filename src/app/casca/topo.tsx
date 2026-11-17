@@ -2,7 +2,6 @@ import type { MouseEvent } from "react";
 import { chamarAcaoDaCasca, fecharMenuDaConta } from "./acoes.ts";
 import { usarEstadoDaNavegacao } from "../contexto-do-app.ts";
 import { telaDaRota } from "../../lib/rotas.ts";
-import { EVENTO_ABRIR_BUSCA } from "../../lib/busca-global.ts";
 import { SininhoDoResumo } from "../../modulos/resumo-do-dia/resumo-do-dia.tsx";
 import {
   IconeDaTelaCheia,
@@ -40,31 +39,11 @@ export function Topo() {
         <TituloDaPagina naTela={naTela} />
       </div>
       <div className="actions">
-        <BotaoDaBusca />
         {/* Resumo do dia do responsável (src/modulos/resumo-do-dia/) */}
         <SininhoDoResumo />
         <MenuDaConta />
       </div>
     </header>
-  );
-}
-
-/*
-  A lupa: abre a busca global (src/componentes/busca-global/) pelo evento,
-  em qualquer largura. No celular e no tablet é o único jeito (sem Ctrl+K).
-*/
-function BotaoDaBusca() {
-  return (
-    <button
-      type="button"
-      className="botao-da-busca"
-      aria-label="Buscar editais"
-      title="Buscar editais (Ctrl+K)"
-      aria-haspopup="dialog"
-      onClick={() => document.dispatchEvent(new Event(EVENTO_ABRIR_BUSCA))}
-    >
-      <i className="fa-solid fa-magnifying-glass" aria-hidden="true" />
-    </button>
   );
 }
 
