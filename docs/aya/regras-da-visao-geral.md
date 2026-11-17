@@ -90,7 +90,7 @@ app em React (Etapa 5, parte 1) e ficam aqui, com a Aya.
 ## Quem vê a Visão geral
 
 **perguntas:** quem pode ver a visao geral | nao vejo a visao geral | permissao visao geral | posso editar a visao geral
-**resposta:** A Visão geral usa a permissão "Visão geral" (Leitor basta, em Configurações › Acessos), mostra só a área atual e é só de consulta. Para mudar vagas, cronograma ou status de um edital, use Editais (Editor em Editais ou em Cronograma); os rótulos dos indicadores mudam em Configurações › Página inicial. Corrigir coordenadas dos mapas é do administrador global ou do Gestor.
+**resposta:** A Visão geral usa a permissão "Visão geral" (Leitor basta, em Configurações › Acessos), mostra só a área atual e é só de consulta. Para mudar vagas, cronograma ou status de um edital, use Editais (Editor em Editais ou em Cronograma); os rótulos dos indicadores mudam em Configurações › Página inicial. Corrigir coordenadas do mapa de Projetos é do administrador global ou do Gestor; os pontos do mapa da Saúde Indígena se corrigem no SIGEPSI.
 **fonte:** src/lib/access-roles.ts (paginasPermitidas, podeEditarCoordenadas)
 **abrir:** dashboard
 

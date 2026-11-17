@@ -23,9 +23,9 @@ import { usarUltimo } from "./usar-ultimo.ts";
     fundo, contornos, observador de tamanho), refaz o enquadramento quando ele
     aparece ou muda de tamanho sem a pessoa ter mexido, e remede ao voltar a
     aparecer ou ao entrar/sair da tela cheia.
-  - `TopoDoMapa`: título, contagem e os controles "Coordenadas" (quem pode
-    editar), "Brasil" e o que o pai passar (Tela cheia, que some no modo de
-    edição).
+  - `TopoDoMapa`: título, contagem e os controles "Coordenadas" (só com
+    `modo`, o mapa de Projetos, para quem pode editar), "Brasil" e o que o
+    pai passar (Tela cheia, que some no modo de edição).
   - `MolduraDoMapa`: o contêiner do Leaflet (ou o aviso sem conexão) e a
     legenda flutuante por cima.
   - `ListaDoMapa`: a lista lateral ("Territórios por vagas", "Municípios por
@@ -121,7 +121,7 @@ export function TopoDoMapa({
         role="group"
         aria-label="Controles do mapa"
       >
-        {podeEditar ? (
+        {podeEditar && modo ? (
           <button
             type="button"
             className="btn secondary small"
@@ -147,7 +147,7 @@ export function TopoDoMapa({
         >
           Brasil
         </button>
-        {modo.editando ? null : acoes}
+        {modo?.editando ? null : acoes}
       </div>
     </header>
   );
@@ -236,8 +236,8 @@ export function propsDoEditor(modo: ModoDeEdicao, idDoPainel: string) {
 }
 
 /* As classes do painel nacional (o modo de edição o leva à tela inteira). */
-export const classesDoPainel = (modo: Pick<ModoDeEdicao, "editando">) =>
+export const classesDoPainel = (modo?: Pick<ModoDeEdicao, "editando">) =>
   classes(
     "ui-card mapa-si-painel mapa-si-painel--nacional",
-    modo.editando && "mapa-si-painel--editando",
+    modo?.editando && "mapa-si-painel--editando",
   );

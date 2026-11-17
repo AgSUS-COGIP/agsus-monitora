@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  casaisNacionaisDoMapa,
   configuracaoDoMapa,
-  redeCnesDoMapa,
   terrasDoMapa,
 } from "../src/lib/mapa-saude-indigena/dados-do-mapa.ts";
 import { registrosDoDsei } from "../src/lib/mapa-saude-indigena/mapa-do-dsei.ts";
@@ -26,10 +26,9 @@ describe("entrada geográfica da Saúde Indígena", () => {
       sedeuf: "27",
       polos: [{ cnes: "456", uf: "27" }],
     });
-    const rede = redeCnesDoMapa({
-      rede: { A: { u: [["UBSI A", 789, -12, -50, 12, 27]] } },
-    });
-    expect(rede.rede.A.u[0]).toEqual(["UBSI A", 789, -12, -50, "12", 27]);
+    expect(casaisNacionaisDoMapa([["CASAI A", 131, -12, -50, 12, 53]])).toEqual(
+      [["CASAI A", 131, -12, -50, "12", 53]],
+    );
   });
   it("trata contêineres inválidos como listas vazias", () => {
     for (const valor of [
@@ -41,7 +40,7 @@ describe("entrada geográfica da Saúde Indígena", () => {
       { dsei: {}, rede: [], nac: false },
     ]) {
       expect(configuracaoDoMapa(valor).dsei).toEqual([]);
-      expect(redeCnesDoMapa(valor)).toEqual({ rede: {}, nac: [] });
+      expect(casaisNacionaisDoMapa(valor)).toEqual([]);
       expect(terrasDoMapa(valor)).toEqual([]);
     }
   });
@@ -78,18 +77,15 @@ describe("entrada geográfica da Saúde Indígena", () => {
         },
       ],
     });
-    const rede = redeCnesDoMapa({
-      rede: { A: { u: [null, ["UBSI A", "001", [], false]], c: {} } },
-      nac: {},
-    });
+    const casais = casaisNacionaisDoMapa([null, ["CASAI A", "001", [], false]]);
     expect(configuracao.dsei[0].polos[0]).toMatchObject({
       lat: null,
       lon: null,
     });
-    expect(rede.rede.A.u[0]).toEqual(["UBSI A", "001", null, null, "", ""]);
-    expect(
-      registrosDoDsei(configuracao.dsei[0], rede).map((r) => r.name),
-    ).toEqual(["Com posição"]);
+    expect(casais).toEqual([["CASAI A", "001", null, null, "", ""]]);
+    expect(registrosDoDsei(configuracao.dsei[0]).map((r) => r.name)).toEqual([
+      "Com posição",
+    ]);
   });
   it("só permite enquadrar terras com caixa numérica finita", () => {
     expect(

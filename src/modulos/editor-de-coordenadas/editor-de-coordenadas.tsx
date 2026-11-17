@@ -114,8 +114,8 @@ function usarLista<T>(
   sem mudar a posição) e o histórico com "Desfazer". Tudo grava por RPC; o
   mapa recebe a resposta da RPC (`aoAtualizarMapa(data, ponto)`).
 
-  O que é de cada mapa vem em `fonte` (montada por quem usa: o editor da
-  Saúde Indígena e o de Projetos), sempre a mesma referência:
+  O que é de cada mapa vem em `fonte` (montada por quem usa: hoje, o editor
+  de Projetos), sempre a mesma referência:
   - `rpc`: { salvar, desfazer, pendencias, historico } — os nomes das RPCs;
   - `fila(pontos, pendencias, opcoes)`, `chaveDoPonto(ponto)`,
     `chaveDaPendencia(p)`, `sugestoes(pendencia, ponto)`,

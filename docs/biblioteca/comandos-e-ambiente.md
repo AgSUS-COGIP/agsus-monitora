@@ -24,13 +24,13 @@ cp .env.example .env.local   # PowerShell: Copy-Item .env.example .env.local
 
 Os valores vêm de quem administra o ambiente e nunca vão para o repositório.
 
-| Variável                         | Uso                                                                       |
-| -------------------------------- | ------------------------------------------------------------------------- |
-| `VITE_SUPABASE_URL`              | endereço do projeto Supabase                                              |
-| `VITE_SUPABASE_PUBLISHABLE_KEY`  | chave **publicável** do Supabase (vai para o navegador)                   |
-| `GOOGLE_APPLICATION_CREDENTIALS` | opcional: JSON da conta de serviço, só para cargas de planilha            |
-| `SUPABASE_DB_URL`                | opcional: só para os scripts de banco (`db:estado`, `db:esquema`)         |
-| `PORT`, `HOST`, `DIST`           | opcionais: porta, interface e pasta servidas pelo `server/servidor.ts`    |
+| Variável                         | Uso                                                                    |
+| -------------------------------- | ---------------------------------------------------------------------- |
+| `VITE_SUPABASE_URL`              | endereço do projeto Supabase                                           |
+| `VITE_SUPABASE_PUBLISHABLE_KEY`  | chave **publicável** do Supabase (vai para o navegador)                |
+| `GOOGLE_APPLICATION_CREDENTIALS` | opcional: JSON da conta de serviço, só para cargas de planilha         |
+| `SUPABASE_DB_URL`                | opcional: só para os scripts de banco (`db:estado`, `db:esquema`)      |
+| `PORT`, `HOST`, `DIST`           | opcionais: porta, interface e pasta servidas pelo `server/servidor.ts` |
 
 Tudo que começa com `VITE_` vai para o navegador: **nunca** coloque ali a chave `service_role`.
 
@@ -45,7 +45,9 @@ Tudo que começa com `VITE_` vai para o navegador: **nunca** coloque ali a chave
 
 O login volta para `<endereço>/auth/callback.html`, que precisa estar nas **Redirect URLs** do
 Supabase. As rotas das telas entregam o `index.html` tanto na Vercel (`rewrites`) quanto no
-servidor. As rotas `/api/*` só existem na Vercel; localmente respondem 404.
+servidor. As rotas `/api/*` em TypeScript também rodam no `npm run dev:frontend` (plugin
+`scripts/servir-api-no-vite.mjs`, com as variáveis do `.env.local`); no `npm run dev`, no `npm start` e
+no container respondem 404, e as em Python só existem na Vercel.
 
 ## Rode o mínimo
 

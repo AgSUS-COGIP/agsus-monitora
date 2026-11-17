@@ -1,27 +1,13 @@
 // @vitest-environment jsdom
 import { StrictMode, act, createElement } from "react";
 import { createRoot } from "react-dom/client";
-import {
-  afterEach,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-  beforeAll,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { EVENTO_TEMA_ALTERADO } from "../../src/lib/eventos-da-barra-lateral.ts";
 import { CORES_DO_MAPA } from "../../src/lib/mapa-saude-indigena/formas.ts";
 import { EVENTO_DAS_TERRAS } from "../../src/modules/indigenous-territories-layer.ts";
 import { MapaSaudeIndigena } from "../../src/modulos/mapa-saude-indigena/mapa-saude-indigena.tsx";
 import { clicar, teclar } from "../componentes/interacoes.ts";
 import { criarLeafletFalso } from "./leaflet-falso.js";
-import { carregarEditorDeCoordenadas } from "../../src/modulos/editor-de-coordenadas/editor-sob-demanda.ts";
-
-// O editor chega sob demanda (fora do pacote principal): carregado antes, desenha na hora.
-beforeAll(async () => {
-  await carregarEditorDeCoordenadas();
-});
 
 /*
   O mapa da Saúde Indígena em React (src/modulos/mapa-saude-indigena/), com o
@@ -41,9 +27,26 @@ const LMAP = {
       pop: 12000,
       sedeuf: "AL",
       ufs: ["AL", "SE"],
+      // Os pontos do SIGEPSI (aplicarLocalizacoes): polos, CASAI e lotação.
       polos: [
-        { n: "XITEI", lat: -9.9, lon: -36.0, uf: "AL" },
-        { n: "LONGE", lat: -8.0, lon: -35.0, uf: "PE" },
+        { n: "XITEI", lat: -9.9, lon: -36.0, uf: "AL", tipo: "polo" },
+        { n: "LONGE", lat: -8.0, lon: -35.0, uf: "PE", tipo: "polo" },
+        {
+          n: "CASAI AL/SE",
+          lat: -9.62,
+          lon: -35.73,
+          uf: "AL",
+          tipo: "casai",
+          municipio: "MACEIO",
+        },
+        {
+          n: "UBSI <img src=x onerror=alert(1)>",
+          lat: -10.1,
+          lon: -36.4,
+          uf: "AL",
+          tipo: "unidade",
+          municipio: "PORTO REAL",
+        },
       ],
     },
     {
@@ -69,25 +72,8 @@ const LMAP = {
   ],
 };
 
-const REDE = {
-  rede: {
-    "ALAGOAS E SERGIPE": {
-      u: [
-        ["POLO BASE XITEI", "111", -9.9, -36.0, "TRAIPU", 27],
-        [
-          "UBSI <img src=x onerror=alert(1)>",
-          "222",
-          -10.1,
-          -36.4,
-          "PORTO REAL",
-          27,
-        ],
-      ],
-      c: [["CASAI AL/SE", "333", -9.62, -35.73, "MACEIO", 27]],
-    },
-  },
-  nac: [["CASAI DF", "", -15.8, -47.9, "BRASILIA", 53]],
-};
+/* As CASAIs nacionais do SIGEPSI (localização 131). */
+const CASAIS = [["CASAI DF", "131", -15.8, -47.9, "BRASILIA", "DF"]];
 
 const LINHAS = [
   {
@@ -114,7 +100,7 @@ function Pai(props) {
     null,
     createElement(MapaSaudeIndigena, {
       lmap: LMAP,
-      redeCnes: REDE,
+      casaisNacionais: CASAIS,
       linhas: LINHAS,
       ...props,
     }),
@@ -332,26 +318,6 @@ describe("visão nacional", () => {
     expect(document.body.style.overflow).toBe("");
   });
 
-  it("abre coordenadas na lateral e volta à lista sem sair da tela cheia", async () => {
-    await montar({ perfil: { admin_global: true } });
-    const botao = (texto) =>
-      [...host.querySelectorAll("button")].find((b) => b.textContent === texto);
-    await clicar(botao("Tela cheia"));
-    await clicar(botao("Coordenadas"));
-    expect(botao("Coordenadas").getAttribute("aria-expanded")).toBe("true");
-    expect(
-      host.querySelector('[aria-label="Corrigir coordenadas"]'),
-    ).not.toBeNull();
-    await clicar(botao("Voltar à lista"));
-    expect(
-      host.querySelector('[aria-label="Corrigir coordenadas"]'),
-    ).toBeNull();
-    expect(host.querySelectorAll(".mapa-si-territorio")).toHaveLength(3);
-    await clicar(botao("Sair da tela cheia"));
-    expect(host.querySelector(".mapa-si--tela-cheia")).toBeNull();
-    expect(document.body.style.overflow).toBe("");
-  });
-
   it("recolhe e mostra o mapa, e lembra a escolha ao voltar", async () => {
     localStorage.removeItem("agsus_yeende_mapa_recolhido_v1");
     await montar();
@@ -486,7 +452,7 @@ describe("mapa do DSEI", () => {
     expect(leaflet.vivos()).toHaveLength(2);
   });
 
-  it("unidades: sede em estrela, polo reconciliado uma vez, UBSI sem HTML", async () => {
+  it("unidades: sede em estrela, polo uma vez, UBSI sem HTML", async () => {
     const mapa = await abrirAlse();
     const marcadores = leaflet.desenhadas(mapa, "marker");
     const titulos = marcadores.map((m) => m.opcoes.title);
@@ -843,7 +809,7 @@ it("abre o mapa com dados geográficos inválidos sem derrubar a tela", async ()
     lmap: {
       dsei: [null, { k: "A", n: "Distrito A", lat: [], lon: {}, polos: {} }],
     },
-    redeCnes: { rede: [], nac: {} },
+    casaisNacionais: {},
     dseiSelecionado: "A",
   });
   expect(host.querySelector(".mapa-si-painel--dsei")).not.toBeNull();

@@ -11,16 +11,34 @@ import type {
   RetanguloDoEditor,
   SugestaoDoEditor,
 } from "./tipos-do-editor-de-coordenadas.ts";
-import { distanciaKm } from "./reconciliacao-unidades.ts";
+
+/* Distância entre dois pontos na esfera (km); `null` sem os quatro números. */
+export function distanciaKm(
+  lat1: unknown,
+  lon1: unknown,
+  lat2: unknown,
+  lon2: unknown,
+): number | null {
+  if (![lat1, lon1, lat2, lon2].every(Number.isFinite)) return null;
+  const R = 6371;
+  const rad = (g: number) => (g * Math.PI) / 180;
+  const dLat = rad((lat2 as number) - (lat1 as number));
+  const dLon = rad((lon2 as number) - (lon1 as number));
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(rad(lat1 as number)) *
+      Math.cos(rad(lat2 as number)) *
+      Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
+}
 
 /*
   O EDITOR DE COORDENADAS DOS MAPAS — regras comuns, sem DOM
 
-  Serve aos dois mapas com editor (administrador global e Gestor):
-  - Saúde Indígena: sedes, polos, UBSI e CASAIs (`coordenadas-do-mapa.ts`,
-    RPCs `*_coordenada_mapa_saude_indigena`);
-  - Projetos: os lugares das vagas (`coordenadas-dos-projetos.ts`, RPCs
-    `*_coordenada_mapa_projetos`).
+  Serve ao mapa com editor (administrador global e Gestor): Projetos, os
+  lugares das vagas (`coordenadas-dos-projetos.ts`, RPCs
+  `*_coordenada_mapa_projetos`). O da Saúde Indígena saiu em 17/11/2026: os
+  pontos vêm do SIGEPSI, e a correção é feita lá.
 
   Aqui ficam a leitura e a validação da coordenada, a fila (busca, "Só
   pendentes", gravidade com contagem), a lista de sugestões (repetidas fora,
@@ -92,9 +110,8 @@ export const textoDePendentes = (n: number) =>
   `${n} ${n === 1 ? "pendente" : "pendentes"}`;
 
 /*
-  Régua da gravidade (pedido de 02/10), a mesma nos dois mapas: a distância
-  entre a posição atual e a sugestão que serve de régua (aldeia/lugar na
-  Saúde Indígena, sede do município ou centro da UF em Projetos):
+  Régua da gravidade (pedido de 02/10): a distância entre a posição atual e a
+  sugestão que serve de régua (sede do município ou centro da UF):
   - "erro": o motivo da pendência já é um erro, ou a régua está a mais de 10 km;
   - "revisar": a régua está entre 2 e 10 km, ou nenhuma sugestão serve de régua;
   - "confirmar": a régua está a até 2 km — a posição bate, falta o "Conferido";

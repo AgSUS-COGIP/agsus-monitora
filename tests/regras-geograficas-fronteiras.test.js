@@ -1,37 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { registrosDoDsei } from "../src/lib/mapa-saude-indigena/mapa-do-dsei.ts";
 import {
   bolhasDosDsei,
   territoriosPorVagas,
 } from "../src/lib/mapa-saude-indigena/mapa-nacional.ts";
 
 describe("fronteiras das regras geográficas", () => {
-  it("absorve o CNES numérico sem duplicar o polo nem substituir sua posição", () => {
-    const dsei = {
-      k: "CEARA",
-      n: "Ceará",
-      sedeuf: "CE",
-      polos: [{ n: "FORTALEZA", cnes: "123", lat: -3.7, lon: -38.5 }],
-    };
-    const rede = {
-      rede: {
-        CEARA: {
-          u: [["POLO BASE FORTALEZA", 123, -3.71, -38.51, "Fortaleza", 23]],
-          c: [],
-        },
-      },
-      nac: [],
-    };
-    const registros = registrosDoDsei(dsei, rede);
-    expect(registros).toHaveLength(1);
-    expect(registros[0]).toMatchObject({
-      cnes: 123,
-      lat: -3.7,
-      lon: -38.5,
-      origens: ["lmap", "rede_cnes"],
-    });
-  });
-
   it("ordena territórios sem modificar a lista congelada de bolhas", () => {
     const dseis = Object.freeze([
       { k: "MAIOR", n: "Maior", lat: 1, lon: 2, pop: 1000 },

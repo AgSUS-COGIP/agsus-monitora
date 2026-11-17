@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useReducer, useState } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { exigirSessao, type ClienteDaSessao } from "../../lib/sessao";
 import type {
@@ -11,9 +11,9 @@ import type {
 
   `/api/dseis` (função da Vercel) lê a API do SIGEPSI com o token do servidor;
   aqui só se manda o token da sessão. Um pedido por CACHE_MS para a página
-  inteira (trocar de área e voltar não repete). Falha não fica guardada e o
-  mapa usa os dados do banco (`lmap`, `rede_cnes`); fora da Vercel (servidor
-  local) a rota não existe e é igual.
+  inteira (trocar de área e voltar não repete). Falha não fica guardada: a
+  tela mostra o erro e "Tentar novamente" pede de novo (sem plano B no
+  banco). Fora da Vercel (servidor local) a rota não existe: também é erro.
 */
 
 export const ROTA_DAS_LOCALIZACOES = "/api/dseis";
@@ -77,11 +77,13 @@ export function carregarLocalizacoes(
   return emVoo;
 }
 
-export type LocalizacoesNaTela =
+type EstadoDoSigepsi =
   | { estado: "carregando"; dados: null }
   | { estado: "pronto"; dados: DadosDoSigepsi }
-  /* SIGEPSI fora ou sem `/api` (servidor local): o mapa usa os dados do banco. */
+  /* SIGEPSI fora ou sem `/api` (servidor local): a tela mostra o erro. */
   | { estado: "indisponivel"; dados: null };
+
+export type LocalizacoesNaTela = EstadoDoSigepsi & { tentarDeNovo(): void };
 
 /**
  * Os dados do SIGEPSI e se ainda estão chegando: o mapa espera por eles,
@@ -90,11 +92,16 @@ export type LocalizacoesNaTela =
 export function usarLocalizacoesDoSigepsi(
   supabase: SupabaseClient | null,
 ): LocalizacoesNaTela {
-  const [localizacoes, setLocalizacoes] = useState<LocalizacoesNaTela>(() =>
+  const [localizacoes, setLocalizacoes] = useState<EstadoDoSigepsi>(() =>
     guardado
       ? { estado: "pronto", dados: guardado.dados }
       : { estado: "carregando", dados: null },
   );
+  const [tentativa, contarTentativa] = useReducer((n: number) => n + 1, 0);
+  const tentarDeNovo = useCallback(() => {
+    setLocalizacoes({ estado: "carregando", dados: null });
+    contarTentativa();
+  }, []);
   useEffect(() => {
     let vivo = true;
     void carregarLocalizacoes(supabase).then((resultado) => {
@@ -108,6 +115,6 @@ export function usarLocalizacoesDoSigepsi(
     return () => {
       vivo = false;
     };
-  }, [supabase]);
-  return localizacoes;
+  }, [supabase, tentativa]);
+  return { ...localizacoes, tentarDeNovo };
 }

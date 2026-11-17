@@ -10,8 +10,8 @@ import { EstadoVazio, Selo } from "../../ui/index.ts";
 
 /*
   Posições candidatas de um ponto (as `sugestoes` já prontas, de
-  `listaDeSugestoes`: CNES, aldeias e sede do município na Saúde Indígena;
-  sede do município, centro da UF e sede do DSEI em Projetos), com a
+  `listaDeSugestoes`: sede do município, centro da UF e sede do DSEI em
+  Projetos), com a
   distância até a posição atual. No alto, a gravidade (selo e resumo) e o
   motivo da pendência; a mais provável vem primeiro, marcada. "Usar esta" só
   preenche a prévia; gravar continua com Salvar/Conferido. Seção recolhível

@@ -255,26 +255,31 @@ describe("pontos de um DSEI", () => {
     sede_municipio: "Maceió",
     sede_endereco: "Rua A, 1",
     sede_cnes: "999",
+    // Os pontos do SIGEPSI (aplicarLocalizacoes); a UBSI vem repetida.
     polos: [
-      { n: "XITEI", lat: -9.9, lon: -36.0, uf: "AL" },
-      { n: "LONGE", lat: -8.0, lon: -35.0, uf: "PE" },
+      { n: "XITEI", lat: -9.9, lon: -36.0, uf: "AL", tipo: "polo" },
+      { n: "LONGE", lat: -8.0, lon: -35.0, uf: "PE", tipo: "polo" },
+      ...[1, 2].map(() => ({
+        n: "UBSI ALDEIA <b>",
+        lat: -10.1,
+        lon: -36.4,
+        uf: "AL",
+        tipo: "unidade",
+        municipio: "PORTO REAL",
+      })),
+      {
+        n: "CASAI AL/SE",
+        lat: -9.62,
+        lon: -35.73,
+        uf: "AL",
+        tipo: "casai",
+        municipio: "MACEIO",
+      },
     ],
   };
-  const redeCnes = {
-    rede: {
-      TESTE: {
-        u: [
-          ["POLO BASE XITEI", "111", -9.9, -36.0, "TRAIPU", 27],
-          ["UBSI ALDEIA <b>", "222", -10.1, -36.4, "PORTO REAL", 27],
-          ["UBSI ALDEIA <b>", "222", -10.1, -36.4, "PORTO REAL", 27],
-        ],
-        c: [["CASAI AL/SE", "333", -9.62, -35.73, "MACEIO", 27]],
-      },
-    },
-  };
 
-  it("reconcilia o polo com o CNES e não repete estabelecimento", () => {
-    const registros = registrosDoDsei(dsei, redeCnes);
+  it("só os pontos do SIGEPSI, com o tipo deles, sem repetir", () => {
+    const registros = registrosDoDsei(dsei);
     const nomes = registros.map((r) => `${r.type.key}:${r.name}`);
     expect(nomes.filter((n) => n.includes("XITEI"))).toHaveLength(1);
     expect(nomes.filter((n) => n.includes("ALDEIA"))).toHaveLength(1);
@@ -284,10 +289,7 @@ describe("pontos de um DSEI", () => {
   });
 
   it("vínculo: fora das UFs do DSEI é externo; o enquadramento do território o deixa de fora", () => {
-    const classificados = classificarRegistros(
-      registrosDoDsei(dsei, redeCnes),
-      dsei,
-    );
+    const classificados = classificarRegistros(registrosDoDsei(dsei), dsei);
     const externos = registrosExternos(classificados);
     expect(externos.map((r) => r.name)).toEqual(["LONGE"]);
     expect(registrosLocais(classificados)).toHaveLength(
@@ -302,7 +304,7 @@ describe("pontos de um DSEI", () => {
   });
 
   it("tipos do território, do mais frequente ao menos, e filtro por ocultos", () => {
-    const registros = registrosDoDsei(dsei, redeCnes);
+    const registros = registrosDoDsei(dsei);
     const tipos = tiposDoTerritorio(registros);
     expect(tipos[0].tipo.key).toBe("polo");
     expect(
@@ -313,7 +315,7 @@ describe("pontos de um DSEI", () => {
   });
 
   it("resumo da dica: polos que o distrito tem e pontos que o mapa mostra", () => {
-    const registros = registrosDoDsei(dsei, redeCnes);
+    const registros = registrosDoDsei(dsei);
     expect(resumoDaRede(dsei, registros)).toEqual([
       "Polos base: 2",
       "No mapa: 4 pontos (2 polos, 1 unidades, 1 CASAIs)",
@@ -323,16 +325,12 @@ describe("pontos de um DSEI", () => {
 
   it("popups e dicas são texto (sem HTML) e não falam de validação", () => {
     const [registro] = classificarRegistros(
-      registrosDoDsei(dsei, redeCnes).filter((r) => r.name.includes("ALDEIA")),
+      registrosDoDsei(dsei).filter((r) => r.name.includes("ALDEIA")),
       dsei,
     );
     const popup = popupDoRegistro(registro);
     expect(popup.titulo).toBe("UBSI");
-    expect(popup.linhas).toEqual([
-      "UBSI ALDEIA <b>",
-      "PORTO REAL – AL",
-      "CNES: 222",
-    ]);
+    expect(popup.linhas).toEqual(["UBSI ALDEIA <b>", "PORTO REAL – AL"]);
     expect(popup.nota).toBeUndefined();
     expect(dicaDoRegistro(registro, dsei).linhas).toEqual([
       "Vinculado ao DSEI Teste",

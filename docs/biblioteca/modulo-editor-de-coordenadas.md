@@ -1,13 +1,13 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-10
+atualizado: 2026-11-17
 ---
 
 # Módulo: Editor de coordenadas
 
-Peça (não é tela) em `src/modulos/editor-de-coordenadas/`: o editor React e TypeScript comum aos
-mapas de Projetos e da Saúde Indígena. Tem fila com busca e gravidade, sugestões, pin de prévia,
+Peça (não é tela) em `src/modulos/editor-de-coordenadas/`: o editor React e TypeScript hoje só do
+mapa de Projetos (o da Saúde Indígena não tem editor: os pontos vêm do SIGEPSI e se corrigem lá). Tem fila com busca e gravidade, sugestões, pin de prévia,
 confirmação de correção e conferência, histórico com desfazer e modo de edição
 (`modo-de-edicao.tsx`) com painel recolhível e Escape. Só o administrador global e o Gestor o abrem.
 
@@ -19,11 +19,9 @@ confirmação de correção e conferência, histórico com desfazer e modo de ed
   integração.
 - `src/lib/editor-de-coordenadas.ts` reúne as regras comuns: validação, ordenação, distância,
   sugestões repetidas, histórico e folga do enquadramento (`folgaDoEnquadramento`).
-- As regras específicas dos dois mapas e seus adaptadores também estão em TypeScript: cada mapa
-  liga o editor comum no seu `editor-de-coordenadas.tsx` (ver [[modulo-mapa-saude-indigena]] e
-  [[modulo-mapa-de-projetos]]).
-- Os alvos da Saúde Indígena declaram fonte, tipo, DSEI, índice, código e nome; a leitura de
-  dados externos preserva os índices originais usados pelo banco.
+- As regras do mapa de Projetos e o adaptador também estão em TypeScript: o mapa liga o editor
+  comum no seu `editor-de-coordenadas.tsx` (ver [[modulo-mapa-de-projetos]]). O adaptador e as
+  regras do mapa da Saúde Indígena saíram em 17/11/2026 ([[modulo-mapa-saude-indigena]]).
 
 ## Fronteira dos dados
 
@@ -35,7 +33,7 @@ confirmação de correção e conferência, histórico com desfazer e modo de ed
 - Coordenada anterior inválida impede desfazer na interface.
 - A gravação precisa devolver um registro com os campos escalares de posição e conferência nos
   tipos esperados.
-- O conteúdo geográfico de `lmap` e `rede_cnes` continua a cargo do adaptador do mapa.
+- O conteúdo geográfico dos pontos continua a cargo do adaptador do mapa (Projetos).
 - `leaflet-do-editor.ts` verifica a presença dos métodos necessários na integração JavaScript.
   Os contratos estruturais cobrem só a API usada pelo editor; não validam os retornos internos do
   Leaflet nem substituem os contratos completos.
@@ -44,16 +42,16 @@ confirmação de correção e conferência, histórico com desfazer e modo de ed
 ## Verificação
 
 - `npm run typecheck:frontend`.
-- Testes dos dois editores, do modo de edição e dos mapas em `tests/modulos/`
-  (`editor-de-coordenadas.test.js`, `modo-de-edicao.test.js`).
-- Regras em `tests/coordenadas-*.test.js`; respostas externas em
+- Testes do editor de Projetos (`tests/editor-de-coordenadas-projetos.test.js`), do modo de edição
+  (`tests/modulos/modo-de-edicao.test.js`) e dos mapas em `tests/modulos/`.
+- Regras em `tests/coordenadas-dos-projetos.test.js`; respostas externas em
   `tests/respostas-do-editor-de-coordenadas.test.js`; contratos em
   `tests/tipos/editor-de-coordenadas.tsx`.
 - Os testes usam RPCs simuladas e não acessam dados de produção.
 
 ## Relacionadas
 
-- [[modulo-mapa-saude-indigena]] — usa o editor com os pontos do `lmap`/`rede_cnes`
+- [[modulo-mapa-saude-indigena]] — não usa mais o editor (pontos do SIGEPSI)
 - [[modulo-mapa-de-projetos]] — usa o editor com os lugares das vagas
 - [[coordenadas]] — de onde vêm as coordenadas e como foram auditadas
 - [[mapas-e-leaflet]] — fábrica do Leaflet e guardas

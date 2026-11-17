@@ -1,43 +1,23 @@
 import type { CoordenadasDoMapa } from "../tipos-do-mapa.ts";
 import type {
   DseiDoMapa,
-  RedeCnesDoMapa,
   RegistroDoDsei,
-  EstabelecimentoCompacto,
   TerraDoMapa,
   LinhaDaTerra,
 } from "./tipos.ts";
 /*
   O MAPA DE UM DSEI (MODO DETALHADO), SEM LEAFLET
 
-  Junta os pontos de um distrito, todos do banco (TB_CONFIG_MAPA_SAUDE_INDIG):
+  Os pontos de um distrito são os do SIGEPSI, a fonte verdadeira: os `polos`
+  que `aplicarLocalizacoes` (localizacoes-do-sigepsi.ts) põe em cada DSEI —
+  polos base, CASAIs e unidades de lotação, na posição, no município e na UF
+  (pelo CEP) cadastrados lá. O CNES (`rede_cnes`) e a reconciliação com ele
+  saíram do mapa em 17/11/2026.
 
-    lmap (polos)        a posição do polo é a do `lmap`, exatamente como está
-                        gravada (auditada em 01–02/10/2026 contra fontes
-                        oficiais — ver docs/coordenadas/auditoria-
-                        oficial-das-coordenadas-2026-10-01.md);
-    rede_cnes (u, c)    estabelecimentos do CNES (UBSI, CASAI, polos
-                        cadastrados), na coordenada gravada no `rede_cnes`;
-    reconciliação       polo do lmap + registro do CNES que são a mesma
-                        estrutura viram um ponto só (`reconciliarDsei`), na
-                        posição do lmap; o que ela não decide continua como
-                        dois registros.
-
-  Nenhuma outra fonte mexe na posição: a planilha de Lotações e os vereditos
-  da validação de 22/09 saíram do mapa em 02/10/2026.
-
-  É o `detailRecordsForDsei` do `legacy-app.js`, mais o vínculo territorial
-  (UF do CNES × UFs do DSEI), os filtros por tipo, o resumo da dica e os dois
-  enquadramentos (território / com vínculos externos).
+  Mais o vínculo territorial (UF do ponto × UFs do DSEI), os filtros por tipo,
+  o resumo da dica e os dois enquadramentos (território / com vínculos
+  externos).
 */
-import {
-  LIMIAR_MESMO_PONTO_KM,
-  distanciaKm,
-  reconciliarDsei,
-  tipoDeclarado,
-  tiposCompativeis,
-  unirEstabelecimentosRepetidos,
-} from "../reconciliacao-unidades.ts";
 import {
   VINCULO_EXTERNO,
   VINCULO_INDETERMINADO,
@@ -53,172 +33,41 @@ import {
 } from "./formas.ts";
 
 /*
-  O tipo de um polo do `lmap`: o do SIGEPSI (TP_UNIDADE) ou polo base. A
-  unidade de lotação toma o tipo do nome (o do SIGEPSI primeiro, depois o do
-  CNES unido a ela): "NOVO DIA" + "UBSI NOVO DIA" é UBSI.
+  O tipo do ponto: o do SIGEPSI (TP_UNIDADE). A unidade de lotação toma o
+  tipo do nome ("UBSI BANANAL" é UBSI; "NOVO DIA", Unidade).
 */
-function tipoDoPolo(tipo: unknown, ...nomes: unknown[]) {
+function tipoDoPonto(tipo: unknown, nome: unknown) {
   if (tipo === "casai") return TIPO_CASAI;
   if (tipo !== "unidade") return TIPO_POLO;
-  for (const nome of nomes) {
-    const doNome = tipoDaUnidade(nome);
-    if (doNome !== TIPO_UNIDADE) return doNome;
-  }
-  return TIPO_UNIDADE;
+  const doNome = tipoDaUnidade(nome);
+  return doNome === TIPO_POLO ? TIPO_UNIDADE : doNome;
 }
 
-/* Estabelecimento compacto do `rede_cnes`: [nome, cnes, lat, lon, município, uf]. */
-export function abrirEstabelecimento(a: EstabelecimentoCompacto) {
-  return {
-    n: a?.[0],
-    cnes: a?.[1],
-    lat: a?.[2],
-    lon: a?.[3],
-    mun: a?.[4],
-    uf: a?.[5],
-  };
-}
+/* Os pontos de um DSEI, sem repetição e só com coordenada. */
 
-/* Os pontos de saúde de um DSEI, sem repetição e só com coordenada. */
-
-export function registrosDoDsei(
-  dsei: DseiDoMapa,
-  redeCnes: RedeCnesDoMapa,
-): RegistroDoDsei[] {
+export function registrosDoDsei(dsei: DseiDoMapa): RegistroDoDsei[] {
   if (!dsei?.k) return [];
-  const rede = redeCnes?.rede?.[dsei.k] || { u: [], c: [] };
-
-  // Com as CASAIs do SIGEPSI, as do CNES (`c` e as que se chamam CASAI) saem.
-  const casaisDoSigepsi = redeCnes?.casais_do_sigepsi === true;
-  const estabelecimentos = [
-    ...(casaisDoSigepsi ? [] : rede.c || []).map((item) => ({
-      item,
-      forcado: TIPO_CASAI,
-    })),
-    ...(rede.u || []).map((item) => ({ item, forcado: null })),
-  ]
-    .map(({ item, forcado }) => {
-      const e = abrirEstabelecimento(item);
-      return {
-        nome: e.n,
-        cnes: e.cnes,
-        chave: e.cnes || `${e.n}|${e.lat}|${e.lon}`,
-        lat: e.lat,
-        lon: e.lon,
-        municipio: e.mun,
-        uf: e.uf,
-        _tipoVisual: forcado || tipoDaUnidade(e.n),
-      };
-    })
-    .filter((e) => !casaisDoSigepsi || e._tipoVisual !== TIPO_CASAI);
-
-  // O CNES não pode se repetir a si próprio antes de reconciliar com os polos.
-  const { estabelecimentos: unicos } =
-    unirEstabelecimentosRepetidos(estabelecimentos);
-
-  const { reconciliados, estabelecimentosUsados } = reconciliarDsei({
-    dseiChave: dsei.k,
-    polos: (dsei.polos || [])
-      .filter((p) => temCoordenada(p.lat, p.lon))
-      .map((p) => ({
-        nome: p.n,
-        cnes: p.cnes || "",
-        // Posição do polo: a do lmap, sem substituição.
-        lat: Number(p.lat),
-        lon: Number(p.lon),
-        uf: p.uf,
-        cod: p.cod ?? null,
-        tipo: p.tipo || "polo",
-      })),
-    estabelecimentos: unicos,
-  });
-
-  /*
-    Repetido entre o SIGEPSI e o CNES: vale o SIGEPSI (nome, município e UF;
-    a posição já é a do polo). Do CNES fica só o código.
-  */
-  const polosPorNome = new Map((dsei.polos || []).map((p) => [p.n, p]));
-  const unificados = reconciliados.map((u) => {
-    const polo = polosPorNome.get(u.nomes?.lmap ?? "");
-    const doSigepsi = polo?.origem === "sigepsi";
-    return {
-      name: doSigepsi ? polo.n : u.nome_exibicao,
-      cnes: u.cnes,
-      lat: u.lat,
-      lon: u.lon,
-      city: (doSigepsi && polo.municipio) || u.municipio,
-      uf: (doSigepsi && polo.uf) || u.uf || dsei.sedeuf,
-      type: tipoDoPolo(u.tipo, u.nomes?.lmap, u.nomes?.rede_cnes),
-      origens: doSigepsi ? ["sigepsi", "rede_cnes"] : u.origens,
-      nomes: u.nomes,
-    };
-  });
-
-  // Polos que a reconciliação não casou continuam a existir.
-  const unidos = new Set(reconciliados.map((u) => u.nomes?.lmap));
-  const polosSoltos = (dsei.polos || [])
-    .filter((p) => !unidos.has(p.n) && temCoordenada(p.lat, p.lon))
-    .map((p) => ({
-      name: p.n,
-      cnes: "",
-      lat: Number(p.lat),
-      lon: Number(p.lon),
-      city: p.municipio || "",
-      uf: p.uf || dsei.sedeuf,
-      type: tipoDoPolo(p.tipo, p.n),
-      origens: [p.origem === "sigepsi" ? "sigepsi" : "lmap"],
-    }));
-
-  /*
-    O SIGEPSI é a fonte verdadeira: o estabelecimento do CNES que sobrou a
-    menos de LIMIAR_MESMO_PONTO_KM de um ponto do SIGEPSI de tipo compatível é
-    esse ponto com outro nome ("CASAI DSEI AL/SE" × "CASAI ALAGOAS", sem
-    palavra em comum) e sai do mapa. Só vale contra o SIGEPSI: entre o lmap
-    do banco e o CNES a coordenada sozinha continua sem ser prova.
-  */
-  const pontosDoSigepsi = (dsei.polos || []).filter(
-    (p) => p.origem === "sigepsi" && temCoordenada(p.lat, p.lon),
-  );
-  const repeteOSigepsi = (e: (typeof unicos)[number]) =>
-    pontosDoSigepsi.some((p) => {
-      if (!tiposCompativeis(p.tipo || "polo", tipoDeclarado(e.nome)))
-        return false;
-      const km = distanciaKm(
-        Number(p.lat),
-        Number(p.lon),
-        Number(e.lat),
-        Number(e.lon),
-      );
-      return km != null && km <= LIMIAR_MESMO_PONTO_KM;
-    });
-
-  // Estabelecimentos que nenhuma reconciliação absorveu.
-  const soltos = unicos
-    .filter((e) => !estabelecimentosUsados.has(e.chave))
-    .filter((e) => !repeteOSigepsi(e))
-    .map((e) => ({
-      name: e.nome,
-      cnes: e.cnes,
-      lat: e.lat,
-      lon: e.lon,
-      city: e.municipio,
-      uf: e.uf,
-      type: e._tipoVisual,
-      origens: ["rede_cnes"],
-    }));
-
-  type Candidato = Omit<RegistroDoDsei, "id" | "lat" | "lon"> & {
-    lat: number | string | null;
-    lon: number | string | null;
-  };
-  const candidatos: Candidato[] = [...unificados, ...polosSoltos, ...soltos];
   const vistos = new Set<string>();
-  return candidatos
-    .filter((r): r is Candidato & { lat: number; lon: number } => {
-      const chave = [r.name, r.lat, r.lon].join("|");
-      if (vistos.has(chave)) return false;
+  return (dsei.polos || [])
+    .filter((p) => temCoordenada(p.lat, p.lon))
+    .flatMap((p) => {
+      const lat = Number(p.lat);
+      const lon = Number(p.lon);
+      const chave = [p.n, lat, lon].join("|");
+      if (vistos.has(chave)) return [];
       vistos.add(chave);
-      return Number.isFinite(r.lat) && Number.isFinite(r.lon);
+      return [
+        {
+          name: p.n,
+          cnes: "",
+          lat,
+          lon,
+          city: p.municipio || "",
+          uf: p.uf || dsei.sedeuf,
+          type: tipoDoPonto(p.tipo, p.n),
+          origens: ["sigepsi"],
+        },
+      ];
     })
     .map((r, indice) => ({
       ...r,
@@ -227,8 +76,8 @@ export function registrosDoDsei(
 }
 
 /*
-  Vínculo territorial: o CNES decide a UF administrativa; a coordenada só diz
-  onde desenhar. Fora das UFs do DSEI = externo (marcador no lugar verdadeiro e
+  Vínculo territorial: a UF do ponto (pelo CEP no SIGEPSI) decide a UF
+  administrativa; a coordenada só diz onde desenhar. Fora das UFs do DSEI = externo (marcador no lugar verdadeiro e
   linha pontilhada até a sede); sem UF utilizável = indeterminado, que conta
   como local (sem prova, não se afirma que está fora).
 */
@@ -273,7 +122,7 @@ export const visiveis = (
 ) => (registros || []).filter((r) => !ocultos?.has?.(r.type.key));
 
 /*
-  Duas perguntas, duas linhas: quantos polos o distrito TEM (lotações/lmap) e
+  Duas perguntas, duas linhas: quantos polos base o distrito TEM (SIGEPSI) e
   quantos pontos o mapa MOSTRA (contados de `registrosDoDsei`, o mesmo que se
   desenha, para não divergirem).
 */
@@ -393,7 +242,9 @@ export function dicaDoRegistro(registro: RegistroDoDsei, dsei: DseiDoMapa) {
   if (registro.vinculo === VINCULO_EXTERNO)
     linhas.push("Fora das UFs de abrangência do DSEI");
   else if (registro.vinculo === VINCULO_INDETERMINADO)
-    linhas.push("UF não informada no CNES — vínculo não classificado");
+    linhas.push(
+      "UF não informada no SIGEPSI (sem CEP) — vínculo não classificado",
+    );
   return {
     titulo: `${registro.type?.label || ""} ${registro.name || ""}`.trim(),
     linhas,

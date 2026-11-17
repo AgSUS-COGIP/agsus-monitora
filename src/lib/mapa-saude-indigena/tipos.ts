@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import type { LinhaDoMonitoramento } from "../../componentes/tipos-do-monitoramento.ts";
 import type { CoordenadasDoMapa } from "../tipos-do-mapa.ts";
 import type { tipoDaUnidade } from "./formas.ts";
@@ -13,10 +12,9 @@ export interface PoloDoMapa {
   uf?: string;
   cod?: string | number | null;
   cnes?: string;
-  /** Polo do SIGEPSI: o tipo vem de TP_UNIDADE ("polo" quando ausente). */
+  /** O tipo do SIGEPSI (TP_UNIDADE); "polo" quando ausente. */
   tipo?: "casai" | "polo" | "unidade";
   municipio?: string;
-  /** "sigepsi" quando veio da API (o editor de coordenadas não oferece). */
   origem?: string;
 }
 export interface DseiDoMapa extends PoloDoMapa {
@@ -29,14 +27,11 @@ export interface DseiDoMapa extends PoloDoMapa {
   sede_uf?: string;
   sede_endereco?: string;
   sede_cnes?: string;
-  /** "sigepsi" quando a sede (lat/lon) veio da API (o editor não oferece). */
-  sede_origem?: string;
-  /** Posição do DSEI no `lmap` do banco (a lista vem do SIGEPSI). */
-  indice_no_banco?: number;
 }
-export type EstabelecimentoCompacto = [
+/** CASAI nacional do SIGEPSI: [nome, código, lat, lon, município, UF]. */
+export type CasaiNacionalCompacta = [
   nome: string,
-  cnes: string | number | null,
+  codigo: string | number | null,
   latitude: number | string | null,
   longitude: number | string | null,
   municipio?: string,
@@ -45,15 +40,6 @@ export type EstabelecimentoCompacto = [
 export interface ConfiguracaoDoMapa {
   [campo: string]: unknown;
   dsei: DseiDoMapa[];
-}
-export interface RedeCnesDoMapa {
-  rede: Record<
-    string,
-    { u: EstabelecimentoCompacto[]; c: EstabelecimentoCompacto[] }
-  >;
-  nac: EstabelecimentoCompacto[];
-  /** As CASAIs vêm só do SIGEPSI: as do CNES não entram (`nac` já é do SIGEPSI). */
-  casais_do_sigepsi?: boolean;
 }
 export interface ContagemDoDsei {
   editais: number;
@@ -135,7 +121,8 @@ export interface EnquadramentoDoMapa {
 }
 export interface PropsDoMapaSaudeIndigena {
   lmap: unknown;
-  redeCnes: unknown;
+  /** As CASAIs nacionais do SIGEPSI (localizações 131 e 132). */
+  casaisNacionais: unknown;
   linhas?: readonly LinhaDoMonitoramento[];
   filtroAtivo?: boolean;
   dseiSelecionado?: string | null;
@@ -147,19 +134,10 @@ export interface PropsDoMapaSaudeIndigena {
   aoSairDoDsei?(): void;
   aoFiltrarPorBusca?(busca: string): void;
   aoEscolherUnidade?(unidade: RegistroDoDsei): void;
-  perfil?: object | null;
-  supabase?: SupabaseClient | null;
-  aoAtualizarMapa?(configuracao: { lmap?: unknown; rede_cnes?: unknown }): void;
 }
 export interface PropsDaVisaoNacional extends Pick<
   PropsDoMapaSaudeIndigena,
-  | "lmap"
-  | "redeCnes"
-  | "perfil"
-  | "supabase"
-  | "aoAtualizarMapa"
-  | "aoEscolherDsei"
-  | "aoFiltrarPorBusca"
+  "aoEscolherDsei" | "aoFiltrarPorBusca"
 > {
   L:
     | import("../../modulos/mapa-saude-indigena/tipos-do-leaflet.ts").LeafletDoMapa
@@ -178,12 +156,11 @@ export interface PropsDaVisaoNacional extends Pick<
 }
 export interface PropsDoMapaDoDsei extends Pick<
   PropsDoMapaSaudeIndigena,
-  "lmap" | "perfil" | "supabase" | "aoAtualizarMapa" | "aoEscolherUnidade"
+  "aoEscolherUnidade"
 > {
   L:
     | import("../../modulos/mapa-saude-indigena/tipos-do-leaflet.ts").LeafletDoMapa
     | null;
-  redeCnes: unknown;
   dsei: DseiDoMapa;
   idDoMapa: string;
   telaCheia: boolean;

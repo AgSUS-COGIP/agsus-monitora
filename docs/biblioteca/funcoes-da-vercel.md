@@ -7,8 +7,9 @@ atualizado: 2026-11-10
 # Funções da Vercel (`api/`)
 
 Cada arquivo de `api/` é um endpoint `/api/<nome>`; o que começa com `_` não é rota (a Vercel o
-ignora). As rotas `/api/*` só existem na Vercel: o `server/servidor.ts` não as tem e, localmente,
-respondem 404. A Aya responde no navegador; o endpoint de IA e o bridge local foram retirados.
+ignora). As rotas `/api/*` existem na Vercel e, em TypeScript, também no `npm run dev:frontend`
+(`scripts/servir-api-no-vite.mjs` carrega `api/<nome>.ts` pelo Vite, com as variáveis do `.env.local`); o
+`server/servidor.ts` não as tem (404). As em Python (`.py`) só rodam na Vercel. A Aya responde no navegador; o endpoint de IA e o bridge local foram retirados.
 
 ## As funções
 

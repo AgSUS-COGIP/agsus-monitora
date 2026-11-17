@@ -30,6 +30,38 @@ import { comemoracoesNaPagina } from "../shows-de-comemoracao.js";
 */
 
 // O Chart.js não desenha no jsdom (sem canvas): um falso guarda o que recebeu.
+/*
+  O SIGEPSI (/api/dseis) simulado: o mapa da Saúde Indígena só desenha com a
+  resposta dele. `entregarDoSigepsi` responde; `sigepsi.atual` começa
+  "carregando" (o mapa espera), e "indisponivel" mostra o erro.
+*/
+const sigepsi = vi.hoisted(() => ({
+  atual: { estado: "carregando", dados: null },
+  ouvintes: new Set(),
+  tentativas: 0,
+}));
+vi.mock("../../src/modulos/mapa-saude-indigena/localizacoes.ts", async () => {
+  const { useSyncExternalStore } = await import("react");
+  return {
+    usarLocalizacoesDoSigepsi: () => ({
+      ...useSyncExternalStore(
+        (avisar) => {
+          sigepsi.ouvintes.add(avisar);
+          return () => sigepsi.ouvintes.delete(avisar);
+        },
+        () => sigepsi.atual,
+      ),
+      tentarDeNovo: () => {
+        sigepsi.tentativas += 1;
+      },
+    }),
+  };
+});
+function responderDoSigepsi(atual) {
+  sigepsi.atual = atual;
+  for (const avisar of sigepsi.ouvintes) avisar();
+}
+
 const graficos = vi.hoisted(() => []);
 vi.mock("../../src/lib/chartjs-global.ts", () => {
   const Chart = class {
@@ -1015,6 +1047,26 @@ describe("o mapa da Saúde Indígena na Visão geral", () => {
     rede: {},
     nac: [["CASAI DF", "", -15.8, -47.9, "BRASILIA", 53]],
   };
+  /* O SIGEPSI responde com os DSEIs do LMAP (sede = posição) e a CASAI DF. */
+  async function entregarDoSigepsi() {
+    const dseis = Object.fromEntries(
+      LMAP.dsei.map((d) => [
+        d.k,
+        {
+          nome: d.k,
+          polos: [],
+          sede: { lat: d.lat, lon: d.lon, uf: d.ufs[0], municipio: "" },
+        },
+      ]),
+    );
+    await act(async () => {
+      estado.definirDadosDoMapa({ lmap: LMAP });
+      responderDoSigepsi({
+        estado: "pronto",
+        dados: { dseis, casaisNacionais: REDE.nac },
+      });
+    });
+  }
   let leaflet;
   const vivo = (id) =>
     leaflet.vivos().find((m) => m.elemento.id === id) || null;
@@ -1029,15 +1081,28 @@ describe("o mapa da Saúde Indígena na Visão geral", () => {
   });
   afterEach(() => {
     delete globalThis.L;
+    responderDoSigepsi({ estado: "carregando", dados: null });
+  });
+
+  it("sem o SIGEPSI, mostra o erro e 'Tentar novamente' (sem os dados do banco)", async () => {
+    await montar();
+    await act(async () => {
+      estado.definirDadosDoMapa({ lmap: LMAP });
+      responderDoSigepsi({ estado: "indisponivel", dados: null });
+    });
+    expect(secao.querySelector("#map")).toBeNull();
+    const erro = secao.querySelector(".visao-geral-mapa [role='alert']");
+    expect(erro.textContent).toContain("o SIGEPSI não respondeu");
+    const antes = sigepsi.tentativas;
+    await clicar(erro.querySelector("[data-acao='tentar-novamente']"));
+    expect(sigepsi.tentativas).toBe(antes + 1);
   });
 
   it("espera os dados do mapa e desenha um #map só, com as bolhas do recorte", async () => {
     await montar();
     expect(secao.querySelectorAll("#map")).toHaveLength(1);
     expect(secao.querySelector(".mapa-si-lista__esqueleto")).not.toBeNull();
-    await act(async () =>
-      estado.definirDadosDoMapa({ lmap: LMAP, redeCnes: REDE }),
-    );
+    await entregarDoSigepsi();
     const mapa = vivo("map");
     expect(bolhas(mapa)).toHaveLength(2);
     const territorios = [...secao.querySelectorAll(".mapa-si-territorio")];
@@ -1054,9 +1119,7 @@ describe("o mapa da Saúde Indígena na Visão geral", () => {
 
   it("a bolha recorta a página pelo DSEI; 'Voltar ao Brasil' sai sem limpar os filtros", async () => {
     await montar();
-    await act(async () =>
-      estado.definirDadosDoMapa({ lmap: LMAP, redeCnes: REDE }),
-    );
+    await entregarDoSigepsi();
     await act(async () => estado.definirFiltro("uf", ["MT"]));
     const xingu = bolhas(vivo("map")).find((b) => b.latlng[0] === -11.5);
     await act(async () => xingu.fire("click"));
@@ -1075,9 +1138,7 @@ describe("o mapa da Saúde Indígena na Visão geral", () => {
 
   it("o chip DSEI volta ao Brasil com o mesmo voo do botão, sem mexer no foco", async () => {
     await montar();
-    await act(async () =>
-      estado.definirDadosDoMapa({ lmap: LMAP, redeCnes: REDE }),
-    );
+    await entregarDoSigepsi();
     await act(async () => estado.definirDsei("DSEI Xingu", "Xingu"));
     expect(vivo("detailMap")).not.toBeNull();
     const nacional = vivo("map");
@@ -1097,9 +1158,7 @@ describe("o mapa da Saúde Indígena na Visão geral", () => {
 
   it("o DSEI aberto pelo chip ou por 'Limpar tudo' fecha o mapa do distrito", async () => {
     await montar();
-    await act(async () =>
-      estado.definirDadosDoMapa({ lmap: LMAP, redeCnes: REDE }),
-    );
+    await entregarDoSigepsi();
     await act(async () => estado.definirDsei("DSEI Xingu", "Xingu"));
     expect(vivo("detailMap")).not.toBeNull();
     await clicar(botao("Limpar tudo", secao));
@@ -1109,9 +1168,7 @@ describe("o mapa da Saúde Indígena na Visão geral", () => {
 
   it("a CASAI nacional procura pela cidade na busca da página", async () => {
     await montar();
-    await act(async () =>
-      estado.definirDadosDoMapa({ lmap: LMAP, redeCnes: REDE }),
-    );
+    await entregarDoSigepsi();
     const [casai] = leaflet.desenhadas(vivo("map"), "marker");
     await act(async () => casai.fire("click"));
     expect(estado.obter().busca).toBe("CASAI BRASILIA");
@@ -1119,9 +1176,7 @@ describe("o mapa da Saúde Indígena na Visão geral", () => {
 
   it("trocar de área destrói o mapa da Saúde Indígena (cleanup do Leaflet)", async () => {
     await montar();
-    await act(async () =>
-      estado.definirDadosDoMapa({ lmap: LMAP, redeCnes: REDE }),
-    );
+    await entregarDoSigepsi();
     expect(leaflet.vivos()).toHaveLength(1);
     await act(async () => definirAreaAtual("projetos"));
     expect(vivo("map")).toBeNull();

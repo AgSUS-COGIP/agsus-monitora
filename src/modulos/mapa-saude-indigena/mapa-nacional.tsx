@@ -55,7 +55,6 @@ import {
   MolduraDoMapa,
   TopoDoMapa,
   classesDoPainel,
-  propsDoEditor,
   usarMapaDoBrasil,
 } from "./painel-do-mapa.tsx";
 import { usarUltimo } from "./usar-ultimo.ts";
@@ -64,12 +63,6 @@ import {
   ordenarTerritorios,
   tituloDaOrdem,
 } from "../../lib/mapa-saude-indigena/ordem-dos-territorios.ts";
-import { podeEditarCoordenadas } from "../../lib/access-roles.ts";
-import { EditorDeCoordenadas } from "./editor-de-coordenadas.tsx";
-import {
-  PainelDoEditor,
-  usarModoDeEdicao,
-} from "../editor-de-coordenadas/modo-de-edicao.tsx";
 
 /*
   A volta de um DSEI parte da sede, no zoom em que o mapa do distrito costuma
@@ -181,11 +174,6 @@ const LinhaDoTerritorio = memo(function LinhaDoTerritorio({
   mesmos.
 */
 export function MapaNacional({
-  lmap,
-  redeCnes,
-  perfil,
-  supabase,
-  aoAtualizarMapa,
   L,
   idDoMapa,
   visivel,
@@ -201,7 +189,6 @@ export function MapaNacional({
   aoEscolherDsei,
   aoFiltrarPorBusca,
 }: PropsDaVisaoNacional) {
-  const podeEditar = podeEditarCoordenadas(perfil);
   const refDaLista = useRef<HTMLElement | null>(null);
   // Enquanto voa de volta ao Brasil, o "apareceu" do ResizeObserver não salta.
   const voando = useRef<(() => void) | null>(null);
@@ -227,11 +214,6 @@ export function MapaNacional({
         };
       },
     });
-  const modo = usarModoDeEdicao({
-    mapa,
-    permitido: podeEditar && visivel,
-    pegar: () => camadas.current?.pegar(),
-  });
   const idDoPainel = `${idDoMapa}-painel-lateral`;
   // A última volta de DSEI já enquadrada e já com o foco devolvido (`vez`).
   const voltaEnquadrada = useRef(0);
@@ -455,7 +437,7 @@ export function MapaNacional({
 
   return (
     <section
-      className={classesDoPainel(modo)}
+      className={classesDoPainel()}
       hidden={!visivel}
       aria-labelledby={`${idDoMapa}-titulo`}
     >
@@ -468,9 +450,6 @@ export function MapaNacional({
         contagem={
           carregando ? "…" : plural(bolhas.length, "território", "territórios")
         }
-        podeEditar={podeEditar}
-        modo={modo}
-        idDoPainel={idDoPainel}
         acoes={acoes}
       />
       <div className="mapa-si-painel__corpo">
@@ -493,63 +472,44 @@ export function MapaNacional({
             <LegendaNacional mapa={mapa} temAbrangencia={temAbrangencia} />
           ) : null}
         </MolduraDoMapa>
-        {modo.editando ? (
-          <PainelDoEditor
-            id={idDoPainel}
-            rotulo="Coordenadas do mapa"
-            modo={modo}
-          >
-            <EditorDeCoordenadas
-              L={L}
-              mapa={mapa}
-              lmap={lmap}
-              redeCnes={redeCnes}
-              perfil={perfil}
-              supabase={supabase}
-              aoAtualizarMapa={aoAtualizarMapa}
-              {...propsDoEditor(modo, idDoPainel)}
-            />
-          </PainelDoEditor>
-        ) : (
-          <ListaDoMapa
-            refDaLista={refDaLista}
-            id={idDoPainel}
-            idDoTitulo={`${idDoMapa}-lista`}
-            titulo={tituloDaOrdem(ordem)}
-            total={territorios.length}
-            carregando={carregando}
-            vazio="Nenhum território no recorte."
-            antes={
-              territorios.length ? (
-                <OrdemDaLista ordem={ordem} aoOrdenar={definirOrdem} />
-              ) : null
-            }
-          >
-            {territorios.length ? (
-              <ol className="mapa-si-lista__itens">
-                {territoriosNaOrdem.map((t) => {
-                  const numero = simples
-                    ? (numerosPorChave.get(t.chave) ?? null)
-                    : null;
-                  return (
-                    <LinhaDoTerritorio
-                      key={t.chave}
-                      territorio={t}
-                      aoEscolher={escolherNaLista}
-                      simples={simples}
-                      numero={numero}
-                      token={numero ? pintura.tokens.get(numero) : undefined}
-                      realcado={
-                        simples && numero !== null && realceNaLista === numero
-                      }
-                      aoRealcar={realcarDaLista}
-                    />
-                  );
-                })}
-              </ol>
-            ) : null}
-          </ListaDoMapa>
-        )}
+        <ListaDoMapa
+          refDaLista={refDaLista}
+          id={idDoPainel}
+          idDoTitulo={`${idDoMapa}-lista`}
+          titulo={tituloDaOrdem(ordem)}
+          total={territorios.length}
+          carregando={carregando}
+          vazio="Nenhum território no recorte."
+          antes={
+            territorios.length ? (
+              <OrdemDaLista ordem={ordem} aoOrdenar={definirOrdem} />
+            ) : null
+          }
+        >
+          {territorios.length ? (
+            <ol className="mapa-si-lista__itens">
+              {territoriosNaOrdem.map((t) => {
+                const numero = simples
+                  ? (numerosPorChave.get(t.chave) ?? null)
+                  : null;
+                return (
+                  <LinhaDoTerritorio
+                    key={t.chave}
+                    territorio={t}
+                    aoEscolher={escolherNaLista}
+                    simples={simples}
+                    numero={numero}
+                    token={numero ? pintura.tokens.get(numero) : undefined}
+                    realcado={
+                      simples && numero !== null && realceNaLista === numero
+                    }
+                    aoRealcar={realcarDaLista}
+                  />
+                );
+              })}
+            </ol>
+          ) : null}
+        </ListaDoMapa>
       </div>
     </section>
   );

@@ -11,16 +11,12 @@ import {
   visiveis,
 } from "../../src/lib/mapa-saude-indigena/mapa-do-dsei.ts";
 import type {
+  CasaiNacionalCompacta,
   DseiDoMapa,
-  RedeCnesDoMapa,
   RegistroDoDsei,
   ContagemDoDsei,
 } from "../../src/lib/mapa-saude-indigena/tipos.ts";
 import type { CoordenadasDoMapa } from "../../src/lib/tipos-do-mapa.ts";
-import {
-  reconciliarDsei,
-  unirEstabelecimentosRepetidos,
-} from "../../src/lib/reconciliacao-unidades.ts";
 import { TIPO_POLO } from "../../src/lib/mapa-saude-indigena/formas.ts";
 
 const dsei: DseiDoMapa = {
@@ -30,42 +26,24 @@ const dsei: DseiDoMapa = {
   lon: -38.5,
   ufs: ["CE"],
 };
-const rede: RedeCnesDoMapa = {
-  rede: { CEARA: { u: [["Polo", 123, -3.7, -38.5, "Fortaleza", 23]], c: [] } },
-  nac: [],
-};
+const nac: CasaiNacionalCompacta[] = [
+  ["CASAI DF", "131", -15.7, -47.7, "BRASILIA", "DF"],
+];
 const contagens: ReadonlyMap<string, ContagemDoDsei> = contarPorDsei([]);
 const distritos: readonly DseiDoMapa[] = [dsei];
 const bolhas = bolhasDosDsei({ dseis: distritos, contagens });
-const casais = casaisNacionais({ nac: rede.nac, contagens });
+const casais = casaisNacionais({ nac, contagens });
 const pontos: CoordenadasDoMapa[] = enquadramentoNacional({
   bolhas,
   casais,
 }).pontos;
-const registros: readonly RegistroDoDsei[] = registrosDoDsei(dsei, rede);
+const registros: readonly RegistroDoDsei[] = registrosDoDsei(dsei);
 const classificados: RegistroDoDsei[] = classificarRegistros(registros, dsei);
 const territorio: CoordenadasDoMapa[] = limitesDoDsei(
   dsei,
   classificados,
 ).territorio;
 const visibilidade: RegistroDoDsei[] = visiveis(registros, new Set<string>());
-
-const agrupados = unirEstabelecimentosRepetidos([
-  {
-    nome: "Polo",
-    chave: 123,
-    lat: -3.7,
-    lon: -38.5,
-    identificadorVisual: "polo",
-  },
-]);
-const identificador: string | undefined =
-  agrupados.estabelecimentos[0]?.identificadorVisual;
-const usados: Set<string | number> = reconciliarDsei({
-  dseiChave: dsei.k,
-  polos: [],
-  estabelecimentos: agrupados.estabelecimentos,
-}).estabelecimentosUsados;
 
 bolhasDosDsei({
   // @ts-expect-error Uma contagem de vagas precisa ser numérica.
@@ -86,4 +64,4 @@ limitesDoDsei(dsei, [
     lon: -38.5,
   },
 ]);
-void [pontos, territorio, visibilidade, identificador, usados];
+void [pontos, territorio, visibilidade];

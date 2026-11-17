@@ -39,38 +39,6 @@ export type ContratoRpc = {
 };
 
 export const CONTRATO_RPC: Record<string, ContratoRpc> = {
-  salvar_coordenada_mapa_saude_indigena: {
-    argumentos: [
-      "p_alvo",
-      "p_latitude",
-      "p_longitude",
-      "p_latitude_anterior",
-      "p_longitude_anterior",
-      "p_motivo",
-      "p_conferido",
-    ],
-    critica: true,
-    resumo:
-      "Corrige a coordenada de um ponto existente e/ou o marca como conferido (p_conferido), com histórico privado. Só administrador global ou Gestor.",
-  },
-  desfazer_coordenada_mapa_saude_indigena: {
-    argumentos: ["p_historico", "p_motivo"],
-    critica: false,
-    resumo:
-      "Volta a última alteração de um ponto do mapa como alteração nova, com motivo. Só administrador global ou Gestor.",
-  },
-  listar_historico_coordenada_mapa_saude_indigena: {
-    argumentos: ["p_alvo", "p_limite"],
-    critica: false,
-    resumo:
-      "Últimas alterações de um ponto do mapa (quem, quando, de/para, motivo). Só administrador global ou Gestor.",
-  },
-  listar_pendencias_coordenada_mapa_saude_indigena: {
-    argumentos: [],
-    critica: false,
-    resumo:
-      "Pontos do mapa ainda não conferidos depois da auditoria, com candidatos. Só administrador global ou Gestor.",
-  },
   // ── Editor de coordenadas do mapa de Projetos (admin global ou Gestor) ──
   salvar_coordenada_mapa_projetos: {
     argumentos: [
@@ -494,7 +462,7 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     argumentos: ["p_versao"],
     critica: false,
     resumo:
-      "O mapa da Saúde Indígena (`lmap` e `rede_cnes` de TB_CONFIG_MAPA_SAUDE_INDIG, ~150 kB; SECURITY INVOKER, a RLS de sempre) como `{ linhas: [{ chave, payload }], versao }`; p_versao igual à atual devolve só `inalterado` (20261015000100). Substitui o select direto na tabela na entrada.",
+      "O mapa da Saúde Indígena (`lmap` de TB_CONFIG_MAPA_SAUDE_INDIG: nome, população e UFs de cada DSEI; os pontos vêm do SIGEPSI; SECURITY INVOKER, a RLS de sempre) como `{ linhas: [{ chave, payload }], versao }`; p_versao igual à atual devolve só `inalterado` (20261015000100). Substitui o select direto na tabela na entrada.",
   },
   // ── API para outro sistema (20261105150000 e 170000; chamadas por api/*.js com a chave de servidor) ──
   listar_editais_da_api: {

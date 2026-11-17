@@ -15,10 +15,8 @@ import { chaveDoDsei, temCoordenada, texto } from "./chaves.js";
   - `aplicarLocalizacoes(lmap, porDsei)`: a lista de DSEIs passa a ser a do
     SIGEPSI, com polos e sede (posição, município e UF) dele.
 
-  Ponto repetido entre o SIGEPSI e o CNES (`rede_cnes`) vira um só, com nome,
-  posição, município e UF do SIGEPSI (`registrosDoDsei`, mapa-do-dsei.ts).
-  Tudo o que vem daqui tem `origem: "sigepsi"`: o editor de coordenadas não
-  oferece (a correção é no SIGEPSI, não no banco do MONITORA).
+  Os pontos de cada DSEI e as CASAIs são só os daqui (o CNES saiu do mapa em
+  17/11/2026); corrigir um ponto é no SIGEPSI.
 */
 
 export const ORIGEM_SIGEPSI = "sigepsi" as const;
@@ -205,8 +203,7 @@ export function localizacoesPorDsei(linhas: unknown): LocalizacoesPorDsei {
 
   As de cada DSEI já entram como polos `tipo: "casai"`. As nacionais
   (CODIGOS_DAS_CASAIS_NACIONAIS: 131 CASAI DF, 132 CASAI São Paulo) viram a
-  lista `nac` do mapa nacional, no formato compacto do `rede_cnes`
-  ([nome, código, lat, lon, município, UF]). Sem CEP (CASAI DF), a UF é a
+  lista do mapa nacional ([nome, código, lat, lon, município, UF]). Sem CEP (CASAI DF), a UF é a
   sigla do nome do DSEI ("CASAI DF" → DF).
 */
 export type CasaiNacionalDoSigepsi = [
@@ -247,21 +244,6 @@ export function casaisNacionaisDoSigepsi(
   });
 }
 
-/*
-  O `rede_cnes` com as CASAIs do SIGEPSI: `nac` passa a ser a lista nacional
-  do SIGEPSI e `casais_do_sigepsi: true` avisa que as CASAIs do CNES (`c` e as
-  unidades com nome de CASAI) não entram no mapa nem no editor. As listas do
-  CNES não são recortadas: o editor confere cada ponto pela posição nelas.
-*/
-export function aplicarCasaisDoSigepsi(
-  redeCnes: unknown,
-  casaisNacionais: readonly CasaiNacionalDoSigepsi[] | null | undefined,
-): unknown {
-  if (!casaisNacionais) return redeCnes;
-  const base = registro(redeCnes) || { rede: {} };
-  return { ...base, nac: [...casaisNacionais], casais_do_sigepsi: true };
-}
-
 const MINUSCULAS = new Set(["e", "de", "do", "da", "dos", "das"]);
 
 /* "MÉDIO RIO SOLIMÕES E AFLUENTES" → "Médio Rio Solimões e Afluentes". */
@@ -279,52 +261,50 @@ export function nomeLegivel(nome: unknown): string {
 }
 
 /*
-  A LISTA DE DSEIs É A DO SIGEPSI. Do `lmap` do banco, o DSEI de mesma chave
-  empresta só o que a API não traz: a chave `k` (que liga ao `rede_cnes`), o
-  nome bem grafado, a população e as UFs. DSEI só do banco não entra; DSEI só
-  do SIGEPSI entra com o nome dele e a UF da sede. A posição de cada DSEI na
-  lista do banco vai em `indice_no_banco`: é por ela que o editor de
-  coordenadas confere o alvo ao gravar.
+  OS DSEIs DO MAPA SÃO OS DO SIGEPSI, sem plano B no banco: se o SIGEPSI não
+  responde, a tela mostra o erro (um dado desatualizado seria pior).
 
-  Sem resposta do SIGEPSI (`porDsei` nulo ou vazio), devolve o `lmap` do banco.
+  Do `lmap` do banco, o DSEI de mesma chave empresta só o que a API não traz:
+  o nome bem grafado, a população (tamanho da bolha) e as UFs administrativas
+  (vínculo externo). DSEI só do banco não entra; DSEI só do SIGEPSI entra com
+  o nome dele e a UF da sede. Sede (posição, município, UF) e pontos são os do
+  SIGEPSI; DSEI sem sede no SIGEPSI fica sem bolha.
 */
 export function aplicarLocalizacoes(
   lmap: unknown,
-  porDsei: LocalizacoesPorDsei | null | undefined,
-): unknown {
-  if (!porDsei || !Object.keys(porDsei).length) return lmap;
+  porDsei: LocalizacoesPorDsei,
+): { dsei: Record<string, unknown>[] } {
   const base = registro(lmap) || {};
-  const doBanco = new Map<string, [Record<string, unknown>, number]>();
-  (Array.isArray(base.dsei) ? (base.dsei as unknown[]) : []).forEach(
-    (valor, indice) => {
-      const dsei = registro(valor);
-      if (dsei) doBanco.set(chaveDoDsei(dsei.k), [dsei, indice]);
-    },
-  );
+  const doBanco = new Map<string, Record<string, unknown>>();
+  for (const valor of Array.isArray(base.dsei)
+    ? (base.dsei as unknown[])
+    : []) {
+    const dsei = registro(valor);
+    if (dsei) doBanco.set(chaveDoDsei(dsei.k), dsei);
+  }
   return {
-    ...base,
-    dsei: Object.entries(porDsei).map(([chave, doDsei]) => {
-      const [banco, indice] = doBanco.get(chave) || [null, -1];
+    dsei: Object.values(porDsei).map((doDsei) => {
+      const banco = doBanco.get(chaveDoDsei(doDsei.nome));
       const { sede } = doDsei;
       const ufDaSede = sede?.uf || "";
+      const ufs = Array.isArray(banco?.ufs)
+        ? banco.ufs
+        : ufDaSede
+          ? [ufDaSede]
+          : [];
       return {
-        ...(banco || {}),
-        k: banco ? banco.k : doDsei.nome,
-        n: banco ? banco.n : nomeLegivel(doDsei.nome),
-        ...(banco
-          ? { indice_no_banco: indice }
-          : {
-              origem: ORIGEM_SIGEPSI,
-              ...(ufDaSede ? { ufs: [ufDaSede], sedeuf: ufDaSede } : {}),
-            }),
+        k: doDsei.nome,
+        n: typeof banco?.n === "string" ? banco.n : nomeLegivel(doDsei.nome),
+        ...(banco && "pop" in banco ? { pop: banco.pop } : {}),
+        ufs,
+        sedeuf: (typeof banco?.sedeuf === "string" && banco.sedeuf) || ufDaSede,
         polos: doDsei.polos,
         ...(sede
           ? {
               lat: sede.lat,
               lon: sede.lon,
-              sede_municipio: sede.municipio || banco?.sede_municipio,
-              sede_uf: sede.uf || banco?.sede_uf,
-              sede_origem: ORIGEM_SIGEPSI,
+              sede_municipio: sede.municipio,
+              sede_uf: sede.uf,
             }
           : {}),
       };

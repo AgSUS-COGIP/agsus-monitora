@@ -35,8 +35,9 @@ export interface PropsDoTopoDoMapa {
   titulo: string;
   contagem: ReactNode;
   podeEditar?: boolean;
-  modo: ModoDeEdicao;
-  idDoPainel: string;
+  /** Só no mapa que tem editor de coordenadas (Projetos). */
+  modo?: ModoDeEdicao;
+  idDoPainel?: string;
   acoes?: ReactNode;
 }
 export interface PropsDaListaDoMapa {
