@@ -76,6 +76,14 @@ class FichasComPendencia(unittest.TestCase):
         caso = next(c for c in DOURADOS["casos"] if c["nome"].startswith("Confere da experiência abaixo"))
         self.assertEqual(rv.fichas_com_pendencia([pagina([caso])], DOURADOS["hoje"]), [])
 
+    def test_importada_da_planilha_nao_vai(self):
+        """Ficha importada da planilha (16/11/2026): sem itens marcados, não tem pendência a conferir."""
+        importada = {
+            "lancamento": {"importada_da_planilha": {"linha": "l1", "versao": 3, "status": "Aprovado"}},
+            "resultado": {"resultado": "APTO", "nota_final": 30, "importada_da_planilha": True},
+        }
+        self.assertEqual(rv.fichas_com_pendencia([pagina([importada])], DOURADOS["hoje"]), [])
+
 
 class MandarParaRevisao(unittest.TestCase):
     def test_conta_as_que_o_banco_confirmou(self):
