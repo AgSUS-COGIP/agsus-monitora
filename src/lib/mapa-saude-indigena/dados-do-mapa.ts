@@ -114,6 +114,7 @@ export function redeCnesDoMapa(valor: unknown): RedeCnesDoMapa {
       }),
     ),
     nac: estabelecimentos(raiz.nac),
+    ...(raiz.casais_do_sigepsi === true ? { casais_do_sigepsi: true } : {}),
   };
 }
 export function terrasDoMapa(valor: unknown): TerraDoMapa[] {

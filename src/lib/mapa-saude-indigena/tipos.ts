@@ -31,6 +31,8 @@ export interface DseiDoMapa extends PoloDoMapa {
   sede_cnes?: string;
   /** "sigepsi" quando a sede (lat/lon) veio da API (o editor não oferece). */
   sede_origem?: string;
+  /** Posição do DSEI no `lmap` do banco (a lista vem do SIGEPSI). */
+  indice_no_banco?: number;
 }
 export type EstabelecimentoCompacto = [
   nome: string,
@@ -50,6 +52,8 @@ export interface RedeCnesDoMapa {
     { u: EstabelecimentoCompacto[]; c: EstabelecimentoCompacto[] }
   >;
   nac: EstabelecimentoCompacto[];
+  /** As CASAIs vêm só do SIGEPSI: as do CNES não entram (`nac` já é do SIGEPSI). */
+  casais_do_sigepsi?: boolean;
 }
 export interface ContagemDoDsei {
   editais: number;

@@ -69,21 +69,31 @@ com as Lotações), `redeCnes` (chave "rede_cnes"), `linhas` (editais recortados
 
 - **Dados.** `carregarMapa` (`src/app/carga.ts`) lê a tabela (faz parte da cópia da sessão e da
   recarga) e publica `estado.definirDadosDoMapa({ lmap, redeCnes })`.
-- **SIGEPSI, a fonte verdadeira dos pontos.** `MapaDaSaudeIndigena` pede `/api/dseis`
-  ([[funcoes-da-vercel]]) por `usarLocalizacoesDoSigepsi` (`localizacoes.ts`, um pedido a cada 10
-  min para a página). `aplicarLocalizacoes` troca, em cada DSEI que a API traz, os `polos` e a sede
-  (`lat`/`lon`, onde fica também a bolha nacional, `sede_municipio`, `sede_uf`,
-  `sede_origem: "sigepsi"`); UFs e população continuam do `lmap`. `TP_UNIDADE`: POLO BASE e ROTA →
+- **SIGEPSI, a fonte verdadeira da lista de DSEIs e dos pontos.** `MapaDaSaudeIndigena` pede
+  `/api/dseis` ([[funcoes-da-vercel]]) por `usarLocalizacoesDoSigepsi` (`localizacoes.ts`, um pedido
+  a cada 10 min para a página) e fica em "carregando" até a resposta (não mostra a lista do banco
+  para trocá-la em seguida). `aplicarLocalizacoes` monta a lista de DSEIs com a do SIGEPSI: DSEI só
+  do banco não entra; do DSEI de mesma chave no `lmap` vêm só `k` (liga ao `rede_cnes`), `n`,
+  população, UFs e `indice_no_banco` (o editor confere a sede do banco por ele); DSEI só do SIGEPSI
+  entra com `origem: "sigepsi"`, o nome legível de `NO_DSEI` e a UF da sede. A sede (`lat`/`lon`,
+  onde fica a bolha nacional, `sede_municipio`, `sede_uf`, `sede_origem: "sigepsi"`) e os `polos`
+  são os do SIGEPSI. `TP_UNIDADE`: POLO BASE e ROTA →
   `polo`; CASAI → `casai`; SEDE → a sede; UNIDADE DE LOTAÇÃO → `unidade` (ou polo/CASAI, se o nome
   disser), desenhada pelo nome (UBSI ou Unidade). UF pelo CEP.
 - **Repetido com o CNES, vale o SIGEPSI.** A reconciliação une `unidade` com UBSI/posto/outro de
   mesmo nome (`tiposCompativeis`), e o ponto unido fica com nome, posição, município e UF do
   SIGEPSI (do CNES, só o código). O estabelecimento do CNES que sobrar a até 200 m de um ponto do
   SIGEPSI de tipo compatível sai do mapa, mesmo sem palavra em comum (só contra o SIGEPSI).
-- O editor de coordenadas não oferece a sede nem os pontos do SIGEPSI (corrige-se lá). "CASAI DF"
-  e "CASAI SÃO PAULO" vêm com o próprio nome em `NO_DSEI`, sem DSEI do `lmap`: não entram (as
-  CASAIs nacionais continuam do `rede_cnes`). Falha na API ou servidor local (sem `/api`): o mapa
-  segue com os dados do banco.
+- **CASAIs só do SIGEPSI.** As nacionais são as localizações 131 (CASAI DF) e 132 (CASAI São
+  Paulo) (`CODIGOS_DAS_CASAIS_NACIONAIS`): `casaisNacionaisDoSigepsi` as põe no `nac` do
+  `rede_cnes` (o losango do mapa nacional) e não viram DSEI. `aplicarCasaisDoSigepsi` marca o
+  `rede_cnes` com `casais_do_sigepsi: true` (`redeCnesDoMapa` preserva): as CASAIs do CNES (`c` e
+  as unidades com nome de CASAI) saem do mapa do DSEI e do editor, sem recortar as listas (o editor
+  confere cada ponto pela posição nelas). As do banco saíram com a migration `20261117150000`
+  (cópias `*_backup_20261117_pre_casais_do_sigepsi`).
+- O editor de coordenadas não oferece a sede, o DSEI, as CASAIs nem os pontos do SIGEPSI
+  (corrige-se lá). Falha na API ou servidor local (sem `/api`): o mapa usa a lista e os dados do
+  banco (sem CASAI, depois da migration).
 - **DSEI.** `definirDsei` guarda `chaveDoDsei(chave)`; o recorte compara com
   `chaveDoDsei(linha.unidade)`. O chip "DSEI X ×", "← Voltar ao Brasil" e Esc chamam `tirarDsei`
   (os filtros ficam); "Limpar tudo", a busca global e a troca de área tiram o DSEI.

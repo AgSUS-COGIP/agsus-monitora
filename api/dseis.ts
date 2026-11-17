@@ -1,13 +1,15 @@
 /*
-  /api/dseis — os polos base e CASAIs de cada DSEI, lidos do SIGEPSI.
+  /api/dseis — os DSEIs (lista, sedes e pontos) e as CASAIs nacionais, lidos
+  do SIGEPSI.
 
   1. só GET;
   2. só para quem está logado no MONITORA: o front manda
      `Authorization: Bearer <token da sessão do Supabase>`, conferido em
      `/auth/v1/user` (o mesmo token que as RPCs usam);
   3. lê a API do SIGEPSI com `SIGEPSI_API_TOKEN`, que nunca sai da função;
-  4. responde `{ dseis: { <chave do DSEI>: polos[] }, lidoEm }`
-     (`localizacoesPorDsei`, src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts).
+  4. responde `{ dseis: { <chave>: { nome, polos, sede } }, casaisNacionais,
+     lidoEm }` (`localizacoesPorDsei` e `casaisNacionaisDoSigepsi`,
+     src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts).
 
   A resposta da API fica guardada por CACHE_MS na instância da função: abrir o
   mapa várias vezes não repete o pedido ao SIGEPSI. O cache do navegador é
@@ -19,8 +21,14 @@
     SIGEPSI_API_TOKEN              o Bearer da API do SIGEPSI (secreto)
 */
 
-import { localizacoesPorDsei } from "../src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.js";
-import type { LocalizacoesPorDsei } from "../src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.js";
+import {
+  casaisNacionaisDoSigepsi,
+  localizacoesPorDsei,
+} from "../src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.js";
+import type {
+  CasaiNacionalDoSigepsi,
+  LocalizacoesPorDsei,
+} from "../src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.js";
 import type { PedidoDaVercel, RespostaDaVercel } from "./_tipos-da-vercel.js";
 
 export const URL_DO_SIGEPSI =
@@ -50,7 +58,11 @@ export function configuracao() {
   return { base, publicavel, tokenDoSigepsi, faltam };
 }
 
-let guardado: { em: number; dseis: LocalizacoesPorDsei } | null = null;
+let guardado: {
+  em: number;
+  dseis: LocalizacoesPorDsei;
+  casaisNacionais: CasaiNacionalDoSigepsi[];
+} | null = null;
 
 /** Só para os testes: esquece a resposta guardada. */
 export function esquecerCache() {
@@ -119,6 +131,7 @@ export default async function handler(
   if (guardado && agora - guardado.em < CACHE_MS) {
     return responder(res, 200, {
       dseis: guardado.dseis,
+      casaisNacionais: guardado.casaisNacionais,
       lidoEm: new Date(guardado.em).toISOString(),
     });
   }
@@ -143,9 +156,14 @@ export default async function handler(
     if (!Array.isArray(linhas)) {
       return responder(res, 502, { erro: "resposta_invalida_do_sigepsi" });
     }
-    guardado = { em: agora, dseis: localizacoesPorDsei(linhas) };
+    guardado = {
+      em: agora,
+      dseis: localizacoesPorDsei(linhas),
+      casaisNacionais: casaisNacionaisDoSigepsi(linhas),
+    };
     return responder(res, 200, {
       dseis: guardado.dseis,
+      casaisNacionais: guardado.casaisNacionais,
       lidoEm: new Date(agora).toISOString(),
     });
   } catch (falha) {
