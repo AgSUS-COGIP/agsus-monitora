@@ -1,5 +1,7 @@
 /*
-  ENSAIO de 20261113230000_validade_dos_editais_pelo_texto_do_edital: grava, inativa, confere; termina em rollback.
+  ROLLBACK de 20261117160000_validade_dos_editais_pelo_texto_do_edital: zera a validade dos 121 editais e reativa as listas
+  vigentes deles que esta migration inativou. As listas que já estavam
+  inativas em 13/11/2026 (27, da SEDE) ficam como estavam.
 */
 begin;
 
@@ -130,60 +132,16 @@ insert into tmp_validade values
     ('65f6f52a-615d-4072-a784-fca9e0f34454'::uuid, 'FGV 2025', 2::smallint, 0::smallint, false)  -- sede, texto do edital; vence 2027-12-12
 ;
 
-do $guarda$
-declare
-  v_faltam integer;
-  v_ja integer;
-begin
-  select count(*) into v_faltam from tmp_validade t
-   where not exists (select 1 from public."TB_MONITORAMENTO_INDIGENA" m where m.id = t.id and m.edital = t.edital);
-  if v_faltam <> 0 then
-    raise exception '% editais não existem mais ou mudaram de número: confira antes de aplicar.', v_faltam;
-  end if;
-  select count(*) into v_ja from public."TB_MONITORAMENTO_INDIGENA" m join tmp_validade t on t.id = m.id
-   where m."NU_ANOS_VALIDADE" <> 0 or m."NU_MESES_VALIDADE" <> 0 or m."ST_PRORROGADO";
-  if v_ja <> 0 then
-    raise exception '% editais já têm validade gravada (pela tela?): junte as mudanças antes de aplicar.', v_ja;
-  end if;
-end;
-$guarda$;
+update public."TB_LISTA_APROVADO" l
+   set ativo = true, updated_at = now()
+  from tmp_validade t
+ where l.edital_id = t.id::text
+   and l.vigente and not l.ativo
+   and l.id not in ('3d22195d-4012-4edb-90d9-c7e5415ebdbd', '4c2933c3-ceed-4453-adf8-c27f06108739', 'd4452809-95d3-45c1-9752-eb7126abfbc8', 'b4ce0f4f-573a-402d-9182-71c0b02efaa1', '8eb62b3f-a9b6-4d14-a234-dabfa25c8083', '46f8a592-e327-411f-b9f0-a4032282fc67', '166ff43c-397e-46cf-8093-16173a922443', 'f7a09413-d7ff-4271-93cb-b9a167304d26', 'ecea4cfe-8749-458c-bbf4-6404c36e7752', 'ee61c404-03b0-4290-9259-3d58b3e10671', 'cd33ceea-5324-4f67-a5f8-35b2f825f222', '0b5d9e22-9447-427b-9fe6-c4fcc9a4337a', 'dbb7c720-5cfd-4bb9-9b60-c437e8bc98bb', '577890ca-dd2d-41a8-b6b1-8cbddd7ea69e', 'ab454b7a-9106-44e1-bec9-74158b23483e', '575ae580-4d4e-49ff-81f0-5158c4684681', 'faebd92f-f5d4-4235-8d86-f91fa9a82b89', 'b9a5db15-c920-4b08-9c51-e6ce23d70ead', '4b3ed3ea-f4ea-4c0a-955a-bc002bf33f35', '51b3473d-e9f6-4b4b-bb73-7d321bc783bb', '11873860-8962-4f32-b97b-8b37940b9632', '207065f7-6c71-4325-a60a-91ecfe0ea4d8', '7d6d84a0-d9be-4900-a1b9-4727b521138f', '08731277-b2d3-4ea0-af5a-34deff0f93e3', 'd4e6d076-6a4c-459d-82e3-528b05f60132', '65ff11a9-ad89-4155-8003-43b4f848d1ec', 'f159a221-d2eb-4415-94ca-7dbbc7cbb092');
 
 update public."TB_MONITORAMENTO_INDIGENA" m
-   set "NU_ANOS_VALIDADE" = t.anos,
-       "NU_MESES_VALIDADE" = t.meses,
-       "ST_PRORROGADO" = t.prorrogado
+   set "NU_ANOS_VALIDADE" = 0, "NU_MESES_VALIDADE" = 0, "ST_PRORROGADO" = false
   from tmp_validade t
  where m.id = t.id;
 
--- A rotina das 00:05, agora: as listas vigentes dos editais vencidos ficam inativas.
-do $inativa$
-begin
-  raise notice 'Listas inativadas: %', private."FC_INATIVAR_LISTAS_VENCIDAS"();
-end;
-$inativa$;
-
-do $confere$
-declare
-  v_gravados integer;
-  v_vencidos integer;
-  v_ativas_vencidas integer;
-begin
-  select count(*) into v_gravados from public."TB_MONITORAMENTO_INDIGENA" m join tmp_validade t on t.id = m.id
-   where m."NU_ANOS_VALIDADE" = t.anos and m."NU_MESES_VALIDADE" = t.meses and m."ST_PRORROGADO" = t.prorrogado;
-  select count(*) into v_vencidos from public."TB_MONITORAMENTO_INDIGENA" m join tmp_validade t on t.id = m.id
-   where private."FC_VENCIMENTO_DO_EDITAL"(m.data_fim::date, m."NU_ANOS_VALIDADE", m."NU_MESES_VALIDADE", m."ST_PRORROGADO")
-         < (now() at time zone 'America/Sao_Paulo')::date;
-  select count(*) into v_ativas_vencidas from public."TB_LISTA_APROVADO" l join tmp_validade t on t.id::text = l.edital_id
-    join public."TB_MONITORAMENTO_INDIGENA" m on m.id = t.id
-   where l.vigente and l.ativo
-     and private."FC_VENCIMENTO_DO_EDITAL"(m.data_fim::date, m."NU_ANOS_VALIDADE", m."NU_MESES_VALIDADE", m."ST_PRORROGADO")
-         < (now() at time zone 'America/Sao_Paulo')::date;
-  raise notice 'Editais com validade: % de 121; vencidos hoje: % (em 13/11/2026 eram 45); listas vencidas ainda ativas: %',
-    v_gravados, v_vencidos, v_ativas_vencidas;
-  if v_gravados <> 121 then raise exception 'Gravou % editais, esperava 121.', v_gravados; end if;
-  if v_vencidos < 45 then raise exception 'Só % vencidos; esperava ao menos 45.', v_vencidos; end if;
-  if v_ativas_vencidas <> 0 then raise exception 'Ainda há % listas vencidas ativas.', v_ativas_vencidas; end if;
-end;
-$confere$;
-
-rollback;
+commit;

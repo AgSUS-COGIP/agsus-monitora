@@ -30501,6 +30501,8 @@ begin
                'codigo', s."CO_VAGA",
                'vaga', s."DS_VAGA_PLANILHA",
                'cargo', s."NO_CARGO",
+               -- O cargo oficial (TD_CARGO) da grafia; nulo sem cadastro na área ou sem casamento único.
+               'co_cargo', private."FC_CARGO_DA_GRAFIA"(s."NO_CARGO", v_area),
                'unidade', s."NO_UNIDADE",
                'inscritos', s."QT_INSCRITO"
              ) order by s."CO_MONITORAMENTO", s."DS_VAGA_PLANILHA")
@@ -30512,6 +30514,7 @@ begin
       select jsonb_agg(jsonb_build_object(
                'monitoramento_id', q."CO_MONITORAMENTO",
                'cargo', q."NO_CARGO",
+               'co_cargo', private."FC_CARGO_DA_GRAFIA"(q."NO_CARGO", v_area),
                'lotacao', q."NO_LOTACAO",
                'vagas', q."QT_VAGA_IMEDIATA",
                'reserva', q."ST_CADASTRO_RESERVA" = 'S'
@@ -30545,7 +30548,7 @@ $$;
 -- Name: FUNCTION listar_vagas_por_cargo_da_visao_geral(p_area text, p_editais uuid[]); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.listar_vagas_por_cargo_da_visao_geral(p_area text, p_editais uuid[]) IS 'Aba 2 do relatório da diretoria (montador da Visão geral, só leitura): dos editais pedidos que a pessoa vê, as vagas da Seleção com inscritos, o quadro de vagas do edital e as contagens da lista vigente por vaga. Sem dado pessoal. Recurso dashboard, área do usuário e recorte da coordenação (20261116120000).';
+COMMENT ON FUNCTION public.listar_vagas_por_cargo_da_visao_geral(p_area text, p_editais uuid[]) IS 'Aba 2 do relatório da diretoria (montador da Visão geral, só leitura): dos editais pedidos que a pessoa vê, as vagas da Seleção com inscritos, o quadro de vagas do edital e as contagens da lista vigente por vaga. Sem dado pessoal. Desde 20261117130000, as vagas e o quadro trazem co_cargo (FC_CARGO_DA_GRAFIA, cadastro oficial da área), para a Visão geral contar uma vez a vaga reaberta. Recurso dashboard, área do usuário e recorte da coordenação (20261116120000).';
 
 --
 -- Name: mandar_fichas_revisao(uuid, jsonb, text); Type: FUNCTION; Schema: public; Owner: -
