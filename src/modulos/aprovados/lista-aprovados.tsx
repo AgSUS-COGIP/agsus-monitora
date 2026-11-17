@@ -1,3 +1,4 @@
+import { rotuloDaCopia } from "../../lib/cache-de-payload";
 import {
   naLocalidade,
   opcoesDeLocalidade,
@@ -125,11 +126,13 @@ function textoDoStatus({
   carregado,
   erroAoCarregar,
   carregadoEm,
+  copiaDe,
   acao,
 }: SnapshotDosAprovados) {
   if (erroAoCarregar && !carregado) return "Sem dados";
   if (!carregado) return "Carregando dados…";
   if (acao) return "Atualizando…";
+  if (copiaDe) return rotuloDaCopia(copiaDe);
   return carregadoEm
     ? `Atualizado em ${formatarDataHora(carregadoEm)}`
     : "Base carregada";

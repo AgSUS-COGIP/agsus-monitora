@@ -42,13 +42,33 @@ de 17/11/2026). Esta nota diz o que o service worker guarda, o que abre sem inte
 
 ## Dados sem rede
 
-Os dados vêm do Supabase, em outro domínio, e nunca passam pelo service worker. As cópias que as
-telas guardam no IndexedDB, e por quanto tempo, estão em [[dados-pessoais]].
+Os dados vêm do Supabase, em outro domínio, e nunca passam pelo service worker. Sem rede, as telas
+usam a cópia que guardaram no IndexedDB na última leitura com rede (o que leva e por quanto tempo:
+[[dados-pessoais]]):
+
+| Tela                                                           | Sem rede, com cópia                                                |
+| -------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Análises, Seleção, Entrevistas › Resultados                    | a cópia; o status do topo vira "Dados de 17/11, 10:14"             |
+| Lista de aprovados                                             | a cópia (candidatos e listas da área), com a mesma data            |
+| Entrevistas › Conduzir (fila e ficha)                          | a lista de editais e o edital aberto, com a data ao lado do edital |
+| Avaliação documental, Classificação, Conferências, Visão geral | ainda o erro (ou a cópia da sessão, na Visão geral)                |
+
+- A data (`rotuloDaCopia`) aparece uma vez só, no lugar da data de atualização; sai quando a versão
+  nova chega. Sem cópia, o erro de sempre ("Não foi possível falar com o servidor…").
+- A cópia é lida quando a falha é de conexão (`ehFalhaDeConexao`); erro do banco ou de permissão
+  continua erro, e 42501/22023 apagam as cópias.
+- Gravar (notas, convocação, status) exige rede: lançar notas sem rede é a fase 3, ainda não feita.
+- **Limite:** abrir ou recarregar o app sem rede não entra (a entrada confere o perfil no banco), e
+  com o token vencido (1 h) sem rede a sessão não é lida. A cópia serve com o app já aberto.
 
 ## Testes
 
 - `tests/service-worker-policy.test.js`: estratégia, limite com os arquivos fixos, hash e a lista
   do build.
+- `tests/copias-no-aparelho.test.ts`: 48 h, data da cópia, apagar a vencida (leitura e varredura).
+- Sem rede em cada tela: `tests/modulos/entrevistas.test.js`, `selecao.test.js`,
+  `analises-consultas.test.js`, `tests/componentes/lista-aprovados.test.ts` e
+  `tests/modulos/conducao-sem-rede-abre-a-copia.test.ts`.
 - `tests/pwa-sem-rede.spec.js` (Playwright, build simulado): abre o app, espera o service worker
   terminar de guardar, desliga a rede (`context.setOffline(true)`) e troca para o Cronograma, que
   nunca foi aberto; depois dá F5 sem rede (com o Supabase simulado: de verdade, a entrada sem rede
@@ -64,3 +84,4 @@ arquivos do build); Network → Offline; trocar de tela e recarregar.
 - [[servidor-web]] — o que o servidor publica
 - [[deploy-e-vercel]] — a versão do build
 - [[testes-de-navegador]] — Playwright e o build simulado
+- [[dados-pessoais]] — o que as cópias levam e quando saem

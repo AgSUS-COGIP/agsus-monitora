@@ -22,9 +22,9 @@ O que vale em todas as telas: Pessoas online, atualização do sistema e busca g
 
 ## Sem internet
 
-**perguntas:** funciona sem internet | sem internet | sem conexao | offline | modo offline | abrir sem rede | instalar o yeende | usar no campo
-**resposta:** Depois de aberto uma vez com internet, o Yeendé guarda no aparelho o necessário para abrir todas as telas, mesmo as que você ainda não abriu: com o Yeendé aberto, se a conexão cair, aparece o aviso "Sem conexão com a internet" e você continua trocando de tela. Recarregar a página ou abrir o Yeendé sem internet ainda não funciona: a entrada confere suas permissões no banco. Os dados vêm do banco: sem internet, só aparecem os que a tela já tinha guardado. Mapas de terras e DSEIs precisam de internet. Quando a conexão volta, aparece "Conexão restabelecida". O Yeendé se instala pelo navegador, no celular e no computador; não há aplicativo de loja.
-**fonte:** sw.js; sw-policy.js; src/lib/cache-do-service-worker.ts; src/app/casca/aviso-de-conexao.tsx
+**perguntas:** funciona sem internet | sem internet | sem conexao | offline | modo offline | abrir sem rede | instalar o yeende | usar no campo | dados de | copia no aparelho | dados guardados no celular
+**resposta:** Depois de aberto uma vez com internet, o Yeendé guarda no aparelho o necessário para abrir todas as telas, mesmo as que você ainda não abriu: com o Yeendé aberto, se a conexão cair, aparece o aviso "Sem conexão com a internet" e você continua trocando de tela. Recarregar a página ou abrir o Yeendé sem internet ainda não funciona: a entrada confere suas permissões no banco. Os dados vêm do banco. Sem internet, Análises, Seleção, Entrevistas (o painel, a fila do dia e a ficha) e a Lista de aprovados mostram o que o aparelho guardou da última vez que foram abertas com internet, com a data no alto, como "Dados de 17/11, 10:14": dá para consultar, não para gravar. Essas cópias ficam só no aparelho, sem CPF nem contatos, valem 48 horas e saem ao Sair, ao perder o acesso ou quando outra pessoa entra no navegador. Mapas de terras e DSEIs precisam de internet. Quando a conexão volta, aparece "Conexão restabelecida". O Yeendé se instala pelo navegador, no celular e no computador; não há aplicativo de loja.
+**fonte:** sw.js; sw-policy.js; src/lib/cache-do-service-worker.ts; src/app/casca/aviso-de-conexao.tsx; src/lib/cache-de-payload.ts; src/app/copias-da-conducao.ts
 
 ## Busca global
 

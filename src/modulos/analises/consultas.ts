@@ -138,11 +138,11 @@ export function criarConsultasDasAnalises({
     aoPerderAcesso,
   }: OpcoesDeCarga): Promise<ResultadoDasAnalises> {
     const contexto = { usuarioId, area, escopo };
-    const copia = forcarRede ? null : await copias.ler(contexto);
+    const copia = forcarRede ? null : await copias.lerComData(contexto);
     let guardado = null;
     if (copia) {
       try {
-        guardado = normalizarPayloadDasAnalises(copia);
+        guardado = normalizarPayloadDasAnalises(copia.payload);
       } catch {
         await copias.apagarTudo();
       }
@@ -158,18 +158,25 @@ export function criarConsultasDasAnalises({
           aoMudar?.({ payload, linhas: linhasDoPayload(payload) });
         },
         aoPerderAcesso: (erro: unknown) => aoPerderAcesso?.(erro),
-      });
+      }).then((novo) => novo !== null);
       return {
         payload: guardado,
         linhas: linhasDoPayload(guardado),
         daCopia: true,
+        guardadoEm: copia!.guardadoEm,
         revalidacao,
       };
     }
     const payload = await buscarPacote(area, escopo);
     const linhas = linhasDoPayload(payload);
     void copias.guardar(contexto, payload);
-    return { payload, linhas, daCopia: false, revalidacao: Promise.resolve() };
+    return {
+      payload,
+      linhas,
+      daCopia: false,
+      guardadoEm: 0,
+      revalidacao: Promise.resolve(true),
+    };
   }
 
   /*
@@ -215,7 +222,12 @@ export function criarConsultasDasAnalises({
     return {
       ...juntar(),
       daCopia: resultados.some((resultado) => resultado.daCopia),
-      revalidacao: Promise.all(resultados.map((r) => r.revalidacao)),
+      guardadoEm: Math.min(
+        ...resultados.map((r) => (r.daCopia ? r.guardadoEm : Infinity)),
+      ),
+      revalidacao: Promise.all(resultados.map((r) => r.revalidacao)).then(
+        (chegaram) => chegaram.every(Boolean),
+      ),
     };
   }
 

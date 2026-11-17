@@ -94,6 +94,8 @@ export type EstadoDaConducao = {
   } | null;
   acao: { tipo: TipoDaAcaoDaConducao; rotulo: string } | null;
   fichaAberta: string | null;
+  /** Hora da cópia na tela quando o banco não respondeu (sem rede); senão `null`. */
+  copiaDe: number | null;
 };
 
 export type TipoDaAcaoDaConducao =

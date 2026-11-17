@@ -25,8 +25,18 @@ export type ClienteDaConducao = {
   ) => PromiseLike<{ data: unknown; error: unknown }>;
   auth?: Pick<SupabaseClient["auth"], "onAuthStateChange">;
 };
+/*
+  As cópias da condução no aparelho (src/app/copias-da-conducao.ts): a lista
+  de editais da área e o edital aberto, lidas só quando o banco não responde
+  por falta de conexão.
+*/
+export type CopiasDaConducao = {
+  ler(chave: string): Promise<{ payload: unknown; guardadoEm: number } | null>;
+  guardar(chave: string, payload: unknown): Promise<unknown>;
+};
 export type OpcoesDoEstadoDaConducao = {
   supabase?: ClienteDaConducao | null;
+  copias?: CopiasDaConducao | null;
   toast?: (mensagem: string, tom?: string) => void;
   aoMudarResultados?: () => void;
   tempoLimiteMs?: number;

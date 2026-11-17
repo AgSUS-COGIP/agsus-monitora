@@ -1,4 +1,5 @@
 import { erroParaATela } from "../../lib/erro-na-tela.ts";
+import { rotuloDaCopia } from "../../lib/cache-de-payload";
 import type {
   CampoDoFiltro,
   EstadoDaSelecao,
@@ -68,6 +69,7 @@ function textoDoStatus(e: SnapshotDaSelecao) {
   if (e.erroAoCarregar && !e.carregado) return "Sem dados";
   if (!e.carregado) return "Carregando dados…";
   if (e.atualizando) return "Atualizando…";
+  if (e.copiaDe) return rotuloDaCopia(e.copiaDe);
   return (
     textoDaConferencia({ conferidoEm: e.dados?.ultimaCarga?.em }) ||
     `Atualizado em ${dataHoraBR(e.carregadoEm)}`

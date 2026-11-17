@@ -19,6 +19,8 @@
   `criarCacheDePayload`; `apagarCacheDePayload` também nunca lança.
 */
 
+import { registroVencido } from "../lib/cache-de-payload";
+
 const BANCO = "agsus-monitora-analises";
 const LOJA = "payload";
 
@@ -64,7 +66,48 @@ export const armazenamentoDePayload = Object.freeze({
   async apagarTudo(): Promise<void> {
     await naLoja("readwrite", (loja) => loja.clear());
   },
+  async apagar(chave: string): Promise<void> {
+    await naLoja("readwrite", (loja) => loja.delete(chave));
+  },
 });
+
+/**
+ * Apaga as cópias vencidas (`registroVencido`, 48 h), de todas as telas. Roda
+ * na abertura do app: o que passou da validade sai do aparelho mesmo que a
+ * tela nunca mais seja aberta. Nunca lança; sem o banco, não o cria.
+ */
+export async function apagarCopiasVencidas(
+  agora: number = Date.now(),
+): Promise<number> {
+  try {
+    const bancos = await globalThis.indexedDB.databases?.();
+    if (bancos && !bancos.some((b) => b.name === BANCO)) return 0;
+    const banco = await abrirBanco();
+    try {
+      return await new Promise<number>((resolver, rejeitar) => {
+        let apagadas = 0;
+        const transacao = banco.transaction(LOJA, "readwrite");
+        const cursor = transacao.objectStore(LOJA).openCursor();
+        cursor.onsuccess = () => {
+          const atual = cursor.result;
+          if (!atual) return;
+          if (registroVencido(atual.value, agora)) {
+            atual.delete();
+            apagadas += 1;
+          }
+          atual.continue();
+        };
+        transacao.oncomplete = () => resolver(apagadas);
+        transacao.onerror = () => rejeitar(transacao.error);
+        transacao.onabort = () => rejeitar(transacao.error);
+      });
+    } finally {
+      banco.close();
+    }
+  } catch {
+    return 0;
+  }
+}
 
 /**
  * Apaga o banco inteiro (todas as telas, áreas e escopos). Não cria o banco se ele não

@@ -60,6 +60,7 @@ const ESTADO_INICIAL: SnapshotDaSelecao = Object.freeze({
   semAcesso: false,
   atualizando: false,
   daCopia: false,
+  copiaDe: null,
   carregadoEm: 0,
 });
 
@@ -120,6 +121,7 @@ export function criarEstadoDaSelecao({
       erroAoCarregar: "",
       atualizando: false,
       daCopia: false,
+      copiaDe: null,
       carregadoEm: agora(),
       ...extra,
     });
@@ -218,9 +220,10 @@ export function criarEstadoDaSelecao({
       }
       const contexto = { usuarioId, area };
 
-      const guardado = primeira ? await copias.ler(contexto) : null;
+      const copia = primeira ? await copias.lerComData(contexto) : null;
       if (meu !== pedido) return false;
-      if (guardado) {
+      if (copia) {
+        const guardado = copia.payload;
         mostrar(guardado, { atualizando: true, daCopia: true });
         const novo = await revalidarPayload({
           guardado,
@@ -235,13 +238,13 @@ export function criarEstadoDaSelecao({
           },
           apagarTudo: () => copias.apagarTudo(),
         });
+        // Sem a versão nova (rede, servidor), a cópia fica com a data dela no topo.
         if (meu === pedido && estado.carregado)
-          publicar({ atualizando: false, daCopia: false });
-        if (!novo && meu === pedido && estado.carregado)
-          toast(
-            "Mostrando a cópia guardada: não foi possível buscar a seleção mais recente.",
-            "warn",
-          );
+          publicar({
+            atualizando: false,
+            daCopia: false,
+            copiaDe: novo ? null : copia.guardadoEm,
+          });
         return Boolean(novo);
       }
 

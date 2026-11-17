@@ -69,6 +69,7 @@ const ESTADO_INICIAL: SnapshotDasEntrevistas = Object.freeze({
   atualizando: false,
   /** Os dados na tela vieram da cópia do navegador (ainda revalidando). */
   daCopia: false,
+  copiaDe: null,
   carregadoEm: 0,
   /** id da entrevista aberta na gaveta, ou `null`. */
   gaveta: null,
@@ -152,6 +153,7 @@ export function criarEstadoDasEntrevistas({
       erroAoCarregar: "",
       atualizando: false,
       daCopia: false,
+      copiaDe: null,
       carregadoEm: agora(),
       ...extra,
     });
@@ -270,9 +272,10 @@ export function criarEstadoDasEntrevistas({
       usuarioDaCarga = usuarioId;
       const contexto = { usuarioId, area };
 
-      const guardado = primeira ? await copias.ler(contexto) : null;
+      const copia = primeira ? await copias.lerComData(contexto) : null;
       if (meu !== pedido) return false;
-      if (guardado) {
+      if (copia) {
+        const guardado = copia.payload;
         mostrar(guardado, { atualizando: true, daCopia: true });
         const novo = await revalidarPayload({
           guardado,
@@ -287,13 +290,13 @@ export function criarEstadoDasEntrevistas({
           },
           apagarTudo: () => copias.apagarTudo(),
         });
+        // Sem a versão nova (rede, servidor), a cópia fica com a data dela no topo.
         if (meu === pedido && estado.carregado)
-          publicar({ atualizando: false, daCopia: false });
-        if (!novo && meu === pedido && estado.carregado)
-          toast(
-            "Mostrando a cópia guardada: não foi possível buscar as entrevistas mais recentes.",
-            "warn",
-          );
+          publicar({
+            atualizando: false,
+            daCopia: false,
+            copiaDe: novo ? null : copia.guardadoEm,
+          });
         return Boolean(novo);
       }
 

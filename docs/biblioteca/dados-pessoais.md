@@ -1,7 +1,7 @@
 ---
 tipo: regra
 area: seguranca
-atualizado: 2026-11-10
+atualizado: 2026-11-17
 ---
 
 # Dados pessoais (LGPD)
@@ -23,6 +23,32 @@ e os logs do GitHub Actions são **públicos**: nada pessoal sai em log, artefat
 Os registros de acesso (`TL_ACESSO_FICHA_ANALISE`) ficam só para a coordenação e o administrador
 global. Decisões da Avaliação documental em [[avaliacao-documental-pendencias]],
 seção 10.
+
+## No aparelho (cópias para abrir rápido e sem rede)
+
+Algumas telas guardam no navegador (IndexedDB `agsus-monitora-analises`, loja `payload`) uma cópia
+do que o banco mandou, para abrir na hora e para consultar sem rede.
+
+| Cópia (chave)                                                              | O que leva                                                                          |
+| -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Análises (`<área>:<escopo>`)                                               | candidato, vaga, responsável, data e nota da análise                                |
+| Lista de aprovados (`aprovados:<área>`)                                    | nome, nota, classificação, modalidade, status, SEI, matrícula; as listas            |
+| Entrevistas › Resultados (`entrevistas:<área>`)                            | nome e código, notas por critério, parecer, comparecimento                          |
+| Condução (`conducao:editais:…`, `conducao:edital:<id>`)                    | editais da área; convocados (nome, código, vaga, banca), notas, observações, agenda |
+| Seleção (`selecao:<área>`)                                                 | só contagens por vaga                                                               |
+| Avaliação documental, pré-classificação e Classificação (`<RPC>:<edital>`) | regra; nome, código e notas dos candidatos                                          |
+
+- **Sem CPF, e-mail nem telefone:** as RPCs dessas telas não os mandam.
+- **48 horas** (`VALIDADE_DO_CACHE_MS`, `src/lib/cache-de-payload.ts`): a cópia vencida é apagada
+  na leitura e na abertura do app (`apagarCopiasVencidas`), não só ignorada.
+- **De um usuário só:** outra pessoa abrindo uma tela no mesmo navegador apaga as cópias de quem
+  veio antes.
+- **Saem inteiras** ao Sair, no "Limpar sessão", ao perder o acesso (perfil sem acesso; 42501/22023
+  na leitura) e quando outro usuário entra (`apagarCacheDePayload`, `src/app/sistema.ts`).
+- Sem rede, a tela mostra a cópia só para consulta, com "Dados de 17/11, 10:14" no topo; gravar
+  exige rede.
+- A cópia da sessão (banco `agsus-monitora`, [[carga-da-entrada]]) não leva dado de candidato e
+  segue com 7 dias.
 
 ## Nos robôs e jobs
 
@@ -55,3 +81,4 @@ seção 10.
 - [[seguranca]] — segredos e fronteiras
 - [[python-e-jobs]] — os padrões dos jobs
 - [[modulo-avaliacao-documental]] — onde a ficha mostra os dados
+- [[pwa-e-modo-offline]] — o que abre sem rede
