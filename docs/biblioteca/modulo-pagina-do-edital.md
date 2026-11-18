@@ -32,6 +32,10 @@ pagina-do-edital.css  só o que é desta tela; o resto vem de src/ui/
   `retorno` (a tela e o edital) e o "Voltar" volta pelo histórico, com os filtros da tela de
   antes. Aberta por link ou F5, vai à Visão geral (ou a Editais, ou ao Cronograma, a primeira que o
   perfil abre). Ir à Classificação do edital e voltar pelo navegador mantém o retorno.
+- **Quem leva à página**: o botão "Abrir página do edital" em cada linha de Editais, na linha do
+  tempo do Cronograma (o edital escolhido) e na busca global (o resultado marcado; a área troca
+  para a do edital, e volta se a navegação recusar: `abrirPaginaDoEditalNaArea`). Todos chamam
+  `abrir.ts` na hora do clique.
 - Quem abre: quem vê Visão geral, Editais ou Cronograma (`podeAbrirPaginaDoEdital`,
   `src/lib/acessos/access-roles.ts`). O banco confere de novo: `get_monitoramento_cronograma`
   exige uma delas (ou Lista de aprovados/importação) e o acesso ao edital (`FC_PODE_VER_EDITAL`).

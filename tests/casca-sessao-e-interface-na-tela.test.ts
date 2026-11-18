@@ -7141,6 +7141,23 @@ bloco("componentes/busca-global", async () => {
       expect(itens()).toHaveLength(2);
     });
 
+    it("o resultado marcado ganha Abrir página do edital, na área dele", async () => {
+      const navigate = vi.fn(() => true);
+      vi.stubGlobal("navigate", navigate);
+      await ctrlK();
+      await digitar(campo(), "xingu");
+      expect(document.querySelector(".search-modal-acoes")).toBeNull();
+      await teclar(definido(campo()), "ArrowDown");
+      const botao = document.querySelector(".search-modal-acoes button");
+      expect(botao?.textContent).toContain("Abrir página do edital");
+      await clicar(botao);
+      expect(navigate).toHaveBeenCalledWith("edital", { edital: "3-2026" });
+      expect(dialogo()).toBeNull();
+      // Não é a escolha de antes (localizar na Visão geral).
+      expect(escolhidos).toEqual([]);
+      vi.unstubAllGlobals();
+    });
+
     it("sem resultado, mensagem curta", async () => {
       await ctrlK();
       await digitar(campo(), "nada disso");

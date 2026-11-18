@@ -1075,6 +1075,20 @@ bloco("componentes/calendario-editais", () => {
       expect(seletor("calTimelineEdital")?.value).toBe("2");
       expect(etapasDaLinhaDoTempo()).toEqual(["Inscrições", "Entrevista"]);
     });
+
+    it("o edital da linha do tempo abre a página do edital", async () => {
+      const navigate = vi.fn(() => true);
+      vi.stubGlobal("navigate", navigate);
+      const botao = [
+        ...document.querySelectorAll<HTMLElement>(
+          '[data-tour="cronograma-edital-da-linha-do-tempo"] button',
+        ),
+      ].find((b) => b.textContent?.includes("Abrir página do edital"));
+      await clicar(botao);
+      // As linhas do teste não têm número: o endereço leva o id.
+      expect(navigate).toHaveBeenCalledWith("edital", { edital: "1" });
+      vi.unstubAllGlobals();
+    });
   });
 
   describe("popup do dia", () => {
@@ -3091,6 +3105,26 @@ bloco("componentes/nucleo", () => {
       } finally {
         registrarTelas({});
       }
+    });
+
+    it("cada linha abre a página do edital (pelo id quando o número se repete na área)", async () => {
+      const navigate = vi.fn(() => true);
+      vi.stubGlobal("navigate", navigate);
+      await montar();
+      const botao = linha("1")?.querySelector<HTMLElement>(
+        ".nucleo-pagina-do-edital",
+      );
+      expect(botao?.getAttribute("title")).toBe("Abrir página do edital");
+      await clicar(botao);
+      // 10/2026 está em duas linhas da área (1 e 3): o endereço leva o id.
+      expect(navigate).toHaveBeenCalledWith("edital", { edital: "1" });
+      await clicar(
+        linha("2")?.querySelector<HTMLElement>(".nucleo-pagina-do-edital"),
+      );
+      expect(navigate).toHaveBeenLastCalledWith("edital", {
+        edital: "11-2026",
+      });
+      vi.unstubAllGlobals();
     });
 
     it("Regras do edital: abre no lugar da tabela, com o edital e a etapa no endereço, troca de etapa e volta", async () => {
