@@ -68,9 +68,20 @@ describe("a fase do edital", () => {
         etapa: "Resultado final do Processo Seletivo",
       }),
     ).toBe("Cancelado");
+    // Concluído pelas datas (cálculo automático) não prova o resultado: "Cronograma encerrado".
     expect(faseDoEdital({ status: "Concluído", etapa: "Entrevistas" })).toBe(
-      "Concluído",
+      "Cronograma encerrado",
     );
+    expect(
+      faseDoEdital({ status: "Concluído", cronograma_automatico: true }),
+    ).toBe("Cronograma encerrado");
+    expect(faseDoEdital({ status: "Cronograma encerrado" })).toBe(
+      "Cronograma encerrado",
+    );
+    // Só o "Concluído" digitado à mão (cálculo manual) é Concluído.
+    expect(
+      faseDoEdital({ status: "Concluído", cronograma_automatico: false }),
+    ).toBe("Concluído");
     expect(
       faseDoEdital({
         status: "Planejado",
@@ -110,14 +121,16 @@ describe("a fase do edital", () => {
       "Entrevistas",
       "Resultado",
       "Contratação",
-      "Concluído",
+      "Cronograma encerrado",
     ]);
-    expect(ORDEM_DAS_FASES.slice(-3)).toEqual([
+    expect(ORDEM_DAS_FASES.slice(-4)).toEqual([
+      "Concluído",
       "Cancelado",
       "Sem cronograma",
       "Outra",
     ]);
     expect(tomDaFase("Concluído")).toBe("sucesso");
+    expect(tomDaFase("Cronograma encerrado")).toBe("neutro");
     expect(tomDaFase("Cancelado")).toBe("perigo");
     expect(tomDaFase("Outra")).toBe("neutro");
   });

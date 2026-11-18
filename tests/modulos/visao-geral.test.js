@@ -607,11 +607,15 @@ describe("blocos", () => {
     expect(nomes).toContain("Entrevistas");
     // Sem as vazias e sem as encerradas.
     expect(nomes).not.toContain("Recursos");
-    expect(nomes).not.toContain("Concluído");
+    expect(nomes).not.toContain("Cronograma encerrado");
     expect(nomes).not.toContain("Cancelado");
+    // "Concluído" pelas datas não afirma o resultado: "com cronograma encerrado".
     expect(secao.querySelector(".visao-geral-encerrados").textContent).toMatch(
-      /concluído/,
+      /com cronograma encerrado/,
     );
+    expect(
+      secao.querySelector(".visao-geral-encerrados").textContent,
+    ).not.toMatch(/concluído/);
     // A etapa perigosa é "Outra" e fica como texto (title) na coluna Fase.
     expect(secao.querySelector("img")).toBeNull();
     const celula = [...secao.querySelectorAll("td")].find(

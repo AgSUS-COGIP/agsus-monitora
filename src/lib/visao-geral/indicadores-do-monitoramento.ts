@@ -46,9 +46,14 @@ const status = (linha: unknown) =>
 /** Edital cancelado (qualquer grafia). */
 export const ehCancelado = (linha: unknown): boolean =>
   status(linha).includes("cancel");
-/** Edital concluído: o cronograma terminou (qualquer grafia). */
+/*
+  Edital concluído: o cronograma terminou (qualquer grafia). Na Visão geral, o
+  "Concluído" que só vem das datas aparece como "Cronograma encerrado"
+  (statusDaVisaoGeral) e continua contando aqui.
+*/
 export const ehConcluido = (linha: unknown): boolean =>
-  status(linha).includes("conclu");
+  status(linha).includes("conclu") ||
+  status(linha).includes("cronograma encerrado");
 /** Edital concluído ou cancelado. */
 export const ehEditalEncerrado = (linha: unknown): boolean =>
   ehCancelado(linha) || ehConcluido(linha);
