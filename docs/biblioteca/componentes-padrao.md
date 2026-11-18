@@ -48,8 +48,8 @@ Gráficos: o `Grafico` dentro do `CardDeGrafico` traz a tabela dos valores (leit
 (`src/ui/tabela-do-grafico.tsx`, DS 13.5).
 
 Exportação: toda tabela exporta por `BotoesDeExportacao` — "Exportar em Excel" (.xlsx) e "Salvar
-em PDF", sempre com esse nome e nessa ordem — no topo da tela (`TopoDoPainel` `exportacao`) ou na
-barra da tabela. O arquivo sai de `src/lib/base/exportacao-da-tabela.ts` (`arquivoDaTabela`), a
+em PDF", sempre com esse nome e nessa ordem — no topo da tela (`TopoDoPainel` `exportacao`), no
+rodapé da lista (`TabelaDaLista` `exportacao`, ao lado de "Mostrando N de M") ou na barra da tabela. O arquivo sai de `src/lib/base/exportacao-da-tabela.ts` (`arquivoDaTabela`), a
 partir do mesmo retrato (título, colunas e linhas); `baixarArquivo` entrega.
 
 Nas telas com `CabecalhoDaTela` (`tituloNaTela` em `src/lib/navegacao/rotas.ts`: Conduzir entrevistas,

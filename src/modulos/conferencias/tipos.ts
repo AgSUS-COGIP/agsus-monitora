@@ -189,6 +189,8 @@ export interface ConsultaDeCasos {
 export interface ExportacaoDeCasos {
   aviso?: Pick<Aviso, "id" | "conferencia"> | null;
   busca?: string;
+  /** "excel" (o padrão) ou "pdf". */
+  formato?: "excel" | "pdf";
 }
 export interface SnapshotDosAvisos {
   readonly status: "idle" | "loading" | "ready" | "error";

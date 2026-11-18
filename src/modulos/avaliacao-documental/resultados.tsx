@@ -1,4 +1,5 @@
 import { erroParaATela } from "../../lib/base/erro-na-tela.ts";
+import { BotoesDeExportacao } from "../../ui/botoes-de-exportacao.tsx";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import {
   FILTRO_INICIAL,
@@ -129,15 +130,12 @@ export function ResultadosDaAvaliacao({
           {concluidos.length.toLocaleString("pt-BR")} avaliação(ões)
           concluída(s) na seleção.
         </span>
-        <button
-          type="button"
-          className="btn secondary small"
-          data-acao="exportar-resultados-avd"
-          disabled={!concluidos.length}
-          onClick={() => fila.exportarCsv(concluidos, "concluidas")}
-        >
-          Exportar resultados CSV
-        </button>
+        <BotoesDeExportacao
+          pequenos
+          desativado={!concluidos.length}
+          excel={() => fila.exportar("excel", concluidos, "concluidas")}
+          pdf={() => fila.exportar("pdf", concluidos, "concluidas")}
+        />
       </div>
       <div className="ui-tabela-rolagem">
         <table className="avd-tabela">

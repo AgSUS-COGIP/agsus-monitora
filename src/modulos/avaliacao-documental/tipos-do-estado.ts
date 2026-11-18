@@ -305,7 +305,7 @@ export interface OpcoesDaFila {
   documento?: DocumentoDaReserva | null;
   agora?: () => number;
   tempoLimiteMs?: number;
-  baixar?: (conteudo: BlobPart, nome: string) => void;
+  baixar?: (conteudo: Uint8Array, nome: string, tipo: string) => void;
   getProfile?: () => unknown;
 }
 

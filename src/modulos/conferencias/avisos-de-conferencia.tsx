@@ -61,6 +61,7 @@ import {
   Selo,
   SeloDePrazo,
 } from "../../ui/index.ts";
+import { BotoesDeExportacao } from "../../ui/botoes-de-exportacao.tsx";
 import { criarEstadoDosAvisos } from "./estado.ts";
 
 declare global {
@@ -389,35 +390,29 @@ function ListaDeCasos({
   );
 }
 
-function BotaoDeCsv({
+/* "Exportar em Excel" e "Salvar em PDF" dos casos (do aviso ou da busca geral). */
+function ExportarCasos({
   estado,
   aviso = null,
   busca = "",
 }: PropsDoEstado & { aviso?: Aviso | null; busca?: string }) {
-  const [exportando, setExportando] = useState(false);
   const [erro, setErro] = useState("");
-  async function exportar() {
-    setExportando(true);
+  async function exportar(formato: "excel" | "pdf") {
     setErro("");
     try {
-      if (!(await estado.exportarCasos({ aviso, busca })))
+      if (!(await estado.exportarCasos({ aviso, busca, formato })))
         setErro("Nenhum caso para exportar.");
     } catch (falha) {
       setErro(erroDaConsulta(falha));
-    } finally {
-      setExportando(false);
     }
   }
   return (
     <>
-      <button
-        type="button"
-        className="btn secondary conf-botao"
-        disabled={exportando}
-        onClick={() => void exportar()}
-      >
-        {exportando ? "Exportando…" : "Exportar CSV"}
-      </button>
+      <BotoesDeExportacao
+        pequenos
+        excel={() => exportar("excel")}
+        pdf={() => exportar("pdf")}
+      />
       {erro ? (
         <small className="conf-erro" role="alert">
           {erro}
@@ -451,7 +446,7 @@ function CasosDoAviso({
           maxLength={80}
           onChange={(e) => setDigitado(e.target.value)}
         />
-        <BotaoDeCsv estado={estado} aviso={aviso} busca="" />
+        <ExportarCasos estado={estado} aviso={aviso} busca="" />
       </div>
       <ListaDeCasos
         estado={estado}
@@ -1195,7 +1190,7 @@ export function ListaDeAvisos({
         <div className="conf-resultados">
           <div className="conf-casos__barra">
             <strong>Casos com “{busca}”</strong>
-            <BotaoDeCsv estado={estado} busca={busca} />
+            <ExportarCasos estado={estado} busca={busca} />
           </div>
           <ListaDeCasos
             estado={estado}

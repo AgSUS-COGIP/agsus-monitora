@@ -1,4 +1,5 @@
-import { sanitizeCsvCell } from "../seguranca/csv-security.ts";
+import { MIME_PDF } from "../base/exportacao-da-tabela.ts";
+import type { TabelaParaExportar } from "../base/exportacao-da-tabela.ts";
 import { arquivosDoXlsx, MIME_XLSX } from "../classificacao/exportacao.ts";
 import type {
   CelulaDaPlanilha,
@@ -33,7 +34,7 @@ export const RPC_SINCRONIZAR_RELATORIO_DO_PAINEL =
 
 export type IdDoRelatorio =
   "resumo-dos-editais" | "editais-por-cargo" | "aprovados";
-export type FormatoDoRelatorio = "CSV" | "XLSX";
+export type FormatoDoRelatorio = "XLSX" | "PDF";
 type TipoDaColuna = "texto" | "inteiro" | "decimal" | "data";
 
 export interface ColunaDoRelatorio {
@@ -316,23 +317,22 @@ function tabelaDoArquivo(
   ];
 }
 
-const BOM = String.fromCharCode(0xfeff);
-
-function celulaDoCsv(valor: CelulaDaPlanilha) {
-  const bruto =
-    typeof valor === "number" ? String(valor).replace(".", ",") : valor;
-  const seguro = sanitizeCsvCell(bruto ?? "");
-  return /[";\n\r]/.test(seguro) ? `"${seguro.replace(/"/g, '""')}"` : seguro;
-}
-
-/** O CSV: cabeçalho e uma linha por registro; `;` (Excel pt-BR), BOM e CRLF. */
-export function csvDoRelatorio(
+/** A tabela do PDF ("Salvar em PDF"): o cabeçalho e as linhas do arquivo. */
+export function tabelaDoRelatorio(
   definicao: DefinicaoDoRelatorio,
   linhas: readonly LinhaDoRelatorio[],
-): string {
-  return `${BOM}${tabelaDoArquivo(definicao, linhas)
-    .map((l) => l.map(celulaDoCsv).join(";"))
-    .join("\r\n")}\r\n`;
+): Pick<TabelaParaExportar, "colunas" | "linhas"> {
+  const [colunas = [], ...corpo] = tabelaDoArquivo(definicao, linhas);
+  return {
+    colunas: colunas.map((c) => String(c ?? "")),
+    linhas: corpo.map((linha) =>
+      linha.map((celula) =>
+        typeof celula === "number" || celula === null || celula === undefined
+          ? celula
+          : String(celula),
+      ),
+    ),
+  };
 }
 
 /** A planilha do XLSX: uma aba, com filtro e cabeçalho fixo. */
@@ -444,7 +444,7 @@ export function xlsxDoRelatorio(
 }
 
 export const MIME_DO_RELATORIO: Readonly<Record<FormatoDoRelatorio, string>> =
-  Object.freeze({ CSV: "text/csv;charset=utf-8", XLSX: MIME_XLSX });
+  Object.freeze({ XLSX: MIME_XLSX, PDF: MIME_PDF });
 
 const trecho = (valor: string) =>
   valor

@@ -129,7 +129,7 @@ pela função: quem monta os dados liga cada nome à análise do candidato antes
 
 ## Código e testes
 
-- Estado fora do React: `estado.ts` (painel: carga da área com cópia guardada, gaveta, CSV, agenda
+- Estado fora do React: `estado.ts` (painel: carga da área com cópia guardada, gaveta, exportação, agenda
   do recorte, comemorações) e `estado-da-conducao.ts` (editais, edital aberto, escritas uma por vez).
 - Regras puras em `src/lib/`: `entrevistas/entrevistas-do-painel.ts`, `entrevistas/painel-de-entrevistas.ts`,
   `entrevistas/fila-de-conducao.ts`, `entrevistas/conducao-de-entrevista.ts` e `entrevistas/roteiro-de-entrevista.ts` (escalas, pesos,

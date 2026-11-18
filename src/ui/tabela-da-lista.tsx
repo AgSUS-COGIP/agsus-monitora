@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { formatNumberBR } from "../lib/base/formatters";
 import { classes } from "./classes.ts";
+import { BotoesDeExportacao } from "./botoes-de-exportacao.tsx";
+import type { PropriedadesDosBotoesDeExportacao } from "./botoes-de-exportacao.tsx";
 import { LinhasEsqueleto } from "./esqueleto.tsx";
 import { CabecalhosDaTabela } from "./tabela-infinita.tsx";
 import type {
@@ -16,7 +18,8 @@ import type {
   (`TabelaDaLista`), com o cabeçalho fixo e a rolagem de 50 em 50: a tabela
   mostra 50 e, quando a rolagem chega perto do fim (um sentinela no fim da
   caixa que rola, observado com IntersectionObserver), mostra mais 50. O
-  rodapé diz "Mostrando N de M" e tem o Exportar CSV. São dois componentes
+  rodapé diz "Mostrando N de M" e tem "Exportar em Excel" e "Salvar em PDF"
+  (BotoesDeExportacao; desativados sem ninguém na lista). São dois componentes
   para a tela memorizar a tabela sem a barra (que muda a cada tecla).
 
   `itens` já vem filtrado e na ordem da tela. Com `servidor`
@@ -74,9 +77,8 @@ export interface PropriedadesDaTabelaDaLista<T> {
   grupo?: GrupoDaTabela<T> | null;
   servidor?: TabelaNoServidor | null;
   chaveDoRecorte?: unknown;
-  aoExportar?: (() => void) | null;
-  exportarDesativado?: boolean;
-  /** O que mais vai no rodapé, antes de Exportar. */
+  exportacao?: PropriedadesDosBotoesDeExportacao | null;
+  /** O que mais vai no rodapé, antes dos botões de exportar. */
   rodape?: ReactNode;
   classeDaTabela?: string;
   idDoCorpo?: string;
@@ -156,8 +158,7 @@ export function TabelaDaLista<T>({
   grupo = null,
   servidor = null,
   chaveDoRecorte,
-  aoExportar = null,
-  exportarDesativado = false,
+  exportacao = null,
   rodape = null,
   classeDaTabela,
   idDoCorpo,
@@ -277,17 +278,12 @@ export function TabelaDaLista<T>({
               : `Mostrando ${formatNumberBR(visiveis)} de ${formatNumberBR(total)}`}
         </span>
         {rodape}
-        {aoExportar ? (
-          <button
-            type="button"
-            className="btn ghost small ui-lista-exportar"
-            data-acao="exportar-csv"
-            disabled={exportarDesativado || !total}
-            onClick={aoExportar}
-          >
-            <i className="fa-solid fa-download" aria-hidden="true" /> Exportar
-            CSV
-          </button>
+        {exportacao ? (
+          <BotoesDeExportacao
+            pequenos
+            {...exportacao}
+            desativado={exportacao.desativado || !total}
+          />
         ) : null}
       </div>
     </>

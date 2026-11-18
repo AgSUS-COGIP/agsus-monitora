@@ -25,7 +25,8 @@
     abrir_fichas_do_edital(p_edital)
     incluir_no_lote_por_decisao / revogar_decisao_lote (20261007200000; decisao-no-banco.ts)
     salvar_filtro_fila(p_nome, p_filtro) / excluir_filtro_fila(p_filtro)
-  "Exportar CSV" baixa a aba aberta (csvDaFila), sem ir ao banco.
+  "Exportar em Excel" e "Salvar em PDF" baixam a aba aberta (tabelaDaFila),
+  sem ir ao banco.
   O último filtro usado fica no navegador só por conveniência (try/catch);
   os filtros salvos com nome ficam no banco, por pessoa. A lista de fora do
   lote (eliminados e ranqueados) só vem quando a tela pede (carregarForaDoLote:
@@ -49,15 +50,18 @@
   outra pessoa pegou a ficha no intervalo, a ficha fica só para leitura com o
   aviso; o que foi salvo continua nela e o que está na tela não é apagado.
 */
+import { arquivoDaTabela } from "../../lib/base/exportacao-da-tabela.ts";
+import type { FormatoDaExportacao } from "../../lib/base/exportacao-da-tabela.ts";
+import { baixarArquivo } from "../../ui/botoes-de-exportacao.tsx";
 import { isAdminGlobal } from "../../lib/acessos/access-roles.ts";
 import { comTempoLimite } from "../../lib/carga/falha-de-rede";
 import { ehConflitoDeVersao } from "../../lib/base/conflito-de-versao.ts";
 import { lerFilaComRecuperacao } from "../../lib/avaliacao-documental/repetir-leitura-da-fila.ts";
 import {
-  csvDaFila,
+  tabelaDaFila,
   FILTRO_INICIAL,
   filtrarFila,
-  nomeDoCsvDaFila,
+  nomeDoArquivoDaFila,
   normalizarFiltro,
   ordenarFila,
 } from "../../lib/avaliacao-documental/fila.ts";
@@ -213,18 +217,6 @@ function guardarFiltro(
   }
 }
 
-/* O CSV já vem com o BOM (o Excel abre em UTF-8); o Blob "text/csv" passa pela guarda de csv-security. */
-function baixarNoNavegador(conteudo: BlobPart, nome: string) {
-  const url = URL.createObjectURL(
-    new Blob([conteudo], { type: "text/csv;charset=utf-8;" }),
-  );
-  const ancora = document.createElement("a");
-  ancora.href = url;
-  ancora.download = nome;
-  ancora.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
 export function criarEstadoDaFila({
   supabase = null,
   toast = (mensagem) => console.info(mensagem),
@@ -235,7 +227,7 @@ export function criarEstadoDaFila({
   documento = globalThis.document ?? null,
   agora = () => Date.now(),
   tempoLimiteMs = TEMPO_LIMITE_MS,
-  baixar = baixarNoNavegador,
+  baixar = baixarArquivo,
   getProfile = () => null,
 }: OpcoesDaFila = {}) {
   let estado: SnapshotDaFila = { ...INICIAL, filtro: lerFiltro(armazenamento) };
@@ -503,8 +495,9 @@ export function criarEstadoDaFila({
     };
   }
 
-  /* "Exportar CSV" da aba Eliminados: o recorte inteiro, página a página. */
+  /* A exportação da aba Eliminados: o recorte inteiro, página a página. */
   async function exportarEliminados(
+    formato: FormatoDaExportacao,
     filtro: FiltroDosEliminados,
     ordem: OrdemDosEliminados | null,
   ): Promise<boolean> {
@@ -517,8 +510,7 @@ export function criarEstadoDaFila({
         apos = r.proximo;
         if (apos === null || apos === undefined) break;
       }
-      exportarCsv(linhas as InscritoNaFila[], "eliminados");
-      return true;
+      return await exportar(formato, linhas as InscritoNaFila[], "eliminados");
     } catch (erro) {
       toast(`Não foi possível exportar: ${mensagemDoBanco(erro)}`, "error");
       return false;
@@ -822,12 +814,35 @@ export function criarEstadoDaFila({
     }
   }
 
-  /* "Exportar CSV": as linhas da aba, na ordem e nas colunas da tela. */
-  function exportarCsv(linhas: ReadonlyArray<InscritoNaFila>, etapa: string) {
-    baixar(
-      csvDaFila(linhas, etapa, estado.dados?.eu),
-      nomeDoCsvDaFila(estado.dados?.edital?.rotulo, etapa),
-    );
+  /* "Exportar em Excel" e "Salvar em PDF": as linhas da aba, na ordem e nas colunas da tela. */
+  async function exportar(
+    formato: FormatoDaExportacao,
+    linhas: ReadonlyArray<InscritoNaFila>,
+    etapa: string,
+  ): Promise<boolean> {
+    const quando = new Date(agora());
+    try {
+      const edital = estado.dados?.edital?.rotulo;
+      const arquivo = await arquivoDaTabela(
+        formato,
+        {
+          titulo: ["Avaliação documental", edital, etapa]
+            .filter(Boolean)
+            .join(" — "),
+          ...tabelaDaFila(linhas, etapa, estado.dados?.eu, quando),
+        },
+        quando,
+      );
+      baixar(
+        arquivo.bytes,
+        nomeDoArquivoDaFila(edital, etapa, arquivo.extensao, quando),
+        arquivo.tipo,
+      );
+      return true;
+    } catch (erro) {
+      toast(`Não foi possível exportar: ${mensagemDoBanco(erro)}`, "error");
+      return false;
+    }
   }
 
   return {
@@ -862,7 +877,7 @@ export function criarEstadoDaFila({
     revogarDecisao,
     salvarFiltro,
     excluirFiltro,
-    exportarCsv,
+    exportar,
     /* Para o conteúdo da ficha aberta (ficha/estado-da-ficha.ts). */
     rpc,
     toast,

@@ -9,7 +9,7 @@ atualizado: 2026-11-18
 Avisos diários de inconsistência entre análises, entrevistas, classificação, aprovados e cargas.
 Módulo completo em React e TypeScript em `src/modulos/conferencias/`: estado externo, cartão de
 avisos, selos dos módulos, gaveta, busca de casos, paginação, a central de avisos
-(tratamento, responsável, prazo, evidência e histórico), navegação e CSV. Regras puras em `src/lib/conferencias/avisos-de-conferencia.ts`; contratos em `tipos.ts`.
+(tratamento, responsável, prazo, evidência e histórico), navegação e exportação (Excel e PDF). Regras puras em `src/lib/conferencias/avisos-de-conferencia.ts`; contratos em `tipos.ts`.
 
 As conferências são calculadas por um job Python no GitHub Actions (workflow `conferencias.yml`;
 ver [[python-e-jobs]] e [[robos-e-agenda]]). As histórias de usuário (CF-1 a CF-6) estão em
@@ -39,8 +39,8 @@ ver [[python-e-jobs]] e [[robos-e-agenda]]). As histórias de usuário (CF-1 a C
   tela de Editais. O status não muda sozinho; a equipe marca "Concluído" ou dispensa.
 - O snapshot é lido por `useSyncExternalStore`; respostas antigas não substituem a leitura de
   outra área ou módulo.
-- O CSV lê páginas de 1000 casos, encerra quando não há casos novos e protege as células contra
-  fórmulas.
+- A exportação (Excel e PDF) lê páginas de 1000 casos e encerra quando não há casos novos; na
+  planilha o texto nunca vira fórmula.
 - A interface tem busca com espera de 300 ms e páginas de 50 casos.
 
 ## Fronteira dos dados

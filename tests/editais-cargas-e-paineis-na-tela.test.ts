@@ -1643,7 +1643,8 @@ bloco("componentes/casos-dos-avisos", async () => {
     props: Partial<Parameters<typeof SeloDeAvisos>[0]> = {},
   ) {
     const supabase = supabaseFalso();
-    const baixar = vi.fn<(conteudo: string, nome: string) => void>();
+    const baixar =
+      vi.fn<(conteudo: Uint8Array, nome: string, tipo: string) => void>();
     const estado = criarEstadoDosAvisos({ supabase, baixar });
     await montar(
       createElement(SeloDeAvisos, {
@@ -1729,15 +1730,16 @@ bloco("componentes/casos-dos-avisos", async () => {
       expect(itens[0]?.textContent).toContain("Pessoa 12");
     });
 
-    it("exporta o CSV com todos os casos", async () => {
+    it("exporta a planilha com todos os casos", async () => {
       const { baixar } = await abrirCasos();
-      const csv = [
+      const excel = [
         ...document.querySelectorAll(".conf-aviso__casos button"),
-      ].find((b) => b.textContent === "Exportar CSV");
-      await clicar(csv);
+      ].find((b) => b.textContent?.trim() === "Exportar em Excel");
+      await clicar(definido(excel));
       await esperar();
       expect(baixar).toHaveBeenCalledTimes(1);
-      expect(baixar.mock.calls[0]?.[0].split("\n")).toHaveLength(61);
+      const planilha = new TextDecoder().decode(baixar.mock.calls[0]?.[0]);
+      expect(planilha.match(/<row /g)).toHaveLength(61);
     });
 
     it("clicar no caso fecha a gaveta e pede ao Painel das análises a busca e a análise", async () => {
@@ -4927,21 +4929,22 @@ bloco("modulos/paineis-de-dados", () => {
       expect(botao("Atualizar")).toBeUndefined();
     });
 
-    it("baixa o CSV e o XLSX do que está na tabela", async () => {
+    it("baixa o Excel e o PDF do que está na tabela", async () => {
       const { salvos } = await montar({
         "resumo-dos-editais": RESUMO,
       });
-      await clicar(botao("Baixar CSV"));
-      await esperar();
-      await clicar(botao("Baixar XLSX"));
+      await clicar(botao("Exportar em Excel"));
       await esperar(() => new Promise((ok) => setTimeout(ok, 50)));
+      await clicar(botao("Salvar em PDF"));
+      await esperar(() => new Promise((ok) => setTimeout(ok, 200)));
       expect(salvos.map((s) => s.nome)).toEqual([
-        "resumo-dos-editais-saude-indigena-2026-11-13-1204.csv",
         "resumo-dos-editais-saude-indigena-2026-11-13-1204.xlsx",
+        "resumo-dos-editais-saude-indigena-2026-11-13-1204.pdf",
       ]);
-      const csv = await salvos[0]!.arquivo.text();
-      expect(csv).toContain("39/2026;DSEI Teste;12;05/03/2026;30/06/2026");
-      expect(salvos[1]!.arquivo.size).toBeGreaterThan(0);
+      expect(salvos[0]!.arquivo.size).toBeGreaterThan(0);
+      const pdf = await salvos[1]!.arquivo.text();
+      expect(pdf.startsWith("%PDF")).toBe(true);
+      expect(salvos[1]!.arquivo.type).toBe("application/pdf");
     });
 
     it("pagina a tabela: 50 por vez, setas e linhas por página", async () => {
@@ -5051,13 +5054,17 @@ bloco("modulos/paineis-de-dados", () => {
       const { supabase, salvos } = await montar({
         "resumo-dos-editais": CENTO_E_VINTE,
       });
-      await clicar(botao("Baixar CSV"));
-      await esperar();
+      await clicar(botao("Exportar em Excel"));
+      await esperar(() => new Promise((ok) => setTimeout(ok, 50)));
       expect(leituras(supabase.chamadas).at(-1)).toBe(
         "resumo-dos-editais:1:null",
       );
-      const csv = await salvos[0]!.arquivo.text();
-      expect(csv.trim().split("\r\n")).toHaveLength(121);
+      const arquivos = unzipSync(
+        new Uint8Array(await salvos[0]!.arquivo.arrayBuffer()),
+      );
+      expect(
+        strFromU8(arquivos["xl/worksheets/sheet1.xml"]!).match(/<row /g),
+      ).toHaveLength(121);
     });
 
     it("as setas da paginação ficam travadas enquanto a página carrega", async () => {
@@ -5092,7 +5099,7 @@ bloco("modulos/paineis-de-dados", () => {
       expect(caixa?.querySelector("[role=alert]")?.textContent).toBe(
         MENSAGEM_SEM_PERMISSAO,
       );
-      expect(botao("Baixar CSV")?.hasAttribute("disabled")).toBe(true);
+      expect(botao("Exportar em Excel")?.hasAttribute("disabled")).toBe(true);
       await act(async () => raiz?.unmount());
       caixa?.remove();
       await montar({
@@ -5417,7 +5424,7 @@ bloco("modulos/paineis-de-dados", () => {
       const { salvos } = await montar({
         "resumo-dos-editais": RESUMO_COM_FONTE,
       });
-      await clicar(botao("Baixar XLSX"));
+      await clicar(botao("Exportar em Excel"));
       await esperar(() => new Promise((ok) => setTimeout(ok, 50)));
       const arquivos = unzipSync(
         new Uint8Array(await salvos[0]!.arquivo.arrayBuffer()),

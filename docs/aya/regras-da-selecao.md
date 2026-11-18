@@ -23,7 +23,7 @@ ficam aqui, com a Aya. Fontes: `src/modulos/selecao/`, `src/lib/selecao/selecao-
 ## Convocados para entrevista
 
 **perguntas:** convocados entrevista | convocados para entrevista | origem dos convocados | de onde vem os convocados para entrevista
-**resposta:** Na Seleção, os convocados para entrevista vêm das entrevistas registradas no Yeendé quando o edital as tem (a vaga sem nenhuma entrevista fica com 0); quando o edital não tem, vêm da planilha Auditoria, que é o dado antigo. O CSV exportado traz a origem de cada vaga na coluna "Origem dos convocados".
+**resposta:** Na Seleção, os convocados para entrevista vêm das entrevistas registradas no Yeendé quando o edital as tem (a vaga sem nenhuma entrevista fica com 0); quando o edital não tem, vêm da planilha Auditoria, que é o dado antigo. A planilha exportada ("Exportar em Excel") e o PDF ("Salvar em PDF") trazem a origem de cada vaga na coluna "Origem dos convocados".
 **fonte:** supabase/migrations/20261001130000_selecao_aprovados_outras_bancas.sql; src/lib/selecao/selecao-do-painel.ts
 
 ## Aprovados e contratados na Seleção

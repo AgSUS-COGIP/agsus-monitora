@@ -28,7 +28,7 @@ import {
   ondeDoAviso,
   tituloDaConferencia,
   tomDoSelo,
-  csvDosCasos,
+  tabelaDosCasos,
   destinoDoCaso,
   linhaDoVinculo,
   normalizarCaso,
@@ -40,7 +40,7 @@ import {
   filtroDoCaso,
   juntarPaginasDeCasos,
   motivoDoCaso,
-  nomeDoCsvDosCasos,
+  nomeDoArquivoDosCasos,
   normalizarCasos,
   termoDeBusca,
 } from "../src/lib/conferencias/avisos-de-conferencia.ts";
@@ -2089,8 +2089,8 @@ bloco("casos-dos-avisos-dos-modulos", () => {
       );
     });
 
-    it("CSV: nome, situação, vagas da pessoa; sem UUID na referência", () => {
-      const csv = csvDosCasos([
+    it("exportação: nome, situação, vagas da pessoa; sem UUID na referência", () => {
+      const { linhas: tabela } = tabelaDosCasos([
         normalizarCaso(aprovado({ referencia: UUID_DO_APROVADO })),
         normalizarCaso({
           conferencia: "APROVADOS_CONTRATADO_DUPLICADO",
@@ -2098,14 +2098,14 @@ bloco("casos-dos-avisos-dos-modulos", () => {
           resolucao: "removido",
         }),
       ]);
-      const [, linha, removido] = csv.split("\n");
+      const [linha, removido] = tabela.map((l) => l.join(";"));
       expect(linha).toContain(
         "4512;Maria Fictícia;Edital 12/2025;1777 · Enfermeiro;;Contratado em 03/02/2026;",
       );
       expect(linha).toContain(
         "Edital 40/2026 · 1900 · Técnico de enfermagem · Contratado em 20/05/2026",
       );
-      expect(csv).not.toMatch(/b44c58f2/);
+      expect(tabela.flat().join(";")).not.toMatch(/b44c58f2/);
       expect(removido).toContain(";Registro removido;");
     });
   });
@@ -2484,34 +2484,36 @@ bloco("casos-dos-avisos", () => {
         p_limite: 1000,
         p_deslocamento: 1000,
       });
-      const [conteudo, nome] = baixar.mock.calls[0];
-      expect(conteudo.split("\n")).toHaveLength(1002);
+      const [bytes, nome] = baixar.mock.calls[0];
+      // A planilha: o cabeçalho e uma linha por caso (os 1001 casos).
+      expect(new TextDecoder().decode(bytes).match(/<row /g)).toHaveLength(
+        1002,
+      );
       expect(nome).toMatch(
-        /^avisos-analise-data-invalida-\d{4}-\d{2}-\d{2}\.csv$/,
+        /^avisos-analise-data-invalida-\d{4}-\d{2}-\d{2}\.xlsx$/,
       );
     });
   });
 
-  describe("CSV dos casos", () => {
-    it("cabeçalho, uma linha por caso e célula protegida contra fórmula", () => {
-      const csv = csvDosCasos([
+  describe("exportação dos casos", () => {
+    it("cabeçalho, uma linha por caso; o texto vai como veio (a planilha não lê fórmula)", () => {
+      const { colunas, linhas } = tabelaDosCasos([
         normalizarCaso(bruto()),
         normalizarCaso(bruto({ ordem: 2, nome: "=HYPERLINK(1)", codigo: "9" })),
       ]);
-      const linhas = csv.split("\n");
-      expect(linhas[0]).toBe(
+      expect(colunas.join(";")).toBe(
         "Aviso;Código do candidato;Nome;Edital;Vaga;Responsável pela análise;Situação;Data da análise;Motivo;Análises do candidato;Vagas na lista de aprovados;Referência",
       );
-      expect(linhas[1]).toContain(
+      expect(linhas[0].join(";")).toContain(
         "4512;Maria Fictícia;Edital 101/2026;177979 · Enfermeiro;Ana Analista;Aprovado;01/09/2026",
       );
-      expect(linhas[2]).toContain(";'=HYPERLINK(1);");
-      expect(linhas).toHaveLength(3);
+      expect(linhas[1][2]).toBe("=HYPERLINK(1)");
+      expect(linhas).toHaveLength(2);
     });
 
     it("nome do arquivo da busca geral", () => {
-      expect(nomeDoCsvDosCasos(null, new Date(2026, 9, 6))).toBe(
-        "avisos-busca-2026-10-06.csv",
+      expect(nomeDoArquivoDosCasos(null, "xlsx", new Date(2026, 9, 6))).toBe(
+        "avisos-busca-2026-10-06.xlsx",
       );
     });
   });
@@ -3027,7 +3029,9 @@ bloco("conferencias-fronteiras", () => {
       });
       expect(caso.analises).toHaveLength(1);
       expect(destinoDoCaso(caso)?.view).toBe("analises");
-      expect(csvDosCasos([caso])).not.toContain("[object Object]");
+      expect(tabelaDosCasos([caso]).linhas.flat().join(";")).not.toContain(
+        "[object Object]",
+      );
       expect(
         motivoDoCaso("ANALISE_EM_DOIS_EDITAIS", { editais: {} }, caso),
       ).toBe("Em mais de um edital ativo");
@@ -3042,7 +3046,7 @@ bloco("conferencias-fronteiras", () => {
       expect(normalizarCaso({ lista: [] }).lista).toBeNull();
     });
 
-    it("o CSV encerra quando a RPC repete a página, sem repetir casos", async () => {
+    it("a exportação encerra quando a RPC repete a página, sem repetir casos", async () => {
       const supabase = {
         rpc: vi.fn(async () => ({
           data: {
@@ -3056,8 +3060,9 @@ bloco("conferencias-fronteiras", () => {
       const estado = criarEstadoDosAvisos({ supabase, baixar });
       expect(await estado.exportarCasos()).toBe(true);
       expect(supabase.rpc).toHaveBeenCalledTimes(2);
-      expect(baixar.mock.calls[0][0].split("\n")).toHaveLength(2);
-      expect(baixar.mock.calls[0][0]).toContain("'=1+1");
+      const planilha = new TextDecoder().decode(baixar.mock.calls[0][0]);
+      expect(planilha.match(/<row /g)).toHaveLength(2);
+      expect(planilha).toContain(">=1+1<");
     });
   });
 });

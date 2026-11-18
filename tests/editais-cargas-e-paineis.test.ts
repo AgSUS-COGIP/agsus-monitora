@@ -136,7 +136,7 @@ import {
   xlsxDoRelatorio,
   type ZiparRelatorio,
   RELATORIOS_DOS_PAINEIS,
-  csvDoRelatorio,
+  tabelaDoRelatorio,
   chaveDaPagina,
   larguraArrastada,
   linhasDaOrigem,
@@ -4282,24 +4282,32 @@ bloco("relatorios-dos-paineis", () => {
       },
     ]);
 
-    it("CSV: BOM, ponto e vírgula, CRLF e célula protegida contra fórmula", () => {
-      const csv = csvDoRelatorio(porCargo, linhas);
-      expect(csv.startsWith("﻿")).toBe(true);
-      expect(csv.slice(1).split("\r\n")).toEqual([
-        "Número do edital;DSEI / Unidade;Código da vaga;Cargo;Vagas imediatas;Total de inscritos;Total de aprovados",
-        "39/2026;DSEI Teste;178962;'=CMD();3;120;",
-        "",
+    it("PDF: a mesma tabela do arquivo, com o texto como veio", () => {
+      const { colunas, linhas: tabela } = tabelaDoRelatorio(porCargo, linhas);
+      expect(colunas).toEqual([
+        "Número do edital",
+        "DSEI / Unidade",
+        "Código da vaga",
+        "Cargo",
+        "Vagas imediatas",
+        "Total de inscritos",
+        "Total de aprovados",
+      ]);
+      expect(tabela).toEqual([
+        ["39/2026", "DSEI Teste", "178962", "=CMD()", 3, 120, ""],
       ]);
     });
 
-    it("CSV: decimal com vírgula e data dd/mm/aaaa", () => {
-      const csv = csvDoRelatorio(
+    it("PDF: data dd/mm/aaaa e número como número", () => {
+      const { linhas: tabela } = tabelaDoRelatorio(
         aprovados,
         linhasDoRelatorio(aprovados, [
           { nota: 87.5, nome: "A; B", data_contratacao: "2026-10-01" },
         ]),
       );
-      expect(csv.split("\r\n")[1]).toBe(';;;87,5;;"A; B";;;01/10/2026');
+      expect(tabela[0]).toContain(87.5);
+      expect(tabela[0]).toContain("A; B");
+      expect(tabela[0]).toContain("01/10/2026");
     });
 
     it("XLSX: uma aba com o nome do relatório, cabeçalho e números", () => {

@@ -32,12 +32,14 @@ import type {
   cada lista aberta guarda as páginas dela; aqui só a leitura, a leitura de
   todos (CSV) e o download.
 */
+import { arquivoDaTabela } from "../../lib/base/exportacao-da-tabela.ts";
+import { baixarArquivo } from "../../ui/botoes-de-exportacao.tsx";
 import {
   CASOS_POR_PAGINA,
   CASOS_POR_PAGINA_DO_CSV,
-  csvDosCasos,
+  tabelaDosCasos,
   juntarPaginasDeCasos,
-  nomeDoCsvDosCasos,
+  nomeDoArquivoDosCasos,
   normalizarAvisos,
   normalizarCasos,
   normalizarHistorico,
@@ -53,19 +55,6 @@ import {
   memoriaDosAvisos,
 } from "./memoria-dos-avisos.ts";
 
-function baixarNoNavegador(conteudo: string, nome: string) {
-  // O BOM faz o Excel abrir em UTF-8.
-  const arquivo = new Blob(["﻿" + conteudo], {
-    type: "text/csv;charset=utf-8;",
-  });
-  const url = URL.createObjectURL(arquivo);
-  const ancora = document.createElement("a");
-  ancora.href = url;
-  ancora.download = nome;
-  ancora.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
 const RPC_DOS_AVISOS = "listar_avisos_conferencia_se_mudou";
 
 /* Recorte → a última lista lida e a versão dela (só nesta página; a saída apaga). */
@@ -77,10 +66,10 @@ export { esquecerAvisosGuardados };
 
 export function criarEstadoDosAvisos({
   supabase,
-  baixar = baixarNoNavegador,
+  baixar = baixarArquivo,
 }: {
   supabase: ClienteDosAvisos | null;
-  baixar?: (conteudo: string, nome: string) => void;
+  baixar?: (conteudo: Uint8Array, nome: string, tipo: string) => void;
 }): EstadoDosAvisos {
   let estado: SnapshotDosAvisos = {
     status: "idle",
@@ -312,14 +301,30 @@ export function criarEstadoDosAvisos({
     }
   }
 
-  /** Baixa o CSV dos casos de um aviso (ou da busca geral). true se baixou. */
+  /** Baixa os casos de um aviso (ou da busca geral) em Excel ou PDF. true se baixou. */
   async function exportarCasos({
     aviso = null,
     busca = "",
+    formato = "excel",
   }: ExportacaoDeCasos = {}) {
     const casos = await todosOsCasos({ avisoId: aviso?.id || null, busca });
     if (!casos.length) return false;
-    baixar(csvDosCasos(casos), nomeDoCsvDosCasos(aviso));
+    const quando = new Date();
+    const arquivo = await arquivoDaTabela(
+      formato,
+      {
+        titulo: ["Avisos de conferência", aviso?.conferencia || busca]
+          .filter(Boolean)
+          .join(" — "),
+        ...tabelaDosCasos(casos),
+      },
+      quando,
+    );
+    baixar(
+      arquivo.bytes,
+      nomeDoArquivoDosCasos(aviso, arquivo.extensao, quando),
+      arquivo.tipo,
+    );
     return true;
   }
 

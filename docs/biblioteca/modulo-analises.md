@@ -30,14 +30,14 @@ espelho-na-gaveta.tsx  linha da ficha concluída: nota autodeclarada × consolid
                 Declarada / Após análise / Teto, com as justificativas do critério que mudou
                 (a conta: src/lib/analises/espelho-do-painel-de-analises.ts)
 estado.ts       store sem React: carga por área e escopo, cópia do navegador, porteiro, gaveta
-                (detalhamento sob demanda), pareceres em lote, CSV, comemorações
+                (detalhamento sob demanda), pareceres em lote, planilha, comemorações
 consultas.ts    as RPCs (lista, porteiro, detalhamento, pareceres, ritmo) e a cópia no IndexedDB
 marcos.ts       edital 100% analisado e fila zerada (escopo Ativo); meta de hoje batida pela
                 equipe (uma vez por dia por pessoa)
 ```
 
 Regras puras em `src/lib/analises/analises-curriculares.ts` (janela e validação, filtros em cascata, KPIs,
-gráficos, pendências, recorte, gaveta, CSV), mais `analises/area-do-painel-de-analises.ts`,
+gráficos, pendências, recorte, gaveta, planilha), mais `analises/area-do-painel-de-analises.ts`,
 `analises/lista-do-painel-de-analises.ts`, `analises/textos-do-painel-de-analises.ts` e
 `analises/cache-do-painel-de-analises.ts`; o ritmo (etapa do cronograma, dias úteis, projeção) em
 `src/lib/analises/ritmo-da-analise.ts`. Visual só de `src/ui/` (sem CSS próprio). `marcos.ts` também avisa o

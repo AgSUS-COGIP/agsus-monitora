@@ -10678,16 +10678,16 @@ bloco("ui/layout-da-selecao", () => {
       expect($("table")?.dataset.mobileTable).toBe("scroll");
     });
 
-    it("vazia: Ninguém por aqui e a linha da tela; Exportar desligado", async () => {
-      const aoExportar = vi.fn();
-      await montar(h(Lista, { itens: [], aoExportar }));
+    it("vazia: Ninguém por aqui e a linha da tela; exportar desligado", async () => {
+      const excel = vi.fn();
+      await montar(h(Lista, { itens: [], exportacao: { excel } }));
       expect($(".ui-lista-vazia")?.textContent).toBe(
         "Ninguém por aquiNenhuma pessoa com esses filtros.",
       );
       expect($(".ui-lista-contagem")?.textContent).toBe("Mostrando 0 de 0");
-      expect($<HTMLButtonElement>("[data-acao='exportar-csv']")?.disabled).toBe(
-        true,
-      );
+      expect(
+        $<HTMLButtonElement>("[data-acao='exportar-excel']")?.disabled,
+      ).toBe(true);
     });
 
     it("no banco: chegar ao fim pede a página seguinte, uma vez enquanto ela vem", async () => {

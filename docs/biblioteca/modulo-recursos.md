@@ -75,7 +75,7 @@ componente desmonta.
   versões), `formulario.tsx` (candidato buscado nas análises do edital), `resposta.tsx`,
   `modelos.tsx` (administração), `recursos.css` (só tokens; o resto vem de `src/ui/`).
 - Regras puras em `src/lib/`: `recursos/recursos-dos-candidatos.ts` (enriquecimento, busca, indicadores,
-  duplicidade, formulário, CSV), `recursos/prazo-do-recurso.ts`, `recursos/parecer-do-recurso.ts` (botões permitidos),
+  duplicidade, formulário, exportação), `recursos/prazo-do-recurso.ts`, `recursos/parecer-do-recurso.ts` (botões permitidos),
   `recursos/resposta-do-recurso.ts` (transições e revisão), `recursos/modelos-de-resposta.ts`,
   `recursos/anexos-do-recurso.ts`, `recursos/documento-da-resposta.ts`.
 - Contratos: `src/lib/recursos/tipos-dos-recursos.ts`, `tipos-do-estado.ts`, `tipos-da-gaveta.ts`,

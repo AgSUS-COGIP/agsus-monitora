@@ -5,12 +5,14 @@ import {
   RPC_LER_RELATORIO_DO_PAINEL,
   RPC_SINCRONIZAR_RELATORIO_DO_PAINEL,
   chaveDaPagina,
-  csvDoRelatorio,
+  tabelaDoRelatorio,
   definicaoDoRelatorio,
   lerPaginaDoRelatorio,
   nomeDoArquivoDoRelatorio,
   xlsxDoRelatorio,
 } from "../../lib/paineis/relatorios-dos-paineis.ts";
+import { pdfDaTabela } from "../../lib/base/exportacao-da-tabela.ts";
+import { nomeDaArea } from "../../lib/navegacao/menu-lateral.ts";
 import {
   RPC_LISTAR_FONTES_DO_PAINEL,
   RPC_SALVAR_FONTE_DA_COLUNA,
@@ -541,8 +543,16 @@ export function criarEstadoDosPaineis({
           quando,
         );
         const conteudo: BlobPart =
-          formato === "CSV"
-            ? csvDoRelatorio(definicao, linhas)
+          formato === "PDF"
+            ? ((await pdfDaTabela(
+                {
+                  titulo: [definicao.rotulo, nomeDaArea(leitura.area)]
+                    .filter(Boolean)
+                    .join(" — "),
+                  ...tabelaDoRelatorio(definicao, linhas),
+                },
+                { quando },
+              )) as Uint8Array<ArrayBuffer>)
             : (xlsxDoRelatorio(
                 definicao,
                 linhas,

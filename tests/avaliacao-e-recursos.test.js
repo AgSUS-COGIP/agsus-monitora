@@ -263,13 +263,13 @@ import {
   agruparPorVaga,
   andamentoDaFila,
   contadoresDaFila,
-  csvDaFila,
+  tabelaDaFila,
   fichaPeloCodigo,
   filtrarFila,
   filtroEhInicial,
   FILTRO_INICIAL,
   naEtapa,
-  nomeDoCsvDaFila,
+  nomeDoArquivoDaFila,
   normalizarFiltro,
   ordenarFila,
   planoDeDistribuicao,
@@ -8962,19 +8962,26 @@ bloco("lib/avaliacao-documental-fila", () => {
       expect(proximaOrdem(ordem, "art")).toEqual({ chave: "", sentido: "" });
     });
 
-    it("CSV da aba: colunas da aba, ';', BOM e célula protegida contra fórmula", () => {
-      const csv = csvDaFila([eliminado], "eliminados");
+    it("exportação da aba: as colunas da aba; o texto vai como veio (a planilha não lê fórmula)", () => {
+      const { colunas, linhas } = tabelaDaFila([eliminado], "eliminados");
+      expect(colunas).toEqual([
+        "Código",
+        "Nome",
+        "Vaga",
+        "Motivo da eliminação",
+        "Nota declarada (ART)",
+      ]);
+      expect(linhas).toEqual([
+        ["7009", "=Cmd|' /C calc'!A0", "11", "Cancelou a inscrição", "12,5"],
+      ]);
       expect(
-        csv.startsWith(
-          "\uFEFFCódigo;Nome;Vaga;Motivo da eliminação;Nota declarada (ART)\r\n",
+        nomeDoArquivoDaFila(
+          "93/2026",
+          "eliminados",
+          "xlsx",
+          new Date(2026, 9, 6),
         ),
-      ).toBe(true);
-      expect(csv).toContain(
-        "7009;'=Cmd|' /C calc'!A0;11;Cancelou a inscrição;12,5",
-      );
-      expect(
-        nomeDoCsvDaFila("93/2026", "eliminados", new Date(2026, 9, 6)),
-      ).toBe("fila-93-2026-eliminados-2026-10-06.csv");
+      ).toBe("fila-93-2026-eliminados-2026-10-06.xlsx");
     });
   });
 

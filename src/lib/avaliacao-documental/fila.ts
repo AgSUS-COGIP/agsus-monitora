@@ -6,7 +6,7 @@
   job Python) e, por aba, as colunas, a ordem por coluna e o CSV. Os dados
   vêm de obter_fila_avaliacao (supabase/migrations/20261006120000_fichas_fila_e_reserva.sql).
 */
-import { sanitizeCsvCell } from "../seguranca/csv-security";
+import type { TabelaParaExportar } from "../base/exportacao-da-tabela.ts";
 import type { AndamentoDaVaga } from "./andamento-por-vaga.ts";
 import type {
   AnalistaDaDistribuicao,
@@ -941,31 +941,27 @@ export function proximaOrdem(
   return { chave: "", sentido: "" };
 }
 
-/** CSV (";", BOM, CRLF) da aba, nas colunas da aba e com cada célula protegida contra fórmula. */
-export function csvDaFila(
+/** A tabela da exportação (Excel e PDF) da aba: as colunas e a ordem da aba. */
+export function tabelaDaFila(
   linhas: readonly InscritoNaFila[] | null | undefined,
   etapa: string | null | undefined,
   eu = "",
   agora: Date = new Date(),
-): string {
+): Pick<TabelaParaExportar, "colunas" | "linhas"> {
   const chaves = colunasDaEtapa(etapa);
-  const celula = (valor: unknown): string => {
-    const seguro = sanitizeCsvCell(valor ?? "");
-    return /[";\n\r]/.test(seguro) ? `"${seguro.replace(/"/g, '""')}"` : seguro;
-  };
-  const conteudo = [
-    chaves.map((k) => celula(COLUNAS_DA_FILA[k].rotulo)).join(";"),
-    ...(Array.isArray(linhas) ? linhas : []).map((c) =>
-      chaves.map((k) => celula(textoDaColuna(c, k, eu, agora))).join(";"),
+  return {
+    colunas: chaves.map((k) => COLUNAS_DA_FILA[k].rotulo),
+    linhas: (Array.isArray(linhas) ? linhas : []).map((c) =>
+      chaves.map((k) => textoDaColuna(c, k, eu, agora)),
     ),
-  ];
-  return `\uFEFF${conteudo.join("\r\n")}\r\n`;
+  };
 }
 
-/** "fila-93-2026-eliminados-2026-10-06.csv". */
-export function nomeDoCsvDaFila(
+/** "fila-93-2026-eliminados-2026-10-06.xlsx" (ou .pdf). */
+export function nomeDoArquivoDaFila(
   edital: unknown,
   etapa: string | null | undefined,
+  extensao: "xlsx" | "pdf",
   agora: Date = new Date(),
 ): string {
   const base =
@@ -976,5 +972,5 @@ export function nomeDoCsvDaFila(
       .replace(/^-|-$/g, "")
       .toLowerCase() || "edital";
   const dois = (n: number) => String(n).padStart(2, "0");
-  return `fila-${base}-${etapa || "inscritos"}-${agora.getFullYear()}-${dois(agora.getMonth() + 1)}-${dois(agora.getDate())}.csv`;
+  return `fila-${base}-${etapa || "inscritos"}-${agora.getFullYear()}-${dois(agora.getMonth() + 1)}-${dois(agora.getDate())}.${extensao}`;
 }
