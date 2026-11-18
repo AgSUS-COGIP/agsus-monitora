@@ -255,6 +255,7 @@ export function TelaDaVisaoGeral({
           supabase={supabase as ClienteDosAvisos | null}
           aoAbrirCentral={abrirCentral}
           secaoInicial={secaoDaGaveta}
+          linhasDaArea={e.linhasDaArea}
           aoFechar={() => setAberta(null)}
           aoVoltarALinha={() => {
             setAberta(null);
