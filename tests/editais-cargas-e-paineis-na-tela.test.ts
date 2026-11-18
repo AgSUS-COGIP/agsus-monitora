@@ -5813,6 +5813,7 @@ bloco("modulos/pagina-do-edital", () => {
       status_override: "Suspenso",
       status_override_motivo: "Decisão judicial",
       status_override_data: "2026-11-05",
+      cronograma_origem: "PDF",
     },
     estado: { status: "Suspenso", etapa: "Inscrições" },
     etapas: [
@@ -5840,11 +5841,50 @@ bloco("modulos/pagina-do-edital", () => {
     ],
   };
 
+  const QUADRO = {
+    linhas: [
+      {
+        id: "q1",
+        cargo: "Enfermeiro",
+        lotacao: "Polo Base Fictício",
+        modalidades: { Ampla: 3, PcD: 1 },
+        vagas_imediatas: 4,
+        cadastro_reserva: true,
+      },
+    ],
+    origem: { tipo: "PDF", arquivo: "anexos-105.pdf", gravado_em: null },
+    vinculos: [
+      {
+        vaga: "V1",
+        cargo: "ENFERMEIRO - POLO FICTÍCIO",
+        situacao: "CONFIRMADO",
+        origem: "AUTOMATICO",
+        regra: "NOME",
+        quadro: "q1",
+        cargo_quadro: "Enfermeiro",
+        lotacao_quadro: "Polo Base Fictício",
+      },
+      {
+        vaga: "V2",
+        cargo: "TÉCNICO DE ENFERMAGEM",
+        situacao: "AMBIGUO",
+        origem: "AUTOMATICO",
+        candidatas: [
+          { id: "q1", cargo: "Enfermeiro", lotacao: null },
+          { id: "q2", cargo: "Técnico", lotacao: null },
+        ],
+      },
+    ],
+    vagas_do_edital: "COM_CODIGO",
+    pode_editar: false,
+  };
+
   function clienteFalso() {
-    const rpc = vi.fn<ClienteDaPaginaDoEdital["rpc"]>(async () => ({
-      data: CRONOGRAMA,
-      error: null,
-    }));
+    const rpc = vi.fn(async (nome: string) =>
+      nome === "obter_quadro_de_vagas"
+        ? { data: QUADRO, error: null }
+        : { data: CRONOGRAMA, error: null },
+    );
     return {
       auth: {
         getSession: async () => ({
@@ -5957,13 +5997,23 @@ bloco("modulos/pagina-do-edital", () => {
       // Candidatos: 30 aprovados, 12 aguardando, 15 nas demais (3 desistentes à parte).
       expect(texto).toContain("Aguardando chamada");
       expect(texto).toContain("3 desistentes à parte");
-      // Linha do tempo pelas datas de hoje.
-      const etapas = [...elemento.querySelectorAll("[data-marca]")].map(
-        (li) => [
+      // Resumo: o andamento (a etapa atual e a próxima prevista).
+      const marcas = () =>
+        [...elemento.querySelectorAll("[data-marca]")].map((li) => [
           li.querySelector("strong")?.textContent,
           li.getAttribute("data-marca"),
-        ],
-      );
+        ]);
+      expect(marcas()).toEqual([
+        ["Inscrições", "atual"],
+        ["Resultado final", "prevista"],
+      ]);
+      // Aba Etapas: a linha do tempo inteira, pelas datas de hoje.
+      await clicar(elemento.querySelector('[role="tab"][data-aba="etapas"]'));
+      expect(
+        elemento.querySelector('[role="tab"][aria-selected="true"]')
+          ?.textContent,
+      ).toBe("Etapas");
+      const etapas = marcas();
       expect(etapas).toEqual([
         ["Publicação do edital", "concluida"],
         ["Inscrições", "atual"],
@@ -5973,14 +6023,79 @@ bloco("modulos/pagina-do-edital", () => {
         elemento.querySelector('[aria-current="step"] strong')?.textContent,
       ).toBe("Inscrições");
       // A retificação do histórico.
-      expect(texto).toContain("Errata nº 1");
-      expect(texto).toContain("SEI 00000.000000/2026-00");
+      expect(elemento.textContent).toContain("Errata nº 1");
+      expect(elemento.textContent).toContain("SEI 00000.000000/2026-00");
       // O edital publicado (link da linha).
       expect(
         elemento.querySelector<HTMLAnchorElement>(
           'a[href^="https://exemplo.org"]',
         )?.textContent,
       ).toContain("Edital publicado");
+    });
+
+    it("Vagas e cargos: o quadro, só quando a aba abre, com o vínculo de cada vaga", async () => {
+      const { elemento, cliente } = await montar("105-2026");
+      expect(cliente.rpc).not.toHaveBeenCalledWith(
+        "obter_quadro_de_vagas",
+        expect.anything(),
+      );
+      await clicar(elemento.querySelector('[role="tab"][data-aba="vagas"]'));
+      await esperar(() => new Promise((resolver) => setTimeout(resolver, 0)));
+      expect(cliente.rpc).toHaveBeenCalledWith("obter_quadro_de_vagas", {
+        p_edital: ID,
+      });
+      const celulas = [
+        ...elemento.querySelectorAll(".pagina-do-edital-tabela tbody td"),
+      ].map((td) => td.textContent);
+      expect(celulas).toEqual([
+        "Enfermeiro",
+        "Polo Base Fictício",
+        "4",
+        "Sim",
+        "Ampla: 3 · PcD: 1",
+      ]);
+      const texto = elemento.textContent || "";
+      expect(texto).toContain("1 confirmada · 1 ambígua · 0 ausentes");
+      expect(texto).toContain("Ambíguas (1)");
+      expect(texto).toContain("2 linhas possíveis");
+    });
+
+    it("Candidatos: abre as telas da seleção já no edital (só as que o perfil abre)", async () => {
+      const navigate = vi.fn(() => true);
+      vi.stubGlobal("navigate", navigate);
+      vi.stubGlobal("getMonitoraProfile", () => ({
+        id: "p",
+        ativo: true,
+        permissoes: { selecao: "leitor", classificacao: "leitor" },
+      }));
+      const { elemento } = await montar("105-2026");
+      await clicar(
+        elemento.querySelector('[role="tab"][data-aba="candidatos"]'),
+      );
+      const telas = [...elemento.querySelectorAll("[data-tela]")].map((b) =>
+        b.getAttribute("data-tela"),
+      );
+      expect(telas).toEqual(["selecao", "classificacao"]);
+      await clicar(elemento.querySelector('[data-tela="classificacao"]'));
+      expect(navigate).toHaveBeenLastCalledWith("classificacao", {
+        edital: ID,
+      });
+      // A Seleção recorta pelo número: vai num pedido de filtro.
+      await clicar(elemento.querySelector('[data-tela="selecao"]'));
+      expect(navigate).toHaveBeenLastCalledWith("selecao");
+      expect(consumirPedidoDeFiltro("selecao")).toEqual({ edital: "105/2026" });
+      vi.unstubAllGlobals();
+    });
+
+    it("Fontes e histórico: de onde vem cada dado e o histórico do cronograma", async () => {
+      const { elemento } = await montar("105-2026");
+      await clicar(elemento.querySelector('[role="tab"][data-aba="fontes"]'));
+      await esperar(() => new Promise((resolver) => setTimeout(resolver, 0)));
+      const texto = elemento.textContent || "";
+      expect(texto).toContain("importado do PDF de anexos");
+      expect(texto).toContain("PDF de anexos · anexos-105.pdf");
+      expect(texto).toContain("Histórico do cronograma");
+      expect(texto).toContain("1 registro");
     });
 
     it("o Voltar diz para onde volta e chama a navegação", async () => {

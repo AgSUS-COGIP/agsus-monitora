@@ -260,6 +260,12 @@ import {
   situacaoDasVagas,
   situacaoDosCandidatos,
   situacaoExcepcional,
+  ehAbaDaPagina,
+  andamentoDasEtapas,
+  telasDoEdital,
+  origemDoCronograma,
+  historicoDoCronograma,
+  quadroDaPagina,
 } from "../src/lib/pagina-do-edital/pagina-do-edital.ts";
 
 bloco("admissao-e-ciclo-na-visao-geral", () => {
@@ -6525,6 +6531,99 @@ bloco("lib/pagina-do-edital", () => {
       });
       expect(situacaoExcepcional({}, "Cancelado")?.status).toBe("Cancelado");
       expect(situacaoExcepcional(null, "Em andamento")).toBeNull();
+    });
+  });
+
+  describe("abas, telas, fontes e quadro", () => {
+    it("as abas da página; a que não existe não vale", () => {
+      expect(ehAbaDaPagina("etapas")).toBe(true);
+      expect(ehAbaDaPagina("qualquer")).toBe(false);
+    });
+
+    it("andamento: as etapas atuais e a próxima prevista", () => {
+      const etapas = etapasNaLinhaDoTempo(
+        [
+          { atividade: "A", data_inicio: "2026-10-01" },
+          { atividade: "B", data_inicio: "2026-11-01", data_fim: "2026-11-30" },
+          { atividade: "C", data_inicio: "2026-12-01" },
+          { atividade: "D", data_inicio: "2026-12-10" },
+        ],
+        "2026-11-18",
+      );
+      const { atuais, proxima } = andamentoDasEtapas(etapas);
+      expect(atuais.map((e) => e.atividade)).toEqual(["B"]);
+      expect(proxima?.atividade).toBe("C");
+    });
+
+    it("telas da seleção na ordem do processo, só as que o perfil abre", () => {
+      expect(
+        telasDoEdital((view) => view !== "selecao").map((t) => t.view),
+      ).toEqual([
+        "pre-classificacao",
+        "avaliacao-documental",
+        "conduzir-entrevistas",
+        "classificacao",
+        "approved",
+      ]);
+      expect(telasDoEdital(() => false)).toEqual([]);
+    });
+
+    it("origem do cronograma e histórico inteiro, do mais recente ao mais antigo", () => {
+      expect(origemDoCronograma("pdf")).toBe("importado do PDF de anexos");
+      expect(origemDoCronograma("")).toBe("");
+      expect(origemDoCronograma("OUTRA")).toBe("outra");
+      expect(
+        historicoDoCronograma([
+          { acao: "salvar", created_at: "2026-10-01T10:00:00Z", motivo: "x" },
+          {
+            acao: "errata",
+            numero_errata: "Errata nº 2",
+            created_at: "2026-11-01T10:00:00Z",
+            created_by_email: "pessoa@exemplo.org",
+            total_alteracoes: 1,
+          },
+        ]).map((r) => [r.tipo, r.titulo, r.quem, r.alteracoes]),
+      ).toEqual([
+        ["retificacao", "Errata nº 2", "pessoa@exemplo.org", 1],
+        ["alteracao", "Alteração", "", 0],
+      ]);
+    });
+
+    it("o quadro de vagas sem confiar no formato", () => {
+      const quadro = quadroDaPagina({
+        linhas: [
+          {
+            id: "q1",
+            cargo: "Enfermeiro",
+            lotacao: null,
+            modalidades: { Ampla: 2, PcD: null },
+            vagas_imediatas: 2,
+            cadastro_reserva: false,
+          },
+          { id: "q2", cargo: "" },
+          "lixo",
+        ],
+        origem: { tipo: "MANUAL", arquivo: null },
+        vinculos: [],
+        vagas_do_edital: "PENDENTE_INTEGRACAO",
+      });
+      expect(quadro.linhas).toEqual([
+        {
+          id: "q1",
+          cargo: "Enfermeiro",
+          lotacao: "",
+          imediatas: 2,
+          cadastroReserva: false,
+          modalidades: [{ nome: "Ampla", valor: "2" }],
+        },
+      ]);
+      expect(quadro.origem).toEqual({
+        tipo: "MANUAL",
+        arquivo: "",
+        gravadoEm: "",
+      });
+      expect(quadro.fila.vagasDoEdital).toBe("PENDENTE_INTEGRACAO");
+      expect(quadroDaPagina(null)).toMatchObject({ linhas: [], origem: null });
     });
   });
 });

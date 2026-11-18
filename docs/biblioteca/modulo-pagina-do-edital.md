@@ -16,6 +16,7 @@ por tela. Pasta `src/modulos/pagina-do-edital/`; regras em `src/lib/pagina-do-ed
 pagina-do-edital.tsx  componente e criarPaginaDoEdital() → { estado, conteudo, nome, render() }
 estado.ts             store sem React: o cronograma de cada edital e o acompanhamento da área
 abrir.ts              abrirPaginaDoEdital(linha, linhasDaArea): o "Abrir página do edital" das outras telas
+                      (usa src/lib/pagina-do-edital/endereco-do-edital.ts, leve, para não pesar na entrada)
 pagina-do-edital.css  só o que é desta tela; o resto vem de src/ui/
 ```
 
@@ -53,6 +54,24 @@ pagina-do-edital.css  só o que é desta tela; o resto vem de src/ui/
   tempo de Editais); o aviso de sequência incoerente (`sequencia-do-cronograma.ts`) baixa sob
   demanda. As retificações são as erratas do histórico (`TH_CRONOGRAMA_MONIT_INDIG`, ação
   `errata`), da mais recente para a mais antiga.
+
+## Abas
+
+A aba vai no endereço (`?aba=etapas`) sem empilhar entrada no histórico: o "Voltar" da página não
+passeia pelas abas.
+
+- **Resumo**: vagas, candidatos, o andamento (a etapa atual e a próxima prevista) e os avisos de
+  conferência abertos do edital (o estado da central, `criarEstadoDosAvisos`, lido pela área e
+  recortado pelo `editalId`; quem não vê os avisos não vê o bloco).
+- **Vagas e cargos**: o quadro de vagas (`obter_quadro_de_vagas`, lido quando a aba abre) e o
+  vínculo vaga–quadro de [[modulo-editais]]: confirmadas, ambíguas (com as linhas possíveis) e
+  ausentes, só para ler. O quadro é de Editais, Cronograma ou Entrevistas: sem esse recurso, aviso.
+- **Etapas**: a linha do tempo inteira e as retificações.
+- **Candidatos**: os números e as telas da seleção já no edital, só as que o perfil abre. Triagem,
+  Avaliação documental, Entrevistas e Classificação recebem o id (`abrirEdital`); Seleção e Lista de
+  aprovados, o número num pedido de filtro (`src/app/pedido-de-filtro.ts`).
+- **Fontes e histórico**: de onde vem cada dado (cadastro, cronograma e sua origem, quadro de vagas
+  e o arquivo, funil, admissões conciliadas, edital publicado) e o histórico inteiro do cronograma.
 
 ## Testes
 
