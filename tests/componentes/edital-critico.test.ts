@@ -26,7 +26,7 @@ import { desenharNoTeste } from "../montar-tela.ts";
 /*
   Edital crítico marcado à mão (20261110150000): gestor, coordenador ou
   administrador global marca o edital como crítico, com motivo; a Visão geral
-  conta a marcação junto com os motivos automáticos. Quem pode marcar o banco
+  conta somente a marcação manual. Quem pode marcar o banco
   decide (`pode_marcar`).
 */
 
@@ -58,12 +58,12 @@ describe("a regra: marcação manual conta como crítico", () => {
     ]);
   });
 
-  it("a marcação vem primeiro e os motivos automáticos continuam", () => {
+  it("somente a marcação manual torna o processo crítico", () => {
     const codigos = motivosDeAtencao(aberto({ data_fim: "2026-11-01" }), {
       hoje: HOJE,
       marcacao: { motivo: "Banca sem quórum" },
     }).map((m) => m.codigo);
-    expect(codigos).toEqual(["marcado", "atrasada"]);
+    expect(codigos).toEqual(["marcado"]);
   });
 
   it("edital concluído marcado também é crítico; cancelado nunca", () => {

@@ -153,8 +153,8 @@ export function buscarAcompanhamentoNoSupabase(
     else acompanhamentosConhecidos.set(area, data);
     /*
       A marcação manual vem de outra leitura, sem versão (é pequena e muda na
-      hora em que alguém marca). Se falhar, a Visão geral segue com os motivos
-      automáticos — nunca fica sem o acompanhamento por causa dela.
+      hora em que alguém marca). Se falhar, não presume marcações de crítico;
+      o restante do acompanhamento continua disponível.
     */
     const marcados =
       !criticos?.error && Array.isArray(criticos?.data) ? criticos.data : [];
