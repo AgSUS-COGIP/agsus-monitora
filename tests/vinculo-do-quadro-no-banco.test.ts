@@ -1,8 +1,9 @@
 // @vitest-environment node
 /*
-  O vínculo da vaga com a linha do quadro (migration 20261118120000) num Postgres de verdade
-  (PGlite): o banco de hoje (corpos copiados do retrato de produção), a migration, as RPCs da
-  fila, quem consulta o vínculo, o ensaio e o rollback.
+  O vínculo da vaga com a linha do quadro (migration 20261118120000, aplicada em 18/11/2026)
+  num Postgres de verdade (PGlite): o banco de antes (corpos copiados do retrato de produção) com
+  a migration aplicada, as RPCs da fila e quem consulta o vínculo. A guarda, o ensaio e o
+  rollback saíram com a migration (regra do #712).
 */
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
@@ -15,11 +16,9 @@ import {
   EDITAL,
   EDITAL_CANCELADO,
   EDITAL_SEM_CODIGO,
-  ensaio,
   entrar,
   gravarQuadro,
   migration,
-  rollback,
   vinculos,
 } from "./apoio/banco-do-vinculo-do-quadro.ts";
 import { moldeDeBanco } from "./apoio/molde-de-banco.ts";
@@ -107,57 +106,7 @@ const gravar = (
     quadro,
   ]);
 
-const FUNCOES_TROCADAS = [
-  `private."FC_DADOS_CLASSIFICACAO_EDITAL"(uuid, text)`,
-  `private."FC_QUADRO_DA_VAGA_EMPREGARE"(uuid, text)`,
-  `public.obter_quadro_de_vagas(uuid)`,
-  `public.salvar_quadro_de_vagas(uuid, jsonb)`,
-  `public.conferencia_ler_listas_e_quadros()`,
-];
-
-async function retratoDasFuncoes(db: Banco): Promise<Record<string, unknown>> {
-  const saida: Record<string, unknown> = {};
-  for (const f of FUNCOES_TROCADAS) {
-    const { rows } = await db.query<{ src: string; doc: string }>(
-      `select p.prosrc as src, obj_description(p.oid, 'pg_proc') as doc from pg_proc p where p.oid = to_regprocedure($1)`,
-      [f],
-    );
-    saida[f] = rows[0];
-  }
-  return saida;
-}
-
-describe("a migration sobre o banco de hoje", () => {
-  it("a guarda md5 reconhece os corpos copiados do retrato", async () => {
-    const db = await bancoAntesComDados();
-    const sql = migration();
-    for (const f of [
-      ...FUNCOES_TROCADAS,
-      `private."FC_QUADRO_DA_VAGA"(uuid, text)`,
-      `private."FC_TOKENS_VAGA"(text)`,
-    ]) {
-      const { rows } = await db.query<{ md5: string }>(
-        `select md5(prosrc) as md5 from pg_proc where oid = to_regprocedure($1)`,
-        [f],
-      );
-      expect(sql, f).toContain(`'${rows[0]!.md5}'`);
-    }
-  });
-
-  it("recusa aplicar de novo", async () => {
-    const db = await bancoMigrado();
-    await expect(db.exec(migration())).rejects.toThrow(/já foi aplicada/);
-  });
-
-  it("recusa quando uma função do quadro mudou", async () => {
-    const db = await bancoAntesComDados();
-    await db.exec(`create or replace function private."FC_QUADRO_DA_VAGA"(p_edital uuid, p_nome_vaga text) returns uuid
-                   language sql stable set search_path to '' as $$ select null::uuid $$`);
-    await expect(db.exec(migration())).rejects.toThrow(
-      /mudou desde 17\/11\/2026/,
-    );
-  });
-
+describe("a migration aplicada", () => {
   it("agenda a rodada diária e a põe no catálogo das tarefas", async () => {
     const db = await bancoMigrado();
     const { rows } = await db.query<{ jobname: string; command: string }>(
@@ -579,62 +528,5 @@ describe("quem consulta o vínculo", () => {
     expect(await situacao(EDITAL_CANCELADO)).toBe("NAO_SE_APLICA");
     expect(await situacao(EDITAL_EXTERNO)).toBe("EXTERNO");
     expect(await situacao(EDITAL_SEM_CODIGO)).toBe("PENDENTE_INTEGRACAO");
-  });
-});
-
-describe("ensaio e rollback", () => {
-  it("o ensaio roda sobre o banco de hoje e não grava nada", async () => {
-    const db = await bancoAntesComDados();
-    await db.exec(ensaio());
-    expect(
-      (
-        await db.query(
-          `select to_regclass('public."TA_VAGA_QUADRO_EDITAL"') as t`,
-        )
-      ).rows,
-    ).toEqual([{ t: null }]);
-  });
-
-  it("o rollback devolve as funções letra por letra e tira o que a migration criou", async () => {
-    const antes = await bancoAntesComDados();
-    const db = await bancoMigrado();
-    await db.exec(rollback());
-    expect(await retratoDasFuncoes(db)).toEqual(await retratoDasFuncoes(antes));
-    const { rows } = await db.query(
-      `select to_regclass('public."TA_VAGA_QUADRO_EDITAL"') as ta, to_regclass('public."TH_VAGA_QUADRO_EDITAL"') as th,
-              (select count(*)::int from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-                where p.proname in ('FC_CHAVE_LINHA_QUADRO', 'FC_CANDIDATAS_DO_QUADRO', 'FC_VAGAS_PARA_O_QUADRO',
-                                    'FC_VINCULO_AUTOMATICO_QUADRO', 'FC_GRAVAR_VINCULO_QUADRO', 'FC_PREENCHER_VINCULOS_QUADRO',
-                                    'FC_PREENCHER_TODOS_VINCULOS_QUADRO', 'FC_QUADRO_DA_VAGA_VINCULADA', 'FC_EXIGIR_EDITAR_QUADRO',
-                                    'gravar_vinculo_do_quadro', 'atualizar_vinculos_do_quadro')) as funcoes,
-              (select count(*)::int from cron.job) as tarefas,
-              (select count(*)::int from public."TB_TAREFA_AGENDADA") as catalogo`,
-    );
-    expect(rows).toEqual([
-      { ta: null, th: null, funcoes: 0, tarefas: 0, catalogo: 0 },
-    ]);
-    // E a migration aplica de novo.
-    await db.exec(migration());
-  });
-
-  it("o rollback para quando há decisão da equipe, até confirmarem a perda", async () => {
-    const db = await bancoMigrado();
-    await entrar(db, 2);
-    await gravar(db, "1002", "CONFIRMAR", linhas.l2);
-    await expect(db.exec(rollback())).rejects.toThrow(/decididos pela equipe/);
-    await db.exec(`rollback`);
-    await db.exec(
-      rollback().replace(
-        "set local lock_timeout = '5s';",
-        "set local lock_timeout = '5s';\nselect set_config('agsus.rollback_perde_manuais', 'sim', true);",
-      ),
-    );
-    expect(
-      (
-        await db.query(
-          `select to_regclass('public."TA_VAGA_QUADRO_EDITAL"') as t`,
-        )
-      ).rows,
-    ).toEqual([{ t: null }]);
   });
 });

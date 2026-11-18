@@ -3,7 +3,8 @@
 
   O que é de verdade: as tabelas e as funções do quadro, da Empregare e da Classificação, como
   estão em produção (tests/fixtures/banco-antes-do-vinculo-do-quadro.sql, copiadas do retrato),
-  e a migration 20261118120000 com o rollback.
+  e a migration 20261118120000, aplicada e guardada sem mudança em
+  tests/fixtures/sql-do-banco/.
 
   O que é imitação (o Supabase tem, o PGlite não, ou é de outro assunto): os papéis, a sessão
   (auth.uid() lê teste.uid), o nível em nucleo (private.pode_recurso lê teste.nivel: 0 sem
@@ -22,9 +23,8 @@ export const NOME_DA_MIGRATION =
 
 const ler = (caminho: string) =>
   readFileSync(caminho, "utf8").replace(/\r\n/g, "\n");
-export const migration = () => ler(`supabase/migrations/${NOME_DA_MIGRATION}`);
-export const rollback = () => ler(`supabase/rollback/${NOME_DA_MIGRATION}`);
-export const ensaio = () => ler(`supabase/ensaios/${NOME_DA_MIGRATION}`);
+export const migration = () =>
+  ler(`tests/fixtures/sql-do-banco/${NOME_DA_MIGRATION}`);
 export const bancoAntes = () =>
   ler("tests/fixtures/banco-antes-do-vinculo-do-quadro.sql");
 

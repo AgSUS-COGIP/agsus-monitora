@@ -1,18 +1,53 @@
+-- Migration aplicada em produção e registrada em public.migracoes_aplicadas, guardada aqui
+-- só para montar o banco dos testes (PGlite); não aplicar. A fonte do código do banco é o
+-- banco e o retrato supabase/esquema-atual.sql. O arquivo saiu de supabase/migrations/ em
+-- 18/11/2026 (histórico no Git). Daqui para baixo, o conteúdo aplicado, sem mudança.
 /*
-  ENSAIO de 20261118120000_vinculo_da_vaga_com_o_quadro.sql (não grava: termina em rollback)
+  VÍNCULO EXPLÍCITO ENTRE A VAGA E A LINHA DO QUADRO DE VAGAS DO EDITAL
 
-  Roda a migration inteira (gerado dela: o SQL entre o begin e o commit) e confere:
-    1. todo vínculo automático pelo nome bate com FC_QUADRO_DA_VAGA (CONFIRMADO = a linha que a
-       regra de hoje devolve; AMBIGUO/AUSENTE = a regra de hoje não acha linha);
-    2. todo CONFIRMADO aponta para linha ativa do mesmo edital; todo AMBIGUO tem candidata;
-    3. o tempo do primeiro preenchimento.
-  E mostra o retrato por edital (confirmadas pelo nome e pelo título, ambíguas, ausentes) e o
-  dos editais com quadro sem vaga com código (não se aplica, externo, pendente de integração).
+  Pedido da conferência de 17/11/2026 ("Vaga sem linha no quadro").
 
-  psql "$SUPABASE_DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/ensaios/20261118120000_vinculo_da_vaga_com_o_quadro.sql
+  O PROBLEMA
+    A vaga operacional (código da Empregare ou da planilha) só se ligava à linha do quadro de
+    vagas (Anexo II, TB_QUADRO_VAGA_EDITAL) pelas palavras do nome (FC_QUADRO_DA_VAGA): o cargo
+    da linha inteiro no nome e a lotação para desempatar. No ensaio de 17/11/2026, 134 vagas de
+    11 editais da Saúde Indígena não casavam: nome cortado pela Empregare (o mesmo cargo em
+    várias lotações), cargo do quadro que não está no nome ("Cirurgião Dentista 40h"), empate
+    pelo nome do DSEI e lotação contraditória. Ninguém podia confirmar a linha certa, e o id da
+    linha muda a cada reimportação do PDF.
+
+  O QUE MUDA
+    1. TA_VAGA_QUADRO_EDITAL: uma linha por (edital, código da vaga), com a situação
+       (CONFIRMADO, AMBIGUO com as linhas candidatas, AUSENTE) e a origem (AUTOMATICO pela
+       regra, MANUAL pela equipe). TH_VAGA_QUADRO_EDITAL guarda cada mudança.
+    2. Preenchimento automático (FC_PREENCHER_VINCULOS_QUADRO), pela regra de sempre:
+       a regra do nome (FC_CANDIDATAS_DO_QUADRO decide igual a FC_QUADRO_DA_VAGA e devolve as
+       candidatas) e, sem linha única, o título "CARGO N" da Empregare
+       (FC_QUADRO_PELO_TITULO_EMPREGARE, a mesma da pré-classificação; TP_REGRA = TITULO).
+       Nunca mexe em vínculo MANUAL. Roda ao salvar o quadro, pela fila (atualizar) e todo dia
+       às 05:30 de Brasília (agsus_vinculos_do_quadro), antes do robô das conferências.
+    3. Reimportação do quadro: o vínculo passa para a linha nova de mesmo cargo e lotação
+       (sem acento, caixa e pontuação). O MANUAL cuja linha saiu vira AUSENTE com a pendência
+       "a linha escolhida saiu do quadro" (e o histórico), até a equipe decidir de novo.
+    4. Quem usa: FC_QUADRO_DA_VAGA_VINCULADA (vínculo CONFIRMADO → a linha; "sem linha"
+       confirmado → nenhuma; senão a regra do nome) na Classificação
+       (FC_DADOS_CLASSIFICACAO_EDITAL); FC_QUADRO_DA_VAGA_EMPREGARE (pré-classificação e
+       acompanhamento) consulta o vínculo antes da regra de sempre; obter_quadro_de_vagas
+       devolve os vínculos com situação; conferencia_ler_listas_e_quadros os entrega ao robô.
+    5. RPCs da fila (Núcleo ou Calendário, editor): gravar_vinculo_do_quadro (CONFIRMAR uma
+       linha, SEM_LINHA, AUTOMATICO) e atualizar_vinculos_do_quadro.
+    FC_QUADRO_DA_VAGA e FC_TOKENS_VAGA não mudam (a cópia em Python continua valendo).
+
+  GUARDAS (a migration não aplica nada se falhar)
+    - Já aplicada (TA_VAGA_QUADRO_EDITAL existe); pg_cron desligado.
+    - As funções trocadas ou de que esta depende não são as conhecidas (md5 do corpo): alguém
+      as mudou depois; junte as mudanças antes de aplicar.
+
+  Ensaio: supabase/ensaios/20261118120000_vinculo_da_vaga_com_o_quadro.sql (o retrato por edital)
+  Rollback: supabase/rollback/20261118120000_vinculo_da_vaga_com_o_quadro.sql
+  Testes: tests/vinculo-do-quadro-no-banco.test.ts (PGlite: antes × depois × rollback).
 */
 begin;
-
 
 set local lock_timeout = '5s';
 
@@ -828,81 +863,6 @@ select cron.schedule(
   'agsus_vinculos_do_quadro', '30 8 * * *',
   $c$select private."FC_PREENCHER_TODOS_VINCULOS_QUADRO"() where pg_try_advisory_xact_lock(hashtext('agsus_vinculos_do_quadro'));$c$);
 
--- O primeiro preenchimento, medido.
-do $$
-declare
-  v_inicio timestamptz := clock_timestamp();
-  v_n integer;
-begin
-  v_n := private."FC_PREENCHER_TODOS_VINCULOS_QUADRO"();
-  raise notice 'Preenchimento: % editais em % s', v_n, round(extract(epoch from clock_timestamp() - v_inicio)::numeric, 1);
-end
-$$;
+select private."FC_PREENCHER_TODOS_VINCULOS_QUADRO"();
 
-
--- Conferências -------------------------------------------------------------------------------
-do $$
-declare
-  v_n integer;
-begin
-  select count(*) into v_n
-    from public."TA_VAGA_QUADRO_EDITAL" v
-   where v."TP_ORIGEM" = 'AUTOMATICO' and v."TP_REGRA" = 'NOME'
-     and v."CO_QUADRO_VAGA" is distinct from private."FC_QUADRO_DA_VAGA"(v."CO_MONITORAMENTO", v."NO_VAGA");
-  if v_n > 0 then
-    raise exception 'Reprovado: % vínculos pelo nome diferentes de FC_QUADRO_DA_VAGA', v_n;
-  end if;
-  select count(*) into v_n
-    from public."TA_VAGA_QUADRO_EDITAL" v
-    left join public."TB_QUADRO_VAGA_EDITAL" q
-      on q."CO_QUADRO_VAGA" = v."CO_QUADRO_VAGA" and q."CO_MONITORAMENTO" = v."CO_MONITORAMENTO" and q."ST_REGISTRO_ATIVO" = 'S'
-   where v."TP_VINCULO" = 'CONFIRMADO' and q."CO_QUADRO_VAGA" is null;
-  if v_n > 0 then
-    raise exception 'Reprovado: % vínculos confirmados sem linha ativa do edital', v_n;
-  end if;
-  select count(*) into v_n from public."TA_VAGA_QUADRO_EDITAL" v
-   where v."TP_VINCULO" = 'AMBIGUO' and jsonb_array_length(v."DS_CANDIDATA") = 0;
-  if v_n > 0 then
-    raise exception 'Reprovado: % vínculos ambíguos sem candidata', v_n;
-  end if;
-  raise notice 'Conferências aprovadas.';
-end
-$$;
-
--- Retrato por edital ---------------------------------------------------------------------------
-select m."CO_AREA" as area, m.edital, coalesce(m.status, '') as status,
-       count(*) filter (where v."TP_VINCULO" = 'CONFIRMADO' and v."TP_REGRA" = 'NOME') as confirmadas_nome,
-       count(*) filter (where v."TP_VINCULO" = 'CONFIRMADO' and v."TP_REGRA" = 'TITULO') as confirmadas_titulo,
-       count(*) filter (where v."TP_VINCULO" = 'AMBIGUO') as ambiguas,
-       count(*) filter (where v."TP_VINCULO" = 'AUSENTE') as ausentes,
-       count(*) as vagas
-  from public."TA_VAGA_QUADRO_EDITAL" v
-  join public."TB_MONITORAMENTO_INDIGENA" m on m.id = v."CO_MONITORAMENTO"
- group by 1, 2, 3
-having count(*) filter (where v."TP_VINCULO" <> 'CONFIRMADO') > 0
- order by 1, (count(*) filter (where v."TP_VINCULO" <> 'CONFIRMADO')) desc, 2;
-
-select m."CO_AREA" as area,
-       count(distinct v."CO_MONITORAMENTO") as editais,
-       count(*) filter (where v."TP_VINCULO" = 'CONFIRMADO' and v."TP_REGRA" = 'NOME') as confirmadas_nome,
-       count(*) filter (where v."TP_VINCULO" = 'CONFIRMADO' and v."TP_REGRA" = 'TITULO') as confirmadas_titulo,
-       count(*) filter (where v."TP_VINCULO" = 'AMBIGUO') as ambiguas,
-       count(*) filter (where v."TP_VINCULO" = 'AUSENTE') as ausentes,
-       count(*) as vagas
-  from public."TA_VAGA_QUADRO_EDITAL" v
-  join public."TB_MONITORAMENTO_INDIGENA" m on m.id = v."CO_MONITORAMENTO"
- group by rollup (1) order by 1;
-
--- Editais com quadro e sem vaga com código: o que a fila mostra.
-select m."CO_AREA" as area, m.edital, coalesce(m.status, '') as status,
-       -- A mesma regra de obter_quadro_de_vagas (que exige sessão).
-       case when coalesce(m.status, '') = 'Cancelado' then 'NAO_SE_APLICA'
-            when exists (select 1 from public."TB_SELECAO_VAGA" s
-                          where s."CO_MONITORAMENTO" = m.id and s."ST_REGISTRO_ATIVO" = 'S') then 'EXTERNO'
-            else 'PENDENTE_INTEGRACAO' end as vagas_do_edital
-  from public."TB_MONITORAMENTO_INDIGENA" m
- where exists (select 1 from public."TB_QUADRO_VAGA_EDITAL" q where q."CO_MONITORAMENTO" = m.id and q."ST_REGISTRO_ATIVO" = 'S')
-   and not exists (select 1 from public."TA_VAGA_QUADRO_EDITAL" v where v."CO_MONITORAMENTO" = m.id)
- order by 1, 2;
-
-rollback;
+commit;
