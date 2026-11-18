@@ -21,10 +21,7 @@ export { CabecalhoDaTela } from "./cabecalho-da-tela.tsx";
 export { CelulaDaPessoa } from "./celula-da-pessoa.tsx";
 export type { PropriedadesDoCabecalhoDaTela } from "./cabecalho-da-tela.tsx";
 export { BotaoDeAcao } from "./botao-de-acao.tsx";
-export {
-  baixarArquivo,
-  BotoesDeExportacao,
-} from "./botoes-de-exportacao.tsx";
+export { baixarArquivo, BotoesDeExportacao } from "./botoes-de-exportacao.tsx";
 export type {
   AcaoDeExportar,
   PropriedadesDosBotoesDeExportacao,

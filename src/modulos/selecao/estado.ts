@@ -85,7 +85,6 @@ function mensagemDaCarga(erro: unknown): string {
   return mensagemDeFalha(erro);
 }
 
-
 export function criarEstadoDaSelecao({
   supabase = null,
   toast = (mensagem) => console.info(mensagem),
@@ -282,7 +281,9 @@ export function criarEstadoDaSelecao({
       const arquivo = await arquivoDaTabela(
         formato,
         {
-          titulo: ["Seleção", nomeDaArea(estado.area)].filter(Boolean).join(" — "),
+          titulo: ["Seleção", nomeDaArea(estado.area)]
+            .filter(Boolean)
+            .join(" — "),
           ...tabelaDaSelecao(vagas),
         },
         quando,

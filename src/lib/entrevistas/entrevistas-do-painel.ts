@@ -640,10 +640,7 @@ const COLUNAS_DA_EXPORTACAO: readonly (readonly [
   ["Nota da entrevista", (e) => e.nota],
   ["Parecer", (e) => rotuloDoParecer(e.parecer)],
   ["Compareceu", (e) => rotuloDoComparecimento(e.compareceu)],
-  [
-    "Nota da análise",
-    (e) => e.analise?.nota ?? null,
-  ],
+  ["Nota da análise", (e) => e.analise?.nota ?? null],
   [
     "Resultado da análise",
     (e) => (e.analise ? e.analise.resultado : "Sem análise"),

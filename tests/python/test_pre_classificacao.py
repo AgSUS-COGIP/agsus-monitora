@@ -2,9 +2,9 @@
 Testes da avaliação documental em Python (python/monitora/avaliacao_documental/):
 os MESMOS casos dourados do vitest —
 tests/fixtures/avaliacao-documental/casos-de-pre-classificacao.json
-(tests/lib/avaliacao-documental-pre-classificacao.test.js) e a nota declarada
+(tests/avaliacao-e-recursos.test.js (bloco lib/avaliacao-documental-pre-classificacao)) e a nota declarada
 de tests/fixtures/avaliacao-documental/casos-de-pontuacao.json
-(tests/lib/avaliacao-documental-pontuacao.test.js). Nada fala com o Supabase.
+(tests/avaliacao-e-recursos.test.js (bloco lib/avaliacao-documental-pontuacao)). Nada fala com o Supabase.
 
     python -m pytest tests/python
 """
@@ -312,7 +312,7 @@ class NotaDeclaradaPorNivel(unittest.TestCase):
 
 
 class BaseDaNotaECongelamento(unittest.TestCase):
-    """Os mesmos testes de tests/lib/avaliacao-documental-pre-classificacao.test.js."""
+    """Os mesmos testes de tests/avaliacao-e-recursos.test.js (bloco lib/avaliacao-documental-pre-classificacao)."""
 
     CASO = next(c for c in PRE["casos"] if c["nome"].startswith("base da nota pela declarada"))
 

@@ -411,22 +411,22 @@ const COLUNAS_DA_EXPORTACAO: readonly (readonly [
   ["Edital", (v) => v.edital],
   ["Cargo", (v) => v.cargo],
   ["Vaga", (v) => v.vaga || ""],
-  ["Inscritos", (v) => (v.inscritos)],
-  ["Aptos para análise", (v) => (v.aptos)],
-  ["Cancelados", (v) => (v.cancelados)],
+  ["Inscritos", (v) => v.inscritos],
+  ["Aptos para análise", (v) => v.aptos],
+  ["Cancelados", (v) => v.cancelados],
   [
     "Reprovados por não finalizar o questionário",
-    (v) => (v.reprovadosQuestionario),
+    (v) => v.reprovadosQuestionario,
   ],
-  ["Eliminados por nota", (v) => (v.eliminadosNota)],
-  ["Reprovados na análise", (v) => (v.reprovadosAnalise)],
-  ["Triados", (v) => (v.triados)],
-  ["Total de eliminados", (v) => (v.totalEliminados)],
-  ["Convocados para entrevista", (v) => (v.convocados)],
+  ["Eliminados por nota", (v) => v.eliminadosNota],
+  ["Reprovados na análise", (v) => v.reprovadosAnalise],
+  ["Triados", (v) => v.triados],
+  ["Total de eliminados", (v) => v.totalEliminados],
+  ["Convocados para entrevista", (v) => v.convocados],
   ["Origem dos convocados", (v) => rotuloDaOrigem(v.origemConvocados)],
-  ["Aprovados", (v) => (v.aprovados)],
-  ["Contratados", (v) => (v.contratados)],
-  ["Não contratados", (v) => (v.naoContratados)],
+  ["Aprovados", (v) => v.aprovados],
+  ["Contratados", (v) => v.contratados],
+  ["Não contratados", (v) => v.naoContratados],
   ["Observação", (v) => v.observacao || ""],
 ]);
 
@@ -436,7 +436,9 @@ export function tabelaDaSelecao(
 ): Pick<TabelaParaExportar, "colunas" | "linhas"> {
   return {
     colunas: COLUNAS_DA_EXPORTACAO.map(([titulo]) => titulo),
-    linhas: vagas.map((v) => COLUNAS_DA_EXPORTACAO.map(([, valor]) => valor(v))),
+    linhas: vagas.map((v) =>
+      COLUNAS_DA_EXPORTACAO.map(([, valor]) => valor(v)),
+    ),
   };
 }
 

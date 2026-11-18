@@ -96,7 +96,9 @@ export function colunasDaExportacaoDeAnalises(
   area: unknown,
 ): string[] {
   const base = Array.isArray(colunasBase) ? [...colunasBase] : [];
-  return ehAreaSaudeIndigena(area) ? base : [...base, ...COLUNAS_EXTRAS_DA_EXPORTACAO];
+  return ehAreaSaudeIndigena(area)
+    ? base
+    : [...base, ...COLUNAS_EXTRAS_DA_EXPORTACAO];
 }
 
 /* Nome da planilha exportada: o da Saúde Indígena mantém o nome de sempre. */

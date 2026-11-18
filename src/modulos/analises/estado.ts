@@ -449,7 +449,6 @@ export function criarEstadoDasAnalises({
     return true;
   }
 
-
   function definirDetalhe(id: string, valor: DetalheDaAnalise) {
     const detalhes = new Map(estado.detalhes);
     detalhes.set(id, valor);

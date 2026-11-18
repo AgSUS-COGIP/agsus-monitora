@@ -42,7 +42,7 @@ deva ser publicado; rodar script de banco contra produção sem pedido explícit
 ## Rode o mínimo
 
 ```bash
-npx vitest run tests/<arquivo>.test.ts   # 1 teste — padrão ao editar
+npx vitest run tests/<assunto>.test.ts -t "<bloco>"   # 1 bloco — padrão ao editar
 npm run lint && npm run format:check     # só arquivos alterados
 npm run check:architecture               # auth + rpc + MutationObserver + remendos + legado + docs
 npm run check:docs                       # links e notas órfãs da biblioteca

@@ -125,7 +125,8 @@ export async function pdfDaTabela(
     comprimir?: boolean;
   } = {},
 ): Promise<Uint8Array> {
-  const { jsPDF, autoTable } = bibliotecas ?? (await carregarBibliotecasDoPdf());
+  const { jsPDF, autoTable } =
+    bibliotecas ?? (await carregarBibliotecasDoPdf());
   const documento: TipoJsPdf = new jsPDF({
     orientation: "landscape",
     unit: "pt",

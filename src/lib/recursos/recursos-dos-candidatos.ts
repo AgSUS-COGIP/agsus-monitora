@@ -755,37 +755,39 @@ type ColunaDaExportacao = readonly [
     origens: readonly OrigemDoRecurso[],
   ) => CelulaParaExportar,
 ];
-export const COLUNAS_DA_EXPORTACAO: readonly ColunaDaExportacao[] = Object.freeze([
-  ["Nº", (r) => r.nu],
-  ["Edital", (r) => r.edital],
-  ["Unidade", (r) => r.unidade],
-  ["Origem", (r, origens) => rotuloDaOrigem(r.origem, origens)],
-  ["Código do candidato", (r) => r.codigo],
-  ["Candidato", (r) => r.candidato],
-  ["Fora das análises", (r) => simNao(r.fora_analise)],
-  ["Cargo", (r) => r.cargo],
-  ["Vaga", (r) => r.vaga],
-  ["Analista", (r) => r.analista],
-  ["Situação", (r) => rotuloDaSituacao(r.situacao)],
-  ["Decidido em", (r) => dataBR(r.decisao_em)],
-  ...ETAPAS.map((etapa): ColunaDaExportacao => [
-    etapa.rotulo,
-    (r) => dataBR(r[etapa.campo]),
-  ]),
-  ["Nº processo SEI", (r) => r.processo_sei],
-  ["Nota no cadastro", (r) => numeroBR(r.nota_anterior)],
-  ["Nota atual", (r) => numeroBR(r.nota_atual)],
-  ["Mudou a nota", (r) => simNao(r.mudouNota)],
-  ["Mudou a classificação", (r) => simNao(r.mudouClassificacao)],
-  ["Prazo de resposta", (r) => dataBR(r.prazo?.data)],
-  ["Atrasado", (r) => simNao(r.atrasado)],
-  ["Dias em aberto", (r) => r.diasEmAberto ?? ""],
-  ["Cadastrado em", (r) => dataBR(r.criado_em)],
-]);
+export const COLUNAS_DA_EXPORTACAO: readonly ColunaDaExportacao[] =
+  Object.freeze([
+    ["Nº", (r) => r.nu],
+    ["Edital", (r) => r.edital],
+    ["Unidade", (r) => r.unidade],
+    ["Origem", (r, origens) => rotuloDaOrigem(r.origem, origens)],
+    ["Código do candidato", (r) => r.codigo],
+    ["Candidato", (r) => r.candidato],
+    ["Fora das análises", (r) => simNao(r.fora_analise)],
+    ["Cargo", (r) => r.cargo],
+    ["Vaga", (r) => r.vaga],
+    ["Analista", (r) => r.analista],
+    ["Situação", (r) => rotuloDaSituacao(r.situacao)],
+    ["Decidido em", (r) => dataBR(r.decisao_em)],
+    ...ETAPAS.map((etapa): ColunaDaExportacao => [
+      etapa.rotulo,
+      (r) => dataBR(r[etapa.campo]),
+    ]),
+    ["Nº processo SEI", (r) => r.processo_sei],
+    ["Nota no cadastro", (r) => numeroBR(r.nota_anterior)],
+    ["Nota atual", (r) => numeroBR(r.nota_atual)],
+    ["Mudou a nota", (r) => simNao(r.mudouNota)],
+    ["Mudou a classificação", (r) => simNao(r.mudouClassificacao)],
+    ["Prazo de resposta", (r) => dataBR(r.prazo?.data)],
+    ["Atrasado", (r) => simNao(r.atrasado)],
+    ["Dias em aberto", (r) => r.diasEmAberto ?? ""],
+    ["Cadastrado em", (r) => dataBR(r.criado_em)],
+  ]);
 
 /** A tabela da exportação (Excel e PDF, src/lib/base/exportacao-da-tabela.ts). */
 export function tabelaDosRecursos(
-  itens: readonly RecursoDoPainel[], origens: readonly OrigemDoRecurso[] = ORIGENS_PADRAO,
+  itens: readonly RecursoDoPainel[],
+  origens: readonly OrigemDoRecurso[] = ORIGENS_PADRAO,
 ): Pick<TabelaParaExportar, "colunas" | "linhas"> {
   return {
     colunas: COLUNAS_DA_EXPORTACAO.map(([titulo]) => titulo),

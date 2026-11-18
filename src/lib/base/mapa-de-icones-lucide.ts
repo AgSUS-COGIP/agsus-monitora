@@ -8,7 +8,7 @@
   texto) e o Font Awesome deixou de ser carregado.
 
   Ícone novo no código? Acrescente aqui e rode `npm run icones`.
-  `tests/icones-lucide.test.js` falha se algum `fa-…` usado não estiver no mapa.
+  `tests/editais-cargas-e-paineis.test.js` (bloco `icones-lucide`) falha se algum `fa-…` usado não estiver no mapa.
 */
 export const FA_PARA_LUCIDE = Object.freeze({
   "fa-align-left": "TextAlignStart",

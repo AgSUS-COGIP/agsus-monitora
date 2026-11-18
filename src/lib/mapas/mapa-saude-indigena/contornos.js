@@ -4,7 +4,7 @@
 
   Copiados de `UF_GEO` e `BR_OUTLINE` do `legacy-app.js` (01/10/2026). Ao ligar
   o mapa React na Visão geral, o legado passa a importar daqui e a cópia dele
-  sai. `tests/mapa-saude-indigena.test.js` confere que as duas são iguais
+  sai. `tests/mapas-e-visao-geral.test.js` (bloco `mapa-saude-indigena`) confere que as duas são iguais
   enquanto existirem as duas, e `BRASIL_BOUNDS` contra o contorno.
 */
 export const UF_GEO = Object.freeze({

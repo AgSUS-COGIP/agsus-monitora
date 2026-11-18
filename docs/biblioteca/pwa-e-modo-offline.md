@@ -81,14 +81,14 @@ Decisão de 17/11/2026, para o trabalho de campo (`src/lib/sessao/sessao-sem-red
 
 ## Testes
 
-- `tests/service-worker-policy.test.js`: estratégia, limite com os arquivos fixos, hash e a lista
+- `tests/editais-cargas-e-paineis.test.js` (bloco `service-worker-policy`): estratégia, limite com os arquivos fixos, hash e a lista
   do build.
-- `tests/copias-no-aparelho.test.ts`: 48 h, data da cópia, apagar a vencida (leitura e varredura).
-- Sem rede em cada tela: `tests/modulos/entrevistas.test.js`, `selecao.test.js`,
-  `analises-consultas.test.js`, `tests/componentes/lista-aprovados.test.ts` e
-  `tests/modulos/conducao-sem-rede-abre-a-copia.test.ts`.
-- Entrada sem rede: `tests/sessao-sem-rede.test.ts` (a regra) e `tests/app/sessao.test.ts`
-  ("entrar sem rede"); "Levar para o campo": `tests/conducao-para-o-campo.test.ts`.
+- `tests/editais-cargas-e-paineis.test.ts` (bloco `copias-no-aparelho`): 48 h, data da cópia, apagar a vencida (leitura e varredura).
+- Sem rede em cada tela: `tests/telas-com-modulo-simulado-na-tela.test.js` (bloco `modulos/entrevistas`), `selecao.test.js`,
+  `analises-consultas.test.js`, `tests/entrevistas-e-aprovados-na-tela.test.ts` (bloco `componentes/lista-aprovados`) e
+  `tests/entrevistas-e-aprovados.test.ts` (bloco `modulos/conducao-sem-rede-abre-a-copia`).
+- Entrada sem rede: `tests/demais-regras.test.ts` (bloco `sessao-sem-rede`) (a regra) e `tests/casca-sessao-e-interface-na-tela.test.ts` (bloco `app/sessao`)
+  ("entrar sem rede"); "Levar para o campo": `tests/entrevistas-e-aprovados.test.ts` (bloco `conducao-para-o-campo`).
 - `tests/pwa-sem-rede.spec.js` (Playwright, build simulado): abre o app, espera o service worker
   terminar de guardar, desliga a rede (`context.setOffline(true)`) e troca para o Cronograma, que
   nunca foi aberto; depois dá F5 sem rede (com o Supabase simulado). O segundo teste derruba a

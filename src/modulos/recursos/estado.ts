@@ -728,7 +728,6 @@ export function criarEstadoDosRecursos({
     }
   }
 
-
   // ── Resposta ao candidato (20260929230000) ─────────────────────────────
 
   /* O que a resposta ou um anexo muda no recurso, direto na lista da aba. */

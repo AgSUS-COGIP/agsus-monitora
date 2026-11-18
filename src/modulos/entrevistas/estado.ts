@@ -412,7 +412,6 @@ export function criarEstadoDasEntrevistas({
     }
   }
 
-
   return {
     obter: () => estado,
     assinar(ouvinte: () => void) {
