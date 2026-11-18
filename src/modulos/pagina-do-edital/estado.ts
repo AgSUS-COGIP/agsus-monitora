@@ -56,6 +56,13 @@ export interface SnapshotDaPaginaDoEdital {
   /** id do monitoramento → o quadro de vagas com os vínculos (resposta da RPC). */
   quadros: Readonly<Record<string, Carga<unknown>>>;
   acompanhamento: AcompanhamentoDaPagina | null;
+  /**
+   * Conta as aberturas (`renovar`): a tela relê quando ele muda. Sem ele, a
+   * abertura que caía no mesmo ciclo das primeiras leituras devolvia o estado
+   * inicial idêntico, o React não via mudança e nada era relido (as leituras
+   * a caminho já tinham sido descartadas): esqueleto para sempre.
+   */
+  abertura: number;
 }
 
 export interface OpcoesDoEstadoDaPagina {
@@ -69,6 +76,7 @@ const ESTADO_INICIAL: SnapshotDaPaginaDoEdital = Object.freeze({
   cronogramas: Object.freeze({}),
   quadros: Object.freeze({}),
   acompanhamento: null,
+  abertura: 0,
 });
 
 const mensagemDe = (erro: unknown) =>
@@ -213,7 +221,7 @@ export function criarEstadoDaPaginaDoEdital({
     /** Nova abertura da página: o cronograma e o acompanhamento são relidos. */
     renovar() {
       geracao += 1;
-      publicar(ESTADO_INICIAL);
+      publicar({ ...ESTADO_INICIAL, abertura: estado.abertura + 1 });
     },
   };
 }

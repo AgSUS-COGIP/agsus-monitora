@@ -51,7 +51,7 @@ pagina-do-edital.css  só o que é desta tela; o resto vem de src/ui/
   linha enriquecida com o acompanhamento da área (`listar_acompanhamento_da_visao_geral_se_mudou`,
   com versão: aberta depois da Visão geral, o banco responde "inalterado"). "0 de 70
   preenchidas" são as contratações dentro das imediatas; reabertas, as vagas sem contratação
-  reabertas em edital mais novo; cadastro reserva, as contratações acima das imediatas. Candidatos
+  reabertas em edital mais novo; contratações além das vagas imediatas, as acima delas. Candidatos
   da lista vigente: aprovados, contratados, aguardando chamada (sem status), demais situações e
   desistentes à parte; sem lista, "—".
 - **Linha do tempo**: `get_monitoramento_cronograma`, relido a cada abertura. Cada etapa é

@@ -100,7 +100,10 @@ import type {
   EstadoDaNavegacao,
   LeituraDaNavegacao,
 } from "../src/app/navegacao.ts";
-import { PaginaDoEdital } from "../src/modulos/pagina-do-edital/pagina-do-edital.tsx";
+import {
+  PaginaDoEdital,
+  criarPaginaDoEdital,
+} from "../src/modulos/pagina-do-edital/pagina-do-edital.tsx";
 import { criarEstadoDaPaginaDoEdital } from "../src/modulos/pagina-do-edital/estado.ts";
 import { abrirPaginaDoEdital } from "../src/modulos/pagina-do-edital/abrir.ts";
 import type { ClienteDaPaginaDoEdital } from "../src/modulos/pagina-do-edital/estado.ts";
@@ -6175,6 +6178,90 @@ bloco("modulos/pagina-do-edital", () => {
       const { elemento, cliente } = await montar("7-2030");
       expect(elemento.textContent).toContain("Edital 7/2030 não encontrado");
       expect(cliente.rpc).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("pela rota, sem a Visão geral ter carregado", () => {
+    /* O banco inteiro que a página usa: cronograma, acompanhamento e avisos. */
+    function bancoDaPagina() {
+      const rpc = vi.fn(async (nome: string, _parametros?: unknown) => {
+        if (nome === "get_monitoramento_cronograma")
+          return { data: CRONOGRAMA, error: null };
+        if (nome === "listar_acompanhamento_da_visao_geral_se_mudou")
+          return {
+            data: {
+              versao: "v1",
+              listas: [
+                {
+                  monitoramento_id: ID,
+                  aprovados: 30,
+                  com_status: 18,
+                  desistentes: 3,
+                },
+              ],
+            },
+            error: null,
+          };
+        if (nome === "listar_avisos_conferencia_se_mudou")
+          return { data: { avisos: [] }, error: null };
+        return { data: [], error: null };
+      });
+      return {
+        auth: {
+          getSession: async () => ({
+            data: { session: { access_token: "token" } },
+            error: null,
+          }),
+        },
+        rpc,
+      };
+    }
+
+    it("abre por /saude-indigena/edital/105-2026 e lê candidatos e etapas sozinha", async () => {
+      // A aba guardada por outro teste não vale aqui: a página abre no Resumo.
+      sessionStorage.clear();
+      history.replaceState(null, "", "/saude-indigena/edital/105-2026");
+      const banco = bancoDaPagina();
+      const pagina = criarPaginaDoEdital({
+        supabase: banco,
+        agora: () => HOJE,
+      });
+      const navegacao = criarNavegacao({
+        janela: { location: { reload() {} } },
+        obterPerfil: () => ({
+          id: "g",
+          ativo: true,
+          perfil: "edital_gestor",
+          areas: ["saude-indigena"],
+        }),
+        confirmarSaida: () => true,
+        aplicarAtualizacao: () => false,
+      });
+      const montado = montarTelasNoTeste(navegacao, { edital: pagina });
+      desmontar = () => montado.desmontar();
+      act(() => navegacao.abrirEntrada());
+      const secao = () => document.getElementById("page-edital");
+      // Candidatos: os números da lista vigente, sem esqueleto.
+      await vi.waitFor(() =>
+        expect(
+          secao()?.querySelectorAll('.ui-kpi[aria-busy="true"]').length,
+        ).toBe(0),
+      );
+      expect(banco.rpc).toHaveBeenCalledWith(
+        "listar_acompanhamento_da_visao_geral_se_mudou",
+        expect.objectContaining({ p_area: "saude-indigena" }),
+      );
+      expect(secao()?.textContent).toContain("Aguardando chamada");
+      expect(secao()?.textContent).toContain(
+        "Contratações além das vagas imediatas",
+      );
+      expect(secao()?.textContent).toContain("3 desistentes à parte");
+      // Etapas: a linha do tempo, sem esqueleto.
+      await clicar(secao()?.querySelector('[role="tab"][data-aba="etapas"]'));
+      await vi.waitFor(() =>
+        expect(secao()?.querySelectorAll("[data-marca]").length).toBe(3),
+      );
+      expect(secao()?.querySelector('[aria-busy="true"]')).toBeNull();
     });
   });
 
