@@ -86,15 +86,28 @@ topo da minha tela quantos avisos há, **para** corrigir sem procurar.
 - **CF-4.8** — **Dado** os casos de um aviso, **quando** clico em "Exportar CSV", **então** baixo
   todos os casos, com as células protegidas contra fórmula.
 
-## CF-5 — Ignorar com motivo
+## CF-5 — Tratar o aviso (central de avisos, 18/11/2026)
 
 - **CF-5.1** — **Dado** que administro o módulo (na Classificação, edito) ou sou administrador
-  global, **quando** clico em "Ignorar", **então** escrevo o motivo (10 a 500 caracteres) e o aviso
-  vai para "Ignorados", com data e motivo.
-- **CF-5.2** — **Dado** que só leio o módulo, **quando** vejo o aviso, **então** não há botão
-  "Ignorar" e o banco recusa (42501).
-- **CF-5.3** — **Dado** um aviso ignorado, **quando** a quantidade de casos cresce, **então** ele
-  volta a ABERTO; com a mesma quantidade, continua ignorado.
+  global, **quando** clico em "Tratar" e escolho "Dispensado", **então** escrevo a justificativa
+  (10 a 500 caracteres) e o aviso vai para "Dispensados"; a justificativa fica no histórico.
+- **CF-5.2** — **Dado** que só leio o módulo e não sou o responsável, **quando** vejo o aviso,
+  **então** não há "Tratar" e o banco recusa (42501).
+- **CF-5.3** — **Dado** um aviso dispensado, **quando** a quantidade de casos cresce, **então** ele
+  volta a pendente; com a mesma quantidade, continua dispensado.
+- **CF-5.4** — **Dado** que sou o responsável ou o gestor, **quando** marco "Em análise",
+  "Aguardando documento" ou "Corrigido" (os dois últimos com motivo), **então** a situação aparece no
+  aviso e no histórico.
+- **CF-5.5** — **Dado** um aviso corrigido, **quando** a conferência seguinte ainda o acha,
+  **então** ele volta para "Em análise" ("rechecado: o problema continua" no histórico); **quando**
+  não acha, **então** fica resolvido como "Rechecado sem problema". Nada apaga o motivo de antes.
+- **CF-5.6** — **Dado** que sou o gestor, **quando** escolho o responsável (quem tem acesso ao
+  módulo) e o prazo, **então** eles aparecem no aviso; o prazo vencido fica em destaque.
+- **CF-5.7** — **Dado** que posso tratar o aviso, **quando** junto uma evidência (processo SEI, link
+  https ou nota) ao aviso ou a um caso, **então** ela aparece no histórico; retirar pede motivo e a
+  evidência continua no histórico, riscada.
+- **CF-5.8** — **Dado** a lista, **então** os abertos ficam agrupados por edital, cada aviso com a
+  data da última rechecagem; dispensados e resolvidos dos últimos 30 dias ficam recolhidos.
 
 ## CF-6 — As conferências
 

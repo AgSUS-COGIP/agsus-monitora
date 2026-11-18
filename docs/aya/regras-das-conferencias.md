@@ -1,7 +1,7 @@
 # Regras das conferências de consistência
 
 Avisos de conferência: o que o Yeendé confere todo dia entre os módulos, onde os avisos aparecem e
-quem pode ignorar. Fontes: `scripts/conferencias/`, `src/modulos/conferencias/`,
+quem pode tratar, dispensar e atribuir. Fontes: `scripts/conferencias/`, `src/modulos/conferencias/`,
 `src/lib/conferencias/avisos-de-conferencia.ts` e as migrations `20261005210000_conferencias_de_consistencia.sql`,
 `20261007120000_casos_dos_avisos_de_conferencia.sql` e `20261007240000_casos_dos_avisos_resolvidos.sql`.
 
@@ -18,11 +18,11 @@ quem pode ignorar. Fontes: `scripts/conferencias/`, `src/modulos/conferencias/`,
 **resposta:** Análises: aprovada com nota abaixo da mínima da regra de classificação; nota final diferente da soma das parciais (formação, cursos, experiência e critério étnico), quando as quatro estão preenchidas; experiência acima do teto, quando a regra tiver teto; data da análise no futuro ou antes da inscrição do candidato no mesmo edital; ficha concluída com a conta diferente da regra (a ficha importada da planilha fica de fora); e, só como informação, o mesmo candidato com análise em dois editais ativos. Entrevistas: convocado sem nota depois da data marcada na agenda; nota de avaliador fora da escala do roteiro; convocado que não está na lista de convocação vigente da Classificação; e dois horários para o mesmo candidato. Classificação: lista final gerada antes da última mudança nas análises; empate sem desempate registrado; vaga das análises sem linha no quadro de vagas do edital; vaga com mais de uma linha possível no quadro (confirme a linha em Editais, nos anexos do edital); ajuste de recurso aprovado depois da última lista; convocação para entrevista gerada com uma versão da regra anterior à vigente. Lista de aprovados: a mesma pessoa com duas matrículas Contratado no mesmo edital (crítico); a mesma matrícula Contratado em mais de uma lista, por exemplo na ampla e na cota, que é uma contratação só, quando o sistema não decidiu qual linha é a contratação — a linha que ele decide fica "Contratado em outra lista" e sai do aviso; a equipe marca esse status na linha pela qual a pessoa não foi contratada (atenção); recontratação em outro edital, com outra matrícula, não gera aviso; convocado há mais de 15 dias sem desfecho e sem admissão no RH; pessoa admitida no RH (admissão conciliada) que na lista ainda está sem o status Contratado; pessoas da publicação vinda da Classificação ainda para revisão. Cargas: vaga da Empregare cujo número de candidatos variou 50% ou mais na última carga.
 **fonte:** scripts/conferencias/regras.py; scripts/conferencias/catalogo.py
 
-## Ignorar um aviso
+## Tratar, dispensar e atribuir um aviso
 
-**perguntas:** como ignorar um aviso | ignorar aviso de conferencia | quem pode ignorar um aviso | aviso ignorado voltou | motivo para ignorar
-**resposta:** Quem administra o módulo do aviso (na Classificação, quem edita) ou o administrador global vê o botão "Ignorar" no aviso aberto e precisa escrever o motivo, de 10 a 500 caracteres. O aviso vai para "Ignorados", com a data e o motivo. Se numa próxima conferência a quantidade de casos crescer, ele volta a aberto sozinho; se o problema sumir, ele sai da lista. Quem só lê o módulo vê os avisos, mas não ignora.
-**fonte:** supabase/migrations/20261005210000_conferencias_de_consistencia.sql
+**perguntas:** como ignorar um aviso | ignorar aviso de conferencia | dispensar aviso | como tratar um aviso | quem pode dispensar um aviso | aviso dispensado voltou | justificativa do aviso | situacao do aviso | responsavel pelo aviso | prazo do aviso | evidencia do aviso | historico do aviso | rechecado sem problema
+**resposta:** Cada aviso tem a situação da equipe: pendente, em análise, aguardando documento, corrigido ou dispensado com justificativa. "Rechecado sem problema" quem põe é a conferência, quando deixa de achar o problema. Em "Tratar", quem administra o módulo (na Classificação, quem edita) ou o administrador global muda a situação, dispensa (justificativa de 10 a 500 caracteres) e escolhe o responsável, alguém com acesso ao módulo, e o prazo; o responsável também muda a situação e junta evidências. Aguardando documento e corrigido pedem motivo. Se o aviso dispensado crescer, volta a pendente; se o corrigido continuar aparecendo na conferência seguinte, volta para em análise. Em "Histórico" ficam todas as mudanças, com quem, quando e o motivo, e as evidências (processo SEI, link ou nota), do aviso ou de um caso; nada se apaga. O prazo vencido fica em destaque. Os abertos aparecem agrupados por edital, com a data da última rechecagem; os dispensados e os resolvidos dos últimos 30 dias ficam recolhidos.
+**fonte:** supabase/migrations/20261118140000_central_de_avisos_das_conferencias.sql; src/modulos/conferencias/avisos-de-conferencia.tsx
 
 ## Quem vê os avisos
 

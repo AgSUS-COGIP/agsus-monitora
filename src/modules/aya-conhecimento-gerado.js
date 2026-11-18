@@ -4315,19 +4315,27 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-das-conferencias.md",
-    titulo: "Ignorar um aviso",
+    titulo: "Tratar, dispensar e atribuir um aviso",
     perguntas: [
       "como ignorar um aviso",
       "ignorar aviso de conferencia",
-      "quem pode ignorar um aviso",
-      "aviso ignorado voltou",
-      "motivo para ignorar",
+      "dispensar aviso",
+      "como tratar um aviso",
+      "quem pode dispensar um aviso",
+      "aviso dispensado voltou",
+      "justificativa do aviso",
+      "situacao do aviso",
+      "responsavel pelo aviso",
+      "prazo do aviso",
+      "evidencia do aviso",
+      "historico do aviso",
+      "rechecado sem problema",
     ],
     resposta:
-      'Quem administra o módulo do aviso (na Classificação, quem edita) ou o administrador global vê o botão "Ignorar" no aviso aberto e precisa escrever o motivo, de 10 a 500 caracteres. O aviso vai para "Ignorados", com a data e o motivo. Se numa próxima conferência a quantidade de casos crescer, ele volta a aberto sozinho; se o problema sumir, ele sai da lista. Quem só lê o módulo vê os avisos, mas não ignora.',
+      'Cada aviso tem a situação da equipe: pendente, em análise, aguardando documento, corrigido ou dispensado com justificativa. "Rechecado sem problema" quem põe é a conferência, quando deixa de achar o problema. Em "Tratar", quem administra o módulo (na Classificação, quem edita) ou o administrador global muda a situação, dispensa (justificativa de 10 a 500 caracteres) e escolhe o responsável, alguém com acesso ao módulo, e o prazo; o responsável também muda a situação e junta evidências. Aguardando documento e corrigido pedem motivo. Se o aviso dispensado crescer, volta a pendente; se o corrigido continuar aparecendo na conferência seguinte, volta para em análise. Em "Histórico" ficam todas as mudanças, com quem, quando e o motivo, e as evidências (processo SEI, link ou nota), do aviso ou de um caso; nada se apaga. O prazo vencido fica em destaque. Os abertos aparecem agrupados por edital, com a data da última rechecagem; os dispensados e os resolvidos dos últimos 30 dias ficam recolhidos.',
     fato: "",
     fonte:
-      "supabase/migrations/20261005210000_conferencias_de_consistencia.sql",
+      "supabase/migrations/20261118140000_central_de_avisos_das_conferencias.sql; src/modulos/conferencias/avisos-de-conferencia.tsx",
   },
   {
     arquivo: "regras-das-conferencias.md",

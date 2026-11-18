@@ -5,7 +5,7 @@ import { createRoot } from "react-dom/client";
 import type { Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { definido } from "../definido.ts";
-import { clicar, digitar, esperar } from "./interacoes.ts";
+import { clicar, digitar, escolher, esperar } from "./interacoes.ts";
 import {
   definirAreaAtual,
   definirAreasDoUsuario,
@@ -15,8 +15,10 @@ import {
 /*
   Avisos de conferência (React, src/modulos/conferencias/): o selo de cada
   tela pede só os avisos do módulo na área atual, some sem aviso e abre a
-  gaveta; o cartão do Status das atualizações filtra por módulo; ignorar exige
-  motivo e relê a lista.
+  gaveta; o cartão do Status das atualizações filtra por módulo e agrupa por
+  edital; a central de avisos (20261118140000): dispensar exige justificativa e
+  relê a lista; o gestor atribui responsável e prazo; evidência de um caso; o
+  histórico.
 */
 
 const { SeloDeAvisos, CartaoDeAvisos } =
@@ -38,7 +40,10 @@ const aviso = (extra: Record<string, unknown> = {}) => ({
   resumo: "3 análises aprovadas com nota abaixo de 60 no edital 101/2026.",
   situacao: "ABERTO",
   primeira_vez: "2026-10-05T09:00:00Z",
-  pode_ignorar: true,
+  ultima_vez: "2026-10-06T09:00:00Z",
+  tratamento: "PENDENTE",
+  pode_gerir: true,
+  pode_tratar: true,
   ...extra,
 });
 
@@ -53,10 +58,55 @@ function supabaseFalso(avisos: () => unknown[]) {
     rpc: vi.fn(async (nome: string, _argumentos?: ParametrosDosAvisos) => {
       if (nome === "listar_avisos_conferencia_se_mudou")
         return { data: { avisos: avisos() }, error: null };
-      return { data: { id: "a1", situacao: "IGNORADO" }, error: null };
+      if (nome === "listar_responsaveis_aviso_conferencia")
+        return {
+          data: [{ id: "u1", nome: "Pessoa Fictícia" }],
+          error: null,
+        };
+      if (nome === "listar_casos_aviso_conferencia")
+        return {
+          data: {
+            total: 1,
+            casos: [
+              {
+                aviso_id: "a1",
+                ordem: 1,
+                conferencia: "ANALISE_APROVADA_ABAIXO_DO_CORTE",
+                analise_id: "an1",
+                codigo: "4512",
+                nome: "Pessoa Fictícia",
+              },
+            ],
+          },
+          error: null,
+        };
+      if (nome === "listar_historico_aviso_conferencia")
+        return {
+          data: {
+            eventos: [
+              {
+                id: 2,
+                evento: "TRATAMENTO",
+                tratamento: "DISPENSADO",
+                motivo: "Conferido com a banca.",
+                por: "Pessoa Fictícia",
+                em: "2026-10-06T10:00:00Z",
+              },
+              { id: 1, evento: "ACHADO", quantidade: 3, robo: true },
+            ],
+            evidencias: [],
+          },
+          error: null,
+        };
+      return { data: { id: "a1" }, error: null };
     }),
   };
 }
+
+const botao = (dentro: Element, texto: string) =>
+  [...dentro.querySelectorAll("button")].find((b) =>
+    b.textContent?.includes(texto),
+  );
 
 let raiz: HTMLDivElement | undefined;
 let montagem: Root | undefined;
@@ -113,15 +163,14 @@ describe("selo de avisos no topo da tela", () => {
 });
 
 describe("cartão do Status das atualizações", () => {
-  it("filtra por módulo e ignora com motivo", async () => {
-    let ignorado = false;
+  it("filtra por módulo, agrupa por edital e dispensa com justificativa", async () => {
+    let dispensado = false;
     const supabase = supabaseFalso(() => [
       aviso(
-        ignorado
+        dispensado
           ? {
-              situacao: "IGNORADO",
+              tratamento: "DISPENSADO",
               motivo: "Conferido com a banca.",
-              pode_ignorar: false,
             }
           : {},
       ),
@@ -134,7 +183,8 @@ describe("cartão do Status das atualizações", () => {
         area: null,
         edital_id: null,
         edital: null,
-        pode_ignorar: false,
+        pode_gerir: false,
+        pode_tratar: false,
       }),
     ]);
     await montar(createElement(CartaoDeAvisos, { supabase }));
@@ -143,10 +193,19 @@ describe("cartão do Status das atualizações", () => {
       { p_area: null, p_modulo: null, p_versao: null },
     );
     expect(document.querySelectorAll(".conf-aviso")).toHaveLength(2);
+    expect(
+      [...document.querySelectorAll(".conf-grupo__titulo")].map(
+        (t) => t.firstChild?.textContent,
+      ),
+    ).toEqual(["Edital 101/2026", "Vaga 177979"]);
+    expect(document.body.textContent).toContain("rechecado em 06/10/2026");
 
     await clicar(document.querySelector('[data-valor="cargas"]'));
     expect(document.querySelectorAll(".conf-aviso")).toHaveLength(1);
-    expect(document.body.textContent).toContain("Vaga 177979");
+    // Sem permissão, nada de "Tratar".
+    expect(
+      botao(definido(document.querySelector(".conf-aviso")), "Tratar"),
+    ).toBeUndefined();
     await clicar(document.querySelector('[data-valor="todos"]'));
 
     const analise = definido(
@@ -154,26 +213,82 @@ describe("cartão do Status das atualizações", () => {
         '[data-conferencia="ANALISE_APROVADA_ABAIXO_DO_CORTE"]',
       ),
     );
-    const botaoIgnorar = [...analise.querySelectorAll("button")].find(
-      (b) => b.textContent === "Ignorar",
-    );
-    await clicar(botaoIgnorar);
-    await clicar(analise.querySelector('button[type="submit"]'));
+    await clicar(botao(analise, "Tratar"));
+    await escolher(analise.querySelector("select"), "DISPENSADO");
+    await clicar(botao(analise, "Salvar situação"));
     expect(analise.textContent).toContain("pelo menos 10");
     expect(supabase.rpc).not.toHaveBeenCalledWith(
-      "ignorar_aviso_conferencia",
+      "tratar_aviso_conferencia",
       expect.anything(),
     );
 
     await digitar(analise.querySelector("textarea"), "Conferido com a banca.");
-    ignorado = true;
-    await clicar(analise.querySelector('button[type="submit"]'));
+    dispensado = true;
+    await clicar(botao(analise, "Salvar situação"));
     await esperar();
-    expect(supabase.rpc).toHaveBeenCalledWith("ignorar_aviso_conferencia", {
+    expect(supabase.rpc).toHaveBeenCalledWith("tratar_aviso_conferencia", {
       p_id: "a1",
+      p_tratamento: "DISPENSADO",
       p_motivo: "Conferido com a banca.",
     });
-    expect(document.body.textContent).toContain("Ignorados (1)");
+    expect(document.body.textContent).toContain("Dispensados (1)");
+  });
+
+  it("o gestor atribui responsável e prazo; prazo vencido em destaque", async () => {
+    const supabase = supabaseFalso(() => [
+      aviso({
+        responsavel_id: "u1",
+        responsavel: "Pessoa Fictícia",
+        prazo: "2026-01-02",
+      }),
+    ]);
+    await montar(createElement(CartaoDeAvisos, { supabase }));
+    expect(
+      document.querySelector(".conf-prazo--vencido")?.textContent,
+    ).toContain("02/01/2026");
+    const item = definido(document.querySelector(".conf-aviso"));
+    await clicar(botao(item, "Tratar"));
+    await esperar();
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "listar_responsaveis_aviso_conferencia",
+      { p_id: "a1" },
+    );
+    const [, pessoa] = item.querySelectorAll("select");
+    await escolher(pessoa, "");
+    await clicar(botao(item, "Salvar responsável"));
+    expect(supabase.rpc).toHaveBeenCalledWith("atribuir_aviso_conferencia", {
+      p_id: "a1",
+      p_responsavel: null,
+      p_prazo: null,
+    });
+  });
+
+  it("evidência de um caso e o histórico, que não se apaga", async () => {
+    const supabase = supabaseFalso(() => [aviso()]);
+    await montar(createElement(CartaoDeAvisos, { supabase }));
+    const item = definido(document.querySelector(".conf-aviso"));
+    await clicar(botao(item, "3 casos"));
+    await esperar();
+    await clicar(item.querySelector(".conf-caso__evidencia"));
+    await esperar();
+    expect(item.textContent).toContain("Do caso 4512 · Pessoa Fictícia");
+    expect(item.textContent).toContain("Conferido com a banca.");
+    expect(item.textContent).toContain("Conferência automática");
+    await digitar(
+      item.querySelector('.conf-painel input[type="text"]'),
+      "25000.000001/2026-01",
+    );
+    await clicar(botao(item, "Juntar evidência"));
+    expect(supabase.rpc).toHaveBeenCalledWith(
+      "incluir_evidencia_aviso_conferencia",
+      {
+        p_id: "a1",
+        p_tipo: "SEI",
+        p_descricao: "25000.000001/2026-01",
+        p_url: null,
+        p_chave_caso: "analise:an1",
+      },
+    );
   });
 });
 
