@@ -43,6 +43,10 @@ API completa (uma linha por componente) está em [docs/arquitetura-react.md](../
 Prazos: `SeloDePrazo` diz quanto falta para uma data ("Vence em 12 dias", "Venceu há 3 dias") com
 o tom da faixa (vencido, menos de 30, 90 ou 180 dias); a lógica é `src/lib/base/prazos.ts`.
 
+Gráficos: o `Grafico` dentro do `CardDeGrafico` traz a tabela dos valores (leitor de tela e botão
+"Tabela" do título) e percorre os itens pelas setas; nada a fazer em quem usa
+(`src/ui/tabela-do-grafico.tsx`, DS 13.5).
+
 Nas telas com `CabecalhoDaTela` (`tituloNaTela` em `src/lib/navegacao/rotas.ts`: Conduzir entrevistas,
 Classificação, Avaliação documental e Triagem), a faixa do topo do app (`header.top`) fica compacta
 (`data-compacto`, só a partir de 901px): sem o título, que é o da tela, e com a conta menor, o perfil

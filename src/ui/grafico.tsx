@@ -1,5 +1,12 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import type { DependencyList } from "react";
+import {
+  useContext,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import type { DependencyList, KeyboardEvent } from "react";
 import type {
   Chart as ChartJs,
   ChartData,
@@ -8,6 +15,13 @@ import type {
   Plugin,
 } from "chart.js";
 import { carregarChart, chartCarregado } from "../lib/base/chartjs-global.ts";
+import {
+  ContextoDoGrafico,
+  dadosDaTabelaDoGrafico,
+  TabelaDoGrafico,
+  textoDoPonto,
+} from "./tabela-do-grafico.tsx";
+import type { DadosDaTabelaDoGrafico } from "./tabela-do-grafico.tsx";
 
 /*
   Cores dos gráficos dentro do app, lidas dos tokens (src/styles/tokens.css)
@@ -79,10 +93,38 @@ export function paletaDosGraficos(
   ("claro"/"escuro") entra nas `dependencias` para as cores acompanharem a
   troca de tema.
 
-  O canvas leva `role="img"` e o `rotulo`; os números estão também nos KPIs,
-  nas pendências e na tabela. `plugins` (opcional) são plugins do Chart.js só
-  deste gráfico, fixos desde a criação (ex.: rótulo de valor nas barras).
+  Acessível (padrão do SIGEPSI): o canvas leva `role="img"` e o `rotulo`, e
+  os números vão também numa tabela (TabelaDoGrafico) — escondida da vista,
+  para o leitor de tela, ou, com "Tabela" ligado no CardDeGrafico, no lugar
+  do gráfico. Pelo teclado, o canvas entra no Tab e as setas (Home, End)
+  percorrem os itens: o item fica em destaque, com a dica do Chart.js, e o
+  valor é anunciado; Esc ou sair do foco limpa.
+  `plugins` (opcional) são plugins do Chart.js só deste gráfico, fixos desde
+  a criação (ex.: rótulo de valor nas barras).
 */
+const PASSO_DO_TECLADO: Partial<
+  Record<string, "+1" | "-1" | "inicio" | "fim">
+> = {
+  ArrowRight: "+1",
+  ArrowDown: "+1",
+  ArrowLeft: "-1",
+  ArrowUp: "-1",
+  Home: "inicio",
+  End: "fim",
+};
+
+/** O item depois de apertar a tecla (dá a volta); sem destaque, começa na ponta. */
+export function proximoDestaque(
+  atual: number | null,
+  passo: "+1" | "-1" | "inicio" | "fim",
+  total: number,
+): number {
+  const ultimo = total - 1;
+  if (passo === "inicio") return 0;
+  if (passo === "fim") return ultimo;
+  if (atual === null) return passo === "+1" ? 0 : ultimo;
+  return (atual + (passo === "+1" ? 1 : -1) + total) % total;
+}
 export interface MontagemDoGrafico<T extends ChartType> {
   data: ChartData<T, number[], string>;
   options?: ChartOptions<T>;
@@ -109,6 +151,14 @@ export function Grafico<T extends ChartType>({
   const grafico = useRef<ChartJs<T, number[], string> | null>(null);
   const ultimoMontar = useRef(montar);
   const pluginsIniciais = useRef(plugins);
+  const cartao = useContext(ContextoDoGrafico);
+  const emTabela = Boolean(cartao?.emTabela);
+  const idDaDica = useId();
+  const [dados, definirDados] = useState<DadosDaTabelaDoGrafico | null>(null);
+  const [anuncio, definirAnuncio] = useState("");
+  const destaque = useRef<number | null>(null);
+  const registrar = cartao?.registrar;
+  useEffect(() => registrar?.(), [registrar]);
   // O Chart.js baixa no primeiro gráfico (chartjs-global.ts); depois, desenha na hora.
   const [Chart, definirChart] = useState<typeof ChartJs | null>(() =>
     chartCarregado(),
@@ -152,6 +202,10 @@ export function Grafico<T extends ChartType>({
   }, [tipo, Chart]);
 
   useEffect(() => {
+    // A tabela não espera o Chart.js baixar: sai direto dos dados.
+    definirDados(dadosDaTabelaDoGrafico(ultimoMontar.current().data));
+    destaque.current = null;
+    definirAnuncio("");
     const atual = grafico.current;
     if (!atual) return;
     const { data, options } = ultimoMontar.current();
@@ -162,5 +216,68 @@ export function Grafico<T extends ChartType>({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `dependencias` é a lista do chamador (dados e tema), como num useMemo.
   }, dependencias);
 
-  return <canvas id={id} ref={canvas} role="img" aria-label={rotulo} />;
+  function destacar(indice: number | null) {
+    destaque.current = indice;
+    const atual = grafico.current;
+    if (atual) {
+      const ativos =
+        indice === null
+          ? []
+          : atual.data.datasets.map((_, datasetIndex) => ({
+              datasetIndex,
+              index: indice,
+            }));
+      try {
+        atual.setActiveElements(ativos);
+        atual.tooltip?.setActiveElements(ativos, { x: 0, y: 0 });
+        atual.update();
+      } catch {
+        // Gráfico sem área desenhada: fica só o anúncio.
+      }
+    }
+    definirAnuncio(
+      indice === null || !dados ? "" : textoDoPonto(dados, indice),
+    );
+  }
+
+  function aoTeclar(evento: KeyboardEvent<HTMLCanvasElement>) {
+    if (!dados?.linhas.length) return;
+    if (evento.key === "Escape") {
+      if (destaque.current !== null) destacar(null);
+      return;
+    }
+    const passo = PASSO_DO_TECLADO[evento.key];
+    if (!passo) return;
+    evento.preventDefault();
+    destacar(proximoDestaque(destaque.current, passo, dados.linhas.length));
+  }
+
+  return (
+    <>
+      <canvas
+        id={id}
+        ref={canvas}
+        role="img"
+        aria-label={rotulo}
+        aria-describedby={dados ? idDaDica : undefined}
+        tabIndex={dados && !emTabela ? 0 : undefined}
+        hidden={emTabela}
+        onKeyDown={aoTeclar}
+        onBlur={() => {
+          if (destaque.current !== null) destacar(null);
+        }}
+      />
+      {dados ? (
+        <>
+          <span id={idDaDica} className="sr-only">
+            Setas percorrem os valores.
+          </span>
+          <span className="sr-only" aria-live="polite">
+            {anuncio}
+          </span>
+          <TabelaDoGrafico dados={dados} titulo={rotulo} visivel={emTabela} />
+        </>
+      ) : null}
+    </>
+  );
 }
