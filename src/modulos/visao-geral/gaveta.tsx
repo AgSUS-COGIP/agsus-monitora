@@ -1,5 +1,6 @@
 import { hojeEmBrasilia } from "../../lib/cronograma/cronograma-do-edital.ts";
 import { telaPronta } from "../../app/registro-das-telas.ts";
+import { abrirPaginaDoEdital } from "../pagina-do-edital/abrir.ts";
 import type { LinhaDaVisaoGeral } from "./tipos.ts";
 import { formatNumberBR } from "../../lib/base/formatters";
 import {
@@ -48,6 +49,7 @@ export function GavetaDoProcesso({
   supabase = null,
   aoAbrirCentral = null,
   secaoInicial = "",
+  linhasDaArea = [],
 }: {
   linha: LinhaDaVisaoGeral;
   aoFechar: () => void;
@@ -59,6 +61,8 @@ export function GavetaDoProcesso({
   aoAbrirCentral?: (() => void) | null;
   /** A seção que abre à vista: "avisos" quando veio do selo de Atenção. */
   secaoInicial?: string;
+  /** As linhas da área: o endereço da página do edital usa o número só se ele não se repete. */
+  linhasDaArea?: readonly LinhaDaVisaoGeral[];
 }) {
   const corpo = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -226,6 +230,18 @@ export function GavetaDoProcesso({
         </Secao>
       </div>
       <div className="ui-gaveta-rodape ui-acoes">
+        <button
+          type="button"
+          className="btn primary small"
+          data-acao="pagina-do-edital"
+          onClick={() => {
+            aoFechar();
+            abrirPaginaDoEdital(linha, linhasDaArea);
+          }}
+        >
+          <i className="fa-solid fa-file-lines" aria-hidden="true" /> Abrir
+          página do edital
+        </button>
         {link ? (
           <a
             className="btn secondary small"

@@ -7262,6 +7262,18 @@ bloco("modulos/visao-geral", async () => {
       expect(document.querySelector("#visaoGeralGaveta")).toBeNull();
     });
 
+    it("Abrir página do edital fecha a gaveta e vai à página pelo número", async () => {
+      const navigate = vi.fn(() => true);
+      vi.stubGlobal("navigate", navigate);
+      await montar();
+      await clicar(linhas()[0]);
+      const gaveta = document.querySelector("#visaoGeralGaveta");
+      await clicar(gaveta.querySelector('[data-acao="pagina-do-edital"]'));
+      expect(document.querySelector("#visaoGeralGaveta")).toBeNull();
+      expect(navigate).toHaveBeenCalledWith("edital", { edital: "3-2026" });
+      vi.unstubAllGlobals();
+    });
+
     it("a linha do tempo do cronograma abre a do Núcleo", async () => {
       const abrirLinhaDoTempo = vi.fn();
       // Editais no registro das telas (src/app/telas.tsx), como no app.
