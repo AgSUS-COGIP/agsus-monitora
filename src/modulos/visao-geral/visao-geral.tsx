@@ -6,6 +6,7 @@ import type {
   PropsDoPainel,
 } from "./tipos.ts";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { ComponentType } from "react";
 import { lazy, Suspense, useMemo, useState, useSyncExternalStore } from "react";
 import { importarComRecarga } from "../../lib/carga/importar-com-recarga.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
@@ -20,8 +21,9 @@ import {
   mapaDaVisaoGeral,
 } from "../../lib/visao-geral/visao-geral-da-area.ts";
 import { criarCarregadorDeMunicipios } from "../mapa-de-projetos/carregador.ts";
-// Os mapas (e o Leaflet) baixam quando montam: ./mapas-sob-demanda.tsx.
-import { MapaDeProjetos, MapaSaudeIndigena } from "./mapas-sob-demanda.tsx";
+// O mapa de Projetos (e o Leaflet) baixa quando monta: ./mapas-sob-demanda.tsx.
+import { MapaDeProjetos } from "./mapas-sob-demanda.tsx";
+import type { PropsDoCartaoDoMapa } from "./cartao-do-mapa.tsx";
 import { MarcosDoAno } from "./boas-vindas.tsx";
 import {
   buscarAcompanhamentoNoSupabase,
@@ -70,19 +72,32 @@ type PerfilDaNavegacao = Parameters<typeof telaPermitida>[1];
   detalhes numa gaveta.
 
   O MAPA DA ÁREA (`mapaDaVisaoGeral`):
-  - Saúde Indígena: `<MapaSaudeIndigena>` (src/modulos/mapa-saude-indigena/),
-    com o mesmo estado da página — linhas recortadas, DSEI aberto, busca — e
-    os dados do mapa que o legado publica no estado;
+  - Saúde Indígena: o cartão do Mapa (`cartao-do-mapa.tsx`), três números e
+    "Abrir no mapa"; o mapa dos DSEIs é a aba Mapa (src/modulos/mapa/);
   - Projetos: `<MapaDeProjetos>` (src/modulos/mapa-de-projetos/), os
     lugares das vagas de todos os projetos, pedidos pelo carregador da tela
     (um por montagem, com cache) depois da primeira carga da página
-    (`carregadoEm`), recortados pelas mesmas linhas filtradas da página, como
-    o da Saúde Indígena;
+    (`carregadoEm`), recortados pelas mesmas linhas filtradas da página;
   - SEDE: sem mapa.
 
   Textos de Configurações › Página inicial (publicados): filtros e rótulos
   dos indicadores (`textosDaVisaoGeral`).
 */
+
+/*
+  O cartão do Mapa (Saúde Indígena) baixa sob demanda: a contagem por DSEI e
+  a lista dos 34 DSEIs ficam fora do pacote de entrada (orçamento de 320 KB
+  gzip). Falhou o download, o cartão não aparece e o resto da página segue.
+*/
+const baixarCartaoDoMapa = importarComRecarga(() =>
+  import("./cartao-do-mapa.tsx").then((modulo) => ({
+    default: modulo.CartaoDoMapa,
+  })),
+);
+const SemCartao = (_props: PropsDoCartaoDoMapa) => null;
+const CartaoDoMapa = lazy<ComponentType<PropsDoCartaoDoMapa>>(() =>
+  baixarCartaoDoMapa().catch(() => ({ default: SemCartao })),
+);
 
 /*
   O montador de relatório (e as regras do relatório e da diretoria) só abre no
@@ -96,35 +111,6 @@ const MontadorDeRelatorio = lazy(
     })),
   ),
 );
-
-/* O mapa da Saúde Indígena lendo e pedindo ao estado da Visão geral. */
-function MapaDaSaudeIndigena({
-  e,
-  estado,
-  supabase,
-}: PropsDoPainel & { supabase: SupabaseClient | null }) {
-  // Só o `lmap` do banco (nome, população e UFs de cada DSEI); o SIGEPSI, o
-  // resto e o erro sem ele ficam dentro do mapa, que baixa sob demanda
-  // (mapa-saude-indigena/mapa-com-sigepsi.tsx).
-  const lmap = e.mapa?.lmap;
-  return (
-    <div
-      className="visao-geral-mapa"
-      data-tour="visao-geral-mapa-saude-indigena"
-    >
-      <MapaSaudeIndigena
-        supabase={supabase}
-        lmap={lmap}
-        linhas={e.filtradas}
-        filtroAtivo={e.temRecorte}
-        dseiSelecionado={e.dsei.chave || null}
-        aoEscolherDsei={(dsei) => estado.definirDsei(dsei.k, dsei.n)}
-        aoSairDoDsei={estado.tirarDsei}
-        aoFiltrarPorBusca={estado.definirBusca}
-      />
-    </div>
-  );
-}
 
 function usarTextos(configuracoes: Configuracoes) {
   const { valores } = useSyncExternalStore(
@@ -200,7 +186,9 @@ export function TelaDaVisaoGeral({
         <ProcessosPorProjeto e={e} estado={estado} />
       ) : null}
       {mapa === MAPA_DOS_DSEIS ? (
-        <MapaDaSaudeIndigena e={e} estado={estado} supabase={supabase} />
+        <Suspense fallback={null}>
+          <CartaoDoMapa linhas={e.linhasDaArea} carregado={e.carregado} />
+        </Suspense>
       ) : null}
       {mapa === MAPA_DOS_MUNICIPIOS ? (
         <div className="visao-geral-mapa" data-tour="visao-geral-mapa-projetos">

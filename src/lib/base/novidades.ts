@@ -25,6 +25,12 @@ export const NOVIDADES_PUBLICADAS = 5;
 
 export const NOVIDADES: readonly Novidade[] = [
   {
+    id: "2026-11-18-aba-mapa",
+    data: "2026-11-18",
+    texto: "mapa dos DSEIs numa página própria, com o endereço de cada DSEI",
+    visivel: true,
+  },
+  {
     id: "2026-11-18-aba-aberta-na-publicacao",
     data: "2026-11-18",
     texto: "página aberta numa atualização recarrega sozinha",

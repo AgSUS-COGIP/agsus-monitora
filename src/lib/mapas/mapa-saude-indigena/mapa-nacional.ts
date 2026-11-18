@@ -11,7 +11,6 @@
   mapa só conta. Com filtro ativo, só aparecem os DSEIs e as CASAIs nacionais
   que têm edital no recorte.
 */
-import type { LinhaDoMonitoramento } from "../../../componentes/tipos-do-monitoramento.ts";
 import type { CoordenadasDoMapa } from "../tipos-do-mapa.ts";
 import type {
   BolhaDoDsei,
@@ -34,52 +33,8 @@ import {
   texto,
 } from "./chaves.ts";
 import { CORES_DO_MAPA } from "./formas.ts";
-import {
-  contratadasImediatas,
-  ehCancelado,
-  temResultado,
-  vagasEfetivas,
-  vagasSemContratacao,
-} from "../../visao-geral/indicadores-do-monitoramento.ts";
-
-const VAZIO: Readonly<ContagemDoDsei> = Object.freeze({
-  editais: 0,
-  vagas: 0,
-  contratadas: 0,
-  ociosas: 0,
-});
-
-/*
-  Editais, vagas, contratadas e ociosas por DSEI (chave de `chaveDoDsei`),
-  pela regra dos indicadores da Visão geral (indicadores-do-monitoramento.ts):
-  o edital cancelado conta como processo, mas as vagas dele não entram; ociosa
-  é a vaga sem contratação de edital com resultado — a de edital ainda em
-  seleção não é ociosa. Antes a bolha somava `vagas_ociosas` de todo edital
-  (cancelado e em seleção também) e o mapa dizia mais ociosas que o KPI.
-*/
-
-export function contarPorDsei(
-  linhas: readonly LinhaDoMonitoramento[],
-): Map<string, ContagemDoDsei> {
-  const contagens = new Map<string, ContagemDoDsei>();
-  const lista: readonly LinhaDoMonitoramento[] = Array.isArray(linhas)
-    ? linhas
-    : [];
-  for (const linha of lista) {
-    const chave = chaveDoDsei(linha?.unidade);
-    if (!chave) continue;
-    const atual = contagens.get(chave) || { ...VAZIO };
-    atual.editais += 1;
-    if (!ehCancelado(linha)) {
-      // A vaga reaberta em edital mais novo do DSEI conta só no novo.
-      atual.vagas += vagasEfetivas(linha);
-      atual.contratadas += contratadasImediatas(linha);
-      if (temResultado(linha)) atual.ociosas += vagasSemContratacao(linha);
-    }
-    contagens.set(chave, atual);
-  }
-  return contagens;
-}
+// A contagem (editais, vagas, contratadas e ociosas por DSEI): contagem-por-dsei.ts.
+import { CONTAGEM_VAZIA as VAZIO } from "./contagem-por-dsei.ts";
 
 /*
   Uma bolha por DSEI com coordenada. Ordem: da maior para a menor, para que a

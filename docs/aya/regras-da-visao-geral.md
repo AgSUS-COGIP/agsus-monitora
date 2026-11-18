@@ -7,7 +7,7 @@ app em React (Etapa 5, parte 1) e ficam aqui, com a Aya.
 ## Visão geral
 
 **perguntas:** visao geral | pagina inicial | dashboard | painel inicial | para que serve visao geral | para que serve a visao geral | tela da visao geral
-**resposta:** A Visão geral do Yeendé é a mesma página nas três áreas (Saúde Indígena, SEDE e Projetos) e mostra só os editais da área escolhida no menu. De cima para baixo: o cabeçalho (saudação, quantos editais têm etapa nos próximos 7 dias, a hora da carga e os botões Filtros, Atualizar e Exportar), as vagas, "Pede ação" (críticos e pendências do pós-resultado) ao lado de "Em andamento, por fase", o mapa e a tabela de processos. Em Projetos há também "Processos por projeto". Na Saúde Indígena o mapa mostra os DSEIs e as CASAIs; em Projetos, os municípios das vagas; a SEDE não tem mapa.
+**resposta:** A Visão geral do Yeendé é a mesma página nas três áreas (Saúde Indígena, SEDE e Projetos) e mostra só os editais da área escolhida no menu. De cima para baixo: o cabeçalho (saudação, quantos editais têm etapa nos próximos 7 dias, a hora da carga e os botões Filtros, Atualizar e Exportar), as vagas, "Pede ação" (críticos e pendências do pós-resultado) ao lado de "Em andamento, por fase", o mapa e a tabela de processos. Em Projetos há também "Processos por projeto". Na Saúde Indígena, no lugar do mapa fica o cartão "Mapa" (quantos DSEIs têm edital, o com mais vagas ociosas e o menos preenchido, e "Abrir no mapa"): o mapa dos DSEIs é a página Mapa. Em Projetos, o mapa mostra os municípios das vagas; a SEDE não tem mapa.
 **fonte:** interface do Yeendé
 
 ## Indicadores da Visão geral
@@ -34,14 +34,14 @@ app em React (Etapa 5, parte 1) e ficam aqui, com a Aya.
 ## Filtros da Visão geral
 
 **perguntas:** filtros da visao geral | como funcionam os filtros da visao geral | filtro por ano | filtrar editais de 2026 | busca da tabela da visao geral | limpar filtros da visao geral | filtro de fase
-**resposta:** Na Visão geral, o botão Filtros do cabeçalho abre os campos Ano, Unidade, Edital e Status, com Fase e UF em "Mais opções"; os filtros aplicados ficam sempre à vista como etiquetas, com "Limpar tudo". Cada filtro aceita vários valores e as opções de um seguem os outros já escolhidos. O campo Ano escolhe de uma vez todos os editais daquele ano (pelo número, como 11/2026); outra escolha de editais aparece como "Seleção própria". A busca da tabela vale para a página toda: indicadores, mapa, blocos e tabela. Os filtros ficam guardados no navegador. Críticos e as pendências do Pós-resultado aparecem como "Recorte" entre os filtros aplicados. "Limpar tudo" apaga filtros, busca, recorte e o DSEI aberto e volta o mapa ao Brasil.
+**resposta:** Na Visão geral, o botão Filtros do cabeçalho abre os campos Ano, Unidade, Edital e Status, com Fase e UF em "Mais opções"; os filtros aplicados ficam sempre à vista como etiquetas, com "Limpar tudo". Cada filtro aceita vários valores e as opções de um seguem os outros já escolhidos. O campo Ano escolhe de uma vez todos os editais daquele ano (pelo número, como 11/2026); outra escolha de editais aparece como "Seleção própria". A busca da tabela vale para a página toda: indicadores, blocos, tabela e, em Projetos, o mapa. Os filtros ficam guardados no navegador. Críticos e as pendências do Pós-resultado aparecem como "Recorte" entre os filtros aplicados. "Limpar tudo" apaga filtros, busca e recorte. Para ver só um DSEI, use o filtro Unidade.
 **fonte:** interface do Yeendé
 
 ## Mapa e filtros da Visão geral
 
-**perguntas:** dsei aberto no mapa | filtro dsei da pagina | casai no mapa filtra
-**resposta:** Na Visão geral da Saúde Indígena, escolher um DSEI no mapa recorta a página inteira por ele (aparece o filtro "DSEI" entre os filtros aplicados). Tirar esse filtro, ou voltar ao Brasil pelo mapa, sai do território e mantém os outros filtros. Clicar numa CASAI no mapa busca por ela na página.
-**fonte:** interface do Yeendé
+**perguntas:** dsei aberto no mapa | filtro dsei da pagina | casai no mapa filtra | cartao do mapa | abrir no mapa | mapa da visao geral
+**resposta:** Na Visão geral da Saúde Indígena, o mapa dos DSEIs deu lugar ao cartão "Mapa": quantos dos 34 DSEIs têm edital, o DSEI com mais vagas ociosas e o menos preenchido (contratadas sobre vagas), contados de todos os editais da área, como no Mapa. O nome do DSEI abre a página Mapa já nele, e "Abrir no mapa" a abre no Brasil. Escolher um DSEI no Mapa não filtra a Visão geral. Clicar numa CASAI nacional no Mapa abre a Visão geral com a busca por ela.
+**fonte:** src/modulos/visao-geral/cartao-do-mapa.tsx; src/lib/mapas/mapa-saude-indigena/aba-do-mapa.ts
 
 ## Blocos da Visão geral
 

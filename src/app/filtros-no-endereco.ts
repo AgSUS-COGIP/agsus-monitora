@@ -12,7 +12,11 @@
     deixou na URL fica guardado aqui (`guardarFiltrosDaTela`), e a navegação
     devolve ao voltar a ela pelo menu (src/app/navegacao.ts, caminhoAtual).
 */
-import { destinoDoCaminho } from "../lib/navegacao/rotas.ts";
+import {
+  caminhoDoDestino,
+  destinoDoCaminho,
+  telaDaRota,
+} from "../lib/navegacao/rotas.ts";
 import type { LocalDoEndereco } from "./endereco.ts";
 
 /** Um filtro da tela. O valor é sempre texto (o da URL). */
@@ -154,6 +158,45 @@ export function mesmosFiltros<C extends string>(
 /** O endereço é o da tela (`view` da rota)? */
 export function enderecoDaTela(local: LocalDoEndereco, tela: string): boolean {
   return destinoDoCaminho(local.caminho, local.busca)?.view === tela;
+}
+
+/* A tela do endereço guarda um filtro no caminho (o DSEI do Mapa)? */
+function destinoComCampoNoCaminho(local: LocalDoEndereco) {
+  const destino = destinoDoCaminho(local.caminho, local.busca);
+  return destino && telaDaRota(destino.view)?.campoNoCaminho ? destino : null;
+}
+
+/**
+ * A busca do endereço como os filtros a leem ("" ou "?a=b"). Na tela com um
+ * filtro no caminho (`/saude-indigena/mapa/yanomami`), ele entra na busca
+ * (`?dsei=yanomami`); nas outras, é a busca da URL.
+ */
+export function buscaDoEndereco(local: LocalDoEndereco): string {
+  const destino = destinoComCampoNoCaminho(local);
+  if (!destino) return local.busca;
+  const parametros = new URLSearchParams(destino.filtros || "");
+  if (destino.visao) parametros.set(DA_NAVEGACAO, destino.visao);
+  const texto = parametros.toString();
+  return texto ? `?${texto}` : "";
+}
+
+/**
+ * O endereço com esta busca (a de `buscaDoEndereco`): na tela com um filtro
+ * no caminho, ele volta para o caminho; nas outras, caminho + busca.
+ */
+export function enderecoComBusca(
+  local: LocalDoEndereco,
+  busca: string,
+): string {
+  const destino = destinoComCampoNoCaminho(local);
+  if (!destino) return local.caminho + busca;
+  // `caminhoDoDestino` tira a visão da busca e põe o filtro no caminho.
+  const visao = new URLSearchParams(busca).get(DA_NAVEGACAO) || "";
+  return caminhoDoDestino({
+    ...destino,
+    visao,
+    filtros: busca.replace(/^\?/, ""),
+  });
 }
 
 /** A busca sem o parâmetro da navegação: os filtros ("" ou "a=b"). */

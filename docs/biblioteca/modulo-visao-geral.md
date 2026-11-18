@@ -9,13 +9,17 @@ atualizado: 2026-11-18
 Página `dashboard`, rota `/<área>/visao-geral`, em React/TypeScript em `src/modulos/visao-geral/`.
 `criarVisaoGeral` devolve o conteúdo, que a rota (`src/app/telas.tsx`) desenha no pacote principal,
 dentro do ErrorBoundary da tela. O bootstrap, a navegação e a carga do monitoramento continuam em
-`src/app/`. Liga os mapas: [[modulo-mapa-saude-indigena]] e [[modulo-mapa-de-projetos]].
+`src/app/`. Liga o mapa de Projetos ([[modulo-mapa-de-projetos]]); na Saúde Indígena mostra o cartão
+do Mapa, e o mapa dos DSEIs é a aba Mapa ([[modulo-mapa-saude-indigena]]), que lê este estado.
 
 ## Arquivos
 
 - `estado.ts`: recorte por área, filtros, busca, DSEI, atalhos, colunas, ordenação, exportação e
-  acompanhamento dos editais. Não importa React.
-- `visao-geral.tsx`: composição da tela e integração com os mapas.
+  acompanhamento dos editais. Não importa React. Também lido pela aba Mapa: com ela aberta,
+  `definirLidaPeloMapa(true)` faz o estado calcular e pedir o acompanhamento sem montar a página.
+- `visao-geral.tsx`: composição da tela e integração com o mapa de Projetos.
+- `cartao-do-mapa.tsx`: o cartão do Mapa (Saúde Indígena): DSEIs com edital, o de mais ociosas e o
+  menos preenchido (`resumoDoMapa`), cada DSEI levando à aba Mapa nele, e "Abrir no mapa".
 - `paineis.tsx`, `tabela.tsx` e `gaveta.tsx`: cabeçalho, filtros, vagas, pede ação, em andamento,
   processos por projeto, tabela e detalhes.
 - `boas-vindas.tsx` e `marcos.ts`: os marcos anuais da equipe (só a comemoração, sem card).
@@ -52,8 +56,9 @@ trabalho). De cima para baixo:
   lista sem status; contratação abaixo de 50% e desistências saíram em 18/11/2026) numa lista; só as fases
   com edital aberto, sem as vazias, e numa linha os com cronograma encerrado, os concluídos
   (digitados à mão) e os cancelados.
-- **Mapa** mais baixo que na tela do mapa (`--altura-do-mapa-na-visao-geral`), com a altura
-  reservada enquanto o módulo baixa (`.visao-geral-mapa-reserva`).
+- **Mapa**: na Saúde Indígena, o cartão do Mapa (o mapa grande foi para a aba Mapa em 18/11/2026);
+  em Projetos, o mapa, mais baixo (`--altura-do-mapa-na-visao-geral`), com a altura reservada
+  enquanto o módulo baixa (`.visao-geral-mapa-reserva`).
 - **Tabela**: a contagem não repete o total; no celular, o cartão mostra só unidade, edital,
   vagas, inscritos, contratados, sem contratação, status e atenção (`data-campo` nas células).
 - **Os números levam aos dados** (revisão de 17/11/2026; `NumeroDaLinha` em `tabela.tsx`, regra
@@ -205,7 +210,7 @@ trabalho). De cima para baixo:
 
 ## Relacionadas
 
-- [[modulo-mapa-saude-indigena]] — o mapa da área Saúde Indígena, ligado aqui
+- [[modulo-mapa-saude-indigena]] — o mapa da Saúde Indígena (a aba Mapa), que lê este estado
 - [[modulo-mapa-de-projetos]] — o mapa da área Projetos, ligado aqui
 - [[mapas-e-leaflet]] — regras comuns dos mapas
 - [[arquitetura-do-front]] — rotas do app único, o recorte por área e de onde vêm as linhas do monitoramento

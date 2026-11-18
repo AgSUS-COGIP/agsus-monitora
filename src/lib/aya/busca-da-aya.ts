@@ -164,8 +164,8 @@ interface ConsultaDaBusca {
 const PAGINAS_DO_ARQUIVO: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
     "regras-da-visao-geral.md": ["dashboard"],
-    "regras-dos-mapas.md": ["dashboard"],
-    "regras-do-mapa-saude-indigena.md": ["dashboard"],
+    "regras-dos-mapas.md": ["dashboard", "mapa"],
+    "regras-do-mapa-saude-indigena.md": ["mapa", "dashboard"],
     "regras-dos-editais.md": ["nucleo"],
     "regras-do-cronograma.md": ["calendario"],
     "regras-das-analises.md": ["analises"],

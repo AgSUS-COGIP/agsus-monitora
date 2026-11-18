@@ -220,7 +220,6 @@ export type MarcoDoAno = { ano: number; concluidas_no_ano: number };
 export type EstadoProprio = {
   filtros: FiltrosDaVisaoGeral;
   busca: string;
-  dsei: { chave: string; nome: string };
   atalho: Atalho;
   mapa: { lmap: unknown };
   ordenacao: Ordenacao;
@@ -274,6 +273,8 @@ export type EstadoDaVisaoGeral = {
   definirAviso: (funcao?: ((mensagem: string) => void) | null) => void;
   definirBuscaDoAcompanhamento: (funcao: BuscaDoAcompanhamento | null) => void;
   definirAberta: (aberta: boolean) => void;
+  /** O Mapa (Saúde Indígena) está aberto e lê as linhas daqui. */
+  definirLidaPeloMapa: (lida: boolean) => void;
   definirFiltro: (campo: CampoDoFiltro, valores: readonly string[]) => void;
   alternarFiltroUnico: (
     campo: CampoDoFiltro,
@@ -286,13 +287,11 @@ export type EstadoDaVisaoGeral = {
   limparTudo: () => void;
   /** A pessoa saiu: o recorte volta ao vazio, sem aviso. */
   esquecer: () => void;
-  tirarDsei: () => void;
   localizar: (linha: LinhaDoMonitoramento | null) => void;
   destacar: (id: string | number | undefined) => void;
   /** Um número levou a outra tela: ao voltar, esta linha se destaca. */
   sairPelaLinha: (id: string | number | undefined) => void;
   definirBusca: (busca: string) => void;
-  definirDsei: (chave: string, nome?: string) => void;
   definirDadosDoMapa: (dados?: { lmap?: unknown }) => void;
   ordenarPor: (campo: ColunaDaTabela) => void;
   alternarColuna: (campo: ColunaDaTabela, visivel: boolean) => void;

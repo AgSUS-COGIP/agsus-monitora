@@ -7,6 +7,7 @@ import type { criarAvaliacaoDocumental } from "../modulos/avaliacao-documental/a
 import type { criarPreClassificacao } from "../modulos/avaliacao-documental/entrada-da-pre-classificacao.tsx";
 import type { criarClassificacao } from "../modulos/classificacao/classificacao.tsx";
 import type { criarCalendarioEditais } from "../modulos/cronograma/calendario-editais.tsx";
+import type { criarMapa } from "../modulos/mapa/mapa.tsx";
 import type { criarNucleo } from "../modulos/editais/nucleo.tsx";
 import type { criarConducaoDeEntrevistas } from "../modulos/entrevistas/conduzir.tsx";
 import type { criarEntrevistas } from "../modulos/entrevistas/entrevistas.tsx";
@@ -56,6 +57,7 @@ export interface ControladorDeTela {
 /** O controlador de cada tela, pelo nome interno (view). */
 export interface ControladoresDasTelas {
   dashboard: ReturnType<typeof criarVisaoGeral>;
+  mapa: ReturnType<typeof criarMapa>;
   nucleo: ReturnType<typeof criarNucleo>;
   calendario: ReturnType<typeof criarCalendarioEditais>;
   approved: ReturnType<typeof criarListaAprovados>;

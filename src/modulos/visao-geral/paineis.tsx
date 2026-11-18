@@ -93,12 +93,9 @@ function abrirCronogramaDaArea(area: string) {
     ?.click();
 }
 
-/** Quantos filtros recortam a página (campos, busca, DSEI e atalho). */
+/** Quantos filtros recortam a página (campos, busca e atalho). */
 export const quantosFiltros = (e: SnapshotDaVisaoGeral) =>
-  e.quantosFiltros +
-  (e.busca.trim() ? 1 : 0) +
-  (e.dsei.chave ? 1 : 0) +
-  (e.atalho ? 1 : 0);
+  e.quantosFiltros + (e.busca.trim() ? 1 : 0) + (e.atalho ? 1 : 0);
 
 export function Cabecalho({
   e,
@@ -325,11 +322,6 @@ export function Filtros({
             {e.atalho ? (
               <ChipDeFiltro rotulo="Recorte" aoTirar={estado.tirarAtalho}>
                 {rotuloDoAtalho(e.atalho)}
-              </ChipDeFiltro>
-            ) : null}
-            {e.dsei.chave ? (
-              <ChipDeFiltro rotulo="DSEI" aoTirar={estado.tirarDsei}>
-                {e.dsei.nome || e.dsei.chave}
               </ChipDeFiltro>
             ) : null}
             {CAMPOS_DO_FILTRO.filter((c) => e.filtros[c.campo].length).map(

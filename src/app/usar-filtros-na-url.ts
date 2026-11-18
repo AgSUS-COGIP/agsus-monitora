@@ -10,6 +10,8 @@ import { gravarNaSessao, lerDaSessao } from "../ui/usar-estado-da-sessao.ts";
 import { criarEndereco } from "./endereco.ts";
 import {
   buscaComFiltros,
+  buscaDoEndereco,
+  enderecoComBusca,
   enderecoDaTela,
   filtrosDaBusca,
   filtrosGuardadosDaTela,
@@ -101,7 +103,8 @@ function escrever<C extends string>(
   if (!tela) return;
   const local = endereco.obter();
   const aVista = enderecoDaTela(local, tela);
-  const base = aVista ? local.busca : filtrosGuardadosDaTela(tela);
+  const atual = buscaDoEndereco(local);
+  const base = aVista ? atual : filtrosGuardadosDaTela(tela);
   const busca = buscaComFiltros(
     base,
     esquema,
@@ -109,8 +112,8 @@ function escrever<C extends string>(
     empilhar ? (manter ?? []) : null,
   );
   guardarFiltrosDaTela(tela, busca);
-  if (aVista && busca !== local.busca)
-    endereco.ir(local.caminho + busca, { substituir: !empilhar });
+  if (aVista && busca !== atual)
+    endereco.ir(enderecoComBusca(local, busca), { substituir: !empilhar });
 }
 
 /*
@@ -125,7 +128,7 @@ function lerAgora<C extends string>(
   if (!tela) return null;
   const local = endereco.obter();
   return enderecoDaTela(local, tela)
-    ? filtrosDaBusca(esquema, local.busca)
+    ? filtrosDaBusca(esquema, buscaDoEndereco(local))
     : null;
 }
 
@@ -136,10 +139,11 @@ function daUrlDoVoltar<C extends string>(
   local: { caminho: string; busca: string },
 ): ValoresDosFiltros<C> | null {
   if (!tela || !enderecoDaTela(local, tela)) return null;
-  guardarFiltrosDaTela(tela, local.busca);
+  const busca = buscaDoEndereco(local);
+  guardarFiltrosDaTela(tela, busca);
   return {
     ...padroesDosFiltros(esquema),
-    ...(filtrosDaBusca(esquema, local.busca) ?? {}),
+    ...(filtrosDaBusca(esquema, busca) ?? {}),
   };
 }
 

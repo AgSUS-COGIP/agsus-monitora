@@ -91,9 +91,12 @@ export const AREAS_DO_MENU = Object.freeze([
   `listar_abas_do_menu`).
 
   A Visão geral é a mesma página (`dashboard`) nas três áreas, recortada pela
-  área atual; o que muda é o bloco do mapa — DSEIs na Saúde Indígena,
-  municípios das vagas em Projetos, nenhum na SEDE
-  (`src/lib/visao-geral/visao-geral-da-area.ts`). O ícone da página aparece no menu
+  área atual; o que muda é o bloco do mapa — o cartão do Mapa na Saúde
+  Indígena, municípios das vagas em Projetos, nenhum na SEDE
+  (`src/lib/visao-geral/visao-geral-da-area.ts`). O Mapa (`mapa`) é aba só da
+  Saúde Indígena, na ordem 2, com a permissão da Visão geral (migration
+  `20261118160000_aba_mapa_na_saude_indigena.sql`, que empurra as seguintes
+  uma posição). O ícone da página aparece no menu
   inferior do celular e no trilho da barra recolhida.
 
   Análises curriculares era um painel externo (`TB_PAINEL_EXTERNO`, código
@@ -179,10 +182,20 @@ export const ABAS_DO_MENU = Object.freeze(
       areas: NAS_TRES_AREAS,
     },
     {
+      id: "mapa",
+      rotulo: "Mapa",
+      icone: "globe",
+      ordem: 2,
+      view: "mapa",
+      recurso: "dashboard",
+      tipo: "nativa",
+      areas: [{ area: "saude-indigena" }],
+    },
+    {
       id: "analises",
       rotulo: "Painel das análises",
       icone: "file-search",
-      ordem: 2,
+      ordem: 3,
       view: "analises",
       recurso: "analises",
       tipo: "nativa",
@@ -192,7 +205,7 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "recursos",
       rotulo: "Painel de recursos",
       icone: "scale",
-      ordem: 3,
+      ordem: 4,
       view: "recursos",
       recurso: "recursos",
       tipo: "nativa",
@@ -202,7 +215,7 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "entrevistas",
       rotulo: "Painel de entrevistas",
       icone: "messages-square",
-      ordem: 4,
+      ordem: 5,
       view: "entrevistas",
       recurso: "entrevistas",
       tipo: "nativa",
@@ -213,7 +226,7 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "selecao",
       rotulo: "Painel da Seleção",
       icone: "funnel",
-      ordem: 5,
+      ordem: 6,
       view: "selecao",
       recurso: "selecao",
       tipo: "nativa",
@@ -224,7 +237,7 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "cronograma",
       rotulo: "Cronograma",
       icone: "calendar-days",
-      ordem: 6,
+      ordem: 7,
       view: "calendario",
       recurso: "calendario",
       tipo: "nativa",
@@ -234,7 +247,7 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "editais",
       rotulo: "Editais",
       icone: "file-text",
-      ordem: 7,
+      ordem: 8,
       view: "nucleo",
       recurso: "nucleo",
       tipo: "nativa",
@@ -244,7 +257,7 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "pre-classificacao",
       rotulo: "Triagem",
       icone: "list-checks",
-      ordem: 8,
+      ordem: 9,
       view: "pre-classificacao",
       recurso: "avaliacao_documental",
       tipo: "nativa",
@@ -255,7 +268,7 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "avaliacao-documental",
       rotulo: "Avaliação documental",
       icone: "graduation-cap",
-      ordem: 9,
+      ordem: 10,
       view: "avaliacao-documental",
       recurso: "avaliacao_documental",
       tipo: "nativa",
@@ -266,7 +279,7 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "analisar-recursos",
       rotulo: "Recursos",
       icone: "gavel",
-      ordem: 10,
+      ordem: 11,
       view: "analisar-recursos",
       recurso: "recursos",
       tipo: "nativa",
@@ -277,7 +290,7 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "conduzir-entrevistas",
       rotulo: "Entrevistas",
       icone: "clipboard-pen-line",
-      ordem: 11,
+      ordem: 12,
       view: "conduzir-entrevistas",
       recurso: "entrevistas",
       tipo: "nativa",
@@ -288,7 +301,7 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "classificacao",
       rotulo: "Classificação",
       icone: "list-ordered",
-      ordem: 12,
+      ordem: 13,
       view: "classificacao",
       recurso: "classificacao",
       tipo: "nativa",
@@ -299,7 +312,7 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "aprovados",
       rotulo: "Lista de aprovados",
       icone: "user-round-check",
-      ordem: 13,
+      ordem: 14,
       view: "approved",
       recurso: "aprovados",
       tipo: "nativa",
@@ -309,7 +322,7 @@ export const ABAS_DO_MENU = Object.freeze(
       id: "paineis-de-dados",
       rotulo: "Painéis",
       icone: "layout-dashboard",
-      ordem: 14,
+      ordem: 15,
       view: "paineis-de-dados",
       recurso: "paineis_dados",
       tipo: "nativa",
@@ -365,6 +378,7 @@ export const BLOCOS_DA_ADMINISTRACAO: readonly {
 
 const ABAS_DE_ACOMPANHAMENTO = new Set([
   "visao-geral",
+  "mapa",
   "analises",
   "recursos",
   "entrevistas",

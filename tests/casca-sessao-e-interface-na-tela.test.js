@@ -8639,29 +8639,17 @@ bloco("modulos/mapa-saude-indigena", () => {
       expect(document.body.style.overflow).toBe("");
     });
 
-    it("recolhe e mostra o mapa, e lembra a escolha ao voltar", async () => {
-      localStorage.removeItem("agsus_yeende_mapa_recolhido_v1");
+    it("é a página da aba Mapa: não se recolhe, nem com a escolha guardada do de Projetos", async () => {
+      localStorage.setItem("agsus_yeende_mapa_recolhido_v1", "recolhido");
       await montar();
-      const botao = (texto) =>
-        [...host.querySelectorAll("button")].find(
-          (b) => b.textContent === texto,
-        );
-      expect(botao("Recolher mapa").getAttribute("aria-expanded")).toBe("true");
-      await clicar(botao("Recolher mapa"));
-      expect(host.querySelector(".mapa-si--recolhido")).not.toBeNull();
-      expect(botao("Mostrar mapa").getAttribute("aria-expanded")).toBe("false");
-      // Recolhido, não se amplia.
-      expect(botao("Tela cheia")).toBeUndefined();
-      expect(localStorage.getItem("agsus_yeende_mapa_recolhido_v1")).toBe(
-        "recolhido",
+      const textos = [...host.querySelectorAll("button")].map(
+        (b) => b.textContent,
       );
-      await act(async () => raiz.unmount());
-      raiz = null;
-      await montar();
-      expect(host.querySelector(".mapa-si--recolhido")).not.toBeNull();
-      await clicar(botao("Mostrar mapa"));
+      expect(textos).not.toContain("Recolher mapa");
+      expect(textos).not.toContain("Mostrar mapa");
+      expect(textos).toContain("Tela cheia");
       expect(host.querySelector(".mapa-si--recolhido")).toBeNull();
-      expect(localStorage.getItem("agsus_yeende_mapa_recolhido_v1")).toBeNull();
+      localStorage.removeItem("agsus_yeende_mapa_recolhido_v1");
     });
 
     it("restaura a rolagem anterior ao desmontar em tela cheia", async () => {

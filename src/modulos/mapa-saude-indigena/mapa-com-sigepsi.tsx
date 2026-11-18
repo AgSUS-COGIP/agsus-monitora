@@ -13,10 +13,8 @@ import { MapaSaudeIndigena } from "./mapa-saude-indigena.tsx";
   responde, o mapa espera; se ele falhar, mostra o erro e "Tentar novamente"
   (um dado desatualizado seria pior).
 
-  Mora no pedaço do mapa (baixado sob demanda por
-  src/modulos/visao-geral/mapas-sob-demanda.tsx), não na entrada: a Visão
-  geral só passa o `lmap` do banco (17/11/2026, a entrada passava do
-  orçamento de 320 KB gzip).
+  Mora no pedaço da aba Mapa (src/modulos/mapa/, baixada sob demanda), não
+  na entrada (17/11/2026, a entrada passava do orçamento de 320 KB gzip).
 */
 export type PropsDoMapaComSigepsi = Omit<
   PropsDoMapaSaudeIndigena,

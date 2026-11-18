@@ -7,6 +7,7 @@
     /<area>/<tela>[/<edital>][?visao=<visão>][&<filtros>]  telas das áreas (Saúde Indígena, SEDE, Projetos)
     /<area>/edital/<edital>                     a página do edital (número "105-2026" ou id)
     /<area>/editais/<edital>/regras/<etapa>     Regras do edital (Editais), na etapa
+    /<area>/mapa[/<dsei>]                       Mapa (o DSEI aberto é um filtro no caminho)
     /administracao/configuracoes[/<seção>]      Configurações
     /paineis/<código>                           painel externo
     /sem-acesso                                 quem não tem módulo liberado
@@ -58,6 +59,12 @@ export interface TelaDaRota {
    * de tela.
    */
   tituloNaTela?: boolean;
+  /**
+   * Um filtro da tela que mora no caminho, não na busca: o Mapa guarda o
+   * DSEI aberto em `/<area>/mapa/<dsei>`. Para quem lê os filtros
+   * (src/app/filtros-no-endereco.ts) ele é um filtro como os outros.
+   */
+  campoNoCaminho?: string;
 }
 
 /*
@@ -66,6 +73,7 @@ export interface TelaDaRota {
 */
 const TELAS: TelaDaRota[] = [
   { view: "dashboard", caminho: "visao-geral", titulo: "Visão geral" },
+  { view: "mapa", caminho: "mapa", titulo: "Mapa", campoNoCaminho: "dsei" },
   {
     view: "nucleo",
     caminho: "editais",
@@ -202,11 +210,17 @@ export function caminhoDoDestino(destino: DestinoDaRota): string {
   const daRegra = tela.comRegras ? pedaco(destino.edital) : "";
   if (daRegra && destino.regras)
     return `/${area}/${tela.caminho}/${daRegra}/${CAMINHO_DAS_REGRAS}/${etapaDasRegras(destino.regras)}`;
-  const edital = tela.comEdital ? pedaco(destino.edital) : "";
-  if (tela.editalObrigatorio && !edital) return "/";
+  const doEdital = tela.comEdital ? pedaco(destino.edital) : "";
+  if (tela.editalObrigatorio && !doEdital) return "/";
   const visao = pedaco(destino.visao);
   const parametros = new URLSearchParams(destino.filtros || "");
   parametros.delete("visao");
+  // O filtro que mora no caminho sai da busca (só um pedaço válido vira caminho).
+  const noCaminho = tela.campoNoCaminho
+    ? pedaco(parametros.get(tela.campoNoCaminho))
+    : "";
+  if (tela.campoNoCaminho) parametros.delete(tela.campoNoCaminho);
+  const edital = tela.comEdital ? doEdital : noCaminho;
   const filtros = parametros.toString();
   return (
     `/${area}/${tela.caminho}` +
@@ -254,16 +268,22 @@ export function destinoDoCaminho(
       ? { view: "config", ...(terceira ? { secao: terceira } : {}) }
       : null;
   const tela = segunda ? POR_CAMINHO.get(segunda) : undefined;
-  if (!tela || (terceira && !tela.comEdital)) return null;
+  if (!tela || (terceira && !tela.comEdital && !tela.campoNoCaminho))
+    return null;
   if (tela.editalObrigatorio && !terceira) return null;
   const parametros = new URLSearchParams(busca || "");
   const visao = pedaco(parametros.get("visao"));
   parametros.delete("visao");
+  // `/<area>/mapa/<dsei>`: o pedaço do caminho é o filtro (o da busca não vale).
+  if (tela.campoNoCaminho) {
+    parametros.delete(tela.campoNoCaminho);
+    if (terceira) parametros.set(tela.campoNoCaminho, terceira);
+  }
   const filtros = parametros.toString();
   return {
     view: tela.view,
     area: primeira,
-    ...(terceira ? { edital: terceira } : {}),
+    ...(terceira && tela.comEdital ? { edital: terceira } : {}),
     ...(visao ? { visao } : {}),
     ...(filtros ? { filtros } : {}),
   };

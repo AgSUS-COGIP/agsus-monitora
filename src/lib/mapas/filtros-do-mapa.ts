@@ -31,10 +31,6 @@ export interface OpcoesDoFiltro<L> {
   ignorarCampo?: string;
   /** Regra extra de exclusão (ex.: encerrados). */
   excluir?: (linha: L) => boolean;
-  /** Chave do DSEI selecionado no mapa. */
-  dsei?: string;
-  /** Chave do DSEI da linha. */
-  chaveDsei?: (linha: L) => string;
   comparar?: (a: string, b: string) => number;
 }
 
@@ -75,9 +71,8 @@ export function linhaAtende<L>(
   estado: EstadoDosFiltros | null | undefined,
   opcoes: OpcoesDoFiltro<L> = {},
 ): boolean {
-  const { ignorarCampo = "", excluir, dsei = "", chaveDsei } = opcoes;
+  const { ignorarCampo = "", excluir } = opcoes;
   if (excluir && excluir(linha)) return false;
-  if (dsei && chaveDsei && chaveDsei(linha) !== dsei) return false;
   const campos = opcoes.campos || Object.keys(estado || {});
   return campos.every((campo) => {
     if (campo === ignorarCampo) return true;

@@ -6,14 +6,12 @@ import { carregarLeaflet } from "../mapa-saude-indigena/carregar-leaflet.ts";
 import { Carregando, ErroAoCarregar } from "../../ui/index.ts";
 
 /*
-  Os mapas da Visão geral (Saúde Indígena e Projetos) saem do pacote
-  principal: o código deles e o Leaflet (CDN, `carregarLeaflet`) só baixam
-  quando um mapa monta. Até lá, "Carregando…" no lugar do mapa; falhou, o
+  O mapa da Visão geral (Projetos) sai do pacote principal: o código dele e
+  o Leaflet (CDN, `carregarLeaflet`) só baixam quando o mapa monta. O da
+  Saúde Indígena é a aba Mapa (src/modulos/mapa/), que já baixa sob demanda. Até lá, "Carregando…" no lugar do mapa; falhou, o
   aviso com "Tentar novamente". Depois de carregado, desenha na hora.
 */
 
-type MapaSI =
-  typeof import("../mapa-saude-indigena/mapa-com-sigepsi.tsx").MapaSaudeIndigenaComSigepsi;
 type MapaProjetos =
   typeof import("../mapa-de-projetos/mapa-de-projetos.tsx").MapaDeProjetos;
 
@@ -55,21 +53,15 @@ function sobDemanda<C>(importar: () => Promise<C>) {
   return { carregar, assinar, obter: () => estado };
 }
 
-// Com o SIGEPSI por cima do banco (a lógica dele também fica fora da entrada).
-const mapaSI = sobDemanda<MapaSI>(() =>
-  import("../mapa-saude-indigena/mapa-com-sigepsi.tsx").then(
-    (modulo) => modulo.MapaSaudeIndigenaComSigepsi,
-  ),
-);
 const mapaProjetos = sobDemanda<MapaProjetos>(() =>
   import("../mapa-de-projetos/mapa-de-projetos.tsx").then(
     (modulo) => modulo.MapaDeProjetos,
   ),
 );
 
-/** Baixa os dois mapas (e o Leaflet) antes de montar: pré-carga e testes. */
+/** Baixa o mapa (e o Leaflet) antes de montar: pré-carga e testes. */
 export function carregarMapasDaVisaoGeral(opcoes: OpcoesDaCarga = {}) {
-  return Promise.all([mapaSI.carregar(opcoes), mapaProjetos.carregar(opcoes)]);
+  return mapaProjetos.carregar(opcoes);
 }
 
 function usarMapa<C>(carga: ReturnType<typeof sobDemanda<C>>) {
@@ -103,10 +95,6 @@ function MapaSobDemanda<P extends object>({
       <Carregando />
     </div>
   );
-}
-
-export function MapaSaudeIndigena(props: ComponentProps<MapaSI>) {
-  return <MapaSobDemanda carga={mapaSI} props={props} />;
 }
 
 export function MapaDeProjetos(props: ComponentProps<MapaProjetos>) {

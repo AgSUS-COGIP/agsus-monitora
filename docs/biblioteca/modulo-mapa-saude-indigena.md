@@ -1,22 +1,23 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-17
+atualizado: 2026-11-18
 ---
 
 # Módulo: Mapa da Saúde Indígena
 
-O mapa da Visão geral da área Saúde Indígena em React, em `src/modulos/mapa-saude-indigena/`,
-ligado na Visão geral e lendo o estado dela. O legado não desenha mais mapa nenhum. O de Projetos é
+O mapa da área Saúde Indígena em React, em `src/modulos/mapa-saude-indigena/`, desenhado pela aba
+Mapa (`src/modulos/mapa/`, rota `/saude-indigena/mapa[/<dsei>]`) com o estado da Visão geral. O legado não desenha mais mapa nenhum. O de Projetos é
 o módulo irmão ([[modulo-mapa-de-projetos]]), com as mesmas regras: reaproveita daqui o painel do
 mapa nacional, `leaflet.ts` (leque, enquadramento), a legenda flutuante, a tela cheia e `.mapa-si-*`.
 Tipos e fronteiras dos dados (e o que saiu do legado): [[mapa-saude-indigena-contratos]].
 
 ## Controles e tela cheia
 
-- Os controles (Brasil, Recolher mapa, Tela cheia) ficam no cabeçalho, acima do mapa e da lista
-  lateral. Em tela cheia, o painel cobre o shell, mantém "Sair da tela cheia" visível e bloqueia a
-  rolagem até sair (botão ou Esc). A legenda começa recolhida.
+- Os controles (Brasil, Tela cheia) ficam no cabeçalho, acima do mapa e da lista lateral. Na aba o
+  mapa é a página e não se recolhe ("Recolher mapa", `recolher.tsx`, ficou só no de Projetos). Em
+  tela cheia, o painel cobre o shell, mantém "Sair da tela cheia" visível e bloqueia a rolagem até
+  sair (botão ou Esc). A legenda começa recolhida.
 - **Não há editor de coordenadas neste mapa.** Os pontos vêm do SIGEPSI e se corrigem lá. O editor
   comum ([[coordenadas]]) é só do mapa de Projetos. `TopoDoMapa` e `classesDoPainel`
   (`painel-do-mapa.tsx`) aceitam `modo` opcional.
@@ -27,31 +28,47 @@ Tipos e fronteiras dos dados (e o que saiu do legado): [[mapa-saude-indigena-con
 ## Onde fica
 
 - `mapa-saude-indigena.tsx` (`<MapaSaudeIndigena>`: estado, contas memorizadas, um mapa principal
-  de cada vez), `mapa-nacional.tsx` (bolhas, CASAIs nacionais, leque, "Territórios por vagas";
-  a escolha de recolher em `src/lib/mapas/mapa-recolhido.ts`) e `mapa-do-dsei.tsx` (unidades agrupadas
+  de cada vez), `mapa-nacional.tsx` (bolhas, CASAIs nacionais, leque, "Territórios por vagas") e `mapa-do-dsei.tsx` (unidades agrupadas
   por proximidade + leque, sede, vínculos externos, filtros por tipo, Terras Indígenas e povos).
 - Peças comuns aos dois mapas: `leaflet.ts`, `painel-do-mapa.tsx`, `legenda.tsx`
   (`<LegendaFlutuante>`), `tela-cheia.tsx` (`travarRolagemDaPagina` é contada: tela cheia e edição
   de Projetos), `usar-ultimo.ts`.
 - `ordem-da-lista.tsx` — "Ordenar" (Vagas, A–Z, Nº do DSEI, % preenchidas, Ociosas), escolha
   guardada no navegador; regras em `src/lib/mapas/mapa-saude-indigena/ordem-dos-territorios.ts`.
-- Regras puras em `src/lib/mapas/mapa-saude-indigena/` (`chaves`, `formas`, `mapa-nacional`,
+- Regras puras em `src/lib/mapas/mapa-saude-indigena/` (`chaves`, `formas`, `contagem-por-dsei`
+  (editais, vagas, contratadas e ociosas por DSEI, também do cartão da Visão geral), `aba-do-mapa`
+  (o DSEI no endereço e o resumo do cartão), `mapa-nacional`,
   `mapa-do-dsei`, `localizacoes-do-sigepsi`, `contornos` com `UF_GEO` e `BR_OUTLINE`). CSS em
   `mapa-saude-indigena.css`, só tokens.
 
-## Ligação na Visão geral
+## A aba Mapa
 
-Em `src/modulos/visao-geral/visao-geral.tsx` (`MapaDaSaudeIndigena`), só quando a área é a Saúde
-Indígena (`mapaDaVisaoGeral(area) === MAPA_DOS_DSEIS`); em Projetos é `<MapaDeProjetos>`, na SEDE
-nenhum mapa. Lê o MESMO estado (`src/modulos/visao-geral/estado.ts`). Props: `lmap`
-(`TB_CONFIG_MAPA_SAUDE_INDIG`, chave "lmap"), `casaisNacionais`, `linhas` (editais recortados),
-`filtroAtivo`, `dseiSelecionado` (chave normalizada), `carregando`, `aoEscolherDsei`
-(`estado.definirDsei`), `aoSairDoDsei` (`estado.tirarDsei`) e `aoFiltrarPorBusca` (CASAI nacional:
-"CASAI <cidade>").
+`src/modulos/mapa/mapa.tsx` (`criarMapa`, `<TelaDoMapa>`), sob demanda (`src/app/telas.tsx`), com o
+Leaflet carregado pela própria tela (`carregarLeaflet`; falhou, `ErroAoCarregar`). Aba só da Saúde
+Indígena, ordem 2, recurso `dashboard` (a permissão da Visão geral): `ABAS_DO_MENU` e a migration
+`20261118160000_aba_mapa_na_saude_indigena.sql`. Fora da Saúde Indígena a tela mostra um aviso.
 
-- **DSEI.** `definirDsei` guarda `chaveDoDsei(chave)`; o recorte compara com
-  `chaveDoDsei(linha.unidade)`. O chip "DSEI X ×", "← Voltar ao Brasil" e Esc chamam `tirarDsei`
-  (os filtros ficam); "Limpar tudo", a busca global e a troca de área tiram o DSEI.
+- **Dados.** As linhas e o `lmap` são os do estado da Visão geral (`estadoDaVisaoGeral`): mesmas
+  contas, com o desconto das reabertas pelo acompanhamento. Com o Mapa aberto, `pagina-aberta.ts`
+  chama `definirLidaPeloMapa(true)` (o estado calcula e pede o acompanhamento sem montar a Visão
+  geral) e a carga lê as linhas (`mapa` em `telas-com-linhas.ts`). Aberto antes da Visão geral,
+  `criarMapa` entrega ao estado a busca do acompanhamento. O mapa recebe `linhasDaArea` (a área
+  inteira, sem os filtros da Visão geral) e `filtroAtivo` falso.
+- **DSEI no endereço.** `/saude-indigena/mapa/yanomami`: o DSEI é um filtro da tela que mora no
+  caminho (`campoNoCaminho: "dsei"` em `src/lib/navegacao/rotas.ts`; `buscaDoEndereco` e
+  `enderecoComBusca` em `src/app/filtros-no-endereco.ts` o tratam como `?dsei=` para
+  `usarLojaNaUrl`). O pedaço é `dseiNoEndereco(chave)`; de volta, `chaveDoDseiNoEndereco` (a chave
+  de `chaveDoDsei`). Abrir um DSEI empilha no histórico; "← Voltar ao Brasil" e Esc tiram o DSEI do
+  endereço; o voltar do navegador volta ao Brasil. A loja do DSEI é da tela; `render()` (a cada
+  abertura) relê o endereço, e é assim que o cartão da Visão geral abre o Mapa num DSEI
+  (`guardarFiltrosDaTela("mapa", "dsei=…")` e `navigate("mapa")`).
+- **CASAI nacional.** `aoFiltrarPorBusca` põe "CASAI <cidade>" na busca da Visão geral e abre a
+  Visão geral.
+- **Na Visão geral** fica o cartão (`src/modulos/visao-geral/cartao-do-mapa.tsx`): DSEIs com edital
+  (de 34), o de mais ociosas e o menos preenchido (`resumoDoMapa`), e "Abrir no mapa". O recorte
+  por DSEI da Visão geral (`definirDsei`, chip "DSEI") saiu com o mapa: um DSEI ali é o filtro
+  Unidade.
+
 - **Ciclo de vida.** Trocar de área desmonta o componente e o `remove` do Leaflet (StrictMode
   limpo). O mapa do DSEI é criado ao abrir o distrito e destruído ao sair.
 - **Ids.** `id="map"` (nacional) e `id="detailMap"` (DSEI), porque
@@ -125,14 +142,14 @@ Terceiro botão do seletor do fundo, só no `#map` (`map-base-layer-switcher.ts`
 
 `volta-ao-brasil.ts` (`usarVoltaDoDsei`, `usarEscParaVoltar`).
 
-- Ao sair do DSEI ("← Voltar ao Brasil", Esc, o chip da Visão geral, "Limpar tudo"),
+- Ao sair do DSEI ("← Voltar ao Brasil", Esc, o voltar do navegador),
   `usarVoltaDoDsei` entrega ao mapa nacional `{ k, lat, lon, focar, vez }`. O mapa parte da sede do
   distrito (zoom 7, sem animar) e voa em 0,8 s (`DURACAO_DA_VOLTA_AO_BRASIL`) até o Brasil
   (`voarAoBrasil`, `maxZoom` `ZOOM_NACIONAL` 4.5; a guarda desce o mínimo se a altura não couber)
   ou, se ficaram filtros, até o recorte. Com `prefers-reduced-motion: reduce`, enquadra sem animar.
   Durante o voo, o "apareceu" do ResizeObserver não reenquadra por cima.
 - **Foco.** Pelo botão ou Esc (`focar`), o foco vai à linha do DSEI em "Territórios por vagas"
-  (`data-dsei`) ou, se ela não estiver na lista, ao mapa. Pelo chip da página, fica onde está.
+  (`data-dsei`) ou, se ela não estiver na lista, ao mapa. Pelo voltar do navegador, fica onde está.
 - **Esc.** Ligado só com DSEI aberto, na captura do `document`; volta com o foco no mapa ou no
   `body` (nunca num campo, numa janela, no painel da Aya ou com modal aberto). Na tela cheia, o
   primeiro Esc volta ao Brasil (`preventDefault`) e `usarTelaCheia`, que ignora Esc já usado
@@ -148,14 +165,14 @@ Terceiro botão do seletor do fundo, só no `#map` (`map-base-layer-switcher.ts`
 `tests/mapas-e-visao-geral.test.js` (bloco `mapa-saude-indigena`) (fixture real das Lotações),
 `tests/mapas-e-visao-geral.test.js` (bloco `coordenadas-so-do-sigepsi`), `tests/demais-regras.test.ts` (bloco `lib/localizacoes-do-sigepsi`),
 `tests/casca-sessao-e-interface-na-tela.test.js` (bloco `modulos/mapa-saude-indigena`) (Leaflet falso em `tests/modulos/leaflet-falso.js`),
-`tests/telas-com-modulo-simulado-na-tela.test.js` (bloco `modulos/visao-geral`), `tests/mapas-e-visao-geral-na-tela.test.js` (bloco `dica-dentro-do-mapa`),
+`tests/casca-com-modulo-simulado-na-tela.test.ts` (bloco `modulos/mapa`: a aba e o DSEI no endereço), `tests/demais-telas-na-tela.test.ts` (bloco `modulos/cartao-do-mapa`), `tests/demais-regras.test.ts` (bloco `lib/aba-do-mapa`), `tests/repositorio-e-banco.test.ts` (bloco `aba-mapa-no-banco`: migration, ensaio e rollback), `tests/casca-sessao-e-interface.test.js` (bloco `rotas`), `tests/mapas-e-visao-geral-na-tela.test.js` (bloco `dica-dentro-do-mapa`),
 `tests/mapas-e-visao-geral-na-tela.test.js` (bloco `modulos/modo-de-edicao`) (hoje só Projetos) e, do Mapa DSEIs,
 `tests/mapas-e-visao-geral.test.js` (bloco `mapa-simples`), `tests/mapas-e-visao-geral-na-tela.test.js` (bloco `map-base-layer-simples`) e
 `tests/mapas-e-visao-geral-na-tela.test.js` (bloco `modulos/mapa-simples`).
 
 ## Relacionadas
 
-- [[modulo-visao-geral]] — a tela que liga o mapa e guarda o estado
+- [[modulo-visao-geral]] — guarda o estado que o mapa lê e mostra o cartão do mapa
 - [[modulo-mapa-de-projetos]] — o mapa irmão, que reaproveita as peças daqui
 - [[mapa-saude-indigena-contratos]] — tipos, fronteiras dos dados e o que saiu do legado
 - [[mapas-e-leaflet]] — a fábrica do Leaflet, as guardas e a camada de Terras Indígenas

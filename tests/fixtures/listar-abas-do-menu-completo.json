@@ -29,29 +29,46 @@
     ]
   },
   {
+    "co_aba": "mapa",
+    "no_aba": "Mapa",
+    "ds_icone": "globe",
+    "nu_ordem": 2,
+    "co_view": "mapa",
+    "co_recurso": "dashboard",
+    "tp_aba": "nativa",
+    "areas": [
+      {
+        "co_area": "saude-indigena",
+        "nu_ordem": 2,
+        "co_view": "mapa",
+        "ds_icone": "globe"
+      }
+    ]
+  },
+  {
     "co_aba": "analises",
     "no_aba": "Painel das análises",
     "ds_icone": "file-search",
-    "nu_ordem": 2,
+    "nu_ordem": 3,
     "co_view": "analises",
     "co_recurso": "analises",
     "tp_aba": "nativa",
     "areas": [
       {
         "co_area": "saude-indigena",
-        "nu_ordem": 2,
+        "nu_ordem": 3,
         "co_view": "analises",
         "ds_icone": "file-search"
       },
       {
         "co_area": "sede",
-        "nu_ordem": 2,
+        "nu_ordem": 3,
         "co_view": "analises",
         "ds_icone": "file-search"
       },
       {
         "co_area": "projetos",
-        "nu_ordem": 2,
+        "nu_ordem": 3,
         "co_view": "analises",
         "ds_icone": "file-search"
       }
@@ -61,26 +78,26 @@
     "co_aba": "recursos",
     "no_aba": "Painel de recursos",
     "ds_icone": "scale",
-    "nu_ordem": 3,
+    "nu_ordem": 4,
     "co_view": "recursos",
     "co_recurso": "recursos",
     "tp_aba": "nativa",
     "areas": [
       {
         "co_area": "saude-indigena",
-        "nu_ordem": 3,
+        "nu_ordem": 4,
         "co_view": "recursos",
         "ds_icone": "scale"
       },
       {
         "co_area": "sede",
-        "nu_ordem": 3,
+        "nu_ordem": 4,
         "co_view": "recursos",
         "ds_icone": "scale"
       },
       {
         "co_area": "projetos",
-        "nu_ordem": 3,
+        "nu_ordem": 4,
         "co_view": "recursos",
         "ds_icone": "scale"
       }
@@ -90,26 +107,26 @@
     "co_aba": "entrevistas",
     "no_aba": "Painel de entrevistas",
     "ds_icone": "messages-square",
-    "nu_ordem": 4,
+    "nu_ordem": 5,
     "co_view": "entrevistas",
     "co_recurso": "entrevistas",
     "tp_aba": "nativa",
     "areas": [
       {
         "co_area": "saude-indigena",
-        "nu_ordem": 4,
+        "nu_ordem": 5,
         "co_view": "entrevistas",
         "ds_icone": "messages-square"
       },
       {
         "co_area": "sede",
-        "nu_ordem": 4,
+        "nu_ordem": 5,
         "co_view": "entrevistas",
         "ds_icone": "messages-square"
       },
       {
         "co_area": "projetos",
-        "nu_ordem": 4,
+        "nu_ordem": 5,
         "co_view": "entrevistas",
         "ds_icone": "messages-square"
       }
@@ -119,26 +136,26 @@
     "co_aba": "selecao",
     "no_aba": "Painel da Seleção",
     "ds_icone": "funnel",
-    "nu_ordem": 5,
+    "nu_ordem": 6,
     "co_view": "selecao",
     "co_recurso": "selecao",
     "tp_aba": "nativa",
     "areas": [
       {
         "co_area": "saude-indigena",
-        "nu_ordem": 5,
+        "nu_ordem": 6,
         "co_view": "selecao",
         "ds_icone": "funnel"
       },
       {
         "co_area": "sede",
-        "nu_ordem": 5,
+        "nu_ordem": 6,
         "co_view": "selecao",
         "ds_icone": "funnel"
       },
       {
         "co_area": "projetos",
-        "nu_ordem": 5,
+        "nu_ordem": 6,
         "co_view": "selecao",
         "ds_icone": "funnel"
       }
@@ -148,26 +165,26 @@
     "co_aba": "cronograma",
     "no_aba": "Cronograma",
     "ds_icone": "calendar-days",
-    "nu_ordem": 6,
+    "nu_ordem": 7,
     "co_view": "calendario",
     "co_recurso": "calendario",
     "tp_aba": "nativa",
     "areas": [
       {
         "co_area": "saude-indigena",
-        "nu_ordem": 6,
+        "nu_ordem": 7,
         "co_view": "calendario",
         "ds_icone": "calendar-days"
       },
       {
         "co_area": "sede",
-        "nu_ordem": 6,
+        "nu_ordem": 7,
         "co_view": "calendario",
         "ds_icone": "calendar-days"
       },
       {
         "co_area": "projetos",
-        "nu_ordem": 6,
+        "nu_ordem": 7,
         "co_view": "calendario",
         "ds_icone": "calendar-days"
       }
@@ -177,26 +194,26 @@
     "co_aba": "editais",
     "no_aba": "Editais",
     "ds_icone": "file-text",
-    "nu_ordem": 7,
+    "nu_ordem": 8,
     "co_view": "nucleo",
     "co_recurso": "nucleo",
     "tp_aba": "nativa",
     "areas": [
       {
         "co_area": "saude-indigena",
-        "nu_ordem": 7,
+        "nu_ordem": 8,
         "co_view": "nucleo",
         "ds_icone": "file-text"
       },
       {
         "co_area": "sede",
-        "nu_ordem": 7,
+        "nu_ordem": 8,
         "co_view": "nucleo",
         "ds_icone": "file-text"
       },
       {
         "co_area": "projetos",
-        "nu_ordem": 7,
+        "nu_ordem": 8,
         "co_view": "nucleo",
         "ds_icone": "file-text"
       }
@@ -206,26 +223,26 @@
     "co_aba": "pre-classificacao",
     "no_aba": "Triagem",
     "ds_icone": "list-checks",
-    "nu_ordem": 8,
+    "nu_ordem": 9,
     "co_view": "pre-classificacao",
     "co_recurso": "avaliacao_documental",
     "tp_aba": "nativa",
     "areas": [
       {
         "co_area": "saude-indigena",
-        "nu_ordem": 8,
+        "nu_ordem": 9,
         "co_view": "pre-classificacao",
         "ds_icone": "list-checks"
       },
       {
         "co_area": "sede",
-        "nu_ordem": 8,
+        "nu_ordem": 9,
         "co_view": "pre-classificacao",
         "ds_icone": "list-checks"
       },
       {
         "co_area": "projetos",
-        "nu_ordem": 8,
+        "nu_ordem": 9,
         "co_view": "pre-classificacao",
         "ds_icone": "list-checks"
       }
@@ -235,26 +252,26 @@
     "co_aba": "avaliacao-documental",
     "no_aba": "Avaliação documental",
     "ds_icone": "graduation-cap",
-    "nu_ordem": 9,
+    "nu_ordem": 10,
     "co_view": "avaliacao-documental",
     "co_recurso": "avaliacao_documental",
     "tp_aba": "nativa",
     "areas": [
       {
         "co_area": "saude-indigena",
-        "nu_ordem": 9,
+        "nu_ordem": 10,
         "co_view": "avaliacao-documental",
         "ds_icone": "graduation-cap"
       },
       {
         "co_area": "sede",
-        "nu_ordem": 9,
+        "nu_ordem": 10,
         "co_view": "avaliacao-documental",
         "ds_icone": "graduation-cap"
       },
       {
         "co_area": "projetos",
-        "nu_ordem": 9,
+        "nu_ordem": 10,
         "co_view": "avaliacao-documental",
         "ds_icone": "graduation-cap"
       }
@@ -264,26 +281,26 @@
     "co_aba": "analisar-recursos",
     "no_aba": "Recursos",
     "ds_icone": "gavel",
-    "nu_ordem": 10,
+    "nu_ordem": 11,
     "co_view": "analisar-recursos",
     "co_recurso": "recursos",
     "tp_aba": "nativa",
     "areas": [
       {
         "co_area": "saude-indigena",
-        "nu_ordem": 10,
+        "nu_ordem": 11,
         "co_view": "analisar-recursos",
         "ds_icone": "gavel"
       },
       {
         "co_area": "sede",
-        "nu_ordem": 10,
+        "nu_ordem": 11,
         "co_view": "analisar-recursos",
         "ds_icone": "gavel"
       },
       {
         "co_area": "projetos",
-        "nu_ordem": 10,
+        "nu_ordem": 11,
         "co_view": "analisar-recursos",
         "ds_icone": "gavel"
       }
@@ -293,26 +310,26 @@
     "co_aba": "conduzir-entrevistas",
     "no_aba": "Entrevistas",
     "ds_icone": "clipboard-pen-line",
-    "nu_ordem": 11,
+    "nu_ordem": 12,
     "co_view": "conduzir-entrevistas",
     "co_recurso": "entrevistas",
     "tp_aba": "nativa",
     "areas": [
       {
         "co_area": "saude-indigena",
-        "nu_ordem": 11,
+        "nu_ordem": 12,
         "co_view": "conduzir-entrevistas",
         "ds_icone": "clipboard-pen-line"
       },
       {
         "co_area": "sede",
-        "nu_ordem": 11,
+        "nu_ordem": 12,
         "co_view": "conduzir-entrevistas",
         "ds_icone": "clipboard-pen-line"
       },
       {
         "co_area": "projetos",
-        "nu_ordem": 11,
+        "nu_ordem": 12,
         "co_view": "conduzir-entrevistas",
         "ds_icone": "clipboard-pen-line"
       }
@@ -322,26 +339,26 @@
     "co_aba": "classificacao",
     "no_aba": "Classificação",
     "ds_icone": "list-ordered",
-    "nu_ordem": 12,
+    "nu_ordem": 13,
     "co_view": "classificacao",
     "co_recurso": "classificacao",
     "tp_aba": "nativa",
     "areas": [
       {
         "co_area": "saude-indigena",
-        "nu_ordem": 12,
+        "nu_ordem": 13,
         "co_view": "classificacao",
         "ds_icone": "list-ordered"
       },
       {
         "co_area": "sede",
-        "nu_ordem": 12,
+        "nu_ordem": 13,
         "co_view": "classificacao",
         "ds_icone": "list-ordered"
       },
       {
         "co_area": "projetos",
-        "nu_ordem": 12,
+        "nu_ordem": 13,
         "co_view": "classificacao",
         "ds_icone": "list-ordered"
       }
@@ -351,26 +368,26 @@
     "co_aba": "aprovados",
     "no_aba": "Lista de aprovados",
     "ds_icone": "user-round-check",
-    "nu_ordem": 13,
+    "nu_ordem": 14,
     "co_view": "approved",
     "co_recurso": "aprovados",
     "tp_aba": "nativa",
     "areas": [
       {
         "co_area": "saude-indigena",
-        "nu_ordem": 13,
+        "nu_ordem": 14,
         "co_view": "approved",
         "ds_icone": "user-round-check"
       },
       {
         "co_area": "sede",
-        "nu_ordem": 13,
+        "nu_ordem": 14,
         "co_view": "approved",
         "ds_icone": "user-round-check"
       },
       {
         "co_area": "projetos",
-        "nu_ordem": 13,
+        "nu_ordem": 14,
         "co_view": "approved",
         "ds_icone": "user-round-check"
       }
@@ -380,26 +397,26 @@
     "co_aba": "paineis-de-dados",
     "no_aba": "Painéis",
     "ds_icone": "layout-dashboard",
-    "nu_ordem": 14,
+    "nu_ordem": 15,
     "co_view": "paineis-de-dados",
     "co_recurso": "paineis_dados",
     "tp_aba": "nativa",
     "areas": [
       {
         "co_area": "saude-indigena",
-        "nu_ordem": 14,
+        "nu_ordem": 15,
         "co_view": "paineis-de-dados",
         "ds_icone": "layout-dashboard"
       },
       {
         "co_area": "sede",
-        "nu_ordem": 14,
+        "nu_ordem": 15,
         "co_view": "paineis-de-dados",
         "ds_icone": "layout-dashboard"
       },
       {
         "co_area": "projetos",
-        "nu_ordem": 14,
+        "nu_ordem": 15,
         "co_view": "paineis-de-dados",
         "ds_icone": "layout-dashboard"
       }

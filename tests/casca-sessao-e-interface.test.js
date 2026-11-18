@@ -789,7 +789,8 @@ bloco("catalogo-de-abas", () => {
         rotulo: "Triagem",
         icone: "list-checks",
         view: "pre-classificacao",
-        ordem: 8,
+        // 8 até o Mapa entrar na ordem 2 (20261118160000).
+        ordem: 9,
         recurso: "avaliacao_documental",
       });
     });
@@ -814,6 +815,7 @@ bloco("catalogo-de-abas", () => {
     it("toda view do catálogo é uma tela que o front desenha", () => {
       const telas = new Set([
         "dashboard",
+        "mapa",
         "nucleo",
         "calendario",
         "approved",
@@ -3186,6 +3188,8 @@ bloco("menu-lateral", () => {
           areas: [area],
         });
         const blocos = blocosDaArea(arvore[0].itens);
+        // O Mapa é aba só da Saúde Indígena, logo depois da Visão geral.
+        const mapa = area === "saude-indigena" ? ["Mapa"] : [];
         expect(
           blocos.map((bloco) => [
             bloco.rotulo,
@@ -3196,6 +3200,7 @@ bloco("menu-lateral", () => {
             "Acompanhar",
             [
               "Visão geral",
+              ...mapa,
               "Painel das análises",
               "Painel de recursos",
               "Painel de entrevistas",
@@ -5294,6 +5299,57 @@ bloco("rotas", () => {
       });
     });
 
+    it("o Mapa: o DSEI aberto é um filtro que mora no caminho", () => {
+      expect(caminhoDoDestino({ view: "mapa", area: "saude-indigena" })).toBe(
+        "/saude-indigena/mapa",
+      );
+      expect(
+        caminhoDoDestino({
+          view: "mapa",
+          area: "saude-indigena",
+          filtros: "dsei=yanomami",
+        }),
+      ).toBe("/saude-indigena/mapa/yanomami");
+      expect(
+        caminhoDoDestino({
+          view: "mapa",
+          area: "saude-indigena",
+          filtros: "outro=1&dsei=alto-rio-negro",
+          visao: "x",
+        }),
+      ).toBe("/saude-indigena/mapa/alto-rio-negro?visao=x&outro=1");
+      // Pedaço inválido não vira caminho (e sai da busca).
+      expect(
+        caminhoDoDestino({
+          view: "mapa",
+          area: "saude-indigena",
+          filtros: "dsei=a%2Fb",
+        }),
+      ).toBe("/saude-indigena/mapa");
+      expect(destinoDoCaminho("/saude-indigena/mapa/yanomami")).toEqual({
+        view: "mapa",
+        area: "saude-indigena",
+        filtros: "dsei=yanomami",
+      });
+      // O do caminho vale; o da busca, não.
+      expect(
+        destinoDoCaminho("/saude-indigena/mapa/yanomami", "?dsei=xingu&b=2"),
+      ).toEqual({
+        view: "mapa",
+        area: "saude-indigena",
+        filtros: "b=2&dsei=yanomami",
+      });
+      expect(destinoDoCaminho("/saude-indigena/mapa", "?dsei=xingu")).toEqual({
+        view: "mapa",
+        area: "saude-indigena",
+      });
+      expect(destinoDoCaminho("/saude-indigena/mapa/yanomami/x")).toBeNull();
+      // Tela sem edital nem campo no caminho continua sem terceiro pedaço.
+      expect(
+        destinoDoCaminho("/saude-indigena/visao-geral/yanomami"),
+      ).toBeNull();
+    });
+
     it("todas as telas vão e voltam, em todas as áreas", () => {
       for (const { id: area } of AREAS_DO_SISTEMA)
         for (const { view, editalObrigatorio } of TELAS_DAS_AREAS) {
@@ -5801,7 +5857,8 @@ bloco("selecao-do-painel", () => {
         view: "selecao",
         recurso: "selecao",
         icone: "funnel",
-        ordem: 5,
+        // 5 até o Mapa entrar na ordem 2 (20261118160000).
+        ordem: 6,
         beta: true,
       });
       expect(NOMES_DE_ICONES).toContain("funnel");

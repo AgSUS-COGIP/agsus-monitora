@@ -86,13 +86,16 @@ export function destinoDaTela(pedida: unknown): DestinoDaTela {
   O que pode o perfil, tela a tela, e o aviso de quem não pode. A ordem e os
   textos são os de sempre (o `navigate` do legado).
 */
+const DA_VISAO_GERAL = [
+  (perfil: Perfil) => permissaoLegada(perfil, "ind"),
+  "Sem permissão para Saúde Indígena.",
+] as const;
 const BLOQUEIOS: Readonly<
   Record<string, readonly [(perfil: Perfil) => unknown, string]>
 > = Object.freeze({
-  dashboard: [
-    (perfil) => permissaoLegada(perfil, "ind"),
-    "Sem permissão para Saúde Indígena.",
-  ],
+  dashboard: DA_VISAO_GERAL,
+  // O Mapa (Saúde Indígena) abre com a permissão da Visão geral.
+  mapa: DA_VISAO_GERAL,
   nucleo: [
     (perfil) => permissaoLegada(perfil, "cores"),
     "Sem permissão para Editais.",

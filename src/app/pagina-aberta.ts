@@ -15,7 +15,9 @@ import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.ts";
     as usa (src/lib/navegacao/telas-com-linhas.ts); sem pedido, a carga não as lê
     (src/app/carga.ts);
   - a Visão geral sabe se está aberta (`definirAberta`): fechada, não pede o
-    acompanhamento da área; ao voltar, pede o que ficou para trás.
+    acompanhamento da área; ao voltar, pede o que ficou para trás. O Mapa
+    (Saúde Indígena) lê o mesmo estado, e com ele aberto o estado também
+    calcula e pede (`definirLidaPeloMapa`).
 
   Acompanha a navegação (src/app/navegacao.ts): `abertura` abriu uma página;
   `aviso` quer dizer que no lugar dela ficou um aviso (desligada, manutenção,
@@ -29,7 +31,10 @@ export interface DependenciasDaPaginaAberta {
     assinar: (ouvinte: (evento: EventoDaNavegacao) => void) => () => void;
   };
   pedirLinhas?: () => () => void;
-  visaoGeral?: { definirAberta: (aberta: boolean) => void };
+  visaoGeral?: {
+    definirAberta: (aberta: boolean) => void;
+    definirLidaPeloMapa?: (lida: boolean) => void;
+  };
 }
 
 /** Liga a página aberta ao que se carrega. Devolve o cancelamento. */
@@ -47,6 +52,7 @@ export function acompanharPaginaAberta({
       devolverLinhas = null;
     }
     visaoGeral.definirAberta(view === "dashboard");
+    visaoGeral.definirLidaPeloMapa?.(view === "mapa");
   }
 
   const parar = navegacao.assinar((evento) => {

@@ -3243,7 +3243,8 @@ bloco("entrevistas-do-painel", () => {
         view: "conduzir-entrevistas",
         recurso: "entrevistas",
         icone: "clipboard-pen-line",
-        ordem: 11,
+        // 11 e 4 até o Mapa entrar na ordem 2 (20261118160000).
+        ordem: 12,
         beta: true,
       });
       expect(NOMES_DE_ICONES).toContain("clipboard-pen-line");
@@ -3255,10 +3256,10 @@ bloco("entrevistas-do-painel", () => {
         view: "entrevistas",
         recurso: "entrevistas",
         icone: "messages-square",
-        ordem: 4,
+        ordem: 5,
         beta: true,
       });
-      expect(ABAS_DO_MENU.find((aba) => aba.id === "recursos").ordem).toBe(3);
+      expect(ABAS_DO_MENU.find((aba) => aba.id === "recursos").ordem).toBe(4);
       expect(NOMES_DE_ICONES).toContain("messages-square");
       expect(RESOURCES).toContainEqual(["entrevistas", "Entrevistas"]);
     });

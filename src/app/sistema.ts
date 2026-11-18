@@ -159,7 +159,7 @@ function sairDoPainelExterno() {
 /*
   Busca global (Ctrl+K, src/componentes/busca-global/): a linha escolhida fica
   à vista na Visão geral, que troca o recorte pela unidade e pelo edital dela
-  (sem DSEI aberto) e destaca a linha. Linha de outra área do usuário: a área
+  e destaca a linha. Linha de outra área do usuário: a área
   troca junto (a Visão geral recorta pela área atual), e volta se a navegação
   for recusada.
 */
