@@ -6218,7 +6218,7 @@ bloco("modulos/visao-geral", async () => {
       contratados: 4,
       vagas_ociosas: 6,
       inscritos: 80,
-      // Crítico por atraso (etapa chegando não faz crítico).
+      // O atraso não cria crítico; a marcação vem da RPC simulada abaixo.
       data_fim: "2026-09-28",
       cronograma_automatico: true,
       cronograma_dias_para_proxima: 2,
@@ -6312,7 +6312,22 @@ bloco("modulos/visao-geral", async () => {
   async function montar({
     valores = {},
     comPerfil = false,
-    supabase = null,
+    supabase = {
+      rpc: vi.fn(async (nome) => ({
+        data:
+          nome === "listar_editais_criticos_manuais"
+            ? [
+                {
+                  monitoramento_id: 1,
+                  motivo: "Cronograma suspenso pela diretoria",
+                },
+              ]
+            : nome === "listar_acompanhamento_da_visao_geral_se_mudou"
+              ? {}
+              : null,
+        error: null,
+      })),
+    },
     comemoracoes = false,
     carregar = true,
     carregadorDeMunicipios,
@@ -6397,6 +6412,7 @@ bloco("modulos/visao-geral", async () => {
           kpi_contratados_label: "Contratações de Vagas Imediatas + CR",
         },
       });
+      await esperar();
       const chaves = [
         ...secao.querySelectorAll(".visao-geral-kpis [data-kpi]"),
       ].map((k) => k.dataset.kpi);
@@ -6423,7 +6439,7 @@ bloco("modulos/visao-geral", async () => {
       );
     });
 
-    it("o acompanhamento da área chega uma vez por carga: parado e pós-resultado", async () => {
+    it("o acompanhamento da área chega uma vez por carga: marcações e pós-resultado", async () => {
       const supabase = {
         rpc: vi.fn(async (nome) =>
           nome === "listar_acompanhamento_da_visao_geral_se_mudou"
@@ -6455,7 +6471,16 @@ bloco("modulos/visao-geral", async () => {
                 },
                 error: null,
               }
-            : { data: null, error: null },
+            : {
+                data:
+                  nome === "listar_editais_criticos_manuais"
+                    ? [1, 2].map((id) => ({
+                        monitoramento_id: id,
+                        motivo: "Cronograma suspenso pela diretoria",
+                      }))
+                    : null,
+                error: null,
+              },
         ),
       };
       await montar({ supabase });
@@ -6470,7 +6495,7 @@ bloco("modulos/visao-geral", async () => {
           { p_area: "saude-indigena", p_versao: null },
         ],
       ]);
-      // 11/2025: sem etapa em curso desde 11/09 → parado há 20 dias.
+      // Os dois editais foram marcados manualmente; datas não criam críticos.
       expect(criticos().textContent).toContain("2 editais");
       expect(
         secao.querySelector(".visao-geral-pede-acao").textContent,
@@ -6557,7 +6582,7 @@ bloco("modulos/visao-geral", async () => {
       };
       await montar({ supabase });
       await esperar();
-      expect(criticos().textContent).toContain("1 edital");
+      expect(criticos()).toBeNull();
       expect(aviso).toHaveBeenCalled();
       aviso.mockRestore();
     });
@@ -6592,7 +6617,7 @@ bloco("modulos/visao-geral", async () => {
   });
 
   describe("filtros e recorte", () => {
-    it("Críticos (em Pede ação) recorta pelos críticos calculados e tira no segundo clique", async () => {
+    it("Críticos (em Pede ação) recorta pelos marcados manualmente e tira no segundo clique", async () => {
       await montar();
       const alvo = criticos();
       await clicar(alvo);

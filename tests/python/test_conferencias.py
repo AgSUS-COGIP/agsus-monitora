@@ -451,6 +451,52 @@ class Classificacao(unittest.TestCase):
             [{"referencia": "aj1", "tipo": "ajuste_recurso"}],
         )
 
+    def test_vinculo_da_vaga_com_o_quadro_vem_antes_das_palavras(self):
+        # Nome cortado ("Enfermeiro") com o cargo em duas lotações: pelas palavras, nenhuma vaga teria linha.
+        candidatas = [
+            {"id": "q1", "cargo": "Enfermeiro", "lotacao": "Polo Alfa"},
+            {"id": "q2", "cargo": "Enfermeiro", "lotacao": "Polo Beta"},
+        ]
+        saiu = "A linha escolhida (Enfermeiro — Polo Gama) saiu do quadro em 18/11/2026."
+        dados = {
+            "listas": [], "ajustes": [],
+            "quadros": [{**c, "edital": E1} for c in candidatas],
+            "vinculos": [
+                {"edital": E1, "vaga": "190001", "situacao": "CONFIRMADO", "origem": "MANUAL", "quadro": "q2"},
+                {"edital": E1, "vaga": "190002", "situacao": "AMBIGUO", "origem": "AUTOMATICO", "candidatas": candidatas},
+                {"edital": E1, "vaga": "190003", "situacao": "AUSENTE", "origem": "MANUAL", "pendencia": None},
+                {"edital": E1, "vaga": "190004", "situacao": "AUSENTE", "origem": "MANUAL", "pendencia": saiu},
+                {"edital": E1, "vaga": "190005", "situacao": "AUSENTE", "origem": "AUTOMATICO", "pendencia": None},
+            ],
+        }  # fmt: skip
+        editais = {e["id"]: e for e in CONTEXTO["editais"]}
+        analises = regras.AnalisesDaClassificacao()
+        linhas = [
+            {"edital": E1, "area": "saude-indigena", "atualizado": None, "vaga": v, "nome_vaga": "Enfermeiro"}
+            for v in ("190001", "190002", "190003", "190004", "190005")
+        ]
+        # Sem vínculo (vaga nova, antes da rodada diária): as palavras de sempre acham a linha.
+        linhas.append({"edital": E1, "area": "saude-indigena", "atualizado": None, "vaga": "190006",
+                       "nome_vaga": "Enfermeiro - Polo Alfa"})  # fmt: skip
+        list(analises.paginas([linhas]))
+        ac = regras.Acumulador(editais)
+        regras.conferir_classificacao(dados, ac, analises, editais)
+        avisos = _avisos(ac)
+        sem = avisos[("CLASSIFICACAO_VAGA_SEM_QUADRO", f"edital:{E1}")]
+        self.assertEqual(sem["exemplos"], ["190004", "190005"])
+        self.assertEqual(
+            sem["casos"],
+            [{"referencia": "190004", "tipo": "vaga", "detalhe": {"linha_saiu_do_quadro": True}},
+             {"referencia": "190005", "tipo": "vaga"}],
+        )  # fmt: skip
+        ambigua = avisos[("CLASSIFICACAO_VAGA_QUADRO_AMBIGUO", f"edital:{E1}")]
+        self.assertEqual(ambigua["exemplos"], ["190002"])
+        self.assertEqual(ambigua["casos"], [{"referencia": "190002", "tipo": "vaga", "detalhe": {"candidatas": 2}}])
+        self.assertEqual(
+            regras.resumir({**ambigua, "quantidade": 1, "extra": {}}, "105/2026"),
+            "1 vaga das análises com mais de uma linha possível no quadro de vagas no edital 105/2026.",
+        )
+
     def test_convocacao_gerada_com_regra_anterior_a_vigente(self):
         e3 = "00000000-0000-4000-a000-0000000000e3"
         editais = {
@@ -521,7 +567,8 @@ class Classificacao(unittest.TestCase):
         ]]))  # fmt: skip
         editais = {E1: {"ativo": True}, E2: {"ativo": False}}
         self.assertEqual(
-            regras.vagas_sem_quadro(analises, [], editais), [{"edital": E1, "area": "si", "vaga": "sem-codigo"}]
+            regras.vagas_sem_quadro(analises, [], editais),
+            [{"edital": E1, "area": "si", "vaga": "sem-codigo", "situacao": "AUSENTE"}],
         )
 
     def test_vaga_sem_quadro_fora_de_edital_concluido_ou_cancelado(self):

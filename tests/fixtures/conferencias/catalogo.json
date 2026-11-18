@@ -66,6 +66,11 @@
       "gravidade": "ATENCAO",
       "titulo": "Vaga sem linha no quadro de vagas"
     },
+    "CLASSIFICACAO_VAGA_QUADRO_AMBIGUO": {
+      "modulo": "classificacao",
+      "gravidade": "ATENCAO",
+      "titulo": "Vaga com mais de uma linha possível no quadro"
+    },
     "CLASSIFICACAO_AJUSTE_APOS_LISTA": {
       "modulo": "classificacao",
       "gravidade": "ATENCAO",

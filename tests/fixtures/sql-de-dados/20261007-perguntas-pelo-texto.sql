@@ -37,7 +37,7 @@
   idempotente: só mexe no que ainda está diferente e valida cada modelo com
   private."FC_VALIDAR_REGRA_ANALISE". Os JSON de
   tests/fixtures/avaliacao-documental/modelos/ são o resultado (conferido em
-  tests/avaliacao-e-recursos.test.js (bloco modelos-dos-editais-recentes)).
+  tests/modelos-dos-editais-recentes.test.js).
 */
 begin;
 

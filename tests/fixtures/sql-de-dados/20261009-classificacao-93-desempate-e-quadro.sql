@@ -31,7 +31,7 @@
   só muda se ainda estiver sem a divisão. Ensaio (begin … rollback) com o
   mesmo conteúdo: supabase/ensaios/20261009-classificacao-93-desempate-e-quadro.sql.
   Depois de aplicar: Classificação › 93/2026 › Avaliação documental › Gerar.
-  Testes: tests/classificacao.test.js (bloco classificacao-93-desempate) (lê o $patch$ e o quadro daqui).
+  Testes: tests/classificacao-93-desempate.test.js (lê o $patch$ e o quadro daqui).
 */
 begin;
 

@@ -226,6 +226,30 @@ import {
   comSequencia,
   marcarEtapas,
 } from "../src/lib/cronograma/sequencia-do-cronograma.ts";
+import {
+  type Banco as Banco__DoVinculo,
+  bancoDeHoje as bancoDeHoje__2,
+  criarAnalise,
+  criarEdital,
+  criarVagaDaSelecao,
+  EDITAL,
+  EDITAL_CANCELADO,
+  EDITAL_SEM_CODIGO,
+  entrar as entrar__3,
+  gravarQuadro,
+  migration,
+  vinculos,
+} from "./apoio/banco-do-vinculo-do-quadro.ts";
+import {
+  filaDoQuadro,
+  linhasParaEscolher,
+  origemDoVinculo,
+  pendentesDaFila,
+  rotuloDaLinha,
+  semLinhaConfirmado,
+  separarFila,
+  type VinculoDaVaga,
+} from "../src/lib/editais/vinculos-do-quadro.ts";
 
 bloco("admissao-e-ciclo-na-visao-geral", () => {
   /*
@@ -5581,6 +5605,698 @@ bloco("sequencia-do-cronograma", () => {
         "A etapa 11 (recurso) termina em 25/02/2027, depois da etapa 12 (resultado final, 21/01/2027).",
       );
       expect(comSequencia(analise, etapas).avisos).toEqual(analise.avisos);
+    });
+  });
+});
+
+bloco("vinculo-do-quadro-no-banco", () => {
+  type Banco = Banco__DoVinculo;
+  const bancoDeHoje = bancoDeHoje__2;
+  const entrar = entrar__3;
+  /*
+  O vínculo da vaga com a linha do quadro (migration 20261118120000, aplicada em 18/11/2026)
+  num Postgres de verdade (PGlite): o banco de antes (corpos copiados do retrato de produção) com
+  a migration aplicada, as RPCs da fila e quem consulta o vínculo. A guarda, o ensaio e o
+  rollback saíram com a migration (regra do #712).
+*/
+
+  const EDITAL_EXTERNO = "aaaaaaaa-0000-0000-0000-000000000004";
+
+  /*
+  O edital 105/2026: o mesmo cargo em duas lotações (nome cortado), um cargo com "40h" que o
+  nome não traz, a lotação que contradiz a linha e uma vaga só da Empregare, pelo "CARGO N".
+*/
+  const QUADRO = [
+    { cargo: "Enfermeiro", lotacao: "Polo Base Alfa" },
+    { cargo: "Enfermeiro", lotacao: "Polo Base Beta" },
+    { cargo: "Médico", lotacao: "Polo Base Alfa" },
+    { cargo: "Cirurgião Dentista 40h", lotacao: "Polo Base Gama" },
+    { cargo: "CARGO 7 - Técnico de Enfermagem", lotacao: "Polo Base Alfa" },
+  ];
+
+  type Linhas = { l1: string; l2: string; l3: string; l4: string; l5: string };
+  let linhas: Linhas;
+
+  async function dados(db: Banco): Promise<void> {
+    await criarEdital(db, EDITAL, "105/2026");
+    await criarEdital(db, EDITAL_SEM_CODIGO, "99/2026");
+    await criarEdital(db, EDITAL_CANCELADO, "88/2026", "Cancelado");
+    await criarEdital(db, EDITAL_EXTERNO, "77/2026");
+    const [l1, l2, l3, l4, l5] = await gravarQuadro(db, EDITAL, QUADRO);
+    linhas = { l1: l1!, l2: l2!, l3: l3!, l4: l4!, l5: l5! };
+    for (const e of [EDITAL_SEM_CODIGO, EDITAL_CANCELADO, EDITAL_EXTERNO])
+      await gravarQuadro(db, e, [{ cargo: "Enfermeiro" }]);
+    await criarVagaDaSelecao(
+      db,
+      EDITAL_EXTERNO,
+      null,
+      "Enfermeiro (banca externa)",
+    );
+
+    await criarAnalise(db, "105/2026", "1001", "Enfermeiro - Polo Base Alfa");
+    await criarAnalise(db, "105/2026", "1002", "Enfermeiro");
+    await criarAnalise(db, "105/2026", "1003", "Médico");
+    await criarAnalise(
+      db,
+      "105/2026",
+      "1004",
+      "Cirurgião Dentista - Polo Base Gama",
+    );
+    await criarAnalise(db, "105/2026", "1005", "Médico - Polo Base Zeta");
+    await db.query(
+      `insert into public."TB_EMPREGARE_VAGA" ("CO_VAGA", "CO_MONITORAMENTO", "NO_ARQUIVO")
+     values ('2001', $1, 'Candidatos da vaga 2001 - CARGO 07 - TEC ENF em Excel')`,
+      [EDITAL],
+    );
+  }
+
+  const bancoAntesComDados = moldeDeBanco(async () => {
+    const db = await bancoDeHoje();
+    await dados(db);
+    return db;
+  });
+  const bancoMigrado = moldeDeBanco(async () => {
+    const db = await bancoAntesComDados();
+    await db.exec(migration());
+    return db;
+  });
+
+  async function erroDe(p: Promise<unknown>): Promise<string> {
+    try {
+      await p;
+    } catch (e) {
+      return String((e as { code?: string }).code ?? e);
+    }
+    return "sem erro";
+  }
+
+  const gravar = (
+    db: Banco,
+    vaga: string,
+    acao: string,
+    quadro: string | null = null,
+  ) =>
+    db.query(`select public.gravar_vinculo_do_quadro($1, $2, $3, $4)`, [
+      EDITAL,
+      vaga,
+      acao,
+      quadro,
+    ]);
+
+  describe("a migration aplicada", () => {
+    it("agenda a rodada diária e a põe no catálogo das tarefas", async () => {
+      const db = await bancoMigrado();
+      const { rows } = await db.query<{ jobname: string; command: string }>(
+        `select jobname, command from cron.job`,
+      );
+      expect(rows).toEqual([
+        expect.objectContaining({
+          jobname: "agsus_vinculos_do_quadro",
+          command: expect.stringContaining(
+            `FC_PREENCHER_TODOS_VINCULOS_QUADRO`,
+          ),
+        }),
+      ]);
+      const t = await db.query(
+        `select 1 from public."TB_TAREFA_AGENDADA" where "NO_TAREFA" = 'agsus_vinculos_do_quadro'`,
+      );
+      expect(t.rows).toHaveLength(1);
+    });
+  });
+
+  describe("o preenchimento automático", () => {
+    it("separa confirmadas, ambíguas (com as candidatas) e ausentes", async () => {
+      const db = await bancoMigrado();
+      const { l1, l2, l3, l5 } = linhas;
+      expect(await vinculos(db, EDITAL)).toEqual([
+        {
+          vaga: "1001",
+          situacao: "CONFIRMADO",
+          origem: "AUTOMATICO",
+          regra: "NOME",
+          quadro: l1,
+          candidatas: [],
+          pendencia: null,
+        },
+        {
+          vaga: "1002",
+          situacao: "AMBIGUO",
+          origem: "AUTOMATICO",
+          regra: "NOME",
+          quadro: null,
+          candidatas: [l1, l2],
+          pendencia: null,
+        },
+        {
+          vaga: "1003",
+          situacao: "CONFIRMADO",
+          origem: "AUTOMATICO",
+          regra: "NOME",
+          quadro: l3,
+          candidatas: [],
+          pendencia: null,
+        },
+        // "Cirurgião Dentista 40h": o cargo do quadro não está no nome.
+        {
+          vaga: "1004",
+          situacao: "AUSENTE",
+          origem: "AUTOMATICO",
+          regra: "NOME",
+          quadro: null,
+          candidatas: [],
+          pendencia: null,
+        },
+        // A lotação do nome contradiz a única linha do cargo: candidata, não vínculo.
+        {
+          vaga: "1005",
+          situacao: "AMBIGUO",
+          origem: "AUTOMATICO",
+          regra: "NOME",
+          quadro: null,
+          candidatas: [l3],
+          pendencia: null,
+        },
+        // Só na Empregare: o "CARGO 07" do título.
+        {
+          vaga: "2001",
+          situacao: "CONFIRMADO",
+          origem: "AUTOMATICO",
+          regra: "TITULO",
+          quadro: l5,
+          candidatas: [],
+          pendencia: null,
+        },
+      ]);
+    });
+
+    it("não inventa vaga nos editais sem código", async () => {
+      const db = await bancoMigrado();
+      for (const e of [EDITAL_SEM_CODIGO, EDITAL_CANCELADO, EDITAL_EXTERNO])
+        expect(await vinculos(db, e)).toEqual([]);
+    });
+
+    it("confirma exatamente o que FC_QUADRO_DA_VAGA devolve (casos guardados do banco)", async () => {
+      const db = await bancoMigrado();
+      const casos = JSON.parse(
+        readFileSync(
+          "tests/fixtures/quadro-da-vaga/casos-do-banco.json",
+          "utf8",
+        ),
+      ) as {
+        quadros: { id: string; cargo: string; lotacao: string | null }[];
+        casos: [string, string | null][];
+      };
+      const edital = "bbbbbbbb-0000-0000-0000-000000000001";
+      await criarEdital(db, edital, "500/2026");
+      for (const [i, q] of casos.quadros.entries())
+        await db.query(
+          `insert into public."TB_QUADRO_VAGA_EDITAL" ("CO_QUADRO_VAGA", "CO_MONITORAMENTO", "NU_ORDEM", "NO_CARGO", "NO_LOTACAO")
+         values ($1, $2, $3, $4, $5)`,
+          [q.id, edital, i + 1, q.cargo, q.lotacao],
+        );
+      for (const [nome, esperado] of casos.casos) {
+        const { rows } = await db.query<{
+          hoje: string | null;
+          v: { situacao: string; quadro: string | null; candidatas: string[] };
+        }>(
+          `select private."FC_QUADRO_DA_VAGA"($1, $2) as hoje, private."FC_CANDIDATAS_DO_QUADRO"($1, $2) as v`,
+          [edital, nome],
+        );
+        const { hoje, v } = rows[0]!;
+        expect(hoje, nome).toBe(esperado);
+        expect(v.quadro, nome).toBe(esperado);
+        expect(v.situacao === "CONFIRMADO", nome).toBe(esperado !== null);
+        if (v.situacao === "AMBIGUO")
+          expect(v.candidatas.length, nome).toBeGreaterThan(0);
+      }
+    });
+
+    it("a vaga só da Seleção casa pelo título da planilha (NO_CARGO, não o código)", async () => {
+      const db = await bancoMigrado();
+      await entrar(db, 2);
+      await criarVagaDaSelecao(
+        db,
+        EDITAL,
+        "3001",
+        "Médico - Polo Base Alfa - 1 vaga",
+      );
+      await db.query(`select public.atualizar_vinculos_do_quadro($1)`, [
+        EDITAL,
+      ]);
+      const { rows } = await db.query<{ nome: string }>(
+        `select "NO_VAGA" as nome from public."TA_VAGA_QUADRO_EDITAL" where "CO_VAGA" = '3001'`,
+      );
+      expect(rows).toEqual([{ nome: "Médico - Polo Base Alfa - 1 vaga" }]);
+      expect(
+        (await vinculos(db, EDITAL)).find((v) => v.vaga === "3001"),
+      ).toMatchObject({
+        situacao: "CONFIRMADO",
+        regra: "NOME",
+        quadro: linhas.l3,
+      });
+    });
+
+    it("a vaga que sai do edital sai do vínculo, com histórico", async () => {
+      const db = await bancoMigrado();
+      await entrar(db, 2);
+      await db.query(
+        `update public."TB_ANALISE_CURRICULAR" set ativo = false where codigo_vaga = '1003'`,
+      );
+      await db.query(`select public.atualizar_vinculos_do_quadro($1)`, [
+        EDITAL,
+      ]);
+      expect((await vinculos(db, EDITAL)).map((v) => v.vaga)).toEqual([
+        "1001",
+        "1002",
+        "1004",
+        "1005",
+        "2001",
+      ]);
+      const h = await db.query(
+        `select 1 from public."TH_VAGA_QUADRO_EDITAL" where "CO_VAGA" = '1003' and "TP_EVENTO" = 'REMOCAO'`,
+      );
+      expect(h.rows).toHaveLength(1);
+    });
+
+    it("atualizar pela tela mantém o achado pelo título (que fica para a rodada diária)", async () => {
+      const db = await bancoMigrado();
+      await entrar(db, 2);
+      await db.query(`select public.atualizar_vinculos_do_quadro($1)`, [
+        EDITAL,
+      ]);
+      expect(
+        (await vinculos(db, EDITAL)).find((v) => v.vaga === "2001"),
+      ).toMatchObject({ situacao: "CONFIRMADO", regra: "TITULO" });
+    });
+  });
+
+  describe("a fila: gravar_vinculo_do_quadro", () => {
+    it("só Núcleo ou Calendário com edição", async () => {
+      const db = await bancoMigrado();
+      await entrar(db, 1);
+      expect(await erroDe(gravar(db, "1002", "CONFIRMAR", linhas.l2))).toBe(
+        "42501",
+      );
+    });
+
+    it("recusa linha de outro edital, vaga que não é do edital e ação desconhecida", async () => {
+      const db = await bancoMigrado();
+      await entrar(db, 2);
+      const outra = await db.query<{ id: string }>(
+        `select "CO_QUADRO_VAGA" as id from public."TB_QUADRO_VAGA_EDITAL" where "CO_MONITORAMENTO" = $1`,
+        [EDITAL_EXTERNO],
+      );
+      expect(
+        await erroDe(gravar(db, "1002", "CONFIRMAR", outra.rows[0]!.id)),
+      ).toBe("22023");
+      expect(await erroDe(gravar(db, "9999", "SEM_LINHA"))).toBe("22023");
+      expect(await erroDe(gravar(db, "1002", "APAGAR"))).toBe("22023");
+    });
+
+    it("confirmar, marcar sem linha e devolver à regra, com quem e quando", async () => {
+      const db = await bancoMigrado();
+      await entrar(db, 2);
+      await gravar(db, "1002", "CONFIRMAR", linhas.l2);
+      await gravar(db, "1004", "SEM_LINHA");
+      let v = await vinculos(db, EDITAL);
+      expect(v.find((x) => x.vaga === "1002")).toMatchObject({
+        situacao: "CONFIRMADO",
+        origem: "MANUAL",
+        quadro: linhas.l2,
+      });
+      expect(v.find((x) => x.vaga === "1004")).toMatchObject({
+        situacao: "AUSENTE",
+        origem: "MANUAL",
+        pendencia: null,
+      });
+
+      const { rows } = await db.query<{
+        obter: { vinculos: Record<string, unknown>[]; pode_editar: boolean };
+      }>(`select public.obter_quadro_de_vagas($1)::jsonb as obter`, [EDITAL]);
+      expect(rows[0]!.obter.pode_editar).toBe(true);
+      expect(
+        rows[0]!.obter.vinculos.find((x) => x["vaga"] === "1002"),
+      ).toMatchObject({
+        situacao: "CONFIRMADO",
+        origem: "MANUAL",
+        cargo: "Enfermeiro",
+        cargo_quadro: "Enfermeiro",
+        lotacao_quadro: "Polo Base Beta",
+        confirmado_por: "Pessoa da Equipe",
+      });
+
+      // A rodada automática não mexe no que a equipe decidiu.
+      await db.query(`select private."FC_PREENCHER_TODOS_VINCULOS_QUADRO"()`);
+      v = await vinculos(db, EDITAL);
+      expect(v.find((x) => x.vaga === "1002")).toMatchObject({
+        origem: "MANUAL",
+        quadro: linhas.l2,
+      });
+
+      await gravar(db, "1002", "AUTOMATICO");
+      v = await vinculos(db, EDITAL);
+      expect(v.find((x) => x.vaga === "1002")).toMatchObject({
+        situacao: "AMBIGUO",
+        origem: "AUTOMATICO",
+      });
+      const h = await db.query<{ evento: string; usuario: string | null }>(
+        `select "TP_EVENTO" as evento, "CO_USUARIO"::text as usuario from public."TH_VAGA_QUADRO_EDITAL"
+        where "CO_VAGA" = '1002' order by "SQ_HISTORICO"`,
+      );
+      expect(h.rows.map((r) => r.evento)).toEqual([
+        "PREENCHIMENTO",
+        "CONFIRMACAO",
+        "RETORNO_AUTOMATICO",
+      ]);
+    });
+  });
+
+  describe("a reimportação do quadro", () => {
+    it("passa o vínculo para a linha de mesmo cargo e lotação; o manual cuja linha saiu fica com pendência", async () => {
+      const db = await bancoMigrado();
+      await entrar(db, 2);
+      await gravar(db, "1002", "CONFIRMAR", linhas.l2);
+      await gravar(db, "1004", "CONFIRMAR", linhas.l4);
+      await db.query(`select public.salvar_quadro_de_vagas($1, $2)`, [
+        EDITAL,
+        JSON.stringify({
+          linhas: [
+            { cargo: "ENFERMEIRO", lotacao: "Polo base Alfa." },
+            { cargo: "Enfermeiro", lotacao: "Polo Base Beta" },
+            { cargo: "Médico", lotacao: "Polo Base Alfa" },
+            { cargo: "Odontólogo", lotacao: "Polo Base Gama" },
+            {
+              cargo: "CARGO 7 - Técnico de Enfermagem",
+              lotacao: "Polo Base Alfa",
+            },
+          ],
+        }),
+      ]);
+      const novas = await db.query<{ id: string }>(
+        `select "CO_QUADRO_VAGA" as id from public."TB_QUADRO_VAGA_EDITAL"
+        where "CO_MONITORAMENTO" = $1 and "ST_REGISTRO_ATIVO" = 'S' order by "NU_ORDEM"`,
+        [EDITAL],
+      );
+      const [n1, n2, n3, , n5] = novas.rows.map((r) => r.id);
+      const v = await vinculos(db, EDITAL);
+      expect(v.find((x) => x.vaga === "1001")).toMatchObject({
+        situacao: "CONFIRMADO",
+        origem: "AUTOMATICO",
+        quadro: n1,
+      });
+      expect(v.find((x) => x.vaga === "1002")).toMatchObject({
+        situacao: "CONFIRMADO",
+        origem: "MANUAL",
+        quadro: n2,
+      });
+      expect(v.find((x) => x.vaga === "1003")).toMatchObject({
+        situacao: "CONFIRMADO",
+        quadro: n3,
+      });
+      expect(v.find((x) => x.vaga === "2001")).toMatchObject({
+        situacao: "CONFIRMADO",
+        regra: "TITULO",
+        quadro: n5,
+      });
+      const sumiu = v.find((x) => x.vaga === "1004");
+      expect(sumiu).toMatchObject({
+        situacao: "AUSENTE",
+        origem: "MANUAL",
+        quadro: null,
+      });
+      expect(sumiu?.pendencia).toMatch(
+        /^A linha escolhida \(Cirurgião Dentista 40h — Polo Base Gama\) saiu do quadro em \d\d\/\d\d\/\d{4}\.$/,
+      );
+
+      const h = await db.query<{ vaga: string }>(
+        `select "CO_VAGA" as vaga from public."TH_VAGA_QUADRO_EDITAL" where "TP_EVENTO" = 'REIMPORTACAO' order by 1`,
+      );
+      expect(h.rows.map((r) => r.vaga)).toEqual([
+        "1001",
+        "1002",
+        "1003",
+        "1004",
+        "2001",
+      ]);
+    });
+  });
+
+  describe("quem consulta o vínculo", () => {
+    async function quadroDaClassificacao(
+      db: Banco,
+    ): Promise<Record<string, string | null>> {
+      const { rows } = await db.query<{
+        dados: { candidatos: { vaga: string; quadro: string | null }[] };
+      }>(
+        `select private."FC_DADOS_CLASSIFICACAO_EDITAL"($1, 'saude-indigena')::jsonb as dados`,
+        [EDITAL],
+      );
+      return Object.fromEntries(
+        rows[0]!.dados.candidatos.map((c) => [c.vaga, c.quadro]),
+      );
+    }
+
+    it("a Classificação usa a linha confirmada e respeita o 'sem linha'", async () => {
+      const db = await bancoMigrado();
+      expect(await quadroDaClassificacao(db)).toEqual({
+        "1001": linhas.l1,
+        "1002": null,
+        "1003": linhas.l3,
+        "1004": null,
+        "1005": null,
+      });
+      await entrar(db, 2);
+      await gravar(db, "1002", "CONFIRMAR", linhas.l2);
+      await gravar(db, "1001", "SEM_LINHA");
+      expect(await quadroDaClassificacao(db)).toMatchObject({
+        "1001": null,
+        "1002": linhas.l2,
+        "1003": linhas.l3,
+      });
+    });
+
+    it("a Classificação de hoje e a migrada dão o mesmo quadro sem decisão da equipe", async () => {
+      const antes = await bancoAntesComDados();
+      const depois = await bancoMigrado();
+      const ler = async (db: Banco) =>
+        (
+          await db.query(
+            `select private."FC_DADOS_CLASSIFICACAO_EDITAL"($1, 'saude-indigena')::jsonb -> 'candidatos' as c`,
+            [EDITAL],
+          )
+        ).rows;
+      expect(await ler(depois)).toEqual(await ler(antes));
+    });
+
+    it("a pré-classificação (FC_QUADRO_DA_VAGA_EMPREGARE) consulta o vínculo antes da regra", async () => {
+      const db = await bancoMigrado();
+      // Função sql que devolve uma linha composta: sem linha do quadro, vem uma linha toda nula (como hoje).
+      const linha = async (vaga: string) =>
+        (
+          await db.query<{ id: string | null }>(
+            `select "CO_QUADRO_VAGA" as id from private."FC_QUADRO_DA_VAGA_EMPREGARE"($1, $2)`,
+            [EDITAL, vaga],
+          )
+        ).rows
+          .map((r) => r.id)
+          .filter((id) => id !== null);
+      expect(await linha("1002")).toEqual([]);
+      expect(await linha("2001")).toEqual([linhas.l5]);
+      await entrar(db, 2);
+      await gravar(db, "1002", "CONFIRMAR", linhas.l2);
+      await gravar(db, "2001", "SEM_LINHA");
+      expect(await linha("1002")).toEqual([linhas.l2]);
+      expect(await linha("2001")).toEqual([]);
+    });
+
+    it("a conferência recebe os vínculos com as candidatas", async () => {
+      const db = await bancoMigrado();
+      const { rows } = await db.query<{
+        v: { vaga: string; situacao: string; candidatas: { id: string }[] }[];
+      }>(`select public.conferencia_ler_listas_e_quadros() -> 'vinculos' as v`);
+      const ambigua = rows[0]!.v.find((x) => x.vaga === "1002");
+      expect(ambigua).toMatchObject({ situacao: "AMBIGUO" });
+      expect(ambigua?.candidatas.map((c) => c.id)).toEqual([
+        linhas.l1,
+        linhas.l2,
+      ]);
+    });
+
+    it("o edital sem vaga com código diz por quê", async () => {
+      const db = await bancoMigrado();
+      await entrar(db, 1);
+      const situacao = async (e: string) =>
+        (
+          await db.query<{ s: string }>(
+            `select public.obter_quadro_de_vagas($1)::jsonb ->> 'vagas_do_edital' as s`,
+            [e],
+          )
+        ).rows[0]!.s;
+      expect(await situacao(EDITAL)).toBe("COM_CODIGO");
+      expect(await situacao(EDITAL_CANCELADO)).toBe("NAO_SE_APLICA");
+      expect(await situacao(EDITAL_EXTERNO)).toBe("EXTERNO");
+      expect(await situacao(EDITAL_SEM_CODIGO)).toBe("PENDENTE_INTEGRACAO");
+    });
+  });
+});
+
+bloco("vinculos-do-quadro", () => {
+  const L1 = { id: "l1", cargo: "Enfermeiro", lotacao: "Polo Base Alfa" };
+  const L2 = { id: "l2", cargo: "Enfermeiro", lotacao: "Polo Base Beta" };
+  const L3 = {
+    id: "l3",
+    cargo: "Cirurgião Dentista 40h",
+    lotacao: "Polo Base Vilhena",
+  };
+  const L4 = { id: "l4", cargo: "Médico", lotacao: null };
+
+  const payload = {
+    linhas: [L1, L2, L3, L4, { id: "sem-cargo" }],
+    vagas_do_edital: "COM_CODIGO",
+    pode_editar: true,
+    vinculos: [
+      {
+        vaga: "1003",
+        cargo: "Médico",
+        situacao: "CONFIRMADO",
+        origem: "AUTOMATICO",
+        regra: "NOME",
+        quadro: "l4",
+        cargo_quadro: "Médico",
+      },
+      {
+        vaga: "1002",
+        cargo: "Enfermeiro",
+        situacao: "AMBIGUO",
+        origem: "AUTOMATICO",
+        regra: "NOME",
+        candidatas: [L1, L2],
+      },
+      {
+        vaga: "1004",
+        cargo: "Cirurgião Dentista - Polo Base Vilhena",
+        situacao: "AUSENTE",
+        origem: "AUTOMATICO",
+        regra: "NOME",
+      },
+      {
+        vaga: "1005",
+        cargo: "Agente",
+        situacao: "AUSENTE",
+        origem: "MANUAL",
+        confirmado_por: "Pessoa",
+        confirmado_em: "2026-11-18T10:00:00Z",
+      },
+      {
+        vaga: "1006",
+        cargo: "Enfermeiro - Polo Base Gama",
+        situacao: "AUSENTE",
+        origem: "MANUAL",
+        pendencia:
+          "A linha escolhida (Enfermeiro — Polo Base Gama) saiu do quadro em 18/11/2026.",
+        cargo_quadro: "Enfermeiro",
+        lotacao_quadro: "Polo Base Gama",
+      },
+      {
+        vaga: "2001",
+        cargo: "CARGO 07 - TEC ENF",
+        situacao: "CONFIRMADO",
+        origem: "AUTOMATICO",
+        regra: "TITULO",
+        quadro: "l1",
+      },
+      { vaga: "lixo", situacao: "OUTRA" },
+    ],
+  };
+
+  describe("filaDoQuadro", () => {
+    it("lê o payload e descarta o que não tem forma", () => {
+      const fila = filaDoQuadro(payload);
+      expect(fila.linhas.map((l) => l.id)).toEqual(["l1", "l2", "l3", "l4"]);
+      expect(fila.vinculos.map((v) => v.vaga)).toEqual([
+        "1003",
+        "1002",
+        "1004",
+        "1005",
+        "1006",
+        "2001",
+      ]);
+      expect(fila.podeEditar).toBe(true);
+      expect(fila.vagasDoEdital).toBe("COM_CODIGO");
+      expect(fila.vinculos[1]?.candidatas).toEqual([L1, L2]);
+    });
+
+    it("sem payload ou com o do banco de antes da migration: sem fila e sem edição", () => {
+      expect(filaDoQuadro(null)).toEqual({
+        linhas: [],
+        vinculos: [],
+        vagasDoEdital: null,
+        podeEditar: false,
+      });
+      // O obter_quadro_de_vagas de antes: vínculos sem situação, sem vagas_do_edital.
+      expect(
+        filaDoQuadro({
+          vinculos: [{ vaga: "1", cargo: "Enfermeiro", quadro: null }],
+        }),
+      ).toMatchObject({ vinculos: [], vagasDoEdital: null });
+      expect(filaDoQuadro({ vagas_do_edital: "EXTERNO" }).vagasDoEdital).toBe(
+        "EXTERNO",
+      );
+    });
+  });
+
+  describe("separarFila", () => {
+    it("três situações; nas ausentes, a linha que saiu primeiro e o 'sem linha' confirmado por último", () => {
+      const fila = separarFila(filaDoQuadro(payload).vinculos);
+      expect(fila.confirmadas.map((v) => v.vaga)).toEqual(["2001", "1003"]);
+      expect(fila.ambiguas.map((v) => v.vaga)).toEqual(["1002"]);
+      expect(fila.ausentes.map((v) => v.vaga)).toEqual([
+        "1006",
+        "1004",
+        "1005",
+      ]);
+      expect(pendentesDaFila(fila)).toBe(3);
+    });
+
+    it("'sem linha' confirmado é só o manual sem pendência", () => {
+      const [, , v1004, v1005, v1006] = filaDoQuadro(payload)
+        .vinculos as VinculoDaVaga[];
+      expect([v1004, v1005, v1006].map((v) => semLinhaConfirmado(v!))).toEqual([
+        false,
+        true,
+        false,
+      ]);
+    });
+  });
+
+  describe("linhasParaEscolher", () => {
+    it("candidatas primeiro, na ordem do quadro", () => {
+      const v = filaDoQuadro(payload).vinculos.find((x) => x.vaga === "1002")!;
+      expect(linhasParaEscolher(v, [L4, L3, L2, L1]).map((l) => l.id)).toEqual([
+        "l2",
+        "l1",
+        "l4",
+        "l3",
+      ]);
+    });
+
+    it("sem candidata, a de mais palavras em comum com o nome (o cargo com '40h' que o nome não traz)", () => {
+      const v = filaDoQuadro(payload).vinculos.find((x) => x.vaga === "1004")!;
+      expect(linhasParaEscolher(v, [L1, L2, L3, L4])[0]).toEqual(L3);
+    });
+  });
+
+  describe("textos", () => {
+    it("rótulo da linha e origem", () => {
+      expect(rotuloDaLinha(L1)).toBe("Enfermeiro — Polo Base Alfa");
+      expect(rotuloDaLinha(L4)).toBe("Médico");
+      const [v1003, , , v1005, , v2001] = filaDoQuadro(payload)
+        .vinculos as VinculoDaVaga[];
+      expect([v1003, v1005, v2001].map((v) => origemDoVinculo(v!))).toEqual([
+        "Pela regra do nome",
+        "Pela equipe",
+        "Pelo título da Empregare",
+      ]);
     });
   });
 });

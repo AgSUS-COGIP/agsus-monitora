@@ -113,6 +113,7 @@ topo da minha tela quantos avisos há, **para** corrigir sem procurar.
 | `CLASSIFICACAO_LISTA_FINAL_DESATUALIZADA`     | Classificação | Crítico     | lista FINAL gerada antes da última mudança nas análises do edital           |
 | `CLASSIFICACAO_EMPATE_PENDENTE`               | Classificação | Atenção     | última lista com empate sem desempate registrado                            |
 | `CLASSIFICACAO_VAGA_SEM_QUADRO`               | Classificação | Atenção     | vaga das análises de edital ativo sem linha no quadro (ex.: 101/2026)       |
+| `CLASSIFICACAO_VAGA_QUADRO_AMBIGUO`           | Classificação | Atenção     | vaga com mais de uma linha possível no quadro (vínculo AMBIGUO)             |
 | `CLASSIFICACAO_AJUSTE_APOS_LISTA`             | Classificação | Atenção     | ajuste de recurso aprovado depois da última lista do mesmo tipo             |
 | `CLASSIFICACAO_CONVOCACAO_REGRA_ANTERIOR`     | Classificação | Atenção     | a convocação vigente foi gerada com versão da regra anterior à vigente      |
 | `APROVADOS_CONTRATADO_DUPLICADO`              | Aprovados     | Crítico     | a mesma pessoa com duas matrículas Contratado no mesmo edital               |

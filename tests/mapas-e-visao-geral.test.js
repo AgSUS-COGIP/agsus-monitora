@@ -119,7 +119,6 @@ import {
 import {
   diaDoCalendario,
   gravidade,
-  LIMITES_DO_CRITICO,
   motivosDeAtencao,
   temEtapaEmCurso,
   ultimaMudancaDeEtapa,
@@ -1411,256 +1410,90 @@ bloco("cor-da-terra-indigena", () => {
 });
 
 bloco("criticos-da-visao-geral", () => {
-  /*
-  O crítico calculado da Visão geral: cada motivo isolado, com os casos da
-  leitura de 02/10/2026 (analise.md): 97/2026 Maranhão com etapa perto,
-  108/2026 em andamento sem inscritos, 81/2026 concluído com 1 de 83,
-  79/2026 concluído com 0 de 50, risco manual "Baixo" em tudo.
-*/
-
-  const HOJE = "2026-10-02";
-  const aberto = (extra = {}) => ({
-    status: "Em andamento",
-    risco: "Baixo",
-    cronograma_automatico: true,
-    etapa: "Entrevistas",
-    inscritos: 100,
-    vagas_total: 10,
-    contratados: 0,
-    data_fim: "2026-12-01",
-    ...extra,
-  });
-  const codigos = (linha, opcoes = {}) =>
-    motivosDeAtencao(linha, { hoje: HOJE, ...opcoes }).map((m) => m.codigo);
-
-  describe("cada motivo", () => {
-    it("etapa chegando (hoje, amanhã, em até 3 dias) é agenda, não crítico", () => {
-      for (const dias of [0, 1, 3, 5, null])
-        expect(codigos(aberto({ cronograma_dias_para_proxima: dias }))).toEqual(
-          [],
-        );
+  describe("críticos somente por marcação manual", () => {
+    const hoje = "2026-11-18";
+    it.each([
+      { status: "Em andamento", data_fim: "2026-01-01" },
+      { status: "Em andamento", etapa: "Entrevistas", inscritos: 0 },
+      { status: "Concluído", vagas_total: 50, contratados: 0 },
+      { status: "Suspenso", risco: "Alto" },
+    ])("indicadores automáticos não marcam o edital: %o", (linha) => {
+      expect(motivosDeAtencao(linha, { hoje })).toEqual([]);
     });
-
-    it("atrasada: o fim do cronograma passou e o edital não concluiu", () => {
-      expect(
-        motivosDeAtencao(aberto({ data_fim: "2026-09-27" }), { hoje: HOJE }),
-      ).toEqual([
-        {
-          codigo: "atrasada",
-          rotulo: "Etapa atrasada há 5 dias",
-          tom: "perigo",
-        },
-      ]);
-      expect(codigos(aberto({ data_fim: "2026-10-01" }))).toEqual(["atrasada"]);
-      expect(
-        motivosDeAtencao(aberto({ data_fim: "2026-10-01" }), { hoje: HOJE })[0]
-          .rotulo,
-      ).toBe("Etapa atrasada há 1 dia");
-      expect(codigos(aberto({ data_fim: HOJE }))).toEqual([]);
-    });
-
-    it("parado: sem etapa em curso e sem mudança de etapa há 15 dias ou mais", () => {
-      const etapas = [
-        {
-          atividade: "Inscrições",
-          data_inicio: "2026-08-01",
-          data_fim: "2026-08-20",
-        },
-        {
-          atividade: "Análise",
-          data_inicio: "2026-08-21",
-          data_fim: "2026-09-16",
-        },
-        {
-          atividade: "Entrevistas",
-          data_inicio: "2026-10-20",
-          data_fim: "2026-10-30",
-        },
-      ];
-      // Última mudança: 17/09 (dia seguinte ao fim da análise) → 15 dias.
-      expect(ultimaMudancaDeEtapa(etapas, HOJE)).toBe(
-        diaDoCalendario("2026-09-17"),
-      );
-      expect(temEtapaEmCurso(etapas, HOJE)).toBe(false);
-      expect(
-        motivosDeAtencao(aberto({ etapa: "Aguardando: Entrevistas" }), {
-          hoje: HOJE,
-          etapas,
-        }),
-      ).toEqual([
-        { codigo: "parado", rotulo: "Parado há 15 dias", tom: "alerta" },
-      ]);
-      // 14 dias ainda não.
-      expect(
-        codigos(aberto({ etapa: "Aguardando: Entrevistas" }), {
-          hoje: "2026-10-01",
-          etapas,
-        }),
-      ).toEqual([]);
-      // Etapa em curso não é parado, por mais longa que seja.
-      const longa = [
-        {
-          atividade: "Análise",
-          data_inicio: "2026-08-01",
-          data_fim: "2026-11-30",
-        },
-      ];
-      expect(codigos(aberto(), { etapas: longa })).toEqual([]);
-      // Sem as etapas (banco sem a função), não é avaliado.
-      expect(codigos(aberto({ etapa: "Aguardando: Entrevistas" }))).toEqual([]);
-    });
-
-    it("sem inscritos: em andamento, depois das inscrições, 0 inscritos", () => {
-      // 108/2026: em andamento sem Seleção.
+    it("mantém motivo e autoria mesmo com atraso e contratação baixa", () => {
       expect(
         motivosDeAtencao(
-          aberto({ etapa: "Análise Curricular", inscritos: 0 }),
           {
-            hoje: HOJE,
+            status: "Concluído",
+            data_fim: "2026-01-01",
+            vagas_total: 50,
+            contratados: 0,
+          },
+          {
+            hoje,
+            marcacao: {
+              motivo: "Cronograma suspenso pela diretoria",
+              quem: "Ana Souza",
+            },
           },
         ),
       ).toEqual([
-        { codigo: "sem_inscritos", rotulo: "Sem inscritos", tom: "alerta" },
-      ]);
-      // Inscritos nulo = a fonte do funil não tem o número (só as análises): não é zero.
-      expect(
-        codigos(aberto({ etapa: "Análise Curricular", inscritos: null })),
-      ).toEqual([]);
-      // Ainda nas inscrições (ou antes), não.
-      expect(
-        codigos(aberto({ etapa: "Período de inscrição", inscritos: 0 })),
-      ).toEqual([]);
-      expect(
-        codigos(
-          aberto({
-            status: "Planejado",
-            etapa: "Aguardando: Edital",
-            inscritos: 0,
-          }),
-        ),
-      ).toEqual([]);
-    });
-
-    it("contratação baixa: concluído com menos de 50% das vagas imediatas contratadas", () => {
-      // 81/2026: 1 de 83.
-      expect(
-        motivosDeAtencao(
-          { status: "Concluído", vagas_total: 83, contratados: 1 },
-          { hoje: HOJE },
-        ),
-      ).toEqual([
         {
-          codigo: "contratacao_baixa",
-          rotulo: "Contratação abaixo de 50%",
-          tom: "alerta",
+          codigo: "marcado",
+          rotulo:
+            "Marcado como crítico por Ana Souza: Cronograma suspenso pela diretoria",
+          tom: "perigo",
         },
       ]);
-      // 79/2026: 0 de 50.
+    });
+    it("sem marcação, motivo vazio ou edital ausente não é crítico", () => {
+      for (const marcacao of [null, {}, { motivo: "   " }])
+        expect(motivosDeAtencao({ status: "Suspenso" }, { marcacao })).toEqual(
+          [],
+        );
       expect(
-        codigos({ status: "Concluído", vagas_total: 50, contratados: 0 }),
-      ).toEqual(["contratacao_baixa"]);
-      // Metade ou mais, não; vagas 0 (só cadastro reserva), não.
-      expect(
-        codigos({ status: "Concluído", vagas_total: 10, contratados: 5 }),
-      ).toEqual([]);
-      expect(
-        codigos({ status: "Concluído", vagas_total: 0, contratados: 22 }),
-      ).toEqual([]);
-      // CR não ajuda as imediatas: 130 vagas, 567 contratados é 100%.
-      expect(
-        codigos({ status: "Concluído", vagas_total: 130, contratados: 567 }),
+        motivosDeAtencao(null, { marcacao: { motivo: "Banca sem quórum" } }),
       ).toEqual([]);
     });
-  });
-
-  describe("regras gerais", () => {
-    it("o risco manual não entra; cancelado nunca é crítico", () => {
-      expect(codigos(aberto({ risco: "Alto" }))).toEqual([]);
+    it("cancelado não entra e retirar a marcação retira o crítico", () => {
+      const marcacao = { motivo: "Banca sem quórum" };
       expect(
-        codigos({
-          status: "Cancelado",
-          data_fim: "2026-01-01",
-          cronograma_dias_para_proxima: 1,
-          inscritos: 0,
-        }),
+        motivosDeAtencao({ status: "Em andamento" }, { marcacao }),
+      ).toHaveLength(1);
+      expect(
+        motivosDeAtencao({ status: "Em andamento" }, { marcacao: null }),
       ).toEqual([]);
-    });
-
-    it("vários motivos, do mais grave ao menos grave; a gravidade ordena a tabela", () => {
-      const motivos = motivosDeAtencao(
-        aberto({
-          etapa: "Análise Curricular",
-          inscritos: 0,
-          data_fim: "2026-09-30",
-          cronograma_dias_para_proxima: 2,
-        }),
-        { hoje: HOJE },
+      expect(motivosDeAtencao({ status: "Cancelado" }, { marcacao })).toEqual(
+        [],
       );
-      expect(motivos.map((m) => m.codigo)).toEqual([
-        "atrasada",
-        "sem_inscritos",
-      ]);
-      expect(gravidade(motivos)).toBe(1);
+    });
+    it("a marcação tem prioridade na fila", () => {
+      expect(
+        gravidade(
+          motivosDeAtencao(
+            { status: "Suspenso" },
+            {
+              marcacao: { motivo: "Cronograma suspenso" },
+            },
+          ),
+        ),
+      ).toBe(0);
       expect(gravidade([])).toBe(99);
     });
-
-    it("os limites são configuráveis", () => {
-      expect(LIMITES_DO_CRITICO).toEqual({
-        diasDoPrazo: 3,
-        diasParado: 15,
-        contratacaoMinima: 0.5,
-      });
-      const limites = { ...LIMITES_DO_CRITICO, contratacaoMinima: 0.8 };
-      expect(
-        motivosDeAtencao(
-          { status: "Concluído", vagas_total: 10, contratados: 7 },
-          { hoje: HOJE, limites },
-        )[0].rotulo,
-      ).toBe("Contratação abaixo de 80%");
-    });
   });
 
-  describe("sem `hoje` válido", () => {
-    afterEach(() => vi.useRealTimers());
-    const etapas = [
-      {
-        atividade: "Análise",
-        data_inicio: "2026-08-21",
-        data_fim: "2026-09-16",
-      },
-      {
-        atividade: "Entrevistas",
-        data_inicio: "2026-10-20",
-        data_fim: "2026-10-30",
-      },
-    ];
-    const linha = aberto({ etapa: "Aguardando: Entrevistas" });
-
-    it("o crítico usa o dia de Brasília de agora: parado e atrasada ainda acendem", () => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date("2026-10-02T15:00:00Z"));
-      for (const hoje of [undefined, "", "02/10/2026"]) {
-        expect(
-          motivosDeAtencao(linha, { hoje, etapas }).map((m) => m.codigo),
-        ).toEqual(["parado"]);
-        expect(
-          motivosDeAtencao(aberto({ data_fim: "2026-09-30" }), { hoje }).map(
-            (m) => m.codigo,
-          ),
-        ).toEqual(["atrasada"]);
-      }
+  describe("utilitários de datas preservados", () => {
+    const etapas = [{ data_inicio: "2026-09-01", data_fim: "2026-09-16" }];
+    it("respeita os dias e os limites inclusivos da etapa", () => {
+      expect(temEtapaEmCurso(etapas, "2026-09-16")).toBe(true);
+      expect(temEtapaEmCurso(etapas, "2026-09-17")).toBe(false);
+      expect(ultimaMudancaDeEtapa(etapas, "2026-09-18")).toBe(
+        diaDoCalendario("2026-09-17"),
+      );
     });
-
-    it("as contas das etapas não comparam com null", () => {
+    it("data ausente não vira o início do calendário", () => {
       expect(temEtapaEmCurso(etapas, null)).toBe(false);
       expect(ultimaMudancaDeEtapa(etapas, "sem data")).toBeNull();
-      // Etapa que começa no dia 0 do calendário (1970-01-01): antes "em curso" sem hoje.
-      expect(
-        temEtapaEmCurso(
-          [{ data_inicio: "1970-01-01", data_fim: "2999-12-31" }],
-          undefined,
-        ),
-      ).toBe(false);
     });
   });
 });
@@ -3246,9 +3079,12 @@ bloco("indicadores-do-monitoramento", () => {
       });
     });
 
-    it("Críticos conta as linhas com motivo de atenção (o recorte preenche `atencao`)", () => {
+    it("Críticos conta somente marcações manuais e exclui cancelados", () => {
       const linhas = [
-        { status: "Em andamento", atencao: [{ codigo: "prazo" }] },
+        { status: "Em andamento", atencao: [{ codigo: "marcado" }] },
+        { status: "Em andamento", atencao: [{ codigo: "atrasada" }] },
+        { status: "Concluído", atencao: [{ codigo: "contratacao_baixa" }] },
+        { status: "Cancelado", atencao: [{ codigo: "marcado" }] },
         { status: "Em andamento", atencao: [] },
         { status: "Concluído" },
       ];
@@ -6842,7 +6678,7 @@ bloco("visao-geral", () => {
       contratados: 4,
       vagas_ociosas: 6,
       inscritos: 80,
-      // Crítico por atraso (etapa chegando não faz crítico).
+      // Há atraso, mas a classificação de crítico vem da marcação manual.
       data_fim: "2026-09-28",
       cronograma_automatico: true,
       cronograma_dias_para_proxima: 2,
@@ -6906,6 +6742,10 @@ bloco("visao-geral", () => {
   ];
 
   const ACOMPANHAMENTO = acompanhamentoDaResposta({
+    criticos_manuais: [
+      { monitoramento_id: 1, motivo: "Cronograma suspenso pela diretoria" },
+      { monitoramento_id: 3, motivo: "Revisão da contratação pela diretoria" },
+    ],
     etapas: [
       {
         monitoramento_id: 1,
@@ -6937,7 +6777,12 @@ bloco("visao-geral", () => {
     ],
   });
 
-  const LINHAS = enriquecerLinhas(BRUTAS, { hoje: HOJE });
+  const LINHAS = enriquecerLinhas(BRUTAS, {
+    hoje: HOJE,
+    acompanhamento: {
+      criticosPorEdital: ACOMPANHAMENTO.criticosPorEdital,
+    },
+  });
   const COM_ACOMPANHAMENTO = enriquecerLinhas(BRUTAS, {
     hoje: HOJE,
     acompanhamento: ACOMPANHAMENTO,
@@ -7003,16 +6848,13 @@ bloco("visao-geral", () => {
       const [xingu, analise, yanomami, casai, cancelado] = LINHAS;
       expect(xingu.fase).toBe("Entrevistas");
       expect(xingu.atencao.map((m) => m.rotulo)).toEqual([
-        "Etapa atrasada há 3 dias",
+        "Marcado como crítico: Cronograma suspenso pela diretoria",
       ]);
       expect(analise.fase).toBe("Análise curricular");
       expect(analise.atencao).toEqual([]);
       expect(yanomami.fase).toBe("Concluído");
-      expect(yanomami.atencao.map((m) => m.codigo)).toEqual([
-        "contratacao_baixa",
-      ]);
-      // Sem o resumo das listas, nenhuma pendência (a contratação baixa fica só
-      // como motivo de atenção do crítico, acima).
+      expect(yanomami.atencao.map((m) => m.codigo)).toEqual(["marcado"]);
+      // Sem o resumo das listas, nenhuma pendência pós-resultado.
       expect(yanomami.pos_resultado).toEqual([]);
       expect(casai.fase).toBe("Sem cronograma");
       expect(cancelado.atencao).toEqual([]);
@@ -7052,7 +6894,7 @@ bloco("visao-geral", () => {
       ).toEqual([3]);
       expect(
         ids(recortar(LINHAS, { filtros: filtrosVazios(), atalho: "criticos" })),
-      ).toEqual([1, 3]);
+      ).toEqual([3, 1]);
       expect(
         ids(
           recortar(COM_ACOMPANHAMENTO, {
@@ -7072,9 +6914,8 @@ bloco("visao-geral", () => {
 
     it("sem ordenação, os críticos primeiro, depois mais vagas sem contratação", () => {
       const fila = recortar(LINHAS, { filtros: filtrosVazios() });
-      // 1 (prazo, peso 2), 3 (contratação baixa, peso 5), depois 5 (6 sem
-      // contratação), 4 (2) e 2 (0).
-      expect(ids(fila)).toEqual([1, 3, 5, 4, 2]);
+      // 3 e 1 marcados manualmente, empatados em gravidade; depois 5, 4 e 2.
+      expect(ids(fila)).toEqual([3, 1, 5, 4, 2]);
       const porVagas = recortar(LINHAS, {
         filtros: filtrosVazios(),
         ordenacao: { campo: "vagas_total", direcao: "desc" },
@@ -7084,7 +6925,7 @@ bloco("visao-geral", () => {
         filtros: filtrosVazios(),
         ordenacao: { campo: "atencao", direcao: "asc" },
       });
-      expect(ids(porAtencao).slice(0, 2)).toEqual([1, 3]);
+      expect(ids(porAtencao).slice(0, 2)).toEqual([3, 1]);
     });
 
     it("o cabeçalho alterna crescente, decrescente e sem ordem", () => {

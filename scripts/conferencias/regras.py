@@ -292,6 +292,8 @@ def resumir(aviso, numero_do_edital):
         return f"{plural(n, 'empate', 'empates')} sem desempate registrado na última lista {onde}."
     if c == "CLASSIFICACAO_VAGA_SEM_QUADRO":
         return f"{plural(n, 'vaga', 'vagas')} das análises sem linha no quadro de vagas {onde}."
+    if c == "CLASSIFICACAO_VAGA_QUADRO_AMBIGUO":
+        return f"{plural(n, 'vaga', 'vagas')} das análises com mais de uma linha possível no quadro de vagas {onde}."
     if c == "CLASSIFICACAO_AJUSTE_APOS_LISTA":
         return f"{plural(n, 'ajuste', 'ajustes')} de recurso aprovado depois da última lista {onde}."
     if c == "APROVADOS_CONTRATADO_DUPLICADO":
@@ -649,16 +651,33 @@ class AnalisesDaClassificacao:
         self.completa = True
 
 
-def vagas_sem_quadro(analises, quadros, editais):
-    """As vagas das análises de edital conferido (edital_conferido) sem uma linha do quadro de vagas pelo nome (a regra de
-    private."FC_QUADRO_DA_VAGA", em monitora.classificacao.quadro_da_vaga), em ordem estável."""
+def vagas_sem_quadro(analises, quadros, editais, vinculos=None):
+    """As vagas das análises de edital conferido (edital_conferido) sem uma linha do quadro de vagas, em ordem estável.
+
+    O vínculo da vaga (TA_VAGA_QUADRO_EDITAL, 20261118120000) vem antes das palavras: CONFIRMADO tem linha;
+    AUSENTE MANUAL sem pendência é "a equipe confirmou que não há linha" (sem aviso); AMBIGUO sai com
+    situacao AMBIGUO e as candidatas; o resto, AUSENTE (com a pendência, quando a linha escolhida saiu do
+    quadro). Vaga sem vínculo: a regra de private."FC_QUADRO_DA_VAGA" (monitora.classificacao.quadro_da_vaga).
+    """
     por_edital = preparar_quadros(quadros)
+    por_vaga = {(v.get("edital"), str(v.get("vaga"))): v for v in vinculos or []}
     saida = []
     for edital, area, codigo, nome in sorted(analises.vagas, key=lambda v: tuple(str(x) for x in v)):
         if not edital_conferido(editais.get(edital)):
             continue
-        if quadro_da_vaga(por_edital.get(edital), nome) is None:
-            saida.append({"edital": edital, "area": area, "vaga": codigo or "sem-codigo"})
+        base = {"edital": edital, "area": area, "vaga": codigo or "sem-codigo"}
+        vinculo = por_vaga.get((edital, str(codigo).strip())) if codigo else None
+        if vinculo is None:
+            if quadro_da_vaga(por_edital.get(edital), nome) is None:
+                saida.append({**base, "situacao": "AUSENTE"})
+            continue
+        situacao = vinculo.get("situacao")
+        if situacao == "CONFIRMADO":
+            continue
+        if situacao == "AMBIGUO":
+            saida.append({**base, "situacao": "AMBIGUO", "candidatas": vinculo.get("candidatas") or []})
+        elif vinculo.get("origem") != "MANUAL" or vinculo.get("pendencia"):
+            saida.append({**base, "situacao": "AUSENTE", "pendencia": vinculo.get("pendencia")})
     return saida
 
 
@@ -738,14 +757,18 @@ def conferir_classificacao(dados, acumulador, analises, editais, versoes=None):
 
     _convocacao_com_regra_anterior(listas, versoes or {}, editais, acumulador)
 
-    for v in vagas_sem_quadro(analises, dados.get("quadros"), editais):
-        acumulador.anotar(
-            "CLASSIFICACAO_VAGA_SEM_QUADRO",
-            edital=v.get("edital"),
-            area=v.get("area"),
-            exemplo=v.get("vaga"),
-            caso={"referencia": v.get("vaga"), "tipo": "vaga"},
-        )
+    for v in vagas_sem_quadro(analises, dados.get("quadros"), editais, dados.get("vinculos")):
+        # O detalhe só leva identificador curto (detalhe_seguro): quantas candidatas e se a linha escolhida
+        # saiu do quadro; os nomes das linhas estão na fila do Quadro de vagas do edital.
+        caso = {"referencia": v.get("vaga"), "tipo": "vaga"}
+        if v["situacao"] == "AMBIGUO":
+            codigo = "CLASSIFICACAO_VAGA_QUADRO_AMBIGUO"
+            caso["detalhe"] = {"candidatas": len(v["candidatas"])}
+        else:
+            codigo = "CLASSIFICACAO_VAGA_SEM_QUADRO"
+            if v.get("pendencia"):
+                caso["detalhe"] = {"linha_saiu_do_quadro": True}
+        acumulador.anotar(codigo, edital=v.get("edital"), area=v.get("area"), exemplo=v.get("vaga"), caso=caso)
 
     for j in dados.get("ajustes") or []:
         lista = ultima.get((j.get("edital"), j.get("tipo")))

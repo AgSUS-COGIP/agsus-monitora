@@ -34,8 +34,8 @@
 
   Ensaio:   supabase/ensaios/20261110190000_exportacao_da_lista_de_aprovados.sql
   Rollback: supabase/rollback/20261110190000_exportacao_da_lista_de_aprovados.sql
-  Testes:   tests/entrevistas-e-aprovados.test.ts (bloco exportacao-de-aprovados-no-banco) (PGlite) e
-            tests/entrevistas-e-aprovados.test.ts (bloco lib/exportacao-da-lista-de-aprovados)
+  Testes:   tests/exportacao-de-aprovados-no-banco.test.ts (PGlite) e
+            tests/lib/exportacao-da-lista-de-aprovados.test.ts
 */
 begin;
 

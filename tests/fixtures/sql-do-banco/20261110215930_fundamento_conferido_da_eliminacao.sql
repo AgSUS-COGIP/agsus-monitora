@@ -59,10 +59,10 @@
 
   Ensaio:   supabase/ensaios/20261110215930_fundamento_conferido_da_eliminacao.sql
   Rollback: supabase/rollback/20261110215930_fundamento_conferido_da_eliminacao.sql
-  Testes:   tests/repositorio-e-banco.test.ts (bloco fundamento-da-eliminacao-no-banco) (PGlite: permissões de
+  Testes:   tests/fundamento-da-eliminacao-no-banco.test.ts (PGlite: permissões de
             gestor, coordenador, administrador global, coordenador da equipe e
             analista; auditoria; retificação; comunicado; rollback) e
-            tests/demais-regras.test.ts (bloco lib/fundamento-da-eliminacao).
+            tests/lib/fundamento-da-eliminacao.test.ts.
 */
 begin;
 
