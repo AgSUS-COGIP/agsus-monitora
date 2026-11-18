@@ -1102,6 +1102,16 @@ export function criarEstadoDaListaDeAprovados({
     return { falhas, novos };
   }
 
+  async function lerObservacaoStatus(candidatoId: string): Promise<string> {
+    if (!supabase) throw new Error("Sem conexão com o banco.");
+    const { data, error } = await supabase.rpc(
+      "ler_observacao_status_aprovado",
+      { p_candidato_id: candidatoId },
+    );
+    if (error) throw new Error(mensagemDe(error));
+    return typeof data === "string" ? data : "";
+  }
+
   async function salvarStatus(candidatoId: string, campos: CamposDoStatus) {
     if (!supabase) return false;
     const candidato = candidatoPorId(candidatoId);
@@ -1110,6 +1120,11 @@ export function criarEstadoDaListaDeAprovados({
     const status = text(campos.status);
     const processo = text(campos.processo);
     const matricula = text(campos.matricula);
+    const observacao = text(campos.observacao);
+    if (observacao.length > 2000) {
+      toast("A observação deve ter no máximo 2000 caracteres.", "warn");
+      return false;
+    }
     const dataConvocacao = statusEhConvocado(status)
       ? text(campos.dataConvocacao) || hoje()
       : "";
@@ -1143,8 +1158,9 @@ export function criarEstadoDaListaDeAprovados({
     }
     const salvo = await executar("status", "Salvando…", async (rotular) => {
       const { error } = await supabase.rpc(
-        "alterar_status_candidato_aprovado",
+        "alterar_status_aprovado_com_observacao",
         {
+          p_observacao: observacao || null,
           p_candidato_id: candidato.candidato_id,
           p_status: status || null,
           p_processo_sei: processo || null,
@@ -2003,6 +2019,7 @@ export function criarEstadoDaListaDeAprovados({
     irParaClassificacao,
     fecharModal,
     salvarStatus,
+    lerObservacaoStatus,
     abrirAnexo,
     removerAnexo,
     incluirSubJudice,
