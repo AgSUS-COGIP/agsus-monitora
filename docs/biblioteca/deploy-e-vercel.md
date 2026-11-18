@@ -1,7 +1,7 @@
 ---
 tipo: guia
 area: operacao
-atualizado: 2026-11-17
+atualizado: 2026-11-18
 ---
 
 # Git, deploy e Vercel
@@ -134,7 +134,9 @@ casaisNacionais, lidoEm }` (a lista de DSEIs do mapa e as CASAIs nacionais, loca
   nenhuma, só "Há uma versão nova").
 - `src/lib/base/versao-do-sistema.ts` lê o `versao.json`, escolhe a novidade e dá o sinal de "tela
   antiga" (PGRST202 / "recarregue a página"). Tela sob demanda baixada com a versão velha recarrega
-  uma vez (`importarComRecarga`).
+  uma vez (`importarComRecarga`); outro pedaço que não baixa (`vite:preloadError`) vira "Atualize
+  para continuar". Com service worker, a aba aberta nem chega a isso: os pedaços da versão anterior
+  ficam no cache ([[pwa-e-modo-offline]], "Aba aberta durante a publicação").
 
 ## Depois de publicar
 

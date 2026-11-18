@@ -240,7 +240,10 @@ import {
 import { resumoDasLinhas } from "../src/lib/editais/editais-do-nucleo.ts";
 import { COLUNAS_DO_MONITORAMENTO } from "../src/app/carga.ts";
 import { AvisoDeVersao } from "../src/componentes/aviso-de-versao/aviso-de-versao.tsx";
-import { EVENTO_TELA_ANTIGA } from "../src/lib/base/versao-do-sistema.ts";
+import {
+  EVENTO_PEDACO_QUE_SUMIU,
+  EVENTO_TELA_ANTIGA,
+} from "../src/lib/base/versao-do-sistema.ts";
 import { EVENTO_ESCOLHA_DA_BUSCA } from "../src/lib/navegacao/busca-global.ts";
 import { consumirPedidoDeFiltro } from "../src/app/pedido-de-filtro.ts";
 import { criarEstadoDasConfiguracoes } from "../src/modulos/configuracoes/estado.ts";
@@ -6879,6 +6882,17 @@ bloco("componentes/aviso-de-versao", () => {
         elemento.querySelector('[data-acao="fechar-aviso-de-versao"]'),
       ).toBeNull();
       // Não recarrega sozinho.
+      expect(c.recarregar).not.toHaveBeenCalled();
+      c.aviso.parar();
+    });
+
+    it("pedaço sob demanda que não baixou (vite:preloadError) com versão nova vira 'Atualize para continuar'", async () => {
+      const c = montarCenario();
+      c.aviso.iniciar();
+      await act(async () => {
+        c.janela.dispatchEvent(new Event(EVENTO_PEDACO_QUE_SUMIU));
+        await vi.waitFor(() => expect(c.aviso.obter().telaAntiga).toBe(true));
+      });
       expect(c.recarregar).not.toHaveBeenCalled();
       c.aviso.parar();
     });

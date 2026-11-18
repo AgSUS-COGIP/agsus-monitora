@@ -19,6 +19,14 @@ export const ARQUIVO_DA_VERSAO = "/versao.json";
 /* Disparado em `globalThis` quando uma RPC falha como "tela antiga". */
 export const EVENTO_TELA_ANTIGA = "agsus:tela-antiga";
 
+/*
+  Disparado pelo Vite em `window` quando um `import()` não baixa o pedaço ou o
+  CSS dele: o sinal de "tela antiga" de quem não passa por `importarComRecarga`
+  (o modal do edital, a Aya, o PDF…). Depois de uma publicação, o pedaço da
+  versão anterior some.
+*/
+export const EVENTO_PEDACO_QUE_SUMIU = "vite:preloadError";
+
 export type VersaoPublicada = {
   versao: string;
   novidades: Novidade[];

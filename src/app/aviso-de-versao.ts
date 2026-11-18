@@ -1,6 +1,7 @@
 import { NOVIDADES, type Novidade } from "../lib/base/novidades.ts";
 import {
   ARQUIVO_DA_VERSAO,
+  EVENTO_PEDACO_QUE_SUMIU,
   EVENTO_TELA_ANTIGA,
   lerVersaoPublicada,
   novidadeParaMostrar,
@@ -24,7 +25,9 @@ import { guardaDeAlteracoes } from "./guarda-de-alteracoes.ts";
   versão: uma mais nova o traz de volta.
 
   Tela antiga: uma RPC falhou como só falha a versão anterior (evento de
-  src/lib/sessao/supabaseClient.ts). Confere a versão na hora e, se há mesmo uma nova,
+  src/lib/sessao/supabaseClient.ts), ou um pedaço sob demanda não baixou
+  (`vite:preloadError`: depois da publicação, o da versão anterior sumiu).
+  Confere a versão na hora e, se há mesmo uma nova,
   o aviso vira "Atualize para continuar" (sem fechar). Sem versão nova
   confirmada não muda nada: o PGRST202 também aparece quando o front chega
   antes da migration, e aí recarregar não resolve.
@@ -221,6 +224,7 @@ export function criarAvisoDeVersao({
       documento?.addEventListener("visibilitychange", aoMudarVisibilidade);
       janela?.addEventListener("focus", aoFocar);
       janela?.addEventListener(EVENTO_TELA_ANTIGA, aoEventoDeTelaAntiga);
+      janela?.addEventListener(EVENTO_PEDACO_QUE_SUMIU, aoEventoDeTelaAntiga);
       if (visivel()) ligarRelogio();
     },
     parar() {
@@ -230,6 +234,10 @@ export function criarAvisoDeVersao({
       documento?.removeEventListener("visibilitychange", aoMudarVisibilidade);
       janela?.removeEventListener("focus", aoFocar);
       janela?.removeEventListener(EVENTO_TELA_ANTIGA, aoEventoDeTelaAntiga);
+      janela?.removeEventListener(
+        EVENTO_PEDACO_QUE_SUMIU,
+        aoEventoDeTelaAntiga,
+      );
     },
     /** Fecha o aviso só para a versão nova de agora. */
     fechar() {
