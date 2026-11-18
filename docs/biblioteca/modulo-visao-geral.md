@@ -116,7 +116,8 @@ trabalho). De cima para baixo:
   (`classe` da coluna na `TabelaInfinita`). No celular, em cartões, rótulo e valor ficam na
   mesma linha e só a página rola.
 - O CSV mantém a proteção contra fórmulas e o nome do arquivo usa a data de Brasília.
-- **Montador de relatório** (13/11/2026; `montador-de-relatorio.tsx`, lógica em
+- **Montador de relatório** (13/11/2026; `montador-de-relatorio.tsx`, por `lazy()` desde 18/11/2026:
+  ele e as regras do relatório saíram do pacote de entrada, que estava a 0,4 KB do orçamento; lógica em
   `src/lib/visao-geral/relatorio-da-visao-geral.ts`, PDF em `src/lib/visao-geral/relatorio-da-visao-geral-em-pdf.ts`): o
   botão Exportar abre a janela (e, desde 16/11/2026, o "Montar relatório" dos Painéis, com a área
   inteira — [[modulo-paineis-de-dados]]; saiu do menu da conta). Modelo pronto (Resumo
@@ -170,10 +171,10 @@ trabalho). De cima para baixo:
 
 ## Verificação
 
-- `tests/modulos/visao-geral.test.js`: a tela e o estado, incluindo mapas e troca de área.
-- `tests/visao-geral.test.js`: as regras.
-- `tests/lib/vagas-reabertas.test.ts`: a vaga reaberta contada uma vez só.
-- `tests/fronteiras-da-visao-geral.test.js`: as fronteiras externas.
+- `tests/telas-com-modulo-simulado-na-tela.test.js` (bloco `modulos/visao-geral`): a tela e o estado, incluindo mapas e troca de área.
+- `tests/mapas-e-visao-geral.test.js` (bloco `visao-geral`): as regras.
+- `tests/demais-regras.test.ts` (bloco `lib/vagas-reabertas`): a vaga reaberta contada uma vez só.
+- `tests/mapas-e-visao-geral.test.js` (bloco `fronteiras-da-visao-geral`): as fronteiras externas.
 - `tests/tipos/visao-geral.tsx`: contratos positivos e negativos do compilador.
 - Explicações para quem usa: `docs/aya/regras-da-visao-geral.md` (ver [[aya-base-de-conhecimento]]).
 

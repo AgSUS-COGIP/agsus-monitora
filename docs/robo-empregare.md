@@ -387,8 +387,8 @@ computador: rode-os pelo GitHub.
   `20261008160000_anexos_do_questionario_na_empregare.sql` (anexos do questionário), cada uma com `ensaios/` e `rollback/`; o disparo pelo banco aceita o modo `sondar` e a opção `anexos` desde `20261008190000_sondar_e_anexos_no_disparo_dos_robos.sql`.
 - `src/lib/avaliacao-documental/anexo-na-empregare.ts`: o link de cada anexo na ficha.
 - Testes: `tests/python/test_robo_empregare.py`, `tests/python/test_anexos_empregare.py`,
-  `tests/anexos-do-questionario-migration.test.js`, `tests/lib/avaliacao-documental-anexo-na-empregare.test.js`,
+  `tests/anexos-do-questionario-migration.test.js`, `tests/avaliacao-e-recursos.test.js` (bloco `lib/avaliacao-documental-anexo-na-empregare`),
   `tests/agenda-dos-robos-migration.test.js`,
   `tests/robo-empregare-migration.test.js`, `tests/robo-empregare-vagas-do-quadro.test.js`,
-  `tests/saude-das-cargas.test.js`,
-  `tests/componentes/saude-das-cargas.test.ts`.
+  `tests/editais-cargas-e-paineis.test.js` (bloco `saude-das-cargas`),
+  `tests/casca-sessao-e-interface-na-tela.test.ts` (bloco `componentes/saude-das-cargas`).

@@ -2,7 +2,7 @@
 Distribuição das fichas em Python (python/monitora/avaliacao_documental/distribuicao.py):
 os MESMOS casos dourados do vitest —
 tests/fixtures/avaliacao-documental/casos-de-distribuicao.json
-(tests/lib/avaliacao-documental-distribuicao.test.js). Nada fala com o Supabase.
+(tests/avaliacao-e-recursos.test.js (bloco lib/avaliacao-documental-distribuicao)). Nada fala com o Supabase.
 """
 
 import json

@@ -162,7 +162,7 @@ const NAS_TRES_AREAS = [
   primeiro o que se acompanha (Visão geral e os painéis, Cronograma), depois o
   processo seletivo na ordem do fluxo — Editais → Triagem → Avaliação
   documental → Recursos → Entrevistas → Classificação → Lista de aprovados.
-  Cada página tem ícone próprio (`tests/menu-lateral.test.js` falha se dois
+  Cada página tem ícone próprio (`tests/casca-sessao-e-interface.test.js` (bloco `menu-lateral`) falha se dois
   itens do menu repetirem o ícone). A Triagem guarda o código técnico
   `pre-classificacao` (rota, recurso e tabelas não mudaram de nome).
 */

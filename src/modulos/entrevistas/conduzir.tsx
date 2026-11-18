@@ -73,9 +73,9 @@ import { CarregandoConteudo } from "../../ui/index.ts";
 
   O layout das telas da seleção: o cabeçalho (trilha, título, o edital, as
   seções Fila e Preparar e o Atualizar só com o ícone). Duas seções:
-  - Fila (a primeira): abre em Hoje — a fila do dia pela agenda salva na
-    Classificação › Agenda; sem entrevista hoje, Próximos; sem agenda, Todos
-    —, com a faixa de situação (o contador "7 de 12 hoje" e a próxima
+  - Fila (a primeira; a seção leva quantas há na tela, ContagemDaAba): abre
+    em Hoje — a fila do dia pela agenda salva na Classificação › Agenda; sem
+    entrevista hoje, Próximos; sem agenda, Todos —, com a faixa de situação (o contador "7 de 12 hoje" e a próxima
     entrevista embaixo), a barra (Hoje / Próximos / Todos, a busca por nome
     ou código, vaga e banca) e a tabela em ordem de horário
     (fila-do-dia.tsx). A ação da linha abre a ficha de notas em tela cheia
@@ -403,7 +403,11 @@ function TelaDeConducao({
             tour="conduzir-visoes"
             rotulo="Seções"
             className="entrevistas-visoes"
-            opcoes={VISOES}
+            opcoes={VISOES.map((opcao) =>
+              opcao.valor === "fila" && e.editalId
+                ? { ...opcao, contagem: naTela.length }
+                : opcao,
+            )}
             valor={visao}
             aoMudar={(aba) => mudarSecao({ aba })}
           />

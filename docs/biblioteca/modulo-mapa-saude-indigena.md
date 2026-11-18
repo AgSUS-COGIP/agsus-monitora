@@ -145,13 +145,13 @@ Terceiro botão do seletor do fundo, só no `#map` (`map-base-layer-switcher.ts`
 
 ## Testes
 
-`tests/mapa-saude-indigena.test.js` (fixture real das Lotações),
-`tests/coordenadas-so-do-sigepsi.test.js`, `tests/lib/localizacoes-do-sigepsi.test.ts`,
-`tests/modulos/mapa-saude-indigena.test.js` (Leaflet falso em `tests/modulos/leaflet-falso.js`),
-`tests/modulos/visao-geral.test.js`, `tests/dica-dentro-do-mapa.test.js`,
-`tests/modulos/modo-de-edicao.test.js` (hoje só Projetos) e, do Mapa DSEIs,
-`tests/mapa-simples.test.js`, `tests/map-base-layer-simples.test.js` e
-`tests/modulos/mapa-simples.test.js`.
+`tests/mapas-e-visao-geral.test.js` (bloco `mapa-saude-indigena`) (fixture real das Lotações),
+`tests/mapas-e-visao-geral.test.js` (bloco `coordenadas-so-do-sigepsi`), `tests/demais-regras.test.ts` (bloco `lib/localizacoes-do-sigepsi`),
+`tests/casca-sessao-e-interface-na-tela.test.js` (bloco `modulos/mapa-saude-indigena`) (Leaflet falso em `tests/modulos/leaflet-falso.js`),
+`tests/telas-com-modulo-simulado-na-tela.test.js` (bloco `modulos/visao-geral`), `tests/mapas-e-visao-geral-na-tela.test.js` (bloco `dica-dentro-do-mapa`),
+`tests/mapas-e-visao-geral-na-tela.test.js` (bloco `modulos/modo-de-edicao`) (hoje só Projetos) e, do Mapa DSEIs,
+`tests/mapas-e-visao-geral.test.js` (bloco `mapa-simples`), `tests/mapas-e-visao-geral-na-tela.test.js` (bloco `map-base-layer-simples`) e
+`tests/mapas-e-visao-geral-na-tela.test.js` (bloco `modulos/mapa-simples`).
 
 ## Relacionadas
 

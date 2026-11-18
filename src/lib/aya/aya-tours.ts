@@ -26,7 +26,7 @@
   `classificacao:regra`, `approved:convocacao`); sem tour da aba, vale o da
   tela. Em Configurações, `config:<seção>`.
 
-  O teste tests/aya-tours.test.js confere que cada `data-tour` usado aqui
+  O teste tests/aya-e-comemoracao.test.js (bloco aya-tours) confere que cada `data-tour` usado aqui
   existe em algum componente.
 
   O código fica em src/lib/aya/tours/, um arquivo por assunto; este arquivo

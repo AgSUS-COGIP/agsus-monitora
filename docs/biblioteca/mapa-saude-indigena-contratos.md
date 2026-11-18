@@ -72,8 +72,8 @@ mapa inteiro (`section.health-map-pane`, `#map`, `#detailMap`, listas, legendas)
 
 - Ciclo de vida, StrictMode, legendas, Escape, foco, tela cheia e modo de edição: testes dos dois
   mapas.
-- Dados: `tests/dados-do-mapa-saude-indigena.test.js`, `tests/coordenadas-so-do-sigepsi.test.js` e
-  `tests/lib/localizacoes-do-sigepsi.test.ts`. Interações: `tests/modulos/mapa-saude-indigena.test.js`.
+- Dados: `tests/mapas-e-visao-geral.test.js` (bloco `dados-do-mapa-saude-indigena`), `tests/mapas-e-visao-geral.test.js` (bloco `coordenadas-so-do-sigepsi`) e
+  `tests/demais-regras.test.ts` (bloco `lib/localizacoes-do-sigepsi`). Interações: `tests/casca-sessao-e-interface-na-tela.test.js` (bloco `modulos/mapa-saude-indigena`).
 - Contratos: `tests/tipos/mapa-saude-indigena.tsx`, `tests/tipos/base-dos-mapas.tsx`,
   `tests/tipos/regras-geograficas.tsx` e `tests/tipos/integracao-do-leaflet.tsx`.
 
