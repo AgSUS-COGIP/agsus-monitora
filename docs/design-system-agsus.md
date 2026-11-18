@@ -123,61 +123,61 @@ Conteúdo
 
 Os valores de contraste abaixo foram calculados contra branco (`#FFFFFF`), conforme a fórmula da WCAG. Referências de conformidade:
 
-| Uso                                                      | Mínimo exigido |
-| -------------------------------------------------------- | -------------- |
-| Texto normal                                             | 4,5:1          |
-| Texto grande (≥ 24px, ou ≥ 18,66px em peso 600)          | 3:1            |
-| Componentes de interface e elementos gráficos essenciais | 3:1            |
+| Uso | Mínimo exigido |
+|---|---|
+| Texto normal | 4,5:1 |
+| Texto grande (≥ 24px, ou ≥ 18,66px em peso 600) | 3:1 |
+| Componentes de interface e elementos gráficos essenciais | 3:1 |
 
 ### 3.1 Primitivos — azul institucional
 
 Escala do Manual de Identidade Visual da AgSUS (11/11/2026): `blue-600` é o azul escuro do manual (RGB 0 85 161); `blue-300` a `blue-500` puxam para o azul claro do manual (RGB 15 142 237); as demais são tintas e sombras do `blue-600`. As outras cores do manual (amarelo 255 207 0, verde 0 207 0, vermelho 255 0 0, azul vivo 24 62 255) não passam no contraste de texto e ficam só para marca e ícone (`--marca-agsus-*`).
 
-| Token      | Hex       | Contraste | Uso típico                                                   |
-| ---------- | --------- | --------- | ------------------------------------------------------------ |
-| `blue-50`  | `#F2F7FA` | 1,08      | Fundo de item selecionado, botão secundário                  |
-| `blue-100` | `#E3ECF5` | 1,19      | Hover do botão secundário                                    |
-| `blue-200` | `#C2D6E8` | 1,49      | Escala sequencial de gráficos                                |
-| `blue-300` | `#7BC1F5` | 1,95      | Indicador de item ativo na sidebar                           |
-| `blue-400` | `#0D85E2` | 3,84      | Série de gráfico                                             |
-| `blue-500` | `#066CBF` | 5,38      | Escala sequencial de gráficos                                |
-| `blue-600` | `#0055A1` | 7,46      | **Cor primária:** botão primário, foco, progresso, aba ativa |
-| `blue-700` | `#004787` | 9,33      | Hover do primário, links, texto sobre `blue-50`              |
-| `blue-800` | `#003C71` | 11,14     | Primário pressionado, item ativo na sidebar                  |
-| `blue-900` | `#002F59` | 13,54     | Títulos institucionais, série de gráfico                     |
-| `blue-950` | `#00203D` | 16,48     | Fundo da sidebar                                             |
+| Token | Hex | Contraste | Uso típico |
+|---|---|---|---|
+| `blue-50` | `#F2F7FA` | 1,08 | Fundo de item selecionado, botão secundário |
+| `blue-100` | `#E3ECF5` | 1,19 | Hover do botão secundário |
+| `blue-200` | `#C2D6E8` | 1,49 | Escala sequencial de gráficos |
+| `blue-300` | `#7BC1F5` | 1,95 | Indicador de item ativo na sidebar |
+| `blue-400` | `#0D85E2` | 3,84 | Série de gráfico |
+| `blue-500` | `#066CBF` | 5,38 | Escala sequencial de gráficos |
+| `blue-600` | `#0055A1` | 7,46 | **Cor primária:** botão primário, foco, progresso, aba ativa |
+| `blue-700` | `#004787` | 9,33 | Hover do primário, links, texto sobre `blue-50` |
+| `blue-800` | `#003C71` | 11,14 | Primário pressionado, item ativo na sidebar |
+| `blue-900` | `#002F59` | 13,54 | Títulos institucionais, série de gráfico |
+| `blue-950` | `#00203D` | 16,48 | Fundo da sidebar |
 
 ### 3.2 Primitivos — neutros (cinzas azulados)
 
-| Token         | Hex       | Contraste | Uso típico                                      |
-| ------------- | --------- | --------- | ----------------------------------------------- |
-| `neutral-0`   | `#FFFFFF` | 1,00      | Fundo da área de conteúdo, superfícies elevadas |
-| `neutral-50`  | `#F5F7FA` | 1,07      | Superfície sutil (agrupamento, cards)           |
-| `neutral-100` | `#EDF0F4` | 1,14      | Hover, skeleton, trilha de progresso            |
-| `neutral-200` | `#E0E5EC` | 1,27      | Divisores discretos                             |
-| `neutral-300` | `#CBD2DC` | 1,52      | Divisores de estrutura                          |
-| `neutral-400` | `#858F9F` | 3,27      | Contorno de campos, texto desabilitado          |
-| `neutral-500` | `#677183` | 4,92      | Placeholder, texto terciário                    |
-| `neutral-600` | `#556070` | 6,38      | Texto secundário                                |
-| `neutral-700` | `#3E4857` | 9,25      | Ícones de ação, texto de botão ghost            |
-| `neutral-800` | `#29313E` | 13,10     | Uso raro: ênfase intermediária em texto         |
-| `neutral-900` | `#171C26` | 17,07     | Texto principal                                 |
+| Token | Hex | Contraste | Uso típico |
+|---|---|---|---|
+| `neutral-0` | `#FFFFFF` | 1,00 | Fundo da área de conteúdo, superfícies elevadas |
+| `neutral-50` | `#F5F7FA` | 1,07 | Superfície sutil (agrupamento, cards) |
+| `neutral-100` | `#EDF0F4` | 1,14 | Hover, skeleton, trilha de progresso |
+| `neutral-200` | `#E0E5EC` | 1,27 | Divisores discretos |
+| `neutral-300` | `#CBD2DC` | 1,52 | Divisores de estrutura |
+| `neutral-400` | `#858F9F` | 3,27 | Contorno de campos, texto desabilitado |
+| `neutral-500` | `#677183` | 4,92 | Placeholder, texto terciário |
+| `neutral-600` | `#556070` | 6,38 | Texto secundário |
+| `neutral-700` | `#3E4857` | 9,25 | Ícones de ação, texto de botão ghost |
+| `neutral-800` | `#29313E` | 13,10 | Uso raro: ênfase intermediária em texto |
+| `neutral-900` | `#171C26` | 17,07 | Texto principal |
 
 Não usar preto puro (`#000000`) nem cinzas fora desta escala.
 
 ### 3.3 Primitivos — semânticos
 
-| Token         | Hex       | Contraste                      | Uso                                      |
-| ------------- | --------- | ------------------------------ | ---------------------------------------- |
-| `success-50`  | `#EAF6EF` | —                              | Fundo de badge e alerta de sucesso       |
-| `success-600` | `#1E7A45` | 5,35                           | Ícones, indicadores e barras de sucesso  |
-| `success-700` | `#17613A` | 7,48 (6,74 sobre `success-50`) | Texto de sucesso                         |
-| `warning-50`  | `#FDF4E3` | —                              | Fundo de badge e alerta de atenção       |
-| `warning-600` | `#9A5B00` | 5,43                           | Ícones e indicadores de atenção          |
-| `warning-700` | `#7D4A00` | 7,36 (6,74 sobre `warning-50`) | Texto de atenção                         |
-| `danger-50`   | `#FDEEEC` | —                              | Fundo de badge e alerta de erro          |
-| `danger-600`  | `#C23B30` | 5,30                           | Ícones, bordas de erro, botão destrutivo |
-| `danger-700`  | `#A02E25` | 7,21 (6,39 sobre `danger-50`)  | Texto de erro, hover destrutivo          |
+| Token | Hex | Contraste | Uso |
+|---|---|---|---|
+| `success-50` | `#EAF6EF` | — | Fundo de badge e alerta de sucesso |
+| `success-600` | `#1E7A45` | 5,35 | Ícones, indicadores e barras de sucesso |
+| `success-700` | `#17613A` | 7,48 (6,74 sobre `success-50`) | Texto de sucesso |
+| `warning-50` | `#FDF4E3` | — | Fundo de badge e alerta de atenção |
+| `warning-600` | `#9A5B00` | 5,43 | Ícones e indicadores de atenção |
+| `warning-700` | `#7D4A00` | 7,36 (6,74 sobre `warning-50`) | Texto de atenção |
+| `danger-50` | `#FDEEEC` | — | Fundo de badge e alerta de erro |
+| `danger-600` | `#C23B30` | 5,30 | Ícones, bordas de erro, botão destrutivo |
+| `danger-700` | `#A02E25` | 7,21 (6,39 sobre `danger-50`) | Texto de erro, hover destrutivo |
 
 Informação usa o próprio azul institucional (`blue-50` / `blue-700`). Não existe uma cor "info" separada.
 
@@ -187,88 +187,88 @@ Estes são os únicos tokens de cor que componentes devem usar.
 
 **Fundo**
 
-| Token                 | Valor                  | Uso                                        |
-| --------------------- | ---------------------- | ------------------------------------------ |
-| `--color-bg-canvas`   | `neutral-0`            | Fundo padrão da área de conteúdo           |
-| `--color-bg-subtle`   | `neutral-50`           | Agrupamento por superfície, cards, painéis |
-| `--color-bg-muted`    | `neutral-100`          | Hover de linhas e itens, skeleton, trilhas |
-| `--color-bg-selected` | `blue-50`              | Linha ou item selecionado                  |
-| `--color-bg-raised`   | `neutral-0` + sombra   | Menus, popovers, modais, toasts            |
-| `--color-bg-inverse`  | `neutral-900`          | Tooltips                                   |
-| `--color-bg-overlay`  | `rgb(11 31 61 / 0.40)` | Camada atrás de modais e drawers           |
+| Token | Valor | Uso |
+|---|---|---|
+| `--color-bg-canvas` | `neutral-0` | Fundo padrão da área de conteúdo |
+| `--color-bg-subtle` | `neutral-50` | Agrupamento por superfície, cards, painéis |
+| `--color-bg-muted` | `neutral-100` | Hover de linhas e itens, skeleton, trilhas |
+| `--color-bg-selected` | `blue-50` | Linha ou item selecionado |
+| `--color-bg-raised` | `neutral-0` + sombra | Menus, popovers, modais, toasts |
+| `--color-bg-inverse` | `neutral-900` | Tooltips |
+| `--color-bg-overlay` | `rgb(11 31 61 / 0.40)` | Camada atrás de modais e drawers |
 
 **Texto**
 
-| Token                    | Valor         | Uso                                                              |
-| ------------------------ | ------------- | ---------------------------------------------------------------- |
-| `--color-text-primary`   | `neutral-900` | Texto principal, títulos                                         |
-| `--color-text-secondary` | `neutral-600` | Descrições, textos auxiliares, metadados, cabeçalhos de tabela   |
-| `--color-text-tertiary`  | `neutral-500` | Placeholder, valores vazios — somente sobre `canvas` ou `subtle` |
-| `--color-text-disabled`  | `neutral-400` | Texto desabilitado                                               |
-| `--color-text-inverse`   | `neutral-0`   | Texto sobre fundos escuros ou primários                          |
-| `--color-text-brand`     | `blue-900`    | Títulos institucionais (login, página inicial). Uso raro         |
-| `--color-text-link`      | `blue-700`    | Links. Hover: `blue-800` com sublinhado                          |
+| Token | Valor | Uso |
+|---|---|---|
+| `--color-text-primary` | `neutral-900` | Texto principal, títulos |
+| `--color-text-secondary` | `neutral-600` | Descrições, textos auxiliares, metadados, cabeçalhos de tabela |
+| `--color-text-tertiary` | `neutral-500` | Placeholder, valores vazios — somente sobre `canvas` ou `subtle` |
+| `--color-text-disabled` | `neutral-400` | Texto desabilitado |
+| `--color-text-inverse` | `neutral-0` | Texto sobre fundos escuros ou primários |
+| `--color-text-brand` | `blue-900` | Títulos institucionais (login, página inicial). Uso raro |
+| `--color-text-link` | `blue-700` | Links. Hover: `blue-800` com sublinhado |
 
 **Borda**
 
-| Token                    | Valor         | Uso                                                                         |
-| ------------------------ | ------------- | --------------------------------------------------------------------------- |
-| `--color-border-subtle`  | `neutral-200` | Divisores de linhas de tabela e listas; contorno de card quando necessário  |
+| Token | Valor | Uso |
+|---|---|---|
+| `--color-border-subtle` | `neutral-200` | Divisores de linhas de tabela e listas; contorno de card quando necessário |
 | `--color-border-default` | `neutral-300` | Divisor sob cabeçalho de tabela, divisor do header global, divisor de seção |
-| `--color-border-input`   | `neutral-400` | Contorno de campos de formulário (atende 3:1)                               |
-| `--color-border-focus`   | `blue-600`    | Campo em foco                                                               |
-| `--color-border-danger`  | `danger-600`  | Campo com erro                                                              |
+| `--color-border-input` | `neutral-400` | Contorno de campos de formulário (atende 3:1) |
+| `--color-border-focus` | `blue-600` | Campo em foco |
+| `--color-border-danger` | `danger-600` | Campo com erro |
 
 A borda de campos é mais forte que as demais de propósito. Quando é ela que identifica a área interativa, a WCAG (critério 1.4.11) exige contraste de 3:1. Bordas e divisores decorativos não têm essa exigência e devem permanecer discretos.
 
 **Ação**
 
-| Token                        | Valor                                                 |
-| ---------------------------- | ----------------------------------------------------- |
-| `--color-action-primary`     | `blue-600` (hover `blue-700`, pressionado `blue-800`) |
-| `--color-action-secondary`   | `blue-50` (hover `blue-100`), texto `blue-700`        |
-| `--color-action-ghost-hover` | `neutral-100`, texto `neutral-700`                    |
-| `--color-action-danger`      | `danger-600` (hover `danger-700`)                     |
-| `--color-focus-ring`         | `blue-600`                                            |
+| Token | Valor |
+|---|---|
+| `--color-action-primary` | `blue-600` (hover `blue-700`, pressionado `blue-800`) |
+| `--color-action-secondary` | `blue-50` (hover `blue-100`), texto `blue-700` |
+| `--color-action-ghost-hover` | `neutral-100`, texto `neutral-700` |
+| `--color-action-danger` | `danger-600` (hover `danger-700`) |
+| `--color-focus-ring` | `blue-600` |
 
 **Status** — usados em badges, alertas e indicadores
 
-| Status    | Fundo         | Texto         | Sólido (ícone, ponto, barra) |
-| --------- | ------------- | ------------- | ---------------------------- |
-| `success` | `success-50`  | `success-700` | `success-600`                |
-| `warning` | `warning-50`  | `warning-700` | `warning-600`                |
-| `danger`  | `danger-50`   | `danger-700`  | `danger-600`                 |
-| `info`    | `blue-50`     | `blue-700`    | `blue-600`                   |
-| `neutral` | `neutral-100` | `neutral-700` | `neutral-500`                |
+| Status | Fundo | Texto | Sólido (ícone, ponto, barra) |
+|---|---|---|---|
+| `success` | `success-50` | `success-700` | `success-600` |
+| `warning` | `warning-50` | `warning-700` | `warning-600` |
+| `danger` | `danger-50` | `danger-700` | `danger-600` |
+| `info` | `blue-50` | `blue-700` | `blue-600` |
+| `neutral` | `neutral-100` | `neutral-700` | `neutral-500` |
 
 **Sidebar**
 
-| Token                              | Valor                     | Contraste sobre `blue-950` |
-| ---------------------------------- | ------------------------- | -------------------------- |
-| `--color-sidebar-bg`               | `blue-950`                | —                          |
-| `--color-sidebar-text`             | `#C3D0E4`                 | 10,54                      |
-| `--color-sidebar-text-muted`       | `#8FA2BF`                 | 6,33 (títulos de grupo)    |
-| `--color-sidebar-item-hover`       | `rgb(255 255 255 / 0.06)` | —                          |
-| `--color-sidebar-item-active`      | `blue-800`                | —                          |
-| `--color-sidebar-item-active-text` | `neutral-0`               | 11,13 sobre `blue-800`     |
-| `--color-sidebar-indicator`        | `blue-300`                | 8,05                       |
-| `--color-sidebar-divider`          | `rgb(255 255 255 / 0.08)` | —                          |
-| `--color-sidebar-focus`            | `neutral-0`               | 16,44                      |
+| Token | Valor | Contraste sobre `blue-950` |
+|---|---|---|
+| `--color-sidebar-bg` | `blue-950` | — |
+| `--color-sidebar-text` | `#C3D0E4` | 10,54 |
+| `--color-sidebar-text-muted` | `#8FA2BF` | 6,33 (títulos de grupo) |
+| `--color-sidebar-item-hover` | `rgb(255 255 255 / 0.06)` | — |
+| `--color-sidebar-item-active` | `blue-800` | — |
+| `--color-sidebar-item-active-text` | `neutral-0` | 11,13 sobre `blue-800` |
+| `--color-sidebar-indicator` | `blue-300` | 8,05 |
+| `--color-sidebar-divider` | `rgb(255 255 255 / 0.08)` | — |
+| `--color-sidebar-focus` | `neutral-0` | 16,44 |
 
 **Gráficos** — ver seção 13
 
-| Token                    | Valor                     | Contraste |
-| ------------------------ | ------------------------- | --------- |
-| `--color-chart-1`        | `blue-600`                | 7,46      |
-| `--color-chart-2`        | `blue-400`                | 3,32      |
-| `--color-chart-3`        | `blue-900`                | 13,74     |
-| `--color-chart-4`        | `#1B7F84` (azul-petróleo) | 4,76      |
-| `--color-chart-5`        | `neutral-400`             | 3,27      |
-| `--color-chart-context`  | `neutral-400`             | 3,27      |
-| `--color-chart-grid`     | `neutral-200`             | —         |
-| `--color-chart-axis`     | `neutral-300`             | —         |
-| `--color-chart-positive` | `success-600`             | 5,35      |
-| `--color-chart-negative` | `danger-600`              | 5,30      |
+| Token | Valor | Contraste |
+|---|---|---|
+| `--color-chart-1` | `blue-600` | 7,46 |
+| `--color-chart-2` | `blue-400` | 3,32 |
+| `--color-chart-3` | `blue-900` | 13,74 |
+| `--color-chart-4` | `#1B7F84` (azul-petróleo) | 4,76 |
+| `--color-chart-5` | `neutral-400` | 3,27 |
+| `--color-chart-context` | `neutral-400` | 3,27 |
+| `--color-chart-grid` | `neutral-200` | — |
+| `--color-chart-axis` | `neutral-300` | — |
+| `--color-chart-positive` | `success-600` | 5,35 |
+| `--color-chart-negative` | `danger-600` | 5,30 |
 
 ### 3.5 Regras de uso da cor
 
@@ -289,10 +289,10 @@ Fora do escopo desta versão. Não implementar modo escuro de forma isolada em u
 
 ### 4.1 Família
 
-| Papel                             | Família        | Pilha completa                                                                                              |
-| --------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------- |
-| Interface                         | **Geist**      | `"Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif` |
-| Código e identificadores técnicos | **Geist Mono** | `"Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`                                    |
+| Papel | Família | Pilha completa |
+|---|---|---|
+| Interface | **Geist** | `"Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif` |
+| Código e identificadores técnicos | **Geist Mono** | `"Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace` |
 
 Geist Mono serve apenas para código, chaves técnicas e identificadores que precisam ser copiados caractere a caractere. Não use para labels, números de indicadores ou dados comuns.
 
@@ -300,21 +300,21 @@ Geist Mono serve apenas para código, chaves técnicas e identificadores que pre
 
 ### 4.2 Escala
 
-| Token       | Tamanho / altura de linha | Peso       | Tracking | Uso                                                           |
-| ----------- | ------------------------- | ---------- | -------- | ------------------------------------------------------------- |
-| `display`   | 36 / 44px                 | 600        | -0,02em  | Telas institucionais (login, página inicial). Raro            |
-| `h1`        | 28 / 36px                 | 600        | -0,015em | Título da página. Um por página                               |
-| `h2`        | 22 / 30px                 | 600        | -0,01em  | Seções da página                                              |
-| `h3`        | 18 / 26px                 | 600        | -0,005em | Subseções, título de modal e drawer                           |
-| `h4`        | 16 / 24px                 | 600        | 0        | Grupos de formulário, título de card, título de gráfico       |
-| `body`      | 14 / 22px                 | 400        | 0        | Texto padrão, células de tabela, campos                       |
-| `body-sm`   | 13 / 20px                 | 400        | 0        | Descrições, textos de ajuda, metadados                        |
-| `caption`   | 12 / 16px                 | 400 ou 500 | 0,01em   | Cabeçalho de tabela (500), eixos de gráfico, datas auxiliares |
-| `label`     | 13 / 20px                 | 500        | 0        | Rótulos de campos e de indicadores                            |
-| `button`    | 14 / 20px                 | 500        | 0        | Texto de botões                                               |
-| `metric`    | 28 / 36px                 | 600        | -0,02em  | Valor principal de indicadores                                |
-| `metric-sm` | 20 / 28px                 | 600        | -0,01em  | Indicadores secundários ou compactos                          |
-| `code`      | 13 / 20px (Geist Mono)    | 400        | 0        | Código e identificadores                                      |
+| Token | Tamanho / altura de linha | Peso | Tracking | Uso |
+|---|---|---|---|---|
+| `display` | 36 / 44px | 600 | -0,02em | Telas institucionais (login, página inicial). Raro |
+| `h1` | 28 / 36px | 600 | -0,015em | Título da página. Um por página |
+| `h2` | 22 / 30px | 600 | -0,01em | Seções da página |
+| `h3` | 18 / 26px | 600 | -0,005em | Subseções, título de modal e drawer |
+| `h4` | 16 / 24px | 600 | 0 | Grupos de formulário, título de card, título de gráfico |
+| `body` | 14 / 22px | 400 | 0 | Texto padrão, células de tabela, campos |
+| `body-sm` | 13 / 20px | 400 | 0 | Descrições, textos de ajuda, metadados |
+| `caption` | 12 / 16px | 400 ou 500 | 0,01em | Cabeçalho de tabela (500), eixos de gráfico, datas auxiliares |
+| `label` | 13 / 20px | 500 | 0 | Rótulos de campos e de indicadores |
+| `button` | 14 / 20px | 500 | 0 | Texto de botões |
+| `metric` | 28 / 36px | 600 | -0,02em | Valor principal de indicadores |
+| `metric-sm` | 20 / 28px | 600 | -0,01em | Indicadores secundários ou compactos |
+| `code` | 13 / 20px (Geist Mono) | 400 | 0 | Código e identificadores |
 
 ### 4.3 Regras
 
@@ -345,64 +345,64 @@ Informação secundária           ← body-sm ou caption, text-secondary
 
 Base de 4px. Os nomes coincidem com a escala padrão do Tailwind.
 
-| Token       | Valor | Token      | Valor |
-| ----------- | ----- | ---------- | ----- |
-| `space-0.5` | 2px   | `space-6`  | 24px  |
-| `space-1`   | 4px   | `space-8`  | 32px  |
-| `space-1.5` | 6px   | `space-10` | 40px  |
-| `space-2`   | 8px   | `space-12` | 48px  |
-| `space-3`   | 12px  | `space-16` | 64px  |
-| `space-4`   | 16px  | `space-20` | 80px  |
-| `space-5`   | 20px  |            |       |
+| Token | Valor | Token | Valor |
+|---|---|---|---|
+| `space-0.5` | 2px | `space-6` | 24px |
+| `space-1` | 4px | `space-8` | 32px |
+| `space-1.5` | 6px | `space-10` | 40px |
+| `space-2` | 8px | `space-12` | 48px |
+| `space-3` | 12px | `space-16` | 64px |
+| `space-4` | 16px | `space-20` | 80px |
+| `space-5` | 20px | | |
 
 Não usar valores fora da escala.
 
 ### 5.2 Espaçamento semântico
 
-| Relação                          | Valor                            |
-| -------------------------------- | -------------------------------- |
-| Ícone ↔ texto (componentes `md`) | 8px                              |
-| Ícone ↔ texto (componentes `sm`) | 6px                              |
-| Label ↔ campo                    | 6px                              |
-| Campo ↔ texto de ajuda ou erro   | 6px                              |
-| Título ↔ descrição               | 4px                              |
-| Entre campos (vertical)          | 20px                             |
-| Entre campos lado a lado         | 16px                             |
-| Entre filtros                    | 12px                             |
-| Cabeçalho de seção ↔ conteúdo    | 16px                             |
-| Entre grupos relacionados        | 32px                             |
-| Entre seções da página           | 48px                             |
-| Page header ↔ conteúdo           | 32px                             |
-| Padding interno de card          | 20px (compacto 16px, amplo 24px) |
-| Gap de grade de cards            | 16px (24px a partir de `xl`)     |
+| Relação | Valor |
+|---|---|
+| Ícone ↔ texto (componentes `md`) | 8px |
+| Ícone ↔ texto (componentes `sm`) | 6px |
+| Label ↔ campo | 6px |
+| Campo ↔ texto de ajuda ou erro | 6px |
+| Título ↔ descrição | 4px |
+| Entre campos (vertical) | 20px |
+| Entre campos lado a lado | 16px |
+| Entre filtros | 12px |
+| Cabeçalho de seção ↔ conteúdo | 16px |
+| Entre grupos relacionados | 32px |
+| Entre seções da página | 48px |
+| Page header ↔ conteúdo | 32px |
+| Padding interno de card | 20px (compacto 16px, amplo 24px) |
+| Gap de grade de cards | 16px (24px a partir de `xl`) |
 
 Quanto mais relacionados dois elementos, mais próximos. O espaço entre grupos deve ser visivelmente maior que o espaço dentro dos grupos.
 
 ### 5.3 Estrutura e larguras
 
-| Elemento                            | Valor                                                |
-| ----------------------------------- | ---------------------------------------------------- |
-| Sidebar expandida                   | 256px                                                |
-| Sidebar recolhida                   | 64px                                                 |
-| Header global                       | 56px de altura                                       |
-| Padding horizontal da página        | 32px (desktop), 24px (tablet), 16px (mobile)         |
-| Padding superior da página          | 32px (desktop), 24px (tablet e mobile)               |
-| Largura máxima do conteúdo de dados | 1440px                                               |
-| Largura máxima de formulários       | 640px                                                |
-| Largura máxima de texto corrido     | 720px                                                |
-| Grade                               | 12 colunas; gutter de 24px (desktop) e 16px (mobile) |
+| Elemento | Valor |
+|---|---|
+| Sidebar expandida | 256px |
+| Sidebar recolhida | 64px |
+| Header global | 56px de altura |
+| Padding horizontal da página | 32px (desktop), 24px (tablet), 16px (mobile) |
+| Padding superior da página | 32px (desktop), 24px (tablet e mobile) |
+| Largura máxima do conteúdo de dados | 1440px |
+| Largura máxima de formulários | 640px |
+| Largura máxima de texto corrido | 720px |
+| Grade | 12 colunas; gutter de 24px (desktop) e 16px (mobile) |
 
 Conteúdo alinhado à esquerda. Não centralizar páginas de dados em telas largas com margens enormes: o conteúdo ocupa a área disponível até 1440px, alinhado à esquerda da área de conteúdo.
 
 ### 5.4 Breakpoints
 
-| Token | Largura mínima | Contexto                            |
-| ----- | -------------- | ----------------------------------- |
-| `sm`  | 640px          | Celular grande                      |
-| `md`  | 768px          | Tablet                              |
-| `lg`  | 1024px         | Notebook pequeno, tablet horizontal |
-| `xl`  | 1280px         | Notebook e desktop                  |
-| `2xl` | 1536px         | Desktop amplo                       |
+| Token | Largura mínima | Contexto |
+|---|---|---|
+| `sm` | 640px | Celular grande |
+| `md` | 768px | Tablet |
+| `lg` | 1024px | Notebook pequeno, tablet horizontal |
+| `xl` | 1280px | Notebook e desktop |
+| `2xl` | 1536px | Desktop amplo |
 
 Os valores coincidem com os padrões do Tailwind. O comportamento em cada faixa está na seção 16.
 
@@ -414,12 +414,12 @@ Os valores coincidem com os padrões do Tailwind. O comportamento em cada faixa 
 
 O raio varia conforme a hierarquia do elemento; não é um único valor aplicado a tudo.
 
-| Token         | Valor  | Uso                                                          |
-| ------------- | ------ | ------------------------------------------------------------ |
-| `radius-sm`   | 4px    | Badges, checkbox, chips, tooltips, skeleton                  |
-| `radius-md`   | 6px    | Botões, campos, selects, itens de menu, item da sidebar      |
-| `radius-lg`   | 8px    | Cards, menus, popovers, alertas, toasts                      |
-| `radius-xl`   | 12px   | Modais, drawers                                              |
+| Token | Valor | Uso |
+|---|---|---|
+| `radius-sm` | 4px | Badges, checkbox, chips, tooltips, skeleton |
+| `radius-md` | 6px | Botões, campos, selects, itens de menu, item da sidebar |
+| `radius-lg` | 8px | Cards, menus, popovers, alertas, toasts |
+| `radius-xl` | 12px | Modais, drawers |
 | `radius-full` | 9999px | Somente avatar, ponto de status, switch e barra de progresso |
 
 Evitar o estilo "tudo é pílula". Botões, badges e campos não são arredondados por completo.
@@ -436,12 +436,12 @@ Evitar o estilo "tudo é pílula". Botões, badges e campos não são arredondad
 
 A profundidade vem, nesta ordem, de: espaçamento, contraste de superfície, tipografia, divisores e, por último, sombra.
 
-| Token         | Valor                                                              | Uso                                                                    |
-| ------------- | ------------------------------------------------------------------ | ---------------------------------------------------------------------- |
-| `shadow-none` | —                                                                  | Padrão. Cards não têm sombra                                           |
-| `shadow-sm`   | `0 1px 2px rgb(23 28 38 / 0.06)`                                   | Segmento ativo de controle segmentado; header sticky quando há rolagem |
-| `shadow-md`   | `0 1px 3px rgb(23 28 38 / 0.06), 0 4px 16px rgb(23 28 38 / 0.08)`  | Menus, popovers, selects abertos, toasts                               |
-| `shadow-lg`   | `0 2px 6px rgb(23 28 38 / 0.06), 0 16px 40px rgb(23 28 38 / 0.14)` | Modais, drawers                                                        |
+| Token | Valor | Uso |
+|---|---|---|
+| `shadow-none` | — | Padrão. Cards não têm sombra |
+| `shadow-sm` | `0 1px 2px rgb(23 28 38 / 0.06)` | Segmento ativo de controle segmentado; header sticky quando há rolagem |
+| `shadow-md` | `0 1px 3px rgb(23 28 38 / 0.06), 0 4px 16px rgb(23 28 38 / 0.08)` | Menus, popovers, selects abertos, toasts |
+| `shadow-lg` | `0 2px 6px rgb(23 28 38 / 0.06), 0 16px 40px rgb(23 28 38 / 0.14)` | Modais, drawers |
 
 Sombra indica elemento flutuando sobre a página (camada temporária). Não use sombra para decorar elementos estáticos.
 
@@ -451,13 +451,13 @@ Sombra indica elemento flutuando sobre a página (camada temporária). Não use 
 
 ### 7.1 Movimento
 
-| Token           | Valor                        | Uso                                      |
-| --------------- | ---------------------------- | ---------------------------------------- |
-| `duration-fast` | 120ms                        | Hover, mudança de cor, opacidade         |
-| `duration-base` | 180ms                        | Dropdowns, tooltips, expandir e recolher |
-| `duration-slow` | 240ms                        | Drawers, modais, recolhimento da sidebar |
-| `ease-standard` | `cubic-bezier(0.2, 0, 0, 1)` | Entradas e mudanças de estado            |
-| `ease-exit`     | `cubic-bezier(0.4, 0, 1, 1)` | Saídas                                   |
+| Token | Valor | Uso |
+|---|---|---|
+| `duration-fast` | 120ms | Hover, mudança de cor, opacidade |
+| `duration-base` | 180ms | Dropdowns, tooltips, expandir e recolher |
+| `duration-slow` | 240ms | Drawers, modais, recolhimento da sidebar |
+| `ease-standard` | `cubic-bezier(0.2, 0, 0, 1)` | Entradas e mudanças de estado |
+| `ease-exit` | `cubic-bezier(0.4, 0, 1, 1)` | Saídas |
 
 - Animar apenas para mostrar o que mudou: abertura, fechamento, transição de estado e feedback.
 - Não usar animações de entrada em seções, efeitos em cascata nem movimento decorativo.
@@ -466,17 +466,17 @@ Sombra indica elemento flutuando sobre a página (camada temporária). Não use 
 
 ### 7.2 Camadas (z-index)
 
-| Token        | Valor                                   |
-| ------------ | --------------------------------------- |
-| `z-base`     | 0                                       |
-| `z-sticky`   | 100 (cabeçalho de tabela, barras fixas) |
-| `z-header`   | 200                                     |
-| `z-sidebar`  | 300 (inclui drawer de navegação)        |
-| `z-dropdown` | 400 (menus, popovers, selects)          |
-| `z-overlay`  | 500                                     |
-| `z-modal`    | 510 (modais e drawers)                  |
-| `z-toast`    | 600                                     |
-| `z-tooltip`  | 700                                     |
+| Token | Valor |
+|---|---|
+| `z-base` | 0 |
+| `z-sticky` | 100 (cabeçalho de tabela, barras fixas) |
+| `z-header` | 200 |
+| `z-sidebar` | 300 (inclui drawer de navegação) |
+| `z-dropdown` | 400 (menus, popovers, selects) |
+| `z-overlay` | 500 |
+| `z-modal` | 510 (modais e drawers) |
+| `z-toast` | 600 |
+| `z-tooltip` | 700 |
 
 Não usar valores de z-index fora desta tabela.
 
@@ -492,191 +492,170 @@ Estes tokens são a referência de implementação. Se o projeto usar Tailwind, 
 ```css
 :root {
   /* ---------- Primitivos: azul institucional ---------- */
-  --color-blue-50: #f2f6fc;
-  --color-blue-100: #e3ecf5;
-  --color-blue-200: #c2d6e8;
-  --color-blue-300: #7bc1f5;
-  --color-blue-400: #0d85e2;
-  --color-blue-500: #066cbf;
-  --color-blue-600: #0055a1;
+  --color-blue-50:  #F2F6FC;
+  --color-blue-100: #E3ECF5;
+  --color-blue-200: #C2D6E8;
+  --color-blue-300: #7BC1F5;
+  --color-blue-400: #0D85E2;
+  --color-blue-500: #066CBF;
+  --color-blue-600: #0055A1;
   --color-blue-700: #004787;
-  --color-blue-800: #003c71;
-  --color-blue-900: #002f59;
-  --color-blue-950: #00203d;
+  --color-blue-800: #003C71;
+  --color-blue-900: #002F59;
+  --color-blue-950: #00203D;
 
   /* ---------- Primitivos: neutros ---------- */
-  --color-neutral-0: #ffffff;
-  --color-neutral-50: #f5f7fa;
-  --color-neutral-100: #edf0f4;
-  --color-neutral-200: #e0e5ec;
-  --color-neutral-300: #cbd2dc;
-  --color-neutral-400: #858f9f;
+  --color-neutral-0:   #FFFFFF;
+  --color-neutral-50:  #F5F7FA;
+  --color-neutral-100: #EDF0F4;
+  --color-neutral-200: #E0E5EC;
+  --color-neutral-300: #CBD2DC;
+  --color-neutral-400: #858F9F;
   --color-neutral-500: #677183;
   --color-neutral-600: #556070;
-  --color-neutral-700: #3e4857;
-  --color-neutral-800: #29313e;
-  --color-neutral-900: #171c26;
+  --color-neutral-700: #3E4857;
+  --color-neutral-800: #29313E;
+  --color-neutral-900: #171C26;
 
   /* ---------- Primitivos: semânticos ---------- */
-  --color-success-50: #eaf6ef;
-  --color-success-600: #1e7a45;
-  --color-success-700: #17613a;
-  --color-warning-50: #fdf4e3;
-  --color-warning-600: #9a5b00;
-  --color-warning-700: #7d4a00;
-  --color-danger-50: #fdeeec;
-  --color-danger-600: #c23b30;
-  --color-danger-700: #a02e25;
+  --color-success-50:  #EAF6EF;
+  --color-success-600: #1E7A45;
+  --color-success-700: #17613A;
+  --color-warning-50:  #FDF4E3;
+  --color-warning-600: #9A5B00;
+  --color-warning-700: #7D4A00;
+  --color-danger-50:   #FDEEEC;
+  --color-danger-600:  #C23B30;
+  --color-danger-700:  #A02E25;
 
   /* ---------- Fundo ---------- */
-  --color-bg-canvas: var(--color-neutral-0);
-  --color-bg-subtle: var(--color-neutral-50);
-  --color-bg-muted: var(--color-neutral-100);
+  --color-bg-canvas:   var(--color-neutral-0);
+  --color-bg-subtle:   var(--color-neutral-50);
+  --color-bg-muted:    var(--color-neutral-100);
   --color-bg-selected: var(--color-blue-50);
-  --color-bg-raised: var(--color-neutral-0);
-  --color-bg-inverse: var(--color-neutral-900);
-  --color-bg-overlay: rgb(11 31 61 / 0.4);
+  --color-bg-raised:   var(--color-neutral-0);
+  --color-bg-inverse:  var(--color-neutral-900);
+  --color-bg-overlay:  rgb(11 31 61 / 0.40);
 
   /* ---------- Texto ---------- */
-  --color-text-primary: var(--color-neutral-900);
-  --color-text-secondary: var(--color-neutral-600);
-  --color-text-tertiary: var(--color-neutral-500);
-  --color-text-disabled: var(--color-neutral-400);
-  --color-text-inverse: var(--color-neutral-0);
-  --color-text-brand: var(--color-blue-900);
-  --color-text-link: var(--color-blue-700);
+  --color-text-primary:    var(--color-neutral-900);
+  --color-text-secondary:  var(--color-neutral-600);
+  --color-text-tertiary:   var(--color-neutral-500);
+  --color-text-disabled:   var(--color-neutral-400);
+  --color-text-inverse:    var(--color-neutral-0);
+  --color-text-brand:      var(--color-blue-900);
+  --color-text-link:       var(--color-blue-700);
   --color-text-link-hover: var(--color-blue-800);
 
   /* ---------- Borda ---------- */
-  --color-border-subtle: var(--color-neutral-200);
+  --color-border-subtle:  var(--color-neutral-200);
   --color-border-default: var(--color-neutral-300);
-  --color-border-input: var(--color-neutral-400);
-  --color-border-focus: var(--color-blue-600);
-  --color-border-danger: var(--color-danger-600);
+  --color-border-input:   var(--color-neutral-400);
+  --color-border-focus:   var(--color-blue-600);
+  --color-border-danger:  var(--color-danger-600);
 
   /* ---------- Ação ---------- */
-  --color-action-primary: var(--color-blue-600);
-  --color-action-primary-hover: var(--color-blue-700);
+  --color-action-primary:         var(--color-blue-600);
+  --color-action-primary-hover:   var(--color-blue-700);
   --color-action-primary-pressed: var(--color-blue-800);
-  --color-action-secondary: var(--color-blue-50);
+  --color-action-secondary:       var(--color-blue-50);
   --color-action-secondary-hover: var(--color-blue-100);
-  --color-action-secondary-text: var(--color-blue-700);
-  --color-action-ghost-hover: var(--color-neutral-100);
-  --color-action-ghost-text: var(--color-neutral-700);
-  --color-action-danger: var(--color-danger-600);
-  --color-action-danger-hover: var(--color-danger-700);
-  --color-focus-ring: var(--color-blue-600);
+  --color-action-secondary-text:  var(--color-blue-700);
+  --color-action-ghost-hover:     var(--color-neutral-100);
+  --color-action-ghost-text:      var(--color-neutral-700);
+  --color-action-danger:          var(--color-danger-600);
+  --color-action-danger-hover:    var(--color-danger-700);
+  --color-focus-ring:             var(--color-blue-600);
 
   /* ---------- Status ---------- */
-  --color-status-success-bg: var(--color-success-50);
-  --color-status-success-text: var(--color-success-700);
+  --color-status-success-bg:    var(--color-success-50);
+  --color-status-success-text:  var(--color-success-700);
   --color-status-success-solid: var(--color-success-600);
-  --color-status-warning-bg: var(--color-warning-50);
-  --color-status-warning-text: var(--color-warning-700);
+  --color-status-warning-bg:    var(--color-warning-50);
+  --color-status-warning-text:  var(--color-warning-700);
   --color-status-warning-solid: var(--color-warning-600);
-  --color-status-danger-bg: var(--color-danger-50);
-  --color-status-danger-text: var(--color-danger-700);
-  --color-status-danger-solid: var(--color-danger-600);
-  --color-status-info-bg: var(--color-blue-50);
-  --color-status-info-text: var(--color-blue-700);
-  --color-status-info-solid: var(--color-blue-600);
-  --color-status-neutral-bg: var(--color-neutral-100);
-  --color-status-neutral-text: var(--color-neutral-700);
+  --color-status-danger-bg:     var(--color-danger-50);
+  --color-status-danger-text:   var(--color-danger-700);
+  --color-status-danger-solid:  var(--color-danger-600);
+  --color-status-info-bg:       var(--color-blue-50);
+  --color-status-info-text:     var(--color-blue-700);
+  --color-status-info-solid:    var(--color-blue-600);
+  --color-status-neutral-bg:    var(--color-neutral-100);
+  --color-status-neutral-text:  var(--color-neutral-700);
   --color-status-neutral-solid: var(--color-neutral-500);
 
   /* ---------- Sidebar ---------- */
-  --color-sidebar-bg: var(--color-blue-950);
-  --color-sidebar-text: #c3d0e4;
-  --color-sidebar-text-muted: #8fa2bf;
-  --color-sidebar-item-hover: rgb(255 255 255 / 0.06);
-  --color-sidebar-item-active: var(--color-blue-800);
+  --color-sidebar-bg:               var(--color-blue-950);
+  --color-sidebar-text:             #C3D0E4;
+  --color-sidebar-text-muted:       #8FA2BF;
+  --color-sidebar-item-hover:       rgb(255 255 255 / 0.06);
+  --color-sidebar-item-active:      var(--color-blue-800);
   --color-sidebar-item-active-text: var(--color-neutral-0);
-  --color-sidebar-indicator: var(--color-blue-300);
-  --color-sidebar-divider: rgb(255 255 255 / 0.08);
-  --color-sidebar-focus: var(--color-neutral-0);
+  --color-sidebar-indicator:        var(--color-blue-300);
+  --color-sidebar-divider:          rgb(255 255 255 / 0.08);
+  --color-sidebar-focus:            var(--color-neutral-0);
 
   /* ---------- Gráficos ---------- */
-  --color-chart-1: var(--color-blue-600);
-  --color-chart-2: var(--color-blue-400);
-  --color-chart-3: var(--color-blue-900);
-  --color-chart-4: #1b7f84;
-  --color-chart-5: var(--color-neutral-400);
-  --color-chart-context: var(--color-neutral-400);
-  --color-chart-grid: var(--color-neutral-200);
-  --color-chart-axis: var(--color-neutral-300);
+  --color-chart-1:        var(--color-blue-600);
+  --color-chart-2:        var(--color-blue-400);
+  --color-chart-3:        var(--color-blue-900);
+  --color-chart-4:        #1B7F84;
+  --color-chart-5:        var(--color-neutral-400);
+  --color-chart-context:  var(--color-neutral-400);
+  --color-chart-grid:     var(--color-neutral-200);
+  --color-chart-axis:     var(--color-neutral-300);
   --color-chart-positive: var(--color-success-600);
   --color-chart-negative: var(--color-danger-600);
 
   /* ---------- Tipografia ---------- */
-  --font-sans:
-    "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
-  --font-mono:
-    "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  --font-weight-regular: 400;
-  --font-weight-medium: 500;
+  --font-weight-regular:  400;
+  --font-weight-medium:   500;
   --font-weight-semibold: 600;
 
-  --text-display: 2.25rem;
-  --leading-display: 2.75rem;
-  --tracking-display: -0.02em;
-  --text-h1: 1.75rem;
-  --leading-h1: 2.25rem;
-  --tracking-h1: -0.015em;
-  --text-h2: 1.375rem;
-  --leading-h2: 1.875rem;
-  --tracking-h2: -0.01em;
-  --text-h3: 1.125rem;
-  --leading-h3: 1.625rem;
-  --tracking-h3: -0.005em;
-  --text-h4: 1rem;
-  --leading-h4: 1.5rem;
-  --text-body: 0.875rem;
-  --leading-body: 1.375rem;
-  --text-body-sm: 0.8125rem;
-  --leading-body-sm: 1.25rem;
-  --text-caption: 0.75rem;
-  --leading-caption: 1rem;
-  --tracking-caption: 0.01em;
-  --text-label: 0.8125rem;
-  --leading-label: 1.25rem;
-  --text-button: 0.875rem;
-  --leading-button: 1.25rem;
-  --text-metric: 1.75rem;
-  --leading-metric: 2.25rem;
-  --tracking-metric: -0.02em;
-  --text-metric-sm: 1.25rem;
-  --leading-metric-sm: 1.75rem;
+  --text-display: 2.25rem;   --leading-display: 2.75rem;  --tracking-display: -0.02em;
+  --text-h1:      1.75rem;   --leading-h1:      2.25rem;  --tracking-h1:      -0.015em;
+  --text-h2:      1.375rem;  --leading-h2:      1.875rem; --tracking-h2:      -0.01em;
+  --text-h3:      1.125rem;  --leading-h3:      1.625rem; --tracking-h3:      -0.005em;
+  --text-h4:      1rem;      --leading-h4:      1.5rem;
+  --text-body:    0.875rem;  --leading-body:    1.375rem;
+  --text-body-sm: 0.8125rem; --leading-body-sm: 1.25rem;
+  --text-caption: 0.75rem;   --leading-caption: 1rem;     --tracking-caption: 0.01em;
+  --text-label:   0.8125rem; --leading-label:   1.25rem;
+  --text-button:  0.875rem;  --leading-button:  1.25rem;
+  --text-metric:  1.75rem;   --leading-metric:  2.25rem;  --tracking-metric:  -0.02em;
+  --text-metric-sm: 1.25rem; --leading-metric-sm: 1.75rem;
 
   /* ---------- Espaçamento ---------- */
-  --space-0-5: 0.125rem; /* 2px  */
-  --space-1: 0.25rem; /* 4px  */
-  --space-1-5: 0.375rem; /* 6px  */
-  --space-2: 0.5rem; /* 8px  */
-  --space-3: 0.75rem; /* 12px */
-  --space-4: 1rem; /* 16px */
-  --space-5: 1.25rem; /* 20px */
-  --space-6: 1.5rem; /* 24px */
-  --space-8: 2rem; /* 32px */
-  --space-10: 2.5rem; /* 40px */
-  --space-12: 3rem; /* 48px */
-  --space-16: 4rem; /* 64px */
-  --space-20: 5rem; /* 80px */
+  --space-0-5: 0.125rem;  /* 2px  */
+  --space-1:   0.25rem;   /* 4px  */
+  --space-1-5: 0.375rem;  /* 6px  */
+  --space-2:   0.5rem;    /* 8px  */
+  --space-3:   0.75rem;   /* 12px */
+  --space-4:   1rem;      /* 16px */
+  --space-5:   1.25rem;   /* 20px */
+  --space-6:   1.5rem;    /* 24px */
+  --space-8:   2rem;      /* 32px */
+  --space-10:  2.5rem;    /* 40px */
+  --space-12:  3rem;      /* 48px */
+  --space-16:  4rem;      /* 64px */
+  --space-20:  5rem;      /* 80px */
 
   /* ---------- Layout ---------- */
-  --sidebar-width: 16rem; /* 256px  */
-  --sidebar-width-collapsed: 4rem; /* 64px   */
-  --header-height: 3.5rem; /* 56px   */
-  --content-max-width: 90rem; /* 1440px */
-  --form-max-width: 40rem; /* 640px  */
-  --prose-max-width: 45rem; /* 720px  */
+  --sidebar-width:           16rem;  /* 256px  */
+  --sidebar-width-collapsed: 4rem;   /* 64px   */
+  --header-height:           3.5rem; /* 56px   */
+  --content-max-width:       90rem;  /* 1440px */
+  --form-max-width:          40rem;  /* 640px  */
+  --prose-max-width:         45rem;  /* 720px  */
 
   /* ---------- Raio ---------- */
-  --radius-sm: 0.25rem; /* 4px  */
-  --radius-md: 0.375rem; /* 6px  */
-  --radius-lg: 0.5rem; /* 8px  */
-  --radius-xl: 0.75rem; /* 12px */
+  --radius-sm:   0.25rem;  /* 4px  */
+  --radius-md:   0.375rem; /* 6px  */
+  --radius-lg:   0.5rem;   /* 8px  */
+  --radius-xl:   0.75rem;  /* 12px */
   --radius-full: 9999px;
 
   /* ---------- Sombras ---------- */
@@ -689,17 +668,17 @@ Estes tokens são a referência de implementação. Se o projeto usar Tailwind, 
   --duration-base: 180ms;
   --duration-slow: 240ms;
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
-  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --ease-exit:     cubic-bezier(0.4, 0, 1, 1);
 
   /* ---------- Camadas ---------- */
-  --z-sticky: 100;
-  --z-header: 200;
-  --z-sidebar: 300;
+  --z-sticky:   100;
+  --z-header:   200;
+  --z-sidebar:  300;
   --z-dropdown: 400;
-  --z-overlay: 500;
-  --z-modal: 510;
-  --z-toast: 600;
-  --z-tooltip: 700;
+  --z-overlay:  500;
+  --z-modal:    510;
+  --z-toast:    600;
+  --z-tooltip:  700;
 }
 
 /* Breakpoints (media queries não aceitam var()):
@@ -719,15 +698,12 @@ html {
   outline-offset: 2px;
 }
 
-table,
-.numeric {
+table, .numeric {
   font-variant-numeric: tabular-nums;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -782,11 +758,11 @@ Se o conteúdo fica claro sem o card, não use card. A especificação visual es
 
 ### 9.5 Densidade
 
-| Contexto                                     | Densidade                                        |
-| -------------------------------------------- | ------------------------------------------------ |
-| Padrão (formulários, detalhes, dashboards)   | Tokens desta seção, linhas de tabela de 44px     |
-| Tabelas analíticas com muitas linhas         | Linhas de 36px (modo compacto), mesma tipografia |
-| Telas institucionais (login, página inicial) | Mais espaço, uso de `display`                    |
+| Contexto | Densidade |
+|---|---|
+| Padrão (formulários, detalhes, dashboards) | Tokens desta seção, linhas de tabela de 44px |
+| Tabelas analíticas com muitas linhas | Linhas de 36px (modo compacto), mesma tipografia |
+| Telas institucionais (login, página inicial) | Mais espaço, uso de `display` |
 
 Nunca compacte reduzindo o tamanho da fonte. Compacte reduzindo altura de linha e padding, sempre dentro da escala.
 
@@ -892,15 +868,15 @@ Quando a aplicação tem navegação lateral:
 - **Grupos:** título do grupo em `caption` 500, cor `sidebar-text-muted`, sentence case, 24px acima e 4px abaixo. Não usar caixa alta.
 - **Itens:**
 
-  | Propriedade             | Valor                          |
-  | ----------------------- | ------------------------------ |
-  | Altura                  | 36px                           |
-  | Padding horizontal      | 12px                           |
-  | Raio                    | `radius-md`                    |
-  | Margem lateral          | 8px                            |
-  | Ícone                   | 20px                           |
-  | Texto                   | `body` 400, cor `sidebar-text` |
-  | Gap entre ícone e texto | 12px                           |
+  | Propriedade | Valor |
+  |---|---|
+  | Altura | 36px |
+  | Padding horizontal | 12px |
+  | Raio | `radius-md` |
+  | Margem lateral | 8px |
+  | Ícone | 20px |
+  | Texto | `body` 400, cor `sidebar-text` |
+  | Gap entre ícone e texto | 12px |
 
 - **Hover:** fundo `sidebar-item-hover`.
 - **Ativo:** três sinais combinados, para não depender só de cor:
@@ -948,13 +924,13 @@ Descrição curta do contexto (1–2 linhas)
 - **Uso:** alternar entre visões do mesmo contexto, como dados, histórico e documentos.
 - **Estilo:** sublinhado, sem caixas. O container tem divisor inferior `border-subtle`.
 
-  | Propriedade    | Valor                                                      |
-  | -------------- | ---------------------------------------------------------- |
-  | Altura da aba  | 40px                                                       |
-  | Gap entre abas | 24px                                                       |
-  | Texto          | `body` 500, `text-secondary`                               |
-  | Aba ativa      | `text-primary` + barra inferior de 2px em `action-primary` |
-  | Hover          | `text-primary`                                             |
+  | Propriedade | Valor |
+  |---|---|
+  | Altura da aba | 40px |
+  | Gap entre abas | 24px |
+  | Texto | `body` 500, `text-secondary` |
+  | Aba ativa | `text-primary` + barra inferior de 2px em `action-primary` |
+  | Hover | `text-primary` |
 
 - **Quantidade:** no máximo 6 abas. Em telas estreitas, as abas rolam horizontalmente.
 - **Contagem no rótulo:** quando o número atrás da aba ajuda a decidir o clique, ele vai ao lado do rótulo ("Alertas 18.325", "Cobertura 3%"; milhar com ponto), em `caption` sobre `state-info-soft`; em `state-warning-soft` quando pede ação (pendências abertas). Some no zero. Vale também para o controle segmentado (`ContagemDaAba`).
@@ -977,24 +953,24 @@ Todo componente interativo deve ter definidos os estados: padrão, hover, pressi
 
 **Variantes**
 
-| Variante          | Fundo              | Texto                   | Hover                         | Uso                                                                  |
-| ----------------- | ------------------ | ----------------------- | ----------------------------- | -------------------------------------------------------------------- |
-| Primary           | `action-primary`   | `text-inverse`          | `action-primary-hover`        | Ação principal. No máximo 1 por área da tela                         |
-| Secondary         | `action-secondary` | `action-secondary-text` | `action-secondary-hover`      | Ação importante, mas não principal                                   |
-| Ghost             | transparente       | `action-ghost-text`     | fundo `action-ghost-hover`    | Menor prioridade: cancelar, ações em linhas de tabela, ações de card |
-| Link              | transparente       | `text-link`             | sublinhado, `text-link-hover` | Navegação no meio de texto                                           |
-| Destructive       | `action-danger`    | `text-inverse`          | `action-danger-hover`         | Confirmação final de exclusão ou ação irreversível                   |
-| Destructive ghost | transparente       | `danger-600`            | fundo `danger-50`             | Iniciar uma exclusão em menus e rodapés                              |
+| Variante | Fundo | Texto | Hover | Uso |
+|---|---|---|---|---|
+| Primary | `action-primary` | `text-inverse` | `action-primary-hover` | Ação principal. No máximo 1 por área da tela |
+| Secondary | `action-secondary` | `action-secondary-text` | `action-secondary-hover` | Ação importante, mas não principal |
+| Ghost | transparente | `action-ghost-text` | fundo `action-ghost-hover` | Menor prioridade: cancelar, ações em linhas de tabela, ações de card |
+| Link | transparente | `text-link` | sublinhado, `text-link-hover` | Navegação no meio de texto |
+| Destructive | `action-danger` | `text-inverse` | `action-danger-hover` | Confirmação final de exclusão ou ação irreversível |
+| Destructive ghost | transparente | `danger-600` | fundo `danger-50` | Iniciar uma exclusão em menus e rodapés |
 
 Botões não têm borda. A diferença entre variantes vem do fundo e da cor do texto. O secundário é tonal (azul muito claro), e não contornado.
 
 **Tamanhos**
 
-| Tamanho       | Altura | Padding horizontal | Texto          | Ícone | Gap |
-| ------------- | ------ | ------------------ | -------------- | ----- | --- |
-| `sm`          | 32px   | 12px               | 13px, peso 500 | 16px  | 6px |
-| `md` (padrão) | 36px   | 16px               | `button`       | 16px  | 8px |
-| `lg`          | 40px   | 20px               | `button`       | 16px  | 8px |
+| Tamanho | Altura | Padding horizontal | Texto | Ícone | Gap |
+|---|---|---|---|---|---|
+| `sm` | 32px | 12px | 13px, peso 500 | 16px | 6px |
+| `md` (padrão) | 36px | 16px | `button` | 16px | 8px |
+| `lg` | 40px | 20px | `button` | 16px | 8px |
 
 - **Raio:** `radius-md`.
 - **Botão só com ícone:** quadrado, com a mesma altura do tamanho escolhido. Exige `aria-label` e tooltip.
@@ -1008,12 +984,12 @@ Botões não têm borda. A diferença entre variantes vem do fundo e da cor do t
 
 **Posicionamento**
 
-| Contexto                    | Alinhamento | Ordem                                          |
-| --------------------------- | ----------- | ---------------------------------------------- |
-| Page header                 | Direita     | Secundárias → principal (principal por último) |
-| Fim de formulário em página | Esquerda    | Principal → cancelar                           |
-| Rodapé de modal ou drawer   | Direita     | Cancelar → principal (principal por último)    |
-| Linha de tabela             | Direita     | Ações em `Ellipsis` ou botões ghost de ícone   |
+| Contexto | Alinhamento | Ordem |
+|---|---|---|
+| Page header | Direita | Secundárias → principal (principal por último) |
+| Fim de formulário em página | Esquerda | Principal → cancelar |
+| Rodapé de modal ou drawer | Direita | Cancelar → principal (principal por último) |
+| Linha de tabela | Direita | Ações em `Ellipsis` ou botões ghost de ícone |
 
 - **Mais ações:** com três ou mais ações secundárias, agrupe-as no menu "Mais ações" (`Ellipsis`).
 - **Ação destrutiva:** fica separada das demais, no fim do menu e após um divisor.
@@ -1023,26 +999,26 @@ Botões não têm borda. A diferença entre variantes vem do fundo e da cor do t
 
 **Campo de texto**
 
-| Propriedade        | Valor                                                            |
-| ------------------ | ---------------------------------------------------------------- |
-| Altura             | 36px (`sm` 32px, `lg` 40px)                                      |
-| Padding horizontal | 12px                                                             |
-| Raio               | `radius-md`                                                      |
-| Fundo              | `bg-canvas`                                                      |
-| Borda              | 1px `border-input`                                               |
-| Texto              | `body`, `text-primary`                                           |
-| Placeholder        | `text-tertiary`. É exemplo de formato, nunca substitui o label   |
-| Ícone interno      | 16px em `neutral-500`, 12px da borda (ex.: `Search`, `Calendar`) |
+| Propriedade | Valor |
+|---|---|
+| Altura | 36px (`sm` 32px, `lg` 40px) |
+| Padding horizontal | 12px |
+| Raio | `radius-md` |
+| Fundo | `bg-canvas` |
+| Borda | 1px `border-input` |
+| Texto | `body`, `text-primary` |
+| Placeholder | `text-tertiary`. É exemplo de formato, nunca substitui o label |
+| Ícone interno | 16px em `neutral-500`, 12px da borda (ex.: `Search`, `Calendar`) |
 
 **Estados**
 
-| Estado          | Tratamento                                                                                                                                                            |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Hover           | Borda `neutral-500`                                                                                                                                                   |
-| Foco            | Borda `border-focus` + halo `0 0 0 3px rgb(31 90 168 / 0.20)`. A borda azul atende 3:1 sozinha                                                                        |
-| Erro            | Borda `border-danger`; mensagem abaixo com `CircleAlert` 14px e texto `body-sm` em `danger-700`; `aria-invalid="true"` e `aria-describedby` apontando para a mensagem |
-| Desabilitado    | Fundo `bg-subtle`, borda `border-subtle`, texto `text-disabled`                                                                                                       |
-| Somente leitura | Não usar campo. Exibir o valor como texto em uma lista de propriedades                                                                                                |
+| Estado | Tratamento |
+|---|---|
+| Hover | Borda `neutral-500` |
+| Foco | Borda `border-focus` + halo `0 0 0 3px rgb(31 90 168 / 0.20)`. A borda azul atende 3:1 sozinha |
+| Erro | Borda `border-danger`; mensagem abaixo com `CircleAlert` 14px e texto `body-sm` em `danger-700`; `aria-invalid="true"` e `aria-describedby` apontando para a mensagem |
+| Desabilitado | Fundo `bg-subtle`, borda `border-subtle`, texto `text-disabled` |
+| Somente leitura | Não usar campo. Exibir o valor como texto em uma lista de propriedades |
 
 Não usar sombras internas nem externas em campos. O visual dos campos é idêntico em todas as telas do produto.
 
@@ -1055,14 +1031,14 @@ Não usar sombras internas nem externas em campos. O visual dos campos é idênt
 
 **Outros controles**
 
-| Controle | Especificação                                                                                                                                                          |
-| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Select   | Mesmo visual do campo de texto, com `ChevronDown` 16px à direita. Acima de 10 opções, permitir busca (combobox)                                                        |
-| Checkbox | 16px, `radius-sm`, borda `border-input`. Marcado: fundo `action-primary` e `Check` branco                                                                              |
-| Radio    | 16px circular. Selecionado: anel `action-primary` com ponto interno                                                                                                    |
-| Switch   | 36 × 20px, `radius-full`. Somente para configurações que aplicam imediatamente. Em formulários com botão de envio, usar checkbox                                       |
-| Textarea | Mínimo de 3 linhas, redimensionável apenas na vertical                                                                                                                 |
-| Data     | Campo com `Calendar`, formato dd/mm/aaaa, aceitando digitação direta além do seletor                                                                                   |
+| Controle | Especificação |
+|---|---|
+| Select | Mesmo visual do campo de texto, com `ChevronDown` 16px à direita. Acima de 10 opções, permitir busca (combobox) |
+| Checkbox | 16px, `radius-sm`, borda `border-input`. Marcado: fundo `action-primary` e `Check` branco |
+| Radio | 16px circular. Selecionado: anel `action-primary` com ponto interno |
+| Switch | 36 × 20px, `radius-full`. Somente para configurações que aplicam imediatamente. Em formulários com botão de envio, usar checkbox |
+| Textarea | Mínimo de 3 linhas, redimensionável apenas na vertical |
+| Data | Campo com `Calendar`, formato dd/mm/aaaa, aceitando digitação direta além do seletor |
 | Máscaras | CPF `000.000.000-00`, CNPJ `00.000.000/0000-00`, CEP `00000-000`, telefone `(00) 00000-0000`. Aplicadas durante a digitação; colar com ou sem pontuação deve funcionar |
 
 A área clicável de checkbox e radio inclui o texto do label.
@@ -1102,17 +1078,17 @@ Filtros fazem parte da página, e não de um card independente. Ficam em uma lin
 
 Tabelas são leves: sem grade, sem bordas por célula, sem container com borda e sem zebra.
 
-| Elemento                       | Especificação                                                                                                                                        |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Container                      | Nenhum. A tabela fica direto na página. O texto da primeira coluna alinha com o título da página (compensar o padding da célula com margem negativa) |
-| Cabeçalho                      | Altura de 40px, sem fundo; texto `caption` 500 em `text-secondary`, sentence case; divisor inferior `border-default`                                 |
-| Linha                          | Altura de 44px (compacta: 36px); padding horizontal de 12px; texto `body`; divisor inferior `border-subtle` (exceto na última linha)                 |
-| Linha com duas linhas de texto | 56px. Linha secundária em `body-sm` e `text-secondary`                                                                                               |
-| Hover                          | Fundo `bg-muted`                                                                                                                                     |
-| Selecionada                    | Fundo `bg-selected`                                                                                                                                  |
-| Coluna principal               | Nome da entidade em peso 500, como link para o detalhe                                                                                               |
-| Valor vazio                    | "—" em `text-tertiary`. Nunca "null", "N/A" ou célula em branco                                                                                      |
-| Linha de totais                | Peso 600, divisor superior `border-default`                                                                                                          |
+| Elemento | Especificação |
+|---|---|
+| Container | Nenhum. A tabela fica direto na página. O texto da primeira coluna alinha com o título da página (compensar o padding da célula com margem negativa) |
+| Cabeçalho | Altura de 40px, sem fundo; texto `caption` 500 em `text-secondary`, sentence case; divisor inferior `border-default` |
+| Linha | Altura de 44px (compacta: 36px); padding horizontal de 12px; texto `body`; divisor inferior `border-subtle` (exceto na última linha) |
+| Linha com duas linhas de texto | 56px. Linha secundária em `body-sm` e `text-secondary` |
+| Hover | Fundo `bg-muted` |
+| Selecionada | Fundo `bg-selected` |
+| Coluna principal | Nome da entidade em peso 500, como link para o detalhe |
+| Valor vazio | "—" em `text-tertiary`. Nunca "null", "N/A" ou célula em branco |
+| Linha de totais | Peso 600, divisor superior `border-default` |
 
 **Alinhamento**
 
@@ -1146,15 +1122,15 @@ Tabelas são leves: sem grade, sem bordas por célula, sem container com borda e
 
 Usada para itens heterogêneos ou com pouco dado tabular, como notificações, atividades e documentos.
 
-| Propriedade              | Valor                                                  |
-| ------------------------ | ------------------------------------------------------ |
-| Padding vertical do item | 12px                                                   |
-| Divisor                  | `border-subtle` entre itens, sem divisor após o último |
-| Elemento inicial         | Ícone de 20px ou avatar de 32px, opcional              |
-| Título                   | `body` 500                                             |
-| Descrição                | `body-sm`, `text-secondary`                            |
-| Metadado                 | `caption`, `text-secondary`, alinhado à direita        |
-| Ações                    | Botões ghost de ícone à direita                        |
+| Propriedade | Valor |
+|---|---|
+| Padding vertical do item | 12px |
+| Divisor | `border-subtle` entre itens, sem divisor após o último |
+| Elemento inicial | Ícone de 20px ou avatar de 32px, opcional |
+| Título | `body` 500 |
+| Descrição | `body-sm`, `text-secondary` |
+| Metadado | `caption`, `text-secondary`, alinhado à direita |
+| Ações | Botões ghost de ícone à direita |
 
 - **Grupos:** título `h4` ou `label` em `text-secondary`, 8px acima dos itens e 24px entre grupos.
 - **Sem card por item:** não transformar cada item em um card.
@@ -1179,16 +1155,16 @@ Código CNES         1234567
 
 Usar somente nos casos da seção 9.4.
 
-| Propriedade | Valor                                                                                                            |
-| ----------- | ---------------------------------------------------------------------------------------------------------------- |
-| Fundo       | `bg-subtle` sobre `bg-canvas`. Se a área ao redor já for `bg-subtle`, usar `bg-canvas` com borda `border-subtle` |
-| Borda       | Nenhuma (exceto no caso acima)                                                                                   |
-| Sombra      | Nenhuma                                                                                                          |
-| Raio        | `radius-lg`                                                                                                      |
-| Padding     | 20px (compacto 16px, amplo 24px)                                                                                 |
-| Título      | `h4`                                                                                                             |
-| Descrição   | `body-sm`, `text-secondary`, 4px abaixo do título                                                                |
-| Ações       | Botões ghost ou link, no rodapé do card                                                                          |
+| Propriedade | Valor |
+|---|---|
+| Fundo | `bg-subtle` sobre `bg-canvas`. Se a área ao redor já for `bg-subtle`, usar `bg-canvas` com borda `border-subtle` |
+| Borda | Nenhuma (exceto no caso acima) |
+| Sombra | Nenhuma |
+| Raio | `radius-lg` |
+| Padding | 20px (compacto 16px, amplo 24px) |
+| Título | `h4` |
+| Descrição | `body-sm`, `text-secondary`, 4px abaixo do título |
+| Ações | Botões ghost ou link, no rodapé do card |
 
 - **Card clicável:**
   - hover com fundo `bg-muted` e cursor pointer;
@@ -1219,14 +1195,14 @@ Avaliações concluídas        ← label, text-secondary
 
 ### 11.8 Badges e status
 
-| Propriedade        | Valor                                              |
-| ------------------ | -------------------------------------------------- |
-| Altura             | 20px                                               |
-| Padding horizontal | 8px (6px com ponto)                                |
-| Raio               | `radius-sm`                                        |
-| Texto              | `caption` 500                                      |
-| Cores              | Fundo e texto do status correspondente (seção 3.4) |
-| Ponto opcional     | 6px, `radius-full`, cor sólida do status           |
+| Propriedade | Valor |
+|---|---|
+| Altura | 20px |
+| Padding horizontal | 8px (6px com ponto) |
+| Raio | `radius-sm` |
+| Texto | `caption` 500 |
+| Cores | Fundo e texto do status correspondente (seção 3.4) |
+| Ponto opcional | 6px, `radius-full`, cor sólida do status |
 
 - **Conteúdo:** texto curto (1 ou 2 palavras), sempre presente. A cor nunca aparece sozinha.
 - **Interação:** o badge não é clicável. Para filtrar, use um chip.
@@ -1234,23 +1210,23 @@ Avaliações concluídas        ← label, text-secondary
 
 **Mapeamento de status**, que deve ser o mesmo em todos os produtos:
 
-| Status    | Exemplos                                          |
-| --------- | ------------------------------------------------- |
+| Status | Exemplos |
+|---|---|
 | `success` | Concluído, Aprovado, Ativo, Disponível, Publicado |
-| `info`    | Em andamento, Em análise, Agendado                |
-| `warning` | Pendente, Prazo próximo, Incompleto, Aguardando   |
-| `danger`  | Atrasado, Reprovado, Erro, Falha, Bloqueado       |
-| `neutral` | Rascunho, Inativo, Cancelado, Arquivado           |
+| `info` | Em andamento, Em análise, Agendado |
+| `warning` | Pendente, Prazo próximo, Incompleto, Aguardando |
+| `danger` | Atrasado, Reprovado, Erro, Falha, Bloqueado |
+| `neutral` | Rascunho, Inativo, Cancelado, Arquivado |
 
 ### 11.9 Barras de progresso
 
-| Propriedade   | Valor                                                                                          |
-| ------------- | ---------------------------------------------------------------------------------------------- |
-| Altura        | 6px (8px quando é o elemento principal da área)                                                |
-| Raio          | `radius-full`                                                                                  |
-| Trilha        | `bg-muted`                                                                                     |
-| Preenchimento | `action-primary`; `success-600` quando concluído ou quando o significado for positivo          |
-| Rótulo        | Texto à esquerda e percentual à direita, acima da barra, em `body-sm` com algarismos tabulares |
+| Propriedade | Valor |
+|---|---|
+| Altura | 6px (8px quando é o elemento principal da área) |
+| Raio | `radius-full` |
+| Trilha | `bg-muted` |
+| Preenchimento | `action-primary`; `success-600` quando concluído ou quando o significado for positivo |
+| Rótulo | Texto à esquerda e percentual à direita, acima da barra, em `body-sm` com algarismos tabulares |
 
 - **Estilo:** sem gradientes, listras, brilho ou animação contínua.
 - **Acessibilidade:** usar `role="progressbar"` com `aria-valuenow`, `aria-valuemin`, `aria-valuemax` e `aria-label`.
@@ -1260,28 +1236,28 @@ Avaliações concluídas        ← label, text-secondary
 
 **Menu e dropdown**
 
-| Propriedade          | Valor                                                                                        |
-| -------------------- | -------------------------------------------------------------------------------------------- |
-| Superfície           | `bg-raised`, `shadow-md`, `radius-lg`                                                        |
-| Padding              | 4px                                                                                          |
-| Largura mínima       | 180px                                                                                        |
-| Item                 | 32px de altura, padding horizontal de 8px, `radius-md`, texto `body`, ícone de 16px opcional |
-| Hover e foco do item | Fundo `bg-muted`                                                                             |
-| Itens destrutivos    | No fim, após um divisor `border-subtle`, com texto `danger-600`                              |
-| Teclado              | Setas navegam, Enter seleciona, Esc fecha e devolve o foco ao botão de origem                |
+| Propriedade | Valor |
+|---|---|
+| Superfície | `bg-raised`, `shadow-md`, `radius-lg` |
+| Padding | 4px |
+| Largura mínima | 180px |
+| Item | 32px de altura, padding horizontal de 8px, `radius-md`, texto `body`, ícone de 16px opcional |
+| Hover e foco do item | Fundo `bg-muted` |
+| Itens destrutivos | No fim, após um divisor `border-subtle`, com texto `danger-600` |
+| Teclado | Setas navegam, Enter seleciona, Esc fecha e devolve o foco ao botão de origem |
 
 **Popover:** mesma superfície do menu, com padding de 16px. Usado para conteúdo interativo curto.
 
 **Tooltip**
 
-| Propriedade    | Valor                     |
-| -------------- | ------------------------- |
-| Fundo          | `bg-inverse`              |
-| Texto          | `text-inverse`, `caption` |
-| Raio           | `radius-sm`               |
-| Padding        | 6px × 8px                 |
-| Largura máxima | 240px                     |
-| Atraso         | 400ms                     |
+| Propriedade | Valor |
+|---|---|
+| Fundo | `bg-inverse` |
+| Texto | `text-inverse`, `caption` |
+| Raio | `radius-sm` |
+| Padding | 6px × 8px |
+| Largura máxima | 240px |
+| Atraso | 400ms |
 
 - **Gatilho:** aparece no hover e no foco.
 - **Conteúdo:** apenas informação complementar. Nunca coloque informação essencial só em tooltip, porque não há hover em telas de toque.
@@ -1290,11 +1266,11 @@ Avaliações concluídas        ← label, text-secondary
 
 **Quando usar**
 
-| Situação                                                                         | Solução        |
-| -------------------------------------------------------------------------------- | -------------- |
-| Confirmação ou ação curta (até 3–4 campos) que exige foco temporário             | Modal          |
-| Ver ou editar detalhes sem perder o contexto da lista                            | Drawer lateral |
-| Tarefa longa, com várias seções, que precisa de URL própria ou pode ser retomada | Página         |
+| Situação | Solução |
+|---|---|
+| Confirmação ou ação curta (até 3–4 campos) que exige foco temporário | Modal |
+| Ver ou editar detalhes sem perder o contexto da lista | Drawer lateral |
+| Tarefa longa, com várias seções, que precisa de URL própria ou pode ser retomada | Página |
 
 Não abrir modal a partir de modal.
 
@@ -1326,14 +1302,14 @@ Não abrir modal a partir de modal.
 
 **Toast** — confirmação ou erro de uma ação que o usuário acabou de fazer
 
-| Propriedade  | Valor                                                                                                                                                   |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Superfície   | `bg-raised`, `shadow-md`, `radius-lg`                                                                                                                   |
-| Largura      | 360px                                                                                                                                                   |
-| Padding      | 12px × 16px                                                                                                                                             |
-| Conteúdo     | Ícone de 16px na cor sólida do status, título em `body` 500, descrição opcional em `body-sm` e `text-secondary`, ação opcional (link) e botão de fechar |
-| Posição      | Canto inferior direito (desktop); base da tela em largura total (mobile)                                                                                |
-| Empilhamento | No máximo 3                                                                                                                                             |
+| Propriedade | Valor |
+|---|---|
+| Superfície | `bg-raised`, `shadow-md`, `radius-lg` |
+| Largura | 360px |
+| Padding | 12px × 16px |
+| Conteúdo | Ícone de 16px na cor sólida do status, título em `body` 500, descrição opcional em `body-sm` e `text-secondary`, ação opcional (link) e botão de fechar |
+| Posição | Canto inferior direito (desktop); base da tela em largura total (mobile) |
+| Empilhamento | No máximo 3 |
 
 - **Duração:** sucesso e informação somem em 5 segundos, com pausa no hover e no foco. Erros permanecem até serem fechados.
 - **Acessibilidade:** sucesso usa `aria-live="polite"`; erro usa `role="alert"`.
@@ -1341,13 +1317,13 @@ Não abrir modal a partir de modal.
 
 **Alerta inline** — condição persistente de uma página ou seção
 
-| Propriedade | Valor                                                                                              |
-| ----------- | -------------------------------------------------------------------------------------------------- |
-| Fundo       | `-bg` do status                                                                                    |
-| Borda       | Nenhuma                                                                                            |
-| Raio        | `radius-lg`                                                                                        |
-| Padding     | 12px × 16px                                                                                        |
-| Conteúdo    | Ícone de 16px na cor sólida do status, texto em `body` com a cor de texto do status, ação opcional |
+| Propriedade | Valor |
+|---|---|
+| Fundo | `-bg` do status |
+| Borda | Nenhuma |
+| Raio | `radius-lg` |
+| Padding | 12px × 16px |
+| Conteúdo | Ícone de 16px na cor sólida do status, texto em `body` com a cor de texto do status, ação opcional |
 
 - **Uso:** avisos como "O prazo de envio termina em 2 dias" e resumos de erros de formulário.
 - **Não usar para:** confirmar ações, que é papel do toast.
@@ -1372,12 +1348,12 @@ Estrutura, centralizada na área do conteúdo, com 48px de padding vertical:
 
 Os tipos de vazio usam mensagens diferentes:
 
-| Tipo                        | Mensagem                                      | Ação                                                           |
-| --------------------------- | --------------------------------------------- | -------------------------------------------------------------- |
-| Primeiro uso                | O que é esta área e o que fazer               | Ação de criação (primária se for a tarefa principal da página) |
-| Sem resultados para filtros | "Nenhum resultado para os filtros aplicados." | "Limpar filtros"                                               |
-| Sem dados no período        | "Não há dados para o período selecionado."    | Alterar período                                                |
-| Sem permissão               | O que falta e a quem pedir acesso             | Link de ajuda, se existir                                      |
+| Tipo | Mensagem | Ação |
+|---|---|---|
+| Primeiro uso | O que é esta área e o que fazer | Ação de criação (primária se for a tarefa principal da página) |
+| Sem resultados para filtros | "Nenhum resultado para os filtros aplicados." | "Limpar filtros" |
+| Sem dados no período | "Não há dados para o período selecionado." | Alterar período |
+| Sem permissão | O que falta e a quem pedir acesso | Link de ajuda, se existir |
 
 - **Sem ilustrações:** não usar grandes ilustrações nem imagens decorativas.
 - **Tabelas vazias:** mantêm o cabeçalho e mostram o estado vazio no corpo da tabela.
@@ -1391,23 +1367,23 @@ Os tipos de vazio usam mensagens diferentes:
   - estático com `prefers-reduced-motion`.
 - **Atraso:** o indicador só aparece após 300ms, para não piscar em respostas rápidas.
 
-| Contexto                          | Tratamento                                                                                                            |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Tabela                            | Mantém o cabeçalho e mostra de 5 a 8 linhas skeleton                                                                  |
-| Seção ou gráfico                  | Skeleton na área da seção; o restante da página continua utilizável                                                   |
-| Botão                             | Estado de carregamento do botão (seção 11.1)                                                                          |
+| Contexto | Tratamento |
+|---|---|
+| Tabela | Mantém o cabeçalho e mostra de 5 a 8 linhas skeleton |
+| Seção ou gráfico | Skeleton na área da seção; o restante da página continua utilizável |
+| Botão | Estado de carregamento do botão (seção 11.1) |
 | Atualização com dados já exibidos | Manter os dados atuais visíveis, com indicador discreto (spinner de 16px junto ao título da seção). Não apagar a tela |
-| Carregamento inicial da aplicação | Única situação em que um carregamento de tela inteira é aceitável: fundo `bg-canvas` e spinner central discreto       |
+| Carregamento inicial da aplicação | Única situação em que um carregamento de tela inteira é aceitável: fundo `bg-canvas` e spinner central discreto |
 
 ### 12.3 Erro
 
-| Nível                  | Tratamento                                                                                                                                                      |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Campo                  | Mensagem abaixo do campo (seção 11.2)                                                                                                                           |
-| Formulário             | Alerta inline `danger` no topo, com a lista de erros e links para os campos                                                                                     |
-| Seção ou componente    | O conteúdo é substituído pela mensagem ("Não foi possível carregar os indicadores.") e pelo botão "Tentar novamente". O restante da página continua funcionando |
-| Ação                   | Toast de erro persistente                                                                                                                                       |
-| Página (404, 403, 500) | Página simples, com título, explicação em linguagem comum e uma ação ("Voltar para o início")                                                                   |
+| Nível | Tratamento |
+|---|---|
+| Campo | Mensagem abaixo do campo (seção 11.2) |
+| Formulário | Alerta inline `danger` no topo, com a lista de erros e links para os campos |
+| Seção ou componente | O conteúdo é substituído pela mensagem ("Não foi possível carregar os indicadores.") e pelo botão "Tentar novamente". O restante da página continua funcionando |
+| Ação | Toast de erro persistente |
+| Página (404, 403, 500) | Página simples, com título, explicação em linguagem comum e uma ação ("Voltar para o início") |
 
 Mensagens seguem a seção 15.3. Códigos técnicos, quando úteis para suporte, aparecem em `caption` abaixo da mensagem ("Código: 7F3A-21").
 
@@ -1425,16 +1401,16 @@ Se a resposta for um único número, use um indicador, e não um gráfico.
 
 ### 13.2 Escolha da visualização
 
-| Pergunta                           | Visualização                                                                               |
-| ---------------------------------- | ------------------------------------------------------------------------------------------ |
-| Como evoluiu ao longo do tempo?    | Linha (até 5 séries). Colunas para até 12 períodos                                         |
-| Qual categoria é maior ou menor?   | Barras horizontais ordenadas por valor                                                     |
-| Como o total se divide?            | Barra empilhada 100% ou barras simples. Rosca somente com 2 ou 3 partes                    |
-| Quão perto está da meta?           | Barra de progresso ou barra com marcador de meta                                           |
-| Como os valores se distribuem?     | Histograma ou boxplot                                                                      |
-| Existe relação entre duas medidas? | Dispersão                                                                                  |
-| Como varia por território?         | Barras ordenadas. Mapa coroplético somente quando a geografia for essencial para a leitura |
-| Qual é o valor?                    | Indicador (seção 11.7)                                                                     |
+| Pergunta | Visualização |
+|---|---|
+| Como evoluiu ao longo do tempo? | Linha (até 5 séries). Colunas para até 12 períodos |
+| Qual categoria é maior ou menor? | Barras horizontais ordenadas por valor |
+| Como o total se divide? | Barra empilhada 100% ou barras simples. Rosca somente com 2 ou 3 partes |
+| Quão perto está da meta? | Barra de progresso ou barra com marcador de meta |
+| Como os valores se distribuem? | Histograma ou boxplot |
+| Existe relação entre duas medidas? | Dispersão |
+| Como varia por território? | Barras ordenadas. Mapa coroplético somente quando a geografia for essencial para a leitura |
+| Qual é o valor? | Indicador (seção 11.7) |
 
 Proibido: gráficos 3D, pizza com mais de 3 fatias, gráficos de radar para comparação e eixos duplos, exceto quando indispensáveis e rotulados.
 
@@ -1458,15 +1434,15 @@ Proibido: gráficos 3D, pizza com mais de 3 fatias, gráficos de radar para comp
 
 ### 13.4 Cores em gráficos
 
-| Situação                         | Cores                                                                      |
-| -------------------------------- | -------------------------------------------------------------------------- |
-| Série única                      | `chart-1`                                                                  |
-| Destaque de um item entre vários | Item em `chart-1`; demais em `chart-context`                               |
-| Categorias (até 5)               | `chart-1` → `chart-2` → `chart-3` → `chart-4` → `chart-5`, nesta ordem     |
-| Mais de 5 categorias             | Agrupar em "Outros" ou usar pequenos múltiplos. Não criar novas cores      |
-| Escala sequencial (intensidade)  | `blue-100` → `blue-300` → `blue-500` → `blue-700` → `blue-900`             |
-| Escala divergente                | `danger-600` ↔ `neutral-200` ↔ `blue-600`                                  |
-| Bom e ruim                       | `chart-positive` e `chart-negative`, somente quando há julgamento de valor |
+| Situação | Cores |
+|---|---|
+| Série única | `chart-1` |
+| Destaque de um item entre vários | Item em `chart-1`; demais em `chart-context` |
+| Categorias (até 5) | `chart-1` → `chart-2` → `chart-3` → `chart-4` → `chart-5`, nesta ordem |
+| Mais de 5 categorias | Agrupar em "Outros" ou usar pequenos múltiplos. Não criar novas cores |
+| Escala sequencial (intensidade) | `blue-100` → `blue-300` → `blue-500` → `blue-700` → `blue-900` |
+| Escala divergente | `danger-600` ↔ `neutral-200` ↔ `blue-600` |
+| Bom e ruim | `chart-positive` e `chart-negative`, somente quando há julgamento de valor |
 
 A ordem das cores categóricas alterna luminosidade para que séries vizinhas sejam distinguíveis também por pessoas com daltonismo.
 
@@ -1494,12 +1470,12 @@ A ordem das cores categóricas alterna luminosidade para que séries vizinhas se
 
 ### 14.1 Especificação
 
-| Tamanho | Uso                                                                                |
-| ------- | ---------------------------------------------------------------------------------- |
-| 14px    | Ordenação de tabela, breadcrumb, mensagens de erro de campo, variação de indicador |
-| 16px    | Padrão: botões, campos, itens de menu, toasts, alertas, ícones junto a `body`      |
-| 20px    | Navegação da sidebar, itens de lista                                               |
-| 24px    | Estados vazios                                                                     |
+| Tamanho | Uso |
+|---|---|
+| 14px | Ordenação de tabela, breadcrumb, mensagens de erro de campo, variação de indicador |
+| 16px | Padrão: botões, campos, itens de menu, toasts, alertas, ícones junto a `body` |
+| 20px | Navegação da sidebar, itens de lista |
+| 24px | Estados vazios |
 
 - **Traço:** `strokeWidth` de 1,75 em todos os tamanhos.
 - **Cor:** `currentColor`, herdando a cor do texto. Ícones de ação em `neutral-700`; ícones auxiliares em `neutral-500`.
@@ -1512,36 +1488,36 @@ A ordem das cores categóricas alterna luminosidade para que séries vizinhas se
 
 Usar sempre o mesmo ícone para o mesmo significado, em todos os produtos:
 
-| Significado                 | Ícone Lucide                            |
-| --------------------------- | --------------------------------------- |
-| Criar                       | `Plus`                                  |
-| Editar                      | `Pencil`                                |
-| Excluir                     | `Trash2`                                |
-| Pesquisar                   | `Search`                                |
-| Filtros                     | `ListFilter`                            |
-| Exportar / baixar           | `Download`                              |
-| Importar / enviar arquivo   | `Upload`                                |
-| Mais ações                  | `Ellipsis`                              |
-| Fechar                      | `X`                                     |
-| Voltar                      | `ArrowLeft`                             |
-| Avançar em hierarquia       | `ChevronRight`                          |
-| Expandir / recolher         | `ChevronDown` / `ChevronUp`             |
-| Configurações               | `Settings`                              |
-| Ajuda                       | `CircleHelp`                            |
-| Notificações                | `Bell`                                  |
-| Perfil                      | `CircleUser`                            |
-| Sair                        | `LogOut`                                |
-| Sucesso                     | `CircleCheck`                           |
-| Erro                        | `CircleAlert`                           |
-| Atenção                     | `TriangleAlert`                         |
-| Informação                  | `Info`                                  |
-| Link externo                | `ExternalLink`                          |
-| Data                        | `Calendar`                              |
-| Carregando                  | `LoaderCircle`                          |
-| Ordenação                   | `ArrowUpDown` / `ArrowUp` / `ArrowDown` |
-| Tendência                   | `TrendingUp` / `TrendingDown`           |
-| Menu (mobile)               | `Menu`                                  |
-| Recolher / expandir sidebar | `PanelLeftClose` / `PanelLeftOpen`      |
+| Significado | Ícone Lucide |
+|---|---|
+| Criar | `Plus` |
+| Editar | `Pencil` |
+| Excluir | `Trash2` |
+| Pesquisar | `Search` |
+| Filtros | `ListFilter` |
+| Exportar / baixar | `Download` |
+| Importar / enviar arquivo | `Upload` |
+| Mais ações | `Ellipsis` |
+| Fechar | `X` |
+| Voltar | `ArrowLeft` |
+| Avançar em hierarquia | `ChevronRight` |
+| Expandir / recolher | `ChevronDown` / `ChevronUp` |
+| Configurações | `Settings` |
+| Ajuda | `CircleHelp` |
+| Notificações | `Bell` |
+| Perfil | `CircleUser` |
+| Sair | `LogOut` |
+| Sucesso | `CircleCheck` |
+| Erro | `CircleAlert` |
+| Atenção | `TriangleAlert` |
+| Informação | `Info` |
+| Link externo | `ExternalLink` |
+| Data | `Calendar` |
+| Carregando | `LoaderCircle` |
+| Ordenação | `ArrowUpDown` / `ArrowUp` / `ArrowDown` |
+| Tendência | `TrendingUp` / `TrendingDown` |
+| Menu (mobile) | `Menu` |
+| Recolher / expandir sidebar | `PanelLeftClose` / `PanelLeftOpen` |
 
 Em versões antigas do Lucide, alguns nomes usam os aliases anteriores: `MoreHorizontal`, `HelpCircle`, `CheckCircle2`, `AlertCircle`, `AlertTriangle` e `Loader2`.
 
@@ -1569,14 +1545,14 @@ Em versões antigas do Lucide, alguns nomes usam os aliases anteriores: `MoreHor
 
 Estrutura: **o que aconteceu + o que fazer**.
 
-| Evitar                        | Preferir                                                                    |
-| ----------------------------- | --------------------------------------------------------------------------- |
-| "Erro 500."                   | "Não foi possível salvar as alterações. Tente novamente em alguns minutos." |
-| "Ops! Algo deu errado."       | "Não foi possível carregar a lista de unidades."                            |
-| "Campo inválido."             | "Informe um CPF com 11 dígitos."                                            |
-| "Sucesso!"                    | "Unidade criada."                                                           |
-| "Tem certeza?"                | "Excluir a unidade Centro?"                                                 |
-| "Nenhum registro encontrado." | "Nenhuma unidade corresponde aos filtros aplicados."                        |
+| Evitar | Preferir |
+|---|---|
+| "Erro 500." | "Não foi possível salvar as alterações. Tente novamente em alguns minutos." |
+| "Ops! Algo deu errado." | "Não foi possível carregar a lista de unidades." |
+| "Campo inválido." | "Informe um CPF com 11 dígitos." |
+| "Sucesso!" | "Unidade criada." |
+| "Tem certeza?" | "Excluir a unidade Centro?" |
+| "Nenhum registro encontrado." | "Nenhuma unidade corresponde aos filtros aplicados." |
 
 - **Sem termos técnicos:** nada de stack traces, nomes de tabelas ou códigos HTTP para o usuário final.
 - **Sem culpar o usuário:** evite tom que coloca a responsabilidade do erro em quem usa o sistema.
@@ -1585,21 +1561,21 @@ Estrutura: **o que aconteceu + o que fazer**.
 
 Formatar com `Intl.NumberFormat` e `Intl.DateTimeFormat` no locale `pt-BR`.
 
-| Tipo                        | Formato                                                              |
-| --------------------------- | -------------------------------------------------------------------- |
-| Data                        | 24/09/2026                                                           |
-| Data e hora                 | 24/09/2026 às 14:30 (texto); 24/09/2026 14:30 (tabelas)              |
-| Hora                        | 14:30 (24 horas)                                                     |
-| Período                     | 01/09/2026 a 30/09/2026                                              |
-| Mês em gráficos             | set/2026                                                             |
-| Data relativa               | "há 5 minutos", "ontem" — até 7 dias, com a data absoluta em tooltip |
-| Número inteiro              | 1.234.567                                                            |
-| Decimal                     | 1.234,56                                                             |
-| Percentual                  | 12,5%                                                                |
-| Moeda                       | R$ 1.234,56                                                          |
-| Número abreviado            | 1,2 mil; 3,4 mi; 1,1 bi                                              |
-| CPF / CNPJ / CEP / telefone | Conforme as máscaras da seção 11.2                                   |
-| Valor ausente               | —                                                                    |
+| Tipo | Formato |
+|---|---|
+| Data | 24/09/2026 |
+| Data e hora | 24/09/2026 às 14:30 (texto); 24/09/2026 14:30 (tabelas) |
+| Hora | 14:30 (24 horas) |
+| Período | 01/09/2026 a 30/09/2026 |
+| Mês em gráficos | set/2026 |
+| Data relativa | "há 5 minutos", "ontem" — até 7 dias, com a data absoluta em tooltip |
+| Número inteiro | 1.234.567 |
+| Decimal | 1.234,56 |
+| Percentual | 12,5% |
+| Moeda | R$ 1.234,56 |
+| Número abreviado | 1,2 mil; 3,4 mi; 1,1 bi |
+| CPF / CNPJ / CEP / telefone | Conforme as máscaras da seção 11.2 |
+| Valor ausente | — |
 
 ---
 
@@ -1607,18 +1583,18 @@ Formatar com `Intl.NumberFormat` e `Intl.DateTimeFormat` no locale `pt-BR`.
 
 A interface deve funcionar em desktop, notebook, tablet e, quando aplicável, mobile. Não basta diminuir os componentes: reorganize a interface.
 
-| Elemento                   | ≥ 1280px (`xl`) | 1024–1279px (`lg`)                                          | 768–1023px (`md`)                         | < 768px                                                     |
-| -------------------------- | --------------- | ----------------------------------------------------------- | ----------------------------------------- | ----------------------------------------------------------- |
-| Sidebar                    | Expandida       | Recolhida (ícones) ou expandida, por preferência do usuário | Drawer sobreposto                         | Drawer sobreposto                                           |
-| Padding da página          | 32px            | 32px                                                        | 24px                                      | 16px                                                        |
-| Indicadores                | 4 colunas       | 4 colunas                                                   | 2 colunas                                 | 1 coluna                                                    |
-| Grades de gráficos e cards | 2–3 colunas     | 2 colunas                                                   | 1–2 colunas                               | 1 coluna                                                    |
-| Ações do page header       | Visíveis        | Visíveis                                                    | Principal visível; demais em "Mais ações" | Principal visível; demais em "Mais ações"                   |
-| Filtros                    | Em linha        | Em linha                                                    | Busca e "Filtros (n)"                     | Busca e "Filtros (n)"                                       |
-| Tabelas                    | Completas       | Completas                                                   | Rolagem horizontal, primeira coluna fixa  | Rolagem horizontal ou lista de itens nas tabelas principais |
-| Formulários em 2 colunas   | 2 colunas       | 2 colunas                                                   | 2 colunas                                 | 1 coluna                                                    |
-| Modais                     | Centralizados   | Centralizados                                               | Centralizados                             | Tela cheia ou folha inferior                                |
-| Drawers                    | 480px           | 480px                                                       | 480px                                     | Tela cheia                                                  |
+| Elemento | ≥ 1280px (`xl`) | 1024–1279px (`lg`) | 768–1023px (`md`) | < 768px |
+|---|---|---|---|---|
+| Sidebar | Expandida | Recolhida (ícones) ou expandida, por preferência do usuário | Drawer sobreposto | Drawer sobreposto |
+| Padding da página | 32px | 32px | 24px | 16px |
+| Indicadores | 4 colunas | 4 colunas | 2 colunas | 1 coluna |
+| Grades de gráficos e cards | 2–3 colunas | 2 colunas | 1–2 colunas | 1 coluna |
+| Ações do page header | Visíveis | Visíveis | Principal visível; demais em "Mais ações" | Principal visível; demais em "Mais ações" |
+| Filtros | Em linha | Em linha | Busca e "Filtros (n)" | Busca e "Filtros (n)" |
+| Tabelas | Completas | Completas | Rolagem horizontal, primeira coluna fixa | Rolagem horizontal ou lista de itens nas tabelas principais |
+| Formulários em 2 colunas | 2 colunas | 2 colunas | 2 colunas | 1 coluna |
+| Modais | Centralizados | Centralizados | Centralizados | Tela cheia ou folha inferior |
+| Drawers | 480px | 480px | 480px | Tela cheia |
 
 - **Alvos de toque:** em dispositivos de toque (`pointer: coarse`), controles interativos têm no mínimo 44 × 44px.
 - **Zoom e largura mínima:** o conteúdo deve se reorganizar sem rolagem horizontal da página em 320px de largura e com zoom de 200% (WCAG 1.4.10). A exceção são tabelas e gráficos, que rolam dentro do próprio container.
@@ -1630,23 +1606,23 @@ A interface deve funcionar em desktop, notebook, tablet e, quando aplicável, mo
 
 **Meta:** WCAG 2.2 nível AA em todas as interfaces.
 
-| Tema                  | Requisito                                                                                                                                              |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Contraste de texto    | 4,5:1 (texto normal); 3:1 (texto grande). Os tokens de texto já atendem sobre `bg-canvas` e `bg-subtle`                                                |
-| Contraste não textual | 3:1 para contornos de campos, ícones essenciais, indicadores de estado e elementos de gráfico                                                          |
-| Foco                  | Sempre visível: contorno de 2px `focus-ring` com offset de 2px, ou branco sobre a sidebar. Nunca remover o `outline` sem substituto equivalente        |
-| Foco não encoberto    | Header e barras fixas não podem cobrir o elemento em foco (`scroll-padding-top`, seção 8)                                                              |
-| Teclado               | Toda funcionalidade acessível por teclado, em ordem lógica. Esc fecha camadas temporárias. O foco fica preso em modais e retorna ao elemento de origem |
-| Link de salto         | "Pular para o conteúdo" como primeiro elemento focável da página                                                                                       |
-| Área de clique        | Mínimo de 24 × 24px (WCAG 2.5.8). Padrão de 36px no desktop e 44px em toque                                                                            |
-| Labels                | Todo campo tem label visível associado. Botões só com ícone têm `aria-label`                                                                           |
-| Semântica             | Elementos nativos (`button`, `a`, `table`, `nav`, `main`, `dl`, `fieldset`). Não usar `div` clicável. Títulos em ordem hierárquica                     |
-| Cor                   | Nenhuma informação transmitida apenas por cor                                                                                                          |
-| Feedback assíncrono   | `aria-live` em toasts e atualizações. `role="alert"` para erros. `aria-busy` durante carregamentos                                                     |
-| Erros                 | Identificados em texto, associados ao campo e com instrução de correção                                                                                |
-| Entrada redundante    | Não pedir a mesma informação duas vezes no mesmo fluxo (WCAG 3.3.7)                                                                                    |
-| Movimento             | Respeitar `prefers-reduced-motion`                                                                                                                     |
-| Idioma                | `lang="pt-BR"` no documento                                                                                                                            |
+| Tema | Requisito |
+|---|---|
+| Contraste de texto | 4,5:1 (texto normal); 3:1 (texto grande). Os tokens de texto já atendem sobre `bg-canvas` e `bg-subtle` |
+| Contraste não textual | 3:1 para contornos de campos, ícones essenciais, indicadores de estado e elementos de gráfico |
+| Foco | Sempre visível: contorno de 2px `focus-ring` com offset de 2px, ou branco sobre a sidebar. Nunca remover o `outline` sem substituto equivalente |
+| Foco não encoberto | Header e barras fixas não podem cobrir o elemento em foco (`scroll-padding-top`, seção 8) |
+| Teclado | Toda funcionalidade acessível por teclado, em ordem lógica. Esc fecha camadas temporárias. O foco fica preso em modais e retorna ao elemento de origem |
+| Link de salto | "Pular para o conteúdo" como primeiro elemento focável da página |
+| Área de clique | Mínimo de 24 × 24px (WCAG 2.5.8). Padrão de 36px no desktop e 44px em toque |
+| Labels | Todo campo tem label visível associado. Botões só com ícone têm `aria-label` |
+| Semântica | Elementos nativos (`button`, `a`, `table`, `nav`, `main`, `dl`, `fieldset`). Não usar `div` clicável. Títulos em ordem hierárquica |
+| Cor | Nenhuma informação transmitida apenas por cor |
+| Feedback assíncrono | `aria-live` em toasts e atualizações. `role="alert"` para erros. `aria-busy` durante carregamentos |
+| Erros | Identificados em texto, associados ao campo e com instrução de correção |
+| Entrada redundante | Não pedir a mesma informação duas vezes no mesmo fluxo (WCAG 3.3.7) |
+| Movimento | Respeitar `prefers-reduced-motion` |
+| Idioma | `lang="pt-BR"` no documento |
 
 ---
 
