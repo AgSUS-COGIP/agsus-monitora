@@ -1,5 +1,5 @@
-import { trocarEstadoGuardado } from "../lib/comemoracao.ts";
-import type { ArmazenamentoSimples } from "../lib/comemoracao.ts";
+import { trocarEstadoGuardado } from "../lib/comemoracao/comemoracao.ts";
+import type { ArmazenamentoSimples } from "../lib/comemoracao/comemoracao.ts";
 import type { JanelaDaComemoracao } from "../modulos/comemoracao/desenho.ts";
 import type { OpcoesDaComemoracao } from "../modulos/comemoracao/plano.ts";
 import type { ComemoracaoAberta } from "../modulos/comemoracao/comemoracoes.tsx";

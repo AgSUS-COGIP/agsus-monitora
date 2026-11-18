@@ -7,7 +7,7 @@ import {
   formatarDataHora,
   novaEtapa,
   renumerar,
-} from "../../lib/cronograma-do-edital.ts";
+} from "../../lib/cronograma/cronograma-do-edital.ts";
 import type {
   AnaliseDoCronograma,
   CronogramaDoFormulario,
@@ -16,8 +16,8 @@ import type {
   EtapaDoCronograma,
   RegistroDoHistoricoDoCronograma,
   ResultadoDoLote,
-} from "../../lib/cronograma-do-edital.ts";
-import { editaisComCronogramaParaCopiar } from "../../lib/editais-do-nucleo.ts";
+} from "../../lib/cronograma/cronograma-do-edital.ts";
+import { editaisComCronogramaParaCopiar } from "../../lib/editais/editais-do-nucleo.ts";
 import {
   Aviso,
   Campo,

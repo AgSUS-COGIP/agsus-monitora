@@ -3,11 +3,11 @@ import type {
   CandidatoDaConvocacao,
   GrupoDaConvocacao,
   LinhaDaConvocacao,
-} from "../../lib/tipos-da-lista-de-convocacao.ts";
+} from "../../lib/aprovados/tipos-da-lista-de-convocacao.ts";
 import type {
   ConfiguracoesDaConvocacao,
   ModelosDaConvocacao,
-} from "../../lib/tipos-da-configuracao-de-convocacao.ts";
+} from "../../lib/aprovados/carta-de-convocacao/tipos-da-configuracao-de-convocacao.ts";
 export interface CandidatoDaTabelaDaConvocacao extends CandidatoDaTabelaDeAprovados {
   candidato_id: string;
   nome: string;

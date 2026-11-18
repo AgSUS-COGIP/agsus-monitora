@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   normalizarArvoreDosModulos,
   normalizarResultadoDosModulos,
-} from "../src/lib/arvore-dos-modulos.ts";
+} from "../src/lib/navegacao/arvore-dos-modulos.ts";
 import { criarEstadoDosModulos } from "../src/modulos/modulos/estado.ts";
 
 describe("contrato da árvore de módulos e abas", () => {

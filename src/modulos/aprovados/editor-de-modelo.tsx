@@ -6,7 +6,7 @@ import type {
   MudancasDaCategoria,
   EditorDaConvocacao,
   EstadoDaConfiguracao,
-} from "../../lib/tipos-da-configuracao-de-convocacao.ts";
+} from "../../lib/aprovados/carta-de-convocacao/tipos-da-configuracao-de-convocacao.ts";
 import { useMemo } from "react";
 import {
   ARREDONDAMENTOS,
@@ -15,7 +15,7 @@ import {
   MODELOS_DE_REFERENCIA,
   lerTermos,
   normalizarModelo,
-} from "../../lib/modelo-de-convocacao.ts";
+} from "../../lib/aprovados/carta-de-convocacao/modelo-de-convocacao.ts";
 import {
   acrescentarCategoria,
   alterarCategoria,
@@ -28,7 +28,7 @@ import {
   lerTaxa,
   removerCategoria,
   resumoDasRegrasDaCategoria,
-} from "../../lib/configuracao-de-convocacao.ts";
+} from "../../lib/aprovados/carta-de-convocacao/configuracao-de-convocacao.ts";
 import { BotaoDeAcao, classes } from "../../ui/index.ts";
 import { CampoEditavel } from "./partes.tsx";
 import { PreviaDaConvocacao } from "./previa-da-convocacao.tsx";

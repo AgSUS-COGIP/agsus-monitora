@@ -3,7 +3,7 @@ import {
   DSEIS_OFICIAIS,
   nomeOficialDoDsei,
   numeroDoDsei,
-} from "../src/lib/mapa-saude-indigena/dseis-oficiais.ts";
+} from "../src/lib/mapas/mapa-saude-indigena/dseis-oficiais.ts";
 import {
   NOTA_DA_COR_DO_DSEI,
   TOKEN_SEM_DADO,
@@ -15,11 +15,11 @@ import {
   indicadoresDosDseis,
   pintarDseis,
   tokenDaClasse,
-} from "../src/lib/mapa-saude-indigena/mapa-simples.ts";
-import { contornosValidos } from "../src/lib/mapa-saude-indigena/contornos-dos-dseis.ts";
+} from "../src/lib/mapas/mapa-saude-indigena/mapa-simples.ts";
+import { contornosValidos } from "../src/lib/mapas/mapa-saude-indigena/contornos-dos-dseis.ts";
 
 /*
-  O "Mapa DSEIs" sem Leaflet (src/lib/mapa-saude-indigena/): a numeração
+  O "Mapa DSEIs" sem Leaflet (src/lib/mapas/mapa-saude-indigena/): a numeração
   oficial dos 34 DSEIs, as faixas da cor, o "sem dado", a dica e os contornos
   aceitos do arquivo local.
 */

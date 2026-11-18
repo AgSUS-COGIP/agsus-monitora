@@ -2,11 +2,11 @@
 import { readFileSync } from "node:fs";
 import { fonteDoApp } from "./fonte-do-app.ts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { SUPABASE_AUTH_STORAGE_KEY } from "../src/lib/env";
+import { SUPABASE_AUTH_STORAGE_KEY } from "../src/lib/sessao/env";
 import {
   FORMATOS_DO_ESQUELETO,
   formatoDoEsqueleto,
-} from "../src/lib/esqueleto-da-entrada";
+} from "../src/lib/entrada/esqueleto-da-entrada";
 import {
   esconderEsqueleto,
   esqueletoAtivo,
@@ -14,7 +14,7 @@ import {
   marcarAtualizacao,
   mostrarEsqueleto,
 } from "../src/app/carregamento.ts";
-import { CHAVE_DA_TELA_GUARDADA } from "../src/lib/navegacao";
+import { CHAVE_DA_TELA_GUARDADA } from "../src/lib/navegacao/navegacao";
 
 const html = readFileSync("index.html", "utf8");
 const css = readFileSync("src/styles/carregamento.css", "utf8");

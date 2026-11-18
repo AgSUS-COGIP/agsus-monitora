@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { rotuloEmLinhas } from "../../src/lib/rotulo-em-linhas.ts";
+import { rotuloEmLinhas } from "../../src/lib/selecao/rotulo-em-linhas.ts";
 
 describe("rotuloEmLinhas", () => {
   it("quebra entre palavras até a largura", () => {

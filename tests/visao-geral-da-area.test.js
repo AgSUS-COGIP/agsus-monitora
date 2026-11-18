@@ -4,7 +4,7 @@ import {
   chaveDoMunicipio,
   coordenadasDaUf,
   coordenadasDoMunicipio,
-} from "../src/lib/coordenadas-dos-municipios.ts";
+} from "../src/lib/mapas/coordenadas-dos-municipios.ts";
 import {
   MAPA_DOS_DSEIS,
   MAPA_DOS_MUNICIPIOS,
@@ -22,12 +22,12 @@ import {
   resumoDoLugar,
   rotuloDoLugar,
   textoDasVagas,
-} from "../src/lib/visao-geral-da-area.ts";
+} from "../src/lib/visao-geral/visao-geral-da-area.ts";
 import {
   RAIO_MAXIMO,
   RAIO_MINIMO,
   raioDaBolha,
-} from "../src/lib/mapa-render.ts";
+} from "../src/lib/mapas/mapa-render.ts";
 
 const html = readFileSync("index.html", "utf8").replace(/\s+/g, " ");
 

@@ -6,7 +6,7 @@ import {
   duracaoEmDias,
   enriquecerLinhas,
   valorParaOrdenar,
-} from "../src/lib/visao-geral.ts";
+} from "../src/lib/visao-geral/visao-geral.ts";
 import type {
   Acompanhamento,
   ListaDoAcompanhamento,

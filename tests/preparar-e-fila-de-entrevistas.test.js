@@ -1,23 +1,26 @@
 import { describe, expect, it } from "vitest";
-import { buscarNaFila, montarFila } from "../src/lib/fila-de-conducao.ts";
+import {
+  buscarNaFila,
+  montarFila,
+} from "../src/lib/entrevistas/fila-de-conducao.ts";
 import {
   parecerPronto,
   textoDoParecerDaEntrevista,
-} from "../src/lib/parecer-da-entrevista.ts";
+} from "../src/lib/entrevistas/parecer-da-entrevista.ts";
 import {
   agendaPorDia,
   passoInicial,
   passosDoPreparar,
   pendenciasDaConfiguracao,
   textoDoAndamento,
-} from "../src/lib/passos-do-preparar.ts";
+} from "../src/lib/entrevistas/passos-do-preparar.ts";
 import {
   errosPorSecao,
   pendenciasDoRoteiro,
   secaoDoErro,
-} from "../src/lib/pendencias-do-roteiro.ts";
-import { frasesDaEliminacao } from "../src/lib/resumo-da-entrevista.ts";
-import { errosDoRoteiro } from "../src/lib/roteiro-de-entrevista.ts";
+} from "../src/lib/entrevistas/pendencias-do-roteiro.ts";
+import { frasesDaEliminacao } from "../src/lib/entrevistas/resumo-da-entrevista.ts";
+import { errosDoRoteiro } from "../src/lib/entrevistas/roteiro-de-entrevista.ts";
 
 /*
   Entrevistas mais claras: a busca e a ordem da fila, os passos de Preparar (com o que falta), a lista do que

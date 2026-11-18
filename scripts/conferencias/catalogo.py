@@ -2,7 +2,7 @@
 Catálogo das conferências de consistência: código → módulo, gravidade e título.
 
 O código é a chave do aviso no banco (TB_AVISO_CONFERENCIA.CO_CONFERENCIA) e
-o título é o mesmo que a tela mostra (src/lib/avisos-de-conferencia.js). A
+o título é o mesmo que a tela mostra (src/lib/conferencias/avisos-de-conferencia.js). A
 lista é conferida contra tests/fixtures/conferencias/catalogo.json pelos dois
 lados (pytest e vitest): mudou aqui, mude lá e na tela.
 """

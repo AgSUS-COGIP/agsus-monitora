@@ -7,8 +7,8 @@
 */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { exigirSessao } from "../../lib/sessao";
-import type { ItemDoResumo } from "../../lib/editais-do-nucleo.ts";
+import { exigirSessao } from "../../lib/sessao/sessao";
+import type { ItemDoResumo } from "../../lib/editais/editais-do-nucleo.ts";
 
 const RPC_SUMMARY = "get_nucleo_cronograma_resumo";
 export const NUCLEO_SUMMARY_TTL_MS = 30_000;

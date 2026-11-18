@@ -12,19 +12,19 @@ import {
   usarEstadoDaNavegacao,
   usarNavegacao,
 } from "../../app/contexto-do-app.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient";
-import { safeHttpUrl } from "../../lib/sanitize";
+import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
+import { safeHttpUrl } from "../../lib/seguranca/sanitize";
 import {
   canImportApprovedList,
   canManageEditais,
   isAdminGlobal,
-} from "../../lib/access-roles.ts";
+} from "../../lib/acessos/access-roles.ts";
 import {
   ehEditalDeTreinamento,
   semTreinamento,
-} from "../../lib/edital-de-treinamento.ts";
+} from "../../lib/editais/edital-de-treinamento.ts";
 import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.tsx";
-import { formatarDataHora } from "../../lib/cronograma-do-edital.ts";
+import { formatarDataHora } from "../../lib/cronograma/cronograma-do-edital.ts";
 import {
   alertaDoTipo,
   filtrarEditais,
@@ -35,34 +35,34 @@ import {
   resumoDoEdital,
   tomDoRisco,
   tomDoStatusDoEdital,
-} from "../../lib/editais-do-nucleo.ts";
-import { formatNumberBR } from "../../lib/formatters";
+} from "../../lib/editais/editais-do-nucleo.ts";
+import { formatNumberBR } from "../../lib/base/formatters";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { Selo, TabelaInfinita, TopoDoPainel } from "../../ui/index.ts";
-import { avisoDaListaDoEdital } from "../../lib/aprovados-por-edital.ts";
+import { avisoDaListaDoEdital } from "../../lib/editais/aprovados-por-edital.ts";
 import {
   ORDEM_PADRAO_DOS_EDITAIS,
   ordenarEditais,
   proximaOrdemDosEditais,
-} from "../../lib/ordem-dos-editais.ts";
+} from "../../lib/editais/ordem-dos-editais.ts";
 import type {
   ChaveDaOrdemDosEditais,
   OrdemDosEditais,
-} from "../../lib/ordem-dos-editais.ts";
+} from "../../lib/editais/ordem-dos-editais.ts";
 import { criarEstadoDoNucleo } from "./estado.ts";
 import { PainelOperacional } from "./painel-operacional.tsx";
 import { ModalLinhaDoTempo } from "./modal-linha-do-tempo.tsx";
-import type { ItemDoResumo } from "../../lib/editais-do-nucleo.ts";
+import type { ItemDoResumo } from "../../lib/editais/editais-do-nucleo.ts";
 import type { LinhaDoMonitoramento } from "../../componentes/tipos-do-monitoramento.ts";
 import type {
   EstadoDoNucleo,
   ModalDoNucleo,
   OpcoesDoEstadoDoNucleo,
 } from "./estado.ts";
-import { importarComRecarga } from "../../lib/importar-com-recarga.ts";
+import { importarComRecarga } from "../../lib/carga/importar-com-recarga.ts";
 import { BlocosEsqueleto } from "../../ui/index.ts";
-import { etapaDasRegras } from "../../lib/regras-do-edital.ts";
-import type { EtapaDasRegras } from "../../lib/regras-do-edital.ts";
+import { etapaDasRegras } from "../../lib/regras-do-edital/regras-do-edital.ts";
+import type { EtapaDasRegras } from "../../lib/regras-do-edital/regras-do-edital.ts";
 import type { ClienteDasRegras } from "../regras-do-edital/regras-do-edital.tsx";
 import type { EstadoDosAprovados } from "../aprovados/tipos-do-estado.ts";
 
@@ -143,7 +143,7 @@ const SELO: Partial<Record<string, string>> = {
   cyan: "revisar",
 };
 
-/* As colunas; com `ordem`, o cabeçalho ordena por ela (src/lib/ordem-dos-editais.ts). */
+/* As colunas; com `ordem`, o cabeçalho ordena por ela (src/lib/editais/ordem-dos-editais.ts). */
 const COLUNAS: readonly {
   rotulo: string;
   largura: string;

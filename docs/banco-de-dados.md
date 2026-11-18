@@ -233,7 +233,7 @@ Medição que importa para o diagnóstico, feita no banco real:
 A segunda linha é a razão de a chamada pública de branding não usar o cliente
 compartilhado: uma sessão corrompida no armazenamento faria a requisição falhar
 com 401 **mesmo tendo `anon` o `execute` concedido**. Ver
-`src/lib/access-branding-publico.ts`.
+`src/lib/entrada/access-branding-publico.ts`.
 
 ### 4.2 Seis tabelas com RLS e sem policy — não mexer
 
@@ -472,7 +472,7 @@ das funções igual ao de antes).
 - No navegador, o payload fica no IndexedDB (banco `agsus-monitora-analises`,
   por usuário, área e escopo, amarrado à publicação e ao `schema_version`):
   o painel abre com a cópia e revalida por trás (`analises-consolidated-transport.js`,
-  regras em `src/lib/cache-do-painel-de-analises.ts`). O MONITORA apaga esse
+  regras em `src/lib/analises/cache-do-painel-de-analises.ts`). O MONITORA apaga esse
   banco ao sair pelo botão, em "Limpar sessão", com acesso revogado e quando
   outro usuário entra. O cache antigo do `localStorage`
   (`agsus_analises_cache_*`) é apagado ao abrir o painel.
@@ -600,7 +600,7 @@ desconhecida caía na Saúde Indígena e sumia da tela de quem o criou.
 - **Área de uma unidade** (`private."FC_AREA_DA_UNIDADE"`): `TA_UNIDADE_AREA`;
   senão unidade do catálogo `TD_UNIDADE` (DSEI/CASAI) → `saude-indigena`; senão
   desconhecida. O front usa a mesma ordem (`mapaDeAreasDasUnidades`, em
-  `src/lib/editais-do-nucleo.ts`), lendo `listar_unidades_por_area()`.
+  `src/lib/editais/editais-do-nucleo.ts`), lendo `listar_unidades_por_area()`.
 - **`salvar_monitoramento_com_cronograma_v2`** — mesma assinatura; a área
   pretendida vai em `p_payload.co_area` (o formulário manda a área do menu no
   edital novo e a do próprio edital ao editar). Com ela: a área tem de existir
@@ -687,7 +687,7 @@ updated_at, updated_by) e a linha do painel idênticas.
 Cuidado: restaurar no Histórico de configurações uma versão anterior a esta
 migration reativa a linha (`ativo`), e a coluna `painel:<analises>` volta à
 matriz. O front ignora o painel `analises` de qualquer jeito
-(`semOPainelAntigoDeAnalises`, em `src/lib/pagina-do-painel.ts`).
+(`semOPainelAntigoDeAnalises`, em `src/lib/paineis/pagina-do-painel.ts`).
 
 ## 9. Catálogo de abas (etapa 1 do "tudo vira aba")
 
@@ -720,7 +720,7 @@ virarem aba, entram com `TP_ABA = 'externa'`).
 O front (`src/modules/catalogo-de-abas.ts`) pede a função junto com as outras
 consultas da entrada e guarda a resposta na cópia da sessão (parte opcional
 `abas`). Sem a função (PostgREST `PGRST202`), com erro ou resposta vazia, usa
-`ABAS_DO_MENU` (`src/lib/menu-lateral.ts`), o mesmo catálogo no código — por
+`ABAS_DO_MENU` (`src/lib/navegacao/menu-lateral.ts`), o mesmo catálogo no código — por
 isso o front pode ir antes da migration. `tests/catalogo-de-abas.test.js`
 confere que o seed é `ABAS_DO_MENU`, que a resposta capturada no ensaio
 (`tests/fixtures/listar-abas-do-menu.json`) é a que o seed produz e que a árvore
@@ -754,7 +754,7 @@ com o mesmo md5). Sem migração de dados: a aba começa vazia. O painel externo
   leitor; gravar e buscar candidato, editor.
 - Catálogo: aba `recursos` (ícone `scale`, ordem 6) nas três áreas.
 - O prazo de resposta é classificado no front a partir das etapas do
-  cronograma (`src/lib/prazo-do-recurso.ts`); nada é guardado no banco.
+  cronograma (`src/lib/recursos/prazo-do-recurso.ts`); nada é guardado no banco.
 
 ## 11. CCE e Escritório Distrital e Regional são Projetos
 
@@ -788,7 +788,7 @@ default null)`. Com `p_area`: só a área (22023 se não existe, 42501 se não �
 - **Formato 2**: `listas` em array (id na primeira coluna; a linha leva o
   índice), `dicionarios` com cargo, modalidade, status e código da vaga (a linha
   leva o índice, base 0), `versao`, `area` e `cache`. O front
-  (`src/lib/candidatos-aprovados-compactos.ts`) remonta objetos idênticos aos
+  (`src/lib/aprovados/candidatos-aprovados-compactos.ts`) remonta objetos idênticos aos
   de antes — conferido no ensaio para o admin (3 áreas), um usuário da Saúde
   Indígena e um usuário sintético com recorte por coordenação: conteúdo e ordem
   iguais.
@@ -820,7 +820,7 @@ default null)`. Com `p_area`: só a área (22023 se não existe, 42501 se não �
   candidato a menos.
 - **No navegador**: uma cópia por área no IndexedDB (`aprovados:<área>`, no
   mesmo banco e com o mesmo dono das cópias do painel de análises; regras gerais
-  em `src/lib/cache-de-payload.ts`). A primeira abertura da área mostra a cópia
+  em `src/lib/carga/cache-de-payload.ts`). A primeira abertura da área mostra a cópia
   e pergunta ao banco se a `versao` dela vale; a releitura depois de uma
   escrita vai sempre ao banco, com a versão da tela. Sair, "Limpar sessão",
   acesso revogado e outro usuário apagam as cópias.
@@ -879,7 +879,7 @@ Migration `20260929230000_recursos_modelos_anexos_respostas.sql` (rollback em
 - **Modelos de resposta**: `TB_MODELO_RESPOSTA_RECURSO`, uma linha por versão
   (PK modelo + versão, `ST_VIGENTE`); área e origem nulas = todas. Editar grava
   a versão seguinte; a resposta guarda a versão usada. Marcadores aceitos em
-  `private."FC_MARCADORES_MODELO_RESPOSTA"()` (= `src/lib/modelos-de-resposta.ts`).
+  `private."FC_MARCADORES_MODELO_RESPOSTA"()` (= `src/lib/recursos/modelos-de-resposta.ts`).
   Seis modelos iniciais (deferido, indeferido, parcialmente indeferido ×
   análise curricular, entrevista). Manutenção só com `recursos` = admin, na
   gaveta "Modelos de resposta" do painel de recursos.
@@ -889,7 +889,7 @@ Migration `20260929230000_recursos_modelos_anexos_respostas.sql` (rollback em
   opcional, mas depois de ir à revisão quem escreveu ou enviou não aprova;
   aprovar exige o recurso decidido com a situação do modelo; marcar enviada
   marca a etapa `resposta_candidato` do recurso. Regras espelhadas em
-  `src/lib/resposta-do-recurso.ts`.
+  `src/lib/recursos/resposta-do-recurso.ts`.
 - `TH_RECURSO_CANDIDATO` passa a aceitar `anexo` e `resposta` em `TP_ACAO`.
 - RPCs: `listar_modelos_resposta_recurso`, `salvar_modelo_resposta_recurso`,
   `arquivar_modelo_resposta_recurso`, `salvar_resposta_recurso`,
@@ -963,7 +963,7 @@ Migration `20261001120000_saude_das_cargas.sql` (rollback em `supabase/rollback/
 - A tela mostra uma linha por aba (análises por área, entrevistas, seleção, tarefas do banco) e uma
   frase no topo; o selo (em dia, atrasada, falhou, em andamento, ainda sem carga — este não pede
   atenção: a SEDE ainda não tem planilha de análise) e os prazos ficam no front, em
-  `src/lib/saude-das-cargas.ts`: análises incrementais atrasadas depois de 1 h; entrevistas e
+  `src/lib/automacao/saude-das-cargas.ts`: análises incrementais atrasadas depois de 1 h; entrevistas e
   seleção, de 26 h; tarefas a cada 2 min, de 15 min. A seção é
   `src/componentes/saude-das-cargas/`.
 
@@ -1022,7 +1022,7 @@ treinamento" não aparecem, os filtros de treinamento não tiram nada e
   `private."FC_EH_TREINAMENTO"(marca)`, `private."FC_EDITAL_EH_TREINAMENTO"(id)` e
   `private."FC_ANALISE_EH_TREINAMENTO"(origem_planilha)` (as análises fictícias têm
   `origem_planilha = treinamento`; a análise não tem o id do edital). No front:
-  `src/lib/edital-de-treinamento.ts` (`ehEditalDeTreinamento`, `semTreinamento`).
+  `src/lib/editais/edital-de-treinamento.ts` (`ehEditalDeTreinamento`, `semTreinamento`).
 - **Fica fora de:** `VW_MONITORAMENTO_INDIGENA_KPIS`/`_POR_EDITAL`/`_POR_UNIDADE`,
   `listar_acompanhamento_da_visao_geral`, `VW_ANALISES_DASHBOARD_BASE_TODOS` (painel das análises,
   `TA_PAINEL_ANALISE`, `obter_marcos_da_area`, `get_analises_dashboard_payload_v2`),
@@ -1168,7 +1168,7 @@ prazo do cronograma e o ritmo atual.
 - Índice parcial `IN_FICHAANALISE_CONCLUIDA` (`CO_MONITORAMENTO`, `DT_CONCLUSAO`) incluindo
   `CO_USUARIO_CONCLUSAO`, só fichas `CONCLUIDA`.
 - A conta (etapa do cronograma, dias úteis, ritmo, projeção, por avaliador) é do front, em
-  `src/lib/ritmo-da-analise.ts`. Sem polling: a tela pede junto com a carga do painel; trocar só o
+  `src/lib/analises/ritmo-da-analise.ts`. Sem polling: a tela pede junto com a carga do painel; trocar só o
   escopo não pede de novo. Ensaio em 19/10/2026: 3,2 ms.
 - Ordem: aplicar a migration antes de publicar o front (sem a RPC, o card só não aparece).
 
@@ -1246,7 +1246,7 @@ partir da definição vigente, só acrescentando; mesma permissão):
   `REABRIR`).
 - Medalhas (🥇🥈🥉, empate leva a mesma), selo Precisão (🎯: ≥ 10 conclusões hoje e nenhuma
   reaberta) e a comemoração da meta da equipe (uma vez por dia por pessoa) são do front, em
-  `src/lib/ritmo-da-analise.ts` e `src/modulos/analises/marcos.ts`.
+  `src/lib/analises/ritmo-da-analise.ts` e `src/modulos/analises/marcos.ts`.
 - Ensaio em 21/10/2026: 3,9 ms com o card aquecido (antes 3,2 ms); o trecho novo com o volume de
   20/10 (550 conclusões, 19 reaberturas) levou 1 ms aquecido e 20 ms frio.
 - Ordem: aplicar a migration antes de publicar o front (sem o campo, o bloco só não aparece).

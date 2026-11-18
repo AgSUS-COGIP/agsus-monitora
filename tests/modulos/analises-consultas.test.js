@@ -3,7 +3,7 @@ import {
   criarConsultasDasAnalises,
   VERSAO_DA_COPIA,
 } from "../../src/modulos/analises/consultas.ts";
-import { ESQUEMAS_DO_PAYLOAD } from "../../src/lib/cache-do-painel-de-analises.ts";
+import { ESQUEMAS_DO_PAYLOAD } from "../../src/lib/analises/cache-do-painel-de-analises.ts";
 
 /*
   As consultas de Análises curriculares (src/modulos/analises/consultas.ts):

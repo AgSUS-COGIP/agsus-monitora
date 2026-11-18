@@ -7,10 +7,10 @@ import type {
 import {
   detalheDaAnalise,
   tomDoStatus,
-} from "../../lib/analises-curriculares.ts";
-import { espelhoDoDetalhe } from "../../lib/espelho-do-painel-de-analises.ts";
-import { mesclarDetalhe } from "../../lib/lista-do-painel-de-analises.ts";
-import { linhaSemParecer } from "../../lib/textos-do-painel-de-analises.ts";
+} from "../../lib/analises/analises-curriculares.ts";
+import { espelhoDoDetalhe } from "../../lib/analises/espelho-do-painel-de-analises.ts";
+import { mesclarDetalhe } from "../../lib/analises/lista-do-painel-de-analises.ts";
+import { linhaSemParecer } from "../../lib/analises/textos-do-painel-de-analises.ts";
 import { Gaveta, GradeDeKv, Kv, Secao, Selo } from "../../ui/index.ts";
 import { EspelhoNaGaveta } from "./espelho-na-gaveta.tsx";
 

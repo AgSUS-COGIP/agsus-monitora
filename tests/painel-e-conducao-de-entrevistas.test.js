@@ -4,7 +4,7 @@ import {
   FILTROS_VAZIOS,
   filtrarEntrevistas,
   pendenciasDasEntrevistas,
-} from "../src/lib/entrevistas-do-painel.ts";
+} from "../src/lib/entrevistas/entrevistas-do-painel.ts";
 import {
   contadorDoDia,
   contagemDosRecortes,
@@ -19,20 +19,20 @@ import {
   rotuloDoDia,
   situacaoDoConvocado,
   vagasDaFila,
-} from "../src/lib/fila-de-conducao.ts";
+} from "../src/lib/entrevistas/fila-de-conducao.ts";
 import {
   editalDoRecorte,
   gruposEmpatados,
   mapaDeEmpates,
   proximosDiasDaAgenda,
-} from "../src/lib/painel-de-entrevistas.ts";
+} from "../src/lib/entrevistas/painel-de-entrevistas.ts";
 import {
   criteriosDeDesempate,
   textoDoEmpateFinal,
-} from "../src/lib/convocacao-da-entrevista.ts";
-import { destinoDaTela } from "../src/lib/navegacao";
-import { paginasPermitidas } from "../src/lib/access-roles.ts";
-import { bloqueioDaTela } from "../src/lib/navegacao";
+} from "../src/lib/entrevistas/convocacao-da-entrevista.ts";
+import { destinoDaTela } from "../src/lib/navegacao/navegacao";
+import { paginasPermitidas } from "../src/lib/acessos/access-roles.ts";
+import { bloqueioDaTela } from "../src/lib/navegacao/navegacao";
 
 /*
   O painel (acompanhar) e Conduzir entrevistas (fazer), sem React: a fila do

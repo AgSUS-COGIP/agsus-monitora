@@ -17,7 +17,7 @@ import {
   TEXTOS_PADRAO_DO_ESPELHO,
   textosDoModelo,
 } from "../../src/lib/avaliacao-documental/modelo-do-espelho.ts";
-import { CABECALHO_PADRAO } from "../../src/lib/cabecalho-dos-documentos.ts";
+import { CABECALHO_PADRAO } from "../../src/lib/base/cabecalho-dos-documentos.ts";
 
 /*
   O visual do espelho de nota (issue #588): a folha HTML no padrão do Manual

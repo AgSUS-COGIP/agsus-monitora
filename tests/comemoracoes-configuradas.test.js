@@ -10,8 +10,8 @@ import {
   CHAVE_DO_EFEITO_DO_DIA,
   definirConfiguracaoDasComemoracoes,
   normalizarConfiguracao,
-} from "../src/lib/catalogo-de-comemoracoes.ts";
-import { criarAleatorio } from "../src/lib/fogos.ts";
+} from "../src/lib/comemoracao/catalogo-de-comemoracoes.ts";
+import { criarAleatorio } from "../src/lib/comemoracao/fogos.ts";
 import { EVENTO_DA_AYA } from "../src/modulos/comemoracao/comemoracoes.tsx";
 import { planoDaComemoracao } from "../src/modulos/comemoracao/plano.ts";
 import {

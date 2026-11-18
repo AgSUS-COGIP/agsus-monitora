@@ -8,7 +8,7 @@ import {
   quadroParaSalvar,
   resumoDoQuadro,
   textoDaModalidade,
-} from "../../lib/anexos-do-edital.ts";
+} from "../../lib/editais/anexos-do-edital.ts";
 import type {
   AnexoLido,
   AnexosJuntados,
@@ -16,8 +16,8 @@ import type {
   QuadroParaSalvar,
   ResumoDoQuadro,
   VagaDoAnexo,
-} from "../../lib/anexos-do-edital.ts";
-import type { EtapaDoCronograma } from "../../lib/cronograma-do-edital.ts";
+} from "../../lib/editais/anexos-do-edital.ts";
+import type { EtapaDoCronograma } from "../../lib/cronograma/cronograma-do-edital.ts";
 
 /** O que a seção usa do estado da página (`estado.ts`). */
 export interface EstadoDosAnexos {
@@ -62,7 +62,7 @@ interface GravacaoDoQuadro {
     edital (`estado.salvarEdital({ quadro })`).
 
   Para edital existente mostra também o quadro já salvo. Regras puras em
-  `src/lib/anexos-do-edital.ts`.
+  `src/lib/editais/anexos-do-edital.ts`.
 */
 
 const plural = (total: number, um: string, varios: string) =>

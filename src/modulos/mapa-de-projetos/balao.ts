@@ -4,10 +4,10 @@ import type { MunicipioDoMapa } from "./tipos.ts";
   a API do DOM (`textContent`), sem HTML em string: título, uma linha por
   edital (bolinha na cor do projeto, projeto em negrito, edital, vagas,
   lotações) e as contagens das análises. O texto vem de `resumoDoLugar`
-  (src/lib/visao-geral-da-area.ts); a caixa é a mesma dos balões da Saúde
+  (src/lib/visao-geral/visao-geral-da-area.ts); a caixa é a mesma dos balões da Saúde
   Indígena (`.mapa-si-balao`).
 */
-import { resumoDoLugar } from "../../lib/visao-geral-da-area.ts";
+import { resumoDoLugar } from "../../lib/visao-geral/visao-geral-da-area.ts";
 
 function no(documento: Document, tag: string, classe: string, texto?: string) {
   const elemento = documento.createElement(tag);

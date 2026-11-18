@@ -6,8 +6,8 @@ import type {
   ModeloDaResposta,
   RascunhoDoModelo,
   DadosDosModelos,
-} from "../../lib/tipos-da-resposta-do-recurso.ts";
-import type { ErrosDoModelo } from "../../lib/modelos-de-resposta.ts";
+} from "../../lib/recursos/tipos-da-resposta-do-recurso.ts";
+import type { ErrosDoModelo } from "../../lib/recursos/modelos-de-resposta.ts";
 interface PropsDoModelo {
   estado: EstadoDosRecursos;
   dados: DadosDosModelos;
@@ -19,13 +19,13 @@ import {
   MARCADORES,
   MODELO_VAZIO,
   rascunhoDoModelo,
-} from "../../lib/modelos-de-resposta.ts";
+} from "../../lib/recursos/modelos-de-resposta.ts";
 import {
   rotuloDaOrigem,
   rotuloDaSituacao,
   SITUACOES,
   situacaoDecidida,
-} from "../../lib/recursos-dos-candidatos.ts";
+} from "../../lib/recursos/recursos-dos-candidatos.ts";
 import { Aviso, Carregando, Gaveta, Secao } from "../../ui/index.ts";
 import { dataHora } from "./partes.ts";
 

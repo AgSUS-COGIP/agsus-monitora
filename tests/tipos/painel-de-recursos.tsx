@@ -6,7 +6,7 @@ import {
   calcularIndicadores,
   pendenciasPrioritarias,
   csvDosRecursos,
-} from "../../src/lib/recursos-dos-candidatos.ts";
+} from "../../src/lib/recursos/recursos-dos-candidatos.ts";
 import {
   Graficos,
   Indicadores,
@@ -18,7 +18,7 @@ import { TabelaDeRecursos } from "../../src/modulos/recursos/tabela.tsx";
 import type {
   AoFiltrarRecursos,
   RecursoDoPainel,
-} from "../../src/lib/tipos-dos-recursos.ts";
+} from "../../src/lib/recursos/tipos-dos-recursos.ts";
 
 const recursos = enriquecerRecursos(
   {

@@ -9,11 +9,14 @@
 import { useId, useState } from "react";
 import type { CSSProperties } from "react";
 import { Icone } from "../../../componentes/icone.tsx";
-import { passoParaRetomar, rotuloDoProgresso } from "../../../lib/aya-tours.ts";
+import {
+  passoParaRetomar,
+  rotuloDoProgresso,
+} from "../../../lib/aya/aya-tours.ts";
 import type {
   ProgressoDasTrilhas,
   TrilhaDaAya,
-} from "../../../lib/aya-tours.ts";
+} from "../../../lib/aya/aya-tours.ts";
 
 export interface PropsDaSecaoAprender {
   trilhas: readonly TrilhaDaAya[];

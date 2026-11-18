@@ -6,7 +6,7 @@
   depois das outras guardas: envolve `L.map` e enfeita cada mapa com esses ids.
   Aqui fica só o que mexe no Leaflet (painéis, camadas, o botão); o que é
   conta ou texto — catálogo, nomes e povos, geometria, fases e estilos,
-  preferências guardadas — é puro e mora em src/lib/terras-indigenas/.
+  preferências guardadas — é puro e mora em src/lib/mapas/terras-indigenas/.
 */
 import type { PosicaoDoLeaflet } from "../modulos/mapa-saude-indigena/tipos-do-leaflet.ts";
 import type {
@@ -19,7 +19,7 @@ import type {
   PosicaoGeoJson,
   ResumoDaTerra,
   UnidadeDoDsei,
-} from "../lib/terras-indigenas/tipos.ts";
+} from "../lib/mapas/terras-indigenas/tipos.ts";
 import {
   CATALOGO_DE_TERRAS_EM_ESTUDO,
   FUNAI_PROXY_WMS,
@@ -29,9 +29,9 @@ import {
   funaiEstudoUrl,
   funaiViewportUrl,
   obterCatalogo,
-} from "../lib/terras-indigenas/catalogo.ts";
-import { ARQUIVO_DOS_CONTORNOS_DOS_DSEIS } from "../lib/mapa-saude-indigena/contornos-dos-dseis.ts";
-import { PANE_DA_ABRANGENCIA_DOS_DSEIS } from "../lib/terras-indigenas/catalogo.ts";
+} from "../lib/mapas/terras-indigenas/catalogo.ts";
+import { ARQUIVO_DOS_CONTORNOS_DOS_DSEIS } from "../lib/mapas/mapa-saude-indigena/contornos-dos-dseis.ts";
+import { PANE_DA_ABRANGENCIA_DOS_DSEIS } from "../lib/mapas/terras-indigenas/catalogo.ts";
 import {
   AVISO_DO_SIMBOLO,
   dseiFeatureMatches,
@@ -41,7 +41,7 @@ import {
   tooltipDaTerraEmEstudo,
   tooltipDaTerraIndigena,
   tooltipDoDsei,
-} from "../lib/terras-indigenas/textos.ts";
+} from "../lib/mapas/terras-indigenas/textos.ts";
 import {
   caixaDoMapa,
   resumoDasTerras,
@@ -50,7 +50,7 @@ import {
   terraPertenceAoDsei,
   terraPrecisaDeSimbolo,
   terrasNoEnquadramento,
-} from "../lib/terras-indigenas/geometria.ts";
+} from "../lib/mapas/terras-indigenas/geometria.ts";
 import {
   COR_EM_PROCESSO,
   FASES_DAS_TERRAS,
@@ -63,13 +63,13 @@ import {
   raioDoSimbolo,
   terrasDasFasesVisiveis,
   vectorStyle,
-} from "../lib/terras-indigenas/fases-e-estilos.ts";
+} from "../lib/mapas/terras-indigenas/fases-e-estilos.ts";
 import {
   readStoredFases,
   readStoredVisibility,
   storeFases,
   storeVisibility,
-} from "../lib/terras-indigenas/preferencias.ts";
+} from "../lib/mapas/terras-indigenas/preferencias.ts";
 import {
   EVENTO_DO_FUNDO,
   MODO_SIMPLES,
@@ -77,9 +77,9 @@ import {
 } from "./map-base-layer-switcher.ts";
 
 // Quem importava tudo desta camada continua a importar daqui.
-export * from "../lib/terras-indigenas/catalogo.ts";
-export * from "../lib/terras-indigenas/textos.ts";
-export * from "../lib/terras-indigenas/geometria.ts";
+export * from "../lib/mapas/terras-indigenas/catalogo.ts";
+export * from "../lib/mapas/terras-indigenas/textos.ts";
+export * from "../lib/mapas/terras-indigenas/geometria.ts";
 export {
   FASES_DAS_TERRAS,
   ZOOM_DO_PAIS,
@@ -89,8 +89,8 @@ export {
   faseDaTerra,
   raioDoSimbolo,
   terrasDasFasesVisiveis,
-} from "../lib/terras-indigenas/fases-e-estilos.ts";
-export { lerFasesOcultas } from "../lib/terras-indigenas/preferencias.ts";
+} from "../lib/mapas/terras-indigenas/fases-e-estilos.ts";
+export { lerFasesOcultas } from "../lib/mapas/terras-indigenas/preferencias.ts";
 
 declare global {
   interface Window {

@@ -4,11 +4,11 @@ import { dataDeCorteDoCronograma } from "../../lib/classificacao/dados.ts";
 import {
   criteriosDeDesempate,
   textoDoEmpateFinal,
-} from "../../lib/convocacao-da-entrevista.ts";
+} from "../../lib/entrevistas/convocacao-da-entrevista.ts";
 import type {
   DestinoDoResumo,
   EntradaDoResumo,
-} from "../../lib/resumo-da-entrevista.ts";
+} from "../../lib/entrevistas/resumo-da-entrevista.ts";
 import { BlocosEsqueleto, ErroAoCarregar } from "../../ui/index.ts";
 import { EditorDaChamada } from "../aprovados/chamada-para-contratacao.tsx";
 import type { EstadoDosAprovados } from "../aprovados/tipos-do-estado.ts";

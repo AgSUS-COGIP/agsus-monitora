@@ -3,8 +3,8 @@ import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitorame
 import { SeletorDeEdital } from "../../componentes/seletor-de-edital.tsx";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { TelaNaUrl, usarEditalNaUrl } from "../../app/usar-filtros-na-url.ts";
-import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient";
+import { CHAVE_DO_CABECALHO } from "../../lib/base/cabecalho-dos-documentos.ts";
+import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import { Aviso, CabecalhoDaTela } from "../../ui/index.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { coordenaOEdital } from "./abas-e-entrada.ts";

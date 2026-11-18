@@ -11,7 +11,7 @@ import type {
   PropsDosGraficos,
 } from "./tipos-do-painel.ts";
 import { useEffect, useMemo, useRef } from "react";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import {
   contagemPorComparecimento,
   contagemPorParecer,
@@ -20,8 +20,8 @@ import {
   formatarNota,
   mediaPorCriterio,
   topUnidades,
-} from "../../lib/entrevistas-do-painel.ts";
-import { paletaDoPainel } from "../../lib/tema-do-painel";
+} from "../../lib/entrevistas/entrevistas-do-painel.ts";
+import { paletaDoPainel } from "../../lib/paineis/tema-do-painel";
 import {
   Campo,
   CardDeGrafico,

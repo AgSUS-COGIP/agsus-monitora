@@ -7,8 +7,8 @@ import {
   PRAZO_MENSAL_MIN,
   textoDaIdade,
   visaoSimples,
-} from "../src/lib/saude-das-cargas.ts";
-import { normalizarChaves } from "../src/lib/chaves-da-automacao.ts";
+} from "../src/lib/automacao/saude-das-cargas.ts";
+import { normalizarChaves } from "../src/lib/automacao/chaves-da-automacao.ts";
 import { CATALOGO_DOS_ROBOS } from "./fixtures/catalogo-dos-robos.ts";
 
 /* "Agora" fixo: 01/10/2026 12:00 UTC. */

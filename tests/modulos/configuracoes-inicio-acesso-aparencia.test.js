@@ -15,7 +15,7 @@ import {
 import {
   CHAVES_DAS_SECOES,
   linhasDasSecoes,
-} from "../../src/lib/publicacao-de-configuracoes.ts";
+} from "../../src/lib/configuracoes/publicacao-de-configuracoes.ts";
 import {
   criarImagensDaAparencia,
   EVENTO_FUNDO_DO_ACESSO,

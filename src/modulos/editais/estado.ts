@@ -15,29 +15,29 @@ import {
   canMoveEditalBetweenAreas,
   canManageEditais,
   isAdminGlobal,
-} from "../../lib/access-roles.ts";
-import { aprovadosPorEdital } from "../../lib/aprovados-por-edital.ts";
-import { ehEditalDeTreinamento } from "../../lib/edital-de-treinamento.ts";
-import { exigirSessao } from "../../lib/sessao";
+} from "../../lib/acessos/access-roles.ts";
+import { aprovadosPorEdital } from "../../lib/editais/aprovados-por-edital.ts";
+import { ehEditalDeTreinamento } from "../../lib/editais/edital-de-treinamento.ts";
+import { exigirSessao } from "../../lib/sessao/sessao";
 import {
   analisarCronograma,
   cronogramaParaSalvar,
-} from "../../lib/cronograma-do-edital.ts";
-import { lerAnexoNoServidor } from "../../lib/anexos-do-edital.ts";
-import { lerRetificacaoNoServidor } from "../../lib/retificacao-do-cronograma.ts";
+} from "../../lib/cronograma/cronograma-do-edital.ts";
+import { lerAnexoNoServidor } from "../../lib/editais/anexos-do-edital.ts";
+import { lerRetificacaoNoServidor } from "../../lib/cronograma/retificacao-do-cronograma.ts";
 import { carregarResumoDoNucleo, createNucleoSummaryStore } from "./resumo.ts";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ClienteDoResumo } from "./resumo.ts";
 import type {
   CronogramaNoBanco,
   EtapaDoCronograma,
-} from "../../lib/cronograma-do-edital.ts";
-import type { QuadroParaSalvar } from "../../lib/anexos-do-edital.ts";
+} from "../../lib/cronograma/cronograma-do-edital.ts";
+import type { QuadroParaSalvar } from "../../lib/editais/anexos-do-edital.ts";
 import type {
   ItemDoResumo,
   UnidadeComArea,
   editalParaSalvar,
-} from "../../lib/editais-do-nucleo.ts";
+} from "../../lib/editais/editais-do-nucleo.ts";
 
 /** O cliente Supabase no que a página usa (o do app ou um falso nos testes). */
 export interface ClienteDoNucleo extends ClienteDoResumo {
@@ -426,10 +426,11 @@ export function criarEstadoDoNucleo({
       exigirMotivo: Boolean(edital.id),
     });
     // A regra de sequência (só avisos) baixa ao salvar, fora do pacote de entrada; sem ela, salva igual.
-    const analise = await import("../../lib/sequencia-do-cronograma.ts").then(
-      (modulo) => modulo.comSequencia(base, etapas),
-      () => base,
-    );
+    const analise =
+      await import("../../lib/cronograma/sequencia-do-cronograma.ts").then(
+        (modulo) => modulo.comSequencia(base, etapas),
+        () => base,
+      );
     if (analise.erros.length) {
       toast(analise.erros[0]!, "warn");
       return false;

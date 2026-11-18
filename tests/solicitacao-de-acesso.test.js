@@ -22,7 +22,7 @@ import {
   telaDaSolicitacao,
   validarRecusa,
   validarSolicitacao,
-} from "../src/lib/solicitacao-de-acesso.ts";
+} from "../src/lib/acessos/solicitacao-de-acesso.ts";
 import {
   AVISO_CANCELADO,
   AVISO_SEM_CONSULTA,
@@ -31,7 +31,7 @@ import {
   visaoDoPedido,
 } from "../src/app/entrada/pedido-de-acesso.ts";
 import { PaginaDaSolicitacao } from "../src/app/entrada/solicitacao-de-acesso.tsx";
-import { lembrarContaDesativada } from "../src/lib/acesso-liberado.ts";
+import { lembrarContaDesativada } from "../src/lib/acessos/acesso-liberado.ts";
 import { clicar, digitar, escolher } from "./componentes/interacoes.ts";
 
 /*

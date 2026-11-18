@@ -14,8 +14,8 @@ import type {
   - `carregarEscopo()`: a lista enxuta da área (get_analises_dashboard_payload_v2)
     no escopo da "Situação do processo". "Ativo" e "Inativo" são um pacote
     cada; "Todos" são os pacotes 'ativo' e 'inativo' juntos (sem as desativadas), na
-    ordem do banco (src/lib/lista-do-painel-de-analises.ts).
-    Cópia no navegador (IndexedDB, src/lib/cache-do-painel-de-analises.ts): com
+    ordem do banco (src/lib/analises/lista-do-painel-de-analises.ts).
+    Cópia no navegador (IndexedDB, src/lib/analises/cache-do-painel-de-analises.ts): com
     cópia, devolve na hora (`daCopia`) e revalida por trás (`revalidacao`);
     `aoMudar` recebe o payload novo se o servidor mandou outro, e
     `aoPerderAcesso` é chamado se o acesso caiu (as cópias são apagadas).
@@ -30,25 +30,28 @@ import type {
     (obter_ritmo_da_analise, migration 20261019170000); null se não der.
   - `esquecer()`: o "Atualizar" e a troca de usuário descartam o guardado.
 */
-import { parametroDeAreaDaRpc } from "../../lib/area-do-painel-de-analises.ts";
+import { parametroDeAreaDaRpc } from "../../lib/analises/area-do-painel-de-analises.ts";
 import {
   linhasDoPayload,
   normalizarPayloadDasAnalises,
-} from "../../lib/analises-curriculares.ts";
+} from "../../lib/analises/analises-curriculares.ts";
 import {
   criarCacheDoPainel,
   ESQUEMAS_DO_PAYLOAD,
   revalidarPayload,
-} from "../../lib/cache-do-painel-de-analises.ts";
-import { respostaInalterada, versaoDoPacote } from "../../lib/versao-do-pacote";
-import { comTempoLimite } from "../../lib/falha-de-rede";
+} from "../../lib/analises/cache-do-painel-de-analises.ts";
+import {
+  respostaInalterada,
+  versaoDoPacote,
+} from "../../lib/carga/versao-do-pacote";
+import { comTempoLimite } from "../../lib/carga/falha-de-rede";
 import {
   envelopeDeTodos,
   juntarPartesDoPainel,
   partesDoEscopo,
-} from "../../lib/lista-do-painel-de-analises.ts";
-import { lerRitmoDaAnalise } from "../../lib/ritmo-da-analise.ts";
-import { mapaDosTextos } from "../../lib/textos-do-painel-de-analises.ts";
+} from "../../lib/analises/lista-do-painel-de-analises.ts";
+import { lerRitmoDaAnalise } from "../../lib/analises/ritmo-da-analise.ts";
+import { mapaDosTextos } from "../../lib/analises/textos-do-painel-de-analises.ts";
 import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.ts";
 
 const RPC_PORTEIRO = "usuario_pode_ler_analises";

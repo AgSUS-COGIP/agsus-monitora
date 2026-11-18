@@ -4,7 +4,7 @@ import {
   formatarDataHora,
   hojeEmBrasilia,
   situacaoNaLinhaDoTempo,
-} from "../../lib/cronograma-do-edital.ts";
+} from "../../lib/cronograma/cronograma-do-edital.ts";
 import {
   Aviso,
   BlocosEsqueleto,
@@ -63,9 +63,11 @@ function useSequencia(etapas: CronogramaLido["etapas"]): string[] {
   useEffect(() => {
     let vivo = true;
     const lista = Array.isArray(etapas) ? etapas : [];
-    void import("../../lib/sequencia-do-cronograma.ts").then((modulo) => {
-      if (vivo) setAvisos(modulo.avisosDeSequencia(lista));
-    });
+    void import("../../lib/cronograma/sequencia-do-cronograma.ts").then(
+      (modulo) => {
+        if (vivo) setAvisos(modulo.avisosDeSequencia(lista));
+      },
+    );
     return () => {
       vivo = false;
     };

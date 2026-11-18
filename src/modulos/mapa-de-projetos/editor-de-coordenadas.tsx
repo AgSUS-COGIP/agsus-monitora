@@ -11,7 +11,7 @@ import {
   pontosEditaveisDosProjetos,
   REGRAS_DA_FILA_DOS_PROJETOS,
   sugestoesDoLugar,
-} from "../../lib/coordenadas-dos-projetos.ts";
+} from "../../lib/mapas/coordenadas-dos-projetos.ts";
 // O editor comum chega sob demanda (fora do pacote principal).
 import { usarEditorDeCoordenadas } from "../editor-de-coordenadas/editor-sob-demanda.ts";
 
@@ -19,7 +19,7 @@ import { usarEditorDeCoordenadas } from "../editor-de-coordenadas/editor-sob-dem
   O editor de coordenadas do mapa de Projetos: o editor comum
   (src/modulos/editor-de-coordenadas/) com os lugares das vagas (a chave
   `lugar` e a coordenada do banco que a RPC do mapa devolve), as regras deste
-  mapa (src/lib/coordenadas-dos-projetos.ts) e as RPCs
+  mapa (src/lib/mapas/coordenadas-dos-projetos.ts) e as RPCs
   `*_coordenada_mapa_projetos` (migration 20261002190000). A gravação devolve
   { lugar, latitude, longitude, conferido }, que o mapa aplica por
   `aoAtualizarMapa(data, ponto)`.

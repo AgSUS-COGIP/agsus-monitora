@@ -5,7 +5,7 @@ import {
   guardarMarca,
   lerMarcaGuardada,
   limparMarcaGuardada,
-} from "../src/lib/access-branding-cache.ts";
+} from "../src/lib/entrada/access-branding-cache.ts";
 
 /*
   A ARTE NO PRIMEIRO QUADRO (13/11/2026: "ainda pisca forte a tela de login")

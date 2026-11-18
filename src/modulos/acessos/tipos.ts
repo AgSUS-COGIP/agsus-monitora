@@ -9,11 +9,11 @@ import type {
   RascunhoDeAcessos,
   TetoDeAcessos,
   UsuarioDaMatriz,
-} from "../../lib/tipos-dos-acessos.ts";
+} from "../../lib/acessos/tipos-dos-acessos.ts";
 
 /*
   Tipos do estado de Configurações › Acessos (estado.ts) e dos componentes.
-  As regras e as linhas das RPCs estão em src/lib/tipos-dos-acessos.ts; aqui
+  As regras e as linhas das RPCs estão em src/lib/acessos/tipos-dos-acessos.ts; aqui
   ficam os campos a mais que só a tela lê e a forma do estado.
 */
 
@@ -145,7 +145,7 @@ export type EscolhaDaAprovacao = {
   observacao?: string | null;
 };
 
-/** `argumentos` de validarRecusa (src/lib/solicitacao-de-acesso.ts). */
+/** `argumentos` de validarRecusa (src/lib/acessos/solicitacao-de-acesso.ts). */
 export type ArgumentosDaRecusa = {
   p_motivo: string;
   p_complemento: string | null;

@@ -12,8 +12,8 @@ import {
 import {
   espelhoDoDetalhe,
   TEXTOS_DO_ESPELHO_NO_PAINEL,
-} from "../../src/lib/espelho-do-painel-de-analises.ts";
-import { mesclarDetalhe } from "../../src/lib/lista-do-painel-de-analises.ts";
+} from "../../src/lib/analises/espelho-do-painel-de-analises.ts";
+import { mesclarDetalhe } from "../../src/lib/analises/lista-do-painel-de-analises.ts";
 import { GavetaDaAnalise } from "../../src/modulos/analises/gaveta.tsx";
 
 /*

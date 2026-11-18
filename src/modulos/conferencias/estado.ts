@@ -10,7 +10,7 @@ import type {
 /*
   Estado dos avisos de conferência, fora do React: a última leitura de
   `listar_avisos_conferencia_se_mudou` (área e módulo opcionais; migration
-  20261015000000), já normalizada por src/lib/avisos-de-conferencia.ts, e o
+  20261015000000), já normalizada por src/lib/conferencias/avisos-de-conferencia.ts, e o
   "ignorar" com motivo (`ignorar_aviso_conferencia`). A tela lê com
   `useSyncExternalStore`.
 
@@ -37,9 +37,12 @@ import {
   normalizarAvisos,
   normalizarCasos,
   termoDeBusca,
-} from "../../lib/avisos-de-conferencia.ts";
-import { respostaInalterada, versaoDoPacote } from "../../lib/versao-do-pacote";
-import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede";
+} from "../../lib/conferencias/avisos-de-conferencia.ts";
+import {
+  respostaInalterada,
+  versaoDoPacote,
+} from "../../lib/carga/versao-do-pacote";
+import { comTempoLimite, mensagemDeFalha } from "../../lib/carga/falha-de-rede";
 import {
   esquecerAvisosGuardados,
   memoriaDosAvisos,

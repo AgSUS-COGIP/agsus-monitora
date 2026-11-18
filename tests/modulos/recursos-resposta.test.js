@@ -7,7 +7,7 @@ import {
   escolher,
   esperar,
 } from "../componentes/interacoes.ts";
-import { proximoEstado } from "../../src/lib/resposta-do-recurso.ts";
+import { proximoEstado } from "../../src/lib/recursos/resposta-do-recurso.ts";
 import { montarTela } from "../montar-tela.ts";
 
 /*
@@ -20,7 +20,7 @@ import { montarTela } from "../montar-tela.ts";
   migration no essencial.
 */
 
-vi.mock("../../src/lib/chartjs-global.ts", () => {
+vi.mock("../../src/lib/base/chartjs-global.ts", () => {
   const Chart = class {
     constructor(canvas, configuracao) {
       this.data = configuracao.data;

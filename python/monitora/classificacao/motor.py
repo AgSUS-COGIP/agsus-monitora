@@ -217,7 +217,7 @@ def _momento(valor) -> float:
 
 
 def comparar_entrevistas(a: dict, b: dict) -> float:
-    """compararEntrevistas (src/lib/entrevista-vigente.ts): negativo quando `a` vale mais que `b`."""
+    """compararEntrevistas (src/lib/entrevistas/entrevista-vigente.ts): negativo quando `a` vale mais que `b`."""
 
     def tem_parecer(e):
         return e["parecer"] in ("APTO", "INAPTO")

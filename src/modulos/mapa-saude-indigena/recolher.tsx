@@ -4,11 +4,11 @@ import {
   CHAVE_DO_MAPA_RECOLHIDO,
   lerMapaRecolhido,
   valorDoMapaRecolhido,
-} from "../../lib/mapa-recolhido.ts";
+} from "../../lib/mapas/mapa-recolhido.ts";
 
 /*
   "Recolher mapa"/"Mostrar mapa" no cabeçalho do mapa da Visão geral: a
-  escolha fica no navegador de cada pessoa (src/lib/mapa-recolhido.ts).
+  escolha fica no navegador de cada pessoa (src/lib/mapas/mapa-recolhido.ts).
   Recolhido, o corpo do mapa some (CSS .mapa-si--recolhido) e o Leaflet
   reenquadra sozinho quando ele volta (ResizeObserver, leaflet.ts). Sem
   localStorage (janela privada, bloqueio), o mapa abre e o botão funciona na

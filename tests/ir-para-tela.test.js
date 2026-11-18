@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { linkInterno } from "../src/lib/link-interno.ts";
+import { linkInterno } from "../src/lib/navegacao/link-interno.ts";
 import { irParaTela } from "../src/app/ir-para-tela.ts";
 
 /*
   Os botões "Ir para…" (Entrevistas, Recursos, Lista de aprovados) navegam só
-  para telas do app, conferidas (src/lib/link-interno.ts), e com o edital
+  para telas do app, conferidas (src/lib/navegacao/link-interno.ts), e com o edital
   ele vai junto no endereço (src/app/ir-para-tela.ts); quem abre a tela já
   nele é a rota (tests/app/telas.test.js).
 */

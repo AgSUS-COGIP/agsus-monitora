@@ -14,8 +14,8 @@ import {
   planilhaDoRelatorio,
   textoDaCelula,
   xlsxDoRelatorio,
-} from "../src/lib/relatorios-dos-paineis.ts";
-import type { ZiparRelatorio } from "../src/lib/relatorios-dos-paineis.ts";
+} from "../src/lib/paineis/relatorios-dos-paineis.ts";
+import type { ZiparRelatorio } from "../src/lib/paineis/relatorios-dos-paineis.ts";
 
 /*
   Os relatórios dos Painéis (bloco Dados): as colunas pedidas, a leitura da

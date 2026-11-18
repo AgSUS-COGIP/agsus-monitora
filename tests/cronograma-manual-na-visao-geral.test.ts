@@ -5,7 +5,7 @@ import {
   seloDoCronograma,
   temCronogramaCadastrado,
   urgenciaDoCronograma,
-} from "../src/lib/visao-geral.ts";
+} from "../src/lib/visao-geral/visao-geral.ts";
 
 /*
   Conferência de 17/11/2026: a Visão geral tratava "cálculo manual" como "sem

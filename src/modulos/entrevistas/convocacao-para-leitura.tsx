@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import {
   fonteDaConvocacao,
   gruposDaConvocacao,
-} from "../../lib/convocacao-da-entrevista.ts";
+} from "../../lib/entrevistas/convocacao-da-entrevista.ts";
 import { Aviso, Campo, Carregando } from "../../ui/index.ts";
 import { ListaDeConvocacao } from "./conducao.tsx";
 import { rotuloDoEditalParaConduzir } from "./seletor-do-edital.tsx";

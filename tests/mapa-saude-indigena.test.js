@@ -1,22 +1,25 @@
 import { readFileSync } from "node:fs";
 import { fonteDoApp } from "./fonte-do-app.ts";
 import { describe, expect, it } from "vitest";
-import { BRASIL_BOUNDS, boundsDoGeoJson } from "../src/lib/brasil-bounds.ts";
+import {
+  BRASIL_BOUNDS,
+  boundsDoGeoJson,
+} from "../src/lib/mapas/brasil-bounds.ts";
 import {
   chaveDoDsei,
   temCoordenada,
-} from "../src/lib/mapa-saude-indigena/chaves.ts";
+} from "../src/lib/mapas/mapa-saude-indigena/chaves.ts";
 import {
   BR_OUTLINE,
   UF_GEO,
-} from "../src/lib/mapa-saude-indigena/contornos.js";
+} from "../src/lib/mapas/mapa-saude-indigena/contornos.js";
 import {
   CORES_DO_MAPA,
   FORMAS,
   formaDoTipo,
   TIPOS_DA_LEGENDA,
   tipoDaUnidade,
-} from "../src/lib/mapa-saude-indigena/formas.ts";
+} from "../src/lib/mapas/mapa-saude-indigena/formas.ts";
 import {
   classificarRegistros,
   dicaDoRegistro,
@@ -33,7 +36,7 @@ import {
   textoDosVinculosExternos,
   tiposDoTerritorio,
   visiveis,
-} from "../src/lib/mapa-saude-indigena/mapa-do-dsei.ts";
+} from "../src/lib/mapas/mapa-saude-indigena/mapa-do-dsei.ts";
 import {
   bolhasDosDsei,
   casaisNacionais,
@@ -42,10 +45,10 @@ import {
   enquadramentoNacional,
   popupDaCasaiNacional,
   territoriosPorVagas,
-} from "../src/lib/mapa-saude-indigena/mapa-nacional.ts";
+} from "../src/lib/mapas/mapa-saude-indigena/mapa-nacional.ts";
 
 /*
-  O mapa da Saúde Indígena sem Leaflet (src/lib/mapa-saude-indigena/): as
+  O mapa da Saúde Indígena sem Leaflet (src/lib/mapas/mapa-saude-indigena/): as
   regras do `legacy-app.js` (bolhas, CASAIs nacionais, "Territórios por
   vagas", pontos do DSEI, vínculos, resumo da dica) como entrada → saída.
 */

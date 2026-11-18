@@ -2,7 +2,7 @@ import type {
   CandidatoDasRegrasDeAprovados,
   OpcaoDosAprovados,
   ListaParaFiltroDeAprovados,
-} from "../../lib/tipos-das-regras-de-aprovados.ts";
+} from "../../lib/aprovados/tipos-das-regras-de-aprovados.ts";
 import type { EstadoDaAcao } from "../../ui/botao-de-acao.tsx";
 import type { ConvocacoesDaTabela } from "./tipos-da-aba-de-convocacao.ts";
 export interface CandidatoDaTabelaDeAprovados extends CandidatoDasRegrasDeAprovados {

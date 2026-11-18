@@ -30,7 +30,7 @@ A tela mostra o que a pessoa precisa para agir, e mais nada. Explicação é com
 - Erro diz o que aconteceu e o que fazer; o detalhe técnico fica no console, não na tela.
 - Confirmação cita o objeto: "Excluir o edital 101/2026?".
 - Número no formato brasileiro (`1.308`, `60,5%`), com `toLocaleString("pt-BR")` (ex.:
-  `formatarNumero` em `src/lib/editais-do-nucleo.ts`).
+  `formatarNumero` em `src/lib/editais/editais-do-nucleo.ts`).
 - **Carregando não é zero**: enquanto o dado não chegou, skeleton (`LinhasEsqueleto`,
   `BlocosEsqueleto`, `Kpi` com `carregando`), nunca números zerados. Zero é sempre dado apurado.
 - Primeira carga que falhou: `ErroAoCarregar` (aviso com "Tentar novamente").

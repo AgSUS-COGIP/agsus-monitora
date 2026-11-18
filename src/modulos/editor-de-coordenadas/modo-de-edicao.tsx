@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { MapaNacional } from "../../lib/tipos-do-mapa.ts";
+import type { MapaNacional } from "../../lib/mapas/tipos-do-mapa.ts";
 import {
   useCallback,
   useEffect,
@@ -7,7 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { folgaDoEnquadramento } from "../../lib/editor-de-coordenadas.ts";
+import { folgaDoEnquadramento } from "../../lib/mapas/editor-de-coordenadas.ts";
 import { classes } from "../../ui/index.ts";
 import { remedir } from "../mapa-saude-indigena/leaflet.ts";
 import { travarRolagemDaPagina } from "../mapa-saude-indigena/tela-cheia.tsx";

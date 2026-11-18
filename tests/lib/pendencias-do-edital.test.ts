@@ -8,10 +8,10 @@ import {
   normalizarResposta,
   textoDaAlteracao,
   textoDoDetalhe,
-} from "../../src/lib/pendencias-do-edital.ts";
+} from "../../src/lib/aprovados/pendencias-do-edital.ts";
 import { definido } from "../definido.ts";
 
-/* As regras puras da aba Pendências (src/lib/pendencias-do-edital.ts), com dados fictícios. */
+/* As regras puras da aba Pendências (src/lib/aprovados/pendencias-do-edital.ts), com dados fictícios. */
 
 const linha = (id: string, extra: Record<string, unknown> = {}) => ({
   id,

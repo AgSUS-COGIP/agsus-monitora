@@ -54,7 +54,7 @@ import {
 import {
   AVISO_DE_FICHA_ALTERADA,
   ehConflitoDeVersao,
-} from "../../../lib/conflito-de-versao.ts";
+} from "../../../lib/base/conflito-de-versao.ts";
 import { mensagemDoBanco } from "../estado.ts";
 import type {
   Avaliacao as AvaliacaoDaConta,

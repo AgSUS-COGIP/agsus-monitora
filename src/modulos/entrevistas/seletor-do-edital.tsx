@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.tsx";
-import { marcaDoEdital } from "../../lib/conducao-de-entrevista.ts";
+import { marcaDoEdital } from "../../lib/entrevistas/conducao-de-entrevista.ts";
 import {
   editalEscolhido,
   sufixoDeTreinamento,
-} from "../../lib/edital-de-treinamento.ts";
+} from "../../lib/editais/edital-de-treinamento.ts";
 import { Aviso } from "../../ui/index.ts";
-import { rotuloDaCopia } from "../../lib/rotulo-da-copia.ts";
+import { rotuloDaCopia } from "../../lib/carga/rotulo-da-copia.ts";
 import { LiberacaoDoEdital } from "./conducao.tsx";
 import type {
   EditalDaLista,

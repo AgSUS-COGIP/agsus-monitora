@@ -19,15 +19,15 @@ import {
   textoDaDuracao,
   trocarNaAgenda,
   validarRegraDaAgenda,
-} from "../../src/lib/agenda-das-entrevistas.ts";
+} from "../../src/lib/entrevistas/agenda-das-entrevistas.ts";
 import type {
   ConvocadoDaAgenda,
   ItemDaAgenda,
-} from "../../src/lib/tipos-da-agenda.ts";
+} from "../../src/lib/entrevistas/tipos-da-agenda.ts";
 import { definido } from "../definido.ts";
 
 /*
-  O motor da agenda das entrevistas (src/lib/agenda-das-entrevistas.ts):
+  O motor da agenda das entrevistas (src/lib/entrevistas/agenda-das-entrevistas.ts):
   dias da regra, horários (duração, intervalo, pausa, reserva), distribuição
   pelas bancas, ordem dos candidatos, agrupar por cargo, o aviso de que não
   cabe ou de que sobra muito, e o ajuste manual com conflitos.
@@ -483,13 +483,13 @@ describe("exportação", () => {
 describe("agenda do dia (Entrevistas)", () => {
   it("hoje é o dia de Brasília, mesmo de madrugada em UTC", async () => {
     const { hojeEmBrasilia } =
-      await import("../../src/lib/agenda-das-entrevistas.ts");
+      await import("../../src/lib/entrevistas/agenda-das-entrevistas.ts");
     expect(hojeEmBrasilia(new Date("2026-10-06T02:30:00Z"))).toBe("2026-10-05");
   });
 
   it("abre em hoje, ou no próximo dia com entrevista, ou no último", async () => {
     const { diaInicialDaAgenda } =
-      await import("../../src/lib/agenda-das-entrevistas.ts");
+      await import("../../src/lib/entrevistas/agenda-das-entrevistas.ts");
     const dias = ["2026-10-08", "2026-10-06", "2026-10-06"];
     expect(diaInicialDaAgenda(dias, "2026-10-06")).toBe("2026-10-06");
     expect(diaInicialDaAgenda(dias, "2026-10-07")).toBe("2026-10-08");

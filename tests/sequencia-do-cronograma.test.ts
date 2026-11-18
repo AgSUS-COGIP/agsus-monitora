@@ -2,15 +2,15 @@ import { describe, expect, it } from "vitest";
 import {
   analisarCronograma,
   type EtapaDoCronograma,
-} from "../src/lib/cronograma-do-edital.ts";
+} from "../src/lib/cronograma/cronograma-do-edital.ts";
 import {
   avisosDeSequencia,
   comSequencia,
   marcarEtapas,
-} from "../src/lib/sequencia-do-cronograma.ts";
+} from "../src/lib/cronograma/sequencia-do-cronograma.ts";
 
 /*
-  A sequência entre etapas dependentes (src/lib/sequencia-do-cronograma.ts).
+  A sequência entre etapas dependentes (src/lib/cronograma/sequencia-do-cronograma.ts).
   Caso da conferência de 17/11/2026: no 120/2026 o recurso das entrevistas
   (etapa 11) vai de 14/01 a 25/02/2027, depois do resultado final (21/01).
 */

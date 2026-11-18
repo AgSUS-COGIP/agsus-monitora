@@ -5,10 +5,10 @@ import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { EVENTO_TEMA_ALTERADO } from "../../src/lib/eventos-da-barra-lateral.ts";
-import { urlDaPlanilhaGoogle } from "../../src/lib/planilhas.ts";
+import { EVENTO_TEMA_ALTERADO } from "../../src/lib/navegacao/eventos-da-barra-lateral.ts";
+import { urlDaPlanilhaGoogle } from "../../src/lib/base/planilhas.ts";
 import { pedirFiltro } from "../../src/app/pedido-de-filtro.ts";
-import { agoraEmBrasilia } from "../../src/lib/ritmo-da-analise.ts";
+import { agoraEmBrasilia } from "../../src/lib/analises/ritmo-da-analise.ts";
 import {
   clicar,
   digitar,
@@ -28,7 +28,7 @@ import { montarTela } from "../montar-tela.ts";
 
 // O Chart.js não desenha no jsdom (sem canvas): um falso guarda o que recebeu.
 const graficos = vi.hoisted(() => []);
-vi.mock("../../src/lib/chartjs-global.ts", () => {
+vi.mock("../../src/lib/base/chartjs-global.ts", () => {
   const Chart = class {
     constructor(canvas, configuracao) {
       this.canvas = canvas;

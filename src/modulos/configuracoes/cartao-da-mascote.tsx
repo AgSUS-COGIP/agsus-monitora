@@ -5,7 +5,7 @@ import {
   definirEstadoDaAya,
   ESTADOS_DA_MASCOTE,
   type EstadoDaMascote,
-} from "../../lib/estado-da-aya.ts";
+} from "../../lib/aya/estado-da-aya.ts";
 import {
   ALTURA_DA_ARARA,
   Mascote,

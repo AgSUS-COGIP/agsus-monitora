@@ -1,4 +1,4 @@
-import type { IdentificadorDoRecurso as Id } from "../tipos-dos-recursos.ts";
+import type { IdentificadorDoRecurso as Id } from "../recursos/tipos-dos-recursos.ts";
 import type {
   ItemDoAjuste,
   ItemMontadoDoAjuste,

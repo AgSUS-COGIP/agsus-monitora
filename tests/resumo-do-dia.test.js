@@ -12,7 +12,7 @@ import {
   semDemanda,
   tituloDoResumo,
   totalDoResumo,
-} from "../src/lib/resumo-do-dia.ts";
+} from "../src/lib/resumo-do-dia/resumo-do-dia.ts";
 
 const BRUTO = {
   data: "2026-09-15",

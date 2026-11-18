@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { criarAleatorio, paletaDosFogos } from "../src/lib/fogos.ts";
+import {
+  criarAleatorio,
+  paletaDosFogos,
+} from "../src/lib/comemoracao/fogos.ts";
 import {
   arrastoDoConfete,
   batidaDoCoracao,
@@ -12,11 +15,14 @@ import {
   PICO_DA_CHUVA,
   suavizar,
   tamanhoNaProfundidade,
-} from "../src/lib/particulas-do-motor.ts";
-import { avancarCena, criarCena } from "../src/lib/motor-de-efeitos.ts";
+} from "../src/lib/comemoracao/particulas-do-motor.ts";
+import {
+  avancarCena,
+  criarCena,
+} from "../src/lib/comemoracao/motor-de-efeitos.ts";
 
 /*
-  As animações do motor (src/lib/particulas-do-motor.ts): roteiro em três
+  As animações do motor (src/lib/comemoracao/particulas-do-motor.ts): roteiro em três
   atos (abertura, clímax, dispersão), níveis com diferença clara, confete em
   3D (o ar segura a folhinha de chapa), profundidade e desenho das de longe
   primeiro. Sorteio sempre com criarAleatorio(n).

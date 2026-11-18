@@ -1,7 +1,7 @@
-import { hasSupabaseEnv } from "../lib/env";
-import { isUsableSession, LOGIN_POPUP_MESSAGE } from "../lib/auth-flow";
-import { getSupabaseClient } from "../lib/supabaseClient";
-import type { SessaoConferida } from "../lib/auth-flow";
+import { hasSupabaseEnv } from "../lib/sessao/env";
+import { isUsableSession, LOGIN_POPUP_MESSAGE } from "../lib/sessao/auth-flow";
+import { getSupabaseClient } from "../lib/sessao/supabaseClient";
+import type { SessaoConferida } from "../lib/sessao/auth-flow";
 
 /** Resultado do retorno do OAuth, levado à página principal. */
 export type ResultadoDoCallback =

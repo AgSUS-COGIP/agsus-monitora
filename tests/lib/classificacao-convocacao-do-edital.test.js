@@ -9,8 +9,8 @@ import {
 } from "../../src/lib/classificacao/convocacao-do-edital.ts";
 import { classificar } from "../../src/lib/classificacao/motor.ts";
 import { vagasPelosPercentuais } from "../../src/lib/classificacao/vagas.ts";
-import { derivarQuadro } from "../../src/lib/lista-convocacao-rules.ts";
-import { modeloDeReferencia } from "../../src/lib/modelo-de-convocacao.ts";
+import { derivarQuadro } from "../../src/lib/aprovados/lista-convocacao-rules.ts";
+import { modeloDeReferencia } from "../../src/lib/aprovados/carta-de-convocacao/modelo-de-convocacao.ts";
 
 /*
   Uma conta só para as vagas por modalidade: a Classificação usa a mesma

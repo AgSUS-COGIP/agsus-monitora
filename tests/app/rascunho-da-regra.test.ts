@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { criarGuardaDeAlteracoes } from "../../src/app/guarda-de-alteracoes.ts";
 import { criarRascunhoDaRegra } from "../../src/app/rascunho-da-regra.ts";
-import { chaveDoRascunhoLocal } from "../../src/lib/rascunho-da-regra.ts";
+import { chaveDoRascunhoLocal } from "../../src/lib/regras-do-edital/rascunho-da-regra.ts";
 import { definido } from "../definido.ts";
 
 /*

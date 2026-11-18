@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { strFromU8, unzipSync, zipSync } from "fflate";
 import { describe, expect, it } from "vitest";
 import { carregarBibliotecasDoPdf } from "../../src/lib/avaliacao-documental/espelho-em-pdf.ts";
-import { pdfDoRelatorio } from "../../src/lib/relatorio-da-visao-geral-em-pdf.ts";
+import { pdfDoRelatorio } from "../../src/lib/visao-geral/relatorio-da-visao-geral-em-pdf.ts";
 import {
   alternarNaEscolha,
   conteudoDoRelatorio,
@@ -14,11 +14,11 @@ import {
   recorteDaAreaInteira,
   textoDaColuna,
   xlsxDoRelatorio,
-} from "../../src/lib/relatorio-da-visao-geral.ts";
+} from "../../src/lib/visao-geral/relatorio-da-visao-geral.ts";
 import {
   filtrosVazios,
   indicadoresDaVisaoGeral,
-} from "../../src/lib/visao-geral.ts";
+} from "../../src/lib/visao-geral/visao-geral.ts";
 import type {
   Indicadores,
   LinhaDaVisaoGeral,

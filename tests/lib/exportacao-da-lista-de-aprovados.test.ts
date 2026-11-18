@@ -15,8 +15,8 @@ import {
   type CandidatoDaExportacao,
   type PedidoDaExportacao,
   type RegistroDaExportacao,
-} from "../../src/lib/exportacao-da-lista-de-aprovados.ts";
-import { pdfDaExportacao } from "../../src/lib/exportacao-da-lista-de-aprovados-em-pdf.ts";
+} from "../../src/lib/aprovados/exportacao/exportacao-da-lista-de-aprovados.ts";
+import { pdfDaExportacao } from "../../src/lib/aprovados/exportacao/exportacao-da-lista-de-aprovados-em-pdf.ts";
 
 /* Dados fictícios. */
 const REGISTRO: RegistroDaExportacao = {

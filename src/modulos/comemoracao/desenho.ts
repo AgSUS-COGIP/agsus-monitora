@@ -4,11 +4,14 @@ import {
   corDaParticula,
   fatorDeSaida,
   paletaDosFogos,
-} from "../../lib/fogos.ts";
+} from "../../lib/comemoracao/fogos.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
-import { desenharParticulasDoMotor } from "../../lib/motor-de-efeitos.ts";
-import type { PaletaDosFogos, ShowDeFogos } from "../../lib/fogos.ts";
-import type { CenaDeEfeitos } from "../../lib/motor-de-efeitos.ts";
+import { desenharParticulasDoMotor } from "../../lib/comemoracao/motor-de-efeitos.ts";
+import type {
+  PaletaDosFogos,
+  ShowDeFogos,
+} from "../../lib/comemoracao/fogos.ts";
+import type { CenaDeEfeitos } from "../../lib/comemoracao/motor-de-efeitos.ts";
 
 /*
   O desenho das comemorações no <canvas>, sem React e sem biblioteca: a
@@ -16,7 +19,7 @@ import type { CenaDeEfeitos } from "../../lib/motor-de-efeitos.ts";
   fumaça, foguetes, faíscas e o marco), a prévia do Palco de testes e o texto
   do marco em pixels. Quem cria os canvas e anda os quadros é o componente
   (comemoracoes.tsx, `usarFogos`); a física e o roteiro são de
-  src/lib/fogos.ts e src/lib/motor-de-efeitos.ts.
+  src/lib/comemoracao/fogos.ts e src/lib/comemoracao/motor-de-efeitos.ts.
 */
 
 export type JanelaDaComemoracao = Window & {
@@ -262,7 +265,7 @@ export function desenharPrevia(
 
 /*
   O texto do marco em pixels: escrito num canvas fora da tela (fillText) e
-  lido com getImageData. Sem canvas 2D, null (src/lib/fogos-formas.ts usa a fonte de
+  lido com getImageData. Sem canvas 2D, null (src/lib/comemoracao/fogos-formas.ts usa a fonte de
   pontos).
 */
 export function amostrarTexto(

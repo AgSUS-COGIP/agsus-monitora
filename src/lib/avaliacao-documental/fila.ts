@@ -6,7 +6,7 @@
   job Python) e, por aba, as colunas, a ordem por coluna e o CSV. Os dados
   vêm de obter_fila_avaliacao (supabase/migrations/20261006120000_fichas_fila_e_reserva.sql).
 */
-import { sanitizeCsvCell } from "../csv-security";
+import { sanitizeCsvCell } from "../seguranca/csv-security";
 import type { AndamentoDaVaga } from "./andamento-por-vaga.ts";
 import type {
   AnalistaDaDistribuicao,

@@ -12,30 +12,30 @@ import type {
   SaidaDaCarta,
   SnapshotDaCarta,
   HistoricoDaCarta,
-} from "../../../lib/tipos-da-carta.ts";
+} from "../../../lib/aprovados/carta-de-convocacao/tipos-da-carta.ts";
 import {
   idConfirmadoDaCarta,
   MENSAGEM_CONFIRMACAO_DA_CARTA,
   objetoDaCarta,
   cartasDoHistorico,
   resultadoDeMarcar,
-} from "../../../lib/dados-da-carta.ts";
+} from "../../../lib/aprovados/carta-de-convocacao/dados-da-carta.ts";
 /*
   Estado da carta de convocação, fora do React: os modelos da área (com as
   versões), o histórico de cartas de cada candidato e as ações — salvar o
   modelo (nova versão), inativar/reativar, emitir (Copiar para o SEI, DOCX,
   PDF) registrando a emissão uma vez por carta, e marcar os candidatos como
-  Convocado. As regras são de src/lib/carta-de-convocacao.ts e o documento, de
-  src/lib/carta-de-convocacao-documento.ts (o mesmo modelo do documento
+  Convocado. As regras são de src/lib/aprovados/carta-de-convocacao/carta-de-convocacao.ts e o documento, de
+  src/lib/aprovados/carta-de-convocacao/carta-de-convocacao-documento.ts (o mesmo modelo do documento
   oficial da Classificação). Criado pelo estado da Lista de aprovados
   (`estado.carta`), que dá a área, o perfil e a marcação de convocados.
   Este arquivo não importa React.
 */
 
-import { MIME_DOCX } from "../../../lib/documento-da-resposta.ts";
-import { CABECALHO_PADRAO } from "../../../lib/cabecalho-dos-documentos.ts";
-import { canChangeCandidateStatus } from "../../../lib/access-roles.ts";
-import { ehConflitoDeVersao } from "../../../lib/conflito-de-versao.ts";
+import { MIME_DOCX } from "../../../lib/recursos/documento-da-resposta.ts";
+import { CABECALHO_PADRAO } from "../../../lib/base/cabecalho-dos-documentos.ts";
+import { canChangeCandidateStatus } from "../../../lib/acessos/access-roles.ts";
+import { ehConflitoDeVersao } from "../../../lib/base/conflito-de-versao.ts";
 import {
   assinaturaDaEmissao,
   camposParaRegistrar,
@@ -44,7 +44,7 @@ import {
   lerModelosDoBanco,
   validarEmissao,
   validarModelo,
-} from "../../../lib/carta-de-convocacao.ts";
+} from "../../../lib/aprovados/carta-de-convocacao/carta-de-convocacao.ts";
 import {
   gerarDocxDasCartas,
   gerarZipDasCartas,
@@ -54,8 +54,8 @@ import {
   paginaDaPrevia,
   soACarta,
   textoParaSei,
-} from "../../../lib/carta-de-convocacao-documento.ts";
-import { LOGO_PADRAO_DA_BARRA } from "../../../lib/marca-da-barra-lateral.ts";
+} from "../../../lib/aprovados/carta-de-convocacao/carta-de-convocacao-documento.ts";
+import { LOGO_PADRAO_DA_BARRA } from "../../../lib/navegacao/marca-da-barra-lateral.ts";
 
 const texto = (valor: unknown) => String(valor ?? "").trim();
 const mensagemDe = (erro: unknown) =>

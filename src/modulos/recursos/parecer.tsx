@@ -1,13 +1,13 @@
 import type { PropsDaSecaoDoRecurso } from "./tipos-da-gaveta.ts";
-import type { BotaoDoParecer } from "../../lib/parecer-do-recurso.ts";
-import type { DataDoRecurso } from "../../lib/tipos-dos-recursos.ts";
+import type { BotaoDoParecer } from "../../lib/recursos/parecer-do-recurso.ts";
+import type { DataDoRecurso } from "../../lib/recursos/tipos-dos-recursos.ts";
 import { useState } from "react";
 import {
   acoesDoParecer,
   aguardandoParecer,
   erroDoTextoDoParecer,
   LIMITES_DO_PARECER,
-} from "../../lib/parecer-do-recurso.ts";
+} from "../../lib/recursos/parecer-do-recurso.ts";
 import { Aviso, Kv, Secao } from "../../ui/index.ts";
 import { dataHora } from "./partes.ts";
 import { SeloDaSituacao } from "./tabela.tsx";

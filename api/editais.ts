@@ -2,7 +2,7 @@
   GET /api/editais — os editais do monitoramento: unidade, edital, status,
   etapa, vagas, contratados, ociosas, risco, link do edital e área — Saúde
   Indígena, SEDE ou Projetos (formato em
-  src/lib/editais-da-api.ts).
+  src/lib/editais/editais-da-api.ts).
 
   Acesso: sem login. Quem chama manda a chave fixa da API
   (`Authorization: Bearer <EDITAIS_API_CHAVE>`). A função lê
@@ -73,7 +73,7 @@ import {
   editaisDaApi,
   filtrosDaApi,
   totaisDaApi,
-} from "../src/lib/editais-da-api.js";
+} from "../src/lib/editais/editais-da-api.js";
 import { criarRotaComChave } from "./_rota-com-chave.js";
 
 export default criarRotaComChave({

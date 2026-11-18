@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent, Ref } from "react";
-import { lerDigitacao } from "../../lib/digitacao-de-notas.ts";
+import { lerDigitacao } from "../../lib/entrevistas/digitacao-de-notas.ts";
 import { classes } from "../../ui/classes.ts";
 
 /*
@@ -8,7 +8,7 @@ import { classes } from "../../ui/classes.ts";
   nota, com o fluxo de planilha.
 
   - Ao focar, seleciona o que está escrito: a próxima tecla troca a nota.
-  - O que é digitado passa por `lerDigitacao` (src/lib/digitacao-de-notas.ts):
+  - O que é digitado passa por `lerDigitacao` (src/lib/entrevistas/digitacao-de-notas.ts):
     nota completa da escala grava e chama `aoAvancar` (a matriz foca a
     próxima célula); parcial ("1" num 0 a 10) grava e espera; fora da escala
     não muda a célula e chama `aoRecusar` (a matriz avisa, a célula treme).

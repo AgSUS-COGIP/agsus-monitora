@@ -2,7 +2,7 @@ import type {
   DadosDoRoteiroParaSalvar,
   ModoDoEditorDeRoteiro,
   RoteiroDeEntrevista,
-} from "../../lib/tipos-do-roteiro-de-entrevista.ts";
+} from "../../lib/entrevistas/tipos-do-roteiro-de-entrevista.ts";
 import type { ResultadoDoRenomear } from "../../ui/nome-da-versao.tsx";
 import type {
   DadosDoEdital,

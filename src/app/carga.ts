@@ -1,12 +1,12 @@
 import type { RealtimeChannel, SupabaseClient } from "@supabase/supabase-js";
-import { getSupabaseClient } from "../lib/supabaseClient";
-import { ordenarUnidades } from "../lib/editais-do-nucleo.ts";
-import { erroAmigavel } from "../lib/erro-amigavel";
+import { getSupabaseClient } from "../lib/sessao/supabaseClient";
+import { ordenarUnidades } from "../lib/editais/editais-do-nucleo.ts";
+import { erroAmigavel } from "../lib/base/erro-amigavel";
 import {
   canImportApprovedList,
   canViewCore,
   permissaoLegada,
-} from "../lib/access-roles.ts";
+} from "../lib/acessos/access-roles.ts";
 import {
   assinaturaDoAcesso,
   consultasDosDados,
@@ -16,16 +16,19 @@ import {
   montarCopia,
   partesQueMudaram,
   respostasDasConsultas,
-} from "../lib/copia-da-sessao";
-import type { CopiaDaSessao, DadosDaCopia } from "../lib/copia-da-sessao";
+} from "../lib/sessao/copia-da-sessao";
+import type {
+  CopiaDaSessao,
+  DadosDaCopia,
+} from "../lib/sessao/copia-da-sessao";
 import type {
   PerfilDeAcesso,
   PermissaoLegada,
-} from "../lib/tipos-dos-acessos.ts";
+} from "../lib/acessos/tipos-dos-acessos.ts";
 import type { LinhaDoMonitoramento } from "../modulos/visao-geral/tipos.ts";
 import type { Configuracao } from "./configuracao.ts";
 import type { Navegacao } from "./navegacao.ts";
-import { ehPainelExterno, codigoDoPainel } from "../lib/navegacao";
+import { ehPainelExterno, codigoDoPainel } from "../lib/navegacao/navegacao";
 import {
   VERSAO_DA_COPIA,
   apagarCopiaDaSessao,
@@ -50,7 +53,7 @@ import {
   publicarLinhasDoMonitoramento,
   publicarUnidadesDoCatalogo,
 } from "../componentes/dados-do-monitoramento.ts";
-import { telaUsaAsLinhas } from "../lib/telas-com-linhas.ts";
+import { telaUsaAsLinhas } from "../lib/navegacao/telas-com-linhas.ts";
 import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.ts";
 import { avisar as avisarPadrao } from "./avisos.ts";
 import { criarInicioDaSessao } from "./inicio-da-sessao.ts";
@@ -64,7 +67,7 @@ import type { InicioDaSessao, PartesDoInicio } from "./inicio-da-sessao.ts";
   — configuração, painéis, abas, situação e unidades numa chamada só
   (`obter_inicio_da_sessao`, src/app/inicio-da-sessao.ts) —
   e cada uma é aplicada na ordem de sempre; a espera é a da mais lenta. Se a
-  cópia da sessão (IndexedDB, regras em src/lib/copia-da-sessao.ts) servir, a
+  cópia da sessão (IndexedDB, regras em src/lib/sessao/copia-da-sessao.ts) servir, a
   tela abre por ela e as consultas reais atualizam por trás, reaplicando só o
   que mudou. "Atualizar dados" refaz as consultas sem tela de carregamento.
 
@@ -807,7 +810,7 @@ export function criarCarga(
   }
 
   /*
-    A aba voltou do fundo (src/lib/background-resource-lifecycle.ts): com o
+    A aba voltou do fundo (src/lib/carga/background-resource-lifecycle.ts): com o
     canal fechado, o que mudou enquanto isso não chegou. As linhas já lidas
     ficam desatualizadas e a página que as usa relê com a versão — quase
     sempre `inalterado`, sem trazer as linhas de novo.

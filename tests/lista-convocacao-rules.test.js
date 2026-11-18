@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   modeloDeReferencia,
   normalizarModelo,
-} from "../src/lib/modelo-de-convocacao.ts";
+} from "../src/lib/aprovados/carta-de-convocacao/modelo-de-convocacao.ts";
 import {
   csvDaConvocacao,
   estaAConvocar,
@@ -14,7 +14,7 @@ import {
   resumirConvocacao,
   sequenciaDeConvocacao,
   situacaoNaChamada,
-} from "../src/lib/lista-convocacao-rules.ts";
+} from "../src/lib/aprovados/lista-convocacao-rules.ts";
 import { LEI_15142_ESPALHADA } from "./modelos-de-convocacao-antigos.ts";
 
 /*

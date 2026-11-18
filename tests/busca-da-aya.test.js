@@ -4,7 +4,7 @@ import {
   LIMIAR_INCERTO,
   buscarNaBase,
   responderAya,
-} from "../src/lib/busca-da-aya.ts";
+} from "../src/lib/aya/busca-da-aya.ts";
 
 const responder = (question, extra = {}) =>
   responderAya({ question, section: "dashboard", area: "sede", ...extra });

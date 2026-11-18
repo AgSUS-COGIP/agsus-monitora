@@ -2,14 +2,17 @@
 import { readFileSync } from "node:fs";
 import { fonteDoApp } from "./fonte-do-app.ts";
 import { describe, expect, it } from "vitest";
-import { semOPainelAntigoDeAnalises } from "../src/lib/pagina-do-painel";
-import { RESOURCES } from "../src/lib/permissoes-recursos.ts";
-import { paginasPermitidas, permissaoLegada } from "../src/lib/access-roles.ts";
-import { bloqueioDaTela, telaPermitida } from "../src/lib/navegacao";
+import { semOPainelAntigoDeAnalises } from "../src/lib/paineis/pagina-do-painel";
+import { RESOURCES } from "../src/lib/acessos/permissoes-recursos.ts";
+import {
+  paginasPermitidas,
+  permissaoLegada,
+} from "../src/lib/acessos/access-roles.ts";
+import { bloqueioDaTela, telaPermitida } from "../src/lib/navegacao/navegacao";
 import {
   linhasDosPaineis,
   normalizarPaineis,
-} from "../src/lib/paineis-externos-das-configuracoes.ts";
+} from "../src/lib/configuracoes/paineis-externos-das-configuracoes.ts";
 import { htmlDaPagina } from "./pagina-montada.ts";
 
 /*
@@ -64,7 +67,7 @@ describe("o legado trata Análises como página", () => {
     expect(permissaoLegada(perfil("sem_acesso"), "analises")).toBe(false);
     expect(paginasPermitidas(perfil("leitor")).analises).toBe(true);
     expect(paginasPermitidas(perfil("sem_acesso")).analises).toBe(false);
-    // A navegação (src/lib/navegacao.ts) usa as mesmas regras de access-roles.ts.
+    // A navegação (src/lib/navegacao/navegacao.ts) usa as mesmas regras de access-roles.ts.
     expect(telaPermitida("analises", perfil("leitor"))).toBe(true);
     expect(bloqueioDaTela("analises", perfil("sem_acesso"))).toBe(
       "Sem permissão para o Painel das análises.",

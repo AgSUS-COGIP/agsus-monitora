@@ -20,11 +20,11 @@ import {
 import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
-import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.ts";
+import { CHAVE_DO_CABECALHO } from "../../lib/base/cabecalho-dos-documentos.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.tsx";
 import { classificarEdital } from "../../lib/classificacao/ajustes.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient";
+import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import { Aviso, CabecalhoDaTela, Segmentado } from "../../ui/index.ts";
 import { EntradaDaClassificacao } from "./entrada-da-classificacao.tsx";
 import { Agenda } from "./agenda.tsx";

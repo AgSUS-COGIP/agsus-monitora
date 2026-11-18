@@ -4,7 +4,7 @@ import {
   editaisComDatasARevisar,
   etapaComDatasValidas,
   proximasEtapas,
-} from "../src/lib/datas-do-cronograma.ts";
+} from "../src/lib/cronograma/datas-do-cronograma.ts";
 
 const etapa = (atividade, data_inicio, data_fim, extra = {}) => ({
   atividade,

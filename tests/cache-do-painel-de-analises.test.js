@@ -2,14 +2,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   CHAVE_DO_DONO,
   VALIDADE_DO_CACHE_MS,
-} from "../src/lib/cache-de-payload";
+} from "../src/lib/carga/cache-de-payload";
 import {
   ESQUEMAS_DO_PAYLOAD,
   chavesDoCacheAntigo,
   criarCacheDoPainel,
   payloadMudou,
   revalidarPayload,
-} from "../src/lib/cache-do-painel-de-analises.ts";
+} from "../src/lib/analises/cache-do-painel-de-analises.ts";
 import {
   apagarCacheDePayload,
   armazenamentoDePayload,

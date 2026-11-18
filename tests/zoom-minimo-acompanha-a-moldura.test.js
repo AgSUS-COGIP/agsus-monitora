@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   ZOOM_NACIONAL,
   zoomQueCabe,
-} from "../src/lib/enquadramento-do-brasil.ts";
+} from "../src/lib/mapas/enquadramento-do-brasil.ts";
 
 /*
   O ZOOM MÍNIMO ACOMPANHA A MOLDURA

@@ -7,10 +7,10 @@ import {
   passoDaSeta,
   posicaoNaJanela,
   PASSO_DO_TECLADO_PX,
-} from "../src/lib/borda-da-aya.ts";
+} from "../src/lib/aya/borda-da-aya.ts";
 
 /*
-  A Aya escondida na borda (src/lib/borda-da-aya.ts): qual borda vale ao
+  A Aya escondida na borda (src/lib/aya/borda-da-aya.ts): qual borda vale ao
   soltar, as setas como alternativa ao arraste e a posição guardada.
 */
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   dataDaPlanilha,
   dataDeAnaliseNoFuturo,
-} from "../src/lib/data-de-analise.ts";
+} from "../src/lib/analises/data-de-analise.ts";
 
 describe("data da planilha", () => {
   it("lê dd/mm/aaaa e aaaa-mm-dd", () => {

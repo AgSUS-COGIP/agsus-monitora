@@ -186,7 +186,7 @@ os modelos em `tests/fixtures/avaliacao-documental/modelos/` e o que falta em
 
 **perguntas:** permissao da avaliacao documental | quem ve a avaliacao documental | acesso a avaliacao documental | nao vejo a avaliacao documental | niveis da avaliacao documental
 **resposta:** A Avaliação documental tem permissão própria, separada do Painel das análises: Leitor vê a Fila dos editais que enxerga (Regra, Equipe e Triagem são só de quem coordena o edital); Editor trabalha nas fichas dos editais em que está na equipe (nas próximas fases); Administrador coordena os editais em que é gestor ou está como coordenação. No começo, o administrador global, o Gestor de edital e o Coordenador têm Administrador e os demais grupos não veem o item — quem vai analisar recebe Editor em Configurações › Acessos. Vale também a área e o recorte da coordenação do edital.
-**fonte:** supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql; src/lib/access-roles.ts
+**fonte:** supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql; src/lib/acessos/access-roles.ts
 **abrir:** config:acessos
 
 ## Aldeias do DSEI
@@ -580,5 +580,5 @@ os modelos em `tests/fixtures/avaliacao-documental/modelos/` e o que falta em
 **perguntas:** nome da versao | nome da regra | dar nome a regra | escolher o nome da regra | renomear a regra | renomear versao | trocar o nome da versao | v1 v2 da regra | o que e versao 7 | nome desta versao
 **resposta:** Cada versão da regra pode ter um nome (de 3 a 80 caracteres), em vez de só o número. Ao salvar (no assistente ou no modo avançado), o campo "Nome desta versão" já vem com uma sugestão — o edital e o começo do motivo, por exemplo "Regra do edital 93/2026 – decisão CORES" — que dá para editar ou apagar (vazio grava sem nome). A tela mostra o nome em destaque e o número discreto ("Decisão CORES · v7") no cabeçalho, no seletor de editais, nas versões, em comparar versões, na triagem, na fila e na ficha; sem nome, aparece "Versão 7". Para trocar o nome de uma versão já salva, use "Renomear" no cabeçalho ou na lista de versões: pede o novo nome e o motivo (10 a 500 caracteres), muda só o nome — o conteúdo, o hash e a situação (Conferida ou não) continuam iguais — e a troca fica no histórico ("nome trocado", com de, para, quem e quando). Renomeia quem pode mudar a regra: a coordenação do edital; o administrador global pode tudo. O número da versão continua sendo o que as fichas e listas guardam.
 **fato:** No Yeendé, o nome da versão da regra é opcional, fica na versão (NO_VERSAO) e pode ser trocado com motivo sem mudar o conteúdo nem o hash.
-**fonte:** src/lib/nome-da-versao.ts; src/ui/nome-da-versao.tsx; supabase/migrations/20261008180000_nome_das_versoes_das_regras.sql (salvar_regra_analise, renomear_versao_regra_analise)
+**fonte:** src/lib/base/nome-da-versao.ts; src/ui/nome-da-versao.tsx; supabase/migrations/20261008180000_nome_das_versoes_das_regras.sql (salvar_regra_analise, renomear_versao_regra_analise)
 **abrir:** avaliacao-documental

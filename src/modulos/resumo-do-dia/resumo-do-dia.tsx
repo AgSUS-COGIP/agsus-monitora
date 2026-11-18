@@ -4,7 +4,7 @@ import type {
   BlocoDoResumo,
   ItemDoResumo,
   ResumoDoDia,
-} from "../../lib/resumo-do-dia.ts";
+} from "../../lib/resumo-do-dia/resumo-do-dia.ts";
 import {
   BLOCOS_DO_RESUMO,
   ondeDoItem,
@@ -12,7 +12,7 @@ import {
   recortarBloco,
   tituloDoResumo,
   totalDoResumo,
-} from "../../lib/resumo-do-dia.ts";
+} from "../../lib/resumo-do-dia/resumo-do-dia.ts";
 import { Aviso, Modal } from "../../ui/index.ts";
 import type { EstadoDoResumoDoDia } from "./estado.ts";
 import { resumoDoDia } from "./estado.ts";
@@ -22,7 +22,7 @@ import "./resumo-do-dia.css";
   O sininho do topo (src/app/casca/topo.tsx) e o popup do resumo do dia:
   Hoje, Próximos 7 dias e Atrasadas, dos editais e demandas internas de que a
   pessoa é responsável. O sininho só aparece para quem é responsável por
-  algo; o número é o total do resumo. Regras em src/lib/resumo-do-dia.ts;
+  algo; o número é o total do resumo. Regras em src/lib/resumo-do-dia/resumo-do-dia.ts;
   estado e "abre sozinho ao entrar" em estado.ts.
 */
 

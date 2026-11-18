@@ -1,7 +1,7 @@
 import type { EtapaDoCalendario } from "./tipos.ts";
-import type { MarcaNoDia } from "../../lib/calendario-editais.ts";
+import type { MarcaNoDia } from "../../lib/cronograma/calendario-editais.ts";
 import { useId, useMemo, useState } from "react";
-import { dataLocal } from "../../lib/etapas-de-edital.ts";
+import { dataLocal } from "../../lib/editais/etapas-de-edital.ts";
 import {
   DIAS_SEMANA,
   cabecalhoDoDiaDaLista,
@@ -10,7 +10,7 @@ import {
   etapasAtivasNoDia,
   formatarCurto,
   unidadeCurta,
-} from "../../lib/calendario-editais.ts";
+} from "../../lib/cronograma/calendario-editais.ts";
 import { classes } from "../../ui/index.ts";
 import {
   ItemDeEtapa,
@@ -22,7 +22,7 @@ import {
 /*
   As vistas Lista e Semana do card do calendário. Recebem as etapas JÁ
   filtradas (as mesmas da grade do mês) e só desenham; as regras de quem entra
-  em cada dia estão em `src/lib/calendario-editais.ts`. Clicar numa etapa abre
+  em cada dia estão em `src/lib/cronograma/calendario-editais.ts`. Clicar numa etapa abre
   o mesmo popup do dia da grade (`DiaDoCalendario`).
 
   A Lista rola com a página (sem barra de rolagem dentro do card). No mês de

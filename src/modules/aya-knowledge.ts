@@ -1,7 +1,7 @@
 /*
   Fontes oficiais citadas junto das respostas da Aya e a resposta composta do
   DSEI Alagoas e Sergipe. As demais respostas vêm da busca na base
-  (src/lib/busca-da-aya.ts).
+  (src/lib/aya/busca-da-aya.ts).
 */
 
 /** Uma fonte oficial citada junto da resposta. */

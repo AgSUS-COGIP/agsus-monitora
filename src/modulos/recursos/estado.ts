@@ -13,7 +13,7 @@ import type {
   RecursoDoPainel,
   OrigemDoRecurso,
   EtapaDoRecurso,
-} from "../../lib/tipos-dos-recursos.ts";
+} from "../../lib/recursos/tipos-dos-recursos.ts";
 import {
   normalizarDadosDosRecursos,
   normalizarDetalheDoRecurso,
@@ -21,8 +21,8 @@ import {
   normalizarDadosDosModelos,
   objetoDosRecursos,
   metadadosDaRpcDosRecursos,
-} from "../../lib/dados-dos-recursos.ts";
-import { dadosParaSalvar } from "../../lib/recursos-dos-candidatos.ts";
+} from "../../lib/recursos/dados-dos-recursos.ts";
+import { dadosParaSalvar } from "../../lib/recursos/recursos-dos-candidatos.ts";
 type DocumentoDaResposta = { id: Id; texto_final: string; revisao?: number };
 import {
   normalizarDadosDosAjustes,
@@ -58,22 +58,22 @@ import type {
   do anterior fica na tela). Uma ação por vez (`executar`): o botão dela
   mostra o rótulo, os outros ficam desativados.
 */
-import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.ts";
-import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
-import { csvDosRecursos } from "../../lib/recursos-dos-candidatos.ts";
+import { hojeEmBrasilia } from "../../lib/cronograma/cronograma-do-edital.ts";
+import { ehConflitoDeVersao } from "../../lib/base/conflito-de-versao.ts";
+import { csvDosRecursos } from "../../lib/recursos/recursos-dos-candidatos.ts";
 import {
   BUCKET_DOS_ANEXOS,
   caminhoDoAnexo,
   validarArquivoDoAnexo,
   VALIDADE_DO_DOWNLOAD,
-} from "../../lib/anexos-do-recurso.ts";
+} from "../../lib/recursos/anexos-do-recurso.ts";
 import {
   gerarDocx,
   MIME_DOCX,
   montarPaginaDeImpressao,
   nomeDoDocumento,
-} from "../../lib/documento-da-resposta.ts";
-import { dadosDoModelo } from "../../lib/modelos-de-resposta.ts";
+} from "../../lib/recursos/documento-da-resposta.ts";
+import { dadosDoModelo } from "../../lib/recursos/modelos-de-resposta.ts";
 
 export const MENSAGEM_SEM_SESSAO =
   "Sessão não localizada. Entre de novo no Yeendé.";

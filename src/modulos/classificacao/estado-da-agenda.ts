@@ -5,14 +5,14 @@ import type {
 import type {
   ItemDaAgenda,
   ItemParaSalvar,
-} from "../../lib/tipos-da-agenda.ts";
+} from "../../lib/entrevistas/tipos-da-agenda.ts";
 import {
   dadosDaAgenda,
   objeto,
   regraRegistradaDaAgenda,
-} from "../../lib/dados-da-agenda.ts";
-import type { DadosDaAgenda } from "../../lib/dados-da-agenda.ts";
-import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
+} from "../../lib/entrevistas/dados-da-agenda.ts";
+import type { DadosDaAgenda } from "../../lib/entrevistas/dados-da-agenda.ts";
+import { ehConflitoDeVersao } from "../../lib/base/conflito-de-versao.ts";
 type SnapshotDaAgenda = {
   editalId: string;
   dados: DadosDaAgenda | null;
@@ -39,7 +39,7 @@ type Opcoes = {
     salvar_regra_agenda_entrevista(...)        nova versão da regra
     salvar_agenda_entrevista(p_edital, p_dados) grava a agenda inteira
 
-  A conta é do motor puro (src/lib/agenda-das-entrevistas.ts), feita no
+  A conta é do motor puro (src/lib/entrevistas/agenda-das-entrevistas.ts), feita no
   componente; aqui só a carga, a gravação e o XLSX. A agenda salva também
   preenche DATA e HORA do documento da convocação (`agendaDoDocumento`).
 
@@ -58,12 +58,12 @@ import {
   MIME_XLSX,
   nomeDoArquivoDaAgenda,
   normalizarRegraDaAgenda,
-} from "../../lib/agenda-das-entrevistas.ts";
+} from "../../lib/entrevistas/agenda-das-entrevistas.ts";
 import {
   comTempoLimite,
   ehFalhaDeConexao,
   mensagemDeFalha,
-} from "../../lib/falha-de-rede";
+} from "../../lib/carga/falha-de-rede";
 import { baixarNoNavegador } from "./estado.ts";
 
 const RPC_OBTER_AGENDA = "obter_agenda_entrevista";

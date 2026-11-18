@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { avisoGlobal } from "../src/lib/aviso-global";
+import { avisoGlobal } from "../src/lib/base/aviso-global";
 import { htmlDaPagina } from "./pagina-montada.ts";
 
 describe("aviso global", () => {

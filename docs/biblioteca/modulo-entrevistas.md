@@ -32,25 +32,25 @@ seleção (cabeçalho com o edital e as seções).
   linha "Agora"; a ação da linha abre a ficha em tela cheia, com "Salvar e abrir o próximo";
   concluir o dia mostra um aviso ("Entrevistas de hoje concluídas: 4 de 4."), sem efeito, uma
   vez (marco "vaga pronta" em `marcos.ts`).
-- **Preparar** (`preparar.tsx`, `src/lib/passos-do-preparar.ts`): o topo com "N de 4 passos
+- **Preparar** (`preparar.tsx`, `src/lib/entrevistas/passos-do-preparar.ts`): o topo com "N de 4 passos
   prontos", o período e as regras; a trilha dos passos Roteiro, Banca, Convocação e Agenda e o passo
   escolhido, com o que falta; os **roteiros** da área ficam no passo 1 (a configuração do gestor,
   como Regra e Equipe na Avaliação documental), com versões e o que falta
-  (`src/lib/pendencias-do-roteiro.ts`).
+  (`src/lib/entrevistas/pendencias-do-roteiro.ts`).
 - O edital fica no cabeçalho (`seletor-do-edital.tsx`, com "mostrar também os concluídos" para o
   administrador global); o último aberto na área fica no navegador (só conveniência); com um só na
   lista, abre sozinho. Na URL: a seção, o período, a situação, a vaga, a banca e o passo.
 - Links antigos (`entrevistas:conduzir`, `entrevistas:roteiros`) vão para Conduzir entrevistas
-  (`destinoDaTela`, `src/lib/navegacao.ts`; o controlador tem `abrirVisao` e `abrirEdital`).
+  (`destinoDaTela`, `src/lib/navegacao/navegacao.ts`; o controlador tem `abrirVisao` e `abrirEdital`).
 
 ### Ficha de notas
 
 `ficha.tsx`, em modo de análise (tela inteira), no molde da ficha da Avaliação documental: por
 avaliador (padrão) ou por competência (lembrado no navegador). A matriz competências × aspectos
 (`matriz-de-notas.tsx`) tem o fluxo de planilha: dígito avança, setas/Enter, Backspace volta, fora
-da escala recusa (`src/lib/digitacao-de-notas.ts`). A lateral mostra o total com o mínimo, as
+da escala recusa (`src/lib/entrevistas/digitacao-de-notas.ts`). A lateral mostra o total com o mínimo, as
 barras, o parecer e "X de Y notas"; o parecer em texto pronto sai de
-`src/lib/parecer-da-entrevista.ts` ("Copiar parecer").
+`src/lib/entrevistas/parecer-da-entrevista.ts` ("Copiar parecer").
 
 ## Regras
 
@@ -105,10 +105,10 @@ Como a ficha da Avaliação documental (`20261117050000`): `TB_ENTREVISTA."DT_CO
 presença o parecer calculado e, em Inapto ou falta, a justificativa) fecha a ficha;
 `lancar_notas_entrevista` recusa a concluída (55000). `reabrir_entrevista` é só da coordenação do
 edital (`FC_PAPEL_AVALIACAO` = COORDENADOR), com motivo de `private."FC_MOTIVO_REABERTURA_ENTREVISTA"`
-(a mesma lista em `src/lib/reabertura-da-entrevista.ts`, comparada no teste); o componente de
+(a mesma lista em `src/lib/entrevistas/reabertura-da-entrevista.ts`, comparada no teste); o componente de
 reabrir é o da Avaliação documental (`ReabrirAFicha`, com `motivos`). Conclusão e reabertura vão
 para `TH_ENTREVISTA_AVALIACAO`. `obter_entrevistas_do_edital` traz `pode_reabrir` e, por convocado,
-`concluida_em` e `concluida_por`. Na fila, `a_concluir` (`fila-de-conducao.ts`) é o resultado
+`concluida_em` e `concluida_por`. Na fila, `a_concluir` (`entrevistas/fila-de-conducao.ts`) é o resultado
 definido sem conclusão; `concluida` é só a concluída. A lista gerada que ficou para trás já é
 avisada pela Classificação (`geracaoDesatualizada`).
 
@@ -131,12 +131,12 @@ pela função: quem monta os dados liga cada nome à análise do candidato antes
 
 - Estado fora do React: `estado.ts` (painel: carga da área com cópia guardada, gaveta, CSV, agenda
   do recorte, comemorações) e `estado-da-conducao.ts` (editais, edital aberto, escritas uma por vez).
-- Regras puras em `src/lib/`: `entrevistas-do-painel.ts`, `painel-de-entrevistas.ts`,
-  `fila-de-conducao.ts`, `conducao-de-entrevista.ts` e `roteiro-de-entrevista.ts` (escalas, pesos,
-  mínimos, aspectos, atribuições, permissões, cálculo do parecer), `convocacao-da-entrevista.ts`,
-  `resumo-da-entrevista.ts`, `comemoracao.ts`.
+- Regras puras em `src/lib/`: `entrevistas/entrevistas-do-painel.ts`, `entrevistas/painel-de-entrevistas.ts`,
+  `entrevistas/fila-de-conducao.ts`, `entrevistas/conducao-de-entrevista.ts` e `entrevistas/roteiro-de-entrevista.ts` (escalas, pesos,
+  mínimos, aspectos, atribuições, permissões, cálculo do parecer), `entrevistas/convocacao-da-entrevista.ts`,
+  `entrevistas/resumo-da-entrevista.ts`, `comemoracao/comemoracao.ts`.
 - Contratos (`tipos*.ts` na pasta e em `src/lib/`). O que vem do banco entra como `unknown` e é
-  verificado só nos campos usados (`entrevistas-do-painel.ts`, `src/lib/dados-da-conducao.ts`, que
+  verificado só nos campos usados (`entrevistas/entrevistas-do-painel.ts`, `src/lib/entrevistas/dados-da-conducao.ts`, que
   preserva os dados opacos da Classificação); nada valida o JSON inteiro. A ficha distingue notas
   diretas de notas por aspectos (números; `null` apaga). O editor de roteiros separa texto do
   rascunho de números enviados e preserva campos antigos de convocação e desempate.

@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 */
 
 const rpc = vi.fn(async () => ({ data: 1, error: null }));
-vi.mock("../src/lib/supabaseClient", () => ({
+vi.mock("../src/lib/sessao/supabaseClient", () => ({
   getSupabaseClient: () => ({
     rpc,
     auth: {
@@ -22,7 +22,7 @@ const {
   definirEnvioDoRetrato,
   eventoDoRetrato,
   installFrontendPerformanceMonitor,
-} = await import("../src/lib/frontend-performance-monitor");
+} = await import("../src/lib/carga/frontend-performance-monitor");
 
 afterEach(() => {
   vi.useRealTimers();

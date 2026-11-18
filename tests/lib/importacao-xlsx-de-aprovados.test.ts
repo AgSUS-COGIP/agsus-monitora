@@ -7,9 +7,9 @@ import {
   normalizeApprovedHeaders,
   readApprovedWorkbook,
   validateApprovedRows,
-} from "../../src/lib/aprovados-import.ts";
-import { zipSemCompressao } from "../../src/lib/documento-da-resposta.ts";
-import type { ArquivoDoZip } from "../../src/lib/documento-da-resposta.ts";
+} from "../../src/lib/aprovados/aprovados-import.ts";
+import { zipSemCompressao } from "../../src/lib/recursos/documento-da-resposta.ts";
+import type { ArquivoDoZip } from "../../src/lib/recursos/documento-da-resposta.ts";
 
 const cabecalhos = [
   "Código Vaga",

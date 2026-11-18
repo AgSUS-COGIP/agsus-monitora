@@ -3,7 +3,7 @@
   (`registroVencido`, 48 h), de todas as telas, mesmo as que nunca mais forem
   abertas. Baixa sob demanda (src/app/sistema.ts), fora do pedaço da entrada.
 */
-import { registroVencido } from "../lib/validade-das-copias";
+import { registroVencido } from "../lib/carga/validade-das-copias";
 import {
   BANCO,
   LOJA,

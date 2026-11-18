@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { importarComRecarga } from "../../lib/importar-com-recarga";
-import type { LinhaDoResumo } from "../../lib/regras-do-edital.ts";
+import { importarComRecarga } from "../../lib/carga/importar-com-recarga";
+import type { LinhaDoResumo } from "../../lib/regras-do-edital/regras-do-edital.ts";
 import { GradeDeKv, Kv, Selo } from "../../ui/index.ts";
 import "./resumo-da-regra-da-etapa.css";
 import { CarregandoConteudo } from "../../ui/index.ts";
@@ -17,12 +17,12 @@ import { CarregandoConteudo } from "../../ui/index.ts";
 */
 
 export type ResumosDasRegras =
-  typeof import("../../lib/regras-do-edital-resumos.ts");
+  typeof import("../../lib/regras-do-edital/regras-do-edital-resumos.ts");
 
 let resumosCarregados: ResumosDasRegras | null = null;
 let pedidoDosResumos: Promise<ResumosDasRegras> | null = null;
 const importarResumos = importarComRecarga(
-  () => import("../../lib/regras-do-edital-resumos.ts"),
+  () => import("../../lib/regras-do-edital/regras-do-edital-resumos.ts"),
 );
 
 function baixarResumos() {
