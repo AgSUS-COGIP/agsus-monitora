@@ -280,6 +280,29 @@ describe("o preenchimento automático", () => {
     }
   });
 
+  it("a vaga só da Seleção casa pelo título da planilha (NO_CARGO, não o código)", async () => {
+    const db = await bancoMigrado();
+    await entrar(db, 2);
+    await criarVagaDaSelecao(
+      db,
+      EDITAL,
+      "3001",
+      "Médico - Polo Base Alfa - 1 vaga",
+    );
+    await db.query(`select public.atualizar_vinculos_do_quadro($1)`, [EDITAL]);
+    const { rows } = await db.query<{ nome: string }>(
+      `select "NO_VAGA" as nome from public."TA_VAGA_QUADRO_EDITAL" where "CO_VAGA" = '3001'`,
+    );
+    expect(rows).toEqual([{ nome: "Médico - Polo Base Alfa - 1 vaga" }]);
+    expect(
+      (await vinculos(db, EDITAL)).find((v) => v.vaga === "3001"),
+    ).toMatchObject({
+      situacao: "CONFIRMADO",
+      regra: "NOME",
+      quadro: linhas.l3,
+    });
+  });
+
   it("a vaga que sai do edital sai do vínculo, com histórico", async () => {
     const db = await bancoMigrado();
     await entrar(db, 2);

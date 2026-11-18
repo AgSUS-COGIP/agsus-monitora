@@ -159,8 +159,8 @@ export async function criarVagaDaSelecao(
   nome: string,
 ): Promise<void> {
   await db.query(
-    `insert into public."TB_SELECAO_VAGA" ("CO_AREA", "CO_MONITORAMENTO", "DS_EDITAL", "CO_VAGA", "DS_VAGA_PLANILHA", "DS_CHAVE_ORIGEM")
-     values ('saude-indigena', $1, 'Edital', $2, $3, 'origem-' || gen_random_uuid())`,
+    `insert into public."TB_SELECAO_VAGA" ("CO_AREA", "CO_MONITORAMENTO", "DS_EDITAL", "CO_VAGA", "DS_VAGA_PLANILHA", "NO_CARGO", "DS_CHAVE_ORIGEM")
+     values ('saude-indigena', $1, 'Edital', $2, coalesce($2, 'sem código'), $3, 'origem-' || gen_random_uuid())`,
     [edital, codigo, nome],
   );
 }

@@ -119,7 +119,7 @@ comment on index public."IN_FKVAGAQUADRO_QUADRO" is 'Chave estrangeira para TB_Q
 comment on column public."TA_VAGA_QUADRO_EDITAL"."CO_VAGA_QUADRO_EDITAL" is 'Identificador do vínculo.';
 comment on column public."TA_VAGA_QUADRO_EDITAL"."CO_MONITORAMENTO" is 'Edital (TB_MONITORAMENTO_INDIGENA).';
 comment on column public."TA_VAGA_QUADRO_EDITAL"."CO_VAGA" is 'Código da vaga (Empregare ou planilha), só dígitos; um por edital.';
-comment on column public."TA_VAGA_QUADRO_EDITAL"."NO_VAGA" is 'Nome da vaga usado no casamento: o das análises, o título da Empregare ou o da planilha da Seleção.';
+comment on column public."TA_VAGA_QUADRO_EDITAL"."NO_VAGA" is 'Nome da vaga usado no casamento: o das análises, o título da Empregare ou o da planilha da Seleção (NO_CARGO).';
 comment on column public."TA_VAGA_QUADRO_EDITAL"."CO_QUADRO_VAGA" is 'Linha do quadro ligada; preenchida só quando CONFIRMADO.';
 comment on column public."TA_VAGA_QUADRO_EDITAL"."NO_CARGO_QUADRO" is 'Cargo da linha ligada, como estava (fica para mostrar a linha que saiu do quadro).';
 comment on column public."TA_VAGA_QUADRO_EDITAL"."NO_LOTACAO_QUADRO" is 'Lotação da linha ligada, como estava.';
@@ -248,7 +248,8 @@ as $_$
       from public."TB_EMPREGARE_VAGA" v where v."CO_MONITORAMENTO" = p_edital
   ),
   se as (
-    select s."CO_VAGA" as vaga, min(s."DS_VAGA_PLANILHA") as nome
+    -- DS_VAGA_PLANILHA é só o código; o título da vaga na planilha é NO_CARGO.
+    select s."CO_VAGA" as vaga, min(s."NO_CARGO") as nome
       from public."TB_SELECAO_VAGA" s
      where s."CO_MONITORAMENTO" = p_edital and s."ST_REGISTRO_ATIVO" = 'S' and s."CO_VAGA" is not null
      group by 1
@@ -260,7 +261,7 @@ as $_$
     left join em on em.vaga = t.vaga
     left join se on se.vaga = t.vaga;
 $_$;
-comment on function private."FC_VAGAS_PARA_O_QUADRO"(uuid) is 'As vagas com código do edital (análises ativas, Empregare e Seleção) e o nome para o casamento: o das análises, o título da Empregare ou o da planilha. 20261118120000.';
+comment on function private."FC_VAGAS_PARA_O_QUADRO"(uuid) is 'As vagas com código do edital (análises ativas, Empregare e Seleção) e o nome para o casamento: o das análises, o título da Empregare ou o da planilha da Seleção (NO_CARGO). 20261118120000.';
 
 create function private."FC_VINCULO_AUTOMATICO_QUADRO"(p_edital uuid, p_vaga text, p_nome_vaga text, p_titulo boolean)
 returns jsonb
