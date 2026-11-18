@@ -130,10 +130,10 @@ trabalho). De cima para baixo:
 
 ## Verificação
 
-- `tests/modulos/visao-geral.test.js`: a tela e o estado, incluindo mapas e troca de área.
-- `tests/visao-geral.test.js`: as regras.
-- `tests/lib/vagas-reabertas.test.ts`: a vaga reaberta contada uma vez só.
-- `tests/fronteiras-da-visao-geral.test.js`: as fronteiras externas.
+- `tests/telas-com-modulo-simulado-na-tela.test.js` (bloco `modulos/visao-geral`): a tela e o estado, incluindo mapas e troca de área.
+- `tests/mapas-e-visao-geral.test.js` (bloco `visao-geral`): as regras.
+- `tests/demais-regras.test.ts` (bloco `lib/vagas-reabertas`): a vaga reaberta contada uma vez só.
+- `tests/mapas-e-visao-geral.test.js` (bloco `fronteiras-da-visao-geral`): as fronteiras externas.
 - `tests/tipos/visao-geral.tsx`: contratos positivos e negativos do compilador.
 - Explicações para quem usa: `docs/aya/regras-da-visao-geral.md` (ver [[aya-base-de-conhecimento]]).
 

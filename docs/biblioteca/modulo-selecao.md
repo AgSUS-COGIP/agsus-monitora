@@ -45,7 +45,7 @@ continuam `unknown` e não recebem validação de formato.
 
 ## Testes
 
-`tests/modulos/selecao.test.js` e `tests/selecao-do-painel.test.js` (filtros, sessão, troca de
+`tests/telas-com-modulo-simulado-na-tela.test.js` (bloco `modulos/selecao`) e `tests/casca-sessao-e-interface.test.js` (bloco `selecao-do-painel`) (filtros, sessão, troca de
 área, cache, falhas e CSV, entradas malformadas e callbacks dos gráficos).
 `npm run typecheck:frontend` inclui `tests/tipos/selecao.tsx`.
 

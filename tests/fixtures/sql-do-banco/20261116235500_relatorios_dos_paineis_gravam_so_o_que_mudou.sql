@@ -27,7 +27,7 @@
   O QUE NÃO MUDA
   O que o painel mostra: depois do cálculo, as linhas guardadas são as mesmas, nas mesmas
   posições, que o delete + insert de antes deixaria (o ensaio e
-  tests/relatorios-dos-paineis-gravam-so-o-que-mudou.test.ts conferem). Nenhuma RPC muda.
+  tests/editais-cargas-e-paineis.test.ts (bloco relatorios-dos-paineis-gravam-so-o-que-mudou) conferem). Nenhuma RPC muda.
 
   GUARDA: o corpo de FC_CALCULAR_RELATORIO_PAINEL é o de 20261116160000 (md5 do prosrc sem \r).
   ENSAIO:   supabase/ensaios/20261116235500_relatorios_dos_paineis_gravam_so_o_que_mudou.sql

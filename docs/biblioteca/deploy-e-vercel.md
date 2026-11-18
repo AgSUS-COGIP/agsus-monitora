@@ -113,11 +113,11 @@ casaisNacionais, lidoEm }` (a lista de DSEIs do mapa e as CASAIs nacionais, loca
   repositório inteiro. Se importar `python/monitora`, use `includeFiles` (vale mais que o
   `excludeFiles`). Dependências no `pyproject.toml` da raiz; Pillow e pypdfium2 ficam fora por
   `override-dependencies` (o pdfplumber só os usa em `to_image`, que não chamamos). Guarda:
-  `tests/funcoes-da-vercel-leves.test.js`.
+  `tests/repositorio-e-banco.test.js` (bloco `funcoes-da-vercel-leves`).
 - Limites do plano Hobby: `maxDuration: 30`, corpo de ~4,5 MB. O que pode demorar é job no GitHub
   Actions ([[python-e-jobs]]).
-- Testes: `tests/funai-geodata-proxy.test.js`, `tests/editais-api.test.js`,
-  `tests/aprovados-e-cronograma-api.test.js`, `tests/lib/localizacoes-do-sigepsi.test.ts`; em
+- Testes: `tests/repositorio-e-banco.test.js` (bloco `funai-geodata-proxy`), `tests/editais-cargas-e-paineis.test.js` (bloco `editais-api`),
+  `tests/entrevistas-e-aprovados.test.js` (bloco `aprovados-e-cronograma-api`), `tests/demais-regras.test.ts` (bloco `lib/localizacoes-do-sigepsi`); em
   Python, `tests/python/test_anexos_do_edital.py` e `test_retificacao_do_cronograma.py` (PDFs
   sintéticos).
 

@@ -30,7 +30,7 @@ o build e o CI ([[ci-e-qualidade]]).
   `src/modules/aya-conhecimento-gerado.js`, `src/styles/icones-lucide.css` de `npm run icones`);
   nunca à mão ([[ci-e-qualidade]]).
 - **Link, caminho ou bucket de planilha só em `src/lib/base/planilhas.ts`**; o consumidor importa de lá
-  (`tests/planilhas.test.js` falha se aparecer em outro arquivo). Ver [[planilhas]].
+  (`tests/editais-cargas-e-paineis.test.js` (bloco `planilhas`) falha se aparecer em outro arquivo). Ver [[planilhas]].
 - **CSS segue as regras de ouro** ([[design-e-tokens]]): token em vez de hex, sem
   `!important`/`#id` novos, sem arquivo `*-fix.css` novo ([[css]]).
 - **Interface sem textos genéricos** ([[textos-da-interface]]).

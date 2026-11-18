@@ -43,7 +43,7 @@ ver [[python-e-jobs]] e [[robos-e-agenda]]). As histórias de usuário (CF-1 a C
 ## Testes
 
 - Os testes de avisos, casos e troca de área preservam os fluxos existentes.
-- `tests/conferencias-fronteiras.test.js`: respostas malformadas e paginação repetida.
+- `tests/editais-cargas-e-paineis.test.js` (bloco `conferencias-fronteiras`): respostas malformadas e paginação repetida.
 - `tests/tipos/conferencias.tsx`: contratos válidos e rejeições do compilador.
 - Todas as RPCs dos testes são simuladas, com a rede bloqueada pelo setup da suíte ([[testes]]).
 

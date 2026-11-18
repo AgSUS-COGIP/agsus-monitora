@@ -31,7 +31,7 @@
   só de CR fora da conta pedem o tamanho por vaga (lote.por_vaga) na tela.
 
   Os JSON são cópia de tests/fixtures/avaliacao-documental/modelos/<CODIGO>.json
-  (o teste tests/modelos-dos-editais-recentes.test.js confere).
+  (o teste tests/avaliacao-e-recursos.test.js (bloco modelos-dos-editais-recentes) confere).
 */
 begin;
 

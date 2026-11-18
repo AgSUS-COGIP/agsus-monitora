@@ -56,8 +56,8 @@
 
   Ensaio: supabase/ensaios/20261109180000_catalogo_dos_robos_e_chave_unica.sql
   Rollback: supabase/rollback/20261109180000_catalogo_dos_robos_e_chave_unica.sql
-  Testes: tests/catalogo-dos-robos-migration.test.ts (estáticos) e
-          tests/catalogo-dos-robos-no-banco.test.ts (Postgres de verdade, PGlite:
+  Testes: tests/editais-cargas-e-paineis.test.ts (bloco catalogo-dos-robos-migration) (estáticos) e
+          tests/editais-cargas-e-paineis.test.ts (bloco catalogo-dos-robos-no-banco) (Postgres de verdade, PGlite:
           antes × depois × rollback com as mesmas respostas).
 */
 begin;

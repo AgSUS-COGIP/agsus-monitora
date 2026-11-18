@@ -35,7 +35,7 @@
   carrega o modelo de novo na aba Regra (ou acrescenta a pergunta na nota
   declarada), salva uma versão com o motivo e confere; depois, "Recalcular" na
   Pré-classificação. Os JSON de tests/fixtures/avaliacao-documental/modelos/
-  são o resultado (conferido em tests/modelos-dos-editais-recentes.test.js).
+  são o resultado (conferido em tests/avaliacao-e-recursos.test.js (bloco modelos-dos-editais-recentes)).
 */
 begin;
 

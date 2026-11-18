@@ -157,7 +157,7 @@ Nada acima de `--z-toast`. O `2147483000` de `analises-residual-ui-fixes.js` dev
 escada. A Aya (`src/modulos/aya/aya.css`) fica em 10042: acima do cabeçalho e da barra lateral do
 celular, abaixo do aviso de parabéns (10045). Quem precisa ficar acima da barra
 lateral usa os tokens de overlay: modal de busca (`--z-overlay`); link de pular, faixa offline,
-aviso de conectividade e aviso de sessão (`--z-toast`). `tests/camadas-acima-da-barra.test.js`
+aviso de conectividade e aviso de sessão (`--z-toast`). `tests/repositorio-e-banco.test.js` (bloco `camadas-acima-da-barra`)
 guarda essa ordem.
 
 ### 3.8 Breakpoints
@@ -309,7 +309,7 @@ que não são de área entram em Painéis; as seções de Configurações são a
   `src/styles/icones-lucide.css` (gerado por `npm run icones` a partir de
   `src/lib/base/mapa-de-icones-lucide.ts`) desenha em cada classe o ícone Lucide equivalente, como
   máscara no `::before`. Ícone novo com classe `fa-…`: acrescente o par no mapa e rode
-  `npm run icones`; `tests/icones-lucide.test.js` falha se faltar. Ao reescrever um componente,
+  `npm run icones`; `tests/editais-cargas-e-paineis.test.js` (bloco `icones-lucide`) falha se faltar. Ao reescrever um componente,
   prefira o registro abaixo.
 
 Regras:

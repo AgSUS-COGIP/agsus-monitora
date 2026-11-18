@@ -46,7 +46,7 @@ ajustes da pontuação aprovados em recurso e a prévia do recurso), `documento-
   `supabase/ensaios/20261002-regras-de-classificacao-todos-os-editais.sql`).
 - Auditoria do 93/2026 (desempate do 10.1 na preliminar, quadro do 4.1):
   `tests/fixtures/sql-de-dados/20261009-classificacao-93-desempate-e-quadro.sql` e
-  `tests/classificacao-93-desempate.test.js`.
+  `tests/classificacao.test.js` (bloco `classificacao-93-desempate`).
 
 ## Contratos TypeScript
 
@@ -116,14 +116,14 @@ Python" (`classificacao_calculo`), que nasce **desligada**: ligar só depois da 
 
 ## Testes
 
-- Tela e regras: `tests/lib/classificacao-*.test.js`, `tests/modulos/classificacao.test.js`,
-  `tests/modulos/classificacao-contexto-de-gravacao.test.js`,
-  `tests/classificacao-regras-dos-editais.test.js` (seed e um edital por modelo).
-- Publicação: `tests/lib/publicacao-de-aprovados.test.ts`,
-  `tests/lib/dados-da-publicacao-de-aprovados.test.ts` e o fluxo em
-  `tests/modulos/classificacao.test.js`.
-- Agenda: `tests/lib/dados-da-agenda.test.ts`, `tests/lib/agenda-das-entrevistas.test.ts`,
-  `tests/modulos/agenda-das-entrevistas.test.js`, `tests/modulos/agenda-contexto-de-gravacao.test.js`.
+- Tela e regras: `tests/lib/classificacao-*.test.js`, `tests/classificacao-e-entrevistas-na-tela.test.js` (bloco `modulos/classificacao`),
+  `tests/classificacao.test.js` (bloco `modulos/classificacao-contexto-de-gravacao`),
+  `tests/classificacao.test.js` (bloco `classificacao-regras-dos-editais`) (seed e um edital por modelo).
+- Publicação: `tests/entrevistas-e-aprovados.test.ts` (bloco `lib/publicacao-de-aprovados`),
+  `tests/entrevistas-e-aprovados.test.ts` (bloco `lib/dados-da-publicacao-de-aprovados`) e o fluxo em
+  `tests/classificacao-e-entrevistas-na-tela.test.js` (bloco `modulos/classificacao`).
+- Agenda: `tests/entrevistas-e-aprovados.test.ts` (bloco `lib/dados-da-agenda`), `tests/entrevistas-e-aprovados.test.ts` (bloco `lib/agenda-das-entrevistas`),
+  `tests/casca-sessao-e-interface-na-tela.test.js` (bloco `modulos/agenda-das-entrevistas`), `tests/classificacao.test.js` (bloco `modulos/agenda-contexto-de-gravacao`).
 - Contratos de compilação em `tests/tipos/`: `regra-da-classificacao.tsx`,
   `tela-estado-da-classificacao.tsx`, `listas-da-classificacao.tsx`,
   `publicacao-da-classificacao.tsx`, `agenda-da-classificacao.tsx`.

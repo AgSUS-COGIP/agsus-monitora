@@ -307,7 +307,7 @@ fim, chama `sessaoDoApp.iniciar()`. O `index.html` mantém o `#loginScreen` e os
 (marca antes do primeiro quadro, `sessao-guardada`, `vite-dev-carregando`). Ids e classes da tela
 são os de antes (`#googleLoginBtn`, `#loginMsg`, `#accessRequestCard`…): o CSS da tela de acesso e
 os testes de ponta a ponta continuam valendo; o formulário do pedido usa `Campo` de `src/ui/`.
-Testes: `tests/app/sessao.test.ts`, `tests/app/entrada.test.ts`, `tests/solicitacao-de-acesso.test.js`,
+Testes: `tests/casca-sessao-e-interface-na-tela.test.ts` (bloco `app/sessao`), `tests/casca-sessao-e-interface-na-tela.test.ts` (bloco `app/entrada`), `tests/casca-sessao-e-interface-na-tela.test.js` (bloco `solicitacao-de-acesso`),
 `tests/solicitacao-de-acesso-migration.test.js`.
 
 | Antes (legado)                                                                       | Agora                                                                           |
@@ -387,9 +387,9 @@ Contratos mantidos em `window`: `navigate` (é `navegacao.irPara`; agora também
 Quem acompanha a navegação assina `navegacao.assinar`: `{ tipo: "abertura", view, anterior }`
 (auditoria) e `{ tipo: "menu" }` (o lugar da pessoa na presença).
 
-Testes: `tests/app/navegacao.test.ts`, `carga.test.js`, `configuracao.test.js`,
+Testes: `tests/casca-sessao-e-interface-na-tela.test.ts` (bloco `app/navegacao`), `carga.test.js`, `configuracao.test.js`,
 `paineis-externos.test.js`, `presenca.test.js`, `perfil.test.js`, `moldura.test.js`,
-`sistema.test.js`, `tests/navegacao.test.js` e `tests/componentes/pessoas-online.test.ts`. Os testes
+`sistema.test.js`, `tests/casca-sessao-e-interface.test.js` (bloco `navegacao`) e `tests/casca-sessao-e-interface-na-tela.test.ts` (bloco `componentes/pessoas-online`). Os testes
 que conferem que algo antigo não voltou leem `src/app/` inteiro (`tests/fonte-do-app.ts`).
 
 Ficou para depois (ainda em `src/modules/` ou no `index.html`):
@@ -449,7 +449,7 @@ tabelas-em-cartoes.ts  usarTabelasEmCartoes(): cada linha de tabela vira cartão
 Não há menu no pé da tela: a navegação é uma só, o ☰ do topo (`#globalSidebarToggle`, da barra
 lateral) abre a mesma barra lateral como gaveta. O topo é uma linha só e o conteúdo usa a altura
 toda (nenhuma barra soma recuo de menu inferior). O registro do service worker foi para
-`pwa-lifecycle.ts`. Testes: `tests/app/gaveta-do-celular.test.ts` e `tests/layout-no-celular.test.js`.
+`pwa-lifecycle.ts`. Testes: `tests/casca-sessao-e-interface-na-tela.test.ts` (bloco `app/gaveta-do-celular`) e `tests/casca-sessao-e-interface-na-tela.test.js` (bloco `layout-no-celular`).
 
 **Parte C** — carregamento e avisos, em `src/app/casca/`, por portal da raiz única (`#avisosApp`, no começo
 do `<body>`), fora do `#appScreen` porque a tela de acesso também usa:
@@ -467,7 +467,7 @@ O estado fica em `src/app/avisos.ts` (sem React): `avisar(texto, tom)` e
 `window.monitoraToast`/`window.monitoraLoader`, e quem chama antes da montagem não perde o aviso.
 O `#offlineBar` (sempre escondido; só recebia o texto `offline_message`) saiu: o aviso de
 conexão é o `#connectivityStatusNotice`. Ids e classes são os de antes (CSS em `app.css`,
-`loading-experience.css` e `connectivity-status.css`). Testes: `tests/app/avisos.test.ts`.
+`loading-experience.css` e `connectivity-status.css`). Testes: `tests/casca-sessao-e-interface-na-tela.test.ts` (bloco `app/avisos`).
 
 **Parte D** — o último JavaScript escrito à mão de `src/modules/` (03/11/2026):
 
@@ -489,5 +489,5 @@ src/modules/indigenous-territories-layer.ts  Terras Indígenas em TypeScript; as
 ```
 
 `scripts/check-legado-so-encolhe.mjs` agora também recusa qualquer `.js` nas pastas do legado
-(só o gerado da Aya fica). Testes: `tests/componentes/confirmacao-de-saida.test.ts` e
-`tests/componentes/barra-lateral.test.ts` (marca).
+(só o gerado da Aya fica). Testes: `tests/casca-sessao-e-interface-na-tela.test.ts` (bloco `componentes/confirmacao-de-saida`) e
+`tests/casca-com-modulo-simulado-na-tela.test.ts` (bloco `componentes/barra-lateral`) (marca).
