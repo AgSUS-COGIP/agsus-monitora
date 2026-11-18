@@ -21,7 +21,7 @@ import {
   podeLancarPor,
   progressoDasNotas,
   rascunhoDaConfiguracao,
-} from "../src/lib/conducao-de-entrevista.ts";
+} from "../src/lib/entrevistas/conducao-de-entrevista.ts";
 
 const CONVOCACAO = {
   multiplo_imediatas: 5,
@@ -588,7 +588,7 @@ describe("editais e erros", () => {
 
   it("descreve a janela e o motivo de o edital aparecer", async () => {
     const { marcaDoEdital, textoDaJanela } =
-      await import("../src/lib/conducao-de-entrevista.ts");
+      await import("../src/lib/entrevistas/conducao-de-entrevista.ts");
     const [liberado, fora, pendente, semCronograma] = editaisParaConduzir(
       [
         {
@@ -648,7 +648,7 @@ describe("editais e erros", () => {
 describe("ajustes de 30/09: ordem dos editais e nome do cargo", () => {
   it("editais do mais novo para o mais antigo", async () => {
     const { editaisParaConduzir } =
-      await import("../src/lib/conducao-de-entrevista.ts");
+      await import("../src/lib/entrevistas/conducao-de-entrevista.ts");
     const lista = editaisParaConduzir(
       [
         { id: "a", edital: "03/2025", unidade: "X" },
@@ -666,7 +666,7 @@ describe("ajustes de 30/09: ordem dos editais e nome do cargo", () => {
 
   it("tira o resto da planilha do nome do cargo", async () => {
     const { nomeDoCargo } =
-      await import("../src/lib/conducao-de-entrevista.ts");
+      await import("../src/lib/entrevistas/conducao-de-entrevista.ts");
     expect(
       nomeDoCargo(
         "Enfermeiro - DSEI Porto Velho em Excel (questionário NÍVEL SUPERIOR",
@@ -680,7 +680,8 @@ describe("ajustes de 30/09: ordem dos editais e nome do cargo", () => {
 
 describe("selo PcD", () => {
   it("só o sim da planilha conta como PcD", async () => {
-    const { ehPcd } = await import("../src/lib/conducao-de-entrevista.ts");
+    const { ehPcd } =
+      await import("../src/lib/entrevistas/conducao-de-entrevista.ts");
     expect(["SIM", "Sim", " s ", "true", true, 1].map(ehPcd)).toEqual([
       true,
       true,
@@ -696,7 +697,7 @@ describe("selo PcD", () => {
 });
 
 describe("ficha com aspectos", async () => {
-  const lib = await import("../src/lib/conducao-de-entrevista.ts");
+  const lib = await import("../src/lib/entrevistas/conducao-de-entrevista.ts");
   const ASPECTOS = [{ id: "s1" }, { id: "s2" }, { id: "s3" }];
 
   it("mapa por aspecto, ida e volta", () => {

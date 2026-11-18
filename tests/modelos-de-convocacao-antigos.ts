@@ -6,7 +6,7 @@
   e os mínimos por cota continuam valendo para os modelos já salvos no banco,
   e é isso que os testes que usam estes conferem.
 */
-import type { ReferenciaDoModelo } from "../src/lib/tipos-da-configuracao-de-convocacao.ts";
+import type { ReferenciaDoModelo } from "../src/lib/aprovados/carta-de-convocacao/tipos-da-configuracao-de-convocacao.ts";
 
 export const LEI_15142_ESPALHADA = Object.freeze<ReferenciaDoModelo>({
   // Regra dos editais 96/2025, 30/2026, 93/2026, Cebraspe 2026 e FGV.

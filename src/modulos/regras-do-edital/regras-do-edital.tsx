@@ -3,7 +3,7 @@ import { irParaTela } from "../../app/ir-para-tela.ts";
 import {
   ETAPAS_DAS_REGRAS,
   type EtapaDasRegras,
-} from "../../lib/regras-do-edital.ts";
+} from "../../lib/regras-do-edital/regras-do-edital.ts";
 import type { ClienteDaRegra } from "../../lib/triagem/regra-da-triagem.ts";
 import { Segmentado } from "../../ui/index.ts";
 import { EditorDaRegraDaTriagem } from "../triagem/editor-da-regra.tsx";

@@ -9,7 +9,7 @@ import {
   montarPaginaDeImpressao,
   nomeDoDocumento,
   zipSemCompressao,
-} from "../src/lib/documento-da-resposta.ts";
+} from "../src/lib/recursos/documento-da-resposta.ts";
 
 /*
   O documento da resposta sem dependência: o .docx é um ZIP "stored" com o

@@ -27,7 +27,7 @@ import {
   publicarUnidadesDoCatalogo,
   redefinirDadosDoMonitoramento,
 } from "../../src/componentes/dados-do-monitoramento.ts";
-import { UNIDADES_CORES } from "../../src/lib/responsavel-do-edital.ts";
+import { UNIDADES_CORES } from "../../src/lib/editais/responsavel-do-edital.ts";
 import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.ts";
 import { montarTela } from "../montar-tela.ts";
 import { registrarTelas } from "../../src/app/registro-das-telas.ts";

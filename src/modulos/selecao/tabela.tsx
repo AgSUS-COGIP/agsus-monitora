@@ -1,11 +1,11 @@
 import type { VagaDaSelecao } from "./tipos.ts";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import {
   FILTROS_VAZIOS,
   filtrarVagas,
   formatarQuantidade,
   rotuloDaUnidade,
-} from "../../lib/selecao-do-painel.ts";
+} from "../../lib/selecao/selecao-do-painel.ts";
 import { TabelaInfinita } from "../../ui/index.ts";
 
 /*

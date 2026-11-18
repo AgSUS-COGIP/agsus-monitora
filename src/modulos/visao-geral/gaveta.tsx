@@ -1,22 +1,22 @@
-import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.ts";
+import { hojeEmBrasilia } from "../../lib/cronograma/cronograma-do-edital.ts";
 import { telaPronta } from "../../app/registro-das-telas.ts";
 import type { LinhaDaVisaoGeral } from "./tipos.ts";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import {
   contratacoesDoCadastroReserva,
   contratadasImediatas,
   vagasSemContratacao,
-} from "../../lib/indicadores-do-monitoramento.ts";
+} from "../../lib/visao-geral/indicadores-do-monitoramento.ts";
 import {
   numeroDoFunil,
   textoDaFonteDoFunil,
-} from "../../lib/funil-do-edital.ts";
+} from "../../lib/editais/funil-do-edital.ts";
 import {
   dataCurta,
   linkSeguro,
   statusCanonico,
   urgenciaDoCronograma,
-} from "../../lib/visao-geral.ts";
+} from "../../lib/visao-geral/visao-geral.ts";
 import { Gaveta, GradeDeKv, Kv, Secao } from "../../ui/index.ts";
 
 /*

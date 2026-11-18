@@ -2,13 +2,13 @@ import type { ReactNode } from "react";
 import type {
   IdDaSecao,
   PendenciaDoRoteiro,
-} from "../../lib/pendencias-do-roteiro.ts";
+} from "../../lib/entrevistas/pendencias-do-roteiro.ts";
 
 /*
   Peças do editor do roteiro (roteiros.tsx): a seção recolhível (título,
   uma linha do que está nela e o selo de erros) e a lista do que falta perto
   do Salvar — clicar num item abre a seção dele. As regras ficam em
-  src/lib/pendencias-do-roteiro.ts.
+  src/lib/entrevistas/pendencias-do-roteiro.ts.
 */
 
 export function SecaoRecolhivel({

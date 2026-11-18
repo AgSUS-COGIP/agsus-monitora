@@ -5,9 +5,9 @@ import {
   SESSAO_VENCIDA,
   TEMPO_ESGOTADO_NO_BANCO,
   erroParaATela,
-} from "../src/lib/erro-na-tela.ts";
-import { SEM_SERVIDOR } from "../src/lib/falha-de-rede.ts";
-import { MENSAGEM_DE_VERSAO_NOVA } from "../src/lib/importar-com-recarga.ts";
+} from "../src/lib/base/erro-na-tela.ts";
+import { SEM_SERVIDOR } from "../src/lib/carga/falha-de-rede.ts";
+import { MENSAGEM_DE_VERSAO_NOVA } from "../src/lib/carga/importar-com-recarga.ts";
 
 /*
   Auditoria das telas (10/11/2026): os avisos de erro mostravam o texto cru

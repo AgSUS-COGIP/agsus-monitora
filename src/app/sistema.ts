@@ -1,8 +1,8 @@
 import {
   EVENTO_ESCOLHA_DA_BUSCA,
   areaParaLocalizar,
-} from "../lib/busca-global.ts";
-import { codigoDoPainel } from "../lib/navegacao";
+} from "../lib/navegacao/busca-global.ts";
+import { codigoDoPainel } from "../lib/navegacao/navegacao";
 import { apagarCacheDePayload } from "../modules/cache-de-payload-indexeddb.ts";
 import { comemorarAcessoLiberado } from "../modules/comemoracao-do-acesso.ts";
 import {
@@ -34,8 +34,8 @@ import { criarPerfil } from "./perfil.ts";
 import { criarPresenca } from "./presenca.ts";
 import { criarVigiaDoCatalogo } from "./vigia-do-catalogo.ts";
 import { inicioDaSessao } from "./inicio-da-sessao.ts";
-import { getSupabaseClient } from "../lib/supabaseClient";
-import { definirEnvioDoRetrato } from "../lib/frontend-performance-monitor";
+import { getSupabaseClient } from "../lib/sessao/supabaseClient";
+import { definirEnvioDoRetrato } from "../lib/carga/frontend-performance-monitor";
 import { instalarMarcosDosEditais } from "./marcos-personalizados.ts";
 import { acompanharPaginaAberta } from "./pagina-aberta.ts";
 import { sessaoDoApp } from "./sessao.ts";

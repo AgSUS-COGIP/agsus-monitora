@@ -34,7 +34,7 @@ begin
      or md5((select prosrc from pg_proc where oid = to_regprocedure('public.salvar_quadro_de_vagas(uuid, jsonb)')))
        is distinct from '2e237757c4b4c684d7724c553fd7ce40'
      or md5((select prosrc from pg_proc where oid = to_regprocedure('public.conferencia_ler_listas_e_quadros()')))
-       is distinct from '41f1c0eefd3334bfc75ff99d1799fa37'
+       is distinct from '7189179d116aca01264b285c9a1f17e6'
      or md5((select prosrc from pg_proc where oid = to_regprocedure('private."FC_QUADRO_DA_VAGA"(uuid, text)')))
        is distinct from '3e99e62185118b7378fde0c9ec0166ff'
      or md5((select prosrc from pg_proc where oid = to_regprocedure('private."FC_TOKENS_VAGA"(text)')))
@@ -694,7 +694,7 @@ CREATE OR REPLACE FUNCTION public.conferencia_ler_listas_e_quadros() RETURNS jso
   with ultimas as (
     select distinct on (l."CO_MONITORAMENTO", l."TP_LISTA")
            l."CO_LISTA_CLASSIFICACAO", l."CO_MONITORAMENTO", l."TP_LISTA", l."DT_GERACAO",
-           l."QT_PENDENCIA", l."ST_PUBLICADA", l."DS_RESULTADO"
+           l."QT_PENDENCIA", l."ST_PUBLICADA", l."DS_RESULTADO", l."NU_VERSAO_REGRA"
       from public."TB_LISTA_CLASSIFICACAO" l
      where not private."FC_EDITAL_EH_TREINAMENTO"(l."CO_MONITORAMENTO")
      order by l."CO_MONITORAMENTO", l."TP_LISTA", l."DT_GERACAO" desc, l."CO_LISTA_CLASSIFICACAO" desc
@@ -706,6 +706,8 @@ CREATE OR REPLACE FUNCTION public.conferencia_ler_listas_e_quadros() RETURNS jso
           'id', u."CO_LISTA_CLASSIFICACAO", 'edital', u."CO_MONITORAMENTO", 'area', m."CO_AREA",
           'tipo', u."TP_LISTA", 'gerada_em', u."DT_GERACAO", 'pendencias', u."QT_PENDENCIA",
           'publicada', u."ST_PUBLICADA" = 'S',
+          -- 20261117193000: a versão da regra com que a lista foi gerada (a vigente vem do contexto).
+          'versao_regra', u."NU_VERSAO_REGRA",
           'vagas_pendentes', (select coalesce(jsonb_agg(distinct p ->> 'vaga'), '[]'::jsonb)
                                 from jsonb_array_elements(case when jsonb_typeof(u."DS_RESULTADO" -> 'pendencias') = 'array'
                                                                then u."DS_RESULTADO" -> 'pendencias' else '[]'::jsonb end) p
@@ -740,7 +742,7 @@ CREATE OR REPLACE FUNCTION public.conferencia_ler_listas_e_quadros() RETURNS jso
   );
 $$;
 
-COMMENT ON FUNCTION public.conferencia_ler_listas_e_quadros() IS 'Conferências (job Python, só service_role): a última lista de classificação de cada edital e tipo (fora do treinamento) com as vagas com empate pendente, os ajustes de recurso aprovados, as linhas ativas do quadro de vagas (id, edital, cargo, lotação), cruas, e os vínculos das vagas com o quadro (TA_VAGA_QUADRO_EDITAL, 20261118120000). A vaga sem linha no quadro e a lista final desatualizada são conferidas no robô, com as páginas de conferencia_ler_analises (20261103181500).';
+COMMENT ON FUNCTION public.conferencia_ler_listas_e_quadros() IS 'Conferências (job Python, só service_role): a última lista de classificação de cada edital e tipo (fora do treinamento), com a versão da regra com que foi gerada (20261117193000), as vagas com empate pendente, os ajustes de recurso aprovados, as linhas ativas do quadro de vagas (id, edital, cargo, lotação), cruas, e os vínculos das vagas com o quadro (TA_VAGA_QUADRO_EDITAL, 20261118120000). A vaga sem linha no quadro e a lista final desatualizada são conferidas no robô, com as páginas de conferencia_ler_analises (20261103181500).';
 
 -- 4. RPCs da fila -------------------------------------------------------------------------------
 create function private."FC_EXIGIR_EDITAR_QUADRO"(p_edital uuid) returns void

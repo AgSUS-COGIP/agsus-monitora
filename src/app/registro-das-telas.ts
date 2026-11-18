@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { comecarCargaDeTela } from "../lib/carga-de-telas";
-import { importarComRecarga } from "../lib/importar-com-recarga";
+import { comecarCargaDeTela } from "../lib/carga/carga-de-telas";
+import { importarComRecarga } from "../lib/carga/importar-com-recarga";
 import type { criarAnalises } from "../modulos/analises/analises.tsx";
 import type { criarListaAprovados } from "../modulos/aprovados/lista-aprovados.tsx";
 import type { criarAvaliacaoDocumental } from "../modulos/avaliacao-documental/avaliacao-documental.tsx";

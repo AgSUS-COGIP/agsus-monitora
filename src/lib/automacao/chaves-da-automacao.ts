@@ -1,0 +1,299 @@
+/*
+  Chaves da automação (Configurações › Automação, só administrador global),
+  sem React e sem banco: o que chega de `obter_chaves_da_automacao`
+  (supabase/migrations/20261022190000_chaves_da_automacao.sql) vira uma lista
+  de chaves com estado, última e próxima execução; e as regras do motivo.
+
+  Uma chave por aba liga ou desliga o que roda sozinho: as tarefas do pg_cron
+  da chave (o banco as desliga junto) e os pedidos da agenda dos robôs
+  (FC_DISPARAR_ROBO não pede com a chave desligada). O "Rodar agora" do
+  Status das atualizações continua, com confirmação.
+
+  A PRÓXIMA EXECUÇÃO sai da agenda do pg_cron (src/lib/automacao/agenda-do-cron.ts, o
+  mesmo leitor que dá o prazo de atraso no Status das atualizações).
+*/
+
+import { proximaExecucao } from "./agenda-do-cron.ts";
+
+export interface ExecucaoDaTarefa {
+  inicio: Date | null;
+  fim: Date | null;
+  situacao: string;
+}
+export interface TarefaDaChave {
+  nome: string;
+  agenda: string;
+  ativa: boolean;
+  ultima: ExecucaoDaTarefa | null;
+}
+export interface ChaveDaAutomacao {
+  chave: string;
+  nome: string;
+  ligada: boolean;
+  motivo: string;
+  em: Date | null;
+  por: string;
+  tarefas: TarefaDaChave[];
+  ultimoPedido: ExecucaoDaTarefa | null;
+  ultimaPreClassificacao: ExecucaoDaTarefa | null;
+}
+export interface EventoDaChave {
+  chave: string;
+  ligada: boolean;
+  motivo: string;
+  em: Date | null;
+  por: string;
+  tarefas: string[];
+}
+export interface ChavesDaAutomacao {
+  geradoEm: Date | null;
+  cronDisponivel: boolean;
+  chaves: ChaveDaAutomacao[];
+  semChave: TarefaDaChave[];
+  historico: EventoDaChave[];
+}
+
+export const MOTIVO_MINIMO = 15;
+export const MOTIVO_MAXIMO = 500;
+export const MOTIVO_PALAVRAS = 3;
+/** A regra do motivo, mostrada no formulário (a mesma do banco). */
+export const REGRA_DO_MOTIVO = `Uma frase com pelo menos ${MOTIVO_MINIMO} caracteres e ${MOTIVO_PALAVRAS} palavras.`;
+
+/* Linhas do Status das atualizações que obedecem a uma chave (id da linha → chave). */
+export const CHAVE_DA_LINHA: Readonly<Record<string, string>> = Object.freeze({
+  entrevistas: "entrevistas",
+  selecao: "selecao",
+  conferencias: "conferencias",
+  pre_classificacao: "pre_classificacao",
+  classificacao_desempate: "classificacao",
+  classificacao_calculo: "classificacao_calculo",
+});
+
+/*
+  Chave que só tem efeito com outra ligada (20261024110000): o cálculo das
+  listas pelo Python sai pelo workflow da "Classificação em Python", e o banco
+  (FC_CALCULO_PELO_PYTHON) exige as duas ligadas.
+*/
+export const CHAVE_QUE_PRECISA_DE: Readonly<Record<string, string>> =
+  Object.freeze({ classificacao_calculo: "classificacao" });
+
+/* Quando a chave não tem tarefa no pg_cron: o que dispara a automação. */
+const QUANDO_SEM_TAREFA: Readonly<Record<string, string>> = Object.freeze({
+  pre_classificacao: "No fim de cada carga do robô da Empregare",
+  robo_de_inscricoes: "Nenhum edital com agenda de inscrições",
+  classificacao: "Quando uma lista é gerada na Classificação",
+  classificacao_calculo: "Quando alguém clica em Gerar na Classificação",
+});
+
+const registro = (valor: unknown): Record<string, unknown> =>
+  valor !== null && typeof valor === "object" && !Array.isArray(valor)
+    ? (valor as Record<string, unknown>)
+    : {};
+const registros = (valor: unknown) =>
+  (Array.isArray(valor) ? valor : [])
+    .filter((v) => v !== null && typeof v === "object" && !Array.isArray(v))
+    .map(registro);
+const texto = (valor: unknown) =>
+  typeof valor === "string" || typeof valor === "number"
+    ? String(valor).trim()
+    : "";
+const data = (valor: unknown): Date | null => {
+  if (typeof valor !== "string" && typeof valor !== "number") return null;
+  if (valor === "") return null;
+  const d = new Date(valor);
+  return Number.isNaN(d.getTime()) ? null : d;
+};
+
+function execucao(entrada: unknown): ExecucaoDaTarefa | null {
+  const bruta = registro(entrada);
+  const inicio = data(bruta.inicio);
+  if (!inicio) return null;
+  return { inicio, fim: data(bruta.fim), situacao: texto(bruta.situacao) };
+}
+
+function tarefa(entrada: Record<string, unknown>): TarefaDaChave | null {
+  const nome = texto(entrada.nome);
+  if (!nome) return null;
+  return {
+    nome,
+    agenda: texto(entrada.agenda),
+    ativa: entrada.ativa === true,
+    ultima: execucao(entrada.ultima),
+  };
+}
+const tarefas = (valor: unknown) =>
+  registros(valor)
+    .map(tarefa)
+    .filter((t): t is TarefaDaChave => t !== null);
+
+/** O payload de `obter_chaves_da_automacao`, conferido campo a campo. */
+export function normalizarChaves(entrada: unknown): ChavesDaAutomacao {
+  const dados = registro(entrada);
+  const chaves = registros(dados.chaves)
+    .map((c): ChaveDaAutomacao | null => {
+      const chave = texto(c.chave);
+      if (!chave) return null;
+      return {
+        chave,
+        nome: texto(c.nome) || chave,
+        ligada: c.ligada !== false,
+        motivo: texto(c.motivo),
+        em: data(c.em),
+        por: texto(c.por),
+        tarefas: tarefas(c.tarefas),
+        ultimoPedido: execucao(c.ultimo_pedido),
+        ultimaPreClassificacao: execucao(c.ultima_pre_classificacao),
+      };
+    })
+    .filter((c): c is ChaveDaAutomacao => c !== null);
+  const historico = registros(dados.historico)
+    .map((h): EventoDaChave => ({
+      chave: texto(h.chave),
+      ligada: h.ligada === true,
+      motivo: texto(h.motivo),
+      em: data(h.em),
+      por: texto(h.por),
+      tarefas: (Array.isArray(h.tarefas) ? h.tarefas : [])
+        .map(texto)
+        .filter(Boolean),
+    }))
+    .filter((h) => h.chave);
+  return {
+    geradoEm: data(dados.gerado_em),
+    cronDisponivel: dados.cron_disponivel !== false,
+    chaves,
+    semChave: tarefas(dados.sem_chave),
+    historico,
+  };
+}
+
+const VOGAL = /[aeiouyáàâãäéèêëíìîïóòôõöúùûü]/u;
+const CINCO_CONSOANTES = /[^aeiouyáàâãäéèêëíìîïóòôõöúùûü]{5}/u;
+const TRES_IGUAIS = /(.)\1\1/u;
+
+/** Palavra de verdade: 3 letras ou mais, com vogal, sem 5 consoantes nem 3 letras iguais seguidas. */
+function palavraDeVerdade(letras: string) {
+  return (
+    letras.length >= 3 &&
+    VOGAL.test(letras) &&
+    !CINCO_CONSOANTES.test(letras) &&
+    !TRES_IGUAIS.test(letras)
+  );
+}
+
+/**
+  Motivo com sentido, a mesma regra do banco (private."FC_MOTIVO_COM_SENTIDO",
+  20261103213000): de 15 a 500 caracteres (sem os espaços das pontas), 3
+  palavras ou mais, ao menos 2 palavras de verdade e 5 letras diferentes.
+  Recusa teclado batido ("sadasdsadsadasdas", "testegcgbgfbg", "asdf asdf asdf").
+*/
+export function motivoValido(motivo: unknown) {
+  const t = typeof motivo === "string" ? motivo.trim().toLowerCase() : "";
+  if (t.length < MOTIVO_MINIMO || t.length > MOTIVO_MAXIMO) return false;
+  const palavras = t.split(/\s+/u);
+  if (palavras.length < MOTIVO_PALAVRAS) return false;
+  const letras = palavras.map((p) => p.replace(/\P{L}/gu, ""));
+  if (letras.filter(palavraDeVerdade).length < 2) return false;
+  return new Set(letras.join("")).size >= 5;
+}
+
+/* ── Visão de cada chave na tela ───────────────────────────────────────── */
+
+const maisRecente = (lista: (ExecucaoDaTarefa | null)[]) =>
+  lista
+    .filter((e): e is ExecucaoDaTarefa => e !== null)
+    .sort(
+      (a, b) => (b.inicio?.getTime() ?? 0) - (a.inicio?.getTime() ?? 0),
+    )[0] || null;
+
+/** A última execução automática: a tarefa mais recente ou a triagem do fim do robô. */
+export function ultimaExecucao(chave: ChaveDaAutomacao) {
+  return maisRecente([
+    ...chave.tarefas.map((t) => t.ultima),
+    chave.ultimaPreClassificacao,
+  ]);
+}
+
+/** A próxima execução: a mais cedo das tarefas ativas; `null` com a chave desligada. */
+export function proximaDaChave(chave: ChaveDaAutomacao, agora = new Date()) {
+  if (!chave.ligada) return null;
+  const proximas = chave.tarefas
+    .filter((t) => t.ativa)
+    .map((t) => proximaExecucao(t.agenda, agora))
+    .filter((d): d is Date => d !== null)
+    .sort((a, b) => a.getTime() - b.getTime());
+  return proximas[0] || null;
+}
+
+/** Texto da próxima execução quando não há data (chave desligada ou sem tarefa). */
+export function semProxima(chave: ChaveDaAutomacao) {
+  if (!chave.ligada) return "Não roda enquanto estiver desligada";
+  if (!chave.tarefas.length) return QUANDO_SEM_TAREFA[chave.chave] || "—";
+  if (!chave.tarefas.some((t) => t.ativa)) return "Tarefas paradas no banco";
+  return "—";
+}
+
+/**
+ * Tarefas do pg_cron fora do estado da chave (alguém mexeu direto no banco):
+ * ligadas com a chave desligada, ou paradas com a chave ligada.
+ */
+export function tarefasForaDaChave(chave: ChaveDaAutomacao) {
+  return chave.tarefas.filter((t) => t.ativa !== chave.ligada);
+}
+
+/** Chave por tarefa do pg_cron (para o Status das atualizações). */
+export function chavesPorTarefa(dados: ChavesDaAutomacao | null | undefined) {
+  const mapa = new Map<string, ChaveDaAutomacao>();
+  for (const chave of dados?.chaves || [])
+    for (const t of chave.tarefas) mapa.set(t.nome, chave);
+  return mapa;
+}
+
+/** A chave de que esta precisa, quando está desligada (então esta não tem efeito); senão `null`. */
+export function chaveQueFalta(
+  dados: ChavesDaAutomacao | null | undefined,
+  chave: ChaveDaAutomacao,
+) {
+  const id = Object.hasOwn(CHAVE_QUE_PRECISA_DE, chave.chave)
+    ? CHAVE_QUE_PRECISA_DE[chave.chave]
+    : "";
+  const outra = id ? dados?.chaves.find((c) => c.chave === id) : undefined;
+  return outra && !outra.ligada ? outra : null;
+}
+
+/** O aviso curto da chave ligada sem efeito (a de que ela precisa está desligada). */
+export function avisoSemEfeito(
+  dados: ChavesDaAutomacao | null | undefined,
+  chave: ChaveDaAutomacao,
+) {
+  if (!chave.ligada) return null;
+  const falta = chaveQueFalta(dados, chave);
+  return falta
+    ? `Sem efeito enquanto "${falta.nome}" estiver desligada: o Gerar segue com o cálculo da tela.`
+    : null;
+}
+
+/**
+ * A chave de uma linha do Status das atualizações, se houver. Ligada, mas sem
+ * efeito porque a de que precisa está desligada: vale a desligada.
+ */
+export function chaveDaLinha(
+  dados: ChavesDaAutomacao | null | undefined,
+  linha: string,
+) {
+  const id = Object.hasOwn(CHAVE_DA_LINHA, linha) ? CHAVE_DA_LINHA[linha] : "";
+  const propria = (id && dados?.chaves.find((c) => c.chave === id)) || null;
+  if (!propria?.ligada) return propria;
+  return chaveQueFalta(dados, propria) || propria;
+}
+
+/** O que dizer quando o banco recusa a mudança. */
+export function mensagemDaRecusa(erro: { code?: string; message?: string }) {
+  if (erro.code === "42501")
+    return "Só o administrador global liga ou desliga a automação.";
+  if (erro.code === "55000")
+    return "Outra pessoa já mudou esta automação. A lista foi atualizada.";
+  if (erro.code === "PGRST202")
+    return "O banco ainda não tem as chaves da automação (migration 20261022190000).";
+  return erro.message || "Não foi possível mudar a automação.";
+}

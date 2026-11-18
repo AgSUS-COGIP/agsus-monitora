@@ -18,7 +18,7 @@ Indígena** ([[modulo-mapa-saude-indigena]]) e usa as mesmas peças: muda o que 
   vagas"), filtro "Projeto" e "Agrupar por projeto".
 - `balao.ts` — dica e popup do lugar em DOM seguro (projeto, edital, vagas, lotações, contagens).
 - `editor-de-coordenadas.tsx` — "Coordenadas" (admin global e Gestor): o editor comum com os
-  lugares das vagas, as regras de `src/lib/coordenadas-dos-projetos.ts` e as RPCs
+  lugares das vagas, as regras de `src/lib/mapas/coordenadas-dos-projetos.ts` e as RPCs
   `*_coordenada_mapa_projetos` (migration `20261002190000`).
 - `carregador.ts` — RPC `listar_municipios_das_vagas_da_area`, um pedido por área, cache de 5 min,
   e a escolha da lista (sobrevive à troca de área).
@@ -31,17 +31,17 @@ Indígena** ([[modulo-mapa-saude-indigena]]) e usa as mesmas peças: muda o que 
 - Limites, zoom (4,5 a 19, em quartos), viscosidade, teclado, régua: `criarMapa`, que liga a
   guarda do mapa (`opcoesDoMapa` e `protegerMapa`, `src/modulos/mapa-saude-indigena/guarda-do-mapa.ts`).
 - Enquadramento: `enquadramentoDoRecorte` — sem filtro, o Brasil; com filtro, zoom 7 num ponto só
-  ou a caixa (padding 60, maxZoom 7) (`src/lib/enquadramento-do-brasil.ts`, `enquadrar`).
+  ou a caixa (padding 60, maxZoom 7) (`src/lib/mapas/enquadramento-do-brasil.ts`, `enquadrar`).
 - Reenquadra ao aparecer ou mudar de tamanho até a pessoa mexer; "Brasil" volta a acompanhar
   (`pegar`/`soltar` em `criarMapaDoBrasil`).
 - Topo: título, contagem, "Coordenadas", "Brasil", "Tela cheia" (`TopoDoMapa`).
 - Tela cheia (Esc sai) e modo de edição: `usarTelaCheia` (`tela-cheia.tsx`), `usarModoDeEdicao`.
 - Mapa/Satélite: `map-base-layer-switcher.ts` (ids `map`, `detailMap`, `mapaDosProjetos`).
 - Bolha: `raioDaBolha` (raiz do valor, 5 a 15 px, escala do conjunto inteiro: filtrar não muda o
-  tamanho) e `OPACIDADE_DA_BOLHA` (0,7), em `src/lib/mapa-render.ts`.
+  tamanho) e `OPACIDADE_DA_BOLHA` (0,7), em `src/lib/mapas/mapa-render.ts`.
 - Bolhas no mesmo pixel: leque com traço até o ponto real (`criarLeque`, `leaflet.ts`).
 - Dica e popup: `ligarDicaEPopup`, `manterDicasDentroDoMapa`/`opcoesDoPopup`
-  (`src/lib/dica-dentro-do-mapa.ts`).
+  (`src/lib/mapas/dica-dentro-do-mapa.ts`).
 - Legenda: `LegendaFlutuante` (começa recolhida, `legenda.tsx`).
 - Lista lateral: total, esqueleto, vazio em uma linha; id `<mapa>-painel-lateral` (`ListaDoMapa`).
 - Filtros da Visão geral: as linhas recortadas e `temRecorte` da página.
@@ -67,8 +67,8 @@ Indígena** ([[modulo-mapa-saude-indigena]]) e usa as mesmas peças: muda o que 
 `<MapaDeProjetos area={e.area} carregador={…} carregadoEm={e.carregadoEm} linhas={e.filtradas}
 filtroAtivo={e.temRecorte}>`. O carregador é criado por `montarVisaoGeral` (um por montagem). O
 pedido só sai depois da primeira carga da página (`carregadoEm`, com sessão); Atualizar dados pede
-de novo e o cache decide. Lógica pura em `src/lib/visao-geral-da-area.ts` (projetos, recorte,
-pontos, grupos, resumo do popup) e `src/lib/coordenadas-dos-municipios.ts`.
+de novo e o cache decide. Lógica pura em `src/lib/visao-geral/visao-geral-da-area.ts` (projetos, recorte,
+pontos, grupos, resumo do popup) e `src/lib/mapas/coordenadas-dos-municipios.ts`.
 
 Saiu do legado: `municipios-da-visao-geral.js`, o bloco `#mapaDaVisaoGeral`/
 `#reservaDoMapaDaVisaoGeral` do `index.html`, `renderMap`, `desenharMunicipiosNoMapa`,
@@ -78,7 +78,7 @@ Saiu do legado: `municipios-da-visao-geral.js`, o bloco `#mapaDaVisaoGeral`/
 ## TypeScript e fronteiras
 
 Mapa, lista, balões, carregador e integração do editor em TypeScript; contratos em `tipos.ts`;
-contrato mínimo do mapa em `src/lib/tipos-do-mapa.ts` (não cobre toda a API do Leaflet). A
+contrato mínimo do mapa em `src/lib/mapas/tipos-do-mapa.ts` (não cobre toda a API do Leaflet). A
 resposta da RPC entra como `unknown`: a normalização verifica listas e registros, aceita nomes em
 texto e números finitos ou textos numéricos, aplica padrões e descarta linhas sem município nem
 UF; `origens` fica como lista de `unknown`. Não audita nomes geográficos nem garante posição

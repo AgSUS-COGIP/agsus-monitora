@@ -1,7 +1,7 @@
 import type { PlanilhaDaClassificacao } from "./tipos-dos-documentos.ts";
-import { escapeHtml } from "../sanitize";
+import { escapeHtml } from "../seguranca/sanitize";
 import { dataBR, formatarNota } from "./numeros.ts";
-import { esperaAntesDaTentativa } from "../novas-tentativas.ts";
+import { esperaAntesDaTentativa } from "../sessao/novas-tentativas.ts";
 
 /*
   O relatório de desempate de uma lista gerada, como a tela o mostra e exporta
@@ -335,7 +335,7 @@ export const ESPERA_DO_RELATORIO_MS = 15 * 60 * 1000;
 export const RELEITURA_DO_PREPARO_MS = 10 * 1000;
 export const TETO_DA_RELEITURA_MS = 60 * 1000;
 
-/** Espera antes da `n`-ésima releitura do preparo (src/lib/novas-tentativas.ts). */
+/** Espera antes da `n`-ésima releitura do preparo (src/lib/sessao/novas-tentativas.ts). */
 export function esperaDaReleitura(n: number, sorteio?: () => number) {
   return esperaAntesDaTentativa(
     n,

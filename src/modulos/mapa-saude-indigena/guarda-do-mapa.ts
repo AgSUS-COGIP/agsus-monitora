@@ -1,8 +1,11 @@
-import { BRASIL_BOUNDS, NAVEGACAO_BOUNDS } from "../../lib/brasil-bounds.ts";
+import {
+  BRASIL_BOUNDS,
+  NAVEGACAO_BOUNDS,
+} from "../../lib/mapas/brasil-bounds.ts";
 import {
   FOLGA_DO_BRASIL,
   zoomQueCabe,
-} from "../../lib/enquadramento-do-brasil.ts";
+} from "../../lib/mapas/enquadramento-do-brasil.ts";
 
 /*
   A GUARDA DO MAPA
@@ -117,7 +120,7 @@ interface LeafletDaGuarda {
 
 /*
   Os limites vêm do contorno real do país, não de um retângulo estimado.
-  Ver `src/lib/brasil-bounds.ts` para a medição e para o que a diferença custava.
+  Ver `src/lib/mapas/brasil-bounds.ts` para a medição e para o que a diferença custava.
 */
 const BRAZIL_VIEW_BOUNDS = BRASIL_BOUNDS;
 
@@ -227,7 +230,7 @@ function hardenMapInstance(L: LeafletDaGuarda, map: MapaDaGuarda) {
 
   /*
     O Brasil inteiro, com folga para as bolhas da borda
-    (src/lib/enquadramento-do-brasil.ts). O zoom mínimo é a escala nacional
+    (src/lib/mapas/enquadramento-do-brasil.ts). O zoom mínimo é a escala nacional
     (HEALTH_MAP_MIN_ZOOM) ou, numa moldura baixa, o zoom em quartos em que o
     país cabe com a folga — antes, preso em 4.5, o norte e o sul saíam
     cortados num mapa de 640 px. Recalculado a cada enquadramento do país:

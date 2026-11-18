@@ -6,12 +6,12 @@ import {
   normalizarCaso,
   ondeDoCaso,
   quemDoCaso,
-} from "../src/lib/avisos-de-conferencia.ts";
-import { filtrosDeEntrevistas } from "../src/lib/filtro-da-aya.ts";
+} from "../src/lib/conferencias/avisos-de-conferencia.ts";
+import { filtrosDeEntrevistas } from "../src/lib/aya/filtro-da-aya.ts";
 import {
   filterApprovedCandidates,
   nomeDosCandidatosFiltrados,
-} from "../src/lib/lista-aprovados-rules.ts";
+} from "../src/lib/aprovados/lista-aprovados-rules.ts";
 
 /*
   Casos dos avisos dos outros módulos (20261007240000): aprovados,

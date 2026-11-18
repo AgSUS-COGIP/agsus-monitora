@@ -13,12 +13,12 @@ import {
   acompanharCasamento,
   pedidoLido,
   PRAZO_DO_CASAMENTO_MS,
-} from "../../lib/casamento-da-lista.ts";
-import { candidatosDaListaFinal } from "../../lib/publicacao-de-aprovados.ts";
+} from "../../lib/aprovados/casamento-da-lista.ts";
+import { candidatosDaListaFinal } from "../../lib/aprovados/publicacao-de-aprovados.ts";
 import {
   situacaoDaPublicacao,
   resultadoDaPublicacao,
-} from "../../lib/dados-da-publicacao-de-aprovados.ts";
+} from "../../lib/aprovados/dados-da-publicacao-de-aprovados.ts";
 import {
   objeto,
   textoDaClassificacao,
@@ -85,7 +85,7 @@ import {
   (documento-docx.js); PDF = impressão da página "Como fica no SEI". O
   cabeçalho da agência vem de Configurações › Marca (`documento_cabecalho`).
 */
-import { MIME_DOCX } from "../../lib/documento-da-resposta.ts";
+import { MIME_DOCX } from "../../lib/recursos/documento-da-resposta.ts";
 import {
   gerarXlsx,
   gerarXlsxDaLista,
@@ -118,8 +118,8 @@ import {
   textoParaSei,
 } from "../../lib/classificacao/documento-sei.ts";
 import { gerarDocxOficial } from "../../lib/classificacao/documento-docx.ts";
-import { ehEditalDeTreinamento } from "../../lib/edital-de-treinamento.ts";
-import { LOGO_PADRAO_DA_BARRA } from "../../lib/marca-da-barra-lateral.ts";
+import { ehEditalDeTreinamento } from "../../lib/editais/edital-de-treinamento.ts";
+import { LOGO_PADRAO_DA_BARRA } from "../../lib/navegacao/marca-da-barra-lateral.ts";
 import {
   copiarParaAreaDeTransferencia,
   imprimirPagina,
@@ -128,14 +128,14 @@ import {
 import { convocacaoDoEdital } from "../../lib/classificacao/convocacao-do-edital.ts";
 import { normalizarRegra } from "../../lib/classificacao/regra.ts";
 import { geracaoDesatualizada } from "../../lib/classificacao/dados.ts";
-import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
-import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
+import { rotuloDaVersao } from "../../lib/base/nome-da-versao.ts";
+import { ehConflitoDeVersao } from "../../lib/base/conflito-de-versao.ts";
 import {
   comTempoLimite,
   ehFalhaDeConexao,
   mensagemDeFalha,
-} from "../../lib/falha-de-rede";
-import { esperaAntesDaTentativa } from "../../lib/novas-tentativas.ts";
+} from "../../lib/carga/falha-de-rede";
+import { esperaAntesDaTentativa } from "../../lib/sessao/novas-tentativas.ts";
 import { criarCopiasPorVersao } from "../../app/copias-por-versao.ts";
 import { criarLeituraPorVersao } from "../../lib/avaliacao-documental/leitura-por-versao.ts";
 
@@ -578,7 +578,7 @@ export function criarEstadoDaClassificacao({
     avisar("calculando");
     const inicio = agora();
     let lido = calculoLido({ ...pedido, retrato: null });
-    // Conexão caída: a espera cresce a cada falha seguida (src/lib/novas-tentativas.ts).
+    // Conexão caída: a espera cresce a cada falha seguida (src/lib/sessao/novas-tentativas.ts).
     let falhasSeguidas = 0;
     while (esperaOJob(lido.situacao)) {
       if (agora() - inicio >= prazoDoCalculoMs) {
@@ -832,7 +832,7 @@ export function criarEstadoDaClassificacao({
     confere o retrato, lê a lista vigente do edital (e se a pessoa pode
     substituí-la) e pede o casamento das pessoas ao job Python
     (pedir_casamento_da_lista), com a revisão à mão (`manuais`); espera o
-    plano (src/lib/casamento-da-lista.ts). Sem permissão para substituir a
+    plano (src/lib/aprovados/casamento-da-lista.ts). Sem permissão para substituir a
     lista vigente, não pede nada: a tela avisa.
   */
   async function prepararPublicacaoDeAprovados(

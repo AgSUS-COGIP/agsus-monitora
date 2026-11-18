@@ -90,7 +90,8 @@ describe("service worker cache policy", () => {
 
 describe("versão do cache do service worker", () => {
   it("o build troca o nome do cache pela versão publicada", async () => {
-    const { swComVersao } = await import("../src/lib/cache-do-service-worker");
+    const { swComVersao } =
+      await import("../src/lib/carga/cache-do-service-worker");
     const fonte = readFileSync(resolve(process.cwd(), "sw.js"), "utf8");
     const publicado = swComVersao(fonte, "abc123");
     expect(publicado).toContain(
@@ -100,7 +101,8 @@ describe("versão do cache do service worker", () => {
   });
 
   it("o build grava no sw.js a lista dos arquivos guardados na instalação", async () => {
-    const { swComVersao } = await import("../src/lib/cache-do-service-worker");
+    const { swComVersao } =
+      await import("../src/lib/carga/cache-do-service-worker");
     const fonte = readFileSync(resolve(process.cwd(), "sw.js"), "utf8");
     expect(fonte).toContain("const PRECACHE = [];");
     const publicado = swComVersao(fonte, "abc123", ["/assets/a-12345678.js"]);
@@ -109,7 +111,7 @@ describe("versão do cache do service worker", () => {
 
   it("guarda código, estilo, fonte e imagem; deixa de fora os JSON dos mapas", async () => {
     const { arquivosParaGuardar } =
-      await import("../src/lib/cache-do-service-worker");
+      await import("../src/lib/carga/cache-do-service-worker");
     expect(
       arquivosParaGuardar([
         "assets/main-CQ0xKEuX.css",

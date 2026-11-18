@@ -1,8 +1,8 @@
-import { rotuloDaCopia } from "../../lib/rotulo-da-copia.ts";
+import { rotuloDaCopia } from "../../lib/carga/rotulo-da-copia.ts";
 import {
   naLocalidade,
   opcoesDeLocalidade,
-} from "../../lib/localidade-da-vaga.ts";
+} from "../../lib/aprovados/localidade-da-vaga.ts";
 import type {
   EstadoDosAprovados,
   SnapshotDosAprovados,
@@ -13,13 +13,13 @@ import type {
 import type { FiltrosDaTabelaDeAprovados } from "./tipos-da-aba-de-aprovados.ts";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient";
+import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import {
   canAlterarPorDecisaoJudicial,
   canChangeCandidateStatus,
   canManageSubJudice,
-} from "../../lib/access-roles.ts";
-import { CHAVE_DO_CABECALHO } from "../../lib/cabecalho-dos-documentos.ts";
+} from "../../lib/acessos/access-roles.ts";
+import { CHAVE_DO_CABECALHO } from "../../lib/base/cabecalho-dos-documentos.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import {
   candidateCargosForEdital,
@@ -27,16 +27,16 @@ import {
   filterApprovedCandidates,
   manterSoAsOpcoes,
   opcoesDeEdital,
-} from "../../lib/lista-aprovados-rules.ts";
-import { PLANILHAS } from "../../lib/planilhas.ts";
-import { formatarDataHora } from "../../lib/cronograma-do-edital.ts";
+} from "../../lib/aprovados/lista-aprovados-rules.ts";
+import { PLANILHAS } from "../../lib/base/planilhas.ts";
+import { formatarDataHora } from "../../lib/cronograma/cronograma-do-edital.ts";
 import { soDosEditais } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { classes, ErroAoCarregar, TopoDoPainel } from "../../ui/index.ts";
 import { AbaAprovados } from "./aba-aprovados.tsx";
 import { AbaConvocacao } from "./aba-convocacao.tsx";
 import { AbaResumo } from "./aba-resumo.tsx";
-import type { ResumoPorCargoEStatus } from "../../lib/resumo-por-cargo-e-status.ts";
+import type { ResumoPorCargoEStatus } from "../../lib/aprovados/exportacao/resumo-por-cargo-e-status.ts";
 import { criarEstadoDaListaDeAprovados } from "./estado.js";
 import { ModalDeAnexos, ModalDeStatus, ModalSubJudice } from "./modais.tsx";
 import { ModalListasDoEdital } from "./modal-listas-do-edital.tsx";
@@ -50,9 +50,9 @@ import {
   criarEstadoDasPendencias,
   type EstadoDasPendencias,
 } from "./pendencias/estado-das-pendencias.ts";
-import { contarAbertas } from "../../lib/pendencias-do-edital.ts";
-import { hojeEmBrasilia } from "../../lib/carta-de-convocacao.ts";
-import { montarPedidoDaExportacao } from "../../lib/exportacao-da-lista-de-aprovados.ts";
+import { contarAbertas } from "../../lib/aprovados/pendencias-do-edital.ts";
+import { hojeEmBrasilia } from "../../lib/aprovados/carta-de-convocacao/carta-de-convocacao.ts";
+import { montarPedidoDaExportacao } from "../../lib/aprovados/exportacao/exportacao-da-lista-de-aprovados.ts";
 import { ModalDaExportacao } from "./exportacao/modal-da-exportacao.tsx";
 import "./convocacao.css";
 import "./carta-de-convocacao/carta.css";

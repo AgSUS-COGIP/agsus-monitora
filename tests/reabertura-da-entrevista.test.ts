@@ -5,7 +5,7 @@ import {
   MOTIVOS_DA_REABERTURA_DA_ENTREVISTA,
   podeConcluirAEntrevista,
   validarReaberturaDaEntrevista,
-} from "../src/lib/reabertura-da-entrevista.ts";
+} from "../src/lib/entrevistas/reabertura-da-entrevista.ts";
 
 /*
   Concluir e reabrir a entrevista (20261117050000): a lista de motivos da

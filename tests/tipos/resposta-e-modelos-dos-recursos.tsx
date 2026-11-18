@@ -1,15 +1,15 @@
 import { SecaoDaResposta } from "../../src/modulos/recursos/resposta.tsx";
 import { PainelDeModelos } from "../../src/modulos/recursos/modelos.tsx";
-import { acoesDaResposta } from "../../src/lib/resposta-do-recurso.ts";
+import { acoesDaResposta } from "../../src/lib/recursos/resposta-do-recurso.ts";
 import {
   rascunhoDoModelo,
   renderizarModelo,
-} from "../../src/lib/modelos-de-resposta.ts";
+} from "../../src/lib/recursos/modelos-de-resposta.ts";
 import type { PropsDaGavetaDoRecurso } from "../../src/modulos/recursos/tipos-da-gaveta.ts";
 import type {
   ModeloDaResposta,
   RespostaDoRecurso,
-} from "../../src/lib/tipos-da-resposta-do-recurso.ts";
+} from "../../src/lib/recursos/tipos-da-resposta-do-recurso.ts";
 import type { AcaoDaResposta } from "../../src/modulos/recursos/tipos-do-estado.ts";
 
 function conferir(

@@ -5,7 +5,7 @@ import type {
   FocusEvent,
   KeyboardEvent,
 } from "react";
-import { preCarregarTela } from "../../lib/carga-de-telas";
+import { preCarregarTela } from "../../lib/carga/carga-de-telas";
 import type {
   GrupoDoMenu,
   ItemDoMenu as Item,
@@ -54,18 +54,18 @@ import {
   posicaoDoPainelFlutuante,
   proximoFlutuante,
   recortarArvorePorArea,
-} from "../../lib/menu-lateral.ts";
+} from "../../lib/navegacao/menu-lateral.ts";
 import {
   assinarDadosDoMonitoramento,
   definirAreaAtual,
   obterDadosDoMonitoramento,
 } from "../dados-do-monitoramento.ts";
-import { dicaDaManutencao } from "../../lib/situacao-dos-modulos.ts";
+import { dicaDaManutencao } from "../../lib/navegacao/situacao-dos-modulos.ts";
 import { marcarItemAtivoNoMenu } from "./estado.ts";
 
 /*
   O menu em áreas. O catálogo, a árvore e o estado do painel flutuante são
-  lógica pura, em `src/lib/menu-lateral.ts`; aqui fica o desenho.
+  lógica pura, em `src/lib/navegacao/menu-lateral.ts`; aqui fica o desenho.
 
   - Com mais de uma área, o topo é o SELETOR DE ÁREA ("Área: Projetos", com o
     ícone da área e a bolinha da cor dela) e, abaixo dele, só as páginas da
@@ -259,7 +259,7 @@ function usarGatilhoFlutuante({
   ponteiro e no foco.
 
   Aba em manutenção (`item.manutencao`, do catálogo; ver
-  `src/lib/situacao-dos-modulos.ts`) leva a chave inglesa âmbar ao lado do
+  `src/lib/navegacao/situacao-dos-modulos.ts`) leva a chave inglesa âmbar ao lado do
   nome, com a mensagem e a previsão na dica (`title`). A página continua no
   menu: quem abre vê a tela de manutenção (o administrador global entra).
 */

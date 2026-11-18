@@ -1,11 +1,11 @@
 import type {
   FolgaDoEditor,
   PontoDoEditor,
-} from "../../lib/tipos-do-editor-de-coordenadas.ts";
+} from "../../lib/mapas/tipos-do-editor-de-coordenadas.ts";
 import type { ReactNode } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { LinhaDoMonitoramento } from "../../componentes/tipos-do-monitoramento.ts";
-import type { MapaNacional } from "../../lib/tipos-do-mapa.ts";
+import type { MapaNacional } from "../../lib/mapas/tipos-do-mapa.ts";
 
 export type Coordenadas = [latitude: number, longitude: number];
 export interface ProjetoDoMapa {

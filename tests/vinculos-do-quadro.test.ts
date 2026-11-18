@@ -8,7 +8,7 @@ import {
   semLinhaConfirmado,
   separarFila,
   type VinculoDaVaga,
-} from "../src/lib/vinculos-do-quadro.ts";
+} from "../src/lib/editais/vinculos-do-quadro.ts";
 
 const L1 = { id: "l1", cargo: "Enfermeiro", lotacao: "Polo Base Alfa" };
 const L2 = { id: "l2", cargo: "Enfermeiro", lotacao: "Polo Base Beta" };

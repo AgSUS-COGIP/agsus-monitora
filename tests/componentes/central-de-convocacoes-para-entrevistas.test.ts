@@ -6,7 +6,7 @@ import {
   CentralDeConvocacoes,
   usarConducaoLigada,
 } from "../../src/modulos/aprovados/central-de-convocacoes.tsx";
-import { paginaDesligada } from "../../src/lib/pagina-desligada.ts";
+import { paginaDesligada } from "../../src/lib/navegacao/pagina-desligada.ts";
 import type { TipoDaCentralDeConvocacoes } from "../../src/modulos/aprovados/central-de-convocacoes.tsx";
 import { criarConducaoDeEntrevistas } from "../../src/modulos/entrevistas/conduzir.tsx";
 import type { ClienteDaConducao } from "../../src/modulos/entrevistas/tipos-do-estado-da-conducao.ts";
@@ -14,7 +14,7 @@ import { desenharNoTeste } from "../montar-tela.ts";
 import { clicar, escolher, esperar } from "./interacoes.ts";
 
 /* A página desligada pela coordenação (Módulos e abas): por padrão, ligada. */
-vi.mock("../../src/lib/pagina-desligada.ts", () => ({
+vi.mock("../../src/lib/navegacao/pagina-desligada.ts", () => ({
   paginaDesligada: vi.fn(() => false),
 }));
 

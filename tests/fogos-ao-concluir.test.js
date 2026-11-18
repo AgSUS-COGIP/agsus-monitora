@@ -2,8 +2,8 @@
 import { readFileSync } from "node:fs";
 import { act } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { CHAVE_DO_SOM } from "../src/lib/fogos-cena.ts";
-import { criarAleatorio } from "../src/lib/fogos.ts";
+import { CHAVE_DO_SOM } from "../src/lib/comemoracao/fogos-cena.ts";
+import { criarAleatorio } from "../src/lib/comemoracao/fogos.ts";
 import { TEMPO_DO_AVISO_MS } from "../src/modulos/comemoracao/plano.ts";
 import {
   encerrarShowsAoFimDeCadaTeste,

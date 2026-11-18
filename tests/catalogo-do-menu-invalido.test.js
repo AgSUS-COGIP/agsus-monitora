@@ -3,7 +3,7 @@ import {
   abasDoCatalogo,
   montarArvoreDoMenu,
   paginasDaArea,
-} from "../src/lib/menu-lateral.ts";
+} from "../src/lib/navegacao/menu-lateral.ts";
 
 const aba = {
   co_aba: "editais",

@@ -21,7 +21,7 @@ import {
   tiposOcultosValidos,
   unidadeCurta,
   visaoInicial,
-} from "../src/lib/calendario-editais.ts";
+} from "../src/lib/cronograma/calendario-editais.ts";
 
 /*
   As regras das vistas Lista e Semana do Cronograma. As etapas passam pelo

@@ -4,11 +4,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   erroDoMotivoDoCritico,
   motivosDeAtencao,
-} from "../../src/lib/criticos-da-visao-geral.ts";
+} from "../../src/lib/visao-geral/criticos-da-visao-geral.ts";
 import {
   acompanhamentoDaResposta,
   enriquecerLinhas,
-} from "../../src/lib/visao-geral.ts";
+} from "../../src/lib/visao-geral/visao-geral.ts";
 import {
   buscarAcompanhamentoNoSupabase,
   RPC_ACOMPANHAMENTO,

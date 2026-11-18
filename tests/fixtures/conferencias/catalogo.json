@@ -1,5 +1,5 @@
 {
-  "_leia": "Catálogo das conferências de consistência: a mesma lista é conferida pelo pytest (scripts/conferencias/catalogo.py) e pelo vitest (src/lib/avisos-de-conferencia.ts). Mudou uma conferência: mude aqui e nos dois lados.",
+  "_leia": "Catálogo das conferências de consistência: a mesma lista é conferida pelo pytest (scripts/conferencias/catalogo.py) e pelo vitest (src/lib/conferencias/avisos-de-conferencia.ts). Mudou uma conferência: mude aqui e nos dois lados.",
   "conferencias": {
     "ANALISE_APROVADA_ABAIXO_DO_CORTE": {
       "modulo": "analises",
@@ -76,6 +76,11 @@
       "gravidade": "ATENCAO",
       "titulo": "Ajuste de recurso aprovado depois da última lista"
     },
+    "CLASSIFICACAO_CONVOCACAO_REGRA_ANTERIOR": {
+      "modulo": "classificacao",
+      "gravidade": "ATENCAO",
+      "titulo": "Convocação gerada com versão anterior da regra"
+    },
     "APROVADOS_CONTRATADO_DUPLICADO": {
       "modulo": "aprovados",
       "gravidade": "CRITICA",
@@ -90,6 +95,11 @@
       "modulo": "aprovados",
       "gravidade": "ATENCAO",
       "titulo": "Convocado há muitos dias sem desfecho"
+    },
+    "APROVADOS_ADMITIDO_COM_STATUS_DESATUALIZADO": {
+      "modulo": "aprovados",
+      "gravidade": "ATENCAO",
+      "titulo": "Admitido no RH com status desatualizado"
     },
     "APROVADOS_PENDENCIA_DA_PUBLICACAO": {
       "modulo": "aprovados",

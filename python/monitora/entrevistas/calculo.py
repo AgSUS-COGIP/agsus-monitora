@@ -1,6 +1,6 @@
 """
 Cálculo da entrevista: a regra de private."FC_CALCULAR_ENTREVISTA" (banco) e de
-calcularEntrevista (src/lib/conducao-de-entrevista.js, a prévia da tela).
+calcularEntrevista (src/lib/entrevistas/conducao-de-entrevista.js, a prévia da tela).
 
 - Competência: média das notas lançadas pelos avaliadores × peso, arredondada em
   2 casas (meio para cima, como o numeric do Postgres). Sem nota = falta.

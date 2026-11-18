@@ -1,4 +1,4 @@
-import { registroDoEditor } from "../../lib/respostas-do-editor-de-coordenadas.ts";
+import { registroDoEditor } from "../../lib/mapas/respostas-do-editor-de-coordenadas.ts";
 import type { LeafletDoEditor, MapaDoEditor } from "./tipos.ts";
 
 /** A integração ainda recebe o Leaflet do carregador JavaScript. */

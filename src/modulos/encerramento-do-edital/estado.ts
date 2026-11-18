@@ -12,7 +12,7 @@
     leitura que já estava no caminho não reabre o que a pessoa fechou: os
     vistos desta página valem por cima da resposta até a sessão acabar.
 */
-import { getSupabaseClient } from "../../lib/supabaseClient";
+import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import {
   editaisDoEvento,
   encerramentoAMostrar,
@@ -21,7 +21,7 @@ import {
   RPC_DO_VISTO,
   RPC_DOS_ENCERRAMENTOS,
   type EncerramentoDoEdital,
-} from "../../lib/encerramento-do-edital.ts";
+} from "../../lib/encerramento-do-edital/encerramento-do-edital.ts";
 
 type RespostaDaRpc = { data?: unknown; error?: unknown };
 export interface ClienteDoEncerramento {

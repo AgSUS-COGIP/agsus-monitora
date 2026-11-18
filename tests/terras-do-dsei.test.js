@@ -41,8 +41,8 @@ const terraEm = (lat, lon, lado = 0.2) => ({
 describe("uma cor só para a Terra Indígena", () => {
   const modulo = [
     "src/modules/indigenous-territories-layer.ts",
-    ...readdirSync("src/lib/terras-indigenas").map(
-      (nome) => `src/lib/terras-indigenas/${nome}`,
+    ...readdirSync("src/lib/mapas/terras-indigenas").map(
+      (nome) => `src/lib/mapas/terras-indigenas/${nome}`,
     ),
   ]
     .map((caminho) => readFileSync(caminho, "utf8"))

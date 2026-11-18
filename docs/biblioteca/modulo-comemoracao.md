@@ -28,12 +28,12 @@ Lógica pura em `src/lib/`:
 
 | Arquivo                        | O quê                                                                    |
 | ------------------------------ | ------------------------------------------------------------------------ |
-| `comemoracao.ts`               | quando comemorar (transições vistas) e as frases de cada marco           |
-| `catalogo-de-comemoracoes.ts`  | o catálogo, a configuração publicada, `soAviso` e `reservarEfeitoDoDia`  |
-| `exemplos-das-comemoracoes.ts` | a frase de exemplo de cada marco (Testar e campo Mensagem)               |
-| `motor-de-efeitos.ts`          | confete, serpentina, estrelas, corações e balões                         |
-| `fogos.ts` e `fogos-*.ts`      | física, roteiro, formas no céu (número, coração, estrela, visto), paleta |
-| `efeitos-das-comemoracoes.ts`  | efeitos, intensidades e limites de duração                               |
+| `comemoracao/comemoracao.ts`               | quando comemorar (transições vistas) e as frases de cada marco           |
+| `comemoracao/catalogo-de-comemoracoes.ts`  | o catálogo, a configuração publicada, `soAviso` e `reservarEfeitoDoDia`  |
+| `comemoracao/exemplos-das-comemoracoes.ts` | a frase de exemplo de cada marco (Testar e campo Mensagem)               |
+| `comemoracao/motor-de-efeitos.ts`          | confete, serpentina, estrelas, corações e balões                         |
+| `comemoracao/fogos.ts` e `fogos-*.ts`      | física, roteiro, formas no céu (número, coração, estrela, visto), paleta |
+| `comemoracao/efeitos-das-comemoracoes.ts`  | efeitos, intensidades e limites de duração                               |
 
 ## Regras
 

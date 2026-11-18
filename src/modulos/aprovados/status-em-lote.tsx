@@ -12,9 +12,9 @@ import {
   rotuloDoStatusDoLote,
   statusDoLotePara,
   textoDaConfirmacaoDoLote,
-} from "../../lib/status-em-lote-dos-aprovados.ts";
-import { statusEhConvocado } from "../../lib/lista-aprovados-rules.ts";
-import { formatNumberBR } from "../../lib/formatters";
+} from "../../lib/aprovados/status-em-lote-dos-aprovados.ts";
+import { statusEhConvocado } from "../../lib/aprovados/lista-aprovados-rules.ts";
+import { formatNumberBR } from "../../lib/base/formatters";
 import { BotaoDeAcao, Modal } from "../../ui/index.ts";
 import { plural } from "./partes.tsx";
 

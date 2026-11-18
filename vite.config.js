@@ -3,12 +3,12 @@ import react from "@vitejs/plugin-react";
 import { cp, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createHtmlSecurityPlugin } from "./src/lib/html-security";
+import { createHtmlSecurityPlugin } from "./src/lib/seguranca/html-security";
 import {
   arquivosParaGuardar,
   swComVersao,
-} from "./src/lib/cache-do-service-worker";
-import { novidadesVisiveis } from "./src/lib/novidades.ts";
+} from "./src/lib/carga/cache-do-service-worker";
+import { novidadesVisiveis } from "./src/lib/base/novidades.ts";
 import { apiLocalNoVite } from "./scripts/servir-api-no-vite.mjs";
 
 const projectDirectory = dirname(fileURLToPath(import.meta.url));
@@ -48,7 +48,7 @@ function copyProgressiveWebAppAssets() {
       /*
         O que o service worker guarda na instalação: o que o Vite gerou (os
         pedaços de todas as telas), o que vem de public/ e os ícones.
-        Fica de fora o que arquivosParaGuardar exclui (src/lib/cache-do-service-worker.ts).
+        Fica de fora o que arquivosParaGuardar exclui (src/lib/carga/cache-do-service-worker.ts).
       */
       const publicados = arquivosParaGuardar([
         ...Object.keys(bundle),
@@ -86,7 +86,7 @@ function copyProgressiveWebAppAssets() {
 /*
   Versão do build para o aviso de versão nova (src/app/aviso-de-versao.ts):
   grava a versão no JS (`__VERSAO_DO_BUILD__`) e publica `/versao.json` com a
-  mesma versão e as novidades visíveis (src/lib/novidades.ts). Na Vercel é o
+  mesma versão e as novidades visíveis (src/lib/base/novidades.ts). Na Vercel é o
   commit; fora dela, a hora do build. A página aberta compara as duas.
 */
 function publicarVersaoDoBuild() {

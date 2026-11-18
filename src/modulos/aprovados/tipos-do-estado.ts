@@ -1,23 +1,23 @@
-import type { DadosDaPublicacaoDoEdital } from "../../lib/tipos-do-estado-de-aprovados.ts";
-import type { OpcoesDoEstadoDaCarta } from "../../lib/tipos-da-carta.ts";
-import type { CasamentoDaLista } from "../../lib/casamento-da-lista.ts";
+import type { DadosDaPublicacaoDoEdital } from "../../lib/aprovados/tipos-do-estado-de-aprovados.ts";
+import type { OpcoesDoEstadoDaCarta } from "../../lib/aprovados/carta-de-convocacao/tipos-da-carta.ts";
+import type { CasamentoDaLista } from "../../lib/aprovados/casamento-da-lista.ts";
 import type {
   ConfiguracoesDaConvocacao,
   ModelosDaConvocacao,
-} from "../../lib/tipos-da-configuracao-de-convocacao.ts";
+} from "../../lib/aprovados/carta-de-convocacao/tipos-da-configuracao-de-convocacao.ts";
 
 export type {
   CandidatoAprovado,
   ListaDeAprovados,
   AnexoDoAprovado,
   ConvocacaoDoAprovado,
-} from "../../lib/tipos-do-estado-de-aprovados.ts";
+} from "../../lib/aprovados/tipos-do-estado-de-aprovados.ts";
 import type {
   CandidatoAprovado,
   ListaDeAprovados,
   AnexoDoAprovado,
   ConvocacaoDoAprovado,
-} from "../../lib/tipos-do-estado-de-aprovados.ts";
+} from "../../lib/aprovados/tipos-do-estado-de-aprovados.ts";
 export type ModalDosAprovados =
   | { tipo: "status" | "anexos" | "candidato"; candidatoId: string }
   | { tipo: "sub-judice"; aba?: "novo" | "aprovado"; candidatoId?: string }

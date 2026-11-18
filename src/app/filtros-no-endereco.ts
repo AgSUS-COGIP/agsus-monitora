@@ -7,12 +7,12 @@
     nome, CPF e o texto da busca nunca (`naUrl: false` fica só na tela e na
     sessão da aba).
   - O valor padrão não aparece: a URL só tem o que foi mudado.
-  - `visao` é da navegação (src/lib/rotas.ts) e não é filtro.
+  - `visao` é da navegação (src/lib/navegacao/rotas.ts) e não é filtro.
   - A tela fica montada quando se vai a outra (src/app/telas.tsx): o que ela
     deixou na URL fica guardado aqui (`guardarFiltrosDaTela`), e a navegação
     devolve ao voltar a ela pelo menu (src/app/navegacao.ts, caminhoAtual).
 */
-import { destinoDoCaminho } from "../lib/rotas.ts";
+import { destinoDoCaminho } from "../lib/navegacao/rotas.ts";
 import type { LocalDoEndereco } from "./endereco.ts";
 
 /** Um filtro da tela. O valor é sempre texto (o da URL). */

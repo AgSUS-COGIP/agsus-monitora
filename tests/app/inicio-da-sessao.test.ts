@@ -153,7 +153,8 @@ describe("registro de navegação sem prender a página", () => {
         });
       }),
     );
-    const { getSupabaseClient } = await import("../../src/lib/supabaseClient");
+    const { getSupabaseClient } =
+      await import("../../src/lib/sessao/supabaseClient");
     const cliente = definido(getSupabaseClient());
     await cliente.rpc("registrar_navegacao_monitora", { p_presenca: true });
     await cliente.rpc("registrar_evento_acesso", { p_evento: "logout" });

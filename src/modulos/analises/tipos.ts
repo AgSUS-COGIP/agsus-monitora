@@ -1,5 +1,5 @@
 /** Contratos da lista, dos filtros e das consultas de Análises curriculares. */
-import type { EditalDoRitmo } from "../../lib/ritmo-da-analise.ts";
+import type { EditalDoRitmo } from "../../lib/analises/ritmo-da-analise.ts";
 export type RegistroDaAnalise = Record<string, unknown>;
 export type LinhaDaAnalise = RegistroDaAnalise & {
   __chave: string;

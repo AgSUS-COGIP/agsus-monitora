@@ -9,8 +9,8 @@ As telas de Recursos mostram só rótulos, números e botões; o porquê das reg
 fica aqui, para a Aya explicar. Textos que saíram da tela em 01/10/2026
 (subtítulos das pendências, a dica "Aprovar exige a decisão" e os KPIs que
 viraram filtro) estão registrados nestes verbetes. Fontes:
-`src/modulos/recursos/`, `src/lib/recursos-dos-candidatos.ts`,
-`src/lib/prazo-do-recurso.ts` e as migrations `20260929120000_recursos.sql`,
+`src/modulos/recursos/`, `src/lib/recursos/recursos-dos-candidatos.ts`,
+`src/lib/recursos/prazo-do-recurso.ts` e as migrations `20260929120000_recursos.sql`,
 `20260929230000_recursos_modelos_anexos_respostas.sql`,
 `20260929190200_recorte_por_coordenacao_nos_recursos.sql` e
 `20261001170000_recursos_parecer_juridico.sql` e
@@ -29,7 +29,7 @@ viraram filtro) estão registrados nestes verbetes. Fontes:
 **perguntas:** analisar recursos | analisar um recurso | onde analiso o recurso | onde decido o recurso | onde fica a fila de recursos para analisar | painel ou analisar recursos | diferença entre painel de recursos e analisar recursos | nao vejo analisar recursos
 **resposta:** Analisar recursos é a tela de fazer, com entrada própria no menu (selo BETA). Tem no topo Atualizar, "Ver no painel" (volta ao Painel de recursos com os mesmos filtros), Modelos de resposta (para o Administrador de Recursos) e Novo recurso (para quem tem Editor em Recursos); embaixo, os filtros e a fila. "Abrir" (ou clicar na linha) abre a gaveta do recurso com as ações: editar e excluir, marcar as etapas, enviar para o parecer jurídico, decidir (deferir, deferir parcialmente, indeferir, devolver, reabrir), o ajuste da pontuação, a resposta ao candidato e os anexos. Vê a entrada quem tem Editor em Recursos ou a permissão "Parecer jurídico (Recursos)"; quem só tem Leitor fica com o Painel de recursos. O banco confere cada ação. As origens ativas são análise curricular, entrevista e resultado final; um segundo recurso sem decisão para o mesmo candidato, edital e origem gera um aviso e só é gravado com confirmação.
 **fato:** Analisar recursos aparece para quem tem Editor em Recursos ou o Parecer jurídico; o Painel de recursos, para todo mundo que vê Recursos.
-**fonte:** src/modulos/recursos/recursos.tsx; src/lib/access-roles.ts (canAnalisarRecursos); supabase/migrations/20261009230000_analisar_recursos_no_menu.sql; supabase/migrations/20261001170000_recursos_parecer_juridico.sql
+**fonte:** src/modulos/recursos/recursos.tsx; src/lib/acessos/access-roles.ts (canAnalisarRecursos); supabase/migrations/20261009230000_analisar_recursos_no_menu.sql; supabase/migrations/20261001170000_recursos_parecer_juridico.sql
 **abrir:** analisar-recursos
 
 ## Fluxo do parecer jurídico
@@ -37,20 +37,20 @@ viraram filtro) estão registrados nestes verbetes. Fontes:
 **perguntas:** parecer juridico | fluxo do recurso | como funciona o fluxo do parecer juridico | fluxo do parecer juridico | em analise juridica | enviar para parecer | situacoes do recurso
 **resposta:** No Yeendé, o recurso nasce Registrado: quem edita Recursos cadastra os dados, anexa documentos e escreve o rascunho da resposta, e então o envia para parecer jurídico (Em análise jurídica). Só quem tem a permissão "Parecer jurídico (Recursos)" decide: defere, defere parcialmente ou indefere, sempre com o texto do parecer (10 a 20.000 caracteres), ou devolve para ajuste com um comentário. Quem decidiu, quando e o parecer ficam gravados, e cada passo vai para o histórico do recurso.
 **fato:** No Yeendé, o recurso vai de Registrado a Em análise jurídica e só quem tem a permissão Parecer jurídico decide (Deferido, Deferido parcialmente ou Indeferido); o nível Administrador de Recursos não decide.
-**fonte:** supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/lib/recursos-dos-candidatos.ts
+**fonte:** supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/lib/recursos/recursos-dos-candidatos.ts
 
 ## Quem pode decidir um recurso
 
 **perguntas:** quem pode decidir um recurso | quem pode decidir o recurso | quem decide o recurso | quem decide um recurso | quem defere o recurso | quem pode deferir | quem pode indeferir | grupo juridico | permissao parecer juridico
 **resposta:** Decide o recurso (deferir, deferir parcialmente ou indeferir), devolve para ajuste e reabre a decisão só quem tem a permissão "Parecer jurídico (Recursos)", que tem dois níveis: Sem acesso ou Editor. Ela é dada por grupo ou individualmente em Configurações › Acessos. O grupo Jurídico já vem com ela (e com Editor em Recursos), e o grupo do administrador global também; os outros grupos não. O nível Administrador em Recursos não decide: serve para manter os modelos de resposta. O banco recusa qualquer mudança de situação ou parecer feita sem a permissão.
-**fonte:** supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/lib/permissoes-recursos.ts
+**fonte:** supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/lib/acessos/permissoes-recursos.ts
 **abrir:** config:acessos
 
 ## Aguardando parecer
 
 **perguntas:** aguardando parecer | o que é aguardando parecer | kpi aguardando parecer
 **resposta:** No Yeendé, "Aguardando parecer" conta os recursos Em análise jurídica: já enviados ao jurídico e ainda sem decisão. Clicar no indicador filtra a tela por eles. No detalhe, quem não tem o parecer jurídico (e todos no Painel de recursos) vê "Aguardando parecer jurídico" no lugar dos botões de decisão.
-**fonte:** src/modulos/recursos/paineis.tsx; src/lib/recursos-dos-candidatos.ts
+**fonte:** src/modulos/recursos/paineis.tsx; src/lib/recursos/recursos-dos-candidatos.ts
 
 ## Deferido parcialmente
 
@@ -80,19 +80,19 @@ viraram filtro) estão registrados nestes verbetes. Fontes:
 
 **perguntas:** de onde vem o prazo do recurso | prazo do recurso | prazo estimado | prazo vencido
 **resposta:** O prazo do recurso vem do cronograma do edital: é o fim da atividade de resposta aos recursos daquela origem (análise curricular, entrevista ou resultado final); havendo mais de uma, vale a mais tardia. Sem atividade de resposta, usa o fim do prazo de abertura dos recursos (o prazo estimado, com asterisco). Sem nenhuma das duas, entra a pendência "Prazo não encontrado no cronograma". "Prazo vencido" é o recurso sem resposta enviada com o prazo já passado; "vencendo" é o que vence hoje ou nos próximos dois dias.
-**fonte:** src/lib/prazo-do-recurso.ts; src/lib/recursos-dos-candidatos.ts
+**fonte:** src/lib/recursos/prazo-do-recurso.ts; src/lib/recursos/recursos-dos-candidatos.ts
 
 ## Indicadores do Painel de recursos
 
 **perguntas:** indicadores dos recursos | quais sao os indicadores dos recursos | kpis dos recursos | onde está o total de recursos | taxa de conclusão dos recursos | sem processo sei
 **resposta:** No Yeendé, o Painel de recursos tem quatro indicadores: Aguardando parecer, Prazo vencido, Deferidos (com os parcialmente) e Indeferidos; cada um filtra a tela. O total está na contagem da fila; a taxa de decisão, no recorte ("% decididos"); sem processo SEI, sem resposta, respostas em revisão, aprovadas ou devolvidas, mudança de nota, prazo vencendo e registrados sem envio estão nas Pendências prioritárias e nos gráficos.
-**fonte:** src/modulos/recursos/paineis.tsx; src/lib/recursos-dos-candidatos.ts
+**fonte:** src/modulos/recursos/paineis.tsx; src/lib/recursos/recursos-dos-candidatos.ts
 
 ## Pendências do Painel de recursos
 
 **perguntas:** pendências dos recursos | prazo não encontrado no cronograma | candidato fora das análises | mudança de nota ou classificação | nota mudou
 **resposta:** No Yeendé, "Prazo não encontrado no cronograma" quer dizer que o cronograma do edital não traz o prazo de recurso daquela origem; "Candidato fora das análises" é o recurso cadastrado com os dados digitados, que vale conferir; "Mudança de nota ou classificação" junta a nota mudou (a nota atual da análise difere da guardada no cadastro do recurso) e a classificação mudada pelo ajuste da pontuação aprovado, para conferir no resultado final; "Prazo vence em até 2 dias" é o recurso sem resposta cujo prazo vence hoje ou nos próximos dois dias; "Devolvidos pelo jurídico" são os que voltaram para ajuste.
-**fonte:** src/lib/recursos-dos-candidatos.ts; supabase/migrations/20260929120000_recursos.sql
+**fonte:** src/lib/recursos/recursos-dos-candidatos.ts; supabase/migrations/20260929120000_recursos.sql
 
 ## Anexos e modelos de resposta
 
@@ -119,7 +119,7 @@ viraram filtro) estão registrados nestes verbetes. Fontes:
 
 **perguntas:** o recurso mudou a classificacao | caixa mudou a classificacao | classificacao mudou | marcar que mudou a classificacao
 **resposta:** No Yeendé, "O recurso mudou a classificação" deixou de ser uma caixa marcada à mão: é marcada automaticamente quando o ajuste da pontuação aprovado muda a posição ou a situação do candidato (pela prévia calculada na aprovação) e desmarcada quando esse ajuste é cancelado. Os recursos marcados à mão antes dessa mudança continuam como estavam. A marca alimenta a pendência "Mudança de nota ou classificação", o filtro e o CSV.
-**fonte:** supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql; src/lib/recursos-dos-candidatos.ts
+**fonte:** supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql; src/lib/recursos/recursos-dos-candidatos.ts
 **abrir:** recursos
 
 ## Registrar um recurso

@@ -3,7 +3,7 @@ import { criarCarregadorDeMunicipios } from "../../src/modulos/mapa-de-projetos/
 import {
   municipiosDaResposta,
   pontosDosMunicipios,
-} from "../../src/lib/visao-geral-da-area.ts";
+} from "../../src/lib/visao-geral/visao-geral-da-area.ts";
 import { balaoDoLugar } from "../../src/modulos/mapa-de-projetos/balao.ts";
 import type {
   PontoDoMunicipio,

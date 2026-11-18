@@ -1,13 +1,13 @@
 import type { ReactNode } from "react";
-import type { ModeloDaConvocacao } from "../../lib/tipos-da-configuracao-de-convocacao.ts";
+import type { ModeloDaConvocacao } from "../../lib/aprovados/carta-de-convocacao/tipos-da-configuracao-de-convocacao.ts";
 import { useMemo, useState } from "react";
-import { DISTRIBUICOES } from "../../lib/modelo-de-convocacao.ts";
+import { DISTRIBUICOES } from "../../lib/aprovados/carta-de-convocacao/modelo-de-convocacao.ts";
 import {
   LIMITE_DA_PREVIA,
   lerInteiro,
   ordinalFeminino,
   previaDaConvocacao,
-} from "../../lib/configuracao-de-convocacao.ts";
+} from "../../lib/aprovados/carta-de-convocacao/configuracao-de-convocacao.ts";
 import { classes } from "../../ui/index.ts";
 import { CampoEditavel } from "./partes.tsx";
 

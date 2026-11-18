@@ -1,10 +1,10 @@
 /*
   O banco ANTES de 20261118120000 (vínculo da vaga com o quadro), no que
   tests/apoio/banco-do-vinculo-do-quadro.ts usa: as tabelas (com as chaves primárias, sem as
-  estrangeiras, os índices e os gatilhos) e as funções do quadro de vagas, da Empregare e da
-  Classificação, copiadas letra por letra do retrato de produção (supabase/esquema-atual.sql)
-  da main de 18/11/2026. A guarda md5 da migration confere que são estes corpos. Não é
-  migration: não aplicar.
+  estrangeiras, os índices e os gatilhos), as funções do quadro de vagas, da Empregare e da
+  Classificação e os comentários das que a migration troca, copiados letra por letra do retrato
+  de produção (supabase/esquema-atual.sql) da main de 18/11/2026, depois de 20261117193000. A
+  guarda md5 da migration confere que são estes corpos. Não é migration: não aplicar.
 */
 
 CREATE FUNCTION public.analises_norm_key(p_text text) RETURNS text
@@ -968,7 +968,7 @@ CREATE FUNCTION public.conferencia_ler_listas_e_quadros() RETURNS jsonb
   with ultimas as (
     select distinct on (l."CO_MONITORAMENTO", l."TP_LISTA")
            l."CO_LISTA_CLASSIFICACAO", l."CO_MONITORAMENTO", l."TP_LISTA", l."DT_GERACAO",
-           l."QT_PENDENCIA", l."ST_PUBLICADA", l."DS_RESULTADO"
+           l."QT_PENDENCIA", l."ST_PUBLICADA", l."DS_RESULTADO", l."NU_VERSAO_REGRA"
       from public."TB_LISTA_CLASSIFICACAO" l
      where not private."FC_EDITAL_EH_TREINAMENTO"(l."CO_MONITORAMENTO")
      order by l."CO_MONITORAMENTO", l."TP_LISTA", l."DT_GERACAO" desc, l."CO_LISTA_CLASSIFICACAO" desc
@@ -980,6 +980,8 @@ CREATE FUNCTION public.conferencia_ler_listas_e_quadros() RETURNS jsonb
           'id', u."CO_LISTA_CLASSIFICACAO", 'edital', u."CO_MONITORAMENTO", 'area', m."CO_AREA",
           'tipo', u."TP_LISTA", 'gerada_em', u."DT_GERACAO", 'pendencias', u."QT_PENDENCIA",
           'publicada', u."ST_PUBLICADA" = 'S',
+          -- 20261117193000: a versão da regra com que a lista foi gerada (a vigente vem do contexto).
+          'versao_regra', u."NU_VERSAO_REGRA",
           'vagas_pendentes', (select coalesce(jsonb_agg(distinct p ->> 'vaga'), '[]'::jsonb)
                                 from jsonb_array_elements(case when jsonb_typeof(u."DS_RESULTADO" -> 'pendencias') = 'array'
                                                                then u."DS_RESULTADO" -> 'pendencias' else '[]'::jsonb end) p
@@ -1014,4 +1016,4 @@ COMMENT ON FUNCTION public.obter_quadro_de_vagas(p_edital uuid) IS 'Quadro de va
 
 COMMENT ON FUNCTION public.salvar_quadro_de_vagas(p_edital uuid, p_dados jsonb) IS 'Substitui o quadro de vagas do edital (o anterior fica desativado). p_dados: {origem PDF|MANUAL, arquivo, linhas:[{cargo, lotacao, modalidades, vagas_imediatas, cadastro_reserva}]}. Núcleo ou Calendário (editor) e o edital.';
 
-COMMENT ON FUNCTION public.conferencia_ler_listas_e_quadros() IS 'Conferências (job Python, só service_role): a última lista de classificação de cada edital e tipo (fora do treinamento) com as vagas com empate pendente, os ajustes de recurso aprovados e as linhas ativas do quadro de vagas (id, edital, cargo, lotação), cruas. A vaga sem linha no quadro e a lista final desatualizada são conferidas no robô, com as páginas de conferencia_ler_analises (20261103181500).';
+COMMENT ON FUNCTION public.conferencia_ler_listas_e_quadros() IS 'Conferências (job Python, só service_role): a última lista de classificação de cada edital e tipo (fora do treinamento), com a versão da regra com que foi gerada (20261117193000), as vagas com empate pendente, os ajustes de recurso aprovados e as linhas ativas do quadro de vagas (id, edital, cargo, lotação), cruas. A vaga sem linha no quadro e a lista final desatualizada são conferidas no robô, com as páginas de conferencia_ler_analises (20261103181500).';

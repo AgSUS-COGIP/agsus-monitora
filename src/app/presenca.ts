@@ -1,10 +1,10 @@
-import { getSupabaseClient } from "../lib/supabaseClient";
-import { podeVerPessoasOnline } from "../lib/access-roles.ts";
+import { getSupabaseClient } from "../lib/sessao/supabaseClient";
+import { podeVerPessoasOnline } from "../lib/acessos/access-roles.ts";
 import {
   normalizeOnlinePresenceList,
   ondeEstaNoMonitora,
-} from "../lib/online-presence";
-import type { PessoaOnline } from "../lib/online-presence";
+} from "../lib/sessao/online-presence";
+import type { PessoaOnline } from "../lib/sessao/online-presence";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { obterDadosDoMonitoramento } from "../componentes/dados-do-monitoramento.ts";
 import { SECOES } from "../modulos/configuracoes/secoes.ts";
@@ -26,7 +26,7 @@ import { SECOES } from "../modulos/configuracoes/secoes.ts";
     `access_heartbeat_minutos` e saída. A entrada vai com a primeira batida, a
     abertura com a troca de lugar e o heartbeat com a primeira batida depois do
     intervalo. Eventos de outros módulos (o retrato de desempenho do front,
-    src/lib/frontend-performance-monitor.ts) entram na fila de carona
+    src/lib/carga/frontend-performance-monitor.ts) entram na fila de carona
     (`enfileirarEvento`) e vão com a próxima chamada; a aba que fica oculta
     os despacha na hora. A linha gravada é a de sempre (o "último acesso",
     private."FC_ULTIMO_ACESSO", e a duração da sessão por `client_session_id`
@@ -38,7 +38,7 @@ import { SECOES } from "../modulos/configuracoes/secoes.ts";
     10 min. Abrir a lista é uma batida adiantada (o relógio recomeça dali).
 
   Ninguém espera pela chamada (o cliente a envia com `keepalive`,
-  src/lib/supabaseClient.ts). Banco antigo (PGRST202), um degrau por vez:
+  src/lib/sessao/supabaseClient.ts). Banco antigo (PGRST202), um degrau por vez:
   sem `p_eventos`/`p_listar` (antes de 20261103230000), a lista e os eventos
   de carona saem em chamadas à parte; sem a função (antes de 20261029121700),
   `registrar_evento_acesso` + `registrar_presenca_monitora`.

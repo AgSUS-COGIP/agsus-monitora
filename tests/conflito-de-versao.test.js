@@ -3,7 +3,7 @@ import {
   CONFLITO_DE_VERSAO,
   CONFLITO_DE_VERSAO_ANTIGO,
   ehConflitoDeVersao,
-} from "../src/lib/conflito-de-versao.ts";
+} from "../src/lib/base/conflito-de-versao.ts";
 
 describe("ehConflitoDeVersao", () => {
   it("o código novo é PTxyz com 409: o PostgREST responde 409 e não repete", () => {

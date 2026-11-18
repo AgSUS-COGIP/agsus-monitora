@@ -116,7 +116,7 @@ export function criarTela({ supabase = getSupabaseClient(), toast } = {}) {
 ```
 
 A tela entra em `src/app/telas.tsx` (`registrarTelasDoApp`: `criar` no pacote principal ou
-`carregar: () => import(…)` sob demanda) e em `src/lib/rotas.ts` (view, caminho no endereço,
+`carregar: () => import(…)` sob demanda) e em `src/lib/navegacao/rotas.ts` (view, caminho no endereço,
 título). A rota desenha a `<section id="page-<view>">`, marca a `.active` pela navegação, põe a tela
 num `ErrorBoundary` e chama `render()` a cada abertura. A tela visitada continua montada. Quem
 precisa de outra tela usa o registro (`carregarTela(view)`, `src/app/registro-das-telas.ts`), nunca
@@ -142,7 +142,7 @@ as telas e as peças da casca (Pessoas online, aviso de versão, encerramento, s
 quando a sessão abre o app. A arara dos fogos e a cobertura do painel externo, em DOM feito à mão,
 entram por portais avulsos (`src/app/portais-avulsos.tsx`) até virarem React.
 
-**Rotas** `/:area/:tela[/:edital]` (`src/lib/rotas.ts`, regra pura com teste):
+**Rotas** `/:area/:tela[/:edital]` (`src/lib/navegacao/rotas.ts`, regra pura com teste):
 
 | Tela (view)            | Endereço                                                         |
 | ---------------------- | ---------------------------------------------------------------- |
@@ -175,7 +175,7 @@ entram por portais avulsos (`src/app/portais-avulsos.tsx`) até virarem React.
 - **Roteador próprio, sem dependência.** O React Router somaria ~20 kB gzip a uma entrada já perto
   do orçamento (`npm run check:bundle-size`); o app só precisa de `pushState`/`replaceState`/
   `popstate` e de um store lido com `useSyncExternalStore`. `src/app/endereco.ts` faz isso; a regra
-  de caminho fica em `src/lib/rotas.ts`.
+  de caminho fica em `src/lib/navegacao/rotas.ts`.
 - **A navegação é um store** (`criarNavegacao`, sem DOM): `obter()` devolve `{ view, area, visao,
 edital, secao, aviso, titulo, subtitulo, abertura }`; `assinar()` avisa a casca, a barra, a
   presença e a página aberta. `irPara(view, { edital, visao })` confere saída, versão nova e
@@ -191,7 +191,7 @@ edital, secao, aviso, titulo, subtitulo, abertura }`; `assinar()` avisa a casca,
   de Editais empilha uma entrada, trocar de etapa substitui e o "← Editais" volta pelo histórico
   (`endereco.voltar()`). As outras telas abrem por `navigate("nucleo", { edital, regras })`.
 - **Página desligada ou em manutenção**: a decisão é pura (`avisoDaPagina`,
-  `src/lib/pagina-desligada.ts`); a navegação publica `manutencao` e `faixa`, e a rota desenha
+  `src/lib/navegacao/pagina-desligada.ts`); a navegação publica `manutencao` e `faixa`, e a rota desenha
   `#page-manutencao` e `#faixaDeManutencao`. A situação do sistema fica em
   `src/app/situacao-do-sistema.ts`.
 - **Hospedagem**: `vercel.json` reescreve as rotas do app para `/index.html` (arquivo com ponto,
@@ -220,7 +220,7 @@ telas de página inteira baixam na primeira abertura: `carregar: () => import("�
 `src/app/telas.tsx`, com `React.lazy` sobre `carregarTela` (que usa `importarComRecarga`: versão nova
 publicada com a página aberta recarrega uma vez). Enquanto baixa, a seção mostra "Carregando…"; se
 falhar, o aviso com "Tentar de novo" refaz o `lazy`. O item do menu pré-carrega no mouse/foco
-(`src/lib/carga-de-telas.ts` → `preCarregarTelaRegistrada`) e o tour da Aya espera a carga
+(`src/lib/carga/carga-de-telas.ts` → `preCarregarTelaRegistrada`) e o tour da Aya espera a carga
 (`haTelaCarregando`). A moldura de Configurações e as seções Acessos, Módulos e abas, Status das
 atualizações e Automação baixam do mesmo jeito (`config` e `secao:<id>` no registro). A base de
 verbetes da Aya baixa ao abrir o painel.
@@ -253,7 +253,7 @@ ações: Acessos, Módulos e abas), `.ui-gaveta-contexto`, `.ui-gaveta-corpo`, `
 | `CardDeGrafico`                       | `{ titulo, altura? ("short", "alto"), carregando?, className?, elemento = "article", children }` — sem sobretítulo nem dica                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `Grafico` / `paletaDosGraficos`       | `{ tipo, montar() → { data, options }, dependencias, rotulo, id?, plugins? }` — Chart.js criado uma vez e atualizado; `paletaDosGraficos(escuro, reserva)` lê as cores dos tokens                                                                                                                                                                                                                                                                                                                                                                      |
 | `TabelaInfinita`                      | `{ idDoTitulo, titulo, busca?: { placeholder, rotulo, valor?, aoMudar?, id? }, carregado, itens, filtrarPelaBusca, colunas (cada uma: `{ rotulo, numero?, ordem?, aoOrdenar?, classe? }`), classeDaTabela?, className?, idDoCorpo?, linha(item), informacao(quantos \| null), total, vazio, grupo?: { chave, cabecalho(chave, quantos), recolhidos?, aoAlternar? } }` — 50 por vez, mais 50 ao rolar ou no "Carregar mais"; busca controlável (sem `busca`, sem o campo); `grupo` põe um cabeçalho recolhível por grupo; avisa `agsus:content-updated` |
-| `usarCargaContinua` / `MaisDaCarga`   | `(recorte, total)` → `{ limite, mostrados, total, faltam, carregarMais }` / `{ carga, oQue? }` — lista em blocos ou cartões que não cabe na `TabelaInfinita`: desenhe até `limite` (com `gruposAteOLimite`, `src/lib/carga-continua.ts`, para blocos por dia ou vaga) e ponha `MaisDaCarga` depois: "N de M", "Carregar mais" e mais 50 ao rolar perto do fim                                                                                                                                                                                          |
+| `usarCargaContinua` / `MaisDaCarga`   | `(recorte, total)` → `{ limite, mostrados, total, faltam, carregarMais }` / `{ carga, oQue? }` — lista em blocos ou cartões que não cabe na `TabelaInfinita`: desenhe até `limite` (com `gruposAteOLimite`, `src/lib/carga/carga-continua.ts`, para blocos por dia ou vaga) e ponha `MaisDaCarga` depois: "N de M", "Carregar mais" e mais 50 ao rolar perto do fim                                                                                                                                                                                          |
 | `Gaveta`                              | `{ id, tituloId, aoFechar, fecharAoClicarFora?, className?, cartaoClassName?, sobretitulo?, titulo, resumo?, rotuloDoFechar, children }` — encostada à direita                                                                                                                                                                                                                                                                                                                                                                                         |
 | `TopoDaGaveta`                        | `{ sobretitulo?, titulo, tituloId, resumo?, aoFechar, rotuloDoFechar }` — quando o topo fica dentro de um `<form>`; `usarClassesDaGaveta()` dá as classes do fundo e do cartão para um `<Modal>` direto                                                                                                                                                                                                                                                                                                                                                |
 | `Secao` / `Kv` / `GradeDeKv`          | `{ icone, titulo, secao, children }` / `{ rotulo, children }` (vazio vira "—") / `{ className?, rotulo?, children }` — o detalhe na gaveta                                                                                                                                                                                                                                                                                                                                                                                                             |
@@ -285,8 +285,8 @@ só fica no módulo.
 
 O modo "no quadro" (`<PainelNoQuadro>`, a marcação do antigo painel de análises para as telas que
 rodavam em iframe) saiu com a Seleção, a última delas, ao fim da Etapa 2 — junto com o CSS que
-sobrava em `src/analises/` e o `pagina-do-painel.js` de `src/modules/` (o que restou dele é o
-`src/lib/pagina-do-painel.ts`). Nenhuma tela do app abre mais em
+sobrava em `src/analises/` e o `paineis/pagina-do-painel.js` de `src/modules/` (o que restou dele é o
+`src/lib/paineis/pagina-do-painel.ts`). Nenhuma tela do app abre mais em
 iframe; só os painéis externos (`TB_PAINEL_EXTERNO`) continuam no quadro.
 
 ## Etapa 6 — login e entrada
@@ -315,12 +315,12 @@ Testes: `tests/app/sessao.test.ts`, `tests/app/entrada.test.ts`, `tests/solicita
 | `boot()`, `onAuthStateChange`, `?code=`, `?auth=google`, recuperação de senha        | `sessaoDoApp.iniciar()`, `aoMudarAutenticacao`, `trocarCodigoDoOAuth`           |
 | `handleSignedInSession` (domínio, mesmo usuário, carga única)                        | `entrar()`                                                                      |
 | `loadProfile` (`obter_contexto_monitora`, `meu_usuario`)                             | `carregarPerfil()` na sessão                                                    |
-| `loginWithGoogle`, popup, `message`, `pageshow`, `mobile-google-oauth.js`            | `entrarComGoogle()`; `startMobileGoogleOAuth` em `src/lib/auth-flow.ts`         |
+| `loginWithGoogle`, popup, `message`, `pageshow`, `mobile-google-oauth.js`            | `entrarComGoogle()`; `startMobileGoogleOAuth` em `src/lib/sessao/auth-flow.ts`         |
 | `logout`, `returnToLogin`, `clearLocalAuthState`, `aplicarSaida`                     | `sair()`, `limparSessao()`, `aplicarSaida()` na sessão                          |
-| `showAccessRequestState`, `submitAccessRequest`, `solicitacao-de-acesso.js` (legado) | `pedido-de-acesso.ts` + `solicitacao-de-acesso.tsx`                             |
+| `showAccessRequestState`, `submitAccessRequest`, `acessos/solicitacao-de-acesso.js` (legado) | `pedido-de-acesso.ts` + `solicitacao-de-acesso.tsx`                             |
 | `access-branding-boot.js`, marca e rodapé de `applyConfigToUi`                       | `src/app/entrada/marca.ts` (`definirMarcaDaConfiguracao`)                       |
-| marcas de conta desativada e de boas-vindas (`comemoracao-do-acesso.ts`)             | `src/lib/acesso-liberado.ts` (a comemoração continua no legado)                 |
-| `#loginMsg` escrito por `session-lifecycle.js`                                       | `installSessionLifecycle({ aoExpirar })` → `sessaoDoApp.mostrarMensagem`        |
+| marcas de conta desativada e de boas-vindas (`comemoracao-do-acesso.ts`)             | `src/lib/acessos/acesso-liberado.ts` (a comemoração continua no legado)                 |
+| `#loginMsg` escrito por `sessao/session-lifecycle.js`                                       | `installSessionLifecycle({ aoExpirar })` → `sessaoDoApp.mostrarMensagem`        |
 | `window.loginWithGoogle`, `logout`, `returnToLogin`, `submitAccessRequest`           | saíram; o Sair confirmado (`src/app/casca/saida.ts`) chama `sessaoDoApp.sair()` |
 
 Acesso só por convite: a sessão não chama mais `garantir_acesso_basico` (saiu do front e do
@@ -366,7 +366,7 @@ O `legacy-app.js` de `src/modules/` (1.946 linhas) saiu. Cada responsabilidade v
 src/app/sistema.ts               cria as peças, contratos em window, ganchos da sessão, busca global
 src/app/navegacao.ts             troca de tela (.active, título, menu marcado), permissões, guarda de
                                  saída, versão nova esperando, tela guardada, menu (TELAS_REACT)
-src/lib/navegacao.ts             regras puras: bloqueioDaTela, telaPermitida, telaInicialDoSistema…
+src/lib/navegacao/navegacao.ts             regras puras: bloqueioDaTela, telaPermitida, telaInicialDoSistema…
 src/app/configuracao.ts          TB_CONFIGURACAO, textos do app, aviso global, fundo do acesso
 src/app/paineis-externos.ts      painéis externos: lista, liberados, quadro (iframe na 1ª abertura)
 src/app/carga.ts                 consultas em paralelo, cópia da sessão, "Atualizar dados", Realtime
@@ -376,7 +376,7 @@ src/app/perfil.ts                usuário e perfil (cópia da sessão), cabeçal
 src/app/moldura.ts               barra recolhida, tema, tela cheia
 src/app/avisos.ts                toast (window.monitoraToast) e loader (window.monitoraLoader)
 src/app/carregamento.ts          skeleton da entrada e do painel externo, barra do "Atualizar dados"
-src/lib/erro-amigavel.ts         a frase do erro (antigo friendlyError)
+src/lib/base/erro-amigavel.ts         a frase do erro (antigo friendlyError)
 ```
 
 Contratos mantidos em `window`: `navigate` (é `navegacao.irPara`; agora também escreve o endereço), `refreshData`,
@@ -485,7 +485,7 @@ src/modules/map-base-layer-switcher.ts    Mapa/Satélite, em TypeScript; continu
                                           canto de controles é do Leaflet, nos três mapas)
 src/modules/indigenous-territories-layer.ts  Terras Indígenas em TypeScript; as partes puras
                                           (catálogo, textos, geometria, fases e estilos,
-                                          preferências) em src/lib/terras-indigenas/
+                                          preferências) em src/lib/mapas/terras-indigenas/
 ```
 
 `scripts/check-legado-so-encolhe.mjs` agora também recusa qualquer `.js` nas pastas do legado

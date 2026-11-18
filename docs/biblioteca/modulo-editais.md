@@ -21,7 +21,7 @@ Tabela, alertas, formulário e linha do tempo. A tela é `nucleo.tsx`; o estado 
 `estado.ts` (trocar de usuário na mesma aba apaga o que era da sessão anterior).
 
 - Cadastro do edital e do cronograma; importa cronograma e quadro de vagas do PDF de anexos.
-- **Vagas ligadas ao quadro** (`vinculos-do-quadro.tsx`, `src/lib/vinculos-do-quadro.ts`,
+- **Vagas ligadas ao quadro** (`vinculos-do-quadro.tsx`, `src/lib/editais/vinculos-do-quadro.ts`,
   migration `20261118120000`): no quadro salvo, a fila do vínculo de cada vaga com código com a
   linha do quadro (`TA_VAGA_QUADRO_EDITAL`): ambíguas (com as candidatas), ausentes (a linha
   escolhida que saiu do quadro primeiro) e confirmadas. Núcleo ou Calendário (editor) confirma a
@@ -50,7 +50,7 @@ Tabela, alertas, formulário e linha do tempo. A tela é `nucleo.tsx`; o estado 
   (10 a 500 caracteres) e histórico em `TH_EDITAL_CRITICO`. Grava à parte do "Salvar"; a permissão
   vem do banco (`obter_critico_do_edital` → `pode_marcar`). Conta nos críticos da
   [[modulo-visao-geral]].
-- **Validade do processo seletivo** (#57, `src/lib/validade-do-edital.ts`): anos (0 a 10), meses
+- **Validade do processo seletivo** (#57, `src/lib/editais/validade-do-edital.ts`): anos (0 a 10), meses
   (0 a 11) e prorrogado, com o prazo calculado ao lado. O cálculo espelha
   `private."FC_VENCIMENTO_DO_EDITAL"` (data de encerramento + prazo em meses, em dobro se
   prorrogado; dia que não existe no mês de chegada vira o último dia dele; 0 = não vence) e
@@ -61,13 +61,13 @@ Tabela, alertas, formulário e linha do tempo. A tela é `nucleo.tsx`; o estado 
   a migration `20261111200000`; sem ela, a validade fica "não lida": aviso, campos vazios e só vai o
   que a pessoa preencher (nada gravado é sobrescrito). Valor fora do limite mostra a mensagem no
   campo e o Salvar não envia.
-- **Ordem da tabela** (`src/lib/ordem-dos-editais.ts`): por padrão cronológica, do edital mais
+- **Ordem da tabela** (`src/lib/editais/ordem-dos-editais.ts`): por padrão cronológica, do edital mais
   recente para o mais antigo (data de início e, sem ela, o NNN/AAAA). Clicar no cabeçalho ordena
   pela coluna: 1º clique crescente, 2º decrescente, alternando; números em ordem numérica, textos em
   alfabética, Risco pela gravidade; vazio sempre no fim.
 - Abre o modal de listas da Lista de aprovados por `carregarTela("approved")`
   (`openImportModal(id, rótulo)`; ver [[modulo-aprovados]]).
-- O botão de listas ganha aviso pelo status (`src/lib/aprovados-por-edital.ts`): Cancelado ou
+- O botão de listas ganha aviso pelo status (`src/lib/editais/aprovados-por-edital.ts`): Cancelado ou
   Suspenso → vermelho, "Edital cancelado" / "Edital suspenso"; Concluído sem candidato aprovado
   (sem lista vigente ou com ela vazia, por `listar_listas_aprovados`, relida a cada abertura e no
   Atualizar) → amarelo, "Nenhum candidato foi aprovado neste edital". O aviso é a legenda do botão,
@@ -84,7 +84,7 @@ datas). Ver [[deploy-e-vercel]].
 
 Página aberta em Editais, no lugar da tabela: por edital, todas as regras do processo na ordem das
 etapas — 1 Triagem, 2 Avaliação documental, 3 Entrevista, 4 Classificação e 5 Chamada para
-contratação (lista em `ETAPAS_DAS_REGRAS`, `src/lib/regras-do-edital.ts`).
+contratação (lista em `ETAPAS_DAS_REGRAS`, `src/lib/regras-do-edital/regras-do-edital.ts`).
 
 - Cada etapa usa o editor (e as RPCs) que já existia na tela da etapa, com a mesma loja; nada aqui
   calcula ou grava por conta própria. Salvar não recalcula nada (o 114/2026 segue congelado).
@@ -105,7 +105,7 @@ contratação (lista em `ETAPAS_DAS_REGRAS`, `src/lib/regras-do-edital.ts`).
   Editais e põe o endereço.
 - `resumo-da-regra-da-etapa.tsx`: a regra só para ler no topo da tela da etapa (Avaliação
   documental, Classificação): versão, situação, uma linha por regra; sem regra, aviso curto e o
-  mesmo botão. As linhas vêm de `src/lib/regras-do-edital-resumos.ts`, por `import()` na primeira
+  mesmo botão. As linhas vêm de `src/lib/regras-do-edital/regras-do-edital-resumos.ts`, por `import()` na primeira
   vez (até lá, esqueleto).
 
 ## Encerramento do edital
@@ -132,12 +132,12 @@ conta, avisados pelos marcos de `src/modulos/analises/marcos.ts`. Banco: migrati
 
 - Cadastro: `modal-do-edital.tsx` (formulário e payload), `editor-de-cronograma.tsx`,
   `importar-anexos.tsx`, `modal-linha-do-tempo.tsx`, `painel-operacional.tsx`, `editais.css`.
-- Regras puras em `src/lib/`: `editais-do-nucleo.ts` (a página sem DOM: ordem da fila, tons de
+- Regras puras em `src/lib/`: `editais/editais-do-nucleo.ts` (a página sem DOM: ordem da fila, tons de
   status e risco também usados pelo mapa, unidades do formulário USI × CORES, rascunho, payload e
-  filtro dos indicadores), `cronograma-do-edital.ts` (estado pelas datas, validação, modelo padrão,
-  datas coladas em lote), `retificacao-do-cronograma.ts` (casa o "Leia-se" com as etapas gravadas:
-  igual, data muda, nova, sumiu; número da errata e motivo com o SEI), `validade-do-edital.ts`,
-  `regras-do-edital.ts`, `encerramento-do-edital.ts` (leitura, tela a mostrar, selos e fogos).
+  filtro dos indicadores), `cronograma/cronograma-do-edital.ts` (estado pelas datas, validação, modelo padrão,
+  datas coladas em lote), `cronograma/retificacao-do-cronograma.ts` (casa o "Leia-se" com as etapas gravadas:
+  igual, data muda, nova, sumiu; número da errata e motivo com o SEI), `editais/validade-do-edital.ts`,
+  `regras-do-edital/regras-do-edital.ts`, `encerramento-do-edital/encerramento-do-edital.ts` (leitura, tela a mostrar, selos e fogos).
 - Testes: `tests/componentes/nucleo.test.ts` e `tests/editais-do-nucleo.test.js` citam as
   [histórias de usuário de Editais](../historias-de-usuario/editais.md) (ED-1, ED-2).
 - Explicações para quem usa: [regras-dos-editais](../aya/regras-dos-editais.md) (a explicação mora

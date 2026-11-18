@@ -2,17 +2,17 @@ import { describe, expect, it } from "vitest";
 import {
   modeloDeReferencia,
   normalizarModelo,
-} from "../src/lib/modelo-de-convocacao.ts";
+} from "../src/lib/aprovados/carta-de-convocacao/modelo-de-convocacao.ts";
 import {
   derivarQuadro,
   montarConvocacaoDaVaga,
   sequenciaDeConvocacao,
-} from "../src/lib/lista-convocacao-rules.ts";
+} from "../src/lib/aprovados/lista-convocacao-rules.ts";
 import {
   comDistribuicao,
   previaDaConvocacao,
   resumoDasRegrasDaCategoria,
-} from "../src/lib/configuracao-de-convocacao.ts";
+} from "../src/lib/aprovados/carta-de-convocacao/configuracao-de-convocacao.ts";
 import { LEI_15142_ESPALHADA } from "./modelos-de-convocacao-antigos.ts";
 
 /*

@@ -4,9 +4,15 @@ import type {
   EtapaDoCalendario,
   TipoDaEtapa as TipoDaLegenda,
 } from "./tipos.ts";
-import type { MarcaNoDia, MarcoDoDia } from "../../lib/calendario-editais.ts";
+import type {
+  MarcaNoDia,
+  MarcoDoDia,
+} from "../../lib/cronograma/calendario-editais.ts";
 import { Fragment } from "react";
-import { dataLocal, situacaoDaEtapa } from "../../lib/etapas-de-edital.ts";
+import {
+  dataLocal,
+  situacaoDaEtapa,
+} from "../../lib/editais/etapas-de-edital.ts";
 import {
   CHIPS_POR_DIA,
   DIAS_SEMANA,
@@ -18,7 +24,7 @@ import {
   rotuloDoNumeroDoEdital,
   tituloDoDia,
   unidadeCurta,
-} from "../../lib/calendario-editais.ts";
+} from "../../lib/cronograma/calendario-editais.ts";
 import { Aviso, classes, Modal } from "../../ui/index.ts";
 
 /*

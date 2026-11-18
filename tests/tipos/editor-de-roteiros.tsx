@@ -6,12 +6,12 @@ import { trocarNaLista } from "../../src/modulos/entrevistas/partes.tsx";
 import {
   dadosDoRoteiroParaSalvar,
   rascunhoDoRoteiro,
-} from "../../src/lib/roteiro-de-entrevista.ts";
-import { frasesDaEliminacao } from "../../src/lib/resumo-da-entrevista.ts";
+} from "../../src/lib/entrevistas/roteiro-de-entrevista.ts";
+import { frasesDaEliminacao } from "../../src/lib/entrevistas/resumo-da-entrevista.ts";
 import type {
   DadosDoRoteiroParaSalvar,
   RoteiroDeEntrevista,
-} from "../../src/lib/tipos-do-roteiro-de-entrevista.ts";
+} from "../../src/lib/entrevistas/tipos-do-roteiro-de-entrevista.ts";
 import type { EstadoDaConducaoComAcoes } from "../../src/modulos/entrevistas/tipos.ts";
 
 declare const conducao: EstadoDaConducaoComAcoes;

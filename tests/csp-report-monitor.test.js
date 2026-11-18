@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildCspViolationDetails,
   sanitizeBlockedUri,
-} from "../src/lib/csp-report-monitor";
+} from "../src/lib/seguranca/csp-report-monitor";
 
 describe("csp report monitor", () => {
   it("remove caminho e query de URLs bloqueadas", () => {

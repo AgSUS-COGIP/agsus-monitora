@@ -19,7 +19,7 @@ import {
   type FonteDoParecer,
   type RascunhoDoParecer,
   type TextosDoModelo,
-} from "../../../lib/parecer-em-blocos.ts";
+} from "../../../lib/recursos/parecer-em-blocos.ts";
 import {
   Campo,
   Carregando,

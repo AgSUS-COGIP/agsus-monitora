@@ -17,8 +17,8 @@
 */
 import type { jsPDF as TipoJsPdf } from "jspdf";
 import type { CellInput, RowInput, UserOptions } from "jspdf-autotable";
-import { erroDeVersaoNova } from "../importar-com-recarga.ts";
-import { CABECALHO_PADRAO } from "../cabecalho-dos-documentos.ts";
+import { erroDeVersaoNova } from "../carga/importar-com-recarga.ts";
+import { CABECALHO_PADRAO } from "../base/cabecalho-dos-documentos.ts";
 import { COLUNAS_DOS_CRITERIOS, type Espelho } from "./espelho-de-nota.ts";
 import { comOCandidato, trechosDaSaudacao } from "./modelo-do-espelho.ts";
 

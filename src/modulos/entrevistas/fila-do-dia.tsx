@@ -1,6 +1,6 @@
 import { Fragment, useMemo } from "react";
 import type { ReactNode } from "react";
-import { nomeDoCargo } from "../../lib/conducao-de-entrevista.ts";
+import { nomeDoCargo } from "../../lib/entrevistas/conducao-de-entrevista.ts";
 import {
   RECORTES,
   rotuloDoDia,
@@ -9,8 +9,8 @@ import {
   type ItemDaFila,
   type Recorte,
   type SituacaoNaTela,
-} from "../../lib/fila-de-conducao.ts";
-import { formatNumberBR } from "../../lib/formatters";
+} from "../../lib/entrevistas/fila-de-conducao.ts";
+import { formatNumberBR } from "../../lib/base/formatters";
 import {
   AcoesDaLinha,
   BarraDaLista,

@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useSyncExternalStore } from "react";
-import { situacaoDaPresenca } from "../../lib/online-presence";
+import { situacaoDaPresenca } from "../../lib/sessao/online-presence";
 
 /*
   "Pessoas online" no menu da conta (moldura do app; saiu do cabeçalho em
@@ -12,7 +12,7 @@ import { situacaoDaPresenca } from "../../lib/online-presence";
   continuam valendo.
 */
 
-/** Uma pessoa da lista (`normalizeOnlinePresenceList`, src/lib/online-presence.ts). */
+/** Uma pessoa da lista (`normalizeOnlinePresenceList`, src/lib/sessao/online-presence.ts). */
 export interface PessoaOnline {
   userId: string;
   fullName: string;

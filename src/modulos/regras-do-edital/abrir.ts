@@ -1,4 +1,4 @@
-import type { EtapaDasRegras } from "../../lib/regras-do-edital.ts";
+import type { EtapaDasRegras } from "../../lib/regras-do-edital/regras-do-edital.ts";
 
 /*
   "Editar nas Regras do edital" das telas de cada etapa (Triagem, Avaliação

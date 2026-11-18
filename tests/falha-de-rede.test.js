@@ -5,7 +5,7 @@ import {
   comTempoLimite,
   ehFalhaDeConexao,
   mensagemDeFalha,
-} from "../src/lib/falha-de-rede";
+} from "../src/lib/carga/falha-de-rede";
 
 afterEach(() => vi.useRealTimers());
 

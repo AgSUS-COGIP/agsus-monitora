@@ -4,7 +4,7 @@ import {
   FORMAS,
   TIPOS_DA_LEGENDA,
   formaDoTipo,
-} from "../src/lib/mapa-saude-indigena/formas.ts";
+} from "../src/lib/mapas/mapa-saude-indigena/formas.ts";
 
 const guard = readFileSync(
   "src/modulos/mapa-saude-indigena/guarda-do-mapa.ts",

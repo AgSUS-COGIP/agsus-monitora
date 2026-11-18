@@ -229,7 +229,7 @@ CREATE OR REPLACE FUNCTION public.conferencia_ler_listas_e_quadros() RETURNS jso
   with ultimas as (
     select distinct on (l."CO_MONITORAMENTO", l."TP_LISTA")
            l."CO_LISTA_CLASSIFICACAO", l."CO_MONITORAMENTO", l."TP_LISTA", l."DT_GERACAO",
-           l."QT_PENDENCIA", l."ST_PUBLICADA", l."DS_RESULTADO"
+           l."QT_PENDENCIA", l."ST_PUBLICADA", l."DS_RESULTADO", l."NU_VERSAO_REGRA"
       from public."TB_LISTA_CLASSIFICACAO" l
      where not private."FC_EDITAL_EH_TREINAMENTO"(l."CO_MONITORAMENTO")
      order by l."CO_MONITORAMENTO", l."TP_LISTA", l."DT_GERACAO" desc, l."CO_LISTA_CLASSIFICACAO" desc
@@ -241,6 +241,8 @@ CREATE OR REPLACE FUNCTION public.conferencia_ler_listas_e_quadros() RETURNS jso
           'id', u."CO_LISTA_CLASSIFICACAO", 'edital', u."CO_MONITORAMENTO", 'area', m."CO_AREA",
           'tipo', u."TP_LISTA", 'gerada_em', u."DT_GERACAO", 'pendencias', u."QT_PENDENCIA",
           'publicada', u."ST_PUBLICADA" = 'S',
+          -- 20261117193000: a versão da regra com que a lista foi gerada (a vigente vem do contexto).
+          'versao_regra', u."NU_VERSAO_REGRA",
           'vagas_pendentes', (select coalesce(jsonb_agg(distinct p ->> 'vaga'), '[]'::jsonb)
                                 from jsonb_array_elements(case when jsonb_typeof(u."DS_RESULTADO" -> 'pendencias') = 'array'
                                                                then u."DS_RESULTADO" -> 'pendencias' else '[]'::jsonb end) p
@@ -267,7 +269,7 @@ CREATE OR REPLACE FUNCTION public.conferencia_ler_listas_e_quadros() RETURNS jso
   );
 $$;
 
-COMMENT ON FUNCTION public.conferencia_ler_listas_e_quadros() IS 'Conferências (job Python, só service_role): a última lista de classificação de cada edital e tipo (fora do treinamento) com as vagas com empate pendente, os ajustes de recurso aprovados e as linhas ativas do quadro de vagas (id, edital, cargo, lotação), cruas. A vaga sem linha no quadro e a lista final desatualizada são conferidas no robô, com as páginas de conferencia_ler_analises (20261103181500).';
+COMMENT ON FUNCTION public.conferencia_ler_listas_e_quadros() IS 'Conferências (job Python, só service_role): a última lista de classificação de cada edital e tipo (fora do treinamento), com a versão da regra com que foi gerada (20261117193000), as vagas com empate pendente, os ajustes de recurso aprovados e as linhas ativas do quadro de vagas (id, edital, cargo, lotação), cruas. A vaga sem linha no quadro e a lista final desatualizada são conferidas no robô, com as páginas de conferencia_ler_analises (20261103181500).';
 
 -- 2. A tarefa diária.
 select cron.unschedule(j.jobid) from cron.job j where j.jobname = 'agsus_vinculos_do_quadro';

@@ -1,6 +1,9 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { carregarChart, chartCarregado } from "../src/lib/chartjs-global.ts";
+import {
+  carregarChart,
+  chartCarregado,
+} from "../src/lib/base/chartjs-global.ts";
 
 /*
   O Chart.js baixa no primeiro gráfico, não na entrada: src/main.ts importa
@@ -12,7 +15,10 @@ const semComentarios = (arquivo) =>
 
 describe("gráficos sob demanda", () => {
   it("nenhum import estático de chart.js no código do app", () => {
-    for (const arquivo of ["src/lib/chartjs-global.ts", "src/ui/grafico.tsx"])
+    for (const arquivo of [
+      "src/lib/base/chartjs-global.ts",
+      "src/ui/grafico.tsx",
+    ])
       expect(semComentarios(arquivo)).not.toMatch(
         /^\s*import\s+(?!type\b)[^;]*from\s+["']chart\.js/m,
       );

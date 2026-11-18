@@ -3,7 +3,7 @@ import {
   SEM_ORDEM,
   ordenarAprovados,
   proximaOrdemDosAprovados,
-} from "../src/lib/ordem-dos-aprovados.ts";
+} from "../src/lib/aprovados/ordem-dos-aprovados.ts";
 
 /* A ordem da tabela da aba Aprovados, pelo cabeçalho. */
 

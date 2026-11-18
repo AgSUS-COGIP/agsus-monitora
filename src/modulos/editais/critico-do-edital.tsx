@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { erroDoMotivoDoCritico } from "../../lib/criticos-da-visao-geral.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient";
+import { erroDoMotivoDoCritico } from "../../lib/visao-geral/criticos-da-visao-geral.ts";
+import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import { Aviso, Campo } from "../../ui/index.ts";
 
 /*

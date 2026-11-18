@@ -14,7 +14,7 @@ import { montarTela } from "../montar-tela.ts";
   pode_decidir), o aviso "Aguardando parecer jurídico" para os demais e a
   chamada de transicionar_recurso_candidato com o parecer.
 */
-vi.mock("../../src/lib/chartjs-global.ts", () => {
+vi.mock("../../src/lib/base/chartjs-global.ts", () => {
   const Chart = class {
     constructor(canvas, configuracao) {
       this.data = configuracao.data;

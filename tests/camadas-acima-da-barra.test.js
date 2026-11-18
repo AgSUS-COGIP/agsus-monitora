@@ -43,7 +43,7 @@ describe("camadas acima da barra lateral", () => {
     expect(ler("src/styles/connectivity-status.css")).toMatch(
       /\.connectivity-status\s*\{[^}]*z-index:\s*var\(--z-toast\)/,
     );
-    expect(ler("src/lib/session-lifecycle.ts")).toMatch(
+    expect(ler("src/lib/sessao/session-lifecycle.ts")).toMatch(
       /#agsusSessionNotice\s*\{[^}]*z-index:\s*var\(--z-toast, 20050\)/,
     );
     expect(app).toMatch(/\.toast-box\s*\{[^}]*z-index:\s*var\(--z-toast\)/);

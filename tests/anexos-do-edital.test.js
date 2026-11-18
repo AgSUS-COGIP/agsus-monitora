@@ -8,7 +8,7 @@ import {
   quadroParaSalvar,
   resumoDoQuadro,
   textoDaModalidade,
-} from "../src/lib/anexos-do-edital.ts";
+} from "../src/lib/editais/anexos-do-edital.ts";
 
 const CRONOGRAMA = [
   {

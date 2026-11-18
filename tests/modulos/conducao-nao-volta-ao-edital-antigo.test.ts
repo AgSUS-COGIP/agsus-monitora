@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CONFLITO_DE_VERSAO } from "../../src/lib/conflito-de-versao.ts";
+import { CONFLITO_DE_VERSAO } from "../../src/lib/base/conflito-de-versao.ts";
 import { criarEstadoDaConducao } from "../../src/modulos/entrevistas/estado-da-conducao.ts";
 import type { ClienteDaConducao } from "../../src/modulos/entrevistas/tipos-do-estado-da-conducao.ts";
 

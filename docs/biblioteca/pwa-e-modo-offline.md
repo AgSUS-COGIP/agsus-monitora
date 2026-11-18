@@ -15,7 +15,7 @@ de 17/11/2026). Esta nota diz o que o service worker guarda, o que abre sem inte
 | ------------------------------------------------ | ---------------------------------------------------------------------------- |
 | `sw.js`                                          | o service worker: casca, arquivos do build e estratégia de cada pedido       |
 | `sw-policy.js`                                   | a política pura (estratégia, o que se guarda, limite, hash), testada à parte |
-| `src/lib/cache-do-service-worker.ts`             | o que o build grava no `sw.js`: a versão e a lista `PRECACHE`                |
+| `src/lib/carga/cache-do-service-worker.ts`             | o que o build grava no `sw.js`: a versão e a lista `PRECACHE`                |
 | `vite.config.js` (`copyProgressiveWebAppAssets`) | monta a lista e publica `sw.js`, `sw-policy.js`, `offline.html`, ícones      |
 | `src/modules/pwa-lifecycle.ts`                   | registra o service worker e aplica a versão nova na próxima troca de página  |
 | `src/app/casca/aviso-de-conexao.tsx`             | "Sem conexão com a internet" e "Conexão restabelecida"                       |
@@ -53,22 +53,22 @@ usam a cópia que guardaram no IndexedDB na última leitura com rede (o que leva
 | Entrevistas › Conduzir (fila e ficha)                          | a lista de editais e o edital aberto, com a data ao lado do edital |
 | Avaliação documental, Classificação, Conferências, Visão geral | ainda o erro (ou a cópia da sessão, na Visão geral)                |
 
-- A data (`src/lib/rotulo-da-copia.ts`) aparece uma vez só, no lugar da data de atualização; sai quando a versão
+- A data (`src/lib/carga/rotulo-da-copia.ts`) aparece uma vez só, no lugar da data de atualização; sai quando a versão
   nova chega. Sem cópia, o erro de sempre ("Não foi possível falar com o servidor…").
 - A cópia é lida quando a falha é de conexão (`ehFalhaDeConexao`); erro do banco ou de permissão
   continua erro, e 42501/22023 apagam as cópias.
 - Gravar (notas, convocação, status) exige rede: lançar notas sem rede é a fase 3, ainda não feita.
 - **"Levar para o campo"** (Conduzir entrevistas, edital aberto): relê o edital com rede e confirma
   a cópia ("Pronto para o campo … neste aparelho até 19/11, 10:14"). Quem avalia leva só a sua banca;
-  a coordenação, o edital inteiro; o cálculo da convocação não vai (`src/lib/conducao-para-o-campo.ts`,
+  a coordenação, o edital inteiro; o cálculo da convocação não vai (`src/lib/entrevistas/conducao-para-o-campo.ts`,
   a mesma regra da cópia automática).
 
 ## Entrar sem rede
 
-Decisão de 17/11/2026, para o trabalho de campo (`src/lib/sessao-sem-rede.ts`):
+Decisão de 17/11/2026, para o trabalho de campo (`src/lib/sessao/sessao-sem-rede.ts`):
 
 - **Sessão:** o token vence em 1 h; vencido e sem rede, o `getSession()` do auth-js devolve `null`
-  embora a sessão continue guardada. O cliente (`src/lib/supabaseClient.ts`) passa a devolver a
+  embora a sessão continue guardada. O cliente (`src/lib/sessao/supabaseClient.ts`) passa a devolver a
   guardada quando a renovação falha por falta de rede, por até 48 h depois de vencer. Recusa do
   servidor segue como sessão encerrada.
 - **Perfil:** a entrada sempre consulta o perfil; se a consulta falha por falta de rede, serve o perfil

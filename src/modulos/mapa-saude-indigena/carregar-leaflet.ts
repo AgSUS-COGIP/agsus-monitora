@@ -17,7 +17,7 @@
   novo. Os módulos das guardas passam por `importarComRecarga` (versão nova
   publicada com a página aberta recarrega uma vez em vez de quebrar).
 */
-import { importarComRecarga } from "../../lib/importar-com-recarga.ts";
+import { importarComRecarga } from "../../lib/carga/importar-com-recarga.ts";
 
 export const LEAFLET_JS = Object.freeze({
   src: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js",

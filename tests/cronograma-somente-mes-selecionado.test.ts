@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   montarEtapasDosEditais,
   montarGradeDoMes,
-} from "../src/lib/calendario-editais.ts";
+} from "../src/lib/cronograma/calendario-editais.ts";
 import { GradeDoMes } from "../src/modulos/cronograma/partes.tsx";
 import { definido } from "./definido.ts";
 

@@ -13,7 +13,7 @@ import {
   SAIDA_EXPIRADA,
   declararSaida,
   reiniciarEstadoDeSaidaParaTestes,
-} from "../../src/lib/estado-de-saida";
+} from "../../src/lib/sessao/estado-de-saida";
 import { definido } from "../definido.ts";
 import {
   criarPerfilGuardado,

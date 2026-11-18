@@ -9,11 +9,11 @@ import {
   semLinhaConfirmado,
   separarFila,
   TEXTO_DAS_VAGAS_DO_EDITAL,
-} from "../../lib/vinculos-do-quadro.ts";
+} from "../../lib/editais/vinculos-do-quadro.ts";
 import type {
   LinhaDoQuadro,
   VinculoDaVaga,
-} from "../../lib/vinculos-do-quadro.ts";
+} from "../../lib/editais/vinculos-do-quadro.ts";
 
 type Acao = "CONFIRMAR" | "SEM_LINHA" | "AUTOMATICO";
 
@@ -43,7 +43,7 @@ export interface PropriedadesDosVinculos {
   (migration 20261118120000). Três situações: ambíguas (mais de uma linha possível),
   ausentes (nenhuma linha; a linha escolhida que saiu do quadro vem primeiro) e confirmadas.
   A equipe confirma uma linha, marca "sem linha" ou devolve à regra; quem não edita só vê.
-  Regras puras em `src/lib/vinculos-do-quadro.ts`.
+  Regras puras em `src/lib/editais/vinculos-do-quadro.ts`.
 */
 
 type Aba = "ambiguas" | "ausentes" | "confirmadas";

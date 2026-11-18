@@ -1,4 +1,4 @@
-import { objetoDosRecursos as objeto } from "../dados-dos-recursos.ts";
+import { objetoDosRecursos as objeto } from "../recursos/dados-dos-recursos.ts";
 import type {
   RegistroDaClassificacao,
   EditalDaClassificacao,

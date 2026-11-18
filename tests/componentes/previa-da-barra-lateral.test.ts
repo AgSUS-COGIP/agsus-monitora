@@ -4,7 +4,7 @@ import type { ReactElement } from "react";
 import { createRoot } from "react-dom/client";
 import type { Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { montarArvoreDoMenu } from "../../src/lib/menu-lateral.ts";
+import { montarArvoreDoMenu } from "../../src/lib/navegacao/menu-lateral.ts";
 import { SECOES } from "../../src/modulos/configuracoes/secoes.ts";
 import { BarraLateral } from "../../src/componentes/barra-lateral/barra-lateral.tsx";
 import { desenharNoTeste } from "../montar-tela.ts";

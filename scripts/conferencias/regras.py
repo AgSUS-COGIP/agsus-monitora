@@ -308,7 +308,20 @@ def resumir(aviso, numero_do_edital):
             'marque a linha pela qual a pessoa não foi contratada como "Contratado em outra lista".'
         )
     if c == "APROVADOS_CONVOCADO_SEM_DESFECHO":
-        return f"{plural(n, 'convocado', 'convocados')} há mais de {extra.get('dias')} dias sem desfecho {onde}."
+        return (
+            f"{plural(n, 'convocado', 'convocados')} há mais de {extra.get('dias')} dias sem desfecho "
+            f"nem admissão no RH {onde}."
+        )
+    if c == "APROVADOS_ADMITIDO_COM_STATUS_DESATUALIZADO":
+        return (
+            f"{plural(n, 'pessoa admitida', 'pessoas admitidas')} no RH sem o status Contratado na lista de "
+            f"aprovados {onde}."
+        )
+    if c == "CLASSIFICACAO_CONVOCACAO_REGRA_ANTERIOR":
+        return (
+            f"A convocação para entrevista {onde} foi gerada com a versão {extra.get('lista')} da regra; "
+            f"a vigente é a {extra.get('vigente')}."
+        )
     if c == "APROVADOS_PENDENCIA_DA_PUBLICACAO":
         return f"{plural(n, 'pessoa', 'pessoas')} da lista anterior ainda para revisão depois da publicação {onde}."
     if c == "CARGA_VARIACAO_BRUSCA":
@@ -353,6 +366,9 @@ def conferir_analises(paginas, contexto, acumulador):
                     caso={"analise": ident, "detalhe": {"nota": nota, "corte": corte}},
                 )
 
+            # Só com as 4 parciais. Parcial vazia NÃO vale 0: no ensaio de 17/11/2026, tratar vazio como 0
+            # acusava 3.991 análises em 23 editais (3.350 aprovadas), com diferença fixa por edital (+9,
+            # -2, -6): nessas planilhas a nota final não é a soma das quatro colunas.
             partes = [numero(a.get(c)) for c in ("formacao", "cursos", "experiencia", "etnico")]
             if nota is not None and all(p is not None for p in partes) and abs(sum(partes) - nota) > TOLERANCIA:
                 acumulador.anotar(
@@ -375,6 +391,8 @@ def conferir_analises(paginas, contexto, acumulador):
                     caso={"analise": ident, "detalhe": {"experiencia": experiencia, "teto": teto}},
                 )
 
+            # A inscrição é a 1ª candidatura do candidato nas vagas do MESMO edital (conferencia_ler_analises,
+            # 20261117…): sem candidatura no edital, só a data no futuro é conferida.
             data_analise = dia(a.get("data_analise"))
             inscricao = dia(a.get("inscricao"))
             if data_analise and (data_analise > hoje or (inscricao and data_analise < inscricao)):
@@ -435,6 +453,9 @@ def conferir_fichas(paginas, acumulador):
     (TB_FICHA_ANALISE) não batem: o banco só valida a estrutura e os limites
     do que a tela manda. A nota mínima é a que a conta gravou (a da regra de
     classificação na hora da conclusão) e, sem ela, a de agora.
+    A ficha importada da planilha (DS_LANCAMENTO.importada_da_planilha) fica de fora: a análise foi
+    feita lá, sem itens marcados, e a conta da regra daria sempre diferente (como em
+    revisao_das_fichas.fichas_com_pendencia).
     """
     for pagina in paginas:
         pagina = pagina or {}
@@ -442,6 +463,9 @@ def conferir_fichas(paginas, acumulador):
             (r.get("regra"), r.get("versao")): r.get("configuracao") for r in pagina.get("regras") or []
         }
         for f in pagina.get("linhas") or []:
+            lancamento = f.get("lancamento") if isinstance(f.get("lancamento"), dict) else {}
+            if isinstance(lancamento.get("importada_da_planilha"), dict):
+                continue
             resultado = f.get("resultado") if isinstance(f.get("resultado"), dict) else {}
             documental = f.get("documental") if isinstance(f.get("documental"), dict) else {}
             minima = resultado.get("nota_minima") if "nota_minima" in resultado else documental.get("nota_minima")
@@ -452,9 +476,7 @@ def conferir_fichas(paginas, acumulador):
             try:
                 if not isinstance(regra, dict):
                     raise ValueError("regra da ficha ausente")
-                diferencas = conferir_ficha(
-                    regra, f.get("lancamento") or {}, {**resultado, "parecer": f.get("parecer") or ""}, opcoes
-                )
+                diferencas = conferir_ficha(regra, lancamento, {**resultado, "parecer": f.get("parecer") or ""}, opcoes)
             except Exception:
                 diferencas = [{"campo": "erro_na_conta"}]
             if not diferencas:
@@ -659,11 +681,45 @@ def vagas_sem_quadro(analises, quadros, editais, vinculos=None):
     return saida
 
 
-def conferir_classificacao(dados, acumulador, analises, editais):
+def _convocacao_com_regra_anterior(listas, versoes, editais, acumulador):
+    """
+    A CONVOCACAO vigente (a última gerada do edital) feita com uma versão da regra de classificação
+    anterior à vigente: os convocados para a entrevista saíram de uma regra que mudou (o 93/2026 foi
+    convocado em 09/10 pela v1, e a vigente é a v5). Só edital conferido (edital_conferido), com a
+    versão da lista (conferencia_ler_listas_e_quadros.versao_regra, 20261117…) e a vigente
+    (conferencia_ler_contexto.regras.versao).
+    """
+    for lista in listas:
+        edital = lista.get("edital")
+        if lista.get("tipo") != "CONVOCACAO" or not edital_conferido(editais.get(edital)):
+            continue
+        da_lista, vigente = numero(lista.get("versao_regra")), numero(versoes.get(edital))
+        if da_lista is None or vigente is None or da_lista >= vigente:
+            continue
+        acumulador.anotar(
+            "CLASSIFICACAO_CONVOCACAO_REGRA_ANTERIOR",
+            edital=edital,
+            area=lista.get("area"),
+            exemplo=lista.get("id"),
+            extra={"lista": int(da_lista), "vigente": int(vigente)},
+            caso={
+                "referencia": lista.get("id"),
+                "tipo": "lista_classificacao",
+                "detalhe": {
+                    "versao_lista": int(da_lista),
+                    "versao_vigente": int(vigente),
+                    "gerada_em": dia(lista.get("gerada_em")),
+                },
+            },
+        )
+
+
+def conferir_classificacao(dados, acumulador, analises, editais, versoes=None):
     """
     dados: conferencia_ler_listas_e_quadros (listas, ajustes e as linhas ativas do quadro de vagas).
     analises: AnalisesDaClassificacao das páginas de conferencia_ler_analises (já lidas).
     editais: os editais do contexto (id -> {ativo, status, ...}).
+    versoes: edital -> versão vigente da regra de classificação (conferencia_ler_contexto.regras).
     """
     if not analises.completa:
         raise RuntimeError("as análises não foram lidas inteiras: a classificação não confere")
@@ -698,6 +754,8 @@ def conferir_classificacao(dados, acumulador, analises, editais):
             )
             for vaga in lista.get("vagas_pendentes") or []:
                 Acumulador.acrescentar(aviso, vaga, {"referencia": vaga, "tipo": "vaga"})
+
+    _convocacao_com_regra_anterior(listas, versoes or {}, editais, acumulador)
 
     for v in vagas_sem_quadro(analises, dados.get("quadros"), editais, dados.get("vinculos")):
         # O detalhe só leva identificador curto (detalhe_seguro): quantas candidatas e se a linha escolhida
@@ -775,6 +833,8 @@ def _mesma_matricula_em_duas_linhas(candidatos, acumulador):
     decidida pelo job scripts/aprovados/contratacao.py — é o desfecho do caso, e a leitura
     (conferencia_ler_aprovados) nem a traz. Sobra aqui o que a regra não decide (ambíguo) e a mesma
     matrícula em editais diferentes.
+    O par conta UMA vez (antes, entre duas áreas, contava uma em cada: 17/11/2026): o caso fica na
+    área da primeira linha (pela área, depois pelo id) e as outras linhas vão nos exemplos.
     """
     por_vinculo = defaultdict(list)
     for c in candidatos:
@@ -782,11 +842,40 @@ def _mesma_matricula_em_duas_linhas(candidatos, acumulador):
             por_vinculo[c["vinculo"]].append(c)
     for linhas in por_vinculo.values():
         n = len({c.get("id") for c in linhas})
-        if n >= 2:
-            _um_caso_por_area("APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS", linhas, acumulador, {"linhas": n})
+        if n < 2:
+            continue
+        ordenadas = sorted(linhas, key=lambda c: (str(c.get("area") or "~"), str(c.get("id") or "")))
+        principal = ordenadas[0]
+        aviso = acumulador.anotar(
+            "APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS",
+            area=principal.get("area"),
+            exemplo=principal.get("id"),
+            caso={"referencia": principal.get("id"), "tipo": "candidato_aprovado", "detalhe": {"linhas": n}},
+        )
+        for c in ordenadas[1:]:
+            Acumulador.acrescentar_exemplo(aviso, c.get("id"))
+
+
+# Situações que já são o desfecho de quem foi admitido (Migração conta como contratado; "Contratado em
+# outra lista" é a outra linha da mesma contratação).
+SITUACOES_DE_ADMITIDO = frozenset({"Contratado", "Migração", "Contratado em outra lista"})
+
+
+def codigo_do_status(status):
+    """O status do aprovado como código do detalhe ("Documentação Rejeitada" → "documentacao_rejeitada"):
+    o detalhe só aceita identificador, sem espaço nem acento. Vazio → "sem_status"."""
+    texto = unicodedata.normalize("NFKD", str(status or "")).encode("ascii", "ignore").decode()
+    return re.sub(r"[^a-z0-9]+", "_", texto.strip().lower()).strip("_") or "sem_status"
 
 
 def conferir_aprovados(dados, contexto, acumulador, dias_convocado=15):
+    """
+    dados: conferencia_ler_aprovados. `admitido` (20261117…) diz se a linha tem admissão conciliada com o
+    RH (TB_ADMISSAO_CONCILIADA); a leitura traz também a linha admitida com outro status.
+      convocado sem desfecho       Convocado há mais de N dias, SEM admissão no RH;
+      admitido, status desatualizado  admissão no RH e o status não é de contratado (Convocado,
+                                   Desistente, Documentação Rejeitada ou vazio).
+    """
     hoje = dia(contexto.get("hoje")) or hoje_em_brasilia()
     limite = hoje - timedelta(days=dias_convocado)
     candidatos = dados.get("candidatos") or []
@@ -795,6 +884,19 @@ def conferir_aprovados(dados, contexto, acumulador, dias_convocado=15):
     for c in candidatos:
         if c.get("status") == "Contratado" and c.get("pessoa"):
             contratados[c["pessoa"]].append(c)
+        if c.get("admitido") is True and c.get("status") not in SITUACOES_DE_ADMITIDO:
+            acumulador.anotar(
+                "APROVADOS_ADMITIDO_COM_STATUS_DESATUALIZADO",
+                edital=c.get("edital"),
+                area=c.get("area"),
+                exemplo=c.get("id"),
+                caso={
+                    "referencia": c.get("id"),
+                    "tipo": "candidato_aprovado",
+                    "detalhe": {"status": codigo_do_status(c.get("status")), "admissao": dia(c.get("admissao"))},
+                },
+            )
+            continue
         convocado_em = dia(c.get("convocado_em"))
         if c.get("status") == "Convocado" and convocado_em and convocado_em < limite:
             acumulador.anotar(

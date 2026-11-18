@@ -1,5 +1,5 @@
 import { pedirLinhasDoMonitoramento } from "../componentes/dados-do-monitoramento.ts";
-import { telaUsaAsLinhas } from "../lib/telas-com-linhas.ts";
+import { telaUsaAsLinhas } from "../lib/navegacao/telas-com-linhas.ts";
 import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.ts";
 
 /*
@@ -12,7 +12,7 @@ import { estadoDaVisaoGeral } from "../modulos/visao-geral/estado.ts";
   página. Agora a página aberta é quem diz:
 
   - as linhas do monitoramento são pedidas enquanto está aberta uma página que
-    as usa (src/lib/telas-com-linhas.ts); sem pedido, a carga não as lê
+    as usa (src/lib/navegacao/telas-com-linhas.ts); sem pedido, a carga não as lê
     (src/app/carga.ts);
   - a Visão geral sabe se está aberta (`definirAberta`): fechada, não pede o
     acompanhamento da área; ao voltar, pede o que ficou para trás.

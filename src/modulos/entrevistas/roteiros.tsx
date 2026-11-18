@@ -2,11 +2,11 @@ import type { FormEvent } from "react";
 import type {
   IdDaSecao,
   PendenciaDoRoteiro,
-} from "../../lib/pendencias-do-roteiro.ts";
+} from "../../lib/entrevistas/pendencias-do-roteiro.ts";
 import type {
   RascunhoDoRoteiro,
   CompetenciaDoRascunho,
-} from "../../lib/tipos-do-roteiro-de-entrevista.ts";
+} from "../../lib/entrevistas/tipos-do-roteiro-de-entrevista.ts";
 import type {
   PropriedadesDoCartaoDoRoteiro,
   PropriedadesDaVisaoDeRoteiros,
@@ -21,7 +21,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { guardaDeAlteracoes } from "../../app/guarda-de-alteracoes.ts";
-import { rotuloDaAreaDoPainel } from "../../lib/area-do-painel-de-analises.ts";
+import { rotuloDaAreaDoPainel } from "../../lib/analises/area-do-painel-de-analises.ts";
 import {
   dadosDoRoteiroParaSalvar,
   errosDoRoteiro,
@@ -39,13 +39,13 @@ import {
   textoDaPontuacao,
   TIPOS_DE_AVALIACAO,
   TIPOS_DE_MINIMO,
-} from "../../lib/roteiro-de-entrevista.ts";
+} from "../../lib/entrevistas/roteiro-de-entrevista.ts";
 import {
   erroDoNomeDaVersao,
   nomeParaGravar,
   rotuloDaVersao,
   sugerirNomeDaVersao,
-} from "../../lib/nome-da-versao.ts";
+} from "../../lib/base/nome-da-versao.ts";
 import {
   Aviso,
   Campo,
@@ -62,8 +62,8 @@ import {
   errosPorSecao,
   pendenciasDoRoteiro,
   SECOES_DO_ROTEIRO,
-} from "../../lib/pendencias-do-roteiro.ts";
-import { frasesDaEliminacao } from "../../lib/resumo-da-entrevista.ts";
+} from "../../lib/entrevistas/pendencias-do-roteiro.ts";
+import { frasesDaEliminacao } from "../../lib/entrevistas/resumo-da-entrevista.ts";
 import { AspectosDoRoteiro } from "./aspectos-do-roteiro.tsx";
 import { PendenciasDoRoteiro, SecaoRecolhivel } from "./secoes-do-roteiro.tsx";
 import { DesempateDaClassificacao } from "./conducao.tsx";

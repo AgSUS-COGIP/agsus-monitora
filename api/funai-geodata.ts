@@ -1,4 +1,4 @@
-import { origemDeTerceiro } from "../src/lib/origem-da-requisicao.js";
+import { origemDeTerceiro } from "../src/lib/seguranca/origem-da-requisicao.js";
 import type { PedidoDaVercel, RespostaDaVercel } from "./_tipos-da-vercel.js";
 
 /** Onde e com que nome de camada o GeoServer serve um conjunto. */

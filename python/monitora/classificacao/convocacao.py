@@ -1,8 +1,8 @@
 """
 A configuração de convocação do edital (Lista de aprovados › Convocação) do
 jeito que a classificação a usa — cópia fiel das partes de
-src/lib/modelo-de-convocacao.ts (normalizarModelo, modeloEmBranco),
-src/lib/lista-convocacao-rules.ts (derivarQuadro), src/lib/configuracao-de-convocacao.ts
+src/lib/aprovados/carta-de-convocacao/modelo-de-convocacao.ts (normalizarModelo, modeloEmBranco),
+src/lib/aprovados/lista-convocacao-rules.ts (derivarQuadro), src/lib/aprovados/carta-de-convocacao/configuracao-de-convocacao.ts
 (lerModelosDoBanco, lerConfiguracoesDoBanco, configuracaoDaVaga) e
 src/lib/classificacao/convocacao-do-edital.ts (uma conta só para as vagas por
 modalidade: quadro do edital > configuração de convocação > percentuais da regra).

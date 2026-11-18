@@ -8,16 +8,16 @@ import type {
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient";
+import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import {
   temProcessosPorProjeto,
   textosDaVisaoGeral,
-} from "../../lib/visao-geral.ts";
+} from "../../lib/visao-geral/visao-geral.ts";
 import {
   MAPA_DOS_DSEIS,
   MAPA_DOS_MUNICIPIOS,
   mapaDaVisaoGeral,
-} from "../../lib/visao-geral-da-area.ts";
+} from "../../lib/visao-geral/visao-geral-da-area.ts";
 import { criarCarregadorDeMunicipios } from "../mapa-de-projetos/carregador.ts";
 // Os mapas (e o Leaflet) baixam quando montam: ./mapas-sob-demanda.tsx.
 import { MapaDeProjetos, MapaSaudeIndigena } from "./mapas-sob-demanda.tsx";
@@ -37,7 +37,7 @@ import {
 } from "./paineis.tsx";
 import { TabelaDeProcessos } from "./tabela.tsx";
 import { MontadorDeRelatorio } from "./montador-de-relatorio.tsx";
-import { podeBaixarAprovados } from "../../lib/access-roles.ts";
+import { podeBaixarAprovados } from "../../lib/acessos/access-roles.ts";
 
 /*
   A Visão geral (view `dashboard`), um módulo do app: monta direto na

@@ -13,8 +13,8 @@ import {
   ondeDoCaso,
   quemDoCaso,
   termoDeBusca,
-} from "../src/lib/avisos-de-conferencia.ts";
-import { filtrosDasAnalises } from "../src/lib/filtro-da-aya.ts";
+} from "../src/lib/conferencias/avisos-de-conferencia.ts";
+import { filtrosDasAnalises } from "../src/lib/aya/filtro-da-aya.ts";
 import { criarEstadoDosAvisos } from "../src/modulos/conferencias/estado.ts";
 
 /*
@@ -82,6 +82,29 @@ describe("formato do caso", () => {
       }),
     ).toBe("Experiência 45 · teto 30");
     expect(motivoDoCaso("CARGA_VARIACAO_BRUSCA", {})).toBe("");
+  });
+
+  it("admitido no RH com status desatualizado e convocação com regra anterior", () => {
+    expect(
+      motivoDoCaso("APROVADOS_ADMITIDO_COM_STATUS_DESATUALIZADO", {
+        status: "sem_status",
+        admissao: "2026-09-08",
+      }),
+    ).toBe("Admitido no RH em 08/09/2026 · sem status");
+    expect(
+      motivoDoCaso("APROVADOS_ADMITIDO_COM_STATUS_DESATUALIZADO", {
+        status: "documentacao_rejeitada",
+      }),
+    ).toBe("Admitido no RH · status Documentação Rejeitada");
+    expect(
+      motivoDoCaso("CLASSIFICACAO_CONVOCACAO_REGRA_ANTERIOR", {
+        versao_lista: 1,
+        versao_vigente: 5,
+      }),
+    ).toBe("Regra v1 na convocação · vigente v5");
+    expect(motivoDoCaso("CLASSIFICACAO_CONVOCACAO_REGRA_ANTERIOR", {})).toBe(
+      "",
+    );
   });
 
   it("candidato em dois editais: as análises dele e as fora do acesso", () => {

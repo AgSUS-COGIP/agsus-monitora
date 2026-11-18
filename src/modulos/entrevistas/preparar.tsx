@@ -1,13 +1,13 @@
 import type {
   FonteDaConvocacao as Fonte,
   GrupoDaConvocacao,
-} from "../../lib/tipos-da-convocacao-da-entrevista.ts";
+} from "../../lib/entrevistas/tipos-da-convocacao-da-entrevista.ts";
 import { useMemo, useRef, useState } from "react";
 import {
   bancasDoEdital,
   errosDaConfiguracao,
   rascunhoDaConfiguracao,
-} from "../../lib/conducao-de-entrevista.ts";
+} from "../../lib/entrevistas/conducao-de-entrevista.ts";
 import {
   aConvocar,
   criteriosDeDesempate,
@@ -15,10 +15,10 @@ import {
   gruposDaConvocacao,
   resumoDaConvocacao,
   textoDoEmpateFinal,
-} from "../../lib/convocacao-da-entrevista.ts";
-import { hojeEmBrasilia } from "../../lib/fila-de-conducao.ts";
+} from "../../lib/entrevistas/convocacao-da-entrevista.ts";
+import { hojeEmBrasilia } from "../../lib/entrevistas/fila-de-conducao.ts";
 import { dataBR } from "../../lib/classificacao/numeros.ts";
-import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
+import { rotuloDaVersao } from "../../lib/base/nome-da-versao.ts";
 import {
   agendaPorDia,
   passoInicial,
@@ -27,13 +27,16 @@ import {
   textoDoAndamento,
   type IdDoPasso,
   type PassoDoPreparar,
-} from "../../lib/passos-do-preparar.ts";
+} from "../../lib/entrevistas/passos-do-preparar.ts";
 import {
   resumoDasRegrasDaEntrevista,
   type DestinoDoResumo,
   type EntradaDoResumo,
-} from "../../lib/resumo-da-entrevista.ts";
-import { gruposAteOLimite, totalDosGrupos } from "../../lib/carga-continua.ts";
+} from "../../lib/entrevistas/resumo-da-entrevista.ts";
+import {
+  gruposAteOLimite,
+  totalDosGrupos,
+} from "../../lib/carga/carga-continua.ts";
 import {
   EstadoVazio,
   MaisDaCarga,
@@ -76,7 +79,7 @@ import type {
                   Classificação › Agenda; aqui só se lê).
 
   Cada passo tem o estado (feito / pendente) e a lista do que falta
-  (src/lib/passos-do-preparar.ts); Preparar abre no primeiro pendente (ou
+  (src/lib/entrevistas/passos-do-preparar.ts); Preparar abre no primeiro pendente (ou
   no passo da URL, ?passo=). O layout das telas da seleção: no topo, num
   card, "N de 4 passos prontos" com a barra dos quatro, o período das
   entrevistas (da agenda) e as "Regras da entrevista" (o resumo, recolhível);

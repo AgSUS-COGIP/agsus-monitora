@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { PropsDoMapaSaudeIndigena } from "../../lib/mapa-saude-indigena/tipos.ts";
-import { aplicarLocalizacoes } from "../../lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts";
+import type { PropsDoMapaSaudeIndigena } from "../../lib/mapas/mapa-saude-indigena/tipos.ts";
+import { aplicarLocalizacoes } from "../../lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts";
 import { ErroAoCarregar } from "../../ui/index.ts";
 import { usarLocalizacoesDoSigepsi } from "./localizacoes.ts";
 import { MapaSaudeIndigena } from "./mapa-saude-indigena.tsx";

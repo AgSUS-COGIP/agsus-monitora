@@ -1,10 +1,10 @@
-import type { AlteracaoDoPonto } from "../../lib/tipos-do-editor-de-coordenadas.ts";
+import type { AlteracaoDoPonto } from "../../lib/mapas/tipos-do-editor-de-coordenadas.ts";
 import { useEffect, useState } from "react";
 import {
   correcaoDesfazivel,
   formatarCoordenada,
   rotuloDaAcao,
-} from "../../lib/editor-de-coordenadas.ts";
+} from "../../lib/mapas/editor-de-coordenadas.ts";
 import { Aviso, Campo, Carregando, EstadoVazio } from "../../ui/index.ts";
 
 const quando = (valor: string | undefined) => {

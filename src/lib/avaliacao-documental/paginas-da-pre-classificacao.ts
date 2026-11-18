@@ -15,7 +15,7 @@
   PODE_INCLUIR = fora do lote e eliminados que podem entrar por decisão.
 */
 import { podeIncluirPorDecisao } from "./tela-da-pre-classificacao.ts";
-import { semAcento } from "../fila-de-conducao.ts";
+import { semAcento } from "../entrevistas/fila-de-conducao.ts";
 import type {
   DadosDaPreClassificacao,
   InscritoDaPre,

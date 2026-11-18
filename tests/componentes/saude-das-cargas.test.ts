@@ -367,7 +367,7 @@ describe("Rodar agora (pelo banco: disparar_robo)", () => {
 describe("a seção na Administração", async () => {
   const { SECOES } = await import("../../src/modulos/configuracoes/secoes.ts");
   const { secaoDeConfiguracaoPermitida } =
-    await import("../../src/lib/access-roles.ts");
+    await import("../../src/lib/acessos/access-roles.ts");
 
   it("existe e é só do administrador global", () => {
     expect(SECOES.find((s) => s.id === "cargas")).toMatchObject({

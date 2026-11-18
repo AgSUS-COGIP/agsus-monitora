@@ -1,4 +1,4 @@
-import type { ModeloDaConvocacao } from "../../lib/tipos-da-configuracao-de-convocacao.ts";
+import type { ModeloDaConvocacao } from "../../lib/aprovados/carta-de-convocacao/tipos-da-configuracao-de-convocacao.ts";
 import type {
   PropsDaAbaDaConvocacao,
   CandidatoDaTabelaDaConvocacao,
@@ -19,18 +19,18 @@ import {
   manterSoAsOpcoes,
   opcoesDeEdital,
   paginateApprovedCandidates,
-} from "../../lib/lista-aprovados-rules.ts";
+} from "../../lib/aprovados/lista-aprovados-rules.ts";
 import {
   csvDaConvocacao,
   estaAConvocar,
   montarListaDeConvocacao,
   resumirConvocacao,
-} from "../../lib/lista-convocacao-rules.ts";
+} from "../../lib/aprovados/lista-convocacao-rules.ts";
 import {
   canChangeCandidateStatus,
   canViewClassificacao,
   canViewEntrevistas,
-} from "../../lib/access-roles.ts";
+} from "../../lib/acessos/access-roles.ts";
 import {
   CentralDeConvocacoes,
   usarConducaoLigada,
@@ -40,14 +40,14 @@ import {
   lerModalidade,
   rotuloDaCategoria,
   siglaDaCategoria,
-} from "../../lib/modelo-de-convocacao.ts";
+} from "../../lib/aprovados/carta-de-convocacao/modelo-de-convocacao.ts";
 import {
   configuracaoDaVaga,
   ordinalFeminino,
   resumirQuadro,
-} from "../../lib/configuracao-de-convocacao.ts";
+} from "../../lib/aprovados/carta-de-convocacao/configuracao-de-convocacao.ts";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import {
   Campo,
   GradeDeKpis,
@@ -68,7 +68,7 @@ import {
 /*
   A aba "Lista de convocação" da página: a ordem de chamada que sai do modelo
   de regras e das vagas imediatas de cada edital. O cálculo está em
-  `lib/lista-convocacao-rules.ts`; aqui fica o desenho.
+  `lib/aprovados/lista-convocacao-rules.ts`; aqui fica o desenho.
 
   Ordem e Classificação geral são coisas diferentes, e mostrar as duas lado a
   lado é o ponto: Ordem é a posição que o cálculo de convocação deu;

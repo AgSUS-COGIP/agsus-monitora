@@ -18,8 +18,8 @@ import {
   carregarTela,
   registrarTelas,
 } from "../../src/app/registro-das-telas.ts";
-import { CHAVE_DA_TELA_GUARDADA } from "../../src/lib/navegacao";
-import { TELAS_DAS_AREAS } from "../../src/lib/rotas.ts";
+import { CHAVE_DA_TELA_GUARDADA } from "../../src/lib/navegacao/navegacao";
+import { TELAS_DAS_AREAS } from "../../src/lib/navegacao/rotas.ts";
 import {
   definirAreaAtual,
   obterDadosDoMonitoramento,
@@ -33,7 +33,7 @@ import {
   obterPaginaDaAya,
   redefinirPaginaDaAya,
 } from "../../src/modulos/aya/estado.ts";
-import type { PerfilDeAcesso } from "../../src/lib/tipos-dos-acessos.ts";
+import type { PerfilDeAcesso } from "../../src/lib/acessos/tipos-dos-acessos.ts";
 import { definido } from "../definido.ts";
 import { comAct, fontesFalsas, montarTelasNoTeste } from "./telas-no-teste.ts";
 import type { TelaFalsa } from "./telas-no-teste.ts";

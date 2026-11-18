@@ -2,7 +2,7 @@
   Os números da faixa de situação da Fila da Avaliação documental:
   concluídas hoje, as aptas entre as concluídas e o ritmo do dia (o selo e a
   meta: a mesma conta do card "Ritmo da análise" do Painel das análises,
-  src/lib/ritmo-da-analise.ts, lida de obter_ritmo_da_analise). Sem DOM; a
+  src/lib/analises/ritmo-da-analise.ts, lida de obter_ritmo_da_analise). Sem DOM; a
   lista é a que a Fila já carregou (obter_fila_avaliacao), sem consulta nova
   — só o ritmo pede obter_ritmo_da_analise, uma vez por área, e some se a
   pessoa não pode ler o Painel das análises.
@@ -13,8 +13,8 @@ import {
   lerRitmoDaAnalise,
   seloDoCard,
   TOM_DO_SELO_DO_RITMO,
-} from "../ritmo-da-analise.ts";
-import type { Agora } from "../ritmo-da-analise.ts";
+} from "../analises/ritmo-da-analise.ts";
+import type { Agora } from "../analises/ritmo-da-analise.ts";
 
 interface FichaDosNumeros {
   ficha?: {

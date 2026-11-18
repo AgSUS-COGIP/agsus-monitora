@@ -5,8 +5,8 @@ import {
   numerosDoCasamento,
   pedidoLido,
   textoDoCasamentoParado,
-} from "../../src/lib/casamento-da-lista.ts";
-import type { CasamentoDaLista } from "../../src/lib/casamento-da-lista.ts";
+} from "../../src/lib/aprovados/casamento-da-lista.ts";
+import type { CasamentoDaLista } from "../../src/lib/aprovados/casamento-da-lista.ts";
 import { definido } from "../definido.ts";
 
 /* O que `acompanharCasamento` devolve: o casamento ou o erro. */

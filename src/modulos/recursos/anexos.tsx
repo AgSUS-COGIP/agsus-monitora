@@ -6,7 +6,7 @@ import type {
   EstadoDosRecursos,
   SnapshotDosRecursos,
 } from "./tipos-do-estado.ts";
-import type { IdentificadorDoRecurso } from "../../lib/tipos-dos-recursos.ts";
+import type { IdentificadorDoRecurso } from "../../lib/recursos/tipos-dos-recursos.ts";
 interface PropsDoAnexo {
   estado: EstadoDosRecursos;
   recursoId: IdentificadorDoRecurso;
@@ -19,7 +19,7 @@ import {
   tamanhoLegivel,
   TIPOS_DE_ANEXO,
   validarArquivoDoAnexo,
-} from "../../lib/anexos-do-recurso.ts";
+} from "../../lib/recursos/anexos-do-recurso.ts";
 import { Secao } from "../../ui/index.ts";
 import { dataHora } from "./partes.ts";
 

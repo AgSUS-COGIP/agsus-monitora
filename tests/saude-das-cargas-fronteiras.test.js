@@ -3,15 +3,15 @@ import {
   marcaDasConferencias,
   normalizarSaude,
   visaoSimples,
-} from "../src/lib/saude-das-cargas.ts";
+} from "../src/lib/automacao/saude-das-cargas.ts";
 import {
   acompanhamentoDoPedido,
   normalizarPainel,
   normalizarVagas,
-} from "../src/lib/painel-dos-robos.ts";
+} from "../src/lib/automacao/painel-dos-robos.ts";
 import { criarEstadoDaSaude } from "../src/componentes/saude-das-cargas/estado.ts";
 
-import { situacaoDoPedido } from "../src/lib/robos-de-carga.ts";
+import { situacaoDoPedido } from "../src/lib/automacao/robos-de-carga.ts";
 
 describe("fronteiras do Status das atualizações", () => {
   it("mantém o acompanhamento quando o histórico ainda não existe", () => {
