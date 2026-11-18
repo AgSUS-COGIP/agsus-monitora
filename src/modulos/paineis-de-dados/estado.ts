@@ -10,24 +10,24 @@ import {
   lerPaginaDoRelatorio,
   nomeDoArquivoDoRelatorio,
   xlsxDoRelatorio,
-} from "../../lib/relatorios-dos-paineis.ts";
+} from "../../lib/paineis/relatorios-dos-paineis.ts";
 import {
   RPC_LISTAR_FONTES_DO_PAINEL,
   RPC_SALVAR_FONTE_DA_COLUNA,
   lerFontesDoPainel,
   lerFontesDoRelatorio,
-} from "../../lib/fontes-dos-paineis.ts";
+} from "../../lib/paineis/fontes-dos-paineis.ts";
 import type {
   FonteDaColuna,
   FontesDoPainel,
-} from "../../lib/fontes-dos-paineis.ts";
+} from "../../lib/paineis/fontes-dos-paineis.ts";
 import type {
   FormatoDoRelatorio,
   IdDoRelatorio,
   LinhaDoRelatorio,
   PaginaLida,
   ZiparRelatorio,
-} from "../../lib/relatorios-dos-paineis.ts";
+} from "../../lib/paineis/relatorios-dos-paineis.ts";
 
 /*
   O estado da tela de Painéis (sem React): o relatório escolhido e, para cada

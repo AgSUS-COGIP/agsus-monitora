@@ -11,7 +11,7 @@ import {
   origensParaPreconectar,
   rotuloDoCarregamento,
   servicoDoPainel,
-} from "../../src/lib/carregamento-do-painel.ts";
+} from "../../src/lib/paineis/carregamento-do-painel.ts";
 import { acompanharCarregamentoDoPainel } from "../../src/modulos/paineis-externos/carregamento-do-painel.tsx";
 import { montarPortaisNoTeste } from "../montar-tela.ts";
 

@@ -3,9 +3,9 @@ import {
   CHAVE_DO_MAPA_RECOLHIDO,
   lerMapaRecolhido,
   valorDoMapaRecolhido,
-} from "../src/lib/mapa-recolhido.ts";
+} from "../src/lib/mapas/mapa-recolhido.ts";
 
-/* O mapa da Visão geral recolhido ou aberto (src/lib/mapa-recolhido.ts). */
+/* O mapa da Visão geral recolhido ou aberto (src/lib/mapas/mapa-recolhido.ts). */
 
 describe("mapa recolhido", () => {
   it("aberto é o padrão: sem nada guardado ou com valor estranho", () => {

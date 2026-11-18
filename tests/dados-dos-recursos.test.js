@@ -5,7 +5,7 @@ import {
   normalizarCandidatosDosRecursos,
   normalizarDadosDosModelos,
   normalizarRespostaDoRecurso,
-} from "../src/lib/dados-dos-recursos.ts";
+} from "../src/lib/recursos/dados-dos-recursos.ts";
 
 describe("entrada da resposta e dos modelos", () => {
   it("não amplia o escopo de modelos com área ou origem malformada", () => {

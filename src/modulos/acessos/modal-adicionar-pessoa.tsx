@@ -1,6 +1,6 @@
 import { useState, useSyncExternalStore, type FormEvent } from "react";
-import { gruposAtribuiveis } from "../../lib/teto-de-acessos.ts";
-import { coordenacoesPorArea } from "../../lib/grupos-e-coordenacoes.ts";
+import { gruposAtribuiveis } from "../../lib/acessos/teto-de-acessos.ts";
+import { coordenacoesPorArea } from "../../lib/acessos/grupos-e-coordenacoes.ts";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
 import { BotaoDeAcao, Campo, Modal } from "../../ui/index.ts";
 import { CabecalhoDaGaveta, CampoMotivo, motivoValido } from "./partes.tsx";
@@ -8,7 +8,7 @@ import { AcoesDoConvite } from "./convite.tsx";
 import {
   isAllowedInstitutionalEmail,
   normalizeAllowedDomains,
-} from "../../lib/platform-context";
+} from "../../lib/navegacao/platform-context";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import type {
   ConvitePronto,

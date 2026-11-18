@@ -3,8 +3,11 @@ import {
   nomeDoWorkflow,
   normalizarCatalogo,
   tarefaDoCatalogo,
-} from "../src/lib/catalogo-dos-robos.ts";
-import { normalizarSaude, visaoSimples } from "../src/lib/saude-das-cargas.ts";
+} from "../src/lib/automacao/catalogo-dos-robos.ts";
+import {
+  normalizarSaude,
+  visaoSimples,
+} from "../src/lib/automacao/saude-das-cargas.ts";
 import { CATALOGO_DOS_ROBOS } from "./fixtures/catalogo-dos-robos.ts";
 
 const CATALOGO = normalizarCatalogo(CATALOGO_DOS_ROBOS);

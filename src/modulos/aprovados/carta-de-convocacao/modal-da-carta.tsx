@@ -6,15 +6,15 @@ import type {
   RegistroDaCarta,
   ResultadoDaEmissao,
   SaidaDaCarta,
-} from "../../../lib/tipos-da-carta.ts";
+} from "../../../lib/aprovados/carta-de-convocacao/tipos-da-carta.ts";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import {
   camposUsados,
   emissaoInicial,
   modelosParaEmitir,
   validarEmissao,
-} from "../../../lib/carta-de-convocacao.ts";
-import { formatarData } from "../../../lib/lista-aprovados-rules.ts";
+} from "../../../lib/aprovados/carta-de-convocacao/carta-de-convocacao.ts";
+import { formatarData } from "../../../lib/aprovados/lista-aprovados-rules.ts";
 import {
   Aviso,
   BlocosEsqueleto,

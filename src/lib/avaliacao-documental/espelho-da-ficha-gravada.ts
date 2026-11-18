@@ -20,7 +20,7 @@ import {
   type TextosDoEspelho,
 } from "./modelo-do-espelho.ts";
 import { calcularFicha, regraDaFicha } from "./ficha.ts";
-import { nomeDaArea } from "../menu-lateral.ts";
+import { nomeDaArea } from "../navegacao/menu-lateral.ts";
 
 export type FichaCarregada = {
   nome?: string | null;

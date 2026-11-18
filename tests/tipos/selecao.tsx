@@ -5,13 +5,13 @@ import type {
   ClienteDaSelecao,
   VagaDaSelecao,
 } from "../../src/modulos/selecao/tipos.ts";
-import { comTempoLimite } from "../../src/lib/falha-de-rede";
+import { comTempoLimite } from "../../src/lib/carga/falha-de-rede";
 import {
   FILTROS_VAZIOS,
   normalizarPayload,
   somar,
   opcoesDosFiltros,
-} from "../../src/lib/selecao-do-painel.ts";
+} from "../../src/lib/selecao/selecao-do-painel.ts";
 import { Filtros, Indicadores } from "../../src/modulos/selecao/paineis.tsx";
 import {
   TelaDeSelecao,

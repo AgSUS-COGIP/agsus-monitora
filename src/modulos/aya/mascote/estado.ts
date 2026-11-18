@@ -10,7 +10,7 @@ import {
   EVENTO_ESTADO_DA_AYA,
   lerPedido,
   type EstadoDaMascote,
-} from "../../../lib/estado-da-aya.ts";
+} from "../../../lib/aya/estado-da-aya.ts";
 
 type Ouvinte = () => void;
 

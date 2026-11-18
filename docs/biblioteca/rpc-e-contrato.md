@@ -25,7 +25,7 @@ tabela. Cada RPC que o front chama está declarada no contrato, e o build confer
   roda manualmente na `main` com `SUPABASE_DB_URL_DEV`, só de desenvolvimento
   ([[ci-e-qualidade]]).
 - **Cliente único:** `getSupabaseClient()` ([[seguranca]]); nova tentativa automática só pela
-  regra de `src/lib/novas-tentativas.ts`.
+  regra de `src/lib/sessao/novas-tentativas.ts`.
 - **RPC de job** (chamada pelo Python ou por robô com a `service_role`) **não** entra no contrato
   (o contrato é do front): é `revoke … from public, anon, authenticated` e
   `grant execute … to service_role`. A que a tela chama, entra ([[python-e-jobs]]).
@@ -35,7 +35,7 @@ tabela. Cada RPC que o front chama está declarada no contrato, e o build confer
   `listar_cronograma_da_api`) são só `service_role` e chamadas pelas funções da Vercel
   ([[deploy-e-vercel]]).
 - Sinal de tela antiga: RPC que sumiu (PGRST202) faz o cliente pedir "recarregue a página"
-  (`src/lib/versao-do-sistema.ts`).
+  (`src/lib/base/versao-do-sistema.ts`).
 
 ## Relacionadas
 

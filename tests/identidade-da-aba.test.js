@@ -8,7 +8,7 @@ import {
   definirPaginaDaAba,
   definirSistemaDaAba,
   escreverFavicon,
-} from "../src/lib/identidade-da-aba";
+} from "../src/lib/sessao/identidade-da-aba";
 
 const html = readFileSync("index.html", "utf8");
 const app = fonteDoApp();

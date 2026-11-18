@@ -15,7 +15,7 @@ import { montarTela } from "../montar-tela.ts";
   aprova a resposta aprova — recalculando a prévia. Quem não decide não vê a
   seção enquanto não houver ajuste.
 */
-vi.mock("../../src/lib/chartjs-global.ts", () => {
+vi.mock("../../src/lib/base/chartjs-global.ts", () => {
   const Chart = class {
     constructor(canvas, configuracao) {
       this.data = configuracao.data;

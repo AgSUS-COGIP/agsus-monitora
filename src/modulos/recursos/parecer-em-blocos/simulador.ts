@@ -5,7 +5,7 @@ import {
   OPCOES_DO_PCD,
   rotuloDoQuadro,
   type RascunhoDoParecer,
-} from "../../../lib/parecer-em-blocos.ts";
+} from "../../../lib/recursos/parecer-em-blocos.ts";
 
 /*
   Ponte com o simulador original (o HTML da equipe, fora do repositório),

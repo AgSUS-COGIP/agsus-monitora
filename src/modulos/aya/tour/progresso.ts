@@ -5,7 +5,7 @@
   o tour ("Quer que eu mostre esta tela?") já apareceu. Só localStorage, sempre com
   try/catch: sem armazenamento (janela privada, bloqueio), as trilhas
   funcionam, só não lembram. As regras (normalizar, rótulo, onde retomar)
-  são de src/lib/aya-tours.ts.
+  são de src/lib/aya/aya-tours.ts.
 */
 
 import {
@@ -13,8 +13,8 @@ import {
   comTrilhaConcluida,
   convitesFeitos,
   progressoDasTrilhas,
-} from "../../../lib/aya-tours.ts";
-import type { ProgressoDasTrilhas } from "../../../lib/aya-tours.ts";
+} from "../../../lib/aya/aya-tours.ts";
+import type { ProgressoDasTrilhas } from "../../../lib/aya/aya-tours.ts";
 
 /** A janela (ou um substituto nos testes) com o localStorage. */
 export type JanelaComArmazenamento = { readonly localStorage: Storage };

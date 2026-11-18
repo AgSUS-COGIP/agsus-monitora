@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 import {
   modeloDeReferencia,
   normalizarModelo,
-} from "../src/lib/modelo-de-convocacao.ts";
+} from "../src/lib/aprovados/carta-de-convocacao/modelo-de-convocacao.ts";
 import {
   arredondarVaga,
   derivarQuadro,
   montarConvocacaoDaVaga,
   reservasEfetivas,
   sequenciaDeConvocacao,
-} from "../src/lib/lista-convocacao-rules.ts";
+} from "../src/lib/aprovados/lista-convocacao-rules.ts";
 import {
   FGV_MINIMOS_POR_CARGO,
   LEI_15142_ESPALHADA,

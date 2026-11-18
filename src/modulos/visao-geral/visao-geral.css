@@ -337,7 +337,7 @@
 
 /*
   Células com 8px dos lados em vez de 12px, em toda largura (17/11/2026):
-  com as 17 colunas iniciais (sem Observações, src/lib/visao-geral.ts), a
+  com as 17 colunas iniciais (sem Observações, src/lib/visao-geral/visao-geral.ts), a
   tabela passava 87px da caixa num monitor de 1910px e cortava Atenção; antes
   a regra valia só até 1439px. Em telas menores ela rola de lado, com Unidade
   e Edital presas.

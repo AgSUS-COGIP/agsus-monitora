@@ -9,7 +9,7 @@
   3. lê a API do SIGEPSI com `SIGEPSI_API_TOKEN`, que nunca sai da função;
   4. responde `{ dseis: { <chave>: { nome, polos, sede } }, casaisNacionais,
      lidoEm }` (`localizacoesPorDsei` e `casaisNacionaisDoSigepsi`,
-     src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts).
+     src/lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts).
 
   A resposta da API fica guardada por CACHE_MS na instância da função: abrir o
   mapa várias vezes não repete o pedido ao SIGEPSI. O cache do navegador é
@@ -24,11 +24,11 @@
 import {
   casaisNacionaisDoSigepsi,
   localizacoesPorDsei,
-} from "../src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.js";
+} from "../src/lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.js";
 import type {
   CasaiNacionalDoSigepsi,
   LocalizacoesPorDsei,
-} from "../src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.js";
+} from "../src/lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.js";
 import type { PedidoDaVercel, RespostaDaVercel } from "./_tipos-da-vercel.js";
 
 export const URL_DO_SIGEPSI =

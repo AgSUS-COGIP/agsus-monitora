@@ -5,13 +5,13 @@ import {
   guardarMarca,
   lerMarcaGuardada,
   limparMarcaGuardada,
-} from "../src/lib/access-branding-cache.ts";
-import { needsLightForeground } from "../src/lib/access-branding.ts";
+} from "../src/lib/entrada/access-branding-cache.ts";
+import { needsLightForeground } from "../src/lib/entrada/access-branding.ts";
 import { semTrechos } from "./fonte-do-app.ts";
 
 const html = readFileSync("index.html", "utf8");
-const cache = readFileSync("src/lib/access-branding-cache.ts", "utf8");
-const marca = readFileSync("src/lib/access-branding.ts", "utf8");
+const cache = readFileSync("src/lib/entrada/access-branding-cache.ts", "utf8");
+const marca = readFileSync("src/lib/entrada/access-branding.ts", "utf8");
 
 /*
   A piscada ao recarregar a tela de acesso.

@@ -11,7 +11,7 @@ import {
   TITULOS_ACADEMICOS,
   rotuloDe,
 } from "./catalogo.ts";
-import { rotuloDaVersao } from "../nome-da-versao.ts";
+import { rotuloDaVersao } from "../base/nome-da-versao.ts";
 import { baseDaNota, textoDaPergunta } from "./regra.ts";
 import type {
   Bloco,

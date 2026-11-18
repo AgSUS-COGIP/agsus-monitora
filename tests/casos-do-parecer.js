@@ -3,7 +3,7 @@ import {
   novaExperiencia,
   rascunhoInicial,
   rascunhoVazio,
-} from "../src/lib/parecer-em-blocos.ts";
+} from "../src/lib/recursos/parecer-em-blocos.ts";
 import { dadosFicticios } from "../src/modulos/recursos/parecer-em-blocos/dados-ficticios.ts";
 
 /*

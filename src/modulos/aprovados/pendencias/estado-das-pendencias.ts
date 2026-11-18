@@ -1,12 +1,12 @@
 import type {
   PendenciaDoEdital,
   RascunhoDaDecisao,
-} from "../../../lib/pendencias-do-edital.ts";
+} from "../../../lib/aprovados/pendencias-do-edital.ts";
 import {
   chamadaDaDecisao,
   normalizarResposta,
-} from "../../../lib/pendencias-do-edital.ts";
-import { hojeEmBrasilia } from "../../../lib/carta-de-convocacao.ts";
+} from "../../../lib/aprovados/pendencias-do-edital.ts";
+import { hojeEmBrasilia } from "../../../lib/aprovados/carta-de-convocacao/carta-de-convocacao.ts";
 
 /*
   Estado da aba Pendências (sem React): as pendências da área

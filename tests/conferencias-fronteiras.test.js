@@ -8,7 +8,7 @@ import {
   motivoDoCaso,
   destinoDoCaso,
   csvDosCasos,
-} from "../src/lib/avisos-de-conferencia.ts";
+} from "../src/lib/conferencias/avisos-de-conferencia.ts";
 import { criarEstadoDosAvisos } from "../src/modulos/conferencias/estado.ts";
 
 describe("fronteiras das conferências", () => {

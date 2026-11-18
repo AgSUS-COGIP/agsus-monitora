@@ -5,12 +5,12 @@ import {
   type BlocoDoResumo,
   type DestinoDoResumo,
   type EntradaDoResumo,
-} from "../../lib/resumo-da-entrevista.ts";
+} from "../../lib/entrevistas/resumo-da-entrevista.ts";
 import { Aviso } from "../../ui/index.ts";
 
 /*
   O resumo das regras da entrevista no topo de Conduzir › Preparar, em
-  linguagem simples (as frases são de src/lib/resumo-da-entrevista.ts, a
+  linguagem simples (as frases são de src/lib/entrevistas/resumo-da-entrevista.ts, a
   partir da regra da Classificação, do roteiro e da banca do edital): quem é
   chamado (com a tabelinha por vaga), como a nota é calculada, quem avalia e
   o desempate. Cada bloco tem o botão que leva aonde aquilo se muda

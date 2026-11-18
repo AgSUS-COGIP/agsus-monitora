@@ -4,8 +4,8 @@ import {
   chaveDoEdital,
   inteiroPtBr,
   linhasDaAbaResultado,
-} from "../src/lib/selecao-da-planilha.ts";
-import { PLANILHAS } from "../src/lib/planilhas.ts";
+} from "../src/lib/selecao/selecao-da-planilha.ts";
+import { PLANILHAS } from "../src/lib/base/planilhas.ts";
 
 /* O cabeçalho de hoje (A–Y), com as colunas que não entram (D, E, M–O, Q–S, W–Y). */
 const CABECALHO = [

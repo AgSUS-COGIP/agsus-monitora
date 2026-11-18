@@ -5,7 +5,7 @@ import {
   indicadoresDaVisaoGeral,
   linhasDaResposta,
   normalizarFiltros,
-} from "../src/lib/visao-geral.ts";
+} from "../src/lib/visao-geral/visao-geral.ts";
 import {
   buscarAcompanhamentoNoSupabase,
   criarEstadoDaVisaoGeral,

@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { formatNumberBR } from "../lib/formatters";
-import { ITENS_POR_VEZ } from "../lib/carga-continua.ts";
+import { formatNumberBR } from "../lib/base/formatters";
+import { ITENS_POR_VEZ } from "../lib/carga/carga-continua.ts";
 
 /*
   O carregamento contínuo das listas que não são a TabelaInfinita nem a
   TabelaDaLista (blocos por dia ou por vaga, cartões): 50 itens por vez e mais
   50 quando o fim da lista chega perto da parte visível, ou em "Carregar mais"
   (teclado e leitor de tela). O recorte das linhas fica com a tela (ou com
-  gruposAteOLimite, src/lib/carga-continua.ts).
+  gruposAteOLimite, src/lib/carga/carga-continua.ts).
 
   `usarCargaContinua(recorte, total)`: `recorte` é o que define a lista (a
   própria lista, memorizada, ou uma chave dos filtros); recorte novo volta aos

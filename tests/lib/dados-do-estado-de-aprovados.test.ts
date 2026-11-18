@@ -6,7 +6,7 @@ import {
   listasDoEstado,
   anexosDoEstado,
   resultadoDaMarcacao,
-} from "../../src/lib/dados-do-estado-de-aprovados.ts";
+} from "../../src/lib/aprovados/dados-do-estado-de-aprovados.ts";
 import { criarEstadoDaListaDeAprovados } from "../../src/modulos/aprovados/estado.ts";
 import { compactarPorArea } from "../componentes/candidatos-compactos-falsos.ts";
 import { aberturaPelasChamadasDeAntes } from "../componentes/abertura-dos-aprovados.ts";

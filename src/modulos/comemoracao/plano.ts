@@ -4,9 +4,9 @@ import {
   duracaoMsDasOpcoes,
   marcoSoComAviso,
   reservarEfeitoDoDia,
-} from "../../lib/catalogo-de-comemoracoes.ts";
+} from "../../lib/comemoracao/catalogo-de-comemoracoes.ts";
 import { hojeEmBrasilia } from "../../lib/avaliacao-documental/datas-do-vinculo.ts";
-import type { FormaDoMarco } from "../../lib/catalogo-de-comemoracoes.ts";
+import type { FormaDoMarco } from "../../lib/comemoracao/catalogo-de-comemoracoes.ts";
 import type { JanelaDaComemoracao } from "./desenho.ts";
 
 /*

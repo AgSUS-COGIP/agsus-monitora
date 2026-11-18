@@ -11,21 +11,21 @@ import {
   SITUACAO_PADRAO,
   textoDaFaixaDoAdministrador,
   textosDaManutencao,
-} from "../src/lib/situacao-dos-modulos.ts";
+} from "../src/lib/navegacao/situacao-dos-modulos.ts";
 import {
   abasDoCatalogo,
   ABAS_DO_MENU,
   montarArvoreDoMenu,
   paginasDaArea,
-} from "../src/lib/menu-lateral.ts";
-import { secaoDeConfiguracaoPermitida } from "../src/lib/access-roles.ts";
+} from "../src/lib/navegacao/menu-lateral.ts";
+import { secaoDeConfiguracaoPermitida } from "../src/lib/acessos/access-roles.ts";
 import {
   carregarSituacaoDoSistema,
   consultaDaSituacaoDoSistema,
   esquecerSituacaoDoSistema,
   situacaoDoSistema,
 } from "../src/app/situacao-do-sistema.ts";
-import { avisoDaPagina } from "../src/lib/pagina-desligada.ts";
+import { avisoDaPagina } from "../src/lib/navegacao/pagina-desligada.ts";
 
 /*
   Módulos e abas: o sistema, cada área, cada aba (em todas as áreas ou só
@@ -359,7 +359,7 @@ describe("tela de manutenção e faixa do administrador", () => {
   afterEach(() => {
     esquecerSituacaoDoSistema();
   });
-  // A decisão é pura (src/lib/pagina-desligada.ts); quem desenha é a rota (tests/app/pagina-desligada.test.ts).
+  // A decisão é pura (src/lib/navegacao/pagina-desligada.ts); quem desenha é a rota (tests/app/pagina-desligada.test.ts).
   const decidir = (opcoes) =>
     avisoDaPagina({
       situacao: situacaoDoSistema(),

@@ -17,7 +17,8 @@ local tem um `CLAUDE.md` curto.
   (`check:rpc-contract` quebra o build). Auth só pelos módulos de sessão (nada de `createClient`
   avulso).
 - Tela nova = **React** em `src/modulos/<nome>/`, rota em `src/app/telas.tsx`, visual de `src/ui/`
-  com tokens, lógica pura em `src/lib/` com teste. **Nada novo em `src/modules/`** (o legado só
+  com tokens, lógica pura em `src/lib/<assunto>/` com teste (nunca solta na raiz de `src/lib/`;
+  qual pasta: [[mapa-do-repositorio]]). **Nada novo em `src/modules/`** (o legado só
   encolhe; `check-legado-so-encolhe` quebra o build). O legado fala com o React por estado externo
   e eventos, nunca pelo DOM.
 - **Legado sai quando a mudança é confirmada** pelo usuário (módulos, marcação, funções em
@@ -25,12 +26,12 @@ local tem um `CLAUDE.md` curto.
   testes e `npm run build` depois.
 - Nenhum `MutationObserver` novo nem remendo (`*-fix`, `*-refinement`, `post-N…`,
   `window.navigate = …`): mude a fonte.
-- HTML dinâmico só por `src/lib/sanitize.ts` / `html-security.ts`; nunca `innerHTML` cru.
+- HTML dinâmico só por `src/lib/seguranca/sanitize.ts` / `seguranca/html-security.ts`; nunca `innerHTML` cru.
 - CSS pelas regras de ouro de [[design-e-tokens]]: token em vez de hex, sem `!important`/`#id`.
 - Interface sem texto explicativo: quem explica é a Aya (`docs/aya/`); data de atualização
   discreta e uma vez só.
 - Arquivo gerado se edita na fonte e se regenera com o script. Endereço de planilha só em
-  `src/lib/planilhas.ts`. Banco no padrão MAD (skill `mad-ddl-review`).
+  `src/lib/base/planilhas.ts`. Banco no padrão MAD (skill `mad-ddl-review`).
 - Migration aplicada à mão e registrada, **nunca `supabase db push`** nem edição da aplicada; o
   código vigente do banco está em `supabase/esquema-atual.sql`.
 

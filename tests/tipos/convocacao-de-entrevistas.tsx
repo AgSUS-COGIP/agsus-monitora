@@ -3,13 +3,13 @@ import {
   gruposDaConvocacao,
   aConvocar,
   avisosDaConvocacao,
-} from "../../src/lib/convocacao-da-entrevista.ts";
+} from "../../src/lib/entrevistas/convocacao-da-entrevista.ts";
 import {
   ListaDeConvocacao,
   BotaoIrPara,
   DesempateDaClassificacao,
 } from "../../src/modulos/entrevistas/conducao.tsx";
-import type { FonteDaConvocacao } from "../../src/lib/tipos-da-convocacao-da-entrevista.ts";
+import type { FonteDaConvocacao } from "../../src/lib/entrevistas/tipos-da-convocacao-da-entrevista.ts";
 import type { DadosDoEdital } from "../../src/modulos/entrevistas/tipos.ts";
 
 const dados: DadosDoEdital = {

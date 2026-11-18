@@ -6,7 +6,7 @@ import type {
 import type {
   ModeloDaResposta,
   DadosDosModelos,
-} from "../../lib/tipos-da-resposta-do-recurso.ts";
+} from "../../lib/recursos/tipos-da-resposta-do-recurso.ts";
 import type { CamposDoDetalheDaGaveta } from "./tipos-da-gaveta.ts";
 import type {
   DadosDoRecurso,
@@ -14,7 +14,7 @@ import type {
   IdentificadorDoRecurso,
   OrigemDoRecurso,
   EtapaDoCronogramaDoRecurso,
-} from "../../lib/tipos-dos-recursos.ts";
+} from "../../lib/recursos/tipos-dos-recursos.ts";
 export type RegistroDosRecursos = Record<string, unknown>;
 export interface CandidatoDoRecurso {
   id: IdentificadorDoRecurso;

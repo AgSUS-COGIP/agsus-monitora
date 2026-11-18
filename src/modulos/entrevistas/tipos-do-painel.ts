@@ -157,7 +157,9 @@ export type SnapshotDasEntrevistas = Readonly<{
   comemoracoes: boolean;
   agenda: Readonly<{
     editalId: string;
-    itens: import("../../lib/painel-de-entrevistas.ts").ItemDaAgenda[] | null;
+    itens:
+      | import("../../lib/entrevistas/painel-de-entrevistas.ts").ItemDaAgenda[]
+      | null;
     erro: string;
   }>;
 }>;
@@ -213,7 +215,8 @@ export interface EstadoDasEntrevistas {
   carregarAgenda(
     editalId: string,
   ): Promise<
-    import("../../lib/painel-de-entrevistas.ts").ItemDaAgenda[] | null
+    | import("../../lib/entrevistas/painel-de-entrevistas.ts").ItemDaAgenda[]
+    | null
   >;
   reiniciar(): void;
   definirComemoracoes(ligadas: boolean): void;

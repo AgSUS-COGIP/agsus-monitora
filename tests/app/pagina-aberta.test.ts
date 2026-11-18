@@ -15,7 +15,7 @@ import {
 import {
   TELAS_COM_LINHAS,
   telaUsaAsLinhas,
-} from "../../src/lib/telas-com-linhas.ts";
+} from "../../src/lib/navegacao/telas-com-linhas.ts";
 import {
   buscarAcompanhamentoNoSupabase,
   criarEstadoDaVisaoGeral,
@@ -24,7 +24,7 @@ import {
 /*
   A página aberta decide o que se carrega (src/app/pagina-aberta.ts): as
   linhas do monitoramento só para as páginas que as usam
-  (src/lib/telas-com-linhas.ts) e o acompanhamento da Visão geral só com ela
+  (src/lib/navegacao/telas-com-linhas.ts) e o acompanhamento da Visão geral só com ela
   aberta. Em 19/10/2026 o Supabase NANO saturou com ~10 avaliadores que
   entravam direto na Avaliação documental e, mesmo assim, liam tudo isso.
 */

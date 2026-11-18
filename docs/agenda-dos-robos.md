@@ -46,7 +46,7 @@ como "desligada desde 16/10/2026: só pelo Rodar agora", sem prazo (não ficam "
 linha **Agenda dos robôs** passa a esperar só o pedido diário das Conferências (atrasada depois
 de 26 h). Não religue sem combinar com a coordenação. Ao religar, o Status das atualizações acompanha
 sozinho: o prazo e o "esperado" de cada carga saem da agenda da tarefa no `cron.job`
-(`src/lib/agenda-do-cron.ts`; regra do prazo em `src/lib/saude-das-cargas.ts`).
+(`src/lib/automacao/agenda-do-cron.ts`; regra do prazo em `src/lib/automacao/saude-das-cargas.ts`).
 
 O **Contratado em outra lista** (`contratacao-dos-aprovados.yml`, 20261024120000) não tem tarefa
 própria: roda todo dia chamado pelo `conferencias.yml` (antes das conferências) e é pedido pelo

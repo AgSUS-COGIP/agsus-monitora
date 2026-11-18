@@ -20,13 +20,13 @@ erros, nunca voltou ao front.
 
 ## Regras
 
-- Saúde Indígena: coordenada só do SIGEPSI (`src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts`);
+- Saúde Indígena: coordenada só do SIGEPSI (`src/lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts`);
   nada de reserva vinda do banco, de planilha ou de arquivo em `public/data/`. Corrigir um ponto é
   no SIGEPSI; o mapa não tem editor.
 - Projetos: coordenada no banco, corrigida pelo editor ou por correção de dados com ensaio.
 - O histórico `private."TH_COORDENADA_MAPA_SAUDE_INDIG"` e o catálogo `TD_UNIDADE` ficam no banco
   (a linha `rede_cnes` e as pendências saíram em 17/11/2026, com cópias `*_backup_20261117_*`).
-- `uf-ibge.ts` e `brasil-bounds.ts` são a referência geográfica usada pelos scripts de auditoria.
+- `mapas/uf-ibge.ts` e `mapas/brasil-bounds.ts` são a referência geográfica usada pelos scripts de auditoria.
 - Os scripts de geografia (`compilar-terras-indigenas.mjs`, `compilar-contornos-dos-dseis.mjs`)
   partem do banco e da Funai ([[mapas-e-leaflet]]).
 - As regras para a Aya: `docs/aya/regras-dos-mapas.md` e `docs/aya/regras-do-mapa-saude-indigena.md`.
@@ -40,9 +40,9 @@ e o Gestor o abrem.** O mapa de Projetos o liga no seu `editor-de-coordenadas.ts
 ([[modulo-mapa-de-projetos]]); o adaptador e as regras da Saúde Indígena saíram em 17/11/2026.
 
 - **Contratos.** Interface e fontes em `tipos.ts`; regras puras em
-  `src/lib/tipos-do-editor-de-coordenadas.ts`. Cada fonte fornece as RPCs, a identidade do ponto,
+  `src/lib/mapas/tipos-do-editor-de-coordenadas.ts`. Cada fonte fornece as RPCs, a identidade do ponto,
   as regras da fila, as sugestões e os argumentos de gravação; o tipo genérico preserva os campos
-  próprios do ponto. `src/lib/editor-de-coordenadas.ts` reúne as regras comuns: validação,
+  próprios do ponto. `src/lib/mapas/editor-de-coordenadas.ts` reúne as regras comuns: validação,
   ordenação, distância, sugestões repetidas, histórico e folga do enquadramento
   (`folgaDoEnquadramento`).
 - **Fronteira dos dados.** As respostas das RPCs entram como dados externos: pendências precisam

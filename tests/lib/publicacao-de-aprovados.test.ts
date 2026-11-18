@@ -4,7 +4,7 @@ import {
   motivoValido,
   origemDaLista,
   resumoDasOrigens,
-} from "../../src/lib/publicacao-de-aprovados.ts";
+} from "../../src/lib/aprovados/publicacao-de-aprovados.ts";
 
 const retrato = {
   tipo: "FINAL",

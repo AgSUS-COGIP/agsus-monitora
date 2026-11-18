@@ -5,14 +5,14 @@ import {
   posicaoNaDanca,
   somDoEstouro,
   trajetoDaAya,
-} from "../src/lib/fogos-cena.ts";
-import { criarAleatorio } from "../src/lib/fogos.ts";
+} from "../src/lib/comemoracao/fogos-cena.ts";
+import { criarAleatorio } from "../src/lib/comemoracao/fogos.ts";
 import {
   avancarCena,
   cenaAcabou,
   CONFETE_DA_AYA,
   criarCena,
-} from "../src/lib/motor-de-efeitos.ts";
+} from "../src/lib/comemoracao/motor-de-efeitos.ts";
 import {
   AJUSTE_DA_QUALIDADE,
   criarMedidor,

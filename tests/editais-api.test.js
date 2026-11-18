@@ -4,7 +4,7 @@ import {
   editaisDaApi,
   filtrosDaApi,
   totaisDaApi,
-} from "../src/lib/editais-da-api.ts";
+} from "../src/lib/editais/editais-da-api.ts";
 
 const LINHAS = [
   {

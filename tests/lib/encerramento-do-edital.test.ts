@@ -9,7 +9,7 @@ import {
   numeroCurto,
   selosDoPerfil,
   tituloDeQuemFechou,
-} from "../../src/lib/encerramento-do-edital.ts";
+} from "../../src/lib/encerramento-do-edital/encerramento-do-edital.ts";
 import { definido } from "../definido.ts";
 
 /*

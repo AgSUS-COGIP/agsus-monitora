@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   municipiosDaResposta,
   pontosDosMunicipios,
-} from "../src/lib/visao-geral-da-area.ts";
+} from "../src/lib/visao-geral/visao-geral-da-area.ts";
 
 describe("fronteira dos municípios do mapa de Projetos", () => {
   it("ignora formatos sem lugar e não transforma objetos em nomes", () => {

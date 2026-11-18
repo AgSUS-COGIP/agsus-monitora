@@ -12,7 +12,7 @@ import {
   rotuloDaVersaoNaLista,
   sugerirNomeDaVersao,
   trechoDoMotivo,
-} from "../src/lib/nome-da-versao.ts";
+} from "../src/lib/base/nome-da-versao.ts";
 import {
   CampoNomeDaVersao,
   NomeDaVersao,

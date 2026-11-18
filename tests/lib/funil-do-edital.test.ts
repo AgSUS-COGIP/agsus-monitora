@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   numeroDoFunil,
   textoDaFonteDoFunil,
-} from "../../src/lib/funil-do-edital.ts";
+} from "../../src/lib/editais/funil-do-edital.ts";
 import {
   compararEntrevistas,
   entrevistaVigente,
-} from "../../src/lib/entrevista-vigente.ts";
+} from "../../src/lib/entrevistas/entrevista-vigente.ts";
 
 /*
   O funil do edital vem de uma fonte só (migration 20261022200000): a tela

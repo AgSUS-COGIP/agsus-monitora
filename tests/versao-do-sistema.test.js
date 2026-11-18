@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import { NOVIDADES, novidadesVisiveis } from "../src/lib/novidades.ts";
+import { NOVIDADES, novidadesVisiveis } from "../src/lib/base/novidades.ts";
 import {
   ehErroDeTelaAntiga,
   lerVersaoPublicada,
   novidadeParaMostrar,
   observarRespostasDoBanco,
-} from "../src/lib/versao-do-sistema.ts";
+} from "../src/lib/base/versao-do-sistema.ts";
 
 const novidade = (id, data, visivel = true) => ({
   id,

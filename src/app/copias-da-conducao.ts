@@ -3,7 +3,7 @@
   lista de editais da área e o edital aberto (convocados, notas, agenda e
   previsão), no IndexedDB das cópias de payload
   (src/modules/cache-de-payload-indexeddb.ts), pelas regras de
-  src/lib/cache-de-payload.ts: de um usuário só, por chave e por 48 h; saem ao
+  src/lib/carga/cache-de-payload.ts: de um usuário só, por chave e por 48 h; saem ao
   Sair, no "Limpar sessão", ao perder o acesso e quando outra pessoa entra.
 
   São gravadas a cada leitura com rede e lidas só quando o banco não responde
@@ -11,7 +11,7 @@
   abre da cópia, só para consulta, com a data dela. CPF e contatos não vêm
   nas RPCs da condução e não ficam no aparelho.
 */
-import { criarCacheDePayload } from "../lib/cache-de-payload";
+import { criarCacheDePayload } from "../lib/carga/cache-de-payload";
 import type { CopiasDaConducao } from "../modulos/entrevistas/tipos-do-estado-da-conducao.ts";
 import { armazenamentoDePayload } from "../modules/cache-de-payload-indexeddb.ts";
 

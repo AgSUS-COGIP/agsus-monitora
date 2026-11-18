@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { coordenacoesPorArea } from "../../lib/grupos-e-coordenacoes.ts";
+import { coordenacoesPorArea } from "../../lib/acessos/grupos-e-coordenacoes.ts";
 import { Icone } from "../../componentes/icone.tsx";
 import { Aviso, Campo, classes } from "../../ui/index.ts";
 import type {
@@ -7,7 +7,7 @@ import type {
   CoordenacaoDeAcesso,
   GrupoDeAcesso,
   OpcaoDoModulo,
-} from "../../lib/tipos-dos-acessos.ts";
+} from "../../lib/acessos/tipos-dos-acessos.ts";
 
 /*
   Peças que as abas de Acessos repetem e que não existem em src/ui/: lista

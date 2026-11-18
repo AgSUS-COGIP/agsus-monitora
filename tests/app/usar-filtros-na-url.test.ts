@@ -25,7 +25,10 @@ import {
   usarFiltrosNaUrl,
   usarLojaNaUrl,
 } from "../../src/app/usar-filtros-na-url.ts";
-import { caminhoDoDestino, destinoDoCaminho } from "../../src/lib/rotas.ts";
+import {
+  caminhoDoDestino,
+  destinoDoCaminho,
+} from "../../src/lib/navegacao/rotas.ts";
 import "../componentes/interacoes.ts";
 
 /*

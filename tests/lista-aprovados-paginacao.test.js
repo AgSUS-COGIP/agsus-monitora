@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { paginateApprovedCandidates } from "../src/lib/lista-aprovados-rules.ts";
+import { paginateApprovedCandidates } from "../src/lib/aprovados/lista-aprovados-rules.ts";
 
 /** Candidatos falsos, só com o que a paginação precisa: a ordem. */
 const candidatos = (quantidade) =>

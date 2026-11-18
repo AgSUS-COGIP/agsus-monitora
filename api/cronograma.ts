@@ -1,7 +1,7 @@
 /*
   GET /api/cronograma — o Cronograma: as etapas de cada edital ativo (todas as
   áreas), na ordem do edital (formato em
-  src/lib/aprovados-e-cronograma-da-api.ts; leitura `listar_cronograma_da_api`,
+  src/lib/aprovados/aprovados-e-cronograma-da-api.ts; leitura `listar_cronograma_da_api`,
   migration 20261105150000).
 
   Acesso: sem login, pela mesma chave fixa de /api/editais
@@ -53,7 +53,7 @@
 import {
   RPC_DO_CRONOGRAMA,
   respostaDoCronograma,
-} from "../src/lib/aprovados-e-cronograma-da-api.js";
+} from "../src/lib/aprovados/aprovados-e-cronograma-da-api.js";
 import { criarRotaComChave } from "./_rota-com-chave.js";
 
 export default criarRotaComChave({

@@ -7,8 +7,8 @@ import {
   ESTILO_VIDRO,
   avaliarCor,
   normalizarEstilo,
-} from "../src/lib/contraste.ts";
-import { mapearBrandingPublico } from "../src/lib/access-branding-publico.ts";
+} from "../src/lib/base/contraste.ts";
+import { mapearBrandingPublico } from "../src/lib/entrada/access-branding-publico.ts";
 import { aplicarEstiloDoPainel } from "../src/app/entrada/marca.ts";
 
 /*

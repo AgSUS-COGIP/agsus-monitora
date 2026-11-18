@@ -35,10 +35,10 @@ import type {
   ViewDeTela,
 } from "./registro-das-telas.ts";
 import type { EstadoDaNavegacao, LeituraDaNavegacao } from "./navegacao.ts";
-import { erroAmigavel } from "../lib/erro-amigavel";
-import { ehPainelExterno } from "../lib/navegacao";
+import { erroAmigavel } from "../lib/base/erro-amigavel";
+import { ehPainelExterno } from "../lib/navegacao/navegacao";
 import { situacaoDoSistema } from "./situacao-do-sistema.ts";
-import { TEXTOS_DA_PAGINA_DESLIGADA } from "../lib/pagina-desligada.ts";
+import { TEXTOS_DA_PAGINA_DESLIGADA } from "../lib/navegacao/pagina-desligada.ts";
 import { Icone } from "../componentes/icone.tsx";
 import { criarVisaoGeral } from "../modulos/visao-geral/visao-geral.tsx";
 import { criarNucleo } from "../modulos/editais/nucleo.tsx";
@@ -507,7 +507,7 @@ export function Telas() {
 /*
   Página desligada pela coordenação, ou em manutenção para quem não é
   administrador global: o aviso no lugar da página (a navegação decide, com
-  as regras de src/lib/pagina-desligada.ts), com o botão para a página
+  as regras de src/lib/navegacao/pagina-desligada.ts), com o botão para a página
   inicial. A tela de verdade fica montada e escondida.
 */
 function AvisoNoLugarDaPagina() {

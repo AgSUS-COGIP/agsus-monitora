@@ -28,7 +28,10 @@ import type {
   O logo chega pronto ({ bytes: PNG, largura, altura }); sem logo, o
   cabeçalho vai só com o texto.
 */
-import { escaparXml, zipSemCompressao } from "../documento-da-resposta.ts";
+import {
+  escaparXml,
+  zipSemCompressao,
+} from "../recursos/documento-da-resposta.ts";
 import { CABECALHO_PADRAO, numeracao, trechos } from "./documento-sei.ts";
 
 const W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";

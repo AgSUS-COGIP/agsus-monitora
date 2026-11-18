@@ -12,7 +12,7 @@ import {
   pontosDoTextoNaFonte,
   reduzirPontos,
   tracoDoCheck,
-} from "../src/lib/fogos-formas.ts";
+} from "../src/lib/comemoracao/fogos-formas.ts";
 
 /*
   O marco desenhado no céu: forma → pontos-alvo. Sem sorteio (as formas são

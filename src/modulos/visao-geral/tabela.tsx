@@ -7,12 +7,12 @@ import type {
   TextosDaVisaoGeral,
 } from "./tipos.ts";
 import { cloneElement, useEffect, useRef, useState } from "react";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import {
   contratacoesDoCadastroReserva,
   contratadasImediatas,
   vagasSemContratacao,
-} from "../../lib/indicadores-do-monitoramento.ts";
+} from "../../lib/visao-geral/indicadores-do-monitoramento.ts";
 import {
   COLUNAS_DA_TABELA,
   dataCurta,
@@ -25,7 +25,7 @@ import {
   seloDoStatus,
   taxaDeOciosidade,
   urgenciaDoCronograma,
-} from "../../lib/visao-geral.ts";
+} from "../../lib/visao-geral/visao-geral.ts";
 import { classes, Selo, TabelaInfinita } from "../../ui/index.ts";
 
 /*

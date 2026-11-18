@@ -36,8 +36,8 @@ import {
   ultimaAtualizacao,
   urlSegura,
   validacaoDaJanela,
-} from "../src/lib/analises-curriculares.ts";
-import { urlDaPlanilhaGoogle } from "../src/lib/planilhas.ts";
+} from "../src/lib/analises/analises-curriculares.ts";
+import { urlDaPlanilhaGoogle } from "../src/lib/base/planilhas.ts";
 
 /*
   As regras da tela de Análises curriculares (src/modulos/analises/): o que o

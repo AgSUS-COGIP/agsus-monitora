@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { montarPortaisNoTeste } from "../montar-tela.ts";
 import { criarPaineisExternos } from "../../src/app/paineis-externos.ts";
 import type { PainelExternoDoApp } from "../../src/app/paineis-externos.ts";
-import type { PerfilDeAcesso } from "../../src/lib/tipos-dos-acessos.ts";
+import type { PerfilDeAcesso } from "../../src/lib/acessos/tipos-dos-acessos.ts";
 import { definido } from "../definido.ts";
 
 /*

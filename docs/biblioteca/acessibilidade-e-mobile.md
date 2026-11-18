@@ -38,7 +38,7 @@ Como o sistema cumpre:
 - `Modal` e `Gaveta` prendem o foco e fecham com Esc.
 - Pesos 400/500/600, nada abaixo de 12px, sentence case ([[design-e-tokens]]).
 - Testes: `tests/contraste-dos-temas.spec.js` (Playwright, os dois temas; [[testes]]) e
-  `tests/cores-so-por-token.test.js`; `src/lib/contraste.ts` calcula o contraste do aviso de
+  `tests/cores-so-por-token.test.js`; `src/lib/base/contraste.ts` calcula o contraste do aviso de
   branding (reutilize em vez de reescrever).
 
 ## Mobile e responsividade
@@ -78,7 +78,7 @@ Como o sistema faz:
 
 - **Tela sem rolagem lateral:** `.ui-tela` é uma grade com `minmax(0, 1fr)`; sem isso, a tabela
   mais larga alargava a página inteira (Painéis chegou a 924px num celular de 375px).
-- **Rótulos de gráfico em linhas:** `rotuloEmLinhas` (`src/lib/rotulo-em-linhas.ts`) quebra o
+- **Rótulos de gráfico em linhas:** `rotuloEmLinhas` (`src/lib/selecao/rotulo-em-linhas.ts`) quebra o
   rótulo do eixo para o Chart.js, que desenha um array como várias linhas.
 - **Legenda do mapa** e **convite da Aya**: a legenda começa recolhida abaixo de 768px; o convite
   "Primeira vez em…?" fica menor no celular e some ao rolar a página.

@@ -6,7 +6,7 @@ import { montarTelasNoTeste } from "./telas-no-teste.ts";
 import type { TelaFalsa } from "./telas-no-teste.ts";
 import { criarNavegacao } from "../../src/app/navegacao.ts";
 import type { OpcoesDaNavegacao } from "../../src/app/navegacao.ts";
-import type { PerfilDeAcesso } from "../../src/lib/tipos-dos-acessos.ts";
+import type { PerfilDeAcesso } from "../../src/lib/acessos/tipos-dos-acessos.ts";
 import type { ArvoreDoMenu } from "../../src/componentes/barra-lateral/tipos.ts";
 import { definido } from "../definido.ts";
 import {
@@ -27,12 +27,15 @@ import {
   obterEstadoDaBarraLateral,
   redefinirBarraLateral,
 } from "../../src/componentes/barra-lateral/estado.ts";
-import { ABAS_DO_MENU, abasDoCatalogo } from "../../src/lib/menu-lateral.ts";
+import {
+  ABAS_DO_MENU,
+  abasDoCatalogo,
+} from "../../src/lib/navegacao/menu-lateral.ts";
 import {
   paginaDesligada,
   primeiraPaginaLigada,
-} from "../../src/lib/pagina-desligada.ts";
-import { normalizarSituacaoDoSistema } from "../../src/lib/situacao-dos-modulos.ts";
+} from "../../src/lib/navegacao/pagina-desligada.ts";
+import { normalizarSituacaoDoSistema } from "../../src/lib/navegacao/situacao-dos-modulos.ts";
 import { carregarCatalogoDeAbas } from "../../src/modules/catalogo-de-abas.ts";
 import {
   carregarSituacaoDoSistema,
@@ -69,7 +72,7 @@ function comoDocumento(documento: object): Document {
   saturou e quem já estava numa aba desligada continuava nela, consultando,
   até recarregar).
 
-  - a regra pura (src/lib/pagina-desligada.ts);
+  - a regra pura (src/lib/navegacao/pagina-desligada.ts);
   - a checagem periódica: a versão do catálogo vem de carona na presença, a
     cada 90 s com a aba visível, e para com a aba oculta (src/app/presenca.ts);
   - o vigia (src/app/vigia-do-catalogo.ts) relê o catálogo só quando a versão

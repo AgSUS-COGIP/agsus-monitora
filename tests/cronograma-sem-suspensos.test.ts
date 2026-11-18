@@ -10,7 +10,7 @@ import {
   montarEtapasDosEditais,
   montarGradeDoMes,
   proximasEtapas,
-} from "../src/lib/calendario-editais.ts";
+} from "../src/lib/cronograma/calendario-editais.ts";
 import { criarEstadoDoCalendario } from "../src/modulos/cronograma/estado.ts";
 
 /*

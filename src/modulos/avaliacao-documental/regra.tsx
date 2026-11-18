@@ -23,7 +23,7 @@ import {
   erroDoNomeDaVersao,
   nomeParaGravar,
   sugerirNomeDaVersao,
-} from "../../lib/nome-da-versao.ts";
+} from "../../lib/base/nome-da-versao.ts";
 import {
   Aviso,
   AvisoDeRascunho,
@@ -49,7 +49,7 @@ import type {
 import {
   dataEHoraCurtas,
   textoDaGravacao,
-} from "../../lib/rascunho-da-regra.ts";
+} from "../../lib/regras-do-edital/rascunho-da-regra.ts";
 import {
   AssistenteDaRegra,
   type ClassificacaoDoRascunho,

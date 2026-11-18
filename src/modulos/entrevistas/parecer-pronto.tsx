@@ -4,7 +4,7 @@ import { copiarParaAreaDeTransferencia } from "../classificacao/documento-no-nav
 /*
   O parecer da entrevista em texto pronto, embaixo da matriz da ficha de
   notas (ficha.tsx), quando tudo está lançado — como o parecer da ficha da
-  Avaliação documental: o texto (src/lib/parecer-da-entrevista.ts) e
+  Avaliação documental: o texto (src/lib/entrevistas/parecer-da-entrevista.ts) e
   "Copiar parecer". Com alterações sem salvar, avisa que é a prévia.
 */
 

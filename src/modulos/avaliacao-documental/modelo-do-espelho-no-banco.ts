@@ -12,7 +12,7 @@ import {
   type ModeloDoEdital,
   type TextosDoEspelho,
 } from "../../lib/avaliacao-documental/modelo-do-espelho.ts";
-import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
+import { ehConflitoDeVersao } from "../../lib/base/conflito-de-versao.ts";
 
 export const RPC_OBTER_MODELO_ESPELHO = "obter_modelo_espelho_nota";
 export const RPC_SALVAR_MODELO_ESPELHO = "salvar_modelo_espelho_nota";

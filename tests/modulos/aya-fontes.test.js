@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { criarFontesDaAya } from "../../src/modulos/aya/fontes.ts";
-import { responderComDados } from "../../src/lib/dados-da-aya.ts";
+import { responderComDados } from "../../src/lib/aya/dados-da-aya.ts";
 
 /*
   De onde a Aya conta as análises (src/modulos/aya/fontes.ts): os editais em

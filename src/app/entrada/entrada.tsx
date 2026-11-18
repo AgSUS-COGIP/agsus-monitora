@@ -3,7 +3,7 @@ import { classes } from "../../ui/index.ts";
 import {
   ACCESS_INSTRUCTION,
   normalizeAccessLogoUrl,
-} from "../../lib/access-branding.ts";
+} from "../../lib/entrada/access-branding.ts";
 import { FASES, TEXTO_DO_BOTAO, TEXTO_DO_BOTAO_OCUPADO } from "../sessao.ts";
 import {
   IconeDeEscudo,

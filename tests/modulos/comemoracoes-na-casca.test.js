@@ -2,7 +2,7 @@
 import { StrictMode, act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it } from "vitest";
-import { criarAleatorio } from "../../src/lib/fogos.ts";
+import { criarAleatorio } from "../../src/lib/comemoracao/fogos.ts";
 import { filaDeComemoracoes } from "../../src/app/fila-de-comemoracoes.ts";
 import { ComemoracoesDoApp } from "../../src/app/casca/pecas.tsx";
 import {

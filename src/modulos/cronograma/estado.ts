@@ -30,19 +30,19 @@ import type {
   cada abertura. O resto da tela não precisa de saber de onde vieram as etapas.
 */
 
-import { exigirSessao } from "../../lib/sessao";
+import { exigirSessao } from "../../lib/sessao/sessao";
 import {
   comDemanda,
   LISTA_DE_DEMANDAS_VAZIA,
   lerDemandasInternas,
-} from "../../lib/demandas-internas.ts";
-import type { ListaDeDemandas } from "../../lib/demandas-internas.ts";
+} from "../../lib/cronograma/demandas-internas.ts";
+import type { ListaDeDemandas } from "../../lib/cronograma/demandas-internas.ts";
 import {
   comLimite,
   editaisComCronograma,
   montarEtapasDosEditais,
   registroDoCalendario,
-} from "../../lib/calendario-editais.ts";
+} from "../../lib/cronograma/calendario-editais.ts";
 
 const RPC_RESUMO = "get_nucleo_cronograma_resumo";
 const RPC_CRONOGRAMA = "get_monitoramento_cronograma";

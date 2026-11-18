@@ -5,7 +5,7 @@ import {
   azulejoDoRecuo,
   podeRecuar,
   semAzulejoDeAviso,
-} from "../src/lib/recuo-de-azulejo.ts";
+} from "../src/lib/mapas/recuo-de-azulejo.ts";
 import { criarCamadaComRecuo } from "../src/modules/map-base-layer-switcher.ts";
 
 /*

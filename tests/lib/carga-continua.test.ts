@@ -3,7 +3,7 @@ import {
   ITENS_POR_VEZ,
   gruposAteOLimite,
   totalDosGrupos,
-} from "../../src/lib/carga-continua.ts";
+} from "../../src/lib/carga/carga-continua.ts";
 
 /*
   O recorte das listas em blocos (agenda por dia, convocação por vaga,

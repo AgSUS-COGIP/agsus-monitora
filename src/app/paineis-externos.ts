@@ -1,16 +1,16 @@
-import { getSupabaseClient } from "../lib/supabaseClient";
-import { permissaoLegada } from "../lib/access-roles.ts";
-import { enderecoDoPainel } from "../lib/endereco-do-painel";
-import { semOPainelAntigoDeAnalises } from "../lib/pagina-do-painel";
+import { getSupabaseClient } from "../lib/sessao/supabaseClient";
+import { permissaoLegada } from "../lib/acessos/access-roles.ts";
+import { enderecoDoPainel } from "../lib/paineis/endereco-do-painel";
+import { semOPainelAntigoDeAnalises } from "../lib/paineis/pagina-do-painel";
 import {
   origensParaPreconectar,
   precisaDeCrossorigin,
-} from "../lib/carregamento-do-painel.ts";
-import { codigoDoPainel, ehPainelExterno } from "../lib/navegacao";
+} from "../lib/paineis/carregamento-do-painel.ts";
+import { codigoDoPainel, ehPainelExterno } from "../lib/navegacao/navegacao";
 import { acompanharCarregamentoDoPainel } from "../modulos/paineis-externos/carregamento-do-painel.tsx";
 import { estadoDasConfiguracoes } from "../modulos/configuracoes/estado.ts";
 import { avisar as avisarPadrao } from "./avisos.ts";
-import type { PerfilDeAcesso } from "../lib/tipos-dos-acessos.ts";
+import type { PerfilDeAcesso } from "../lib/acessos/tipos-dos-acessos.ts";
 
 /*
   Os painéis externos (TB_PAINEL_EXTERNO): a lista, os liberados para o perfil

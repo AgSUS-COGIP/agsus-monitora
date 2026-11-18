@@ -3,7 +3,7 @@ import {
   createPerformanceSnapshot,
   roundMetric,
   summarizeResourceEntries,
-} from "../src/lib/frontend-performance-monitor";
+} from "../src/lib/carga/frontend-performance-monitor";
 
 describe("frontend performance monitor", () => {
   it("arredonda métricas inválidas com segurança", () => {

@@ -7,7 +7,7 @@ import {
   TelaDeEntrevistas,
   criarEntrevistas,
 } from "../../src/modulos/entrevistas/entrevistas.tsx";
-import { normalizarPayload } from "../../src/lib/entrevistas-do-painel.ts";
+import { normalizarPayload } from "../../src/lib/entrevistas/entrevistas-do-painel.ts";
 import type {
   EntrevistaDoPainel,
   AprovadoSemEntrevista,
@@ -27,7 +27,7 @@ import {
 import {
   filtrarEntrevistas,
   mediaPorCriterio,
-} from "../../src/lib/entrevistas-do-painel.ts";
+} from "../../src/lib/entrevistas/entrevistas-do-painel.ts";
 
 declare const entrevistas: readonly EntrevistaDoPainel[];
 declare const entrevista: EntrevistaDoPainel;

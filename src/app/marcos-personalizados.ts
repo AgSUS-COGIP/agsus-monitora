@@ -1,4 +1,7 @@
-import { chaveDoMarco, trocarEstadoGuardado } from "../lib/comemoracao.ts";
+import {
+  chaveDoMarco,
+  trocarEstadoGuardado,
+} from "../lib/comemoracao/comemoracao.ts";
 import {
   configuracaoDasComemoracoes,
   estadoDosPersonalizados,
@@ -6,7 +9,7 @@ import {
   maiorPersonalizado,
   mensagemDoPersonalizado,
   personalizadosAlcancados,
-} from "../lib/catalogo-de-comemoracoes.ts";
+} from "../lib/comemoracao/catalogo-de-comemoracoes.ts";
 import {
   assinarDadosDoMonitoramento,
   obterDadosDoMonitoramento,
@@ -16,7 +19,7 @@ import type {
   ConfiguracaoDasComemoracoes,
   MarcoPersonalizado,
   TipoPersonalizado,
-} from "../lib/catalogo-de-comemoracoes.ts";
+} from "../lib/comemoracao/catalogo-de-comemoracoes.ts";
 import type { SnapshotDoMonitoramento } from "../componentes/tipos-do-monitoramento.ts";
 
 /*
@@ -28,7 +31,7 @@ import type { SnapshotDoMonitoramento } from "../componentes/tipos-do-monitorame
     - "analises-no-dia": as linhas da tela de Análises curriculares, a cada
       carga dela (src/modulos/analises/marcos.ts).
 
-  Mesma regra dos outros marcos (src/lib/comemoracao.ts): linha de base em
+  Mesma regra dos outros marcos (src/lib/comemoracao/comemoracao.ts): linha de base em
   silêncio na primeira leitura, comemora a TRANSIÇÃO vista por esta pessoa
   neste navegador, uma vez. Desligadas (Módulos e abas), o estado segue
   guardado sem comemorar. Só o aviso, sem efeito; vários alcançados na

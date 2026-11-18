@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { lerDigitacao } from "../src/lib/digitacao-de-notas.ts";
+import { lerDigitacao } from "../src/lib/entrevistas/digitacao-de-notas.ts";
 import {
   arredondar,
   dadosDoRoteiroParaSalvar,
@@ -16,7 +16,7 @@ import {
   resumoDoRoteiro,
   rotuloDoPeso,
   textoDaPontuacao,
-} from "../src/lib/roteiro-de-entrevista.ts";
+} from "../src/lib/entrevistas/roteiro-de-entrevista.ts";
 
 /* Os dois roteiros iniciais da migration 20260930220000. */
 const SAUDE_INDIGENA = {
@@ -340,7 +340,7 @@ describe("rascunho, validação e gravação", () => {
 });
 
 describe("aspectos do roteiro", async () => {
-  const lib = await import("../src/lib/roteiro-de-entrevista.ts");
+  const lib = await import("../src/lib/entrevistas/roteiro-de-entrevista.ts");
 
   it("rascunho, validação e o que vai ao banco", () => {
     const r = lib.rascunhoDoRoteiro({

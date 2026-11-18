@@ -4,7 +4,7 @@ import { collectAyaPageContext } from "../src/modulos/aya/contexto.ts";
 import {
   contextualAyaAnswer,
   resolverReferencia,
-} from "../src/lib/contexto-da-aya.ts";
+} from "../src/lib/aya/contexto-da-aya.ts";
 
 describe("contexto da tela para a Aya", () => {
   beforeEach(() => {

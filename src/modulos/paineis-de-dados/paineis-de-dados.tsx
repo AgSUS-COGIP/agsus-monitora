@@ -18,10 +18,10 @@ import {
 } from "../../ui/index.ts";
 import type { ColunaDaTabela } from "../../ui/index.ts";
 import { Icone } from "../../componentes/icone.tsx";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient";
+import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import {
   LINHAS_POR_PAGINA,
   RELATORIOS_DOS_PAINEIS,
@@ -30,15 +30,15 @@ import {
   linhasDaOrigem,
   paginaDaTabela,
   textoDaCelula,
-} from "../../lib/relatorios-dos-paineis.ts";
+} from "../../lib/paineis/relatorios-dos-paineis.ts";
 import type {
   IdDoRelatorio,
   LinhaDoRelatorio,
-} from "../../lib/relatorios-dos-paineis.ts";
-import { podeBaixarAprovados } from "../../lib/access-roles.ts";
-import { textosDaVisaoGeral } from "../../lib/visao-geral.ts";
-import { recorteDaAreaInteira } from "../../lib/relatorio-da-visao-geral.ts";
-import type { RecorteDoRelatorio } from "../../lib/relatorio-da-visao-geral.ts";
+} from "../../lib/paineis/relatorios-dos-paineis.ts";
+import { podeBaixarAprovados } from "../../lib/acessos/access-roles.ts";
+import { textosDaVisaoGeral } from "../../lib/visao-geral/visao-geral.ts";
+import { recorteDaAreaInteira } from "../../lib/visao-geral/relatorio-da-visao-geral.ts";
+import type { RecorteDoRelatorio } from "../../lib/visao-geral/relatorio-da-visao-geral.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { estadoDaVisaoGeral } from "../visao-geral/estado.ts";
 import { MontadorDeRelatorio } from "../visao-geral/montador-de-relatorio.tsx";
@@ -63,8 +63,8 @@ import type {
   da área escolhida — Resumo dos editais, Editais por cargo e Aprovados —, um
   por aba, em tabela, com o download em CSV e XLSX do que está na tabela.
   Recurso de permissão `paineis_dados`; aba `paineis-de-dados` no catálogo
-  (`src/lib/menu-lateral.ts`). As colunas e os arquivos são de
-  `src/lib/relatorios-dos-paineis.ts`; o estado, de `./estado.ts`. Título e
+  (`src/lib/navegacao/menu-lateral.ts`). As colunas e os arquivos são de
+  `src/lib/paineis/relatorios-dos-paineis.ts`; o estado, de `./estado.ts`. Título e
   área ficam no cabeçalho da casca.
 
   "Montar relatório" (no topo, desde 16/11/2026; antes ficava no menu da

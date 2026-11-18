@@ -2,13 +2,13 @@ import type { PayloadDasNotas } from "./tipos-da-ficha.ts";
 import type {
   DadosDoRoteiroParaSalvar,
   RoteiroDeEntrevista,
-} from "../../lib/tipos-do-roteiro-de-entrevista.ts";
+} from "../../lib/entrevistas/tipos-do-roteiro-de-entrevista.ts";
 
 import type {
   Avaliador,
   Convocado,
   ItemDaAgendaNoBanco,
-} from "../../lib/fila-de-conducao.ts";
+} from "../../lib/entrevistas/fila-de-conducao.ts";
 
 /*
   Contratos de "Conduzir entrevistas" (conduzir.tsx, fila-do-dia.tsx) com o

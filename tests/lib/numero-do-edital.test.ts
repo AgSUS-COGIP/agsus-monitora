@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { numeroDoEdital } from "../../src/lib/numero-do-edital.ts";
+import { numeroDoEdital } from "../../src/lib/editais/numero-do-edital.ts";
 
 describe("número do edital", () => {
   it("o primeiro N/AAAA, sem zeros à esquerda (como FC_NUMERO_EDITAL)", () => {

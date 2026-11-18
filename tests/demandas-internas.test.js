@@ -14,12 +14,12 @@ import {
   periodoDaDemanda,
   problemaDoFormulario,
   situacaoDaDemanda,
-} from "../src/lib/demandas-internas.ts";
+} from "../src/lib/cronograma/demandas-internas.ts";
 import {
   TIPOS_DA_LEGENDA,
   filtrarEtapas,
   tiposOcultosValidos,
-} from "../src/lib/calendario-editais.ts";
+} from "../src/lib/cronograma/calendario-editais.ts";
 
 const BRUTA = {
   id: "d1",

@@ -4,7 +4,7 @@ import {
   lerAgenda,
   maiorIntervaloMin,
   proximaExecucao,
-} from "../src/lib/agenda-do-cron.ts";
+} from "../src/lib/automacao/agenda-do-cron.ts";
 
 /* "Agora" fixo: 22/10/2026 14:37 UTC (uma quinta-feira). */
 const AGORA = new Date("2026-10-22T14:37:00Z");

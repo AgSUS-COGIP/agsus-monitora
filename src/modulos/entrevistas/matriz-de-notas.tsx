@@ -5,7 +5,7 @@ import {
   moverNaGrade,
   type Movimento,
   type Posicao,
-} from "../../lib/digitacao-de-notas.ts";
+} from "../../lib/entrevistas/digitacao-de-notas.ts";
 import { classes } from "../../ui/classes.ts";
 import { animar, CelulaDeNota, type OpcaoDeNota } from "./campo-de-nota.tsx";
 

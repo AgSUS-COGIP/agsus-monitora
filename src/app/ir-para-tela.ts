@@ -1,12 +1,12 @@
 /*
   Vai para outra tela do app (os botões "Ir para…" de Entrevistas, Recursos e
-  Lista de aprovados). O destino é conferido (src/lib/link-interno.ts) e a
+  Lista de aprovados). O destino é conferido (src/lib/navegacao/link-interno.ts) e a
   troca é a da navegação (`window.navigate`, que confere a permissão da
   página e avisa). Com edital, ele vai junto no endereço
   (`/<área>/classificacao/<edital>`), e a rota abre a tela já nele
   (`abrirEdital`, src/app/telas.tsx) depois de carregá-la.
 */
-import { linkInterno } from "../lib/link-interno.ts";
+import { linkInterno } from "../lib/navegacao/link-interno.ts";
 import type { ExtrasDaNavegacao } from "./navegacao.ts";
 
 export type JanelaDoApp = {

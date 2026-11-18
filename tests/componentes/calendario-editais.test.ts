@@ -27,7 +27,7 @@ afterEach(() => redefinirDadosDoMonitoramento());
 
 /*
   O Calendário de Editais em React: a costura entre o carregamento (1 + N
-  RPCs), a lógica de `src/lib/calendario-editais.ts` e o desenho. "Hoje" é fixo
+  RPCs), a lógica de `src/lib/cronograma/calendario-editais.ts` e o desenho. "Hoje" é fixo
   em 15/09/2026, uma terça-feira.
 */
 

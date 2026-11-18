@@ -5,16 +5,16 @@ import {
   chaveDoCargo,
   reaberturasDosCargos,
   textoDaReabertura,
-} from "../../src/lib/vagas-reabertas.ts";
+} from "../../src/lib/visao-geral/vagas-reabertas.ts";
 import {
   indicadoresDoMonitoramento,
   vagasEfetivas,
   vagasSemContratacao,
-} from "../../src/lib/indicadores-do-monitoramento.ts";
+} from "../../src/lib/visao-geral/indicadores-do-monitoramento.ts";
 import {
   acompanhamentoDaResposta,
   enriquecerLinhas,
-} from "../../src/lib/visao-geral.ts";
+} from "../../src/lib/visao-geral/visao-geral.ts";
 import type { LinhaDoMonitoramento } from "../../src/modulos/visao-geral/tipos.ts";
 
 const edital = (

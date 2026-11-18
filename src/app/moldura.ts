@@ -2,7 +2,7 @@ import {
   avisar as avisarEvento,
   EVENTO_BARRA_ALTERNADA,
   EVENTO_TEMA_ALTERADO,
-} from "../lib/eventos-da-barra-lateral.ts";
+} from "../lib/navegacao/eventos-da-barra-lateral.ts";
 import {
   assinarDadosDoMonitoramento,
   obterDadosDoMonitoramento,

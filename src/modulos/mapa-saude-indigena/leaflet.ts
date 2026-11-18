@@ -18,11 +18,11 @@
 import type {
   CoordenadasDoMapa,
   MapaNacional,
-} from "../../lib/tipos-do-mapa.ts";
+} from "../../lib/mapas/tipos-do-mapa.ts";
 import type {
   RegistroDoDsei,
   EnquadramentoDoMapa,
-} from "../../lib/mapa-saude-indigena/tipos.ts";
+} from "../../lib/mapas/mapa-saude-indigena/tipos.ts";
 import type { MapaDoPainel, MapaCriadoDoBrasil } from "./tipos-do-painel.ts";
 import type {
   LeafletDoMapa,
@@ -38,14 +38,14 @@ export interface ConteudoDoBalao {
   linhas?: readonly string[];
   nota?: string;
 }
-import { BRASIL_BOUNDS } from "../../lib/brasil-bounds.ts";
+import { BRASIL_BOUNDS } from "../../lib/mapas/brasil-bounds.ts";
 import {
   FOLGA_DO_BRASIL,
   OPCOES_DA_CAIXA,
   ZOOM_DO_PONTO,
   ZOOM_NACIONAL,
-} from "../../lib/enquadramento-do-brasil.ts";
-import { calcularLeque } from "../../lib/leque-de-marcadores.ts";
+} from "../../lib/mapas/enquadramento-do-brasil.ts";
+import { calcularLeque } from "../../lib/mapas/leque-de-marcadores.ts";
 import {
   OPCOES_DOS_AZULEJOS,
   opcoesDoMapa,
@@ -59,11 +59,11 @@ import {
   CORES_DO_MAPA,
   DESENHO_DAS_FORMAS,
   formaDoTipo,
-} from "../../lib/mapa-saude-indigena/formas.ts";
+} from "../../lib/mapas/mapa-saude-indigena/formas.ts";
 import {
   manterDicasDentroDoMapa,
   opcoesDoPopup,
-} from "../../lib/dica-dentro-do-mapa.ts";
+} from "../../lib/mapas/dica-dentro-do-mapa.ts";
 
 export function obterLeaflet() {
   return leafletDoMapa(Reflect.get(globalThis, "L"));
@@ -237,7 +237,7 @@ export function limitesDoBrasil(L: LeafletDoMapa) {
 
 /*
   O país inteiro com folga para as bolhas da borda (raio + traço + 12 px,
-  src/lib/enquadramento-do-brasil.ts); numa moldura baixa a guarda deixa
+  src/lib/mapas/enquadramento-do-brasil.ts); numa moldura baixa a guarda deixa
   o zoom descer, em quartos, até caber — o norte não sai cortado.
 */
 export function enquadrarNoBrasil(L: LeafletDoMapa, mapa: MapaDoPainel) {
@@ -273,7 +273,7 @@ export function voarAoBrasil(
 
 /*
   O enquadramento do recorte (`enquadramentoDoRecorte`,
-  src/lib/enquadramento-do-brasil.ts) no Leaflet, igual nos dois mapas
+  src/lib/mapas/enquadramento-do-brasil.ts) no Leaflet, igual nos dois mapas
   nacionais: um ponto em ZOOM_DO_PONTO, a caixa com OPCOES_DA_CAIXA ou o
   Brasil. Com `voar` (a volta de um DSEI), anima em DURACAO_DA_VOLTA_AO_BRASIL.
 */
@@ -383,10 +383,10 @@ export function criarMapaDoBrasil(
   demanda, uma vez, quando o primeiro mapa os desenha.
 */
 let contornos: Promise<
-  typeof import("../../lib/mapa-saude-indigena/contornos.js")
+  typeof import("../../lib/mapas/mapa-saude-indigena/contornos.js")
 > | null = null;
 export function carregarContornos() {
-  contornos ??= import("../../lib/mapa-saude-indigena/contornos.js");
+  contornos ??= import("../../lib/mapas/mapa-saude-indigena/contornos.js");
   return contornos;
 }
 
@@ -450,7 +450,7 @@ function corDoTraco() {
   O LEQUE dos dois mapas nacionais: as bolhas que caem no mesmo pixel
   (Yanomami e Leste de Roraima em Boa Vista; dois lugares de Projetos na
   mesma sede) são desenhadas num círculo de 16 px em volta do ponto real, com
-  um traço até ele (src/lib/leque-de-marcadores.ts). A coordenada não muda;
+  um traço até ele (src/lib/mapas/leque-de-marcadores.ts). A coordenada não muda;
   recalcula a cada zoom e quando o app chama `aplicar()` depois de desenhar.
 
   `adicionar(marcador, lat, lon)` registra a bolha; `limpar()` esquece as

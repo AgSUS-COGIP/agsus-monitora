@@ -1,4 +1,4 @@
-import { origemDeTerceiro } from "../src/lib/origem-da-requisicao.js";
+import { origemDeTerceiro } from "../src/lib/seguranca/origem-da-requisicao.js";
 import type { PedidoDaVercel, RespostaDaVercel } from "./_tipos-da-vercel.js";
 
 const FUNAI_WMS = "https://geoserver.funai.gov.br/geoserver/Funai/wms";
