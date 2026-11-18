@@ -11,14 +11,17 @@
   fixa, na ordem do processo:
 
     Edital → Inscrições → Análise curricular → Recursos → Entrevistas →
-    Resultado → Contratação → Concluído
+    Resultado → Contratação → Cronograma encerrado
 
   e, fora do fluxo, Cancelado, Sem cronograma e Outra (texto que nenhuma
   regra reconhece, como "zzzzz").
 
-  O status manda antes do texto: cancelado é Cancelado, concluído (o
-  cronograma terminou) é Concluído e planejado (antes da primeira atividade) é
-  Edital. "Aguardando: X" conta como a fase de X.
+  O status manda antes do texto: cancelado é Cancelado, planejado (antes da
+  primeira atividade) é Edital e concluído é Cronograma encerrado quando o
+  status vem do cálculo automático pelas datas: a última data passou, o que não
+  prova resultado publicado nem processo homologado (conferência de
+  17/11/2026). Só o "Concluído" digitado à mão (cálculo manual) é Concluído,
+  fora do fluxo. "Aguardando: X" conta como a fase de X.
 */
 
 export const FASES = Object.freeze([
@@ -29,9 +32,10 @@ export const FASES = Object.freeze([
   "Entrevistas",
   "Resultado",
   "Contratação",
-  "Concluído",
+  "Cronograma encerrado",
 ]);
 export const FASES_FORA_DO_FLUXO = Object.freeze([
+  "Concluído",
   "Cancelado",
   "Sem cronograma",
   "Outra",
@@ -87,6 +91,7 @@ export function faseDaAtividade(texto: unknown): string | null {
 /** O que a fase lê da linha do monitoramento. */
 export interface LinhaDaFase {
   status?: unknown;
+  cronograma_automatico?: unknown;
   cronograma_atividade_atual?: unknown;
   etapa?: unknown;
 }
@@ -98,7 +103,11 @@ const status = (linha: LinhaDaFase | null | undefined) =>
 export function faseDoEdital(linha: LinhaDaFase | null | undefined): string {
   const s = status(linha);
   if (s.includes("cancel")) return "Cancelado";
-  if (s.includes("conclu")) return "Concluído";
+  if (s.includes("cronograma encerrado")) return "Cronograma encerrado";
+  if (s.includes("conclu"))
+    return linha?.cronograma_automatico === false
+      ? "Concluído"
+      : "Cronograma encerrado";
   if (s.includes("planejad")) return "Edital";
   const atividade =
     String(linha?.cronograma_atividade_atual ?? "").trim() ||
