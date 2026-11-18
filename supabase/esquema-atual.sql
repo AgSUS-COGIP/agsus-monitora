@@ -2380,6 +2380,62 @@ $$;
 COMMENT ON FUNCTION private."FC_CALCULO_PELO_PYTHON"() IS 'As chaves "Classificação em Python" (classificacao) e "Gerar listas pelo Python" (classificacao_calculo) estão as duas ligadas (20261024110000)? Qualquer uma desligada ou sem a linha na tabela: não (o padrão é o cálculo da tela). Só o dono (as RPCs da Classificação).';
 
 --
+-- Name: FC_CANDIDATAS_DO_QUADRO(uuid, text); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_CANDIDATAS_DO_QUADRO"(p_edital uuid, p_nome_vaga text) RETURNS jsonb
+    LANGUAGE sql STABLE
+    SET search_path TO ''
+    AS $_$
+  -- A decisão de FC_QUADRO_DA_VAGA, linha por linha (mesmas CTEs), mais as candidatas quando não há uma só.
+  with n as (select private."FC_TOKENS_VAGA"(p_nome_vaga) t),
+  q as (
+    select c."CO_QUADRO_VAGA" id, c."NU_ORDEM" ordem, private."FC_TOKENS_VAGA"(c."NO_CARGO") tc, private."FC_TOKENS_VAGA"(c."NO_LOTACAO") tl
+      from public."TB_QUADRO_VAGA_EDITAL" c
+     where c."CO_MONITORAMENTO" = p_edital and c."ST_REGISTRO_ATIVO" = 'S'
+  ),
+  cargo as (
+    select q.id, q.ordem, cardinality(q.tc) nc, cardinality(q.tl) nl, cardinality(q.tl) > 0 and q.tl <@ n.t lotacao,
+           cardinality(q.tl) = 0 or array(
+             select t from unnest(n.t) t
+              where not t = any (q.tc) and t !~ '^\d+$' and t not in ('vaga', 'vagas', 'cadastro', 'reserva', 'cr')
+           ) <@ q.tl compativel
+      from q, n where cardinality(q.tc) > 0 and q.tc <@ n.t
+  ),
+  melhor as (select * from cargo where nc = (select max(nc) from cargo)),
+  com_lotacao as (select * from melhor where lotacao and nl = (select max(nl) from melhor where lotacao)),
+  decisao as (
+    select case
+             when (select count(*) from com_lotacao) = 1 then (select id from com_lotacao)
+             when (select count(*) from com_lotacao) = 0 and (select count(*) from melhor) = 1
+              and (select compativel from melhor) then (select id from melhor)
+           end as id
+  ),
+  -- Empate na lotação: as empatadas. Sem lotação no nome: as do cargo mais específico que não
+  -- contradizem o nome (todas, se todas contradizem).
+  candidatas as (
+    select c.id, c.ordem from com_lotacao c where (select count(*) from com_lotacao) > 1
+    union all
+    select m.id, m.ordem from melhor m
+     where (select count(*) from com_lotacao) = 0
+       and (m.compativel or not exists (select 1 from melhor x where x.compativel))
+  )
+  select case
+           when d.id is not null then jsonb_build_object('situacao', 'CONFIRMADO', 'quadro', d.id, 'candidatas', '[]'::jsonb)
+           when exists (select 1 from cargo) then jsonb_build_object('situacao', 'AMBIGUO', 'quadro', null,
+             'candidatas', (select coalesce(jsonb_agg(c.id order by c.ordem), '[]'::jsonb) from candidatas c))
+           else jsonb_build_object('situacao', 'AUSENTE', 'quadro', null, 'candidatas', '[]'::jsonb)
+         end
+    from decisao d;
+$_$;
+
+--
+-- Name: FUNCTION "FC_CANDIDATAS_DO_QUADRO"(p_edital uuid, p_nome_vaga text); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_CANDIDATAS_DO_QUADRO"(p_edital uuid, p_nome_vaga text) IS 'A regra de FC_QUADRO_DA_VAGA com a situação: {situacao CONFIRMADO|AMBIGUO|AUSENTE, quadro, candidatas [ids na ordem do quadro]}. CONFIRMADO exatamente quando FC_QUADRO_DA_VAGA devolve a linha. 20261118120000.';
+
+--
 -- Name: FC_CARGO_DA_GRAFIA(text, text); Type: FUNCTION; Schema: private; Owner: -
 --
 
@@ -2499,6 +2555,27 @@ $$;
 --
 
 COMMENT ON FUNCTION private."FC_CHAVE_DO_WORKFLOW"(p_workflow text) IS 'Chave da automação que manda nos pedidos da agenda (origem AGENDA) de um workflow, pelo catálogo TB_ROBO_WORKFLOW (20261109180000; antes, lista fixa desde 20261022190000). Nulo = sem chave ou fora do catálogo.';
+
+--
+-- Name: FC_CHAVE_LINHA_QUADRO(text, text); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_CHAVE_LINHA_QUADRO"(p_cargo text, p_lotacao text) RETURNS text
+    LANGUAGE sql IMMUTABLE
+    SET search_path TO ''
+    AS $$
+  select btrim(regexp_replace(translate(lower(coalesce(p_cargo, '')), 'áàâãäéèêëíìîïóòôõöúùûüç', 'aaaaaeeeeiiiiooooouuuuc'),
+                              '[^a-z0-9]+', ' ', 'g'))
+         || '|' ||
+         btrim(regexp_replace(translate(lower(coalesce(p_lotacao, '')), 'áàâãäéèêëíìîïóòôõöúùûüç', 'aaaaaeeeeiiiiooooouuuuc'),
+                              '[^a-z0-9]+', ' ', 'g'));
+$$;
+
+--
+-- Name: FUNCTION "FC_CHAVE_LINHA_QUADRO"(p_cargo text, p_lotacao text); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_CHAVE_LINHA_QUADRO"(p_cargo text, p_lotacao text) IS 'Cargo e lotação de uma linha do quadro sem acento, caixa e pontuação: a mesma linha em outra importação do PDF tem a mesma chave. 20261118120000.';
 
 --
 -- Name: FC_CODIGO_DA_LEITURA(text[]); Type: FUNCTION; Schema: private; Owner: -
@@ -3153,9 +3230,11 @@ begin
         select a.* from public."TB_ANALISE_CURRICULAR" a
          where a."CO_AREA" = v_area and a.ativo and private."FC_NUMERO_EDITAL"(a.edital) = v_numero
       ),
+      -- A linha de cada vaga pelo vínculo (TA_VAGA_QUADRO_EDITAL) e, sem ele, pelo nome (20261118120000).
       vq as (
-        select n.nome_vaga, private."FC_QUADRO_DA_VAGA"(p_edital, n.nome_vaga) as quadro
-          from (select distinct a.nome_vaga from a) n
+        select n.codigo_vaga, n.nome_vaga,
+               private."FC_QUADRO_DA_VAGA_VINCULADA"(p_edital, n.codigo_vaga, n.nome_vaga) as quadro
+          from (select distinct a.codigo_vaga, a.nome_vaga from a) n
       )
       select json_agg(json_build_object(
                'analise_id', a.id, 'codigo', a.id_origem, 'nome', a.candidato, 'vaga', a.codigo_vaga,
@@ -3167,7 +3246,7 @@ begin
                'exp_profissional', a.experiencia_profissional_total, 'status', a.status_consolidado, 'etapa', a.etapa,
                'quadro', vq.quadro, 'hora_nascimento', to_char(h."HR_NASCIMENTO", 'HH24:MI:SS'))
              order by a.codigo_vaga, a.candidato)
-        from a left join vq on vq.nome_vaga is not distinct from a.nome_vaga
+        from a left join vq on vq.codigo_vaga is not distinct from a.codigo_vaga and vq.nome_vaga is not distinct from a.nome_vaga
                left join public."TB_HORA_NASCIMENTO_CANDIDATO" h on h."CO_ANALISE_CURRICULAR" = a.id), '[]'::json),
     'entrevistas', coalesce((
       select json_agg(json_build_object(
@@ -4317,7 +4396,7 @@ COMMENT ON FUNCTION private."FC_ERRO_PONTOS_EXPERIENCIA"(p_alvo jsonb, p_pontuac
 
 CREATE FUNCTION private."FC_ESTADO_DO_CRONOGRAMA"(p_monitoramento_id uuid, p_data date) RETURNS jsonb
     LANGUAGE plpgsql STABLE SECURITY DEFINER
-    SET search_path TO 'public', 'private', 'auth', 'pg_temp'
+    SET search_path TO ''
     AS $$
 declare
   v_monitor public."TB_MONITORAMENTO_INDIGENA"%rowtype;
@@ -4331,6 +4410,8 @@ declare
   v_etapa text;
   v_percentual numeric := 0;
   v_dias integer;
+  v_calculo text;
+  v_situacao text;
 begin
   select * into v_monitor
   from public."TB_MONITORAMENTO_INDIGENA"
@@ -4340,17 +4421,91 @@ begin
     return jsonb_build_object('status', null, 'etapa', null, 'tem_cronograma', false);
   end if;
 
+  v_calculo := case when v_monitor.cronograma_automatico then 'automatico' else 'manual' end;
+
   select count(*)::integer,
          count(*) filter (where data_fim < p_data)::integer
   into v_total, v_concluidas
   from public."TB_CRONOGRAMA_MONIT_INDIG"
   where monitoramento_id = p_monitoramento_id;
 
-  if not v_monitor.cronograma_automatico or v_total = 0 then
+  if v_total = 0 then
+    v_status := coalesce(nullif(v_monitor.status_override,''), nullif(v_monitor.status,''), 'Cronograma pendente');
+    v_etapa := coalesce(nullif(v_monitor.etapa_override,''), nullif(v_monitor.etapa,''), 'Cronograma pendente');
+  else
+    select * into v_primeira
+    from public."TB_CRONOGRAMA_MONIT_INDIG"
+    where monitoramento_id = p_monitoramento_id
+    order by data_inicio, ordem
+    limit 1;
+
+    select * into v_ultima
+    from public."TB_CRONOGRAMA_MONIT_INDIG"
+    where monitoramento_id = p_monitoramento_id
+    order by data_fim desc, ordem desc
+    limit 1;
+
+    select * into v_atual
+    from public."TB_CRONOGRAMA_MONIT_INDIG"
+    where monitoramento_id = p_monitoramento_id
+      and p_data between data_inicio and data_fim
+    order by data_inicio desc, ordem desc
+    limit 1;
+
+    select * into v_proxima
+    from public."TB_CRONOGRAMA_MONIT_INDIG"
+    where monitoramento_id = p_monitoramento_id
+      and data_inicio > p_data
+    order by data_inicio, ordem
+    limit 1;
+
+    v_percentual := round(least(100, greatest(0, (v_concluidas::numeric / nullif(v_total,0)) * 100)), 1);
+
+    if p_data < v_primeira.data_inicio then
+      v_status := 'Planejado';
+      v_etapa := 'Aguardando: ' || v_primeira.atividade;
+    elsif p_data > v_ultima.data_fim then
+      v_status := 'Concluído';
+      v_etapa := v_ultima.atividade;
+      v_percentual := 100;
+    elsif v_atual.id is not null then
+      v_status := 'Em andamento';
+      v_etapa := v_atual.atividade;
+    elsif v_proxima.id is not null then
+      v_status := 'Em andamento';
+      v_etapa := 'Aguardando: ' || v_proxima.atividade;
+    else
+      v_status := 'Em andamento';
+      v_etapa := coalesce(v_ultima.atividade, 'Cronograma em andamento');
+    end if;
+
+    if v_proxima.id is not null then
+      v_dias := v_proxima.data_inicio - p_data;
+    end if;
+
+    if v_monitor.cronograma_automatico then
+      v_status := coalesce(nullif(v_monitor.status_override,''), v_status);
+      v_etapa := coalesce(nullif(v_monitor.etapa_override,''), v_etapa);
+    else
+      -- Cálculo manual: valem o status e a etapa digitados; sem eles, o calculado.
+      v_status := coalesce(nullif(v_monitor.status_override,''), nullif(v_monitor.status,''), v_status);
+      v_etapa := coalesce(nullif(v_monitor.etapa_override,''), nullif(v_monitor.etapa,''), v_etapa);
+    end if;
+  end if;
+
+  v_situacao := case
+    when translate(lower(v_status), 'áâãàéêíóôõúç', 'aaaaeeiooouc') like '%suspens%' then 'suspenso'
+    when translate(lower(v_status), 'áâãàéêíóôõúç', 'aaaaeeiooouc') like '%parali%' then 'paralisado'
+    when translate(lower(v_status), 'áâãàéêíóôõúç', 'aaaaeeiooouc') like '%cancel%' then 'cancelado'
+  end;
+
+  if v_total = 0 then
     return jsonb_build_object(
-      'status', coalesce(nullif(v_monitor.status_override,''), nullif(v_monitor.status,''), 'Cronograma pendente'),
-      'etapa', coalesce(nullif(v_monitor.etapa_override,''), nullif(v_monitor.etapa,''), 'Cronograma pendente'),
+      'status', v_status,
+      'etapa', v_etapa,
       'tem_cronograma', false,
+      'calculo', v_calculo,
+      'situacao', v_situacao,
       'percentual', 0,
       'proxima_atividade', null,
       'proxima_data', null,
@@ -4358,63 +4513,12 @@ begin
     );
   end if;
 
-  select * into v_primeira
-  from public."TB_CRONOGRAMA_MONIT_INDIG"
-  where monitoramento_id = p_monitoramento_id
-  order by data_inicio, ordem
-  limit 1;
-
-  select * into v_ultima
-  from public."TB_CRONOGRAMA_MONIT_INDIG"
-  where monitoramento_id = p_monitoramento_id
-  order by data_fim desc, ordem desc
-  limit 1;
-
-  select * into v_atual
-  from public."TB_CRONOGRAMA_MONIT_INDIG"
-  where monitoramento_id = p_monitoramento_id
-    and p_data between data_inicio and data_fim
-  order by data_inicio desc, ordem desc
-  limit 1;
-
-  select * into v_proxima
-  from public."TB_CRONOGRAMA_MONIT_INDIG"
-  where monitoramento_id = p_monitoramento_id
-    and data_inicio > p_data
-  order by data_inicio, ordem
-  limit 1;
-
-  v_percentual := round(least(100, greatest(0, (v_concluidas::numeric / nullif(v_total,0)) * 100)), 1);
-
-  if p_data < v_primeira.data_inicio then
-    v_status := 'Planejado';
-    v_etapa := 'Aguardando: ' || v_primeira.atividade;
-  elsif p_data > v_ultima.data_fim then
-    v_status := 'Concluído';
-    v_etapa := v_ultima.atividade;
-    v_percentual := 100;
-  elsif v_atual.id is not null then
-    v_status := 'Em andamento';
-    v_etapa := v_atual.atividade;
-  elsif v_proxima.id is not null then
-    v_status := 'Em andamento';
-    v_etapa := 'Aguardando: ' || v_proxima.atividade;
-  else
-    v_status := 'Em andamento';
-    v_etapa := coalesce(v_ultima.atividade, 'Cronograma em andamento');
-  end if;
-
-  if v_proxima.id is not null then
-    v_dias := v_proxima.data_inicio - p_data;
-  end if;
-
-  v_status := coalesce(nullif(v_monitor.status_override,''), v_status);
-  v_etapa := coalesce(nullif(v_monitor.etapa_override,''), v_etapa);
-
   return jsonb_build_object(
     'status', v_status,
     'etapa', v_etapa,
     'tem_cronograma', true,
+    'calculo', v_calculo,
+    'situacao', v_situacao,
     'percentual', v_percentual,
     'atividade_atual', case when v_atual.id is null then null else v_atual.atividade end,
     'proxima_atividade', case when v_proxima.id is null then null else v_proxima.atividade end,
@@ -4432,7 +4536,7 @@ $$;
 -- Name: FUNCTION "FC_ESTADO_DO_CRONOGRAMA"(p_monitoramento_id uuid, p_data date); Type: COMMENT; Schema: private; Owner: -
 --
 
-COMMENT ON FUNCTION private."FC_ESTADO_DO_CRONOGRAMA"(p_monitoramento_id uuid, p_data date) IS 'Estado do cronograma de um edital no dia p_data (status, etapa, percentual, atividade atual e próxima, datas): o cálculo de public.get_monitoramento_cronograma_estado sem a checagem de permissão (20261105170000). Só para funções SECURITY DEFINER do banco; ninguém executa direto.';
+COMMENT ON FUNCTION private."FC_ESTADO_DO_CRONOGRAMA"(p_monitoramento_id uuid, p_data date) IS 'Estado do cronograma de um edital no dia p_data: o cálculo de public.get_monitoramento_cronograma_estado sem a checagem de permissão. tem_cronograma = há etapas; calculo = automatico | manual (no manual valem o status e a etapa digitados; percentual, atividade atual, próxima etapa e datas saem das etapas nos dois); situacao = suspenso | paralisado | cancelado | null, do status final (20261117190000). Só para funções SECURITY DEFINER do banco; ninguém executa direto.';
 
 --
 -- Name: FC_ESTATISTICAS_DA_FILA(); Type: FUNCTION; Schema: private; Owner: -
@@ -4927,6 +5031,31 @@ $$;
 --
 
 COMMENT ON FUNCTION private."FC_EXIGIR_COORD_FICHAS"(p_edital uuid) IS 'Barra (42501) quem não coordena a avaliação documental do edital nas ações da coordenação sobre as fichas. Devolve a área do edital.';
+
+--
+-- Name: FC_EXIGIR_EDITAR_QUADRO(uuid); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_EXIGIR_EDITAR_QUADRO"(p_edital uuid) RETURNS void
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+begin
+  if not exists (select 1 from public."TB_MONITORAMENTO_INDIGENA" where id = p_edital) then
+    raise exception 'Edital não encontrado' using errcode = '22023';
+  end if;
+  if not (private.pode_recurso('nucleo', 2) or private.pode_recurso('calendario', 2)) then
+    raise exception 'Sem permissão para este recurso' using errcode = '42501';
+  end if;
+  perform private."FC_EXIGIR_AREA_EDITAL"(p_edital::text);
+end;
+$$;
+
+--
+-- Name: FUNCTION "FC_EXIGIR_EDITAR_QUADRO"(p_edital uuid); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_EXIGIR_EDITAR_QUADRO"(p_edital uuid) IS 'Quem grava o quadro de vagas e os vínculos: Núcleo ou Calendário (editor) e o edital (a mesma guarda de salvar_quadro_de_vagas). 20261118120000.';
 
 --
 -- Name: FC_EXIGIR_ENTREVISTAS_EDITAL(uuid, integer); Type: FUNCTION; Schema: private; Owner: -
@@ -6733,6 +6862,89 @@ $$;
 --
 
 COMMENT ON FUNCTION private."FC_GRAVAR_NOVA_VERSAO_DA_LISTA"(p_edital uuid, p_anterior uuid, p_origem text, p_ativo boolean, p_arquivo_nome text, p_arquivo_path text, p_lista_classificacao uuid, p_regra uuid, p_versao_regra integer, p_hash text, p_motivo text) IS 'A nova versão da lista de aprovados (XLSX ou Classificação), a partir de pg_temp.tmp_lista_nova e tmp_lista_vinculo: confere os vínculos, tira a anterior de vigor, leva o estado de quem casou (status, processo SEI, matrícula, DT_CONVOCACAO, sub judice, alteração judicial, análise, CO_CANDIDATO_ANTERIOR, anexos), mantém os sub judice sem par, grava TH_PUBLICACAO_APROVADO e recalcula os contratados. 20261030090000.';
+
+--
+-- Name: FC_GRAVAR_VINCULO_QUADRO(uuid, text, text, text, text, text, uuid, uuid[], text, text, uuid); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_GRAVAR_VINCULO_QUADRO"(p_edital uuid, p_vaga text, p_nome_vaga text, p_situacao text, p_origem text, p_regra text, p_quadro uuid, p_candidatas uuid[], p_pendencia text, p_evento text, p_usuario uuid) RETURNS boolean
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+  v_antes public."TA_VAGA_QUADRO_EDITAL";
+  v_depois public."TA_VAGA_QUADRO_EDITAL";
+  v_cargo text;
+  v_lotacao text;
+  v_candidatas jsonb;
+  v_usuario uuid;
+  v_quando timestamptz;
+begin
+  select * into v_antes from public."TA_VAGA_QUADRO_EDITAL" v
+   where v."CO_MONITORAMENTO" = p_edital and v."CO_VAGA" = p_vaga for update;
+
+  if p_quadro is not null then
+    select q."NO_CARGO", q."NO_LOTACAO" into v_cargo, v_lotacao
+      from public."TB_QUADRO_VAGA_EDITAL" q where q."CO_QUADRO_VAGA" = p_quadro;
+  elsif p_pendencia is not null then
+    -- A linha que saiu do quadro continua à vista.
+    v_cargo := v_antes."NO_CARGO_QUADRO";
+    v_lotacao := v_antes."NO_LOTACAO_QUADRO";
+  end if;
+  select coalesce(jsonb_agg(jsonb_build_object('id', q."CO_QUADRO_VAGA", 'cargo', q."NO_CARGO", 'lotacao', q."NO_LOTACAO")
+                            order by q."NU_ORDEM", q."CO_QUADRO_VAGA"), '[]'::jsonb)
+    into v_candidatas
+    from public."TB_QUADRO_VAGA_EDITAL" q where q."CO_QUADRO_VAGA" = any (coalesce(p_candidatas, '{}'));
+
+  -- Quem decidiu: a confirmação registra; o automático limpa; os outros eventos mantêm.
+  if p_origem = 'AUTOMATICO' then
+    v_usuario := null; v_quando := null;
+  elsif p_evento = 'CONFIRMACAO' or v_antes."DT_CONFIRMACAO" is null then
+    v_usuario := p_usuario; v_quando := now();
+  else
+    v_usuario := v_antes."CO_USUARIO_CONFIRMACAO"; v_quando := v_antes."DT_CONFIRMACAO";
+  end if;
+
+  if v_antes."CO_VAGA" is not null
+     and v_antes."NO_VAGA" is not distinct from p_nome_vaga
+     and v_antes."CO_QUADRO_VAGA" is not distinct from p_quadro
+     and v_antes."NO_CARGO_QUADRO" is not distinct from v_cargo
+     and v_antes."NO_LOTACAO_QUADRO" is not distinct from v_lotacao
+     and v_antes."TP_VINCULO" = p_situacao
+     and v_antes."TP_ORIGEM" = p_origem
+     and v_antes."TP_REGRA" is not distinct from p_regra
+     and v_antes."DS_CANDIDATA" = v_candidatas
+     and v_antes."DS_PENDENCIA" is not distinct from p_pendencia
+     and p_evento <> 'CONFIRMACAO' then
+    return false;
+  end if;
+
+  insert into public."TA_VAGA_QUADRO_EDITAL" as v
+         ("CO_MONITORAMENTO", "CO_VAGA", "NO_VAGA", "CO_QUADRO_VAGA", "NO_CARGO_QUADRO", "NO_LOTACAO_QUADRO",
+          "TP_VINCULO", "TP_ORIGEM", "TP_REGRA", "DS_CANDIDATA", "DS_PENDENCIA", "CO_USUARIO_CONFIRMACAO", "DT_CONFIRMACAO")
+  values (p_edital, p_vaga, p_nome_vaga, p_quadro, v_cargo, v_lotacao,
+          p_situacao, p_origem, p_regra, v_candidatas, p_pendencia, v_usuario, v_quando)
+  on conflict ("CO_MONITORAMENTO", "CO_VAGA") do update set
+    "NO_VAGA" = excluded."NO_VAGA", "CO_QUADRO_VAGA" = excluded."CO_QUADRO_VAGA",
+    "NO_CARGO_QUADRO" = excluded."NO_CARGO_QUADRO", "NO_LOTACAO_QUADRO" = excluded."NO_LOTACAO_QUADRO",
+    "TP_VINCULO" = excluded."TP_VINCULO", "TP_ORIGEM" = excluded."TP_ORIGEM", "TP_REGRA" = excluded."TP_REGRA",
+    "DS_CANDIDATA" = excluded."DS_CANDIDATA", "DS_PENDENCIA" = excluded."DS_PENDENCIA",
+    "CO_USUARIO_CONFIRMACAO" = excluded."CO_USUARIO_CONFIRMACAO", "DT_CONFIRMACAO" = excluded."DT_CONFIRMACAO",
+    "DT_ATUALIZACAO" = now()
+  returning * into v_depois;
+
+  insert into public."TH_VAGA_QUADRO_EDITAL" ("CO_MONITORAMENTO", "CO_VAGA", "TP_EVENTO", "DS_ANTERIOR", "DS_NOVO", "CO_USUARIO")
+  values (p_edital, p_vaga, p_evento,
+          case when v_antes."CO_VAGA" is not null then to_jsonb(v_antes) end, to_jsonb(v_depois), p_usuario);
+  return true;
+end;
+$$;
+
+--
+-- Name: FUNCTION "FC_GRAVAR_VINCULO_QUADRO"(p_edital uuid, p_vaga text, p_nome_vaga text, p_situacao text, p_origem text, p_regra text, p_quadro uuid, p_candidatas uuid[], p_pendencia text, p_evento text, p_usuario uuid); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_GRAVAR_VINCULO_QUADRO"(p_edital uuid, p_vaga text, p_nome_vaga text, p_situacao text, p_origem text, p_regra text, p_quadro uuid, p_candidatas uuid[], p_pendencia text, p_evento text, p_usuario uuid) IS 'Grava o vínculo de uma vaga (insere ou troca) e o histórico, só quando algo muda (a confirmação sempre grava). Devolve se gravou. 20261118120000.';
 
 --
 -- Name: FC_GRUPOS_ANALISES_DA_AREA(text); Type: FUNCTION; Schema: private; Owner: -
@@ -11084,6 +11296,137 @@ $$;
 COMMENT ON FUNCTION private."FC_PRAZO_RESERVA_FICHA"() IS 'Duração da reserva da ficha (15 minutos), renovada enquanto a pessoa trabalha.';
 
 --
+-- Name: FC_PREENCHER_TODOS_VINCULOS_QUADRO(); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_PREENCHER_TODOS_VINCULOS_QUADRO"() RETURNS integer
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+  v_edital uuid;
+  v_n integer := 0;
+begin
+  for v_edital in
+    select distinct x.edital from (
+      select q."CO_MONITORAMENTO" as edital from public."TB_QUADRO_VAGA_EDITAL" q where q."ST_REGISTRO_ATIVO" = 'S'
+      union
+      select v."CO_MONITORAMENTO" from public."TA_VAGA_QUADRO_EDITAL" v
+    ) x order by 1
+  loop
+    perform private."FC_PREENCHER_VINCULOS_QUADRO"(v_edital, true, null);
+    v_n := v_n + 1;
+  end loop;
+  return v_n;
+end;
+$$;
+
+--
+-- Name: FUNCTION "FC_PREENCHER_TODOS_VINCULOS_QUADRO"(); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_PREENCHER_TODOS_VINCULOS_QUADRO"() IS 'A rodada diária (agsus_vinculos_do_quadro): FC_PREENCHER_VINCULOS_QUADRO, com o título da Empregare, em cada edital com quadro ou com vínculo. Devolve quantos editais. 20261118120000.';
+
+--
+-- Name: FC_PREENCHER_VINCULOS_QUADRO(uuid, boolean, uuid); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_PREENCHER_VINCULOS_QUADRO"(p_edital uuid, p_titulo boolean DEFAULT false, p_usuario uuid DEFAULT NULL::uuid) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+  r record;
+  v jsonb;
+  v_tem_quadro boolean;
+  v_n integer;
+  v_nova uuid;
+  v_reapontadas integer := 0;
+  v_mudaram integer := 0;
+  v_removidas integer := 0;
+begin
+  v_tem_quadro := exists (select 1 from public."TB_QUADRO_VAGA_EDITAL" q
+                           where q."CO_MONITORAMENTO" = p_edital and q."ST_REGISTRO_ATIVO" = 'S');
+
+  -- 1. Vínculo numa linha que saiu (reimportação): a linha nova de mesmo cargo e lotação.
+  for r in
+    select v."CO_VAGA" as vaga, v."NO_VAGA" as nome, v."TP_VINCULO" as situacao, v."TP_ORIGEM" as origem,
+           v."TP_REGRA" as regra, q."NO_CARGO" as cargo, q."NO_LOTACAO" as lotacao, q."DT_DESATIVACAO" as saiu
+      from public."TA_VAGA_QUADRO_EDITAL" v
+      join public."TB_QUADRO_VAGA_EDITAL" q on q."CO_QUADRO_VAGA" = v."CO_QUADRO_VAGA"
+     where v."CO_MONITORAMENTO" = p_edital and q."ST_REGISTRO_ATIVO" = 'N'
+     order by v."CO_VAGA"
+  loop
+    select count(*), (array_agg(n."CO_QUADRO_VAGA"))[1] into v_n, v_nova
+      from public."TB_QUADRO_VAGA_EDITAL" n
+     where n."CO_MONITORAMENTO" = p_edital and n."ST_REGISTRO_ATIVO" = 'S'
+       and private."FC_CHAVE_LINHA_QUADRO"(n."NO_CARGO", n."NO_LOTACAO") = private."FC_CHAVE_LINHA_QUADRO"(r.cargo, r.lotacao);
+    if v_n = 1 then
+      perform private."FC_GRAVAR_VINCULO_QUADRO"(p_edital, r.vaga, r.nome, 'CONFIRMADO', r.origem, r.regra,
+                                                 v_nova, '{}', null, 'REIMPORTACAO', p_usuario);
+      v_reapontadas := v_reapontadas + 1;
+    elsif r.origem = 'MANUAL' then
+      perform private."FC_GRAVAR_VINCULO_QUADRO"(p_edital, r.vaga, r.nome, 'AUSENTE', 'MANUAL', null, null, '{}',
+        left(format('A linha escolhida (%s) saiu do quadro em %s.',
+                    concat_ws(' — ', r.cargo, r.lotacao),
+                    to_char(coalesce(r.saiu, now()) at time zone 'America/Sao_Paulo', 'DD/MM/YYYY')), 300),
+        'REIMPORTACAO', p_usuario);
+    end if; -- AUTOMATICO: recalculado abaixo.
+  end loop;
+
+  -- 2. As vagas do edital pela regra; o MANUAL nunca é tocado.
+  for r in
+    select t.vaga, t.nome, v."TP_ORIGEM" as origem, v."TP_REGRA" as regra, v."TP_VINCULO" as situacao,
+           q."ST_REGISTRO_ATIVO" as linha_ativa
+      from private."FC_VAGAS_PARA_O_QUADRO"(p_edital) t
+      left join public."TA_VAGA_QUADRO_EDITAL" v on v."CO_MONITORAMENTO" = p_edital and v."CO_VAGA" = t.vaga
+      left join public."TB_QUADRO_VAGA_EDITAL" q on q."CO_QUADRO_VAGA" = v."CO_QUADRO_VAGA"
+     where v_tem_quadro
+     order by t.vaga
+  loop
+    continue when r.origem = 'MANUAL';
+    -- Sem o título (gravação pela tela): o achado pelo título fica até a rodada diária.
+    continue when not p_titulo and r.regra = 'TITULO' and r.situacao = 'CONFIRMADO' and r.linha_ativa = 'S';
+    v := private."FC_VINCULO_AUTOMATICO_QUADRO"(p_edital, r.vaga, r.nome, p_titulo);
+    if private."FC_GRAVAR_VINCULO_QUADRO"(
+         p_edital, r.vaga, r.nome, v ->> 'situacao', 'AUTOMATICO', v ->> 'regra', (v ->> 'quadro')::uuid,
+         array(select jsonb_array_elements_text(v -> 'candidatas')::uuid), null, 'PREENCHIMENTO', p_usuario) then
+      v_mudaram := v_mudaram + 1;
+    end if;
+  end loop;
+
+  -- 3. Automático de vaga que saiu do edital (ou de edital sem quadro): sai, com histórico.
+  with fora as (
+    delete from public."TA_VAGA_QUADRO_EDITAL" v
+     where v."CO_MONITORAMENTO" = p_edital and v."TP_ORIGEM" = 'AUTOMATICO'
+       and (not v_tem_quadro or v."CO_VAGA" not in (select t.vaga from private."FC_VAGAS_PARA_O_QUADRO"(p_edital) t))
+    returning v.*
+  ),
+  hist as (
+    insert into public."TH_VAGA_QUADRO_EDITAL" ("CO_MONITORAMENTO", "CO_VAGA", "TP_EVENTO", "DS_ANTERIOR", "DS_NOVO", "CO_USUARIO")
+    select f."CO_MONITORAMENTO", f."CO_VAGA", 'REMOCAO', to_jsonb(f), null, p_usuario from fora f
+    returning 1
+  )
+  select count(*) into v_removidas from hist;
+
+  return (
+    select jsonb_build_object(
+             'confirmadas', count(*) filter (where v."TP_VINCULO" = 'CONFIRMADO'),
+             'ambiguas', count(*) filter (where v."TP_VINCULO" = 'AMBIGUO'),
+             'ausentes', count(*) filter (where v."TP_VINCULO" = 'AUSENTE'),
+             'manuais', count(*) filter (where v."TP_ORIGEM" = 'MANUAL'),
+             'mudaram', v_mudaram, 'reapontadas', v_reapontadas, 'removidas', v_removidas)
+      from public."TA_VAGA_QUADRO_EDITAL" v where v."CO_MONITORAMENTO" = p_edital);
+end;
+$$;
+
+--
+-- Name: FUNCTION "FC_PREENCHER_VINCULOS_QUADRO"(p_edital uuid, p_titulo boolean, p_usuario uuid); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_PREENCHER_VINCULOS_QUADRO"(p_edital uuid, p_titulo boolean, p_usuario uuid) IS 'Preenche os vínculos das vagas do edital com o quadro: reaponta para a linha nova de mesmo cargo e lotação (MANUAL sem par vira AUSENTE com pendência), recalcula os AUTOMATICO (p_titulo: também pelo título da Empregare) e tira os de vaga que saiu. Nunca muda um MANUAL pela regra. Devolve as contagens. 20261118120000.';
+
+--
 -- Name: FC_PREPARAR_EDITAL_TREINAMENTO(text); Type: FUNCTION; Schema: private; Owner: -
 --
 
@@ -13526,14 +13869,20 @@ CREATE FUNCTION private."FC_QUADRO_DA_VAGA_EMPREGARE"(p_edital uuid, p_vaga text
     SET search_path TO ''
     AS $$
   select q.*
-    from (select coalesce(
-                   (select v.quadro_id
-                      from private."FC_EMPREGARE_VAGAS_DO_QUADRO"(p_vaga) v
-                      join public."TB_QUADRO_VAGA_EDITAL" l
-                        on l."CO_QUADRO_VAGA" = v.quadro_id and l."CO_MONITORAMENTO" = p_edital and l."ST_REGISTRO_ATIVO" = 'S'
-                     where v.edital_id = p_edital
-                     limit 1),
-                   private."FC_QUADRO_PELO_TITULO_EMPREGARE"(p_edital, p_vaga)) as id) x
+    from (select case
+                   when v."TP_VINCULO" = 'CONFIRMADO' then v."CO_QUADRO_VAGA"
+                   when v."TP_ORIGEM" = 'MANUAL' and v."DS_PENDENCIA" is null then null
+                   else coalesce(
+                     (select e.quadro_id
+                        from private."FC_EMPREGARE_VAGAS_DO_QUADRO"(p_vaga) e
+                        join public."TB_QUADRO_VAGA_EDITAL" l
+                          on l."CO_QUADRO_VAGA" = e.quadro_id and l."CO_MONITORAMENTO" = p_edital and l."ST_REGISTRO_ATIVO" = 'S'
+                       where e.edital_id = p_edital
+                       limit 1),
+                     private."FC_QUADRO_PELO_TITULO_EMPREGARE"(p_edital, p_vaga))
+                 end as id
+            from (select 1) u
+            left join public."TA_VAGA_QUADRO_EDITAL" v on v."CO_MONITORAMENTO" = p_edital and v."CO_VAGA" = p_vaga) x
     join public."TB_QUADRO_VAGA_EDITAL" q
       on q."CO_QUADRO_VAGA" = x.id and q."CO_MONITORAMENTO" = p_edital and q."ST_REGISTRO_ATIVO" = 'S';
 $$;
@@ -13542,7 +13891,31 @@ $$;
 -- Name: FUNCTION "FC_QUADRO_DA_VAGA_EMPREGARE"(p_edital uuid, p_vaga text); Type: COMMENT; Schema: private; Owner: -
 --
 
-COMMENT ON FUNCTION private."FC_QUADRO_DA_VAGA_EMPREGARE"(p_edital uuid, p_vaga text) IS 'A linha do quadro de vagas de uma vaga da Empregare no edital: pelo nome_vaga da análise curricular (planilha, FC_EMPREGARE_VAGAS_DO_QUADRO) e, sem ele, pelo título da vaga na Empregare (FC_QUADRO_PELO_TITULO_EMPREGARE, desde 20261013140000). Usada pelo job da pré-classificação (cargo e nível) e pela gravação de cada vaga (NO_CARGO, NO_LOTACAO, quadro).';
+COMMENT ON FUNCTION private."FC_QUADRO_DA_VAGA_EMPREGARE"(p_edital uuid, p_vaga text) IS 'A linha do quadro de vagas de uma vaga da Empregare no edital: a do vínculo CONFIRMADO (TA_VAGA_QUADRO_EDITAL, 20261118120000), nenhuma se a equipe confirmou que não há linha; senão pelo nome_vaga da análise curricular (planilha, FC_EMPREGARE_VAGAS_DO_QUADRO) e, sem ele, pelo título da vaga na Empregare (FC_QUADRO_PELO_TITULO_EMPREGARE, desde 20261013140000). Usada pelo job da pré-classificação (cargo e nível) e pela gravação de cada vaga (NO_CARGO, NO_LOTACAO, quadro).';
+
+--
+-- Name: FC_QUADRO_DA_VAGA_VINCULADA(uuid, text, text); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_QUADRO_DA_VAGA_VINCULADA"(p_edital uuid, p_vaga text, p_nome_vaga text) RETURNS uuid
+    LANGUAGE sql STABLE
+    SET search_path TO ''
+    AS $$
+  select case
+           when v."TP_VINCULO" = 'CONFIRMADO' then v."CO_QUADRO_VAGA"
+           when v."TP_ORIGEM" = 'MANUAL' and v."DS_PENDENCIA" is null then null
+           else private."FC_QUADRO_DA_VAGA"(p_edital, p_nome_vaga)
+         end
+    from (select 1) u
+    left join public."TA_VAGA_QUADRO_EDITAL" v
+      on v."CO_MONITORAMENTO" = p_edital and v."CO_VAGA" = btrim(p_vaga);
+$$;
+
+--
+-- Name: FUNCTION "FC_QUADRO_DA_VAGA_VINCULADA"(p_edital uuid, p_vaga text, p_nome_vaga text); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_QUADRO_DA_VAGA_VINCULADA"(p_edital uuid, p_vaga text, p_nome_vaga text) IS 'A linha do quadro de uma vaga: a do vínculo CONFIRMADO; nenhuma quando a equipe confirmou que a vaga não tem linha; senão a regra do nome (FC_QUADRO_DA_VAGA). 20261118120000.';
 
 --
 -- Name: FC_QUADRO_PELO_TITULO_EMPREGARE(uuid, text); Type: FUNCTION; Schema: private; Owner: -
@@ -15421,6 +15794,46 @@ $$;
 COMMENT ON FUNCTION private."FC_TG_CONTRATACAO_LISTA_NOVA"() IS 'Gatilho da publicação de uma lista de aprovados: pede o job "Contratado em outra lista". 20261024120000.';
 
 --
+-- Name: FC_TG_DATAS_DO_CADASTRO(); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_TG_DATAS_DO_CADASTRO"() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+  v_ids uuid[];
+begin
+  if tg_op = 'INSERT' then
+    v_ids := array[new.monitoramento_id];
+  elsif tg_op = 'DELETE' then
+    v_ids := array[old.monitoramento_id];
+  else
+    v_ids := array[new.monitoramento_id, old.monitoramento_id];
+  end if;
+
+  -- Sem etapas, as datas ficam (como em salvar_monitoramento_com_cronograma).
+  update public."TB_MONITORAMENTO_INDIGENA" m
+     set data_inicio = c.inicio,
+         data_fim = c.fim
+    from (select e.monitoramento_id, min(e.data_inicio) as inicio, max(e.data_fim) as fim
+            from public."TB_CRONOGRAMA_MONIT_INDIG" e
+           where e.monitoramento_id = any (v_ids)
+           group by e.monitoramento_id) c
+   where m.id = c.monitoramento_id
+     and m.cronograma_automatico
+     and (m.data_inicio is distinct from c.inicio or m.data_fim is distinct from c.fim);
+  return null;
+end;
+$$;
+
+--
+-- Name: FUNCTION "FC_TG_DATAS_DO_CADASTRO"(); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_TG_DATAS_DO_CADASTRO"() IS 'Gatilho (de restrição, adiado ao fim da transação) de TB_CRONOGRAMA_MONIT_INDIG: com o cronograma automático ligado, o cadastro do edital (data_inicio, data_fim) recebe o início da primeira etapa e o fim da última sempre que as etapas mudam, por qualquer caminho. Sem etapas, as datas ficam; só grava o que muda. data_fim alimenta FC_VENCIMENTO_DO_EDITAL (20261117190000).';
+
+--
 -- Name: FC_TG_EQUIPE_COM_FICHAS(); Type: FUNCTION; Schema: private; Owner: -
 --
 
@@ -16183,6 +16596,51 @@ $$;
 --
 
 COMMENT ON FUNCTION private."FC_VAGAS_DO_ANALISTA"(p_edital uuid, p_usuario uuid) IS 'As vagas do edital (da pré-classificação e do quadro da pré-classificação) que o usuário analisa (FC_PODE_ANALISAR_VAGA avaliada uma vez por vaga). Usada pela fila da avaliação documental para o recorte do analista.';
+
+--
+-- Name: FC_VAGAS_PARA_O_QUADRO(uuid); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_VAGAS_PARA_O_QUADRO"(p_edital uuid) RETURNS TABLE(vaga text, nome text)
+    LANGUAGE sql STABLE
+    SET search_path TO ''
+    AS $_$
+  -- As vagas com código do edital: análises ativas (mesma área e número), Empregare e Seleção.
+  with m as (
+    select m.id, m."CO_AREA" as area, private."FC_NUMERO_EDITAL"(m.edital) as numero
+      from public."TB_MONITORAMENTO_INDIGENA" m where m.id = p_edital
+  ),
+  an as (
+    select btrim(a.codigo_vaga) as vaga, min(a.nome_vaga) as nome
+      from public."TB_ANALISE_CURRICULAR" a, m
+     where a."CO_AREA" = m.area and a.ativo and private."FC_NUMERO_EDITAL"(a.edital) = m.numero
+       and btrim(a.codigo_vaga) ~ '^[0-9]{1,20}$'
+     group by 1
+  ),
+  em as (
+    select v."CO_VAGA" as vaga, private."FC_TITULO_DA_VAGA_EMPREGARE"(v."NO_ARQUIVO") as nome
+      from public."TB_EMPREGARE_VAGA" v where v."CO_MONITORAMENTO" = p_edital
+  ),
+  se as (
+    -- DS_VAGA_PLANILHA é só o código; o título da vaga na planilha é NO_CARGO.
+    select s."CO_VAGA" as vaga, min(s."NO_CARGO") as nome
+      from public."TB_SELECAO_VAGA" s
+     where s."CO_MONITORAMENTO" = p_edital and s."ST_REGISTRO_ATIVO" = 'S' and s."CO_VAGA" is not null
+     group by 1
+  ),
+  todas as (select an.vaga from an union select em.vaga from em union select se.vaga from se)
+  select t.vaga, left(coalesce(an.nome, em.nome, se.nome), 400)
+    from todas t
+    left join an on an.vaga = t.vaga
+    left join em on em.vaga = t.vaga
+    left join se on se.vaga = t.vaga;
+$_$;
+
+--
+-- Name: FUNCTION "FC_VAGAS_PARA_O_QUADRO"(p_edital uuid); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_VAGAS_PARA_O_QUADRO"(p_edital uuid) IS 'As vagas com código do edital (análises ativas, Empregare e Seleção) e o nome para o casamento: o das análises, o título da Empregare ou o da planilha da Seleção (NO_CARGO). 20261118120000.';
 
 --
 -- Name: FC_VALIDAR_BLOCO_ANALISE(jsonb, integer); Type: FUNCTION; Schema: private; Owner: -
@@ -18050,6 +18508,35 @@ $_$;
 --
 
 COMMENT ON FUNCTION private."FC_VINCULOS_DO_APROVADO"(p_candidato uuid) IS 'As vagas da mesma pessoa do aprovado (código do candidato ou nome normalizado) nas listas vigentes, convocada ou contratada: edital, vaga, situação, data da convocação e da contratação — só as que quem chama vê na lista de aprovados; as demais só contadas (fora). Sem CPF.';
+
+--
+-- Name: FC_VINCULO_AUTOMATICO_QUADRO(uuid, text, text, boolean); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_VINCULO_AUTOMATICO_QUADRO"(p_edital uuid, p_vaga text, p_nome_vaga text, p_titulo boolean) RETURNS jsonb
+    LANGUAGE plpgsql STABLE
+    SET search_path TO ''
+    AS $$
+declare
+  v jsonb := private."FC_CANDIDATAS_DO_QUADRO"(p_edital, p_nome_vaga) || jsonb_build_object('regra', 'NOME');
+  v_titulo uuid;
+begin
+  if v ->> 'situacao' <> 'CONFIRMADO' and p_titulo then
+    -- O "CARGO N" do título da Empregare (o que a pré-classificação já usa); até ~1,8 s por vaga.
+    v_titulo := private."FC_QUADRO_PELO_TITULO_EMPREGARE"(p_edital, p_vaga);
+    if v_titulo is not null then
+      return jsonb_build_object('situacao', 'CONFIRMADO', 'quadro', v_titulo, 'candidatas', '[]'::jsonb, 'regra', 'TITULO');
+    end if;
+  end if;
+  return v;
+end;
+$$;
+
+--
+-- Name: FUNCTION "FC_VINCULO_AUTOMATICO_QUADRO"(p_edital uuid, p_vaga text, p_nome_vaga text, p_titulo boolean); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_VINCULO_AUTOMATICO_QUADRO"(p_edital uuid, p_vaga text, p_nome_vaga text, p_titulo boolean) IS 'O vínculo automático de uma vaga: a regra do nome (FC_CANDIDATAS_DO_QUADRO) e, sem linha única e com p_titulo, o título "CARGO N" da Empregare (FC_QUADRO_PELO_TITULO_EMPREGARE). {situacao, quadro, candidatas, regra}. 20261118120000.';
 
 --
 -- Name: FC_VINCULO_DA_MATRICULA(text); Type: FUNCTION; Schema: private; Owner: -
@@ -20493,6 +20980,27 @@ $$;
 COMMENT ON FUNCTION public.atualizar_cache_painel_entrevistas(p_area text) IS 'Tarefa agsus_entrevistas_cache_do_painel (a cada 2 min): remonta o pacote das entrevistas só da área com marca em TL_ALTERACAO_CACHE, sem pacote ou com pacote de mais de 24 h.';
 
 --
+-- Name: atualizar_vinculos_do_quadro(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.atualizar_vinculos_do_quadro(p_edital uuid) RETURNS json
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+begin
+  perform private."FC_EXIGIR_EDITAR_QUADRO"(p_edital);
+  perform private."FC_PREENCHER_VINCULOS_QUADRO"(p_edital, false, (select auth.uid()));
+  return public.obter_quadro_de_vagas(p_edital);
+end;
+$$;
+
+--
+-- Name: FUNCTION atualizar_vinculos_do_quadro(p_edital uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.atualizar_vinculos_do_quadro(p_edital uuid) IS 'Refaz os vínculos automáticos das vagas do edital com o quadro (vagas novas entram; o título da Empregare fica para a rodada diária). Núcleo ou Calendário (editor) e o edital. Devolve obter_quadro_de_vagas. 20261118120000.';
+
+--
 -- Name: automacao_ligada(text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -21893,6 +22401,7 @@ CREATE FUNCTION public.conferencia_ler_listas_e_quadros() RETURNS jsonb
   -- 20261103181500: a leitura da classificação das conferências sem as análises. A última
   -- atualização das análises e as vagas sem quadro saem das páginas de conferencia_ler_analises,
   -- no robô (scripts/conferencias/regras.py, python/monitora/classificacao/quadro_da_vaga.py).
+  -- 20261118120000: e os vínculos das vagas com o quadro, que o robô consulta antes das palavras.
   with ultimas as (
     select distinct on (l."CO_MONITORAMENTO", l."TP_LISTA")
            l."CO_LISTA_CLASSIFICACAO", l."CO_MONITORAMENTO", l."TP_LISTA", l."DT_GERACAO",
@@ -21932,6 +22441,14 @@ CREATE FUNCTION public.conferencia_ler_listas_e_quadros() RETURNS jsonb
           order by q."CO_MONITORAMENTO", q."CO_QUADRO_VAGA"), '[]'::jsonb)
         from public."TB_QUADRO_VAGA_EDITAL" q
        where q."ST_REGISTRO_ATIVO" = 'S'
+    ),
+    'vinculos', (
+      select coalesce(jsonb_agg(jsonb_build_object(
+          'edital', v."CO_MONITORAMENTO", 'vaga', v."CO_VAGA", 'situacao', v."TP_VINCULO", 'origem', v."TP_ORIGEM",
+          'quadro', v."CO_QUADRO_VAGA", 'pendencia', v."DS_PENDENCIA", 'candidatas', v."DS_CANDIDATA")
+          order by v."CO_MONITORAMENTO", v."CO_VAGA"), '[]'::jsonb)
+        from public."TA_VAGA_QUADRO_EDITAL" v
+       where not private."FC_EDITAL_EH_TREINAMENTO"(v."CO_MONITORAMENTO")
     )
   );
 $$;
@@ -21940,7 +22457,7 @@ $$;
 -- Name: FUNCTION conferencia_ler_listas_e_quadros(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.conferencia_ler_listas_e_quadros() IS 'Conferências (job Python, só service_role): a última lista de classificação de cada edital e tipo (fora do treinamento), com a versão da regra com que foi gerada (20261117193000), as vagas com empate pendente, os ajustes de recurso aprovados e as linhas ativas do quadro de vagas (id, edital, cargo, lotação), cruas. A vaga sem linha no quadro e a lista final desatualizada são conferidas no robô, com as páginas de conferencia_ler_analises (20261103181500).';
+COMMENT ON FUNCTION public.conferencia_ler_listas_e_quadros() IS 'Conferências (job Python, só service_role): a última lista de classificação de cada edital e tipo (fora do treinamento), com a versão da regra com que foi gerada (20261117193000), as vagas com empate pendente, os ajustes de recurso aprovados, as linhas ativas do quadro de vagas (id, edital, cargo, lotação), cruas, e os vínculos das vagas com o quadro (TA_VAGA_QUADRO_EDITAL, 20261118120000). A vaga sem linha no quadro e a lista final desatualizada são conferidas no robô, com as páginas de conferencia_ler_analises (20261103181500).';
 
 --
 -- Name: conferir_eliminados_pre_classificacao(uuid, text[]); Type: FUNCTION; Schema: public; Owner: -
@@ -25447,6 +25964,9 @@ begin
       'etapa', e ->> 'etapa',
       'cronograma_automatico', m.cronograma_automatico,
       'cronograma_total', coalesce(c.total, 0),
+      'tem_cronograma', coalesce(c.total, 0) > 0,
+      'calculo', e ->> 'calculo',
+      'situacao', e ->> 'situacao',
       'tem_resultado_final', coalesce(c.tem_resultado_final, false),
       'percentual', coalesce((e ->> 'percentual')::numeric, 0),
       'proxima_atividade', e ->> 'proxima_atividade',
@@ -25454,8 +25974,8 @@ begin
       'dias_para_proxima', (e ->> 'dias_para_proxima')::integer,
       'status_override', m.status_override,
       'alerta_tipo', case
-        when nullif(m.status_override, '') is not null then 'excepcional'
-        when not m.cronograma_automatico or coalesce(c.total, 0) = 0 then 'sem_cronograma'
+        when nullif(m.status_override, '') is not null or (e ->> 'situacao') is not null then 'excepcional'
+        when coalesce(c.total, 0) = 0 then 'sem_cronograma'
         when coalesce(c.total, 0) < 2 or not coalesce(c.tem_resultado_final, false) then 'incompleto'
         when (e ->> 'dias_para_proxima')::integer between 0 and 3 then 'proxima_3d'
         when (e ->> 'dias_para_proxima')::integer between 4 and 6 then 'proxima_7d'
@@ -25477,6 +25997,12 @@ begin
   ), '[]'::jsonb);
 end;
 $$;
+
+--
+-- Name: FUNCTION get_nucleo_cronograma_resumo(); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.get_nucleo_cronograma_resumo() IS 'Resumo do cronograma de cada edital ativo da área (Núcleo e Cronograma): status, etapa, cálculo, situação, percentual, próxima etapa e o alerta. excepcional = status_override ou situação suspenso/paralisado/cancelado; sem_cronograma = nenhuma etapa (o manual com etapas segue as regras de prazo) (20261117190000).';
 
 --
 -- Name: get_painel_dos_robos(); Type: FUNCTION; Schema: public; Owner: -
@@ -27578,6 +28104,55 @@ $_$;
 --
 
 COMMENT ON FUNCTION public.gravar_sugestoes_da_ficha(p_execucao text, p_edital uuid, p_vaga text, p_sugestoes jsonb) IS 'Recebe do job da pré-classificação (Python) as sugestões da ficha de uma vaga: [{id, blocos: {"<BLOCO>": [itens]}}]. Troca as da vaga inteira em TB_SUGESTAO_FICHA; só inscritos da vaga, só blocos de títulos, cursos e vínculos da regra do edital, até 20 itens limpos por bloco (FC_ITEM_SUGERIDO). Só service_role, com a execução da pré-classificação em andamento.';
+
+--
+-- Name: gravar_vinculo_do_quadro(uuid, text, text, uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.gravar_vinculo_do_quadro(p_edital uuid, p_vaga text, p_acao text, p_quadro uuid DEFAULT NULL::uuid) RETURNS json
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+  v_uid uuid := (select auth.uid());
+  v_vinculo public."TA_VAGA_QUADRO_EDITAL";
+  v jsonb;
+begin
+  perform private."FC_EXIGIR_EDITAR_QUADRO"(p_edital);
+  select * into v_vinculo from public."TA_VAGA_QUADRO_EDITAL" x
+   where x."CO_MONITORAMENTO" = p_edital and x."CO_VAGA" = btrim(coalesce(p_vaga, ''));
+  if v_vinculo."CO_VAGA" is null then
+    raise exception 'Vaga % não está no quadro deste edital', p_vaga using errcode = '22023';
+  end if;
+
+  if p_acao = 'CONFIRMAR' then
+    if not exists (select 1 from public."TB_QUADRO_VAGA_EDITAL" q
+                    where q."CO_QUADRO_VAGA" = p_quadro and q."CO_MONITORAMENTO" = p_edital and q."ST_REGISTRO_ATIVO" = 'S') then
+      raise exception 'A linha escolhida não é do quadro vigente deste edital' using errcode = '22023';
+    end if;
+    perform private."FC_GRAVAR_VINCULO_QUADRO"(p_edital, v_vinculo."CO_VAGA", v_vinculo."NO_VAGA", 'CONFIRMADO', 'MANUAL',
+                                               null, p_quadro, '{}', null, 'CONFIRMACAO', v_uid);
+  elsif p_acao = 'SEM_LINHA' then
+    perform private."FC_GRAVAR_VINCULO_QUADRO"(p_edital, v_vinculo."CO_VAGA", v_vinculo."NO_VAGA", 'AUSENTE', 'MANUAL',
+                                               null, null, '{}', null, 'CONFIRMACAO', v_uid);
+  elsif p_acao = 'AUTOMATICO' then
+    v := private."FC_VINCULO_AUTOMATICO_QUADRO"(p_edital, v_vinculo."CO_VAGA", v_vinculo."NO_VAGA", false);
+    perform private."FC_GRAVAR_VINCULO_QUADRO"(p_edital, v_vinculo."CO_VAGA", v_vinculo."NO_VAGA", v ->> 'situacao', 'AUTOMATICO',
+                                               v ->> 'regra', (v ->> 'quadro')::uuid,
+                                               array(select jsonb_array_elements_text(v -> 'candidatas')::uuid),
+                                               null, 'RETORNO_AUTOMATICO', v_uid);
+  else
+    raise exception 'Ação inválida (CONFIRMAR, SEM_LINHA ou AUTOMATICO)' using errcode = '22023';
+  end if;
+  return public.obter_quadro_de_vagas(p_edital);
+end;
+$$;
+
+--
+-- Name: FUNCTION gravar_vinculo_do_quadro(p_edital uuid, p_vaga text, p_acao text, p_quadro uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.gravar_vinculo_do_quadro(p_edital uuid, p_vaga text, p_acao text, p_quadro uuid) IS 'A equipe decide o vínculo de uma vaga com o quadro: CONFIRMAR (p_quadro, linha vigente do edital), SEM_LINHA (a vaga não tem linha; o aviso some) ou AUTOMATICO (devolve à regra). Vira MANUAL, com histórico. Núcleo ou Calendário (editor) e o edital. Devolve obter_quadro_de_vagas. 20261118120000.';
 
 --
 -- Name: ignorar_aviso_conferencia(uuid, text); Type: FUNCTION; Schema: public; Owner: -
@@ -34872,14 +35447,26 @@ begin
     'origem', (select json_build_object('tipo', q."TP_ORIGEM", 'arquivo', q."DS_ARQUIVO_ORIGEM", 'gravado_em', q."DT_CRIACAO")
                  from public."TB_QUADRO_VAGA_EDITAL" q
                 where q."CO_MONITORAMENTO" = p_edital and q."ST_REGISTRO_ATIVO" = 'S' limit 1),
+    -- O vínculo de cada vaga (TA_VAGA_QUADRO_EDITAL, 20261118120000); 'cargo' é o nome da vaga, como antes.
     'vinculos', coalesce((
-      select json_agg(json_build_object('vaga', v.codigo_vaga, 'cargo', v.cargo,
-               'quadro', private."FC_QUADRO_DA_VAGA"(p_edital, v.cargo)) order by v.cargo)
-        from (select a.codigo_vaga, min(a.nome_vaga) cargo
-                from public."TB_ANALISE_CURRICULAR" a
-               where a."CO_AREA" = v_m."CO_AREA" and a.ativo
-                 and private."FC_NUMERO_EDITAL"(a.edital) = private."FC_NUMERO_EDITAL"(v_m.edital)
-               group by a.codigo_vaga) v), '[]'::json)
+      select json_agg(json_build_object('vaga', v."CO_VAGA", 'cargo', v."NO_VAGA", 'quadro', v."CO_QUADRO_VAGA",
+               'situacao', v."TP_VINCULO", 'origem', v."TP_ORIGEM", 'regra', v."TP_REGRA",
+               'cargo_quadro', v."NO_CARGO_QUADRO", 'lotacao_quadro', v."NO_LOTACAO_QUADRO",
+               'candidatas', v."DS_CANDIDATA", 'pendencia', v."DS_PENDENCIA",
+               'confirmado_em', v."DT_CONFIRMACAO",
+               'confirmado_por', (select p.nome from public."TB_PERFIL_USUARIO" p
+                                   where p.user_id = v."CO_USUARIO_CONFIRMACAO" limit 1))
+             order by v."NO_VAGA", v."CO_VAGA")
+        from public."TA_VAGA_QUADRO_EDITAL" v
+       where v."CO_MONITORAMENTO" = p_edital), '[]'::json),
+    -- Sem vaga com código não há o que ligar: o motivo, sem inventar vaga.
+    'vagas_do_edital', case
+      when exists (select 1 from public."TA_VAGA_QUADRO_EDITAL" v where v."CO_MONITORAMENTO" = p_edital) then 'COM_CODIGO'
+      when coalesce(v_m.status, '') = 'Cancelado' then 'NAO_SE_APLICA'
+      when exists (select 1 from public."TB_SELECAO_VAGA" s
+                    where s."CO_MONITORAMENTO" = p_edital and s."ST_REGISTRO_ATIVO" = 'S') then 'EXTERNO'
+      else 'PENDENTE_INTEGRACAO' end,
+    'pode_editar', private.pode_recurso('nucleo', 2) or private.pode_recurso('calendario', 2)
   );
 end;
 $$;
@@ -34888,7 +35475,7 @@ $$;
 -- Name: FUNCTION obter_quadro_de_vagas(p_edital uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.obter_quadro_de_vagas(p_edital uuid) IS 'Quadro de vagas vigente do edital, de onde veio e a que linha cada vaga da análise se liga. Núcleo, Calendário ou Entrevistas (leitor) e o edital.';
+COMMENT ON FUNCTION public.obter_quadro_de_vagas(p_edital uuid) IS 'Quadro de vagas vigente do edital, de onde veio e o vínculo de cada vaga com a linha (TA_VAGA_QUADRO_EDITAL: situação, origem, candidatas, pendência, quem confirmou); vagas_do_edital diz por que não há vaga para ligar (NAO_SE_APLICA, EXTERNO, PENDENTE_INTEGRACAO); pode_editar = pode gravar o vínculo. Núcleo, Calendário ou Entrevistas (leitor) e o edital.';
 
 --
 -- Name: obter_rascunho_regra(text, uuid); Type: FUNCTION; Schema: public; Owner: -
@@ -41583,6 +42170,9 @@ begin
          v_origem, v_arquivo, (select auth.uid())
     from jsonb_array_elements(v_linhas) with ordinality l(valor, ordem);
 
+  -- Os vínculos das vagas passam para as linhas novas (20261118120000).
+  perform private."FC_PREENCHER_VINCULOS_QUADRO"(p_edital, false, (select auth.uid()));
+
   return public.obter_quadro_de_vagas(p_edital);
 end;
 $$;
@@ -41591,7 +42181,7 @@ $$;
 -- Name: FUNCTION salvar_quadro_de_vagas(p_edital uuid, p_dados jsonb); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.salvar_quadro_de_vagas(p_edital uuid, p_dados jsonb) IS 'Substitui o quadro de vagas do edital (o anterior fica desativado). p_dados: {origem PDF|MANUAL, arquivo, linhas:[{cargo, lotacao, modalidades, vagas_imediatas, cadastro_reserva}]}. Núcleo ou Calendário (editor) e o edital.';
+COMMENT ON FUNCTION public.salvar_quadro_de_vagas(p_edital uuid, p_dados jsonb) IS 'Substitui o quadro de vagas do edital (o anterior fica desativado) e passa os vínculos das vagas para as linhas novas (FC_PREENCHER_VINCULOS_QUADRO). p_dados: {origem PDF|MANUAL, arquivo, linhas:[{cargo, lotacao, modalidades, vagas_imediatas, cadastro_reserva}]}. Núcleo ou Calendário (editor) e o edital.';
 
 --
 -- Name: salvar_rascunho_ficha(uuid, integer, jsonb, jsonb, text); Type: FUNCTION; Schema: public; Owner: -
@@ -47030,6 +47620,138 @@ COMMENT ON COLUMN public."TA_UNIDADE_AREA"."NO_UNIDADE" IS 'Nome da unidade do C
 --
 
 COMMENT ON COLUMN public."TA_UNIDADE_AREA"."CO_AREA" IS 'Área da unidade (TB_AREA).';
+
+--
+-- Name: TA_VAGA_QUADRO_EDITAL; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."TA_VAGA_QUADRO_EDITAL" (
+    "CO_VAGA_QUADRO_EDITAL" uuid DEFAULT gen_random_uuid() NOT NULL,
+    "CO_MONITORAMENTO" uuid NOT NULL,
+    "CO_VAGA" character varying(20) NOT NULL,
+    "NO_VAGA" character varying(400),
+    "CO_QUADRO_VAGA" uuid,
+    "NO_CARGO_QUADRO" character varying(300),
+    "NO_LOTACAO_QUADRO" character varying(300),
+    "TP_VINCULO" character varying(10) NOT NULL,
+    "TP_ORIGEM" character varying(10) NOT NULL,
+    "TP_REGRA" character varying(10),
+    "DS_CANDIDATA" jsonb DEFAULT '[]'::jsonb NOT NULL,
+    "DS_PENDENCIA" character varying(300),
+    "CO_USUARIO_CONFIRMACAO" uuid,
+    "DT_CONFIRMACAO" timestamp with time zone,
+    "DT_CRIACAO" timestamp with time zone DEFAULT now() NOT NULL,
+    "DT_ATUALIZACAO" timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT "CK_VAGAQUADRO_CANDIDATA" CHECK ((jsonb_typeof("DS_CANDIDATA") = 'array'::text)),
+    CONSTRAINT "CK_VAGAQUADRO_CONFIRMADO" CHECK (((("TP_VINCULO")::text = 'CONFIRMADO'::text) = ("CO_QUADRO_VAGA" IS NOT NULL))),
+    CONSTRAINT "CK_VAGAQUADRO_COVAGA" CHECK ((("CO_VAGA")::text ~ '^[0-9]{1,20}$'::text)),
+    CONSTRAINT "CK_VAGAQUADRO_MANUAL" CHECK (((("TP_ORIGEM")::text = 'MANUAL'::text) = ("DT_CONFIRMACAO" IS NOT NULL))),
+    CONSTRAINT "CK_VAGAQUADRO_TPORIGEM" CHECK ((("TP_ORIGEM")::text = ANY ((ARRAY['AUTOMATICO'::character varying, 'MANUAL'::character varying])::text[]))),
+    CONSTRAINT "CK_VAGAQUADRO_TPREGRA" CHECK ((("TP_REGRA" IS NULL) OR (("TP_REGRA")::text = ANY ((ARRAY['NOME'::character varying, 'TITULO'::character varying])::text[])))),
+    CONSTRAINT "CK_VAGAQUADRO_TPVINCULO" CHECK ((("TP_VINCULO")::text = ANY ((ARRAY['CONFIRMADO'::character varying, 'AMBIGUO'::character varying, 'AUSENTE'::character varying])::text[])))
+);
+
+--
+-- Name: TABLE "TA_VAGA_QUADRO_EDITAL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public."TA_VAGA_QUADRO_EDITAL" IS 'Vínculo de cada vaga do edital (código da Empregare ou da planilha) com a linha do quadro de vagas (TB_QUADRO_VAGA_EDITAL): CONFIRMADO, AMBIGUO (com as candidatas) ou AUSENTE; AUTOMATICO pela regra, MANUAL pela equipe. 20261118120000.';
+
+--
+-- Name: COLUMN "TA_VAGA_QUADRO_EDITAL"."CO_VAGA_QUADRO_EDITAL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TA_VAGA_QUADRO_EDITAL"."CO_VAGA_QUADRO_EDITAL" IS 'Identificador do vínculo.';
+
+--
+-- Name: COLUMN "TA_VAGA_QUADRO_EDITAL"."CO_MONITORAMENTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TA_VAGA_QUADRO_EDITAL"."CO_MONITORAMENTO" IS 'Edital (TB_MONITORAMENTO_INDIGENA).';
+
+--
+-- Name: COLUMN "TA_VAGA_QUADRO_EDITAL"."CO_VAGA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TA_VAGA_QUADRO_EDITAL"."CO_VAGA" IS 'Código da vaga (Empregare ou planilha), só dígitos; um por edital.';
+
+--
+-- Name: COLUMN "TA_VAGA_QUADRO_EDITAL"."NO_VAGA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TA_VAGA_QUADRO_EDITAL"."NO_VAGA" IS 'Nome da vaga usado no casamento: o das análises, o título da Empregare ou o da planilha da Seleção (NO_CARGO).';
+
+--
+-- Name: COLUMN "TA_VAGA_QUADRO_EDITAL"."CO_QUADRO_VAGA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TA_VAGA_QUADRO_EDITAL"."CO_QUADRO_VAGA" IS 'Linha do quadro ligada; preenchida só quando CONFIRMADO.';
+
+--
+-- Name: COLUMN "TA_VAGA_QUADRO_EDITAL"."NO_CARGO_QUADRO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TA_VAGA_QUADRO_EDITAL"."NO_CARGO_QUADRO" IS 'Cargo da linha ligada, como estava (fica para mostrar a linha que saiu do quadro).';
+
+--
+-- Name: COLUMN "TA_VAGA_QUADRO_EDITAL"."NO_LOTACAO_QUADRO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TA_VAGA_QUADRO_EDITAL"."NO_LOTACAO_QUADRO" IS 'Lotação da linha ligada, como estava.';
+
+--
+-- Name: COLUMN "TA_VAGA_QUADRO_EDITAL"."TP_VINCULO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TA_VAGA_QUADRO_EDITAL"."TP_VINCULO" IS 'CONFIRMADO (uma linha), AMBIGUO (mais de uma candidata ou lotação contraditória) ou AUSENTE (nenhuma linha).';
+
+--
+-- Name: COLUMN "TA_VAGA_QUADRO_EDITAL"."TP_ORIGEM"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TA_VAGA_QUADRO_EDITAL"."TP_ORIGEM" IS 'AUTOMATICO (FC_PREENCHER_VINCULOS_QUADRO) ou MANUAL (a equipe, por gravar_vinculo_do_quadro). MANUAL AUSENTE sem pendência = a equipe confirmou que a vaga não tem linha.';
+
+--
+-- Name: COLUMN "TA_VAGA_QUADRO_EDITAL"."TP_REGRA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TA_VAGA_QUADRO_EDITAL"."TP_REGRA" IS 'Regra que achou o vínculo automático: NOME (palavras do nome) ou TITULO ("CARGO N" do título da Empregare).';
+
+--
+-- Name: COLUMN "TA_VAGA_QUADRO_EDITAL"."DS_CANDIDATA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TA_VAGA_QUADRO_EDITAL"."DS_CANDIDATA" IS 'Linhas candidatas quando AMBIGUO: [{id, cargo, lotacao}] na ordem do quadro.';
+
+--
+-- Name: COLUMN "TA_VAGA_QUADRO_EDITAL"."DS_PENDENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TA_VAGA_QUADRO_EDITAL"."DS_PENDENCIA" IS 'O que a equipe precisa rever (ex.: a linha escolhida saiu do quadro na reimportação).';
+
+--
+-- Name: COLUMN "TA_VAGA_QUADRO_EDITAL"."CO_USUARIO_CONFIRMACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TA_VAGA_QUADRO_EDITAL"."CO_USUARIO_CONFIRMACAO" IS 'Quem decidiu o vínculo MANUAL (auth.users).';
+
+--
+-- Name: COLUMN "TA_VAGA_QUADRO_EDITAL"."DT_CONFIRMACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TA_VAGA_QUADRO_EDITAL"."DT_CONFIRMACAO" IS 'Quando o vínculo MANUAL foi decidido.';
+
+--
+-- Name: COLUMN "TA_VAGA_QUADRO_EDITAL"."DT_CRIACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TA_VAGA_QUADRO_EDITAL"."DT_CRIACAO" IS 'Quando a vaga entrou no vínculo.';
+
+--
+-- Name: COLUMN "TA_VAGA_QUADRO_EDITAL"."DT_ATUALIZACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TA_VAGA_QUADRO_EDITAL"."DT_ATUALIZACAO" IS 'Última mudança do vínculo.';
 
 --
 -- Name: TB_ABA; Type: TABLE; Schema: public; Owner: -
@@ -59577,6 +60299,89 @@ ALTER TABLE public."TH_SITUACAO_MODULO" ALTER COLUMN "CO_HISTORICO_SITUACAO" ADD
 );
 
 --
+-- Name: TH_VAGA_QUADRO_EDITAL; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."TH_VAGA_QUADRO_EDITAL" (
+    "SQ_HISTORICO" bigint NOT NULL,
+    "CO_MONITORAMENTO" uuid NOT NULL,
+    "CO_VAGA" character varying(20) NOT NULL,
+    "TP_EVENTO" character varying(20) NOT NULL,
+    "DS_ANTERIOR" jsonb,
+    "DS_NOVO" jsonb,
+    "CO_USUARIO" uuid,
+    "DT_EVENTO" timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT "CK_HISTVAGAQUADRO_TPEVENTO" CHECK ((("TP_EVENTO")::text = ANY ((ARRAY['PREENCHIMENTO'::character varying, 'CONFIRMACAO'::character varying, 'REIMPORTACAO'::character varying, 'RETORNO_AUTOMATICO'::character varying, 'REMOCAO'::character varying])::text[])))
+);
+
+--
+-- Name: TABLE "TH_VAGA_QUADRO_EDITAL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public."TH_VAGA_QUADRO_EDITAL" IS 'Histórico de TA_VAGA_QUADRO_EDITAL: cada mudança do vínculo da vaga com a linha do quadro, com antes e depois. 20261118120000.';
+
+--
+-- Name: COLUMN "TH_VAGA_QUADRO_EDITAL"."SQ_HISTORICO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_VAGA_QUADRO_EDITAL"."SQ_HISTORICO" IS 'Sequencial do evento.';
+
+--
+-- Name: COLUMN "TH_VAGA_QUADRO_EDITAL"."CO_MONITORAMENTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_VAGA_QUADRO_EDITAL"."CO_MONITORAMENTO" IS 'Edital (sem chave estrangeira: o histórico fica).';
+
+--
+-- Name: COLUMN "TH_VAGA_QUADRO_EDITAL"."CO_VAGA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_VAGA_QUADRO_EDITAL"."CO_VAGA" IS 'Código da vaga.';
+
+--
+-- Name: COLUMN "TH_VAGA_QUADRO_EDITAL"."TP_EVENTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_VAGA_QUADRO_EDITAL"."TP_EVENTO" IS 'PREENCHIMENTO (regra), CONFIRMACAO (equipe), REIMPORTACAO (quadro novo), RETORNO_AUTOMATICO (equipe devolveu à regra) ou REMOCAO (a vaga saiu do edital).';
+
+--
+-- Name: COLUMN "TH_VAGA_QUADRO_EDITAL"."DS_ANTERIOR"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_VAGA_QUADRO_EDITAL"."DS_ANTERIOR" IS 'A linha de TA_VAGA_QUADRO_EDITAL antes (nulo = vaga nova).';
+
+--
+-- Name: COLUMN "TH_VAGA_QUADRO_EDITAL"."DS_NOVO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_VAGA_QUADRO_EDITAL"."DS_NOVO" IS 'A linha depois (nulo = removida).';
+
+--
+-- Name: COLUMN "TH_VAGA_QUADRO_EDITAL"."CO_USUARIO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_VAGA_QUADRO_EDITAL"."CO_USUARIO" IS 'Quem mudou (auth.users); nulo = automático.';
+
+--
+-- Name: COLUMN "TH_VAGA_QUADRO_EDITAL"."DT_EVENTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_VAGA_QUADRO_EDITAL"."DT_EVENTO" IS 'Quando.';
+
+--
+-- Name: TH_VAGA_QUADRO_EDITAL_SQ_HISTORICO_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public."TH_VAGA_QUADRO_EDITAL" ALTER COLUMN "SQ_HISTORICO" ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public."TH_VAGA_QUADRO_EDITAL_SQ_HISTORICO_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
 -- Name: TL_ACESSO_FICHA_ANALISE; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -61493,6 +62298,13 @@ ALTER TABLE ONLY public."TA_UNIDADE_AREA"
     ADD CONSTRAINT "PK_TA_UNIDADE_AREA" PRIMARY KEY ("NO_UNIDADE");
 
 --
+-- Name: TA_VAGA_QUADRO_EDITAL PK_TA_VAGA_QUADRO_EDITAL; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TA_VAGA_QUADRO_EDITAL"
+    ADD CONSTRAINT "PK_TA_VAGA_QUADRO_EDITAL" PRIMARY KEY ("CO_VAGA_QUADRO_EDITAL");
+
+--
 -- Name: TB_ABA PK_TB_ABA; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -62501,6 +63313,13 @@ ALTER TABLE ONLY public."TH_SITUACAO_MODULO"
     ADD CONSTRAINT "PK_TH_SITUACAO_MODULO" PRIMARY KEY ("CO_HISTORICO_SITUACAO");
 
 --
+-- Name: TH_VAGA_QUADRO_EDITAL PK_TH_VAGA_QUADRO_EDITAL; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TH_VAGA_QUADRO_EDITAL"
+    ADD CONSTRAINT "PK_TH_VAGA_QUADRO_EDITAL" PRIMARY KEY ("SQ_HISTORICO");
+
+--
 -- Name: TL_ACESSO_FICHA_ANALISE PK_TL_ACESSO_FICHA_ANALISE; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -63017,6 +63836,13 @@ ALTER TABLE ONLY public."TD_CARGO"
 --
 
 COMMENT ON CONSTRAINT "UK_TDCARGO_COCARGOSIP" ON public."TD_CARGO" IS 'Um código SIP, um cargo.';
+
+--
+-- Name: TA_VAGA_QUADRO_EDITAL UK_VAGAQUADRO_EDITALVAGA; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TA_VAGA_QUADRO_EDITAL"
+    ADD CONSTRAINT "UK_VAGAQUADRO_EDITALVAGA" UNIQUE ("CO_MONITORAMENTO", "CO_VAGA");
 
 --
 -- Name: TB_ANALISE_CURRICULAR analises_curriculares_pkey; Type: CONSTRAINT; Schema: public; Owner: -
@@ -64719,6 +65545,18 @@ CREATE INDEX "IN_FKTHPRECLASSIF_EXECUCAO" ON public."TH_PRE_CLASSIFICACAO" USING
 COMMENT ON INDEX public."IN_FKTHPRECLASSIF_EXECUCAO" IS 'Chave estrangeira para TL_PRE_CLASSIFICACAO.';
 
 --
+-- Name: IN_FKVAGAQUADRO_QUADRO; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "IN_FKVAGAQUADRO_QUADRO" ON public."TA_VAGA_QUADRO_EDITAL" USING btree ("CO_QUADRO_VAGA");
+
+--
+-- Name: INDEX "IN_FKVAGAQUADRO_QUADRO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON INDEX public."IN_FKVAGAQUADRO_QUADRO" IS 'Chave estrangeira para TB_QUADRO_VAGA_EDITAL.';
+
+--
 -- Name: IN_HISTAGENDA_EDITAL_DATA; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -64819,6 +65657,18 @@ CREATE INDEX "IN_HISTSITUACAO_DTALTERACAO" ON public."TH_SITUACAO_MODULO" USING 
 --
 
 COMMENT ON INDEX public."IN_HISTSITUACAO_DTALTERACAO" IS 'Histórico do mais recente ao mais antigo.';
+
+--
+-- Name: IN_HISTVAGAQUADRO_EDITAL; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "IN_HISTVAGAQUADRO_EDITAL" ON public."TH_VAGA_QUADRO_EDITAL" USING btree ("CO_MONITORAMENTO", "CO_VAGA", "DT_EVENTO" DESC);
+
+--
+-- Name: INDEX "IN_HISTVAGAQUADRO_EDITAL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON INDEX public."IN_HISTVAGAQUADRO_EDITAL" IS 'Histórico de uma vaga do edital, do mais recente.';
 
 --
 -- Name: IN_HIST_PREV_ENT_EDITAL; Type: INDEX; Schema: public; Owner: -
@@ -65905,6 +66755,12 @@ CREATE TRIGGER "TG_CANDAPROV_CACHE_INS" AFTER INSERT ON public."TB_CANDIDATO_APR
 --
 
 CREATE TRIGGER "TG_CANDAPROV_CACHE_UPD" AFTER UPDATE ON public."TB_CANDIDATO_APROVADO" REFERENCING OLD TABLE AS antigas NEW TABLE AS novas FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_CACHE_CANDIDATO_APROVADO"();
+
+--
+-- Name: TB_CRONOGRAMA_MONIT_INDIG TG_DATAS_DO_CADASTRO; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE CONSTRAINT TRIGGER "TG_DATAS_DO_CADASTRO" AFTER INSERT OR DELETE OR UPDATE ON public."TB_CRONOGRAMA_MONIT_INDIG" DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION private."FC_TG_DATAS_DO_CADASTRO"();
 
 --
 -- Name: TB_DECISAO_LOTE TG_DECISAOLOTE_SEMAPAGAR; Type: TRIGGER; Schema: public; Owner: -
@@ -69823,6 +70679,13 @@ ALTER TABLE ONLY public."TB_SUGESTAO_FICHA"
     ADD CONSTRAINT "FK_MONITORAMENTO_SUGFICHA" FOREIGN KEY ("CO_MONITORAMENTO") REFERENCES public."TB_MONITORAMENTO_INDIGENA"(id) ON DELETE CASCADE;
 
 --
+-- Name: TA_VAGA_QUADRO_EDITAL FK_MONITORAMENTO_VAGAQUADRO; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TA_VAGA_QUADRO_EDITAL"
+    ADD CONSTRAINT "FK_MONITORAMENTO_VAGAQUADRO" FOREIGN KEY ("CO_MONITORAMENTO") REFERENCES public."TB_MONITORAMENTO_INDIGENA"(id) ON DELETE CASCADE;
+
+--
 -- Name: TH_ORIGEM_ANALISE_EDITAL FK_ORIGANALEDT_THORIGANALEDT; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -70038,6 +70901,13 @@ ALTER TABLE ONLY public."TB_PRE_CLASSIF_VAGA"
 --
 
 COMMENT ON CONSTRAINT "FK_QUADROVAGA_PRECLASSVAGA" ON public."TB_PRE_CLASSIF_VAGA" IS 'Linha do quadro de vagas.';
+
+--
+-- Name: TA_VAGA_QUADRO_EDITAL FK_QUADROVAGA_VAGAQUADRO; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TA_VAGA_QUADRO_EDITAL"
+    ADD CONSTRAINT "FK_QUADROVAGA_VAGAQUADRO" FOREIGN KEY ("CO_QUADRO_VAGA") REFERENCES public."TB_QUADRO_VAGA_EDITAL"("CO_QUADRO_VAGA") ON DELETE CASCADE;
 
 --
 -- Name: TB_AJUSTE_PONTUACAO_RECURSO FK_RECURSOCANDIDATO_AJUSTEPONTREC; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -71044,6 +71914,12 @@ ALTER TABLE public."TA_ORIGEM_ANALISE" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public."TA_UNIDADE_AREA" ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: TA_VAGA_QUADRO_EDITAL; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public."TA_VAGA_QUADRO_EDITAL" ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: TB_ABA; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -71888,6 +72764,12 @@ ALTER TABLE public."TH_RESPOSTA_RECURSO" ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public."TH_SITUACAO_MODULO" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: TH_VAGA_QUADRO_EDITAL; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public."TH_VAGA_QUADRO_EDITAL" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: TL_ACESSO_FICHA_ANALISE; Type: ROW SECURITY; Schema: public; Owner: -
@@ -72802,6 +73684,12 @@ REVOKE ALL ON FUNCTION private."FC_CALCULAR_RELATORIO_PAINEL"(p_area text, p_rel
 REVOKE ALL ON FUNCTION private."FC_CALCULO_PELO_PYTHON"() FROM PUBLIC;
 
 --
+-- Name: FUNCTION "FC_CANDIDATAS_DO_QUADRO"(p_edital uuid, p_nome_vaga text); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_CANDIDATAS_DO_QUADRO"(p_edital uuid, p_nome_vaga text) FROM PUBLIC;
+
+--
 -- Name: FUNCTION "FC_CARGO_DA_GRAFIA"(p_texto text, p_area text); Type: ACL; Schema: private; Owner: -
 --
 
@@ -72830,6 +73718,12 @@ REVOKE ALL ON FUNCTION private."FC_CHAVE_DA_TAREFA"(p_tarefa text) FROM PUBLIC;
 --
 
 REVOKE ALL ON FUNCTION private."FC_CHAVE_DO_WORKFLOW"(p_workflow text) FROM PUBLIC;
+
+--
+-- Name: FUNCTION "FC_CHAVE_LINHA_QUADRO"(p_cargo text, p_lotacao text); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_CHAVE_LINHA_QUADRO"(p_cargo text, p_lotacao text) FROM PUBLIC;
 
 --
 -- Name: FUNCTION "FC_CODIGO_DA_LEITURA"(p_funcoes text[]); Type: ACL; Schema: private; Owner: -
@@ -73210,6 +74104,12 @@ REVOKE ALL ON FUNCTION private."FC_EXIGIR_COORD_AVALIACAO"(p_edital uuid) FROM P
 REVOKE ALL ON FUNCTION private."FC_EXIGIR_COORD_FICHAS"(p_edital uuid) FROM PUBLIC;
 
 --
+-- Name: FUNCTION "FC_EXIGIR_EDITAR_QUADRO"(p_edital uuid); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_EXIGIR_EDITAR_QUADRO"(p_edital uuid) FROM PUBLIC;
+
+--
 -- Name: FUNCTION "FC_EXIGIR_ENTREVISTAS_EDITAL"(p_edital uuid, p_minimo integer); Type: ACL; Schema: private; Owner: -
 --
 
@@ -73420,6 +74320,12 @@ REVOKE ALL ON FUNCTION private."FC_GESTOR_DO_EDITAL"(p_perfil_usuario uuid, p_ed
 --
 
 REVOKE ALL ON FUNCTION private."FC_GRAVAR_NOVA_VERSAO_DA_LISTA"(p_edital uuid, p_anterior uuid, p_origem text, p_ativo boolean, p_arquivo_nome text, p_arquivo_path text, p_lista_classificacao uuid, p_regra uuid, p_versao_regra integer, p_hash text, p_motivo text) FROM PUBLIC;
+
+--
+-- Name: FUNCTION "FC_GRAVAR_VINCULO_QUADRO"(p_edital uuid, p_vaga text, p_nome_vaga text, p_situacao text, p_origem text, p_regra text, p_quadro uuid, p_candidatas uuid[], p_pendencia text, p_evento text, p_usuario uuid); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_GRAVAR_VINCULO_QUADRO"(p_edital uuid, p_vaga text, p_nome_vaga text, p_situacao text, p_origem text, p_regra text, p_quadro uuid, p_candidatas uuid[], p_pendencia text, p_evento text, p_usuario uuid) FROM PUBLIC;
 
 --
 -- Name: FUNCTION "FC_GRUPOS_ANALISES_DA_AREA"(p_area text); Type: ACL; Schema: private; Owner: -
@@ -74086,6 +74992,18 @@ GRANT ALL ON FUNCTION private."FC_PODE_VER_EDITAL"(p_edital uuid) TO authenticat
 REVOKE ALL ON FUNCTION private."FC_PRAZO_RESERVA_FICHA"() FROM PUBLIC;
 
 --
+-- Name: FUNCTION "FC_PREENCHER_TODOS_VINCULOS_QUADRO"(); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_PREENCHER_TODOS_VINCULOS_QUADRO"() FROM PUBLIC;
+
+--
+-- Name: FUNCTION "FC_PREENCHER_VINCULOS_QUADRO"(p_edital uuid, p_titulo boolean, p_usuario uuid); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_PREENCHER_VINCULOS_QUADRO"(p_edital uuid, p_titulo boolean, p_usuario uuid) FROM PUBLIC;
+
+--
 -- Name: FUNCTION "FC_PREPARAR_EDITAL_TREINAMENTO"(p_area text); Type: ACL; Schema: private; Owner: -
 --
 
@@ -74167,6 +75085,12 @@ GRANT ALL ON TABLE public."TB_QUADRO_VAGA_EDITAL" TO service_role;
 --
 
 REVOKE ALL ON FUNCTION private."FC_QUADRO_DA_VAGA_EMPREGARE"(p_edital uuid, p_vaga text) FROM PUBLIC;
+
+--
+-- Name: FUNCTION "FC_QUADRO_DA_VAGA_VINCULADA"(p_edital uuid, p_vaga text, p_nome_vaga text); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_QUADRO_DA_VAGA_VINCULADA"(p_edital uuid, p_vaga text, p_nome_vaga text) FROM PUBLIC;
 
 --
 -- Name: FUNCTION "FC_QUADRO_PELO_TITULO_EMPREGARE"(p_edital uuid, p_vaga text); Type: ACL; Schema: private; Owner: -
@@ -74458,6 +75382,12 @@ REVOKE ALL ON FUNCTION private."FC_TG_CONTRATACAO_BASE_MUDOU"() FROM PUBLIC;
 REVOKE ALL ON FUNCTION private."FC_TG_CONTRATACAO_LISTA_NOVA"() FROM PUBLIC;
 
 --
+-- Name: FUNCTION "FC_TG_DATAS_DO_CADASTRO"(); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_TG_DATAS_DO_CADASTRO"() FROM PUBLIC;
+
+--
 -- Name: FUNCTION "FC_TG_EQUIPE_COM_FICHAS"(); Type: ACL; Schema: private; Owner: -
 --
 
@@ -74606,6 +75536,12 @@ GRANT ALL ON FUNCTION private."FC_UNIDADES_NORM_VISIVEIS"() TO authenticated;
 REVOKE ALL ON FUNCTION private."FC_VAGAS_DO_ANALISTA"(p_edital uuid, p_usuario uuid) FROM PUBLIC;
 
 --
+-- Name: FUNCTION "FC_VAGAS_PARA_O_QUADRO"(p_edital uuid); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_VAGAS_PARA_O_QUADRO"(p_edital uuid) FROM PUBLIC;
+
+--
 -- Name: FUNCTION "FC_VALIDAR_BLOCO_ANALISE"(p_bloco jsonb, p_ordem integer); Type: ACL; Schema: private; Owner: -
 --
 
@@ -74688,6 +75624,12 @@ REVOKE ALL ON FUNCTION private."FC_VERSAO_DO_CATALOGO_DE_ABAS"() FROM PUBLIC;
 --
 
 REVOKE ALL ON FUNCTION private."FC_VINCULOS_DO_APROVADO"(p_candidato uuid) FROM PUBLIC;
+
+--
+-- Name: FUNCTION "FC_VINCULO_AUTOMATICO_QUADRO"(p_edital uuid, p_vaga text, p_nome_vaga text, p_titulo boolean); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_VINCULO_AUTOMATICO_QUADRO"(p_edital uuid, p_vaga text, p_nome_vaga text, p_titulo boolean) FROM PUBLIC;
 
 --
 -- Name: FUNCTION "FC_VINCULO_DA_MATRICULA"(p_matricula text); Type: ACL; Schema: private; Owner: -
@@ -75030,6 +75972,14 @@ GRANT ALL ON FUNCTION public.atualizar_cache_painel_analises_vencidos() TO servi
 
 REVOKE ALL ON FUNCTION public.atualizar_cache_painel_entrevistas(p_area text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.atualizar_cache_painel_entrevistas(p_area text) TO service_role;
+
+--
+-- Name: FUNCTION atualizar_vinculos_do_quadro(p_edital uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.atualizar_vinculos_do_quadro(p_edital uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.atualizar_vinculos_do_quadro(p_edital uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.atualizar_vinculos_do_quadro(p_edital uuid) TO service_role;
 
 --
 -- Name: FUNCTION automacao_ligada(p_chave text); Type: ACL; Schema: public; Owner: -
@@ -75740,6 +76690,14 @@ GRANT ALL ON FUNCTION public.gravar_retrato_inscricoes(p_execucao text, p_edital
 
 REVOKE ALL ON FUNCTION public.gravar_sugestoes_da_ficha(p_execucao text, p_edital uuid, p_vaga text, p_sugestoes jsonb) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.gravar_sugestoes_da_ficha(p_execucao text, p_edital uuid, p_vaga text, p_sugestoes jsonb) TO service_role;
+
+--
+-- Name: FUNCTION gravar_vinculo_do_quadro(p_edital uuid, p_vaga text, p_acao text, p_quadro uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.gravar_vinculo_do_quadro(p_edital uuid, p_vaga text, p_acao text, p_quadro uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.gravar_vinculo_do_quadro(p_edital uuid, p_vaga text, p_acao text, p_quadro uuid) TO authenticated;
+GRANT ALL ON FUNCTION public.gravar_vinculo_do_quadro(p_edital uuid, p_vaga text, p_acao text, p_quadro uuid) TO service_role;
 
 --
 -- Name: FUNCTION ignorar_aviso_conferencia(p_id uuid, p_motivo text); Type: ACL; Schema: public; Owner: -
@@ -77663,6 +78621,12 @@ GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TA_UNIDADE_AREA" TO 
 GRANT SELECT ON TABLE public."TA_UNIDADE_AREA" TO authenticated;
 
 --
+-- Name: TABLE "TA_VAGA_QUADRO_EDITAL"; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON TABLE public."TA_VAGA_QUADRO_EDITAL" TO service_role;
+
+--
 -- Name: TABLE "TB_ABA"; Type: ACL; Schema: public; Owner: -
 --
 
@@ -78363,6 +79327,12 @@ GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TH_RESPOSTA_RECURSO"
 GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TH_SITUACAO_MODULO" TO service_role;
 
 --
+-- Name: TABLE "TH_VAGA_QUADRO_EDITAL"; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT ALL ON TABLE public."TH_VAGA_QUADRO_EDITAL" TO service_role;
+
+--
 -- Name: TABLE "TL_ACESSO_FICHA_ANALISE"; Type: ACL; Schema: public; Owner: -
 --
 
@@ -78607,3 +79577,4 @@ ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT REFERENCES,TRI
 -- agsus_robo_conferir_disparos | */15 * * * * | ativa | select private."FC_CONFERIR_DISPAROS_ROBO"();
 -- agsus_robo_sincronizar_entrevistas | 5 0-10,15,21-23 * * * | parada | select private."FC_DISPARAR_ROBO"('sincronizar-entrevistas.yml', '{"modo": "normal"}', p_origem => 'AGENDA');
 -- agsus_robo_sincronizar_selecao | 10 11,16,21 * * * | ativa | select private."FC_DISPARAR_ROBO"('sincronizar-selecao.yml', '{"modo": "normal"}', p_origem => 'AGENDA');
+-- agsus_vinculos_do_quadro | 30 8 * * * | ativa | select private."FC_PREENCHER_TODOS_VINCULOS_QUADRO"() where pg_try_advisory_xact_lock(hashtext('agsus_vinculos_do_quadro'));
