@@ -76,9 +76,9 @@ Lógica pura em `src/lib/`:
 
 ## Testes
 
-`tests/fogos*.test.js`, `tests/motor-de-efeitos.test.js`, `tests/marcos-e-comemoracoes.test.js`,
-`tests/marcos-nos-paineis.test.js`, `tests/catalogo-de-comemoracoes.test.js`,
-`tests/comemoracoes-configuradas.test.js` e `tests/exemplos-das-comemoracoes.test.ts`.
+`tests/fogos*.test.js`, `tests/aya-e-comemoracao.test.js` (bloco `motor-de-efeitos`), `tests/avaliacao-e-recursos-na-tela.test.js` (bloco `marcos-e-comemoracoes`),
+`tests/avaliacao-e-recursos-na-tela.test.js` (bloco `marcos-nos-paineis`), `tests/aya-e-comemoracao.test.js` (bloco `catalogo-de-comemoracoes`),
+`tests/aya-e-comemoracao-na-tela.test.js` (bloco `comemoracoes-configuradas`) e `tests/demais-regras.test.ts` (bloco `exemplos-das-comemoracoes`).
 
 ## Relacionadas
 

@@ -102,13 +102,13 @@ RPCs no contrato (`src/lib/rpc-contrato.ts`): `ler_relatorio_do_painel`,
 
 ## Testes
 
-`tests/modulos/paineis-de-dados.test.ts` (tela, permissão, rota, paginação no banco, cache,
-Sincronizar, downloads, gaveta de fontes, largura das colunas, ⓘ e Montar relatório), `tests/relatorios-dos-paineis.test.ts`
-(colunas, página lida, arquivos, largura, origem), `tests/fontes-dos-paineis.test.ts` (leitura das
-fontes, permissão, aba Fontes), `tests/fontes-dos-paineis-no-banco.test.ts` (o núcleo das fontes em
-PGlite), `tests/relatorios-prontos-dos-paineis-no-banco.test.ts` (resultado pronto em PGlite: página,
+`tests/editais-cargas-e-paineis-na-tela.test.ts` (bloco `modulos/paineis-de-dados`) (tela, permissão, rota, paginação no banco, cache,
+Sincronizar, downloads, gaveta de fontes, largura das colunas, ⓘ e Montar relatório), `tests/editais-cargas-e-paineis.test.ts` (bloco `relatorios-dos-paineis`)
+(colunas, página lida, arquivos, largura, origem), `tests/editais-cargas-e-paineis.test.ts` (bloco `fontes-dos-paineis`) (leitura das
+fontes, permissão, aba Fontes), `tests/editais-cargas-e-paineis.test.ts` (bloco `fontes-dos-paineis-no-banco`) (o núcleo das fontes em
+PGlite), `tests/editais-cargas-e-paineis.test.ts` (bloco `relatorios-prontos-dos-paineis-no-banco`) (resultado pronto em PGlite: página,
 recorte da coordenação, Sincronizar 1/min, troca de fonte que falha, cálculo de todos) e
-`tests/vagas-imediatas-dos-paineis-no-banco.test.ts` (a ordem das fontes das vagas imediatas, de
+`tests/editais-cargas-e-paineis.test.ts` (bloco `vagas-imediatas-dos-paineis-no-banco`) (a ordem das fontes das vagas imediatas, de
 `20261116180000`). As migrations aplicadas que montam esses bancos ficam em
 `tests/fixtures/sql-do-banco/`.
 

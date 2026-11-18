@@ -86,10 +86,10 @@ ações. Regras puras em `src/lib/navegacao/modulos-e-abas.ts`; leitura da respo
 
 ## Testes
 
-Módulos e abas: `tests/modulos-e-abas.test.js`, `tests/modulos/modulos.test.js` e
-`tests/arvore-dos-modulos.test.js` (RPCs simuladas, rede bloqueada); `tests/tipos/modulos.tsx`
+Módulos e abas: `tests/casca-sessao-e-interface.test.js` (bloco `modulos-e-abas`), `tests/casca-sessao-e-interface-na-tela.test.js` (bloco `modulos/modulos`) e
+`tests/casca-sessao-e-interface-na-tela.test.js` (bloco `arvore-dos-modulos`) (RPCs simuladas, rede bloqueada); `tests/tipos/modulos.tsx`
 confere contratos e rejeições no compilador estrito. Painéis e Operação:
-`tests/modulos/configuracoes-paineis-e-operacao.test.js`. Comemorações: os testes listados em
+`tests/casca-sessao-e-interface-na-tela.test.js` (bloco `modulos/configuracoes-paineis-e-operacao`). Comemorações: os testes listados em
 [[modulo-comemoracao]].
 
 ## Relacionadas

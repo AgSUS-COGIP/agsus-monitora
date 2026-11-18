@@ -73,7 +73,7 @@ arquivo solto na raiz de `src/lib/` (só `CLAUDE.md` e `rpc-contrato.ts` ficam a
 mais de 30 arquivos diretos. Roda no `check:architecture` e, no CI, pelo teste que aplica a mesma
 regra aos arquivos do repositório (o `check:architecture` não roda no CI). As pastas que já passavam disso quando a organização
 foi feita estão em `ACIMA_DO_LIMITE`, com o tamanho daquele dia como teto: só encolhem (hoje,
-`avaliacao-documental/` com 55). Teste: `tests/scripts/check-lib-sem-arquivo-solto.test.ts`.
+`avaliacao-documental/` com 55). Teste: `tests/repositorio-e-banco.test.ts` (bloco `scripts/check-lib-sem-arquivo-solto`).
 
 ### `check-acabamento-so-encolhe.mjs`
 
@@ -82,7 +82,7 @@ que uma máquina enxerga (cor fixa, `!important`, z-index numérico, raio, sombr
 de layout, blur fora de camada fixa) e compara com `scripts/acabamento-linha-de-base.json`: o
 número de cada tipo só pode cair; arquivo novo entra com limite zero. Corrigiu um lote:
 `node scripts/check-acabamento-so-encolhe.mjs --atualizar` baixa a linha de base (e recusa se algum
-número subir). Teste: `tests/check-acabamento-so-encolhe.test.js`. Regras de contagem e o marcador
+número subir). Teste: `tests/repositorio-e-banco.test.js` (bloco `check-acabamento-so-encolhe`). Regras de contagem e o marcador
 de exceção: [[design-e-tokens]].
 
 ## Scripts (`scripts/`)

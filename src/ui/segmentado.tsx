@@ -1,6 +1,8 @@
 import { useRef } from "react";
 import type { KeyboardEvent } from "react";
 import { classes } from "./classes.ts";
+import { ContagemDaAba } from "./contagem-da-aba.tsx";
+import type { ValorDaContagem } from "./contagem-da-aba.tsx";
 
 /*
   Controle segmentado (`.ui-segmentado`):
@@ -8,7 +10,8 @@ import { classes } from "./classes.ts";
   entra no Tab, e as setas ← → movem a escolha (e o foco), dando a volta.
   Sem escolha válida, a primeira opção recebe o Tab.
 
-  `opcoes`: `[{ valor, rotulo, icone? }]` (`icone` é a classe `fa-*`).
+  `opcoes`: `[{ valor, rotulo, icone?, contagem? }]` (`icone` é a classe
+  `fa-*`; `contagem` é o número ao lado do rótulo, como nas abas: "Fila 12").
   `className` acrescenta a de quem usa. Cada botão leva `data-valor`.
   Usado pelas visões de Entrevistas (no topo da tela), pela escala do roteiro,
   pelo modo de lançamento e pelo comparecimento da ficha.
@@ -17,6 +20,8 @@ export interface OpcaoDoSegmentado<V extends string = string> {
   valor: V;
   rotulo: string;
   icone?: string;
+  contagem?: ValorDaContagem;
+  tomDaContagem?: "neutro" | "alerta";
 }
 
 export interface PropriedadesDoSegmentado<V extends string = string> {
@@ -84,6 +89,7 @@ export function Segmentado<V extends string>({
               <i className={`fa-solid ${opcao.icone}`} aria-hidden="true" />
             ) : null}
             {opcao.rotulo}
+            <ContagemDaAba valor={opcao.contagem} tom={opcao.tomDaContagem} />
           </button>
         );
       })}

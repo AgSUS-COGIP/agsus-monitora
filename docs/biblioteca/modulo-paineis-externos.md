@@ -107,10 +107,10 @@ escondida sob a cobertura.
 
 ## Testes
 
-`tests/endereco-do-painel.test.js`, `tests/painel-externo-shell.test.js`,
-`tests/paineis-externos-das-configuracoes.test.js`, `tests/interface-acesso-e-paineis.test.js`,
-`tests/modulos/carregamento-do-painel.test.js` e
-`tests/modulos/configuracoes-paineis-e-operacao.test.js`.
+`tests/editais-cargas-e-paineis.test.js` (bloco `endereco-do-painel`), `tests/editais-cargas-e-paineis.test.js` (bloco `painel-externo-shell`),
+`tests/casca-sessao-e-interface.test.js` (bloco `paineis-externos-das-configuracoes`), `tests/casca-sessao-e-interface-na-tela.test.js` (bloco `interface-acesso-e-paineis`),
+`tests/editais-cargas-e-paineis-na-tela.test.js` (bloco `modulos/carregamento-do-painel`) e
+`tests/casca-sessao-e-interface-na-tela.test.js` (bloco `modulos/configuracoes-paineis-e-operacao`).
 
 ## Relacionadas
 

@@ -62,8 +62,8 @@ sempre batem).
 
 ## Testes
 
-`tests/analises-curriculares.test.js`, `tests/modulos/analises*.test.js`,
-`tests/ritmo-da-analise.test.js`; os testes simulam consultas e armazenamento com a rede
+`tests/avaliacao-e-recursos.test.js` (bloco `analises-curriculares`), `tests/modulos/analises*.test.js`,
+`tests/avaliacao-e-recursos-na-tela.test.js` (bloco `ritmo-da-analise`); os testes simulam consultas e armazenamento com a rede
 bloqueada; `tests/tipos/analises.tsx` confere usos válidos e rejeições dos contratos. Histórias
 AC-n em [historias-de-usuario/analises-curriculares.md](../historias-de-usuario/analises-curriculares.md).
 Explicações para quem usa: `docs/aya/regras-das-analises.md`.

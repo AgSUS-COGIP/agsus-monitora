@@ -4,7 +4,7 @@
   Uma tabela só decide a forma e a cor de cada marcador e a legenda que os
   descreve (as mesmas de `src/modules/vinculos-territoriais.js` e do
   `detailUnitType` do legado, que saem quando o mapa React for ligado; até lá
-  `tests/mapa-saude-indigena.test.js` confere que não divergem).
+  `tests/mapas-e-visao-geral.test.js` (bloco `mapa-saude-indigena`) confere que não divergem).
 
   Forma além de cor: estrela (sede), círculo (polo base), casa (CASAI), cruz
   (UBSI) e losango (outra unidade) — quem não distingue as cores continua

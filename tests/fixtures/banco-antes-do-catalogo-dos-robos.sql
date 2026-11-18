@@ -3,7 +3,7 @@
 
   As migrations antigas saíram do repositório (continuam aplicadas no banco). Este arquivo guarda,
   copiados delas sem mudança, os trechos de que o banco de teste (tests/apoio/banco-dos-robos.ts) e
-  tests/catalogo-dos-robos-migration.test.ts precisam: a última definição de cada função, o último
+  tests/editais-cargas-e-paineis.test.ts (bloco catalogo-dos-robos-migration) precisam: a última definição de cada função, o último
   comentário de cada objeto e as duas CHECKs com as listas fixas. Não é migration: não aplicar.
   Origem de cada trecho no comentário "-- de" acima dele.
 */

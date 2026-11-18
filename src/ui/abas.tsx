@@ -1,12 +1,16 @@
 import { useRef } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
 import { classes } from "./classes.ts";
+import { ContagemDaAba } from "./contagem-da-aba.tsx";
+import type { ValorDaContagem } from "./contagem-da-aba.tsx";
 
 export interface AbaDaLista {
   id: string;
   rotulo: ReactNode;
   icone?: string;
-  contagem?: number | string;
+  contagem?: ValorDaContagem;
+  /** "alerta" quando a contagem pede ação (ex.: pendências abertas). */
+  tomDaContagem?: "neutro" | "alerta";
   idDaAba?: string;
   idDoPainel?: string;
   dados?: Record<string, string>;
@@ -28,8 +32,8 @@ export interface PropriedadesDasAbas {
   setas ← → movem a escolha (e o foco), dando a volta.
 
   `abas`: `[{ id, rotulo, icone?, contagem?, idDaAba?, idDoPainel?, dados? }]`
-  — `icone` é a classe `fa-*`; `contagem` vira um número ao lado do rótulo
-  (some quando é 0 ou vazio); `idDaAba`/`idDoPainel` ligam a aba ao painel
+  — `icone` é a classe `fa-*`; `contagem` vira o número ao lado do rótulo
+  ("Alertas 18.325", "Cobertura 3%"; some quando é 0 ou vazio; ContagemDaAba); `idDaAba`/`idDoPainel` ligam a aba ao painel
   (`aria-controls`); `dados` são atributos `data-*` extras (contrato de
   teste/DOM). Cada botão leva `data-aba`. `compactas`: dentro de um modal
   (sem recuo lateral). `tour` vira o `data-tour` da lista (passos da Aya).
@@ -99,9 +103,7 @@ export function Abas({
               <i className={`fa-solid ${aba.icone}`} aria-hidden="true" />
             ) : null}
             {aba.rotulo}
-            {aba.contagem ? (
-              <span className="ui-aba-contagem">{aba.contagem}</span>
-            ) : null}
+            <ContagemDaAba valor={aba.contagem} tom={aba.tomDaContagem} />
           </button>
         );
       })}

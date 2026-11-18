@@ -29,7 +29,7 @@
   ser o documento; "respostas" → "Ver respostas na Empregare" e a dica da
   pergunta; sem nada capturado, o candidato (o currículo) ou a vaga / a lista
   de vagas, com a dica de antes.
-  Sem DOM e sem estado. Testes: tests/lib/avaliacao-documental-anexo-na-empregare.test.js.
+  Sem DOM e sem estado. Testes: tests/avaliacao-e-recursos.test.js (bloco lib/avaliacao-documental-anexo-na-empregare).
 */
 
 /** Um anexo capturado (obter_ficha_analise → empregare.anexos). */

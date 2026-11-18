@@ -17,7 +17,7 @@ nomenclatura: [[banco-e-migrations]].
 - `rollback/` e `ensaios/` — desfazer e ensaiar (`begin; … rollback;`) cada migration, mesmo nome.
 - `tests/` — testes SQL de RPCs (não gravam). `.temp/` — estado local da CLI; ignore.
 - Não recriar `migrations-historicas/`, `descartadas/` nem `correcoes/`
-  (`tests/migrations-pasta-limpa.test.js`). Nunca aplicar o acesso automático @agenciasus nem o
+  (`tests/repositorio-e-banco.test.js` (bloco `migrations-pasta-limpa`)). Nunca aplicar o acesso automático @agenciasus nem o
   bridge da IA local da Aya.
 
 Regras:
