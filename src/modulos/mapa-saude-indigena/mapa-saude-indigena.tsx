@@ -151,7 +151,7 @@ export function MapaSaudeIndigena({
             <div>
               <h2>Consulta territorial</h2>
               <p>
-                Selecione um distrito ou explore as unidades diretamente no mapa.
+                Selecione um DSEI para ver suas unidades.
               </p>
             </div>
             <label className="mapa-si-resumo__seletor">
@@ -200,7 +200,7 @@ export function MapaSaudeIndigena({
             </div>
           </div>
           <p className="mapa-si-resumo__fonte">
-            Unidades: localizações do SIGEPSI. Editais e vagas: monitoramento do Monitora.
+            Unidades: SIGEPSI. Editais e vagas: Monitora.
           </p>
         </section>
       ) : null}
