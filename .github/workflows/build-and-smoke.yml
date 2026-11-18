@@ -71,8 +71,12 @@ jobs:
       - name: Verificar formatação alterada
         run: npm run format:check
 
+      # Teto de memória por processo do Node: um arquivo de teste que dispare a memória falha com
+      # "heap out of memory" e o nome dele, em vez de derrubar a máquina sem log (desde o #887).
       - name: Testes e cobertura
-        run: npm run test:coverage
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+        run: npm run test:coverage -- --reporter=verbose
 
       # O Supabase deste build é fictício: os testes de navegador respondem a ele
       # por page.route (tests/sessao-simulada.spec.js). Não é segredo nem banco real.
