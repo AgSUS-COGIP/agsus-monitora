@@ -97,7 +97,10 @@ export function MapaSaudeIndigena({
     }
     return {
       distritos: dseis.length,
-      unidades: dseis.reduce((total, item) => total + (item.polos?.length ?? 0), 0),
+      unidades: dseis.reduce(
+        (total, item) => total + (item.polos?.length ?? 0),
+        0,
+      ),
       editais,
       vagas,
     };
