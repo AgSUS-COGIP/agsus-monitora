@@ -207,9 +207,14 @@ export function ModalDeStatus({
         setObservacaoCarregada(true);
       })
       .catch(() => {
-        if (ativo) setErroObservacao("Não foi possível consultar a observação. Feche e abra novamente.");
+        if (ativo)
+          setErroObservacao(
+            "Não foi possível consultar a observação. Feche e abra novamente.",
+          );
       });
-    return () => { ativo = false; };
+    return () => {
+      ativo = false;
+    };
   }, [estado, candidato.candidato_id]);
   const [data, setData] = useState(dataConvocacao || hoje);
   const [anexos, setAnexos] = useState<File[]>([]);
@@ -354,7 +359,9 @@ export function ModalDeStatus({
               onChange={(evento) => setObservacao(evento.target.value)}
             />
             {erroObservacao ? (
-              <small role="alert" className="approved-field-erro">{erroObservacao}</small>
+              <small role="alert" className="approved-field-erro">
+                {erroObservacao}
+              </small>
             ) : (
               <small className="approved-field-hint">
                 {observacao.length} de 2000 caracteres
