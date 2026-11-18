@@ -532,6 +532,71 @@
 .ui-grafico[data-altura="alto"] {
   height: 380px;
 }
+/* O título e o botão "Tabela" (gráfico ↔ tabela dos valores). */
+.ui-card-de-grafico-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.ui-grafico-alternar {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-1-5);
+  min-height: 32px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+}
+.ui-grafico-alternar:hover {
+  color: var(--text-primary);
+}
+.ui-grafico-alternar[aria-pressed="true"] {
+  border-color: var(--state-info);
+  background: var(--state-info-soft);
+  color: var(--state-info);
+}
+.ui-grafico-alternar:focus-visible,
+.ui-grafico canvas:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+/* A tabela no lugar do gráfico: rola dentro da mesma altura. */
+.ui-grafico.is-em-tabela {
+  height: auto;
+  max-height: 380px;
+  overflow: auto;
+}
+.ui-grafico-tabela table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-body-sm);
+  font-variant-numeric: tabular-nums;
+}
+.ui-grafico-tabela :is(th, td) {
+  padding: var(--space-1-5) var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  text-align: right;
+  text-transform: none;
+}
+.ui-grafico-tabela :is(thead th, tbody th) {
+  font-weight: var(--font-weight-medium);
+}
+.ui-grafico-tabela thead th {
+  color: var(--text-secondary);
+}
+.ui-grafico-tabela tbody th {
+  text-align: left;
+}
 .ui-grafico.is-carregando::after {
   position: absolute;
   inset: 0;

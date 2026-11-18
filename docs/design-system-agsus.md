@@ -1451,7 +1451,8 @@ A ordem das cores categóricas alterna luminosidade para que séries vizinhas se
 ### 13.5 Acessibilidade de gráficos
 
 - **Resumo textual:** todo gráfico tem um resumo em texto (`aria-label` ou texto visível) com a conclusão principal.
-- **Dados em tabela:** oferecer a opção "Ver dados em tabela" em gráficos com dados relevantes para decisão.
+- **Dados em tabela:** oferecer a opção "Ver dados em tabela" em gráficos com dados relevantes para decisão. No Yeendé, todo `Grafico` dentro de `CardDeGrafico` já leva a tabela dos valores: escondida da vista para o leitor de tela e, pelo botão "Tabela" do título (`aria-pressed`), no lugar do gráfico.
+- **Teclado:** o gráfico entra no Tab; as setas (e Home, End) percorrem os itens, com o item em destaque, a dica do gráfico e o valor anunciado; Esc limpa.
 - **Além da cor:** usar rótulos diretos, marcadores ou padrões de linha (contínua ou tracejada) para diferenciar séries.
 
 ### 13.6 Bibliotecas
