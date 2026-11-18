@@ -13,6 +13,8 @@ export type { AbaDaLista, PropriedadesDasAbas } from "./abas.tsx";
 export { Aviso } from "./aviso.tsx";
 export type { PropriedadesDoAviso } from "./aviso.tsx";
 export { BarraDaLista } from "./barra-de-filtros.tsx";
+export { BarraDeSelecao } from "./barra-de-selecao.tsx";
+export type { PropriedadesDaBarraDeSelecao } from "./barra-de-selecao.tsx";
 export type {
   BuscaDaBarra,
   PropriedadesDaBarraDaLista,

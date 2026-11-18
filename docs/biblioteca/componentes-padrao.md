@@ -36,6 +36,7 @@ API completa (uma linha por componente) está em [docs/arquitetura-react.md](../
 | Formulário       | `Campo` (liga o rótulo ao controle), `Segmentado` (radiogroup), `Abas` (tablist), `ContagemDaAba` (o número no rótulo)                             |
 | Estados          | `EstadoVazio`, `Carregando`, `CarregandoConteudo`, `ErroAoCarregar`, `LinhasEsqueleto`, `BlocosEsqueleto`, `Aviso`, `Selo`                         |
 | Ações            | `BotaoDeAcao` (ação que escreve no banco), `AcoesDaLinha`                                                                                          |
+| Seleção em lote  | `BarraDeSelecao` ("Selecionar esta página (N)" ≠ "Selecionar todos os N resultados"; a página vem de `aoMostrar` da tabela; textos em `lib/base/alcance-da-selecao.ts`, a confirmação diz quantos serão afetados) |
 | Telas da seleção | `CabecalhoDaTela`, `BarraDaLista`, `FaixaDeSituacao`, `CardDaLista`                                                                                |
 | Utilitários      | `usarEstadoDaSessao` (filtros voltam no F5), `classes(...)`                                                                                        |
 

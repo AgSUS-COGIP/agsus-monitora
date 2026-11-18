@@ -23,8 +23,12 @@ import { SeloDeStatus } from "./partes.tsx";
   status com a data da convocação e o histórico das cartas de convocação
   emitidas para ele — também nas listas anteriores do edital
   (listar_cartas_do_candidato). Quem edita altera o status e emite a carta
-  daqui.
+  daqui. "Origem" (revisão de 17/11/2026): o edital com a unidade, a lista
+  de onde a linha veio (arquivo e data da importação) e "Ver na
+  Classificação", onde estão a nota e a classificação do edital.
 */
+
+const texto = (valor: unknown) => String(valor ?? "").trim();
 
 const SAIDAS: Readonly<Record<string, string>> = {
   SEI: "Copiada para o SEI",
@@ -148,6 +152,37 @@ export function GavetaDoCandidato({
             <Kv rotulo="Processo SEI">{candidato.processo_sei}</Kv>
             <Kv rotulo="Matrícula">{candidato.matricula}</Kv>
           </GradeDeKv>
+        </Secao>
+
+        <Secao icone="fa-file-import" titulo="Origem" secao="origem">
+          <GradeDeKv rotulo="De onde vem a linha">
+            <Kv rotulo="Edital">
+              {[candidato.edital, candidato.unidade]
+                .filter(Boolean)
+                .join(" · ")}
+            </Kv>
+            <Kv rotulo="Lista">{texto(candidato.arquivo_nome)}</Kv>
+            <Kv rotulo="Importada em">
+              {candidato.importado_em
+                ? formatarDataHora(texto(candidato.importado_em))
+                : ""}
+            </Kv>
+          </GradeDeKv>
+          {candidato.edital_id ? (
+            <button
+              type="button"
+              className="btn secondary small"
+              data-gaveta-action="classificacao"
+              onClick={() =>
+                estado.irParaClassificacao(
+                  String(candidato.edital_id),
+                  texto(candidato.edital),
+                )
+              }
+            >
+              Ver nota e classificação na Classificação
+            </button>
+          ) : null}
         </Secao>
 
         <Secao

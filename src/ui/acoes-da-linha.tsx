@@ -27,6 +27,8 @@ export interface AcaoPrincipalDaLinha {
   titulo?: string;
   /** A ação que há a fazer na linha (Analisar, Incluir no lote): botão azul. */
   destaque?: boolean;
+  /** Atributos data-* a mais no botão (contrato de teste e de tour). */
+  dados?: Record<string, string>;
 }
 
 export interface PropriedadesDasAcoesDaLinha {
@@ -46,6 +48,7 @@ export function AcoesDaLinha({
       {principal ? (
         <button
           type="button"
+          {...principal.dados}
           className={principal.destaque ? "btn small" : "btn contorno small"}
           data-acao={principal.acao}
           title={principal.titulo}

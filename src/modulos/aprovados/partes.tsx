@@ -40,6 +40,12 @@ export { classes };
 export const plural = (total: number, singular: string, varios: string) =>
   `${formatNumberBR(total)} ${total === 1 ? singular : varios}`;
 
+/** O nome dos itens da seleção em lote (lib/base/alcance-da-selecao.ts). */
+export const NOME_DOS_CANDIDATOS = Object.freeze({
+  singular: "candidato",
+  plural: "candidatos",
+});
+
 /*
   O selo do status; com a data da convocação (`dataConvocacao`, "AAAA-MM-DD"),
   Convocado mostra o dia em que foi chamado.
@@ -262,42 +268,6 @@ export function AcaoDeCarta({
 export const IconeDePdf = ({ tamanho = 22 }: { tamanho?: number }) => (
   <Icone nome="file-type-pdf" tamanho={tamanho} />
 );
-
-/*
-  Os anexos do candidato: o ícone de PDF, cinza sem arquivo e vermelho com
-  arquivo. Sem anexo, fica desativado (e não some), para que o lápis de status
-  continue no mesmo lugar em todas as linhas.
-*/
-export function AcaoDeAnexos({
-  candidato,
-  anexos = [],
-  aoAbrir,
-}: {
-  candidato: Pick<CandidatoDaTabelaDeAprovados, "nome" | "candidato_id">;
-  anexos?: readonly unknown[];
-  aoAbrir: (id: string) => void;
-}) {
-  const total = anexos.length;
-  return (
-    <button
-      className="approved-icone-acao approved-anexos-botao"
-      type="button"
-      data-tem-anexo={total ? "" : undefined}
-      disabled={!total}
-      title={total ? `Ver anexos (${total})` : "Sem anexos"}
-      aria-label={
-        total
-          ? `Ver ${total} anexo(s) de ${candidato.nome}`
-          : `${candidato.nome} não tem anexos`
-      }
-      data-approved-action="anexos"
-      data-candidate-id={candidato.candidato_id}
-      onClick={() => aoAbrir(candidato.candidato_id)}
-    >
-      <IconeDePdf />
-    </button>
-  );
-}
 
 /*
   Barra de paginação das duas abas. Some quando tudo cabe numa página: com 30
