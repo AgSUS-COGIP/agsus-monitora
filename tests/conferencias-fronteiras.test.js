@@ -70,6 +70,7 @@ describe("fronteiras das conferências", () => {
       classificacao: 0,
       aprovados: 0,
       cargas: 0,
+      editais: 0,
     });
   });
 

@@ -39,6 +39,7 @@ import {
 import { formatNumberBR } from "../../lib/base/formatters";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { Selo, TabelaInfinita, TopoDoPainel } from "../../ui/index.ts";
+import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
 import { avisoDaListaDoEdital } from "../../lib/editais/aprovados-por-edital.ts";
 import {
   ORDEM_PADRAO_DOS_EDITAIS,
@@ -517,6 +518,7 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
         idDaAtualizacao="nucleoOperationalRefresh"
         atualizarDesativado={nucleo.atualizandoResumo}
       >
+        <SeloDeAvisos modulo="editais" />
         {podeEditar ? (
           <button
             id="newEditalBtn"

@@ -180,6 +180,7 @@ describe("normalizarAvisos", () => {
       classificacao: 1,
       aprovados: 0,
       cargas: 0,
+      editais: 0,
     });
     expect(tomDoSelo(lista.abertos)).toBe("perigo");
     expect(tomDoSelo([])).toBeNull();

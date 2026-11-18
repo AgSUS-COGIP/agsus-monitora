@@ -54,9 +54,11 @@ CATALOGO = {
     "APROVADOS_PENDENCIA_DA_PUBLICACAO": ("aprovados", ATENCAO, "Pendência da publicação sem revisão"),
     # Cargas
     "CARGA_VARIACAO_BRUSCA": ("cargas", ATENCAO, "Variação brusca de candidatos na Empregare"),
+    # Editais (20261118150000)
+    "EDITAL_CRONOGRAMA_ENCERRADO": ("editais", ATENCAO, "Cronograma encerrado, status ainda em andamento"),
 }
 
-MODULOS = ("analises", "entrevistas", "classificacao", "aprovados", "cargas")
+MODULOS = ("analises", "entrevistas", "classificacao", "aprovados", "cargas", "editais")
 
 
 def do_modulo(modulo):

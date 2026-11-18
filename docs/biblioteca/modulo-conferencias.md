@@ -34,6 +34,9 @@ ver [[python-e-jobs]] e [[robos-e-agenda]]). As histórias de usuário (CF-1 a C
 - Na tela, os abertos ficam agrupados por edital; dispensados e resolvidos dos últimos 30 dias,
   recolhidos. Dispensar e atribuir: o gestor do módulo ou o administrador global; tratar e juntar
   evidência: também o responsável. Prazo vencido só destaca.
+- Módulo `editais` (migration `20261118150000`, recurso `nucleo`): o aviso "Cronograma
+  encerrado, status ainda em andamento", um caso por edital (pelo número), com o selo no topo da
+  tela de Editais. O status não muda sozinho; a equipe marca "Concluído" ou dispensa.
 - O snapshot é lido por `useSyncExternalStore`; respostas antigas não substituem a leitura de
   outra área ou módulo.
 - O CSV lê páginas de 1000 casos, encerra quando não há casos novos e protege as células contra

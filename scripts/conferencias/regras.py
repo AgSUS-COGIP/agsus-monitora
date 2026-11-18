@@ -322,6 +322,14 @@ def resumir(aviso, numero_do_edital):
         )
     if c == "APROVADOS_PENDENCIA_DA_PUBLICACAO":
         return f"{plural(n, 'pessoa', 'pessoas')} da lista anterior ainda para revisão depois da publicação {onde}."
+    if c == "EDITAL_CRONOGRAMA_ENCERRADO":
+        fim = extra.get("fim")
+        quando = f" em {fim.strftime('%d/%m/%Y')}" if isinstance(fim, date) else ""
+        status = extra.get("status") or "sem status"
+        return (
+            f"O cronograma do edital {numero_do_edital} terminou{quando}, mas o status ainda é "
+            f'"{status[:40]}": confira e marque "Concluído" no edital.'
+        )
     if c == "CARGA_VARIACAO_BRUSCA":
         return (
             f"Vaga {extra.get('vaga')}: candidatos foram de {extra.get('antes')} para {extra.get('depois')} "
@@ -907,6 +915,50 @@ def conferir_aprovados(dados, contexto, acumulador, dias_convocado=15):
         )
         for ident in ids[1:]:
             Acumulador.acrescentar(aviso, ident, {"referencia": ident, "tipo": "candidato_aprovado"})
+
+
+# ── Editais ─────────────────────────────────────────────────────────────────
+
+
+def leitura_dos_editais_disponivel(contexto):
+    """O contexto traz o cronograma de cada edital (20261118150000)? Sem ele, o banco ainda não aceita o
+    módulo editais: a conferência dele não roda (nem conta como falha)."""
+    editais = contexto.get("editais") or []
+    return bool(editais) and all(isinstance(e, dict) and "cronograma" in e for e in editais)
+
+
+def _sem_acento(texto):
+    return unicodedata.normalize("NFKD", str(texto or "")).encode("ascii", "ignore").decode().strip().lower()
+
+
+def conferir_editais(contexto, acumulador):
+    """
+    Cronograma encerrado e status ainda em andamento: o estado pelas datas (FC_ESTADO_DO_CRONOGRAMA, no
+    contexto) é "Concluído", o edital tem cronograma, e o status gravado é outro (fora de concluído,
+    cancelado e encerrado), sem status manual (status_override). Edital ativo e fora do treinamento. Um
+    caso por edital, pelo número. O status NÃO é mudado aqui: a Avaliação documental e a Classificação
+    leem o gravado (decisão do usuário, 18/11/2026); a equipe marca "Concluído" no edital ou dispensa.
+    """
+    for edital in contexto.get("editais") or []:
+        cronograma = edital.get("cronograma") if isinstance(edital.get("cronograma"), dict) else {}
+        if not edital.get("ativo") or edital.get("treinamento") or edital.get("status_manual"):
+            continue
+        if cronograma.get("tem") is not True or _sem_acento(cronograma.get("status")) != "concluido":
+            continue
+        if _sem_acento(edital.get("status")) in SITUACOES_FORA_DA_CONFERENCIA:
+            continue
+        numero_do_edital = edital.get("numero")
+        acumulador.anotar(
+            "EDITAL_CRONOGRAMA_ENCERRADO",
+            edital=edital.get("id"),
+            area=edital.get("area"),
+            exemplo=numero_do_edital,
+            extra={"fim": dia(cronograma.get("data_fim")), "status": str(edital.get("status") or "").strip()},
+            caso={
+                "referencia": numero_do_edital,
+                "detalhe": {"fim": dia(cronograma.get("data_fim")), "status": codigo_do_status(edital.get("status"))},
+            },
+        )
 
 
 # ── Cargas ──────────────────────────────────────────────────────────────────

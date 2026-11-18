@@ -105,6 +105,11 @@
       "modulo": "cargas",
       "gravidade": "ATENCAO",
       "titulo": "Variação brusca de candidatos na Empregare"
+    },
+    "EDITAL_CRONOGRAMA_ENCERRADO": {
+      "modulo": "editais",
+      "gravidade": "ATENCAO",
+      "titulo": "Cronograma encerrado, status ainda em andamento"
     }
   }
 }

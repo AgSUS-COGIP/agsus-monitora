@@ -3,6 +3,7 @@ import {
   casoAbreAnalise,
   casosRestantes,
   csvDosCasos,
+  destinoDoCaso,
   diaDoCaso,
   filtroDoCaso,
   juntarPaginasDeCasos,
@@ -82,6 +83,28 @@ describe("formato do caso", () => {
       }),
     ).toBe("Experiência 45 · teto 30");
     expect(motivoDoCaso("CARGA_VARIACAO_BRUSCA", {})).toBe("");
+  });
+
+  it("cronograma encerrado: o caso é o edital, pelo número", () => {
+    expect(
+      motivoDoCaso("EDITAL_CRONOGRAMA_ENCERRADO", {
+        fim: "2026-10-31",
+        status: "em_andamento",
+      }),
+    ).toBe("Cronograma terminou em 31/10/2026 · status Em andamento");
+    expect(motivoDoCaso("EDITAL_CRONOGRAMA_ENCERRADO", {})).toBe(
+      "Cronograma terminou",
+    );
+    const caso = normalizarCaso({
+      aviso_id: "av1",
+      ordem: 1,
+      conferencia: "EDITAL_CRONOGRAMA_ENCERRADO",
+      referencia: "93/2026",
+      detalhe: { fim: "2026-10-31", status: "sem_status" },
+    });
+    expect(quemDoCaso(caso)).toBe("Edital 93/2026");
+    expect(caso.motivo).toBe("Cronograma terminou em 31/10/2026 · sem status");
+    expect(destinoDoCaso(caso)).toBeNull();
   });
 
   it("admitido no RH com status desatualizado e convocação com regra anterior", () => {

@@ -735,6 +735,76 @@ class Cargas(unittest.TestCase):
         )
 
 
+class Editais(unittest.TestCase):
+    """Cronograma encerrado, status ainda em andamento (20261118150000)."""
+
+    @staticmethod
+    def _contexto(*editais):
+        return {"hoje": "2026-11-18", "editais": list(editais)}
+
+    @staticmethod
+    def _edital(ident, numero, status="Em andamento", **extra):
+        base = {
+            "id": ident,
+            "numero": numero,
+            "area": "saude-indigena",
+            "ativo": True,
+            "status": status,
+            "status_manual": False,
+            "treinamento": False,
+            "cronograma": {"status": "Concluído", "tem": True, "data_fim": "2026-10-31"},
+        }
+        base.update(extra)
+        return base
+
+    def test_um_caso_por_edital_com_o_cronograma_concluido_e_o_status_em_outra_situacao(self):
+        e = lambda i: f"00000000-0000-4000-a000-00000000e0{i:02d}"  # noqa: E731
+        contexto = self._contexto(
+            self._edital(e(1), "93/2026"),
+            self._edital(e(2), "94/2026", status="Concluído"),
+            self._edital(e(3), "95/2026", status="cancelado"),
+            self._edital(e(4), "96/2026", status_manual=True),
+            self._edital(e(5), "97/2026", treinamento=True),
+            self._edital(e(6), "98/2026", ativo=False),
+            self._edital(e(7), "99/2026", cronograma={"status": "Em andamento", "tem": True, "data_fim": "2026-12-31"}),
+            # Sem cronograma automático, o estado é o status gravado: não há o que comparar.
+            self._edital(e(8), "100/2026", cronograma={"status": "Concluído", "tem": False}),
+            self._edital(e(9), "101/2026", status="Suspenso"),
+        )
+        self.assertTrue(regras.leitura_dos_editais_disponivel(contexto))
+        ac = regras.Acumulador({x["id"]: x for x in contexto["editais"]})
+        regras.conferir_editais(contexto, ac)
+        avisos = _avisos(ac)
+        self.assertEqual(
+            sorted(k for k in avisos),
+            [("EDITAL_CRONOGRAMA_ENCERRADO", f"edital:{e(1)}"), ("EDITAL_CRONOGRAMA_ENCERRADO", f"edital:{e(9)}")],
+        )
+        aviso = avisos[("EDITAL_CRONOGRAMA_ENCERRADO", f"edital:{e(1)}")]
+        self.assertEqual((aviso["modulo"], aviso["gravidade"], aviso["quantidade"]), ("editais", "ATENCAO", 1))
+        self.assertEqual(
+            aviso["casos"], [{"referencia": "93/2026", "detalhe": {"fim": "2026-10-31", "status": "em_andamento"}}]
+        )
+        self.assertIn("93/2026 terminou em 31/10/2026", aviso["resumo"])
+        self.assertIn('"Em andamento"', aviso["resumo"])
+
+    def test_sem_o_cronograma_no_contexto_o_modulo_nao_roda(self):
+        self.assertFalse(regras.leitura_dos_editais_disponivel(CONTEXTO))
+        self.assertFalse(regras.leitura_dos_editais_disponivel({"editais": []}))
+
+    def test_com_a_leitura_o_modulo_roda_e_grava(self):
+        contexto = self._contexto(self._edital(E1, "101/2026"))
+
+        def chamar(funcao, corpo, **_):
+            return contexto if funcao == "conferencia_ler_contexto" else {}
+
+        avisos, rodadas, falhas, _pendentes = conferencias.conferir(chamar, 15)
+        self.assertIn("EDITAL_CRONOGRAMA_ENCERRADO", rodadas)
+        self.assertEqual(falhas, [])
+        self.assertEqual(
+            [a["conferencia"] for a in avisos if a["modulo"] == "editais"], ["EDITAL_CRONOGRAMA_ENCERRADO"]
+        )
+
+
 class _BancoFalso:
     def __init__(self, falhar=None):
         self.chamadas = []
@@ -808,7 +878,9 @@ class Fluxo(unittest.TestCase):
             sorted(a["conferencia"] for a in gravados), ["ANALISE_APROVADA_ABAIXO_DO_CORTE", "CARGA_VARIACAO_BRUSCA"]
         )
         fim = banco.chamadas[-1][1]
-        self.assertEqual(sorted(fim["p_conferencias"]), sorted(CATALOGO))
+        # Sem o cronograma no contexto (banco antes de 20261118150000), o módulo editais fica de fora,
+        # sem falha: um aviso dele derrubaria o lote.
+        self.assertEqual(sorted(fim["p_conferencias"]), sorted(c for c in CATALOGO if c not in do_modulo("editais")))
         self.assertEqual(fim["p_falhas"], [])
 
     def test_modulo_que_falha_nao_resolve_os_avisos_dele(self):
