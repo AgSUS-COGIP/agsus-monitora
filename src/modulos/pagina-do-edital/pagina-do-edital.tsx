@@ -6,7 +6,6 @@ import {
   useSyncExternalStore,
 } from "react";
 import type { ReactNode } from "react";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   usarEstadoDaNavegacao,
   usarNavegacao,
@@ -77,7 +76,13 @@ import type { LinhaDaVisaoGeral } from "../visao-geral/tipos.ts";
 import type { CronogramaLido } from "../editais/estado.ts";
 import { abrirPaginaDoEdital } from "./abrir.ts";
 import { criarEstadoDaPaginaDoEdital } from "./estado.ts";
-import type { Carga, EstadoDaPaginaDoEdital } from "./estado.ts";
+import type {
+  Carga,
+  ClienteDaPaginaDoEdital,
+  EstadoDaPaginaDoEdital,
+} from "./estado.ts";
+import type { ClienteDoAcompanhamento } from "../visao-geral/tipos.ts";
+import type { ClienteDosAvisos } from "../conferencias/tipos.ts";
 import "./pagina-do-edital.css";
 
 /*
@@ -216,7 +221,7 @@ function Vagas({ linha }: { linha: LinhaDaVisaoGeral }) {
         />
         <Kpi
           icone="fa-layer-group"
-          rotulo="Contratações do cadastro reserva"
+          rotulo="Contratações além das vagas imediatas"
           valor={fmt(vagas.cadastroReserva)}
         />
       </GradeDeKpis>
@@ -1001,7 +1006,7 @@ function Conteudo({
   const precisaDoQuadro = aba === "vagas" || aba === "fontes";
   useEffect(() => {
     if (precisaDoQuadro) void estado.carregarQuadro(id);
-  }, [precisaDoQuadro, id, estado, snapshot.quadros]);
+  }, [precisaDoQuadro, id, estado, snapshot.quadros, snapshot.abertura]);
   const relerCronograma = () =>
     void estado.carregarCronograma(id, { forcar: true });
 
@@ -1136,10 +1141,18 @@ export function PaginaDoEdital({
       linhas,
       linhas.map((item) => String(item.id ?? "")).filter(Boolean),
     );
-  }, [aberta, carregado, area, linhas, estado, snapshot.acompanhamento]);
+  }, [
+    aberta,
+    carregado,
+    area,
+    linhas,
+    estado,
+    snapshot.acompanhamento,
+    snapshot.abertura,
+  ]);
   useEffect(() => {
     if (aberta && id) void estado.carregarCronograma(id);
-  }, [aberta, id, estado, snapshot.cronogramas]);
+  }, [aberta, id, estado, snapshot.cronogramas, snapshot.abertura]);
 
   let corpo: ReactNode;
   if (!carregado && !erro)
@@ -1190,11 +1203,16 @@ export function PaginaDoEdital({
   return <TelaNaUrl.Provider value="edital">{corpo}</TelaNaUrl.Provider>;
 }
 
+/** O cliente do app no que a página usa (o cronograma, o acompanhamento da Visão geral e os avisos). */
+type ClienteDaPagina = ClienteDaPaginaDoEdital &
+  ClienteDoAcompanhamento &
+  ClienteDosAvisos;
+
 export function criarPaginaDoEdital({
   supabase = getSupabaseClient(),
   agora,
 }: {
-  supabase?: SupabaseClient | null;
+  supabase?: ClienteDaPagina | null;
   agora?: () => Date;
 } = {}) {
   const estado = criarEstadoDaPaginaDoEdital({
