@@ -6,6 +6,7 @@ import {
   type ComponentProps,
   useState,
   type ReactElement,
+  createElement as h,
 } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -79,6 +80,13 @@ import {
 } from "../src/modulos/editais/critico-do-edital.tsx";
 import { fonteDoApp } from "./fonte-do-app.ts";
 import { htmlDaPagina } from "./pagina-montada.ts";
+import {
+  Abas,
+  ContagemDaAba,
+  formatarContagem,
+  Segmentado,
+  SeloDePrazo,
+} from "../src/ui/index.ts";
 
 bloco("componentes/cabecalho-da-ficha", async () => {
   /*
@@ -2611,6 +2619,157 @@ bloco("modules/visao-geral-por-area", () => {
     it("a view separada da SEDE e de Projetos saiu", () => {
       expect(legado).not.toContain("visao-area");
       expect(indexHtml).not.toContain("page-visao-area");
+    });
+  });
+});
+
+bloco("ui/contagem-da-aba", () => {
+  (
+    globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+  ).IS_REACT_ACT_ENVIRONMENT = true;
+
+  let raiz: Root | null = null;
+
+  function montar(elemento: ReactElement) {
+    const caixa = document.createElement("div");
+    document.body.append(caixa);
+    raiz = createRoot(caixa);
+    act(() => raiz!.render(elemento));
+    return caixa;
+  }
+
+  afterEach(() => {
+    act(() => raiz?.unmount());
+    raiz = null;
+    document.body.innerHTML = "";
+  });
+
+  describe("formatarContagem", () => {
+    it("milhar com ponto, texto como veio, nada no zero", () => {
+      expect(formatarContagem(18325)).toBe("18.325");
+      expect(formatarContagem(7)).toBe("7");
+      expect(formatarContagem("3%")).toBe("3%");
+      expect(formatarContagem(" 4/12 ")).toBe("4/12");
+      expect(formatarContagem(0)).toBe("");
+      expect(formatarContagem("0")).toBe("");
+      expect(formatarContagem("")).toBe("");
+      expect(formatarContagem(null)).toBe("");
+      expect(formatarContagem(undefined)).toBe("");
+      expect(formatarContagem(Number.NaN)).toBe("");
+      expect(formatarContagem(0, true)).toBe("0");
+    });
+  });
+
+  describe("ContagemDaAba", () => {
+    it("desenha o número com o tom; some no zero", () => {
+      const caixa = montar(
+        h("div", null, [
+          h(ContagemDaAba, { key: "a", valor: 18325, id: "alertas" }),
+          h(ContagemDaAba, { key: "b", valor: 3, tom: "alerta", id: "pend" }),
+          h(ContagemDaAba, { key: "c", valor: 0, id: "zero" }),
+        ]),
+      );
+      const alertas = caixa.querySelector("#alertas")!;
+      expect(alertas.textContent).toBe("18.325");
+      expect(alertas.className).toBe("ui-aba-contagem");
+      expect(alertas.getAttribute("data-tom")).toBe("neutro");
+      expect(caixa.querySelector("#pend")!.getAttribute("data-tom")).toBe(
+        "alerta",
+      );
+      expect(caixa.querySelector("#zero")).toBeNull();
+    });
+  });
+
+  describe("contagem no rótulo", () => {
+    it("Abas: o número entra no nome da aba", () => {
+      const caixa = montar(
+        h(Abas, {
+          rotulo: "Visões",
+          ativa: "alertas",
+          aoEscolher: vi.fn(),
+          abas: [
+            { id: "alertas", rotulo: "Alertas", contagem: 18325 },
+            { id: "cobertura", rotulo: "Cobertura", contagem: "3%" },
+            { id: "vazia", rotulo: "Vazia", contagem: 0 },
+          ],
+        }),
+      );
+      const textos = [...caixa.querySelectorAll('[role="tab"]')].map(
+        (aba) => aba.textContent,
+      );
+      expect(textos).toEqual(["Alertas18.325", "Cobertura3%", "Vazia"]);
+      expect(caixa.querySelectorAll(".ui-aba-contagem")).toHaveLength(2);
+    });
+
+    it("Segmentado: a opção leva a contagem e o tom", () => {
+      const caixa = montar(
+        h(Segmentado, {
+          rotulo: "Seções",
+          valor: "fila",
+          aoMudar: vi.fn(),
+          opcoes: [
+            { valor: "fila", rotulo: "Fila", contagem: 12 },
+            {
+              valor: "pendencias",
+              rotulo: "Pendências",
+              contagem: 2,
+              tomDaContagem: "alerta",
+            },
+            { valor: "preparar", rotulo: "Preparar" },
+          ],
+        }),
+      );
+      const opcoes = caixa.querySelectorAll('[role="radio"]');
+      expect(opcoes[0]!.textContent).toBe("Fila12");
+      expect(
+        opcoes[1]!.querySelector(".ui-aba-contagem")!.getAttribute("data-tom"),
+      ).toBe("alerta");
+      expect(opcoes[2]!.querySelector(".ui-aba-contagem")).toBeNull();
+    });
+  });
+});
+
+bloco("ui/selo-de-prazo", () => {
+  (
+    globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+  ).IS_REACT_ACT_ENVIRONMENT = true;
+
+  let raiz: Root | null = null;
+  afterEach(() => {
+    act(() => raiz?.unmount());
+    raiz = null;
+    document.body.innerHTML = "";
+  });
+
+  function selo(data: string | null) {
+    const caixa = document.createElement("div");
+    document.body.append(caixa);
+    raiz = createRoot(caixa);
+    act(() =>
+      raiz!.render(
+        h(SeloDePrazo, { data, hoje: "2026-11-18", diaFormatado: "dia" }),
+      ),
+    );
+    return caixa.querySelector(".ui-selo-de-prazo");
+  }
+
+  describe("SeloDePrazo", () => {
+    it.each([
+      ["2026-11-15", "Venceu há 3 dias", "perigo", "vencido"],
+      ["2026-11-18", "Vence hoje", "alerta", "ate-30"],
+      ["2026-12-30", "Vence em 42 dias", "info", "ate-90"],
+      ["2027-03-01", "Vence em 103 dias", "neutro", "ate-180"],
+      ["2028-01-01", "Vence em 409 dias", "neutro", "depois"],
+    ])("%s: %s", (data, texto, tom, faixa) => {
+      const el = selo(data)!;
+      expect(el.textContent).toBe(texto);
+      expect(el.getAttribute("data-tom")).toBe(tom);
+      expect(el.getAttribute("data-faixa")).toBe(faixa);
+      expect(el.getAttribute("title")).toMatch(/dia$/);
+    });
+
+    it("sem data, nada", () => {
+      expect(selo(null)).toBeNull();
     });
   });
 });

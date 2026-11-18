@@ -33,11 +33,14 @@ API completa (uma linha por componente) está em [docs/arquitetura-react.md](../
 | Listas e tabelas | `TabelaInfinita` (50 por vez, avisa `agsus:content-updated`), `CardDaLista` + `TabelaDaLista`, `BarraDaLista`, `usarCargaContinua` + `MaisDaCarga` |
 | Camadas          | `Gaveta`, `TopoDaGaveta`, `Modal` (portal, Esc, foco preso), `Popover`, `MenuDeAcoes`                                                              |
 | Detalhe          | `Secao`, `Kv`, `GradeDeKv`                                                                                                                         |
-| Formulário       | `Campo` (liga o rótulo ao controle), `Segmentado` (radiogroup), `Abas` (tablist)                                                                   |
+| Formulário       | `Campo` (liga o rótulo ao controle), `Segmentado` (radiogroup), `Abas` (tablist), `ContagemDaAba` (o número no rótulo)                             |
 | Estados          | `EstadoVazio`, `Carregando`, `CarregandoConteudo`, `ErroAoCarregar`, `LinhasEsqueleto`, `BlocosEsqueleto`, `Aviso`, `Selo`                         |
 | Ações            | `BotaoDeAcao` (ação que escreve no banco), `AcoesDaLinha`                                                                                          |
 | Telas da seleção | `CabecalhoDaTela`, `BarraDaLista`, `FaixaDeSituacao`, `CardDaLista`                                                                                |
 | Utilitários      | `usarEstadoDaSessao` (filtros voltam no F5), `classes(...)`                                                                                        |
+
+Prazos: `SeloDePrazo` diz quanto falta para uma data ("Vence em 12 dias", "Venceu há 3 dias") com
+o tom da faixa (vencido, menos de 30, 90 ou 180 dias); a lógica é `src/lib/base/prazos.ts`.
 
 Nas telas com `CabecalhoDaTela` (`tituloNaTela` em `src/lib/navegacao/rotas.ts`: Conduzir entrevistas,
 Classificação, Avaliação documental e Triagem), a faixa do topo do app (`header.top`) fica compacta
