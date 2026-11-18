@@ -493,7 +493,11 @@ describe("a tela de Conduzir entrevistas", () => {
       [...secao.querySelectorAll(".entrevistas-visoes [role=radio]")].map((b) =>
         b.textContent.trim(),
       ),
-    ).toEqual(["Fila", "Preparar"]);
+    ).toEqual(["Fila1", "Preparar"]);
+    // A seção Fila leva quantas estão na tela (ContagemDaAba).
+    expect(visao("fila").querySelector(".ui-aba-contagem").textContent).toBe(
+      "1",
+    );
     // Sem agenda salva: a fila abre em Todos, com o convocado.
     expect(cartoes()).toEqual([["e1", "aguardando"]]);
     expect(

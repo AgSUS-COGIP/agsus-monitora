@@ -31,6 +31,11 @@ export type {
 } from "./caixa-de-marcar-todos.tsx";
 export { Campo } from "./campo.tsx";
 export type { PropriedadesDoCampo } from "./campo.tsx";
+export { ContagemDaAba, formatarContagem } from "./contagem-da-aba.tsx";
+export type {
+  PropriedadesDaContagemDaAba,
+  ValorDaContagem,
+} from "./contagem-da-aba.tsx";
 export { CardDeGrafico } from "./card-de-grafico.tsx";
 export type { PropriedadesDoCardDeGrafico } from "./card-de-grafico.tsx";
 export { classes } from "./classes.ts";
