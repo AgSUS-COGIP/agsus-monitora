@@ -314,26 +314,22 @@ export function acompanhamentoDaResposta(
   };
 }
 
-/* As pendências pós-resultado de uma linha (códigos de PENDENCIAS_POS_RESULTADO). */
+/*
+  As pendências pós-resultado de uma linha (códigos de PENDENCIAS_POS_RESULTADO).
+  "Contratação abaixo de 50%" e "Desistências" saíram do Pede ação em 18/11/2026,
+  a pedido do usuário: não pedem ação de quem olha a Visão Geral. A contratação
+  baixa continua como motivo de Processos Críticos (criticos-da-visao-geral.ts).
+*/
 function pendenciasDaLinha(
   linha: LinhaDoMonitoramento,
   lista: ListaDoAcompanhamento | null,
   temListas: boolean,
-  limites: { contratacaoMinima: number },
 ): Pendencia[] {
   if (ehCancelado(linha) || !temResultado(linha)) return [];
   const codigos: Pendencia[] = [];
   if (temListas && !lista) codigos.push("sem_lista");
   if (lista && num(lista.aprovados) > 0 && num(lista.com_status) === 0)
     codigos.push("sem_status");
-  const vagas = num(linha.vagas_total);
-  if (
-    ehConcluido(linha) &&
-    vagas > 0 &&
-    contratadasImediatas(linha) / vagas < limites.contratacaoMinima
-  )
-    codigos.push("contratacao_baixa");
-  if (lista && num(lista.desistentes) > 0) codigos.push("desistencias");
   return codigos;
 }
 
@@ -415,7 +411,7 @@ export function enriquecerLinhas(
       ...linha,
       ciclo: cicloPadronizado(linha?.ciclo),
       atencao: motivosDeAtencao(linha, { hoje, etapas, limites, marcacao }),
-      pos_resultado: pendenciasDaLinha(linha, lista, temListas, limites),
+      pos_resultado: pendenciasDaLinha(linha, lista, temListas),
       desistentes: lista ? num(lista.desistentes) : 0,
       ...resultadoDaLista(lista),
       primeira_admissao: admissoes?.primeira ?? null,
@@ -433,11 +429,6 @@ export const PENDENCIAS_POS_RESULTADO: readonly {
 }[] = Object.freeze([
   Object.freeze({ codigo: "sem_lista", rotulo: "Sem lista de aprovados" }),
   Object.freeze({ codigo: "sem_status", rotulo: "Lista sem status" }),
-  Object.freeze({
-    codigo: "contratacao_baixa",
-    rotulo: `Contratação abaixo de ${Math.round(LIMITES_DO_CRITICO.contratacaoMinima * 100)}%`,
-  }),
-  Object.freeze({ codigo: "desistencias", rotulo: "Desistências" }),
 ] as const);
 
 /** O rótulo do atalho no chip do recorte. */
@@ -724,30 +715,21 @@ export function andamentoPorFase(linhas: readonly LinhaDoMonitoramento[]) {
 }
 
 /**
- * "Pós-resultado": cada pendência com os editais que a têm.
- * `quantos`: editais; em Desistências, `pessoas` é o total de desistentes.
- * Sem o resumo das listas, só "Contratação abaixo de 50%".
+ * "Pós-resultado": cada pendência com quantos editais a têm (`quantos`).
+ * As duas vêm do resumo das listas; sem ele, nenhuma.
  */
 export function posResultado(
   linhas: readonly LinhaDoMonitoramento[],
   { comListas = false } = {},
 ) {
-  return PENDENCIAS_POS_RESULTADO.filter(
-    (p) => comListas || p.codigo === "contratacao_baixa",
-  ).map(({ codigo, rotulo }) => {
-    const editais = (linhas || []).filter((linha) =>
+  if (!comListas) return [];
+  return PENDENCIAS_POS_RESULTADO.map(({ codigo, rotulo }) => ({
+    codigo,
+    rotulo,
+    quantos: (linhas || []).filter((linha) =>
       (linha?.pos_resultado || []).includes(codigo),
-    );
-    return {
-      codigo,
-      rotulo,
-      quantos: editais.length,
-      pessoas:
-        codigo === "desistencias"
-          ? editais.reduce((soma, linha) => soma + num(linha.desistentes), 0)
-          : null,
-    };
-  });
+    ).length,
+  }));
 }
 
 /** Só Projetos tem "Processos por projeto" (lá a unidade é o projeto). */
@@ -925,6 +907,9 @@ export function diasAte(
   "Edital encerra em N dias" até 7 (perigo) e até 30 (alerta); mais longe,
   nada. Prazo vencido sem concluir não repete aqui: o selo do cronograma diz
   "Etapa atrasada". `{ tom, rotulo, icone }` ou `null`.
+  "Concluído" é o status calculado pelas datas: diz que o cronograma terminou,
+  não que o resultado saiu nem que o processo foi homologado (conferência de
+  17/11/2026). Por isso o rótulo é "Cronograma encerrado".
 */
 export function prazoDoEdital(
   linha: LinhaDoMonitoramento,
@@ -934,7 +919,7 @@ export function prazoDoEdital(
   if (["cancelado", "cancelada"].includes(status))
     return { tom: "neutro", rotulo: "Processo cancelado", icone: "fa-ban" };
   if (["concluído", "concluido"].includes(status))
-    return { tom: "neutro", rotulo: "Processo concluído", icone: "fa-check" };
+    return { tom: "neutro", rotulo: "Cronograma encerrado", icone: "fa-check" };
   const dias = diasAte(linha?.data_fim, hoje);
   if (dias === null || dias < 0) return null;
   const rotulo = `Edital encerra em ${dias} ${dias === 1 ? "dia" : "dias"}`;
@@ -944,10 +929,50 @@ export function prazoDoEdital(
 }
 
 /*
+  Há etapas cadastradas? Com o cálculo automático, sim (Editais não salva o
+  automático sem etapas). Com o manual, o banco (FC_ESTADO_DO_CRONOGRAMA,
+  20261117190000) devolve percentual, atividade atual e próxima etapa sempre
+  que há etapas, e nada disso sem elas: com etapas, ou há uma próxima, ou o
+  dia está numa etapa, ou alguma já terminou (percentual acima de zero).
+*/
+export function temCronogramaCadastrado(
+  linha: LinhaDoMonitoramento | null | undefined,
+): boolean {
+  if (!linha) return false;
+  if (linha.cronograma_automatico) return true;
+  return (
+    Number(linha.cronograma_percentual) > 0 ||
+    Boolean(txt(linha.cronograma_proxima_data)) ||
+    Boolean(txt(linha.cronograma_atividade_atual))
+  );
+}
+
+/*
+  O cronograma em poucas palavras, separando as três coisas: há etapas, o
+  cálculo (automático ou manual) e a situação excepcional pelo status
+  ("Cronograma cadastrado · cálculo manual · suspenso"). Sem etapas, `null`.
+*/
+export function descricaoDoCronograma(
+  linha: LinhaDoMonitoramento | null | undefined,
+): string | null {
+  if (!linha || !temCronogramaCadastrado(linha)) return null;
+  const partes = [
+    "Cronograma cadastrado",
+    linha.cronograma_automatico ? "cálculo automático" : "cálculo manual",
+  ];
+  const status = statusCanonico(linha.status);
+  if (["Suspenso", "Paralisado", "Cancelado"].includes(status))
+    partes.push(status.toLowerCase());
+  return partes.join(" · ");
+}
+
+/*
   A situação do cronograma (Editais): `{ tom, rotulo }`. `tom`: "done"
   (concluído/cancelado), "warning", "danger", "info" ou "neutral" — também a
-  cor da linha na tabela. Atrasada: o fim do cronograma (`data_fim`) passou e
-  o edital não concluiu (a mesma regra do crítico).
+  cor da linha na tabela. Suspenso e paralisado dizem isso (não "atrasada").
+  Atrasada: o fim do cronograma (`data_fim`) passou e o edital não concluiu
+  (a mesma regra do crítico). "Sem cronograma estruturado" só sem etapas: o
+  cálculo manual com etapas segue as regras da próxima etapa.
 */
 export function urgenciaDoCronograma(
   linha: LinhaDoMonitoramento | null,
@@ -956,15 +981,18 @@ export function urgenciaDoCronograma(
   if (!linha)
     return { tom: "neutral", rotulo: "Dados operacionais indisponíveis" };
   const status = statusCanonico(linha.status);
-  if (["Concluído", "Cancelado"].includes(status))
-    return { tom: "done", rotulo: status };
+  if (status === "Cancelado") return { tom: "done", rotulo: status };
+  if (status === "Concluído")
+    return { tom: "done", rotulo: "Cronograma encerrado" };
+  if (status === "Suspenso" || status === "Paralisado")
+    return { tom: "warning", rotulo: `Processo ${status.toLowerCase()}` };
   const fim = diasAte(linha.data_fim, hoje);
   if (fim !== null && fim < 0)
     return {
       tom: "danger",
       rotulo: `Etapa atrasada há ${Math.abs(fim)} dia(s)`,
     };
-  if (!linha.cronograma_automatico)
+  if (!temCronogramaCadastrado(linha))
     return { tom: "warning", rotulo: "Sem cronograma estruturado" };
   const dias = Number(linha.cronograma_dias_para_proxima);
   const temDias =

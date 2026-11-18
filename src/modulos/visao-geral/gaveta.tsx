@@ -13,6 +13,7 @@ import {
 } from "../../lib/editais/funil-do-edital.ts";
 import {
   dataCurta,
+  descricaoDoCronograma,
   linkSeguro,
   statusCanonico,
   urgenciaDoCronograma,
@@ -43,6 +44,8 @@ export function GavetaDoProcesso({
     0,
     Math.min(100, Number(linha.cronograma_percentual || 0)),
   );
+  // Há etapas · cálculo automático ou manual · suspenso/paralisado/cancelado.
+  const cronograma = descricaoDoCronograma(linha);
   const link = linkSeguro(linha.link_edital);
   // A linha do tempo é de Editais (a tela fica montada: src/app/telas.tsx).
   const linhaDoTempo = telaPronta("nucleo")?.estado.abrirLinhaDoTempo;
@@ -119,7 +122,9 @@ export function GavetaDoProcesso({
               Próxima data: {dataCurta(linha.cronograma_proxima_data) || "—"}
             </span>
           </p>
-          {linha.cronograma_automatico ? null : (
+          {cronograma ? (
+            <p className="visao-geral-gaveta-aviso">{cronograma}</p>
+          ) : (
             <p className="visao-geral-gaveta-aviso">
               <i className="fa-solid fa-calendar-xmark" aria-hidden="true" />{" "}
               Cronograma ainda não cadastrado em Editais.

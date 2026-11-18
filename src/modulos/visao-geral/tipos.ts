@@ -36,8 +36,7 @@ export type Ordenacao = {
   campo: ColunaDaTabela | "";
   direcao: "asc" | "desc" | "";
 };
-export type Pendencia =
-  "sem_lista" | "sem_status" | "contratacao_baixa" | "desistencias";
+export type Pendencia = "sem_lista" | "sem_status";
 export type Atalho = "" | "criticos" | `pos:${Pendencia}`;
 export type Motivo = { codigo: string; rotulo: string; tom: string };
 export type LinhaDoMonitoramento = {
