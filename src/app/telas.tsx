@@ -46,7 +46,6 @@ import { SECOES } from "../modulos/configuracoes/secoes.ts";
 import { ContextoDaPaginaDeConfiguracoes } from "../modulos/configuracoes/pagina.ts";
 import { CabecalhoDaTela } from "../ui/cabecalho-da-tela.tsx";
 import { telaDaRota } from "../lib/navegacao/rotas.ts";
-import { nomeDaArea } from "../lib/navegacao/menu-lateral.ts";
 
 /*
   As telas do app como rotas: a navegação (src/app/navegacao.ts) diz qual
@@ -500,7 +499,7 @@ function CabecalhoDaPagina({ view }: { view: ViewDeTela }) {
   return (
     <CabecalhoDaTela
       className="ui-cabecalho-da-pagina"
-      trilha={`${nomeDaArea(navegacao.area)} / ${titulo}`}
+      trilha=""
       titulo={titulo}
       descricao={atual ? navegacao.subtitulo : null}
     />
