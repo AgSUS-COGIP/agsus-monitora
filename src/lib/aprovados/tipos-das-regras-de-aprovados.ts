@@ -5,6 +5,8 @@ export interface CandidatoDasRegrasDeAprovados {
   cargo?: unknown;
   edital?: unknown;
   unidade?: unknown;
+  /** O código da vaga na Empregare (coluna própria na tabela). */
+  codigo_vaga?: unknown;
   modalidade?: unknown;
   matricula?: unknown;
   status?: unknown;

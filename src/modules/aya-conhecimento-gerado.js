@@ -3114,7 +3114,7 @@ export const VERBETES_AYA = Object.freeze([
       "status do candidato",
     ],
     resposta:
-      "A Lista de aprovados mostra a lista vigente de cada edital da área atual, em duas abas: Aprovados (os candidatos e o status) e Convocação (a ordem de chamada, os a convocar e a carta de convocação). Os status do candidato são Convocado, Contratado, Contratado em outra lista, Desistente, Migração e Documentação Rejeitada; Contratado e Migração exigem matrícula e Convocado leva a data da convocação. Status já definido só quem tem Administrador em Aprovados altera (os demais veem um cadeado), exceto do Convocado para o status seguinte. Clicar no nome abre a gaveta do candidato, com os dados e as cartas de convocação emitidas. Quem tem Editor em Aprovados muda status; o grupo Gestor edita a lista desde que tenha a área e o edital. Quem importou ou substituiu a lista fica registrado.",
+      'A Lista de aprovados mostra a lista vigente de cada edital da área atual, em duas abas: Aprovados (os candidatos e o status) e Convocação (a ordem de chamada, os a convocar e a carta de convocação). Os status do candidato são Convocado, Contratado, Contratado em outra lista, Desistente, Migração e Documentação Rejeitada; Contratado e Migração exigem matrícula e Convocado leva a data da convocação. Status já definido só quem tem Administrador em Aprovados altera (para os demais, "Mudar status" aparece apagado no menu da linha, com o motivo), exceto do Convocado para o status seguinte. A tabela tem colunas próprias para o código da vaga, o cargo, a lotação (o lugar que vem no texto do cargo) e o edital com a unidade, e todas ordenam. Cada linha tem uma ação principal com nome ("Mudar status" para quem pode, "Abrir" para os demais) e o "⋯" (Mais ações) com Ver detalhes, Ver anexos, Carta de convocação, Ver na Classificação e, para o administrador, as ações de decisão judicial e sub judice. Clicar no nome abre a gaveta do candidato, com os dados, a origem da linha (edital, unidade, a lista importada e a data) com "Ver nota e classificação na Classificação", e as cartas de convocação emitidas. Quem tem Editor em Aprovados muda status; o grupo Gestor edita a lista desde que tenha a área e o edital. Quem importou ou substituiu a lista fica registrado.',
     fato: "",
     fonte:
       "src/lib/aprovados/lista-aprovados-rules.ts; src/modulos/aprovados/; supabase/migrations/20260930200000_aprovados_por_grupo_edital_gestor_edita.sql",
@@ -3498,13 +3498,14 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: [
       "cadeado no status",
       "por que aparece um cadeado",
+      "mudar status apagado",
       "nao consigo mudar o status",
       "status travado",
       "voltar para sem status",
       "desfazer status do candidato",
     ],
     resposta:
-      'O cadeado aparece para quem tem Editor em Aprovados quando a lista é inativa ou quando o status já foi definido e só o Administrador em Aprovados pode mudá-lo (inclusive voltar a "Sem status"). A exceção é o Convocado: o Editor o leva para Contratado, Desistente ou Documentação Rejeitada sem cadeado. Sem Editor em Aprovados, a coluna mostra só um traço. Peça a mudança a quem tem Administrador em Aprovados.',
+      'Para quem tem Editor em Aprovados, "Mudar status" aparece apagado no "⋯" da linha, com o motivo, quando a lista é inativa ("lista inativa") ou quando o status já foi definido e só o Administrador em Aprovados pode mudá-lo ("status já definido: só o admin altera"), inclusive para voltar a "Sem status". A exceção é o Convocado: o Editor o leva para Contratado, Desistente ou Documentação Rejeitada pelo botão "Mudar status" da linha. Sem Editor em Aprovados, a linha mostra só "Abrir". Peça a mudança a quem tem Administrador em Aprovados.',
     fato: "",
     fonte:
       "src/modulos/aprovados/partes.tsx (AcaoDeStatus); src/lib/aprovados/lista-aprovados-rules.ts; src/lib/acessos/access-roles.ts",

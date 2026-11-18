@@ -195,6 +195,12 @@ table.mobile-card-table td.approved-actions {
 .approved-no-action {
   color: var(--text-secondary);
 }
+/* A unidade do edital, embaixo do número, na coluna Edital. */
+.approved-unidade {
+  display: block;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
 .approved-empty {
   text-align: center;
   padding: var(--space-6);
@@ -397,12 +403,10 @@ table.mobile-card-table td.approved-actions {
 .approved-icone-acao:disabled {
   cursor: default;
 }
-.approved-icone-acao.perigo,
-.approved-anexos-botao[data-tem-anexo] {
+.approved-icone-acao.perigo {
   color: var(--state-danger);
 }
-.approved-icone-acao.perigo:hover:not(:disabled),
-.approved-anexos-botao[data-tem-anexo]:hover {
+.approved-icone-acao.perigo:hover:not(:disabled) {
   color: var(--state-danger);
   opacity: 0.8;
 }

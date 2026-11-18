@@ -10,6 +10,8 @@ export interface CandidatoDaTabelaDeAprovados extends CandidatoDasRegrasDeAprova
   nome: string;
   cargo?: string | null;
   edital?: string | null;
+  unidade?: string | null;
+  codigo_vaga?: string | number | null;
   classificacao?: string | number | null;
   lista_ativa?: boolean | null;
   sub_judice?: boolean | null;
@@ -28,6 +30,8 @@ export interface EstadoDaAbaDeAprovados extends EstadoDaAcao {
   abrirStatus: (id: string) => void;
   abrirCarta: (ids: readonly string[]) => void;
   abrirAlteracaoJudicial: (id: string) => void;
+  /** "Ver na Classificação": a tela da Classificação, no edital do candidato. */
+  irParaClassificacao: (editalId: string, titulo?: string) => void;
   removerSubJudice: (id: string) => Promise<unknown>;
   /** Status em lote da seleção (status-em-lote.tsx). */
   alterarStatusEmLote: (

@@ -300,6 +300,14 @@ const linhaDe = (painel: string, nome: string) =>
     (linha) =>
       linha.querySelector(".approved-name strong")?.textContent === nome,
   );
+/* Uma ação do "⋯ Mais ações" da linha da aba Aprovados (abre o menu). */
+async function doMenuDaLinha(nome: string, acao: string) {
+  const linha = linhaDe("approvedPanelAprovados", nome);
+  await clicar(linha?.querySelector("[data-acao='abrir-menu']"));
+  return linha?.querySelector<HTMLButtonElement>(
+    `[role='menuitem'][data-approved-action="${acao}"]`,
+  );
+}
 const chamadas = (supabase: ReturnType<typeof supabaseFalso>, nome: string) =>
   supabase.rpc.mock.calls.filter(([n]) => n === nome).map(([, a]) => a);
 const irParaConvocacao = () => clicar($("approvedTabConvocacao"));
@@ -352,11 +360,15 @@ describe("H1/H2: status Convocado com a data", () => {
     expect(campo("approvedStatusDataConvocacao")?.value).toBe("2026-10-01");
   });
 
-  it("contratado continua com cadeado para quem não é admin", async () => {
+  it("contratado continua bloqueado para quem não é admin", async () => {
     await montar();
     const diego = linhaDe("approvedPanelAprovados", "Diego Alves");
-    expect(diego?.querySelector('[data-approved-action="status"]')).toBeNull();
-    expect(diego?.querySelector(".fa-lock")).not.toBeNull();
+    expect(
+      diego?.querySelector(".ui-acoes-da-linha > button")?.textContent,
+    ).toBe("Abrir");
+    const status = await doMenuDaLinha("Diego Alves", "status");
+    expect(status?.disabled).toBe(true);
+    expect(status?.textContent).toContain("só o admin altera");
   });
 });
 
@@ -487,11 +499,7 @@ describe("H5/H6: emitir a carta e marcar como Convocado", () => {
 
   it("data limite que já passou bloqueia as saídas", async () => {
     await montar();
-    await clicar(
-      linhaDe("approvedPanelAprovados", "Bruno Lima")?.querySelector(
-        '[data-approved-action="carta"]',
-      ),
-    );
+    await clicar(await doMenuDaLinha("Bruno Lima", "carta"));
     await esperar(() => Promise.resolve());
     await digitar($("carta-dataLimite"), "2026-10-01");
     expect(document.querySelector(".carta-pendencias")?.textContent).toContain(
@@ -504,11 +512,7 @@ describe("H5/H6: emitir a carta e marcar como Convocado", () => {
     await montar({
       supabase: supabaseFalso({ modelos: { pode_editar: true, modelos: [] } }),
     });
-    await clicar(
-      linhaDe("approvedPanelAprovados", "Bruno Lima")?.querySelector(
-        '[data-approved-action="carta"]',
-      ),
-    );
+    await clicar(await doMenuDaLinha("Bruno Lima", "carta"));
     await esperar(() => Promise.resolve());
     expect($("cartaSemModelo")?.textContent).toContain("Nenhum modelo ativo");
     await clicar($("cartaCriarModelo"));

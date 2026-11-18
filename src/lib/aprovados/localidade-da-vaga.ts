@@ -77,6 +77,19 @@ const ESTADOS = new Set(
 );
 
 /** A localidade escrita no texto do cargo, ou "" quando ele não traz. */
+/**
+ * O cargo sem a localidade e o resto da vaga: o primeiro trecho do texto
+ * ("Enfermeiro - Pacaraima/RR - 2 vagas" → "Enfermeiro"). A lotação fica em
+ * localidadeDoCargo: as duas viram colunas próprias na Lista de aprovados.
+ */
+export function cargoDaVaga(cargo: unknown): string {
+  return (
+    txt(cargo)
+      .split(/\s+[-–—]\s+/)[0]
+      ?.trim() ?? ""
+  );
+}
+
 export function localidadeDoCargo(cargo: unknown): string {
   const trechos = txt(cargo)
     .split(/\s+[-–—]\s+/)
