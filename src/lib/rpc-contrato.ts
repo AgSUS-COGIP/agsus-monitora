@@ -1034,13 +1034,25 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "Quadro de vagas vigente do edital (Anexo II importado do PDF), de onde veio e a que linha cada vaga da análise se liga.",
+      "Quadro de vagas vigente do edital (Anexo II importado do PDF), de onde veio e o vínculo de cada vaga com a linha (situação CONFIRMADO/AMBIGUO/AUSENTE, origem, candidatas, pendência; vagas_do_edital sem vaga com código: NAO_SE_APLICA, EXTERNO, PENDENTE_INTEGRACAO; pode_editar).",
   },
   salvar_quadro_de_vagas: {
     argumentos: ["p_edital", "p_dados"],
     critica: false,
     resumo:
-      "Substitui o quadro de vagas do edital (o anterior fica desativado). Núcleo ou Calendário (editor). Devolve o quadro.",
+      "Substitui o quadro de vagas do edital (o anterior fica desativado) e passa os vínculos das vagas para as linhas novas. Núcleo ou Calendário (editor). Devolve o quadro.",
+  },
+  gravar_vinculo_do_quadro: {
+    argumentos: ["p_edital", "p_vaga", "p_acao", "p_quadro"],
+    critica: false,
+    resumo:
+      "A equipe decide o vínculo de uma vaga com o quadro: CONFIRMAR (p_quadro), SEM_LINHA ou AUTOMATICO; vira MANUAL, com histórico (22023 vaga ou linha fora do edital). Núcleo ou Calendário (editor). Devolve o quadro.",
+  },
+  atualizar_vinculos_do_quadro: {
+    argumentos: ["p_edital"],
+    critica: false,
+    resumo:
+      "Refaz os vínculos automáticos das vagas do edital com o quadro (vagas novas entram; nunca muda o que a equipe decidiu). Núcleo ou Calendário (editor). Devolve o quadro.",
   },
   lancar_notas_entrevista: {
     argumentos: ["p_entrevista", "p_dados"],
