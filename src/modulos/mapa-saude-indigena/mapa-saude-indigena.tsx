@@ -91,7 +91,7 @@ export function MapaSaudeIndigena({
   const totais = useMemo(() => {
     let editais = 0;
     let vagas = 0;
-    for (const valor of Object.values(contagens)) {
+    for (const valor of contagens.values()) {
       editais += valor.editais;
       vagas += valor.vagas;
     }
