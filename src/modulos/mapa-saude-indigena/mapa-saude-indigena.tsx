@@ -13,10 +13,10 @@ import { chaveDoDsei } from "../../lib/mapas/mapa-saude-indigena/chaves.ts";
 import {
   bolhasDosDsei,
   casaisNacionais,
-  contarPorDsei,
   enquadramentoNacional,
   territoriosPorVagas,
 } from "../../lib/mapas/mapa-saude-indigena/mapa-nacional.ts";
+import { contarPorDsei } from "../../lib/mapas/mapa-saude-indigena/contagem-por-dsei.ts";
 import {
   registrosDoDsei,
   resumoDaRede,
@@ -25,7 +25,6 @@ import { classes } from "../../ui/index.ts";
 import { obterLeaflet } from "./leaflet.ts";
 import { MapaDoDsei } from "./mapa-do-dsei.tsx";
 import { MapaNacional } from "./mapa-nacional.tsx";
-import { usarMapaRecolhido } from "./recolher.tsx";
 import { usarTelaCheia } from "./tela-cheia.tsx";
 import { usarEscParaVoltar, usarVoltaDoDsei } from "./volta-ao-brasil.ts";
 
@@ -65,19 +64,9 @@ export function MapaSaudeIndigena({
     () => casaisNacionaisDoMapa(casaisDoSigepsi),
     [casaisDoSigepsi],
   );
+  // Na aba Mapa o mapa é a página: não se recolhe (o de Projetos, na Visão geral, sim).
   const [telaCheia, botaoDeTelaCheia] = usarTelaCheia();
-  const [recolhido, botaoDeRecolher] = usarMapaRecolhido();
-  /*
-    Em tela cheia não se recolhe; recolhido, não se amplia. Os dois lugares
-    ficam sempre na mesma posição, para o React não recriar o botão (e o foco
-    não se perder) ao ligar e desligar.
-  */
-  const acoes = (
-    <>
-      {telaCheia ? null : botaoDeRecolher}
-      {recolhido && !telaCheia ? null : botaoDeTelaCheia}
-    </>
-  );
+  const acoes = botaoDeTelaCheia;
   const regiao = useRef<HTMLDivElement | null>(null);
 
   const dseis = useMemo(() => configuracao.dsei, [configuracao]);
@@ -135,7 +124,6 @@ export function MapaSaudeIndigena({
         "mapa-si",
         escuro && "mapa-si--escuro",
         telaCheia && "mapa-si--tela-cheia",
-        recolhido && !telaCheia && "mapa-si--recolhido",
       )}
       aria-label="Mapas da rede de saúde indígena"
       role="region"

@@ -101,6 +101,8 @@ export type ContaParaComparar = {
 /** Páginas que o perfil abre (paginasPermitidas). */
 export type PaginasPermitidas = {
   dashboard: boolean;
+  /** O Mapa (Saúde Indígena): a mesma permissão da Visão geral. */
+  mapa: boolean;
   nucleo: boolean;
   calendario: boolean;
   approved: boolean;

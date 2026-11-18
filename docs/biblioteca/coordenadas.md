@@ -10,7 +10,7 @@ atualizado: 2026-11-17
 nacional), os polos base, a ROTA, as CASAIs, as unidades de lotação e as CASAIs nacionais vêm da
 API do SIGEPSI (`/api/dseis`), com a UF pelo CEP. Do banco (`lmap`, em
 `TB_CONFIG_MAPA_SAUDE_INDIG`) o mapa lê só, de cada DSEI, o nome, a população e as UFs
-administrativas. Não há reserva: se o SIGEPSI não responde, a Visão geral mostra o erro. De
+administrativas. Não há reserva: se o SIGEPSI não responde, a aba Mapa mostra o erro. De
 02/10 a 16/11/2026 o mapa desenhava os pontos gravados no banco (`lmap` e `rede_cnes`); as
 auditorias abaixo descrevem esse período. A planilha "Lotações, Meios de Acesso/Polo Base", com
 erros, nunca voltou ao front.
@@ -62,11 +62,11 @@ e o Gestor o abrem.** O mapa de Projetos o liga no seu `editor-de-coordenadas.ts
 
 ## Os documentos
 
-| Documento                                                                                                         | O que é                                                                                                 |
-| ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| [auditoria-oficial-das-coordenadas-2026-10-01.md](../coordenadas/auditoria-oficial-das-coordenadas-2026-10-01.md) | os 1.500 pontos conferidos contra CNES, IBGE e Funai (01–02/10/2026) e o que foi corrigido no banco     |
-| [pontos-so-na-planilha-de-lotacoes.md](../coordenadas/pontos-so-na-planilha-de-lotacoes.md)                       | o que a planilha fornecia e a decisão para cada atributo                                                |
-| [sedes-dos-dsei.md](../coordenadas/sedes-dos-dsei.md)                                                             | de onde vem cada sede de DSEI (CNES geocodificado, validado pela malha do IBGE)                         |
+| Documento                                                                                                         | O que é                                                                                             |
+| ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| [auditoria-oficial-das-coordenadas-2026-10-01.md](../coordenadas/auditoria-oficial-das-coordenadas-2026-10-01.md) | os 1.500 pontos conferidos contra CNES, IBGE e Funai (01–02/10/2026) e o que foi corrigido no banco |
+| [pontos-so-na-planilha-de-lotacoes.md](../coordenadas/pontos-so-na-planilha-de-lotacoes.md)                       | o que a planilha fornecia e a decisão para cada atributo                                            |
+| [sedes-dos-dsei.md](../coordenadas/sedes-dos-dsei.md)                                                             | de onde vem cada sede de DSEI (CNES geocodificado, validado pela malha do IBGE)                     |
 
 Os três ficam em `docs/coordenadas/` porque o código, os testes ou a base da Aya os citam pelo
 caminho. Histórico, em `docs/_arquivo/`:

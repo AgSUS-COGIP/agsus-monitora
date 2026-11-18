@@ -40,12 +40,12 @@ import {
 import {
   bolhasDosDsei,
   casaisNacionais,
-  contarPorDsei,
   dicaDaBolha,
   enquadramentoNacional,
   popupDaCasaiNacional,
   territoriosPorVagas,
 } from "../src/lib/mapas/mapa-saude-indigena/mapa-nacional.ts";
+import { contarPorDsei } from "../src/lib/mapas/mapa-saude-indigena/contagem-por-dsei.ts";
 
 /*
   O mapa da Saúde Indígena sem Leaflet (src/lib/mapas/mapa-saude-indigena/): as

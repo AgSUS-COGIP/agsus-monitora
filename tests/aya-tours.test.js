@@ -100,7 +100,14 @@ describe("tours das telas", () => {
   it("a Visão geral mostra o mapa da área (e nenhum na SEDE)", () => {
     const titulos = (area) =>
       tourDaPagina({ view: "dashboard", area }).passos.map((p) => p.titulo);
-    expect(titulos("saude-indigena")).toContain("Mapa dos DSEIs");
+    // Na Saúde Indígena, o cartão que leva à página Mapa (que tem tour próprio).
+    expect(titulos("saude-indigena")).toContain("Mapa");
+    expect(titulos("saude-indigena")).not.toContain("Mapa em tela cheia");
+    expect(
+      tourDaPagina({ view: "mapa", area: "saude-indigena" }).passos.map(
+        (p) => p.titulo,
+      ),
+    ).toContain("Mapa dos DSEIs");
     expect(titulos("projetos")).toContain("Mapa dos projetos");
     expect(titulos("sede").some((t) => t.startsWith("Mapa"))).toBe(false);
   });

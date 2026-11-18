@@ -3691,7 +3691,7 @@ export const VERBETES_AYA = Object.freeze([
       "tela da visao geral",
     ],
     resposta:
-      'A Visão geral do Yeendé é a mesma página nas três áreas (Saúde Indígena, SEDE e Projetos) e mostra só os editais da área escolhida no menu. De cima para baixo: o cabeçalho (saudação, quantos editais têm etapa nos próximos 7 dias, a hora da carga e os botões Filtros, Atualizar e Exportar), as vagas, "Pede ação" (críticos e pendências do pós-resultado) ao lado de "Em andamento, por fase", o mapa e a tabela de processos. Em Projetos há também "Processos por projeto". Na Saúde Indígena o mapa mostra os DSEIs e as CASAIs; em Projetos, os municípios das vagas; a SEDE não tem mapa.',
+      'A Visão geral do Yeendé é a mesma página nas três áreas (Saúde Indígena, SEDE e Projetos) e mostra só os editais da área escolhida no menu. De cima para baixo: o cabeçalho (saudação, quantos editais têm etapa nos próximos 7 dias, a hora da carga e os botões Filtros, Atualizar e Exportar), as vagas, "Pede ação" (críticos e pendências do pós-resultado) ao lado de "Em andamento, por fase", o mapa e a tabela de processos. Em Projetos há também "Processos por projeto". Na Saúde Indígena, no lugar do mapa fica o cartão "Mapa" (quantos DSEIs têm edital, o com mais vagas ociosas e o menos preenchido, e "Abrir no mapa"): o mapa dos DSEIs é a página Mapa. Em Projetos, o mapa mostra os municípios das vagas; a SEDE não tem mapa.',
     fato: "",
     fonte: "interface do Yeendé",
   },
@@ -3770,7 +3770,7 @@ export const VERBETES_AYA = Object.freeze([
       "filtro de fase",
     ],
     resposta:
-      'Na Visão geral, o botão Filtros do cabeçalho abre os campos Ano, Unidade, Edital e Status, com Fase e UF em "Mais opções"; os filtros aplicados ficam sempre à vista como etiquetas, com "Limpar tudo". Cada filtro aceita vários valores e as opções de um seguem os outros já escolhidos. O campo Ano escolhe de uma vez todos os editais daquele ano (pelo número, como 11/2026); outra escolha de editais aparece como "Seleção própria". A busca da tabela vale para a página toda: indicadores, mapa, blocos e tabela. Os filtros ficam guardados no navegador. Críticos e as pendências do Pós-resultado aparecem como "Recorte" entre os filtros aplicados. "Limpar tudo" apaga filtros, busca, recorte e o DSEI aberto e volta o mapa ao Brasil.',
+      'Na Visão geral, o botão Filtros do cabeçalho abre os campos Ano, Unidade, Edital e Status, com Fase e UF em "Mais opções"; os filtros aplicados ficam sempre à vista como etiquetas, com "Limpar tudo". Cada filtro aceita vários valores e as opções de um seguem os outros já escolhidos. O campo Ano escolhe de uma vez todos os editais daquele ano (pelo número, como 11/2026); outra escolha de editais aparece como "Seleção própria". A busca da tabela vale para a página toda: indicadores, blocos, tabela e, em Projetos, o mapa. Os filtros ficam guardados no navegador. Críticos e as pendências do Pós-resultado aparecem como "Recorte" entre os filtros aplicados. "Limpar tudo" apaga filtros, busca, recorte e o DSEI aberto e volta o mapa ao Brasil.',
     fato: "",
     fonte: "interface do Yeendé",
   },
@@ -3781,11 +3781,15 @@ export const VERBETES_AYA = Object.freeze([
       "dsei aberto no mapa",
       "filtro dsei da pagina",
       "casai no mapa filtra",
+      "cartao do mapa",
+      "abrir no mapa",
+      "mapa da visao geral",
     ],
     resposta:
-      'Na Visão geral da Saúde Indígena, escolher um DSEI no mapa recorta a página inteira por ele (aparece o filtro "DSEI" entre os filtros aplicados). Tirar esse filtro, ou voltar ao Brasil pelo mapa, sai do território e mantém os outros filtros. Clicar numa CASAI no mapa busca por ela na página.',
+      'Na Visão geral da Saúde Indígena, o mapa dos DSEIs deu lugar ao cartão "Mapa": quantos dos 34 DSEIs têm edital, o DSEI com mais vagas ociosas e o menos preenchido (contratadas sobre vagas), contados de todos os editais da área, como no Mapa. O nome do DSEI abre a página Mapa já nele, e "Abrir no mapa" a abre no Brasil. Escolher um DSEI no Mapa não filtra a Visão geral. Clicar numa CASAI nacional no Mapa abre a Visão geral com a busca por ela.',
     fato: "",
-    fonte: "interface do Yeendé",
+    fonte:
+      "src/modulos/visao-geral/cartao-do-mapa.tsx; src/lib/mapas/mapa-saude-indigena/aba-do-mapa.ts",
   },
   {
     arquivo: "regras-da-visao-geral.md",
@@ -4222,7 +4226,7 @@ export const VERBETES_AYA = Object.freeze([
       "area atual",
     ],
     resposta:
-      "O Yeendé tem três áreas: Saúde Indígena, SEDE e Projetos. Cada área repete as mesmas páginas (Visão geral, Editais, Cronograma, Painel das análises, Avaliação documental, Painel de recursos, Analisar recursos, Painel de entrevistas, Conduzir entrevistas, Classificação, Lista de aprovados e Seleção), e cada página mostra só os registros da área atual, a escolhida no menu. O que muda é o bloco do mapa da Visão geral: DSEIs e CASAIs na Saúde Indígena, os locais das vagas dos projetos em Projetos, e nenhum mapa na SEDE. A área do edital é calculada pelo banco a partir da unidade e do responsável: SEDE, Escritório Distrital e Regional e CCE ficam na SEDE; Caminhoneiros, Saúde nas Fronteiras, MFC e Rio Doce, em Projetos; as demais, na Saúde Indígena.",
+      "O Yeendé tem três áreas: Saúde Indígena, SEDE e Projetos. Cada área repete as mesmas páginas (Visão geral, Editais, Cronograma, Painel das análises, Avaliação documental, Painel de recursos, Analisar recursos, Painel de entrevistas, Conduzir entrevistas, Classificação, Lista de aprovados e Seleção), e cada página mostra só os registros da área atual, a escolhida no menu. O que muda é o mapa: a Saúde Indígena tem a página Mapa (DSEIs e CASAIs) e, na Visão geral, um cartão que leva a ela; Projetos tem na Visão geral o mapa com os locais das vagas dos projetos; a SEDE não tem mapa. A área do edital é calculada pelo banco a partir da unidade e do responsável: SEDE, Escritório Distrital e Regional e CCE ficam na SEDE; Caminhoneiros, Saúde nas Fronteiras, MFC e Rio Doce, em Projetos; as demais, na Saúde Indígena.",
     fato: "O Yeendé tem três áreas (Saúde Indígena, SEDE e Projetos); cada página mostra só a área atual escolhida no menu, e só a Visão geral da Saúde Indígena fala de DSEIs e CASAIs.",
     fonte:
       "src/lib/navegacao/menu-lateral.ts; supabase/migrations/20260925170000_areas_do_sistema.sql",
@@ -5523,6 +5527,27 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-do-mapa-saude-indigena.md",
+    titulo: "Página Mapa",
+    perguntas: [
+      "mapa",
+      "pagina mapa",
+      "para que serve mapa",
+      "para que serve a pagina mapa",
+      "onde fica o mapa",
+      "onde esta o mapa",
+      "mapa saiu da visao geral",
+      "aba mapa",
+      "endereco do dsei",
+      "link do dsei no mapa",
+    ],
+    resposta:
+      'No Yeendé, a página Mapa, no bloco Acompanhar do menu da Saúde Indígena, é o mapa dos DSEIs com a página toda para ele: as bolhas dos 34 distritos, as CASAIs nacionais, a lista "Territórios por vagas", as Terras Indígenas, o satélite e a tela cheia. Clicar num DSEI abre o mapa dele, e o endereço muda para o do distrito (por exemplo, /saude-indigena/mapa/yanomami): o link copiado abre o mapa já nele, e o voltar do navegador volta ao Brasil. O mapa conta todos os editais da área, sem os filtros da Visão geral, com as mesmas contas dos indicadores. Quem abre a Visão geral abre o Mapa. A Visão geral ficou com um cartão pequeno: quantos DSEIs têm edital, o que tem mais vagas ociosas e o menos preenchido; o nome do DSEI abre o Mapa nele, e "Abrir no mapa", no Brasil.',
+    fato: "",
+    fonte: "src/modulos/mapa/; src/modulos/visao-geral/cartao-do-mapa.tsx",
+    abrir: "mapa",
+  },
+  {
+    arquivo: "regras-do-mapa-saude-indigena.md",
     titulo: "Como usar o mapa da Saúde Indígena",
     perguntas: [
       "como usar o mapa",
@@ -5535,7 +5560,7 @@ export const VERBETES_AYA = Object.freeze([
       "mapa da saude indigena",
     ],
     resposta:
-      'No Yeendé, a visão nacional do mapa mostra uma bolha por DSEI e, ao lado, a lista "Territórios por vagas". Clicar numa bolha ou numa linha da lista abre o mapa daquele DSEI, com os polos base, CASAIs, UBSIs e demais unidades, e recorta a página inteira (indicadores e tabela) por ele. "← Voltar ao Brasil", no topo do mapa do DSEI, volta à visão nacional sem apagar os outros filtros.',
+      'No Yeendé, a visão nacional do mapa mostra uma bolha por DSEI e, ao lado, a lista "Territórios por vagas". Clicar numa bolha ou numa linha da lista abre o mapa daquele DSEI, com os polos base, CASAIs, UBSIs e demais unidades, e o endereço da página passa a ser o do DSEI. "← Voltar ao Brasil", no topo do mapa do DSEI, volta à visão nacional.',
     fato: "",
     fonte: "interface do Yeendé",
   },
@@ -5551,7 +5576,7 @@ export const VERBETES_AYA = Object.freeze([
       "dsei com processo ativo",
     ],
     resposta:
-      "No Yeendé, cada bolha da visão nacional fica na sede do DSEI, na posição cadastrada no SIGEPSI. O tamanho segue a população indígena atendida (a área da bolha é proporcional à população). Verde com borda amarela é DSEI com edital no recorte atual; azul, sem edital. Com algum filtro ativo, só aparecem os DSEIs que têm edital no resultado. A dica da bolha traz população, quantos polos base o distrito tem, quantos pontos o mapa desenha, as UFs administrativas, os processos seletivos e as vagas ociosas.",
+      "No Yeendé, cada bolha da visão nacional fica na sede do DSEI, na posição cadastrada no SIGEPSI. O tamanho segue a população indígena atendida (a área da bolha é proporcional à população). Verde com borda amarela é DSEI com edital; azul, sem edital. O mapa mostra todos os DSEIs, com os editais da área inteira. A dica da bolha traz população, quantos polos base o distrito tem, quantos pontos o mapa desenha, as UFs administrativas, os processos seletivos e as vagas ociosas.",
     fato: "",
     fonte: "interface do Yeendé",
   },
@@ -5560,7 +5585,7 @@ export const VERBETES_AYA = Object.freeze([
     titulo: "Mapa de calor",
     perguntas: ["botao calor", "modo calor", "mapa de calor", "mapa sem calor"],
     resposta:
-      'No Yeendé, o mapa da Saúde Indígena não tem modo de calor: a bolha só diz se o DSEI tem edital no recorte (verde) ou não (azul). As vagas ociosas de cada DSEI aparecem na dica da bolha e, como preenchimento, na barra de "Territórios por vagas"; a taxa de ociosidade de cada edital fica na tabela da Visão geral.',
+      'No Yeendé, o mapa da Saúde Indígena não tem modo de calor: a bolha só diz se o DSEI tem edital (verde) ou não (azul). As vagas ociosas de cada DSEI aparecem na dica da bolha e, como preenchimento, na barra de "Territórios por vagas"; a taxa de ociosidade de cada edital fica na tabela da Visão geral.',
     fato: "",
     fonte: "interface do Yeendé",
   },
@@ -5623,7 +5648,7 @@ export const VERBETES_AYA = Object.freeze([
       "clicar na casai nacional",
     ],
     resposta:
-      'No Yeendé, o losango roxo marca as CASAIs de referência nacional (Brasília e São Paulo), desenhadas a partir do SIGEPSI. Clicar nele filtra a página pela busca "CASAI" mais o nome da cidade. Com filtro ativo, a CASAI só aparece se tiver edital no resultado.',
+      'No Yeendé, o losango roxo marca as CASAIs de referência nacional (Brasília e São Paulo), desenhadas a partir do SIGEPSI. Clicar nele abre a Visão geral filtrada pela busca "CASAI" mais o nome da cidade.',
     fato: "",
     fonte: "interface do Yeendé",
   },
@@ -5717,7 +5742,7 @@ export const VERBETES_AYA = Object.freeze([
       "fechar o dsei",
     ],
     resposta:
-      'No Yeendé, com um DSEI aberto, o botão "← Voltar ao Brasil" no topo do mapa (ou a tecla Esc, com o foco no mapa) fecha o distrito: o mapa se afasta devagar até o Brasil inteiro, o filtro de DSEI sai da página e os outros filtros continuam. O foco volta à linha do DSEI em "Territórios por vagas". O chip "DSEI" dos filtros faz a mesma volta. Em tela cheia, o primeiro Esc volta ao Brasil e o segundo sai da tela cheia. Quem pediu menos movimento ao sistema vê o mapa voltar sem animação.',
+      'No Yeendé, com um DSEI aberto, o botão "← Voltar ao Brasil" no topo do mapa (ou a tecla Esc, com o foco no mapa) fecha o distrito: o mapa se afasta devagar até o Brasil inteiro e o endereço volta a ser o da página Mapa. O foco volta à linha do DSEI em "Territórios por vagas". O voltar do navegador faz a mesma volta. Em tela cheia, o primeiro Esc volta ao Brasil e o segundo sai da tela cheia. Quem pediu menos movimento ao sistema vê o mapa voltar sem animação.',
     fato: "",
     fonte: "interface do Yeendé",
   },
@@ -5731,7 +5756,7 @@ export const VERBETES_AYA = Object.freeze([
       "legenda fechada no celular",
     ],
     resposta:
-      'No Yeendé, "Recolher mapa" deixa só o cabeçalho do mapa na Visão geral, para as Fases e os Detalhes subirem; "Mostrar mapa" o traz de volta, e a escolha fica guardada no navegador de cada pessoa. "Tela cheia" faz o mapa ocupar a janela; "Sair da tela cheia" ou a tecla Esc voltam (com um DSEI aberto, o primeiro Esc volta ao Brasil e o segundo sai da tela cheia). Os controles continuam no topo. No celular, a lista fica abaixo do mapa. A legenda do mapa nacional abre pelo botão "Legenda". Sem internet, o fundo do mapa não carrega, mas a lista de territórios continua.',
+      'No Yeendé, o mapa da Saúde Indígena ocupa a página Mapa e não se recolhe. "Tela cheia" faz o mapa ocupar a janela; "Sair da tela cheia" ou a tecla Esc voltam (com um DSEI aberto, o primeiro Esc volta ao Brasil e o segundo sai da tela cheia). Os controles continuam no topo. No celular, a lista fica abaixo do mapa. A legenda do mapa nacional abre pelo botão "Legenda". Sem internet, o fundo do mapa não carrega, mas a lista de territórios continua.',
     fato: "",
     fonte: "interface do Yeendé",
   },
@@ -5767,10 +5792,10 @@ export const VERBETES_AYA = Object.freeze([
       "mapa carregando",
     ],
     resposta:
-      'No Yeendé, o mapa da Saúde Indígena depende do SIGEPSI para a lista de DSEIs e para todos os pontos e não tem plano B. Enquanto o SIGEPSI não responde, o mapa fica em "carregando". Se ele falhar, a Visão geral mostra "Não foi possível carregar o mapa da Saúde Indígena: o SIGEPSI não respondeu", com o botão "Tentar novamente"; o mesmo vale no servidor local, que não tem a rota do SIGEPSI. DSEI que só existe no cadastro do banco, sem aparecer no SIGEPSI, não é desenhado.',
+      'No Yeendé, o mapa da Saúde Indígena depende do SIGEPSI para a lista de DSEIs e para todos os pontos e não tem plano B. Enquanto o SIGEPSI não responde, o mapa fica em "carregando". Se ele falhar, a página Mapa mostra "Não foi possível carregar o mapa da Saúde Indígena: o SIGEPSI não respondeu", com o botão "Tentar novamente"; o mesmo vale no servidor local, que não tem a rota do SIGEPSI. DSEI que só existe no cadastro do banco, sem aparecer no SIGEPSI, não é desenhado.',
     fato: "",
     fonte:
-      "src/modulos/visao-geral/visao-geral.tsx; src/modulos/mapa-saude-indigena/localizacoes.ts",
+      "src/modulos/mapa/mapa.tsx; src/modulos/mapa-saude-indigena/localizacoes.ts",
   },
   {
     arquivo: "regras-do-sistema.md",
@@ -6766,7 +6791,7 @@ export const VERBETES_AYA = Object.freeze([
       "planilha de lotacoes no mapa",
     ],
     resposta:
-      'No mapa da Saúde Indígena, toda coordenada vem do SIGEPSI: a sede de cada DSEI (onde fica a bolha), os polos base, a ROTA, as CASAIs (inclusive as nacionais, de Brasília e São Paulo) e as unidades de lotação, com a UF pelo CEP. Do banco do Yeendé vêm só o nome, a população e as UFs administrativas de cada DSEI. O mapa desenha o que o SIGEPSI devolve; nada é recalculado na tela, e se o SIGEPSI não responde a Visão geral mostra o erro "Não foi possível carregar o mapa da Saúde Indígena: o SIGEPSI não respondeu", com "Tentar novamente". Para corrigir um ponto, a correção é feita no SIGEPSI. A planilha "Lotações, Meios de Acesso/Polo Base" também não entra no mapa. De 02/10 a 16/11/2026 o mapa desenhava as coordenadas gravadas no banco, auditadas em 01 e 02/10/2026 contra fontes oficiais; esse registro histórico está em docs/coordenadas/.',
+      'No mapa da Saúde Indígena, toda coordenada vem do SIGEPSI: a sede de cada DSEI (onde fica a bolha), os polos base, a ROTA, as CASAIs (inclusive as nacionais, de Brasília e São Paulo) e as unidades de lotação, com a UF pelo CEP. Do banco do Yeendé vêm só o nome, a população e as UFs administrativas de cada DSEI. O mapa desenha o que o SIGEPSI devolve; nada é recalculado na tela, e se o SIGEPSI não responde a página Mapa mostra o erro "Não foi possível carregar o mapa da Saúde Indígena: o SIGEPSI não respondeu", com "Tentar novamente". Para corrigir um ponto, a correção é feita no SIGEPSI. A planilha "Lotações, Meios de Acesso/Polo Base" também não entra no mapa. De 02/10 a 16/11/2026 o mapa desenhava as coordenadas gravadas no banco, auditadas em 01 e 02/10/2026 contra fontes oficiais; esse registro histórico está em docs/coordenadas/.',
     fato: "",
     fonte:
       "src/lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts; docs/coordenadas/auditoria-oficial-das-coordenadas-2026-10-01.md; docs/coordenadas/pontos-so-na-planilha-de-lotacoes.md",

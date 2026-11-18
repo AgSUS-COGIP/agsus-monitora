@@ -1,9 +1,9 @@
 import {
   bolhasDosDsei,
   casaisNacionais,
-  contarPorDsei,
   enquadramentoNacional,
 } from "../../src/lib/mapas/mapa-saude-indigena/mapa-nacional.ts";
+import { contarPorDsei } from "../../src/lib/mapas/mapa-saude-indigena/contagem-por-dsei.ts";
 import {
   registrosDoDsei,
   classificarRegistros,

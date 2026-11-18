@@ -43,7 +43,7 @@ o [[modulo-mapa-de-projetos]], e o que a migração para React tirou do legado (
 - `src/lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts` transforma a resposta de `/api/dseis` em
   DSEIs, sedes, polos, CASAIs, unidades e CASAIs nacionais (`casaisNacionais`); `localizacoes.ts`
   (no módulo) faz o pedido. Do banco entram só nome, população e UFs administrativas do `lmap`.
-- Sem o SIGEPSI não há mapa: a Visão geral mostra o erro com "Tentar novamente", sem plano B.
+- Sem o SIGEPSI não há mapa: a aba Mapa mostra o erro com "Tentar novamente", sem plano B.
 - Não há edição de coordenadas neste mapa (o editor comum é só de Projetos), nem `rede_cnes` nem
   reconciliação com o CNES. A tipagem não mudou contratos de RPC.
 

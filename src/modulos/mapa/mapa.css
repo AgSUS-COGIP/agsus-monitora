@@ -1,0 +1,18 @@
+/*
+  A aba Mapa (src/modulos/mapa/mapa.tsx): o mapa da Saúde Indígena com a
+  página para ele. O resto do visual é o do mapa (mapa-saude-indigena.css).
+  Enquanto o Leaflet baixa, a reserva guarda a altura, para a página não
+  pular quando o mapa chega.
+*/
+.mapa-tela {
+  --altura-da-aba-mapa: clamp(560px, calc(100vh - 140px), 960px);
+  min-width: 0;
+}
+.mapa-tela .mapa-si {
+  --mapa-si-altura: var(--altura-da-aba-mapa);
+}
+.mapa-tela-reserva {
+  display: grid;
+  place-items: center;
+  min-height: var(--altura-da-aba-mapa);
+}

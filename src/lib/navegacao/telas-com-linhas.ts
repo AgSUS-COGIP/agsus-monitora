@@ -8,6 +8,8 @@
 
   - `dashboard` (Visão geral): recorte, indicadores, tabela, mapas e
     boas-vindas leem as linhas da área (src/modulos/visao-geral/);
+  - `mapa` (Mapa, Saúde Indígena): as bolhas e os territórios contam as
+    linhas da área, pelo estado da Visão geral (src/modulos/mapa/);
   - `nucleo` (Editais): a tabela é das linhas da área (`usarAreaAtual().linhas`);
   - `calendario` (Cronograma) e `approved` (Lista de aprovados): recortam pelos
     ids dos editais da área (`usarAreaAtual().ids`).
@@ -21,6 +23,7 @@
 
 export const TELAS_COM_LINHAS: ReadonlySet<string> = new Set([
   "dashboard",
+  "mapa",
   "nucleo",
   "calendario",
   "approved",

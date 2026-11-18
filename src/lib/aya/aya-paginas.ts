@@ -89,9 +89,7 @@ function sugestoesDaVisaoGeral(area: string): SugestaoDaAya[] {
     sug("Tabela de processos", "Como leio a tabela de processos?"),
   ];
   if (area === AREA_SAUDE_INDIGENA) {
-    base.push(
-      sug("Coordenadas do mapa", "De onde vêm as coordenadas do mapa?"),
-    );
+    base.push(sug("Mapa", "Onde fica o mapa dos DSEIs?"));
   } else if (area === "projetos") {
     base.push(
       sug("Mapa dos projetos", "De onde vêm os pontos do mapa de Projetos?"),
@@ -103,7 +101,7 @@ function sugestoesDaVisaoGeral(area: string): SugestaoDaAya[] {
 
 function introDaVisaoGeral(area: string, nomeDaArea: string): string {
   if (area === AREA_SAUDE_INDIGENA)
-    return "Posso explicar os indicadores, os filtros, o mapa dos DSEIs e CASAIs e de onde vêm os números da Visão geral da Saúde Indígena.";
+    return "Posso explicar os indicadores, os filtros, o cartão do mapa dos DSEIs e de onde vêm os números da Visão geral da Saúde Indígena.";
   if (area === "projetos")
     return "Posso explicar os indicadores, os filtros e o mapa com os locais das vagas de todos os projetos, tirados dos PDFs dos editais.";
   if (area === "sede")
@@ -116,6 +114,20 @@ const PAGINAS: Readonly<Record<string, PaginaDoMenu>> = Object.freeze({
     nome: "Visão geral",
     intro: introDaVisaoGeral,
     sugestoes: sugestoesDaVisaoGeral,
+  },
+  mapa: {
+    nome: "Mapa",
+    intro: () =>
+      "Posso explicar as bolhas dos DSEIs, a lista Territórios por vagas, o mapa de cada DSEI e de onde vêm os pontos.",
+    sugestoes: () => [
+      sug("Bolhas", "O que significam o tamanho e a cor da bolha?"),
+      sug(
+        "Territórios por vagas",
+        "Como funciona a lista Territórios por vagas?",
+      ),
+      sug("Coordenadas", "De onde vêm as coordenadas do mapa?"),
+      sug("Mapa DSEIs", "O que é o botão Mapa DSEIs?"),
+    ],
   },
   analises: {
     nome: "Painel das análises",
@@ -413,6 +425,7 @@ const GENERICA: SecaoDaAya = Object.freeze({
 /* Os botões de navegação que um verbete pode oferecer (campo `abrir`). */
 export const ACOES_DA_AYA: Readonly<Record<string, AcaoDaAya>> = Object.freeze({
   dashboard: Object.freeze({ rotulo: "Abrir Visão geral", view: "dashboard" }),
+  mapa: Object.freeze({ rotulo: "Abrir Mapa", view: "mapa" }),
   nucleo: Object.freeze({ rotulo: "Abrir Editais", view: "nucleo" }),
   calendario: Object.freeze({ rotulo: "Abrir Cronograma", view: "calendario" }),
   analises: Object.freeze({

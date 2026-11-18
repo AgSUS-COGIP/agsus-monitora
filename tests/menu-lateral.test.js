@@ -545,6 +545,8 @@ describe("blocos da área", () => {
         areas: [area],
       });
       const blocos = blocosDaArea(arvore[0].itens);
+      // O Mapa é aba só da Saúde Indígena, logo depois da Visão geral.
+      const mapa = area === "saude-indigena" ? ["Mapa"] : [];
       expect(
         blocos.map((bloco) => [
           bloco.rotulo,
@@ -555,6 +557,7 @@ describe("blocos da área", () => {
           "Acompanhar",
           [
             "Visão geral",
+            ...mapa,
             "Painel das análises",
             "Painel de recursos",
             "Painel de entrevistas",

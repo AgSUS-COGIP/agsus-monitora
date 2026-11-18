@@ -65,9 +65,9 @@ function navegacaoFalsa(telaDeEntrada: string) {
 }
 
 describe("as páginas que usam as linhas", () => {
-  it("Visão geral, Editais, Cronograma e Lista de aprovados; não a Avaliação documental", () => {
+  it("Visão geral, Mapa, Editais, Cronograma e Lista de aprovados; não a Avaliação documental", () => {
     expect([...TELAS_COM_LINHAS].sort()).toEqual(
-      ["approved", "calendario", "dashboard", "nucleo"].sort(),
+      ["approved", "calendario", "dashboard", "mapa", "nucleo"].sort(),
     );
     for (const view of [
       "avaliacao-documental",
@@ -90,7 +90,10 @@ describe("acompanharPaginaAberta", () => {
     const navegacao = navegacaoFalsa("nucleo");
     const devolver = vi.fn();
     const pedirLinhas = vi.fn(() => devolver);
-    const visaoGeral = { definirAberta: vi.fn() };
+    const visaoGeral = {
+      definirAberta: vi.fn(),
+      definirLidaPeloMapa: vi.fn(),
+    };
     const parar = acompanharPaginaAberta({
       navegacao,
       pedirLinhas,
@@ -126,6 +129,16 @@ describe("acompanharPaginaAberta", () => {
     expect(visaoGeral.definirAberta).toHaveBeenLastCalledWith(true);
     navegacao.irPara("nucleo");
     expect(visaoGeral.definirAberta).toHaveBeenLastCalledWith(false);
+  });
+
+  it("o Mapa lê o estado da Visão geral sem abri-la", () => {
+    const { navegacao, visaoGeral, pedirLinhas } = montar();
+    navegacao.irPara("mapa");
+    expect(visaoGeral.definirLidaPeloMapa).toHaveBeenLastCalledWith(true);
+    expect(visaoGeral.definirAberta).toHaveBeenLastCalledWith(false);
+    expect(pedirLinhas).toHaveBeenCalledTimes(1);
+    navegacao.irPara("nucleo");
+    expect(visaoGeral.definirLidaPeloMapa).toHaveBeenLastCalledWith(false);
   });
 
   it("parar devolve o pedido e fecha a Visão geral", () => {
@@ -315,6 +328,14 @@ describe("entrada: chamadas ao banco", () => {
     ).toHaveLength(1);
     expect(obterDadosDoMonitoramento().linhas).toEqual(LINHAS);
     expect(cliente.channel).toHaveBeenCalledTimes(1);
+  });
+
+  it("quem entra direto no Mapa tem as linhas e o acompanhamento (as mesmas contas da Visão geral)", async () => {
+    const { chamadas } = montar("mapa");
+    await definido(carga).carregarEntrada();
+    await esperar();
+    expect(chamadas).toContain("listar_monitoramento_operacional");
+    expect(chamadas).toContain("listar_acompanhamento_da_visao_geral_se_mudou");
   });
 
   it("o avaliador que abre Editais depois lê as linhas uma vez; a Visão geral escondida não pede nada", async () => {

@@ -374,6 +374,7 @@ export function paginasPermitidas(profile: unknown): PaginasPermitidas {
     permissaoLegada(comoPerfil(profile), perm);
   return {
     dashboard: pode("ind"),
+    mapa: pode("ind"),
     nucleo: pode("cores"),
     calendario: comoPerfil(profile)?.permissoes
       ? pode("calendario")

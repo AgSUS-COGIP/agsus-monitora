@@ -261,6 +261,8 @@ export type EstadoDaVisaoGeral = {
   definirAviso: (funcao?: ((mensagem: string) => void) | null) => void;
   definirBuscaDoAcompanhamento: (funcao: BuscaDoAcompanhamento | null) => void;
   definirAberta: (aberta: boolean) => void;
+  /** O Mapa (Saúde Indígena) está aberto e lê as linhas daqui. */
+  definirLidaPeloMapa: (lida: boolean) => void;
   definirFiltro: (campo: CampoDoFiltro, valores: readonly string[]) => void;
   alternarFiltroUnico: (
     campo: CampoDoFiltro,

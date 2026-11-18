@@ -44,6 +44,27 @@ describe("Visão geral fechada", () => {
     expect(estado.obter()).toBe(visto);
   });
 
+  it("lida pelo Mapa, calcula e avisa sem montar a Visão geral", () => {
+    const dados = dadosFalsos();
+    const estado = criarEstadoDaVisaoGeral({
+      dados,
+      armazenamento: null,
+      aberta: false,
+    });
+    const tela = vi.fn();
+    estado.assinar(tela);
+    estado.definirLidaPeloMapa(true);
+    dados.mudar({ carregado: true });
+    expect(tela).toHaveBeenCalled();
+    expect(estado.obter().carregado).toBe(true);
+    expect(estado.obter().visitada).toBe(false);
+
+    estado.definirLidaPeloMapa(false);
+    tela.mockClear();
+    dados.mudar({ areaAtual: "sede" });
+    expect(tela).not.toHaveBeenCalled();
+  });
+
   it("quem lê com a página fechada (PDF, busca) recebe o dado em dia", () => {
     const dados = dadosFalsos();
     const estado = criarEstadoDaVisaoGeral({

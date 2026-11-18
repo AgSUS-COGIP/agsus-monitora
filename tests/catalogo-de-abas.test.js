@@ -69,7 +69,8 @@ describe("o catálogo do banco é o do código", () => {
         rotulo: "Triagem",
         icone: "list-checks",
         view: "pre-classificacao",
-        ordem: 8,
+        // 8 até o Mapa entrar na ordem 2 (20261118160000).
+        ordem: 9,
         recurso: "avaliacao_documental",
       },
     );
@@ -95,6 +96,7 @@ describe("o catálogo do banco é o do código", () => {
   it("toda view do catálogo é uma tela que o front desenha", () => {
     const telas = new Set([
       "dashboard",
+      "mapa",
       "nucleo",
       "calendario",
       "approved",

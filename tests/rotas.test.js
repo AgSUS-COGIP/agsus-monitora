@@ -37,6 +37,55 @@ describe("caminho ↔ destino", () => {
     });
   });
 
+  it("o Mapa: o DSEI aberto é um filtro que mora no caminho", () => {
+    expect(caminhoDoDestino({ view: "mapa", area: "saude-indigena" })).toBe(
+      "/saude-indigena/mapa",
+    );
+    expect(
+      caminhoDoDestino({
+        view: "mapa",
+        area: "saude-indigena",
+        filtros: "dsei=yanomami",
+      }),
+    ).toBe("/saude-indigena/mapa/yanomami");
+    expect(
+      caminhoDoDestino({
+        view: "mapa",
+        area: "saude-indigena",
+        filtros: "outro=1&dsei=alto-rio-negro",
+        visao: "x",
+      }),
+    ).toBe("/saude-indigena/mapa/alto-rio-negro?visao=x&outro=1");
+    // Pedaço inválido não vira caminho (e sai da busca).
+    expect(
+      caminhoDoDestino({
+        view: "mapa",
+        area: "saude-indigena",
+        filtros: "dsei=a%2Fb",
+      }),
+    ).toBe("/saude-indigena/mapa");
+    expect(destinoDoCaminho("/saude-indigena/mapa/yanomami")).toEqual({
+      view: "mapa",
+      area: "saude-indigena",
+      filtros: "dsei=yanomami",
+    });
+    // O do caminho vale; o da busca, não.
+    expect(
+      destinoDoCaminho("/saude-indigena/mapa/yanomami", "?dsei=xingu&b=2"),
+    ).toEqual({
+      view: "mapa",
+      area: "saude-indigena",
+      filtros: "b=2&dsei=yanomami",
+    });
+    expect(destinoDoCaminho("/saude-indigena/mapa", "?dsei=xingu")).toEqual({
+      view: "mapa",
+      area: "saude-indigena",
+    });
+    expect(destinoDoCaminho("/saude-indigena/mapa/yanomami/x")).toBeNull();
+    // Tela sem edital nem campo no caminho continua sem terceiro pedaço.
+    expect(destinoDoCaminho("/saude-indigena/visao-geral/yanomami")).toBeNull();
+  });
+
   it("todas as telas vão e voltam, em todas as áreas", () => {
     for (const { id: area } of AREAS_DO_SISTEMA)
       for (const { view } of TELAS_DAS_AREAS) {

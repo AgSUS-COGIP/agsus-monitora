@@ -1,28 +1,36 @@
 # Regras do mapa da Saúde Indígena
 
-O mapa da Visão geral (Saúde Indígena) mostra só rótulos, números e controles;
-o porquê fica aqui, para a Aya explicar. Textos que saíram da tela com o mapa
+O mapa da Saúde Indígena (a página Mapa) mostra só rótulos, números e
+controles; o porquê fica aqui, para a Aya explicar. Até 18/11/2026 ele ficava
+na Visão geral; agora ela tem só o cartão do mapa. Textos que saíram da tela com o mapa
 em React (01/10/2026): a dica "Escolha um DSEI no mapa para ver polos e
 unidades", o "clique para abrir o território" das bolhas, o aviso "Visão do
 Brasil. Os filtros continuam valendo" e os textos longos das listas vazias. O
 modo Calor saiu em 02/10/2026.
 
+## Página Mapa
+
+**perguntas:** mapa | pagina mapa | para que serve mapa | para que serve a pagina mapa | onde fica o mapa | onde esta o mapa | mapa saiu da visao geral | aba mapa | endereco do dsei | link do dsei no mapa
+**resposta:** No Yeendé, a página Mapa, no bloco Acompanhar do menu da Saúde Indígena, é o mapa dos DSEIs com a página toda para ele: as bolhas dos 34 distritos, as CASAIs nacionais, a lista "Territórios por vagas", as Terras Indígenas, o satélite e a tela cheia. Clicar num DSEI abre o mapa dele, e o endereço muda para o do distrito (por exemplo, /saude-indigena/mapa/yanomami): o link copiado abre o mapa já nele, e o voltar do navegador volta ao Brasil. O mapa conta todos os editais da área, sem os filtros da Visão geral, com as mesmas contas dos indicadores. Quem abre a Visão geral abre o Mapa. A Visão geral ficou com um cartão pequeno: quantos DSEIs têm edital, o que tem mais vagas ociosas e o menos preenchido; o nome do DSEI abre o Mapa nele, e "Abrir no mapa", no Brasil.
+**fonte:** src/modulos/mapa/; src/modulos/visao-geral/cartao-do-mapa.tsx
+**abrir:** mapa
+
 ## Como usar o mapa da Saúde Indígena
 
 **perguntas:** como usar o mapa | como abrir um dsei no mapa | ver polos e unidades | abrir o territorio | mapa detalhado do dsei | como uso o mapa dos dseis | mapa dos dseis | mapa da saude indigena
-**resposta:** No Yeendé, a visão nacional do mapa mostra uma bolha por DSEI e, ao lado, a lista "Territórios por vagas". Clicar numa bolha ou numa linha da lista abre o mapa daquele DSEI, com os polos base, CASAIs, UBSIs e demais unidades, e recorta a página inteira (indicadores e tabela) por ele. "← Voltar ao Brasil", no topo do mapa do DSEI, volta à visão nacional sem apagar os outros filtros.
+**resposta:** No Yeendé, a visão nacional do mapa mostra uma bolha por DSEI e, ao lado, a lista "Territórios por vagas". Clicar numa bolha ou numa linha da lista abre o mapa daquele DSEI, com os polos base, CASAIs, UBSIs e demais unidades, e o endereço da página passa a ser o do DSEI. "← Voltar ao Brasil", no topo do mapa do DSEI, volta à visão nacional.
 **fonte:** interface do Yeendé
 
 ## Bolhas dos DSEIs no mapa
 
 **perguntas:** bolha do mapa | tamanho da bolha | cor da bolha | bolha verde | bolha azul | dsei com processo ativo
-**resposta:** No Yeendé, cada bolha da visão nacional fica na sede do DSEI, na posição cadastrada no SIGEPSI. O tamanho segue a população indígena atendida (a área da bolha é proporcional à população). Verde com borda amarela é DSEI com edital no recorte atual; azul, sem edital. Com algum filtro ativo, só aparecem os DSEIs que têm edital no resultado. A dica da bolha traz população, quantos polos base o distrito tem, quantos pontos o mapa desenha, as UFs administrativas, os processos seletivos e as vagas ociosas.
+**resposta:** No Yeendé, cada bolha da visão nacional fica na sede do DSEI, na posição cadastrada no SIGEPSI. O tamanho segue a população indígena atendida (a área da bolha é proporcional à população). Verde com borda amarela é DSEI com edital; azul, sem edital. O mapa mostra todos os DSEIs, com os editais da área inteira. A dica da bolha traz população, quantos polos base o distrito tem, quantos pontos o mapa desenha, as UFs administrativas, os processos seletivos e as vagas ociosas.
 **fonte:** interface do Yeendé
 
 ## Mapa de calor
 
 **perguntas:** botao calor | modo calor | mapa de calor | mapa sem calor
-**resposta:** No Yeendé, o mapa da Saúde Indígena não tem modo de calor: a bolha só diz se o DSEI tem edital no recorte (verde) ou não (azul). As vagas ociosas de cada DSEI aparecem na dica da bolha e, como preenchimento, na barra de "Territórios por vagas"; a taxa de ociosidade de cada edital fica na tabela da Visão geral.
+**resposta:** No Yeendé, o mapa da Saúde Indígena não tem modo de calor: a bolha só diz se o DSEI tem edital (verde) ou não (azul). As vagas ociosas de cada DSEI aparecem na dica da bolha e, como preenchimento, na barra de "Territórios por vagas"; a taxa de ociosidade de cada edital fica na tabela da Visão geral.
 **fonte:** interface do Yeendé
 
 ## Territórios por vagas
@@ -46,7 +54,7 @@ modo Calor saiu em 02/10/2026.
 ## CASAI Nacional no mapa
 
 **perguntas:** casai nacional no mapa | losango roxo | clicar na casai nacional
-**resposta:** No Yeendé, o losango roxo marca as CASAIs de referência nacional (Brasília e São Paulo), desenhadas a partir do SIGEPSI. Clicar nele filtra a página pela busca "CASAI" mais o nome da cidade. Com filtro ativo, a CASAI só aparece se tiver edital no resultado.
+**resposta:** No Yeendé, o losango roxo marca as CASAIs de referência nacional (Brasília e São Paulo), desenhadas a partir do SIGEPSI. Clicar nele abre a Visão geral filtrada pela busca "CASAI" mais o nome da cidade.
 **fonte:** interface do Yeendé
 
 ## Formas dos marcadores no mapa do DSEI
@@ -82,13 +90,13 @@ modo Calor saiu em 02/10/2026.
 ## Voltar ao Brasil
 
 **perguntas:** voltar ao brasil | sair do dsei | voltar para a visao geral do mapa | voltar ao mapa nacional | esc no mapa | fechar o dsei
-**resposta:** No Yeendé, com um DSEI aberto, o botão "← Voltar ao Brasil" no topo do mapa (ou a tecla Esc, com o foco no mapa) fecha o distrito: o mapa se afasta devagar até o Brasil inteiro, o filtro de DSEI sai da página e os outros filtros continuam. O foco volta à linha do DSEI em "Territórios por vagas". O chip "DSEI" dos filtros faz a mesma volta. Em tela cheia, o primeiro Esc volta ao Brasil e o segundo sai da tela cheia. Quem pediu menos movimento ao sistema vê o mapa voltar sem animação.
+**resposta:** No Yeendé, com um DSEI aberto, o botão "← Voltar ao Brasil" no topo do mapa (ou a tecla Esc, com o foco no mapa) fecha o distrito: o mapa se afasta devagar até o Brasil inteiro e o endereço volta a ser o da página Mapa. O foco volta à linha do DSEI em "Territórios por vagas". O voltar do navegador faz a mesma volta. Em tela cheia, o primeiro Esc volta ao Brasil e o segundo sai da tela cheia. Quem pediu menos movimento ao sistema vê o mapa voltar sem animação.
 **fonte:** interface do Yeendé
 
 ## Tela cheia e mapa no celular
 
 **perguntas:** mapa em tela cheia | expandir o mapa | mapa no celular | legenda fechada no celular
-**resposta:** No Yeendé, "Recolher mapa" deixa só o cabeçalho do mapa na Visão geral, para as Fases e os Detalhes subirem; "Mostrar mapa" o traz de volta, e a escolha fica guardada no navegador de cada pessoa. "Tela cheia" faz o mapa ocupar a janela; "Sair da tela cheia" ou a tecla Esc voltam (com um DSEI aberto, o primeiro Esc volta ao Brasil e o segundo sai da tela cheia). Os controles continuam no topo. No celular, a lista fica abaixo do mapa. A legenda do mapa nacional abre pelo botão "Legenda". Sem internet, o fundo do mapa não carrega, mas a lista de territórios continua.
+**resposta:** No Yeendé, o mapa da Saúde Indígena ocupa a página Mapa e não se recolhe. "Tela cheia" faz o mapa ocupar a janela; "Sair da tela cheia" ou a tecla Esc voltam (com um DSEI aberto, o primeiro Esc volta ao Brasil e o segundo sai da tela cheia). Os controles continuam no topo. No celular, a lista fica abaixo do mapa. A legenda do mapa nacional abre pelo botão "Legenda". Sem internet, o fundo do mapa não carrega, mas a lista de territórios continua.
 **fonte:** interface do Yeendé
 
 ## Corrigir coordenadas de um ponto
@@ -100,5 +108,5 @@ modo Calor saiu em 02/10/2026.
 ## Quando o SIGEPSI não responde
 
 **perguntas:** nao foi possivel carregar o mapa da saude indigena | o sigepsi nao respondeu | tentar novamente no mapa | mapa em branco | erro no mapa dos dseis | mapa carregando
-**resposta:** No Yeendé, o mapa da Saúde Indígena depende do SIGEPSI para a lista de DSEIs e para todos os pontos e não tem plano B. Enquanto o SIGEPSI não responde, o mapa fica em "carregando". Se ele falhar, a Visão geral mostra "Não foi possível carregar o mapa da Saúde Indígena: o SIGEPSI não respondeu", com o botão "Tentar novamente"; o mesmo vale no servidor local, que não tem a rota do SIGEPSI. DSEI que só existe no cadastro do banco, sem aparecer no SIGEPSI, não é desenhado.
-**fonte:** src/modulos/visao-geral/visao-geral.tsx; src/modulos/mapa-saude-indigena/localizacoes.ts
+**resposta:** No Yeendé, o mapa da Saúde Indígena depende do SIGEPSI para a lista de DSEIs e para todos os pontos e não tem plano B. Enquanto o SIGEPSI não responde, o mapa fica em "carregando". Se ele falhar, a página Mapa mostra "Não foi possível carregar o mapa da Saúde Indígena: o SIGEPSI não respondeu", com o botão "Tentar novamente"; o mesmo vale no servidor local, que não tem a rota do SIGEPSI. DSEI que só existe no cadastro do banco, sem aparecer no SIGEPSI, não é desenhado.
+**fonte:** src/modulos/mapa/mapa.tsx; src/modulos/mapa-saude-indigena/localizacoes.ts

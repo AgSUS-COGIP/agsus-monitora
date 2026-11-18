@@ -332,7 +332,7 @@ export function criarEstadoDaVisaoGeral({
     anterior da mesma área vale até o novo chegar, e não há espera.
   */
   function aguardandoVagas(linhas: readonly unknown[], area: string) {
-    if (!buscarAcompanhamento || !proprio.aberta) return false;
+    if (!buscarAcompanhamento || !emUso()) return false;
     if (acompanhamentoAtual(area)) return false;
     return !(
       semAcompanhamento?.linhas === linhas && semAcompanhamento?.area === area
@@ -382,8 +382,15 @@ export function criarEstadoDaVisaoGeral({
     quando a página abre (`definirAberta`).
   */
   let pendente = false;
+  /*
+    O Mapa (aba da Saúde Indígena) desenha as linhas da área daqui, com as
+    mesmas contas: aberto, o estado calcula e pede o acompanhamento como se a
+    Visão geral estivesse aberta, sem montá-la (`visitada` não muda).
+  */
+  let lidaPeloMapa = false;
+  const emUso = () => proprio.aberta || lidaPeloMapa;
   function avisarOuvintes() {
-    if (!proprio.aberta) {
+    if (!emUso()) {
       pendente = true;
       return;
     }
@@ -424,7 +431,7 @@ export function criarEstadoDaVisaoGeral({
   function pedirAcompanhamento() {
     const { linhas, areaAtual, carregado } = dados.obter();
     // Página fechada não pede: ao abrir de novo (`definirAberta`), pede o que ficou para trás.
-    if (!proprio.aberta) return;
+    if (!emUso()) return;
     if (!buscarAcompanhamento || !carregado || !areaAtual) return;
     if (pedido && pedido.linhas === linhas && pedido.area === areaAtual) return;
     if (acompanhamentoEmDia(linhas, areaAtual)) return;
@@ -621,6 +628,13 @@ export function criarEstadoDaVisaoGeral({
       const nova = Boolean(valor);
       if (nova === proprio.aberta) return;
       publicar({ aberta: nova, visitada: proprio.visitada || nova });
+      pedirAcompanhamento();
+    },
+    definirLidaPeloMapa(valor) {
+      const nova = Boolean(valor);
+      if (nova === lidaPeloMapa) return;
+      lidaPeloMapa = nova;
+      avisarOuvintes();
       pedirAcompanhamento();
     },
     definirFiltro,

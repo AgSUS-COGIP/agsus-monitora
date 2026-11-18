@@ -49,8 +49,8 @@ export const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
       ),
       passo(
         t("visao-geral-mapa-saude-indigena"),
-        "Mapa dos DSEIs",
-        "Escolher um DSEI no mapa recorta a página por ele; voltar ao Brasil tira esse filtro.",
+        "Mapa",
+        "Quantos DSEIs têm edital, o com mais ociosas e o menos preenchido. O nome do DSEI abre a página Mapa nele; Abrir no mapa, no Brasil.",
         { areas: ["saude-indigena"] },
       ),
       passo(
@@ -63,7 +63,7 @@ export const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
         t("visao-geral-mapa-tela-cheia"),
         "Mapa em tela cheia",
         "Abre o mapa na tela inteira; Esc volta.",
-        { areas: ["saude-indigena", "projetos"] },
+        { areas: ["projetos"] },
       ),
       passo(
         t("visao-geral-processos-por-projeto"),
@@ -80,6 +80,22 @@ export const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
         [t("visao-geral-tabela"), "[aria-labelledby='visaoGeralTabelaTitulo']"],
         "Tabela de processos",
         "Cada linha é um edital, com o prazo e a próxima etapa coloridos pela urgência.",
+      ),
+      PASSO_DA_AYA,
+    ]),
+  }),
+  mapa: Object.freeze({
+    titulo: "Mapa",
+    passos: Object.freeze([
+      passo(
+        t("mapa-saude-indigena"),
+        "Mapa dos DSEIs",
+        "Uma bolha por DSEI e, ao lado, Territórios por vagas. Clicar num DSEI abre o mapa dele, e o endereço passa a ser o do DSEI.",
+      ),
+      passo(
+        t("visao-geral-mapa-tela-cheia"),
+        "Tela cheia",
+        "Abre o mapa na tela inteira; Esc volta.",
       ),
       PASSO_DA_AYA,
     ]),

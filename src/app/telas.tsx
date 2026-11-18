@@ -65,8 +65,10 @@ import { ContextoDaPaginaDeConfiguracoes } from "../modulos/configuracoes/pagina
 
 /** Os ids das seções, na ordem de sempre (a Visão geral primeiro). */
 export const TELAS_DA_CASCA: readonly ViewDeTela[] = Object.freeze([
-  // src/modulos/visao-geral/ (mapas da Saúde Indígena e de Projetos).
+  // src/modulos/visao-geral/ (o mapa de Projetos; o da Saúde Indígena é a aba Mapa).
   "dashboard",
+  // src/modulos/mapa/ — o Mapa da Saúde Indígena (DSEI no endereço).
+  "mapa",
   // src/modulos/editais/nucleo.tsx (modal do edital e linha do tempo em portal).
   "nucleo",
   // src/modulos/cronograma/ (o popup do dia é portal no fim do body).
@@ -124,6 +126,13 @@ export function registrarTelasDoApp({
   registrarTelas({
     dashboard: {
       criar: () => criarVisaoGeral({ toast: avisar, comemoracoesLigadas }),
+    },
+    // O mapa e o Leaflet chegam com a tela; as linhas são as da Visão geral.
+    mapa: {
+      carregar: () =>
+        import("../modulos/mapa/mapa.tsx").then((m) =>
+          m.criarMapa({ comAcompanhamento: telaCriada("dashboard") }),
+        ),
     },
     nucleo: {
       criar: () =>

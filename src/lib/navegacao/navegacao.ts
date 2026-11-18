@@ -92,6 +92,10 @@ const BLOQUEIOS: Readonly<
     (perfil) => permissaoLegada(perfil, "ind"),
     "Sem permissão para Saúde Indígena.",
   ],
+  mapa: [
+    (perfil) => permissaoLegada(perfil, "ind"),
+    "Sem permissão para o Mapa.",
+  ],
   nucleo: [
     (perfil) => permissaoLegada(perfil, "cores"),
     "Sem permissão para Editais.",
