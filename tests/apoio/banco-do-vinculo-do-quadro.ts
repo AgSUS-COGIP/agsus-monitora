@@ -15,6 +15,7 @@
 import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 import { moldeDeBanco } from "./molde-de-banco.ts";
+import { lembrarBanco } from "./bancos-abertos.ts";
 
 export type Banco = PGlite;
 
@@ -67,7 +68,7 @@ create function private."FC_AJUSTE_PONTUACAO_JSON"(p_ajuste uuid) returns json l
 `;
 
 async function montarAntes(): Promise<Banco> {
-  const db = await PGlite.create();
+  const db = lembrarBanco(await PGlite.create());
   await db.exec(INFRAESTRUTURA);
   await db.exec(bancoAntes());
   await db.query(

@@ -1,6 +1,15 @@
 // @vitest-environment node
 import { bloco } from "./apoio/bloco.ts";
-import { describe, expect, it, afterEach, beforeEach, vi } from "vitest";
+import { lembrarBanco } from "./apoio/bancos-abertos.ts";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { calcularKpis } from "../src/lib/analises/analises-curriculares.ts";
 import {
   aptosEEliminados,
@@ -5718,6 +5727,42 @@ bloco("lib/base/prazos", () => {
         "ate-180": 0,
         depois: 1,
       });
+    });
+  });
+});
+
+/*
+  Desde o #887 os blocos de um assunto rodam no mesmo processo: os bancos PGlite
+  que ninguém fechava se somavam (8,5 GB num arquivo) e derrubavam a máquina do
+  GitHub. O bloco fecha o banco criado num teste ao fim dele e o do beforeAll ao
+  fim do bloco (tests/apoio/bancos-abertos.ts).
+*/
+bloco("apoio/bancos-abertos", () => {
+  const falso = () => {
+    const banco = {
+      closed: false,
+      async close() {
+        banco.closed = true;
+      },
+    };
+    return banco;
+  };
+  const doBloco = falso();
+  let doPrimeiroTeste = falso();
+
+  describe("os bancos de teste são fechados", () => {
+    beforeAll(() => {
+      lembrarBanco(doBloco);
+    });
+
+    it("o banco criado no teste fica aberto enquanto o teste dura", () => {
+      doPrimeiroTeste = lembrarBanco(falso());
+      expect(doPrimeiroTeste.closed).toBe(false);
+    });
+
+    it("no teste seguinte, o do teste anterior já foi fechado e o do beforeAll continua aberto", () => {
+      expect(doPrimeiroTeste.closed).toBe(true);
+      expect(doBloco.closed).toBe(false);
     });
   });
 });

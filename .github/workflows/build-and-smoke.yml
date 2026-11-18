@@ -71,13 +71,12 @@ jobs:
       - name: Verificar formatação alterada
         run: npm run format:check
 
-      # Sem a cobertura (18/11/2026): com ela, desde o #887 (testes em poucos arquivos grandes), a
-      # máquina do GitHub caía em 2 min sem log, com 4 ou 2 processos e com teto de memória. O limite
-      # era 1% e não barrava nada; a cobertura segue em `npm run test:coverage`, fora do bloqueio.
-      # Tempo próprio, para um teste preso não consumir o build e o Playwright.
-      - name: Testes
+      # Tempo próprio, para um teste preso não consumir o build e o Playwright. A cobertura roda
+      # com 2 processos (package.json): desde o #887 os bancos PGlite de um assunto se somam no
+      # mesmo processo, e com mais processos a máquina do GitHub ficava sem memória.
+      - name: Testes e cobertura
         timeout-minutes: 20
-        run: npx vitest run --maxWorkers=2 --reporter=verbose
+        run: npm run test:coverage
 
       # O Supabase deste build é fictício: os testes de navegador respondem a ele
       # por page.route (tests/sessao-simulada.spec.js). Não é segredo nem banco real.
