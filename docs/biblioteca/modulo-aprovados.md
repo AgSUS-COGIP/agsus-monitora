@@ -70,8 +70,10 @@ o seguinte (quem edita faz); deixar sem status é do admin. Contratados (Seleç�
 Migração. Regras: `src/lib/aprovados/lista-aprovados-rules.ts` (status, trava, resumo) e
 `src/lib/aprovados/lista-convocacao-rules.ts` (ordem, "a convocar", CSV).
 
-**Status em lote** (11/11/2026): na aba Aprovados, quem muda status marca linhas (ou "Selecionar os N
-da tabela": os filtrados e buscados) e usa "Mudar status". Só Convocado (uma data para todos),
+**Status em lote** (11/11/2026): na aba Aprovados, quem muda status marca linhas e usa "Mudar
+status". A barra da seleção (`BarraDeSelecao`, desde 17/11/2026) separa "Selecionar esta página (N)"
+(as linhas desenhadas) de "Selecionar todos os N resultados" (os filtrados e buscados), e a janela
+diz quantos serão afetados e se vão além da página. Só Convocado (uma data para todos),
 Desistente, Documentação Rejeitada e, para o admin, sem status; Contratado e Migração pedem a
 matrícula de cada um e ficam na linha. A janela mostra quem muda, como está hoje e quem fica de fora
 e por quê (`src/lib/aprovados/status-em-lote-dos-aprovados.ts`); o banco repete as regras, um a um

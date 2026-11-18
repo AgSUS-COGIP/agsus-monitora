@@ -15,8 +15,13 @@ import {
 } from "../../lib/aprovados/status-em-lote-dos-aprovados.ts";
 import { statusEhConvocado } from "../../lib/aprovados/lista-aprovados-rules.ts";
 import { formatNumberBR } from "../../lib/base/formatters";
+import {
+  textoDaConfirmacao,
+  textoDoAlcance,
+  type AlcanceDaSelecao,
+} from "../../lib/base/alcance-da-selecao.ts";
 import { BotaoDeAcao, Modal } from "../../ui/index.ts";
-import { plural } from "./partes.tsx";
+import { NOME_DOS_CANDIDATOS, plural } from "./partes.tsx";
 
 /*
   "Mudar status" da seleção na aba Aprovados (11/11/2026): escolhe o status
@@ -24,19 +29,23 @@ import { plural } from "./partes.tsx";
   mudar e quem fica de fora, com o motivo, e só então grava
   (estado.alterarStatusEmLote → alterar_status_candidatos_aprovados). O banco
   repete as regras, um a um. Contratado e Migração não entram: pedem a
-  matrícula de cada um (a mudança de um por vez, na linha).
+  matrícula de cada um (a mudança de um por vez, na linha). O alcance
+  (esta página ou todos os resultados) e quantos serão afetados ficam no
+  alto e no resumo, antes de gravar.
 */
 
 export function ModalDoStatusEmLote({
   estado,
   perfil,
   candidatos,
+  alcance,
   aoFechar,
   aoConcluir,
 }: {
   estado: EstadoDaAbaDeAprovados;
   perfil: unknown;
   candidatos: readonly CandidatoDaTabelaDeAprovados[];
+  alcance: AlcanceDaSelecao;
   aoFechar: () => void;
   aoConcluir: () => void;
 }) {
@@ -74,7 +83,7 @@ export function ModalDoStatusEmLote({
         <div>
           <h3 id="approvedStatusEmLoteTitulo">Mudar status da seleção</h3>
           <p className="approved-modal-subtitle">
-            {[plural(candidatos.length, "selecionado", "selecionados"), editais]
+            {[textoDoAlcance(alcance, NOME_DOS_CANDIDATOS), editais]
               .filter(Boolean)
               .join(" · ")}
           </p>
@@ -120,6 +129,15 @@ export function ModalDoStatusEmLote({
           ) : null}
         </div>
         <div className="approved-lote-resumo" data-resumo-do-lote>
+          <p data-alcance-da-acao>
+            <strong>
+              {textoDaConfirmacao(
+                alcance,
+                plano.alterar.length,
+                NOME_DOS_CANDIDATOS,
+              )}
+            </strong>
+          </p>
           <p>
             <strong>
               {plano.alterar.length

@@ -2611,10 +2611,14 @@ describe("status em lote", () => {
     expect(
       acharTodos("[data-selecao-do-candidato]").length,
     ).toBeGreaterThanOrEqual(3);
-    await clicar(achar("[data-status-em-lote] input"));
-    expect(achar("[data-status-em-lote]").textContent).toContain(
-      "selecionados",
+    // Poucos candidatos: a página é o resultado inteiro.
+    await clicar(achar('[data-acao="selecionar-pagina"]'));
+    expect(achar("[data-alcance-da-selecao]").textContent).toMatch(
+      /^Todos os \d+ candidatos do resultado selecionados$/,
     );
+    expect(
+      document.querySelector('[data-acao="selecionar-todos-os-resultados"]'),
+    ).toBeNull();
     await clicar(achar("[data-abrir-status-em-lote]"));
     const opcoes = [
       ...$<HTMLSelectElement>("approvedStatusEmLoteSelect").options,
@@ -2628,6 +2632,9 @@ describe("status em lote", () => {
     // Ana já é Contratado: quem edita não muda status definido.
     expect(achar("[data-fora-do-lote]").textContent).toContain(
       "Status já definido (Contratado): só o admin muda",
+    );
+    expect(achar("[data-alcance-da-acao]").textContent).toMatch(
+      /^2 candidatos serão afetados · \d+ dos marcados não se aplicam$/,
     );
     const confirmar = achar<HTMLButtonElement>("[data-confirmar-lote]");
     expect(confirmar.textContent).toBe("Mudar 2 candidatos para Desistente");
@@ -2673,7 +2680,9 @@ describe("status em lote", () => {
   it("quem só lê não vê seleção", async () => {
     await montar({ perfil: { permissoes: { aprovados: "leitor" } } });
     expect(document.querySelector("[data-selecao-do-candidato]")).toBeNull();
-    expect(document.querySelector("[data-status-em-lote]")).toBeNull();
+    expect(
+      document.querySelector('[data-acao="selecionar-pagina"]'),
+    ).toBeNull();
   });
 });
 

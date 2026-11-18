@@ -40,6 +40,12 @@ export { classes };
 export const plural = (total: number, singular: string, varios: string) =>
   `${formatNumberBR(total)} ${total === 1 ? singular : varios}`;
 
+/** O nome dos itens da seleção em lote (lib/base/alcance-da-selecao.ts). */
+export const NOME_DOS_CANDIDATOS = Object.freeze({
+  singular: "candidato",
+  plural: "candidatos",
+});
+
 /*
   O selo do status; com a data da convocação (`dataConvocacao`, "AAAA-MM-DD"),
   Convocado mostra o dia em que foi chamado.

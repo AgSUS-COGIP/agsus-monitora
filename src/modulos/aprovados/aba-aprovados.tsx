@@ -23,10 +23,16 @@ import {
   proximaOrdemDosAprovados,
 } from "../../lib/aprovados/ordem-dos-aprovados.ts";
 import { formatNumberBR } from "../../lib/base/formatters";
+import {
+  alcanceDaSelecao,
+  marcarPagina,
+  mesmaPagina,
+} from "../../lib/base/alcance-da-selecao.ts";
 import { resumoDasOrigens } from "../../lib/aprovados/publicacao-de-aprovados.ts";
 import { statusDoLotePara } from "../../lib/aprovados/status-em-lote-dos-aprovados.ts";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
 import {
+  BarraDeSelecao,
   BotaoDeAcao,
   Campo,
   GradeDeKpis,
@@ -40,6 +46,7 @@ import {
   AcaoDeCarta,
   AcaoDeStatus,
   ModalidadeDoCandidato,
+  NOME_DOS_CANDIDATOS,
   NomeDoCandidato,
   NotaDoCandidato,
   plural,
@@ -64,9 +71,12 @@ import { ModalDoStatusEmLote } from "./status-em-lote.tsx";
   Clique na linha (ou Enter/Espaço com ela em foco) abre a gaveta do
   candidato, como o nome; os botões da linha fazem só a própria ação.
 
-  Status em lote (11/11/2026): quem muda status marca as linhas (ou "todos os
-  da tabela", que são os filtrados e buscados, não só os 50 desenhados) e usa
-  "Mudar status" (status-em-lote.tsx). Mudar filtro ou busca limpa a seleção.
+  Status em lote (11/11/2026): quem muda status marca as linhas e usa "Mudar
+  status" (status-em-lote.tsx). Desde a revisão de 17/11/2026 a barra da
+  seleção (BarraDeSelecao) separa "Selecionar esta página" (as linhas
+  desenhadas) de "Selecionar todos os N resultados" (os filtrados e
+  buscados), e a janela diz quantos serão afetados. Mudar filtro ou busca
+  limpa a seleção.
 
   A origem das listas (publicada da Classificação ou manual, por planilha) fica
   numa linha discreta acima da tabela: a do edital, quando o filtro deixa um só.
@@ -300,7 +310,23 @@ export function AbaAprovados({
     () => daTabela.filter((row) => selecionados.has(row.candidato_id)),
     [daTabela, selecionados],
   );
-  const todos = daTabela.length > 0 && escolhidos.length === daTabela.length;
+  // A "página": as linhas que a tabela desenhou (TabelaInfinita.aoMostrar).
+  const [pagina, setPagina] = useState<readonly string[]>([]);
+  const aoMostrar = useCallback(
+    (visiveis: readonly CandidatoDaTabelaDeAprovados[]) => {
+      const ids = visiveis.map((row) => row.candidato_id);
+      setPagina((atual) => (mesmaPagina(atual, ids) ? atual : ids));
+    },
+    [],
+  );
+  const recorte = useMemo(
+    () => daTabela.map((row) => row.candidato_id),
+    [daTabela],
+  );
+  const alcance = useMemo(
+    () => alcanceDaSelecao(selecionados, pagina, recorte),
+    [selecionados, pagina, recorte],
+  );
   const alternar = useCallback((id: string) => {
     setSelecionados((atual) => {
       const novo = new Set(atual);
@@ -309,10 +335,6 @@ export function AbaAprovados({
       return novo;
     });
   }, []);
-  const alternarTodos = () =>
-    setSelecionados(
-      todos ? new Set() : new Set(daTabela.map((row) => row.candidato_id)),
-    );
   const quantos = Object.values(filtros).filter((lista) => lista.length).length;
   const origens = carregado
     ? resumoDasOrigens(
@@ -503,50 +525,34 @@ export function AbaAprovados({
         </p>
       ) : null}
       {podeSelecionar && carregado && daTabela.length ? (
-        <div className="approved-lote" data-status-em-lote>
-          <label className="approved-lote__todos">
-            <input
-              type="checkbox"
-              checked={todos}
-              ref={(caixa) => {
-                if (caixa)
-                  caixa.indeterminate = escolhidos.length > 0 && !todos;
-              }}
-              onChange={alternarTodos}
-            />
-            {todos
-              ? `Todos os ${formatNumberBR(daTabela.length)} da tabela`
-              : `Selecionar os ${formatNumberBR(daTabela.length)} da tabela`}
-          </label>
-          {escolhidos.length ? (
-            <>
-              <span className="approved-lote__quantos" aria-live="polite">
-                {plural(escolhidos.length, "selecionado", "selecionados")}
-              </span>
-              <button
-                type="button"
-                className="btn"
-                data-abrir-status-em-lote
-                onClick={() => setLoteAberto(true)}
-              >
-                Mudar status
-              </button>
-              <button
-                type="button"
-                className="btn secondary"
-                onClick={() => setSelecionados(new Set())}
-              >
-                Limpar seleção
-              </button>
-            </>
-          ) : null}
-        </div>
+        <BarraDeSelecao
+          className="approved-lote"
+          rotulo="Seleção de candidatos"
+          tour="aprovados-selecao"
+          alcance={alcance}
+          nome={NOME_DOS_CANDIDATOS}
+          aoMarcarPagina={(sim) =>
+            setSelecionados((atual) => marcarPagina(atual, pagina, sim))
+          }
+          aoMarcarTodos={() => setSelecionados(new Set(recorte))}
+          aoLimpar={() => setSelecionados(new Set())}
+        >
+          <button
+            type="button"
+            className="btn small"
+            data-abrir-status-em-lote
+            onClick={() => setLoteAberto(true)}
+          >
+            Mudar status
+          </button>
+        </BarraDeSelecao>
       ) : null}
       {loteAberto ? (
         <ModalDoStatusEmLote
           estado={estado}
           perfil={perfil}
           candidatos={escolhidos}
+          alcance={alcance}
           aoFechar={() => setLoteAberto(false)}
           aoConcluir={() => {
             setLoteAberto(false);
@@ -588,6 +594,7 @@ export function AbaAprovados({
               ? plural(quantos, "candidato", "candidatos")
               : `${formatNumberBR(quantos)} de ${plural(candidatos.length, "candidato", "candidatos")}`
         }
+        aoMostrar={aoMostrar}
         linha={(row) => (
           <LinhaDoAprovado
             key={row.candidato_id}

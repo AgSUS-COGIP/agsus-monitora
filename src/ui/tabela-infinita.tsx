@@ -26,6 +26,9 @@ import { LinhasEsqueleto } from "./esqueleto.tsx";
   e filtros vão ao banco: `filtrarPelaBusca` não se aplica.
 
   Com `erro` (e nada carregado), o aviso de erro toma o lugar do esqueleto.
+
+  `aoMostrar(visiveis)` avisa quais itens estão desenhados (a "página" da
+  seleção em lote: BarraDeSelecao); passe uma função estável.
 */
 
 const POR_VEZ = 50;
@@ -124,6 +127,8 @@ export interface PropriedadesDaTabelaInfinita<T> {
   tour?: string;
   grupo?: GrupoDaTabela<T> | null;
   servidor?: TabelaNoServidor | null;
+  /** Os itens desenhados agora (a "página" da seleção em lote). */
+  aoMostrar?: (visiveis: readonly T[]) => void;
 }
 
 /*
@@ -273,6 +278,7 @@ export function TabelaInfinita<T>({
   tour,
   grupo = null,
   servidor = null,
+  aoMostrar,
 }: PropriedadesDaTabelaInfinita<T>) {
   const {
     placeholder,
@@ -320,7 +326,13 @@ export function TabelaInfinita<T>({
         : naTabela,
     [naTabela, grupo, recolhidos],
   );
-  const visiveis = servidor ? abertos : abertos.slice(0, limite);
+  const visiveis = useMemo(
+    () => (servidor ? abertos : abertos.slice(0, limite)),
+    [servidor, abertos, limite],
+  );
+  useEffect(() => {
+    aoMostrar?.(carregado ? visiveis : []);
+  }, [aoMostrar, carregado, visiveis]);
   // No banco: o que ainda não veio (só se pede quando há mais páginas).
   const noRecorte = servidor ? servidor.total : naTabela.length;
   const faltam = servidor
