@@ -68,6 +68,13 @@ app em React (Etapa 5, parte 1) e ficam aqui, com a Aya.
 **fato:** Na tabela da Visão geral, Aprovados, Contratados e Aguardando chamada abrem a Lista de aprovados no edital; Inscritos abre a Seleção (ou as Análises, conforme a fonte); só o total vira "Origem agregada; detalhe individual não disponível".
 **fonte:** src/lib/visao-geral/origem-dos-numeros.ts
 
+## Composição dos números da Visão geral
+
+**perguntas:** composicao dos numeros da visao geral | ver a composicao | como se forma o numero | de onde sai o total | contratados dentro e alem das vagas | vagas publicadas menos reabertas | clicar no indicador | parcelas do numero
+**resposta:** Na Visão geral, clicar num número sublinhado mostra as parcelas que o formam, quando os dados permitem. Na faixa das vagas: Vagas imediatas = Contratadas + Em seleção + Ociosas e, quando há vagas reabertas, Publicadas nos editais − Reabertas em edital mais novo; Contratadas e Contratações além das vagas imediatas = dentro das vagas + além delas (o total contratado); Em seleção e Ociosas = vagas dos editais sem (ou com) resultado − as contratadas nesses editais. Na tabela, por edital: Contratados = dentro das vagas imediatas + além delas; Vagas = publicadas no edital − reabertas em edital mais novo; Sem contratação = vagas publicadas − reabertas − contratadas dentro das vagas; Aprovados = já chamados (com status) + aguardando chamada (sem status). Quando o número é um só, sem parcela que o explique, não há composição.
+**fato:** Clicar num número da Visão geral mostra a composição: Contratados = dentro + além das vagas imediatas; Vagas = publicadas − reabertas; Vagas imediatas = Contratadas + Em seleção + Ociosas.
+**fonte:** src/lib/visao-geral/composicao-dos-numeros.ts
+
 ## Resultado de cada processo seletivo
 
 **perguntas:** quanto tempo levou o processo seletivo | duracao do edital | quantos aprovados no edital | quantos passaram | cadastro reserva do edital | quantos ficaram em cadastro reserva | resultado dos processos seletivos | dados dos processos de 2025

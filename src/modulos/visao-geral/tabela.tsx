@@ -33,7 +33,12 @@ import {
   type OrigemDoNumero,
   type TelaDeOrigem,
 } from "../../lib/visao-geral/origem-dos-numeros.ts";
+import {
+  composicaoDaLinha,
+  type CampoComComposicao,
+} from "../../lib/visao-geral/composicao-dos-numeros.ts";
 import { classes, Popover, Selo, TabelaInfinita } from "../../ui/index.ts";
+import { ComposicaoDoNumero } from "./composicao.tsx";
 
 /*
   A tabela de processos seletivos da Visão geral (TabelaInfinita, src/ui/):
@@ -232,19 +237,40 @@ type Origens = {
   ) => void;
 };
 
-const ROTULO_DO_NUMERO: Readonly<Record<CampoComOrigem, string>> =
-  Object.freeze({
-    aprovados: "Aprovados",
-    contratados: "Contratados",
-    cadastro_reserva: "Aguardando chamada",
-    inscritos: "Inscritos",
-  });
+const ROTULO_DO_NUMERO: Readonly<
+  Record<CampoComOrigem | CampoComComposicao, string>
+> = Object.freeze({
+  aprovados: "Aprovados",
+  contratados: "Contratados",
+  cadastro_reserva: "Aguardando chamada",
+  inscritos: "Inscritos",
+  vagas_total: "Vagas",
+  vagas_ociosas: "Sem contratação",
+});
+const CAMPOS_COM_ORIGEM: readonly string[] = [
+  "aprovados",
+  "contratados",
+  "cadastro_reserva",
+  "inscritos",
+];
+const CAMPOS_COM_COMPOSICAO: readonly string[] = [
+  "vagas_total",
+  "contratados",
+  "vagas_ociosas",
+  "aprovados",
+];
+const ehCampoComOrigem = (campo: string): campo is CampoComOrigem =>
+  CAMPOS_COM_ORIGEM.includes(campo);
+const ehCampoComComposicao = (campo: string): campo is CampoComComposicao =>
+  CAMPOS_COM_COMPOSICAO.includes(campo);
 
 /*
   O número que leva aos dados (revisão de 17/11/2026): clicar abre um painel
-  pequeno com o caminho para a tela do módulo, já no edital, ou "Origem
-  agregada; detalhe individual não disponível" quando só há o total. Sem
-  destino (sem número, zero, sem acesso à tela), é texto como antes.
+  pequeno com a composição, quando os dados permitem (Contratados = dentro
+  + além das vagas imediatas; Vagas = publicadas − reabertas), e o caminho
+  para a tela do módulo, já no edital, ou "Origem agregada; detalhe
+  individual não disponível" quando só há o total. Sem nada disso (sem
+  número, zero, sem acesso à tela), é texto como antes.
 */
 function NumeroDaLinha({
   linha,
@@ -254,17 +280,21 @@ function NumeroDaLinha({
   origens,
 }: {
   linha: LinhaDaVisaoGeral;
-  campo: CampoComOrigem;
+  campo: CampoComOrigem | CampoComComposicao;
   texto: string;
   extra?: ReactNode;
   origens: Origens;
 }) {
-  const origem = origemDoNumero(linha, campo, {
-    comListas: origens.comListas,
-  });
+  const origem = ehCampoComOrigem(campo)
+    ? origemDoNumero(linha, campo, { comListas: origens.comListas })
+    : ({ tipo: "nenhuma" } as const);
   const comTela =
     origem.tipo === "tela" && origens.podeAbrir(origem.view) ? origem : null;
-  if (!comTela && origem.tipo !== "agregada")
+  const agregada = origem.tipo === "agregada";
+  const passos = ehCampoComComposicao(campo)
+    ? composicaoDaLinha(linha, campo)
+    : null;
+  if (!comTela && !agregada && !passos)
     return (
       <>
         {texto}
@@ -276,7 +306,13 @@ function NumeroDaLinha({
     <>
       <Popover
         rotulo={rotulo}
-        dica={comTela ? comTela.rotulo : TEXTO_DA_ORIGEM_AGREGADA}
+        dica={
+          passos
+            ? "Ver a composição"
+            : comTela
+              ? comTela.rotulo
+              : TEXTO_DA_ORIGEM_AGREGADA
+        }
         gatilho={texto}
         classeDoBotao="visao-geral-numero-botao"
         className="visao-geral-numero-origem"
@@ -286,6 +322,7 @@ function NumeroDaLinha({
         {(fechar) => (
           <div className="visao-geral-origem">
             <strong>{rotulo}</strong>
+            {passos ? <ComposicaoDoNumero passos={passos} /> : null}
             {comTela ? (
               <button
                 type="button"
@@ -302,11 +339,11 @@ function NumeroDaLinha({
                 />{" "}
                 {comTela.rotulo}
               </button>
-            ) : (
+            ) : agregada ? (
               <p className="visao-geral-origem-agregada">
                 {TEXTO_DA_ORIGEM_AGREGADA}
               </p>
-            )}
+            ) : null}
           </div>
         )}
       </Popover>
@@ -356,7 +393,12 @@ function celula(
     case "vagas_total":
       return (
         <td key={campo} className="num">
-          {fmt(linha.vagas_total)}
+          <NumeroDaLinha
+            linha={linha}
+            campo={campo}
+            texto={fmt(linha.vagas_total)}
+            origens={origens}
+          />
         </td>
       );
     case "duracao":
@@ -410,14 +452,21 @@ function celula(
       const taxa = taxaDeOciosidade(linha);
       return (
         <td key={campo} className="num">
-          {fmt(vagasSemContratacao(linha))}
-          <span
-            className="visao-geral-taxa"
-            data-nivel={taxa.nivel}
-            title={`${taxa.pct}% das vagas sem contratação`}
-          >
-            {taxa.pct}%
-          </span>
+          <NumeroDaLinha
+            linha={linha}
+            campo={campo}
+            texto={fmt(vagasSemContratacao(linha))}
+            origens={origens}
+            extra={
+              <span
+                className="visao-geral-taxa"
+                data-nivel={taxa.nivel}
+                title={`${taxa.pct}% das vagas sem contratação`}
+              >
+                {taxa.pct}%
+              </span>
+            }
+          />
         </td>
       );
     }

@@ -546,6 +546,26 @@ describe("a tela dentro do app", () => {
       expect(botao("Abrir na Lista de aprovados", painel)).toBeUndefined();
     });
 
+    it("o número mostra a composição: na faixa e na linha", async () => {
+      await montar();
+      await esperar();
+      // Faixa: Vagas imediatas = Contratadas + Em seleção + Ociosas.
+      await clicar(kpi("vagas").querySelector(".visao-geral-numero-botao"));
+      const faixa = kpi("vagas").querySelector(".visao-geral-composicao");
+      expect(faixa.textContent).toContain("Contratadas17");
+      expect(faixa.textContent).toContain("Em seleção+ 6");
+      expect(faixa.textContent).toContain("Vagas imediatas= 23");
+      // Linha: 10 vagas − 4 contratadas = 6 sem contratação.
+      await clicar(
+        celulaDe(1, "vagas_ociosas").querySelector(".visao-geral-numero-botao"),
+      );
+      expect(
+        celulaDe(1, "vagas_ociosas").querySelector(".visao-geral-composicao")
+          .textContent,
+      ).toContain("Sem contratação= 6");
+      expect(document.querySelector("#visaoGeralGaveta")).toBeNull();
+    });
+
     it("sem acesso à Lista de aprovados, o número é texto", async () => {
       await montar({
         supabase: comLista(),

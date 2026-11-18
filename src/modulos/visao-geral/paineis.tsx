@@ -31,6 +31,11 @@ import {
   rotuloDoAtalho,
 } from "../../lib/visao-geral/visao-geral.ts";
 import {
+  composicaoDoIndicador,
+  type Composicao,
+} from "../../lib/visao-geral/composicao-dos-numeros.ts";
+import { ComposicaoDoNumero } from "./composicao.tsx";
+import {
   ChipDeFiltro,
   ChipsDeFiltro,
   ErroAoCarregar,
@@ -38,6 +43,7 @@ import {
   ListaDePendencias,
   MaisOpcoes,
   PainelDeFiltros,
+  Popover,
 } from "../../ui/index.ts";
 import { useState } from "react";
 
@@ -375,6 +381,7 @@ function Numero({
   tom,
   esperando,
   situacao,
+  passos,
 }: {
   chave: string;
   rotulo: string;
@@ -384,6 +391,8 @@ function Numero({
   tom?: string;
   esperando: boolean;
   situacao?: SituacaoDoIndicador;
+  /** A composição do número: clicar nele abre as parcelas. */
+  passos?: Composicao | null;
 }) {
   const semValor = situacao && situacao.tipo !== "valor" ? situacao : null;
   const texto = semValor
@@ -403,6 +412,21 @@ function Numero({
       <span className="visao-geral-numero-rotulo">{rotulo}</span>
       {esperando ? (
         <span className="ui-kpi-valor ui-esqueleto" aria-hidden="true" />
+      ) : passos && !semValor ? (
+        <Popover
+          rotulo={`${rotulo}: ${fmt(valor)}`}
+          dica="Ver a composição"
+          gatilho={fmt(valor)}
+          classeDoBotao="ui-kpi-valor visao-geral-numero-botao"
+          className="visao-geral-numero-origem"
+          lado="esquerda"
+          acao={`composicao-${chave}`}
+        >
+          <div className="visao-geral-origem">
+            <strong>{rotulo}</strong>
+            <ComposicaoDoNumero passos={passos} />
+          </div>
+        </Popover>
       ) : (
         <span className="ui-kpi-valor">{semValor ? "—" : fmt(valor)}</span>
       )}
@@ -442,6 +466,7 @@ export function Vagas({ e, textos }: Omit<PropsComTextos, "estado">) {
       <div className="visao-geral-vagas-numeros">
         <Numero
           chave="vagas"
+          passos={composicaoDoIndicador(e.filtradas, "vagas")}
           rotulo={rotulo.kpi_vagas_label}
           valor={k.vagas}
           esperando={esperando}
@@ -449,6 +474,7 @@ export function Vagas({ e, textos }: Omit<PropsComTextos, "estado">) {
         />
         <Numero
           chave="contratadas"
+          passos={composicaoDoIndicador(e.filtradas, "contratadas")}
           tom="sucesso"
           rotulo={rotulo.kpi_contratadas_label}
           valor={k.contratadas}
@@ -457,6 +483,7 @@ export function Vagas({ e, textos }: Omit<PropsComTextos, "estado">) {
         />
         <Numero
           chave="emSelecao"
+          passos={composicaoDoIndicador(e.filtradas, "emSelecao")}
           tom="info"
           rotulo={rotulo.kpi_em_selecao_label}
           valor={k.emSelecao}
@@ -466,6 +493,7 @@ export function Vagas({ e, textos }: Omit<PropsComTextos, "estado">) {
         />
         <Numero
           chave="ociosas"
+          passos={composicaoDoIndicador(e.filtradas, "ociosas")}
           tom="alerta"
           rotulo={rotulo.kpi_ociosas_label}
           valor={k.ociosas}
@@ -498,6 +526,7 @@ export function Vagas({ e, textos }: Omit<PropsComTextos, "estado">) {
       <div className="visao-geral-vagas-outros">
         <Numero
           chave="alemDasVagas"
+          passos={composicaoDoIndicador(e.filtradas, "alemDasVagas")}
           rotulo={rotulo.kpi_alem_das_vagas_label}
           valor={k.alemDasVagas}
           esperando={!e.carregado}

@@ -66,6 +66,13 @@ trabalho). De cima para baixo:
   (`telaPermitida`); sem os registros (contratados sem lista vigente, inscritos de outra fonte),
   "Origem agregada; detalhe individual não disponível". `sairPelaLinha` guarda a linha, e ao voltar
   (`definirAberta(true)`) ela se destaca; área, filtros e busca ficam no estado.
+- **Composição ao clicar no número** (revisão de 17/11/2026; `composicao-dos-numeros.ts` em
+  `src/lib/visao-geral/`, desenho em `composicao.tsx`): o mesmo `Popover` mostra as parcelas, como
+  uma conta armada (base, +, −, =). Na faixa (`composicaoDoIndicador`, das linhas do recorte):
+  Vagas imediatas = Contratadas + Em seleção + Ociosas e publicadas − reabertas; Contratadas e além
+  das vagas = dentro + além; Em seleção/Ociosas = vagas do grupo − contratadas nele. Na linha
+  (`composicaoDaLinha`): Contratados, Vagas, Sem contratação e Aprovados. Sem parcela que explique,
+  nada; as contas são as dos indicadores, para fechar.
 - **Selo do cronograma** (`urgenciaDoCronograma`, `seloDoCronograma`, `descricaoDoCronograma` em
   `src/lib/visao-geral/visao-geral.ts`; conferência de 17/11/2026). "Sem cronograma" só quando o edital não
   tem etapa (`temCronogramaCadastrado`: automático, ou percentual, próxima etapa ou etapa atual
