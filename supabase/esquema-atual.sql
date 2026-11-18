@@ -21538,6 +21538,8 @@ declare
   v_qt integer;
 begin
   -- 20261103181500: "vaga" e "nome_vaga" para o robô conferir a vaga sem quadro aqui.
+  -- 20261117193000: "inscricao" é a 1ª candidatura do candidato nas vagas do MESMO edital (ou na vaga
+  -- da análise), não em qualquer vaga; sem candidatura ali, nula (o robô não acusa "antes da inscrição").
   with pagina as (
     select a.id, a."CO_AREA" as area, private."FC_NUMERO_EDITAL"(a.edital) as numero, a.id_origem,
            a.status_consolidado, a.nota_final_ajustada, a.pontuacao_escolaridade,
@@ -21557,7 +21559,10 @@ begin
            'etnico', p.pontuacao_criterio_etnico, 'data_analise', p.data_analise,
            'inscricao', (select (min(c."DT_CANDIDATURA") at time zone 'America/Sao_Paulo')::date
                            from public."TB_EMPREGARE_CANDIDATO" c
-                          where c."CO_CANDIDATO_EMPREGARE" = nullif(btrim(p.id_origem), '')),
+                           left join public."TB_EMPREGARE_VAGA" v on v."CO_VAGA" = c."CO_VAGA"
+                          where c."CO_CANDIDATO_EMPREGARE" = nullif(btrim(p.id_origem), '')
+                            and (v."CO_MONITORAMENTO" = e.edital_id
+                                 or c."CO_VAGA" = nullif(btrim(p.codigo_vaga), ''))),
            'atualizado', p.updated_at,
            'vaga', nullif(btrim(p.codigo_vaga), ''),
            'nome_vaga', case when nullif(btrim(p.nome_vaga), '') is not null then p.nome_vaga end) order by p.id), '[]'::jsonb),
@@ -21577,7 +21582,7 @@ $$;
 -- Name: FUNCTION conferencia_ler_analises(p_apos uuid, p_limite integer); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.conferencia_ler_analises(p_apos uuid, p_limite integer) IS 'Conferências (job Python): uma página (até 10000, pela ordem do id, depois de p_apos) das análises curriculares ativas, só com id, área, edital, código do candidato, status, notas, datas, a data da candidatura na Empregare e o código e o nome da vaga (20261103181500). Sem nome nem CPF. proximo = cursor da página seguinte (nulo na última). Só service_role.';
+COMMENT ON FUNCTION public.conferencia_ler_analises(p_apos uuid, p_limite integer) IS 'Conferências (job Python): uma página (até 10000, pela ordem do id, depois de p_apos) das análises curriculares ativas, só com id, área, edital, código do candidato, status, notas, datas, a data da 1ª candidatura na Empregare nas vagas do mesmo edital (ou na vaga da análise; 20261117193000) e o código e o nome da vaga (20261103181500). Sem nome nem CPF. proximo = cursor da página seguinte (nulo na última). Só service_role.';
 
 --
 -- Name: conferencia_ler_aprovados(); Type: FUNCTION; Schema: public; Owner: -
@@ -21603,12 +21608,19 @@ CREATE FUNCTION public.conferencia_ler_aprovados() RETURNS jsonb
              'nome:' || lower(regexp_replace(btrim(c.nome), '\s+', ' ', 'g'))), 'UTF8')), 'hex') as pessoa,
            -- O vínculo é a matrícula (uma por contratação), em hash: a matrícula não sai do banco.
            encode(sha256(convert_to('vinculo:' || nullif(ltrim(upper(
-             regexp_replace(coalesce(c.matricula, ''), '[^0-9A-Za-z]', '', 'g')), '0'), ''), 'UTF8')), 'hex') as vinculo
+             regexp_replace(coalesce(c.matricula, ''), '[^0-9A-Za-z]', '', 'g')), '0'), ''), 'UTF8')), 'hex') as vinculo,
+           -- 20261117193000: a admissão conciliada com o RH (TB_ADMISSAO_CONCILIADA) da linha.
+           ad.admissao
       from public."TB_CANDIDATO_APROVADO" c
       join vigentes v on v.id = c.lista_id
       left join public."TB_MONITORAMENTO_INDIGENA" m on m.id = v.edital
       left join public."TB_ANALISE_CURRICULAR" a on a.id = c."CO_ANALISE_CURRICULAR"
-     where c.removido_em is null and c.status in ('Convocado', 'Contratado')
+      left join lateral (select min(x."DT_ADMISSAO") as admissao
+                           from public."TB_ADMISSAO_CONCILIADA" x
+                          where x."CO_CANDIDATO_APROVADO" = c.id) ad on true
+     where c.removido_em is null
+       -- A linha admitida no RH entra com qualquer status: o robô avisa o status desatualizado.
+       and (c.status in ('Convocado', 'Contratado') or ad.admissao is not null)
        -- A linha que o job dá como "em outra lista" (20261024120000) não é mais contratação.
        and not private."FC_EM_OUTRA_LISTA"(c.id)
   ),
@@ -21624,7 +21636,8 @@ CREATE FUNCTION public.conferencia_ler_aprovados() RETURNS jsonb
     'candidatos', (
       select coalesce(jsonb_agg(jsonb_build_object(
           'id', c.id, 'lista', c.lista_id, 'edital', c.edital, 'area', c.area, 'status', c.status,
-          'convocado_em', c."DT_CONVOCACAO", 'pessoa', c.pessoa, 'vinculo', c.vinculo)), '[]'::jsonb)
+          'convocado_em', c."DT_CONVOCACAO", 'pessoa', c.pessoa, 'vinculo', c.vinculo,
+          'admitido', c.admissao is not null, 'admissao', c.admissao)), '[]'::jsonb)
         from candidatos c
     ),
     'pendencias', (
@@ -21652,7 +21665,7 @@ $_$;
 -- Name: FUNCTION conferencia_ler_aprovados(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.conferencia_ler_aprovados() IS 'Conferências (job Python): convocados e contratados das listas de aprovados vigentes (id, lista, edital, status, data da convocação, um hash da pessoa — código do candidato ou nome normalizado — e um hash do vínculo — a matrícula normalizada —, para achar a mesma pessoa com duas matrículas no mesmo edital e a mesma matrícula em duas linhas) e, das listas publicadas pela Classificação, as pendências da publicação ainda sem desfecho (ids). Sem nome, CPF nem matrícula. Só service_role.';
+COMMENT ON FUNCTION public.conferencia_ler_aprovados() IS 'Conferências (job Python): convocados, contratados e as linhas com admissão conciliada com o RH (qualquer status) das listas de aprovados vigentes (id, lista, edital, status, data da convocação, se tem admissão e a data dela (20261117193000), um hash da pessoa — código do candidato ou nome normalizado — e um hash do vínculo — a matrícula normalizada —, para achar a mesma pessoa com duas matrículas no mesmo edital e a mesma matrícula em duas linhas) e, das listas publicadas pela Classificação, as pendências da publicação ainda sem desfecho (ids). Sem nome, CPF nem matrícula. Só service_role.';
 
 --
 -- Name: conferencia_ler_cargas(); Type: FUNCTION; Schema: public; Owner: -
@@ -21883,7 +21896,7 @@ CREATE FUNCTION public.conferencia_ler_listas_e_quadros() RETURNS jsonb
   with ultimas as (
     select distinct on (l."CO_MONITORAMENTO", l."TP_LISTA")
            l."CO_LISTA_CLASSIFICACAO", l."CO_MONITORAMENTO", l."TP_LISTA", l."DT_GERACAO",
-           l."QT_PENDENCIA", l."ST_PUBLICADA", l."DS_RESULTADO"
+           l."QT_PENDENCIA", l."ST_PUBLICADA", l."DS_RESULTADO", l."NU_VERSAO_REGRA"
       from public."TB_LISTA_CLASSIFICACAO" l
      where not private."FC_EDITAL_EH_TREINAMENTO"(l."CO_MONITORAMENTO")
      order by l."CO_MONITORAMENTO", l."TP_LISTA", l."DT_GERACAO" desc, l."CO_LISTA_CLASSIFICACAO" desc
@@ -21895,6 +21908,8 @@ CREATE FUNCTION public.conferencia_ler_listas_e_quadros() RETURNS jsonb
           'id', u."CO_LISTA_CLASSIFICACAO", 'edital', u."CO_MONITORAMENTO", 'area', m."CO_AREA",
           'tipo', u."TP_LISTA", 'gerada_em', u."DT_GERACAO", 'pendencias', u."QT_PENDENCIA",
           'publicada', u."ST_PUBLICADA" = 'S',
+          -- 20261117193000: a versão da regra com que a lista foi gerada (a vigente vem do contexto).
+          'versao_regra', u."NU_VERSAO_REGRA",
           'vagas_pendentes', (select coalesce(jsonb_agg(distinct p ->> 'vaga'), '[]'::jsonb)
                                 from jsonb_array_elements(case when jsonb_typeof(u."DS_RESULTADO" -> 'pendencias') = 'array'
                                                                then u."DS_RESULTADO" -> 'pendencias' else '[]'::jsonb end) p
@@ -21925,7 +21940,7 @@ $$;
 -- Name: FUNCTION conferencia_ler_listas_e_quadros(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.conferencia_ler_listas_e_quadros() IS 'Conferências (job Python, só service_role): a última lista de classificação de cada edital e tipo (fora do treinamento) com as vagas com empate pendente, os ajustes de recurso aprovados e as linhas ativas do quadro de vagas (id, edital, cargo, lotação), cruas. A vaga sem linha no quadro e a lista final desatualizada são conferidas no robô, com as páginas de conferencia_ler_analises (20261103181500).';
+COMMENT ON FUNCTION public.conferencia_ler_listas_e_quadros() IS 'Conferências (job Python, só service_role): a última lista de classificação de cada edital e tipo (fora do treinamento), com a versão da regra com que foi gerada (20261117193000), as vagas com empate pendente, os ajustes de recurso aprovados e as linhas ativas do quadro de vagas (id, edital, cargo, lotação), cruas. A vaga sem linha no quadro e a lista final desatualizada são conferidas no robô, com as páginas de conferencia_ler_analises (20261103181500).';
 
 --
 -- Name: conferir_eliminados_pre_classificacao(uuid, text[]); Type: FUNCTION; Schema: public; Owner: -
