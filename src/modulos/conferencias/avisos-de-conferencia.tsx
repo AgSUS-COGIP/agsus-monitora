@@ -54,7 +54,13 @@ import {
 import { mensagemDeFalha } from "../../lib/carga/falha-de-rede";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import { formatNumberBR } from "../../lib/base/formatters";
-import { Campo, Gaveta, Segmentado, Selo } from "../../ui/index.ts";
+import {
+  Campo,
+  Gaveta,
+  Segmentado,
+  Selo,
+  SeloDePrazo,
+} from "../../ui/index.ts";
 import { criarEstadoDosAvisos } from "./estado.ts";
 
 declare global {
@@ -472,9 +478,13 @@ function SeloDoTratamento({ aviso }: { aviso: Aviso }) {
   );
 }
 
-/** Responsável, prazo (vencido em destaque), evidências e a última rechecagem. */
+/**
+  Responsável, prazo (vencido em destaque, e o selo de quanto falta enquanto
+  o aviso está aberto), evidências e a última rechecagem.
+*/
 function DetalhesDoAviso({ aviso }: { aviso: Aviso }) {
-  const vencido = prazoVencido(aviso.prazo, hojeEmBrasilia());
+  const hoje = hojeEmBrasilia();
+  const vencido = prazoVencido(aviso.prazo, hoje);
   const partes = [
     aviso.situacao === "RESOLVIDO"
       ? `Resolvido em ${diaDoAviso(aviso.resolvidoEm)}`
@@ -492,8 +502,19 @@ function DetalhesDoAviso({ aviso }: { aviso: Aviso }) {
           className={vencido ? "conf-prazo conf-prazo--vencido" : "conf-prazo"}
         >
           {" · "}até {diaDoCaso(aviso.prazo)}
-          {vencido ? " (vencido)" : ""}
         </span>
+      ) : null}
+      {aviso.prazo &&
+      aviso.situacao !== "RESOLVIDO" &&
+      aviso.tratamento !== "DISPENSADO" ? (
+        <>
+          {" "}
+          <SeloDePrazo
+            data={aviso.prazo}
+            hoje={hoje}
+            diaFormatado={diaDoCaso(aviso.prazo)}
+          />
+        </>
       ) : null}
     </small>
   );

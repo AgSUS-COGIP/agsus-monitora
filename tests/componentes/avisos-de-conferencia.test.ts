@@ -246,6 +246,9 @@ describe("cartão do Status das atualizações", () => {
     expect(
       document.querySelector(".conf-prazo--vencido")?.textContent,
     ).toContain("02/01/2026");
+    const selo = document.querySelector(".ui-selo-de-prazo");
+    expect(selo?.getAttribute("data-faixa")).toBe("vencido");
+    expect(selo?.textContent).toMatch(/^Venceu há \d/);
     const item = definido(document.querySelector(".conf-aviso"));
     await clicar(botao(item, "Tratar"));
     await esperar();

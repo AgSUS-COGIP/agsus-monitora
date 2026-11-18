@@ -1217,6 +1217,8 @@ Avaliações concluídas        ← label, text-secondary
 | `danger` | Atrasado, Reprovado, Erro, Falha, Bloqueado |
 | `neutral` | Rascunho, Inativo, Cancelado, Arquivado |
 
+**Faixas de prazo** (`SeloDePrazo`, `src/lib/base/prazos.ts`): o texto diz quanto falta ("Vence hoje", "Vence em 12 dias", "Venceu há 3 dias") e a cor só complementa. Vencido em `danger`; vence em menos de 30 dias em `warning`; em menos de 90 em `info`; o resto `neutral`. No próprio dia ainda vale ("Vence hoje"). Os filtros por faixa usam os rótulos "Vencido" e "Vence em menos de 30, 90 ou 180 dias".
+
 ### 11.9 Barras de progresso
 
 | Propriedade | Valor |
