@@ -103,7 +103,7 @@ const erroDaConsulta = (falha: unknown): string => {
   nome), onde (edital, vaga, situação, responsável), o motivo (datas, notas)
   e, no aprovado, as vagas da pessoa; clicar leva à tela do módulo já no caso
   (análise, aprovado, entrevista; src/lib destinoDoCaso). No topo da lista, a
-  busca em todos os avisos. A central de avisos (20261118120000): os abertos
+  busca em todos os avisos. A central de avisos (20261118140000): os abertos
   agrupados por edital; cada aviso com a situação da equipe (em análise,
   aguardando documento, corrigido, dispensado com justificativa; "rechecado sem
   problema" é da conferência), responsável e prazo (vencido em destaque), a

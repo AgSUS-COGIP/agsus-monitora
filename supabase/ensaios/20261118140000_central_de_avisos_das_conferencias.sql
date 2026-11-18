@@ -1,9 +1,9 @@
 /*
-  ENSAIO de 20261118120000_central_de_avisos_das_conferencias (não grava: termina em rollback). Aplica a migration; confere a migração dos
+  ENSAIO de 20261118140000_central_de_avisos_das_conferencias (não grava: termina em rollback). Aplica a migration; confere a migração dos
   ignorados, a lista, um ciclo de tratamento como o administrador global (sem sessão: as funções que
   exigem sessão ficam de fora) e a marca; aplica o rollback e confere que os corpos e os ignorados
   voltaram.
-  psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/ensaios/20261118120000_central_de_avisos_das_conferencias.sql
+  psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/ensaios/20261118140000_central_de_avisos_das_conferencias.sql
 */
 
 begin;
@@ -30,7 +30,7 @@ begin
        is distinct from 'b4b445bbb0c5d09e8c7857508db7d03b'
      or md5(replace((select prosrc from pg_proc where oid = to_regprocedure('public.ignorar_aviso_conferencia(uuid, text)')), chr(13), ''))
        is distinct from 'c5f9f342ebd5e9ccb0cb239ea21ef04c' then
-    raise exception 'Uma das funções dos avisos mudou depois do retrato de 18/11/2026: junte as mudanças antes de aplicar.';
+    raise exception 'Uma das funções dos avisos mudou depois do retrato de 18/11/2026 (depois do vínculo vaga–quadro): junte as mudanças antes de aplicar.';
   end if;
   if exists (select 1 from public."TB_AVISO_CONFERENCIA" a
               where a."TP_SITUACAO" = 'IGNORADO' and length(btrim(coalesce(a."DS_MOTIVO_IGNORADO", ''))) < 3) then
@@ -271,7 +271,7 @@ begin
       insert into public."TH_AVISO_CONFERENCIA" ("CO_AVISO_CONFERENCIA", "TP_EVENTO", "TP_TRATAMENTO_ANTERIOR", "TP_TRATAMENTO", "TP_SITUACAO", "QT_OCORRENCIA", "DS_MOTIVO", "CO_EXECUCAO")
       values (v_id, 'ACHADO', null, 'PENDENTE', 'ABERTO', v_qt, null, p_execucao);
       v_novos := v_novos + 1;
-    -- 20261118120000: o dispensado volta a pendente se a quantidade passar da dispensada; o resolvido
+    -- 20261118140000: o dispensado volta a pendente se a quantidade passar da dispensada; o resolvido
     -- reabre; tudo vai para o histórico (TH_AVISO_CONFERENCIA), nada se apaga.
     elsif v_atual."TP_SITUACAO" = 'RESOLVIDO'
        or (v_atual."TP_TRATAMENTO" = 'DISPENSADO' and v_qt > v_atual."QT_OCORRENCIA_DISPENSADA") then
@@ -332,7 +332,7 @@ begin
 end;
 $_$;
 
-COMMENT ON FUNCTION public.gravar_avisos_conferencia(p_execucao text, p_avisos jsonb) IS 'Grava até 1000 avisos de uma execução (um por conferência + escopo): novo abre; resolvido reabre; dispensado volta a pendente só se a quantidade passou da dispensada; corrigido antes da execução e achado de novo volta para em análise; aberto atualiza quantidade e exemplos. Cada mudança vai para TH_AVISO_CONFERENCIA (20261118120000). Com ''casos'' (até 5000: análise, código do candidato, referência, tipo da referência e o detalhe que motivou), troca os casos do aviso. Recusa (22023) exemplo ou caso que não seja id ou código (espaço, @, 11 dígitos), tipo desconhecido e resumo com cara de dado pessoal. Só service_role.';
+COMMENT ON FUNCTION public.gravar_avisos_conferencia(p_execucao text, p_avisos jsonb) IS 'Grava até 1000 avisos de uma execução (um por conferência + escopo): novo abre; resolvido reabre; dispensado volta a pendente só se a quantidade passou da dispensada; corrigido antes da execução e achado de novo volta para em análise; aberto atualiza quantidade e exemplos. Cada mudança vai para TH_AVISO_CONFERENCIA (20261118140000). Com ''casos'' (até 5000: análise, código do candidato, referência, tipo da referência e o detalhe que motivou), troca os casos do aviso. Recusa (22023) exemplo ou caso que não seja id ou código (espaço, @, 11 dígitos), tipo desconhecido e resumo com cara de dado pessoal. Só service_role.';
 
 CREATE OR REPLACE FUNCTION public.finalizar_conferencia(p_execucao text, p_conferencias text[], p_falhas text[] DEFAULT '{}'::text[], p_erro text DEFAULT NULL::text) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
@@ -355,7 +355,7 @@ begin
   end if;
 
   -- Só conferência que rodou até o fim resolve: a que falhou deixa os avisos como estavam.
-  -- 20261118120000: o tratamento vira "rechecado sem problema" (o dispensado continua dispensado) e o
+  -- 20261118140000: o tratamento vira "rechecado sem problema" (o dispensado continua dispensado) e o
   -- histórico guarda o que era; o motivo de quem tratou não se apaga.
   if v_mensagem is null then
     with alvo as (
@@ -404,7 +404,7 @@ begin
 end;
 $_$;
 
-COMMENT ON FUNCTION public.finalizar_conferencia(p_execucao text, p_conferencias text[], p_falhas text[], p_erro text) IS 'Fecha a execução das conferências: os avisos abertos das conferências que rodaram até o fim e não foram achados de novo viram RESOLVIDO, com o tratamento RECHECADO_SEM_PROBLEMA (o DISPENSADO fica) e o evento NAO_ACHADO no histórico (20261118120000); com p_erro, nada é resolvido e a execução FALHOU; com falhas, PARCIAL. Só service_role.';
+COMMENT ON FUNCTION public.finalizar_conferencia(p_execucao text, p_conferencias text[], p_falhas text[], p_erro text) IS 'Fecha a execução das conferências: os avisos abertos das conferências que rodaram até o fim e não foram achados de novo viram RESOLVIDO, com o tratamento RECHECADO_SEM_PROBLEMA (o DISPENSADO fica) e o evento NAO_ACHADO no histórico (20261118140000); com p_erro, nada é resolvido e a execução FALHOU; com falhas, PARCIAL. Só service_role.';
 
 CREATE OR REPLACE FUNCTION private."FC_FECHAR_CASOS_DO_AVISO"(p_conferencia text, p_candidatos uuid[]) RETURNS integer
     LANGUAGE plpgsql SECURITY DEFINER
@@ -434,7 +434,7 @@ begin
                                          where k."CO_AVISO_CONFERENCIA" = a."CO_AVISO_CONFERENCIA")::integer)
    where a."CO_AVISO_CONFERENCIA" = any (v_avisos)
      and exists (select 1 from public."TB_CASO_AVISO_CONFERENCIA" k where k."CO_AVISO_CONFERENCIA" = a."CO_AVISO_CONFERENCIA");
-  -- 20261118120000: o aviso sem caso fica resolvido como rechecado sem problema (o dispensado fica), no histórico.
+  -- 20261118140000: o aviso sem caso fica resolvido como rechecado sem problema (o dispensado fica), no histórico.
   with alvo as (
     select a."CO_AVISO_CONFERENCIA" as id, a."TP_TRATAMENTO" as antes, a."QT_OCORRENCIA" as qt
       from public."TB_AVISO_CONFERENCIA" a
@@ -457,7 +457,7 @@ begin
 end;
 $$;
 
-COMMENT ON FUNCTION private."FC_FECHAR_CASOS_DO_AVISO"(p_conferencia text, p_candidatos uuid[]) IS 'Tira dos avisos abertos da conferência os casos das linhas decididas na pendência e resolve o aviso que fica sem caso. 20261026190000; histórico e tratamento em 20261118120000.';
+COMMENT ON FUNCTION private."FC_FECHAR_CASOS_DO_AVISO"(p_conferencia text, p_candidatos uuid[]) IS 'Tira dos avisos abertos da conferência os casos das linhas decididas na pendência e resolve o aviso que fica sem caso. 20261026190000; histórico e tratamento em 20261118140000.';
 
 CREATE OR REPLACE FUNCTION public.listar_avisos_conferencia(p_area text DEFAULT NULL::text, p_modulo text DEFAULT NULL::text) RETURNS json
     LANGUAGE plpgsql STABLE SECURITY DEFINER
@@ -504,7 +504,7 @@ begin
           'primeira_vez', a."DT_PRIMEIRA_VEZ",
           'ultima_vez', a."DT_ULTIMA_VEZ",
           'resolvido_em', a."DT_RESOLUCAO",
-          -- 20261118120000: o tratamento da equipe, o último motivo, responsável, prazo e evidências.
+          -- 20261118140000: o tratamento da equipe, o último motivo, responsável, prazo e evidências.
           'tratamento', a."TP_TRATAMENTO",
           'tratado_em', a."DT_TRATAMENTO",
           'tratado_por', private."FC_NOME_DO_USUARIO"(a."CO_USUARIO_TRATAMENTO"),
@@ -536,7 +536,7 @@ begin
 end;
 $$;
 
-COMMENT ON FUNCTION public.listar_avisos_conferencia(p_area text, p_modulo text) IS 'Avisos de conferência abertos e os resolvidos nos últimos 30 dias (json) que quem chama pode ver: o módulo (leitor), a área e o edital no recorte; cargas e avisos sem área, só o administrador global. Filtra por área e módulo (opcionais). Com o tratamento da equipe, o último motivo, responsável, prazo e quantas evidências (20261118120000); pode_gerir (dispensar, atribuir) e pode_tratar (o gestor ou o responsável).';
+COMMENT ON FUNCTION public.listar_avisos_conferencia(p_area text, p_modulo text) IS 'Avisos de conferência abertos e os resolvidos nos últimos 30 dias (json) que quem chama pode ver: o módulo (leitor), a área e o edital no recorte; cargas e avisos sem área, só o administrador global. Filtra por área e módulo (opcionais). Com o tratamento da equipe, o último motivo, responsável, prazo e quantas evidências (20261118140000); pode_gerir (dispensar, atribuir) e pode_tratar (o gestor ou o responsável).';
 
 CREATE OR REPLACE FUNCTION public.listar_casos_aviso_conferencia(p_aviso uuid DEFAULT NULL::uuid, p_busca text DEFAULT NULL::text, p_area text DEFAULT NULL::text, p_modulo text DEFAULT NULL::text, p_limite integer DEFAULT 50, p_deslocamento integer DEFAULT 0) RETURNS json
     LANGUAGE plpgsql STABLE SECURITY DEFINER
@@ -575,7 +575,7 @@ begin
     select a."CO_AVISO_CONFERENCIA" as id, a."CO_CONFERENCIA" as conferencia, a."CO_MODULO" as modulo,
            a."CO_AREA" as area, a."CO_MONITORAMENTO" as edital
       from public."TB_AVISO_CONFERENCIA" a
-     -- 20261118120000: os casos do aviso resolvido também se abrem (pelo id); a busca, só nos abertos.
+     -- 20261118140000: os casos do aviso resolvido também se abrem (pelo id); a busca, só nos abertos.
      where (a."TP_SITUACAO" = 'ABERTO' or a."CO_AVISO_CONFERENCIA" = p_aviso)
        and (p_aviso is null or a."CO_AVISO_CONFERENCIA" = p_aviso)
        and (v_area is null or a."CO_AREA" = v_area)
@@ -738,7 +738,7 @@ as $$
                 and private."FC_NIVEL_EFETIVO"(p.id, p.perfil, private."FC_CONFERENCIA_RECURSO"(p_modulo))
                       in ('leitor', 'editor', 'admin'))));
 $$;
-comment on function private."FC_PODE_SER_RESPONSAVEL_AVISO"(uuid, text) is 'O usuário (auth.users.id) pode ser responsável por um aviso do módulo? Perfil ativo com acesso ao módulo (leitor ou mais) ou administrador global; cargas, só o administrador global (20261118120000).';
+comment on function private."FC_PODE_SER_RESPONSAVEL_AVISO"(uuid, text) is 'O usuário (auth.users.id) pode ser responsável por um aviso do módulo? Perfil ativo com acesso ao módulo (leitor ou mais) ou administrador global; cargas, só o administrador global (20261118140000).';
 revoke all on function private."FC_PODE_SER_RESPONSAVEL_AVISO"(uuid, text) from public;
 
 create function private."FC_AVISO_PARA_AGIR"(p_id uuid, p_gerir boolean) returns public."TB_AVISO_CONFERENCIA"
@@ -768,7 +768,7 @@ begin
   return v_aviso;
 end;
 $$;
-comment on function private."FC_AVISO_PARA_AGIR"(uuid, boolean) is 'O aviso aberto que quem chama pode mexer, travado (for update): p_gerir (dispensar, atribuir) exige o gestor do módulo ou o administrador global (FC_PODE_IGNORAR_AVISO); senão, também o responsável. 20261118120000.';
+comment on function private."FC_AVISO_PARA_AGIR"(uuid, boolean) is 'O aviso aberto que quem chama pode mexer, travado (for update): p_gerir (dispensar, atribuir) exige o gestor do módulo ou o administrador global (FC_PODE_IGNORAR_AVISO); senão, também o responsável. 20261118140000.';
 revoke all on function private."FC_AVISO_PARA_AGIR"(uuid, boolean) from public;
 
 create function public.tratar_aviso_conferencia(p_id uuid, p_tratamento text, p_motivo text default null) returns json
@@ -807,7 +807,7 @@ begin
   return json_build_object('id', p_id, 'tratamento', v_tratamento, 'tratado_em', now());
 end;
 $$;
-comment on function public.tratar_aviso_conferencia(uuid, text, text) is 'Muda o tratamento de um aviso aberto (20261118120000): EM_ANALISE, AGUARDANDO_DOCUMENTO e CORRIGIDO (o gestor do módulo ou o responsável; os dois últimos com motivo), DISPENSADO (só o gestor ou o administrador global, justificativa de 10 a 500). Grava o histórico. O RECHECADO_SEM_PROBLEMA é só da conferência.';
+comment on function public.tratar_aviso_conferencia(uuid, text, text) is 'Muda o tratamento de um aviso aberto (20261118140000): EM_ANALISE, AGUARDANDO_DOCUMENTO e CORRIGIDO (o gestor do módulo ou o responsável; os dois últimos com motivo), DISPENSADO (só o gestor ou o administrador global, justificativa de 10 a 500). Grava o histórico. O RECHECADO_SEM_PROBLEMA é só da conferência.';
 revoke all on function public.tratar_aviso_conferencia(uuid, text, text) from public;
 grant execute on function public.tratar_aviso_conferencia(uuid, text, text) to authenticated;
 
@@ -848,7 +848,7 @@ begin
                            'responsavel', private."FC_NOME_DO_USUARIO"(p_responsavel), 'prazo', p_prazo);
 end;
 $$;
-comment on function public.atribuir_aviso_conferencia(uuid, uuid, date) is 'Põe (ou tira, com nulo) o responsável e o prazo de um aviso aberto (20261118120000): só o gestor do módulo ou o administrador global; o responsável é um perfil ativo com acesso ao módulo (FC_PODE_SER_RESPONSAVEL_AVISO); prazo só com responsável, de hoje a um ano. Grava o histórico.';
+comment on function public.atribuir_aviso_conferencia(uuid, uuid, date) is 'Põe (ou tira, com nulo) o responsável e o prazo de um aviso aberto (20261118140000): só o gestor do módulo ou o administrador global; o responsável é um perfil ativo com acesso ao módulo (FC_PODE_SER_RESPONSAVEL_AVISO); prazo só com responsável, de hoje a um ano. Grava o histórico.';
 revoke all on function public.atribuir_aviso_conferencia(uuid, uuid, date) from public;
 grant execute on function public.atribuir_aviso_conferencia(uuid, uuid, date) to authenticated;
 
@@ -880,7 +880,7 @@ begin
   );
 end;
 $$;
-comment on function public.listar_responsaveis_aviso_conferencia(uuid) is 'Quem pode ser responsável por um aviso (20261118120000): perfis ativos com acesso ao módulo, com id (auth.users.id) e nome. Só o gestor do módulo ou o administrador global.';
+comment on function public.listar_responsaveis_aviso_conferencia(uuid) is 'Quem pode ser responsável por um aviso (20261118140000): perfis ativos com acesso ao módulo, com id (auth.users.id) e nome. Só o gestor do módulo ou o administrador global.';
 revoke all on function public.listar_responsaveis_aviso_conferencia(uuid) from public;
 grant execute on function public.listar_responsaveis_aviso_conferencia(uuid) to authenticated;
 
@@ -934,7 +934,7 @@ begin
   return json_build_object('id', v_id);
 end;
 $$;
-comment on function public.incluir_evidencia_aviso_conferencia(uuid, text, text, text, text) is 'Junta uma evidência a um aviso aberto (20261118120000): SEI, LINK (https obrigatório) ou NOTA, com descrição de 3 a 500 sem CPF nem e-mail, do aviso ou de um caso dele (analise:, codigo: ou referencia:). O gestor do módulo ou o responsável. Grava o histórico.';
+comment on function public.incluir_evidencia_aviso_conferencia(uuid, text, text, text, text) is 'Junta uma evidência a um aviso aberto (20261118140000): SEI, LINK (https obrigatório) ou NOTA, com descrição de 3 a 500 sem CPF nem e-mail, do aviso ou de um caso dele (analise:, codigo: ou referencia:). O gestor do módulo ou o responsável. Grava o histórico.';
 revoke all on function public.incluir_evidencia_aviso_conferencia(uuid, text, text, text, text) from public;
 grant execute on function public.incluir_evidencia_aviso_conferencia(uuid, text, text, text, text) to authenticated;
 
@@ -971,7 +971,7 @@ begin
   return json_build_object('id', p_evidencia, 'retirada', true);
 end;
 $$;
-comment on function public.retirar_evidencia_aviso_conferencia(uuid, text) is 'Retira (exclusão lógica) uma evidência de um aviso aberto, com motivo de 3 a 500 (20261118120000). O gestor do módulo ou o responsável. Grava o histórico.';
+comment on function public.retirar_evidencia_aviso_conferencia(uuid, text) is 'Retira (exclusão lógica) uma evidência de um aviso aberto, com motivo de 3 a 500 (20261118140000). O gestor do módulo ou o responsável. Grava o histórico.';
 revoke all on function public.retirar_evidencia_aviso_conferencia(uuid, text) from public;
 grant execute on function public.retirar_evidencia_aviso_conferencia(uuid, text) to authenticated;
 
@@ -1017,19 +1017,19 @@ begin
   );
 end;
 $$;
-comment on function public.listar_historico_aviso_conferencia(uuid) is 'O histórico de um aviso de conferência (20261118120000): os eventos (achado, reaberto, tratamento, responsável e prazo, evidência, rechecagem), do mais novo ao mais velho, com motivo, quem (ou a conferência) e quando, e as evidências (ativas e retiradas). Quem vê o aviso.';
+comment on function public.listar_historico_aviso_conferencia(uuid) is 'O histórico de um aviso de conferência (20261118140000): os eventos (achado, reaberto, tratamento, responsável e prazo, evidência, rechecagem), do mais novo ao mais velho, com motivo, quem (ou a conferência) e quando, e as evidências (ativas e retiradas). Quem vê o aviso.';
 revoke all on function public.listar_historico_aviso_conferencia(uuid) from public;
 grant execute on function public.listar_historico_aviso_conferencia(uuid) to authenticated;
 
 
-comment on column public."TB_AVISO_CONFERENCIA"."TP_SITUACAO" is 'O que a conferência acha: ABERTO (achado na última execução) ou RESOLVIDO (não achado). O que a equipe fez fica em TP_TRATAMENTO (20261118120000; o antigo IGNORADO virou DISPENSADO).';
+comment on column public."TB_AVISO_CONFERENCIA"."TP_SITUACAO" is 'O que a conferência acha: ABERTO (achado na última execução) ou RESOLVIDO (não achado). O que a equipe fez fica em TP_TRATAMENTO (20261118140000; o antigo IGNORADO virou DISPENSADO).';
 comment on column public."TB_AVISO_CONFERENCIA"."TP_TRATAMENTO" is 'O que a equipe fez: PENDENTE, EM_ANALISE, AGUARDANDO_DOCUMENTO, CORRIGIDO, DISPENSADO (com justificativa) e RECHECADO_SEM_PROBLEMA (só o robô põe, quando deixa de achar). Histórico em TH_AVISO_CONFERENCIA.';
 comment on column public."TB_AVISO_CONFERENCIA"."CO_USUARIO_TRATAMENTO" is 'Quem pôs o tratamento atual (auth.users.id); nulo quando foi a conferência.';
 comment on column public."TB_AVISO_CONFERENCIA"."DT_TRATAMENTO" is 'Quando o tratamento atual foi posto.';
 comment on column public."TB_AVISO_CONFERENCIA"."QT_OCORRENCIA_DISPENSADA" is 'Quantidade quando foi dispensado: o aviso volta a PENDENTE se a conferência achar mais que isso.';
 comment on column public."TB_AVISO_CONFERENCIA"."CO_USUARIO_RESPONSAVEL" is 'Quem cuida do aviso (auth.users.id; perfil ativo com acesso ao módulo). Também pode tratar e juntar evidência.';
 comment on column public."TB_AVISO_CONFERENCIA"."DT_PRAZO" is 'Prazo para o responsável (data de Brasília); vencido só destaca na tela.';
-comment on constraint "CK_AVISOCONF_TPSITUACAO" on public."TB_AVISO_CONFERENCIA" is 'ABERTO ou RESOLVIDO (20261118120000).';
+comment on constraint "CK_AVISOCONF_TPSITUACAO" on public."TB_AVISO_CONFERENCIA" is 'ABERTO ou RESOLVIDO (20261118140000).';
 comment on constraint "CK_AVISOCONF_TPTRATAMENTO" on public."TB_AVISO_CONFERENCIA" is 'Tratamentos da equipe e o RECHECADO_SEM_PROBLEMA do robô.';
 comment on constraint "CK_AVISOCONF_QTDISPENSADA" on public."TB_AVISO_CONFERENCIA" is 'Só o dispensado guarda a quantidade dispensada (1 ou mais).';
 comment on constraint "CK_AVISOCONF_DTPRAZO" on public."TB_AVISO_CONFERENCIA" is 'Prazo só com responsável.';
@@ -1037,7 +1037,7 @@ comment on constraint "CK_AVISOCONF_QT" on public."TB_AVISO_CONFERENCIA" is 'Pel
 comment on index public."IN_AVISOCONF_VIGENTE" is 'Avisos abertos por módulo e área (tela e selos).';
 comment on index public."IN_AVISOCONF_COUSURESP" is 'Avisos de cada responsável.';
 
-comment on table public."TH_AVISO_CONFERENCIA" is 'Histórico de cada aviso de conferência (20261118120000): o que a conferência achou ou deixou de achar e o que a equipe fez (tratamento, responsável, prazo, evidência), com motivo, quem (ou a execução) e quando. Só cresce; RLS sem policy (só as RPCs).';
+comment on table public."TH_AVISO_CONFERENCIA" is 'Histórico de cada aviso de conferência (20261118140000): o que a conferência achou ou deixou de achar e o que a equipe fez (tratamento, responsável, prazo, evidência), com motivo, quem (ou a execução) e quando. Só cresce; RLS sem policy (só as RPCs).';
 comment on column public."TH_AVISO_CONFERENCIA"."CO_EVENTO" is 'Identificador do evento (identity, em ordem).';
 comment on column public."TH_AVISO_CONFERENCIA"."CO_AVISO_CONFERENCIA" is 'Aviso (TB_AVISO_CONFERENCIA).';
 comment on column public."TH_AVISO_CONFERENCIA"."TP_EVENTO" is 'ACHADO, REABERTO, TRATAMENTO, RESPONSAVEL, EVIDENCIA_INCLUIDA, EVIDENCIA_RETIRADA, RECHECADO_COM_PROBLEMA, NAO_ACHADO ou MIGRADO (o IGNORADO de antes).';
@@ -1058,7 +1058,7 @@ comment on constraint "CK_HISTAVISOCONF_TPSITUACAO" on public."TH_AVISO_CONFEREN
 comment on constraint "CK_HISTAVISOCONF_DSMOTIVO" on public."TH_AVISO_CONFERENCIA" is 'Motivo de 3 a 500 caracteres.';
 comment on index public."IN_FKHISTAVISOCONF_COAVISO" is 'Chave estrangeira para TB_AVISO_CONFERENCIA, na ordem dos eventos.';
 
-comment on table public."TB_EVIDENCIA_AVISO_CONFERENCIA" is 'Evidências de um aviso de conferência (20261118120000): processo SEI, link (https) ou nota, do aviso ou de um caso (pela chave estável do caso). Retirar é lógico; RLS sem policy (só as RPCs).';
+comment on table public."TB_EVIDENCIA_AVISO_CONFERENCIA" is 'Evidências de um aviso de conferência (20261118140000): processo SEI, link (https) ou nota, do aviso ou de um caso (pela chave estável do caso). Retirar é lógico; RLS sem policy (só as RPCs).';
 comment on column public."TB_EVIDENCIA_AVISO_CONFERENCIA"."CO_EVIDENCIA_AVISO" is 'Identificador da evidência.';
 comment on column public."TB_EVIDENCIA_AVISO_CONFERENCIA"."CO_AVISO_CONFERENCIA" is 'Aviso (TB_AVISO_CONFERENCIA).';
 comment on column public."TB_EVIDENCIA_AVISO_CONFERENCIA"."DS_CHAVE_CASO" is 'Caso do aviso: analise:<id>, codigo:<código> ou referencia:<id> (o NU_CASO muda a cada execução). Nulo = o aviso todo.';
@@ -1158,16 +1158,16 @@ begin
     raise exception 'Não aplicada: TH_AVISO_CONFERENCIA não existe.';
   end if;
   if md5(replace((select prosrc from pg_proc where oid = to_regprocedure('public.gravar_avisos_conferencia(text, jsonb)')), chr(13), ''))
-       is distinct from '6443f23fc74d5b9ae033f219ccae3561'
+       is distinct from 'e108d7d69d6d6f861c4bc7fa1fea40ee'
      or md5(replace((select prosrc from pg_proc where oid = to_regprocedure('public.finalizar_conferencia(text, text[], text[], text)')), chr(13), ''))
-       is distinct from '7ed3333263b3c4028251ab02cdc6ee6a'
+       is distinct from 'fc49576572c0460b615f1fdc86274f6b'
      or md5(replace((select prosrc from pg_proc where oid = to_regprocedure('private."FC_FECHAR_CASOS_DO_AVISO"(text, uuid[])')), chr(13), ''))
-       is distinct from 'cf63d45d133a1bcbc8f4d920d1173980'
+       is distinct from '86ae4c22d85012f1ad209d5d9d7525c2'
      or md5(replace((select prosrc from pg_proc where oid = to_regprocedure('public.listar_avisos_conferencia(text, text)')), chr(13), ''))
-       is distinct from '0e9933193d1167d55c94116854cedaec'
+       is distinct from '8b3cb6fd177345d5fcac864cac4a9857'
      or md5(replace((select prosrc from pg_proc where oid = to_regprocedure('public.listar_casos_aviso_conferencia(uuid, text, text, text, integer, integer)')), chr(13), ''))
-       is distinct from 'e21ee015e3b00dfad0c8dee4027ec194' then
-    raise exception 'As funções dos avisos não estão com o corpo de 20261118120000_central_de_avisos_das_conferencias: junte as mudanças antes.';
+       is distinct from '98157f553abf27da3e345303c48c11e0' then
+    raise exception 'As funções dos avisos não estão com o corpo de 20261118140000_central_de_avisos_das_conferencias: junte as mudanças antes.';
   end if;
 end;
 $$;

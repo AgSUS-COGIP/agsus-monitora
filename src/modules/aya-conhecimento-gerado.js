@@ -4335,7 +4335,7 @@ export const VERBETES_AYA = Object.freeze([
       'Cada aviso tem a situação da equipe: pendente, em análise, aguardando documento, corrigido ou dispensado com justificativa. "Rechecado sem problema" quem põe é a conferência, quando deixa de achar o problema. Em "Tratar", quem administra o módulo (na Classificação, quem edita) ou o administrador global muda a situação, dispensa (justificativa de 10 a 500 caracteres) e escolhe o responsável, alguém com acesso ao módulo, e o prazo; o responsável também muda a situação e junta evidências. Aguardando documento e corrigido pedem motivo. Se o aviso dispensado crescer, volta a pendente; se o corrigido continuar aparecendo na conferência seguinte, volta para em análise. Em "Histórico" ficam todas as mudanças, com quem, quando e o motivo, e as evidências (processo SEI, link ou nota), do aviso ou de um caso; nada se apaga. O prazo vencido fica em destaque. Os abertos aparecem agrupados por edital, com a data da última rechecagem; os dispensados e os resolvidos dos últimos 30 dias ficam recolhidos.',
     fato: "",
     fonte:
-      "supabase/migrations/20261118120000_central_de_avisos_das_conferencias.sql; src/modulos/conferencias/avisos-de-conferencia.tsx",
+      "supabase/migrations/20261118140000_central_de_avisos_das_conferencias.sql; src/modulos/conferencias/avisos-de-conferencia.tsx",
   },
   {
     arquivo: "regras-das-conferencias.md",

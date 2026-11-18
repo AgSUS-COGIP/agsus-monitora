@@ -16,7 +16,7 @@ import type {
   chaves nulas e sem `exemplos` quando o aviso tem casos)
   vira a lista da tela — título de cada conferência, tom da gravidade, onde
   (edital, área ou vaga), contagem do selo de cada módulo, o agrupamento por
-  edital e, da central de avisos (20261118120000), o tratamento da equipe,
+  edital e, da central de avisos (20261118140000), o tratamento da equipe,
   responsável, prazo, evidência e histórico, com a validação de cada campo.
 
   Os avisos são gravados pelo job Python scripts/conferencias/ (todo dia às 6h
@@ -308,7 +308,7 @@ function porGravidade(a: Aviso, b: Aviso) {
   );
 }
 
-/* ── Tratamento, responsável, prazo e histórico (20261118120000) ── */
+/* ── Tratamento, responsável, prazo e histórico (20261118140000) ── */
 
 export const TRATAMENTOS: Readonly<
   Record<Tratamento, Readonly<{ rotulo: string; tom: string }>>

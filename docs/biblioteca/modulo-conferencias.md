@@ -21,7 +21,7 @@ ver [[python-e-jobs]] e [[robos-e-agenda]]). As histórias de usuário (CF-1 a C
   - `listar_avisos_conferencia_se_mudou` (com versão, migration `20261015000000`): cada recorte
     lido na página guarda a versão e a releitura sem mudança recebe só `inalterado`;
   - `listar_casos_aviso_conferencia`;
-  - da central de avisos (migration `20261118120000`): `tratar_aviso_conferencia`,
+  - da central de avisos (migration `20261118140000`): `tratar_aviso_conferencia`,
     `atribuir_aviso_conferencia`, `listar_responsaveis_aviso_conferencia`,
     `incluir_evidencia_aviso_conferencia`, `retirar_evidencia_aviso_conferencia` e
     `listar_historico_aviso_conferencia`.

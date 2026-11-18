@@ -21,7 +21,7 @@ export interface Aviso {
   /** A última execução que achou o aviso (a "rechecagem"). */
   ultimaVez: Date | null;
   resolvidoEm: Date | null;
-  /** O que a equipe fez (TB_AVISO_CONFERENCIA.TP_TRATAMENTO, 20261118120000). */
+  /** O que a equipe fez (TB_AVISO_CONFERENCIA.TP_TRATAMENTO, 20261118140000). */
   tratamento: Tratamento;
   tratadoEm: Date | null;
   tratadoPor: string;

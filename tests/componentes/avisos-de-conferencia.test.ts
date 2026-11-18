@@ -16,7 +16,7 @@ import {
   Avisos de conferência (React, src/modulos/conferencias/): o selo de cada
   tela pede só os avisos do módulo na área atual, some sem aviso e abre a
   gaveta; o cartão do Status das atualizações filtra por módulo e agrupa por
-  edital; a central de avisos (20261118120000): dispensar exige justificativa e
+  edital; a central de avisos (20261118140000): dispensar exige justificativa e
   relê a lista; o gestor atribui responsável e prazo; evidência de um caso; o
   histórico.
 */

@@ -1,10 +1,10 @@
 /*
-  ROLLBACK de 20261118120000_central_de_avisos_das_conferencias: volta ao ABERTO/IGNORADO/RESOLVIDO de antes. As funções trocadas voltam ao corpo e
-  ao comentário do retrato de 18/11/2026 (letra por letra), a ignorar_aviso_conferencia volta, as RPCs
+  ROLLBACK de 20261118140000_central_de_avisos_das_conferencias: volta ao ABERTO/IGNORADO/RESOLVIDO de antes. As funções trocadas voltam ao corpo e
+  ao comentário do retrato de 18/11/2026 (depois do vínculo vaga–quadro) (letra por letra), a ignorar_aviso_conferencia volta, as RPCs
   novas saem. O DISPENSADO aberto volta a IGNORADO com quem, quando e o último motivo do histórico. O que
   não tem lugar no modelo antigo se perde: responsável, prazo, evidências, os outros tratamentos e o
   histórico (as tabelas saem). Guarda: só roda com as funções no corpo desta migration (md5).
-  Depois: delete from public.migracoes_aplicadas where caminho = 'migrations/20261118120000_central_de_avisos_das_conferencias.sql';
+  Depois: delete from public.migracoes_aplicadas where caminho = 'migrations/20261118140000_central_de_avisos_das_conferencias.sql';
   Antes ou junto: volte o front (a tela nova chama as RPCs que saem).
 */
 
@@ -16,16 +16,16 @@ begin
     raise exception 'Não aplicada: TH_AVISO_CONFERENCIA não existe.';
   end if;
   if md5(replace((select prosrc from pg_proc where oid = to_regprocedure('public.gravar_avisos_conferencia(text, jsonb)')), chr(13), ''))
-       is distinct from '6443f23fc74d5b9ae033f219ccae3561'
+       is distinct from 'e108d7d69d6d6f861c4bc7fa1fea40ee'
      or md5(replace((select prosrc from pg_proc where oid = to_regprocedure('public.finalizar_conferencia(text, text[], text[], text)')), chr(13), ''))
-       is distinct from '7ed3333263b3c4028251ab02cdc6ee6a'
+       is distinct from 'fc49576572c0460b615f1fdc86274f6b'
      or md5(replace((select prosrc from pg_proc where oid = to_regprocedure('private."FC_FECHAR_CASOS_DO_AVISO"(text, uuid[])')), chr(13), ''))
-       is distinct from 'cf63d45d133a1bcbc8f4d920d1173980'
+       is distinct from '86ae4c22d85012f1ad209d5d9d7525c2'
      or md5(replace((select prosrc from pg_proc where oid = to_regprocedure('public.listar_avisos_conferencia(text, text)')), chr(13), ''))
-       is distinct from '0e9933193d1167d55c94116854cedaec'
+       is distinct from '8b3cb6fd177345d5fcac864cac4a9857'
      or md5(replace((select prosrc from pg_proc where oid = to_regprocedure('public.listar_casos_aviso_conferencia(uuid, text, text, text, integer, integer)')), chr(13), ''))
-       is distinct from 'e21ee015e3b00dfad0c8dee4027ec194' then
-    raise exception 'As funções dos avisos não estão com o corpo de 20261118120000_central_de_avisos_das_conferencias: junte as mudanças antes.';
+       is distinct from '98157f553abf27da3e345303c48c11e0' then
+    raise exception 'As funções dos avisos não estão com o corpo de 20261118140000_central_de_avisos_das_conferencias: junte as mudanças antes.';
   end if;
 end;
 $$;
