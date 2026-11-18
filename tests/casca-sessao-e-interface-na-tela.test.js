@@ -6392,8 +6392,12 @@ bloco("modulos/avaliacao-documental-rascunho", () => {
           .querySelector("[data-cartao='bloco:CURSOS']")
           .querySelector("input[type='checkbox']"),
       );
-      await esperar();
-      await esperar();
+      // A gravação do rascunho pode levar mais que dois ciclos numa máquina lenta (CI).
+      await vi.waitFor(() =>
+        expect(
+          chamadas(supabase, "salvar_rascunho_regra").length,
+        ).toBeGreaterThan(0),
+      );
       const [, args] = chamadas(supabase, "salvar_rascunho_regra").at(-1);
       expect(args).toMatchObject({
         p_tipo: "ANALISE",
@@ -6408,10 +6412,10 @@ bloco("modulos/avaliacao-documental-rascunho", () => {
         "Tirei os cursos do edital 114",
       );
       await clicar(secao.querySelector("[data-acao='salvar-assistente']"));
-      await esperar();
-      await esperar();
-      expect(chamadas(supabase, "salvar_regra_analise")).toHaveLength(1);
-      expect(supabase.rascunho()).toBeNull();
+      await vi.waitFor(() => {
+        expect(chamadas(supabase, "salvar_regra_analise")).toHaveLength(1);
+        expect(supabase.rascunho()).toBeNull();
+      });
       expect(aviso()).toBeNull();
       expect(sair()).toBe(false);
     });
