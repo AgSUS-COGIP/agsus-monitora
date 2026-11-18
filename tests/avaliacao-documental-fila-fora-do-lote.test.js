@@ -71,7 +71,8 @@ describe("fila: os de fora do lote", () => {
     expect(r).toMatchObject({
       inscritos: 12,
       lote: 2,
-      pendentes: 1,
+      // No lote sem ficha também é pendente (a mesma conta do bloco por vaga).
+      pendentes: 2,
       eliminados: 8,
     });
   });

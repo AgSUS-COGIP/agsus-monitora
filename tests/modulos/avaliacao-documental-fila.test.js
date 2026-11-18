@@ -331,7 +331,8 @@ describe("Fila (AM-6)", () => {
       ["lote", "pendentes", "em_analise", "revisao", "concluidas"].map(
         numeroDaFaixa,
       ),
-    ).toEqual(["4", "2", "1", "0", "0"]);
+      // Pendentes: as 2 fichas pendentes e quem está no lote sem ficha (7004).
+    ).toEqual(["4", "3", "1", "0", "0"]);
     expect(
       faixa().querySelector("[data-valor='lote']").getAttribute("aria-pressed"),
     ).toBe("true");
@@ -341,12 +342,13 @@ describe("Fila (AM-6)", () => {
     // A barra da distribuição diz a proporção no nome acessível.
     expect(
       faixa().querySelector("[role='img']").getAttribute("aria-label"),
-    ).toBe("Distribuição do lote: 25% em análise, 50% pendentes");
+    ).toBe("Distribuição do lote: 25% em análise, 75% pendentes");
     expect(linhas()).toEqual(["7001", "7002", "7003", "7004"]);
     await clicar(faixa().querySelector("[data-valor='fora']"));
     expect(linhas()).toEqual(["7009"]);
     await clicar(faixa().querySelector("[data-valor='pendentes']"));
-    expect(linhas()).toEqual(["7002", "7003"]);
+    // Pendentes: as fichas pendentes e quem está no lote sem ficha (7004).
+    expect(linhas()).toEqual(["7002", "7003", "7004"]);
   });
 
   it("Minhas fichas, filtro salvo e salvar um filtro novo", async () => {
@@ -1160,7 +1162,7 @@ describe("fila: andamento, menu da coordenação e tabela agrupada por vaga", ()
     expect(
       faixa().querySelector("[role='img']").getAttribute("aria-label"),
     ).toBe(
-      "Distribuição do lote: 16,6% concluídas, 16,6% em análise, 50% pendentes",
+      "Distribuição do lote: 16,6% concluídas, 16,6% em análise, 66,6% pendentes",
     );
     expect(
       faixa().querySelector("[data-valor='concluidas'] .ui-faixa-contexto")
@@ -1872,7 +1874,7 @@ describe("layout da seleção na Fila: faixa de situação, barra da lista e ⋯
     await montar(supabaseFalso());
     expect(
       ["concluidas", "em_analise", "pendentes"].map(numeroDaFaixa),
-    ).toEqual(["0", "1", "2"]);
+    ).toEqual(["0", "1", "3"]);
     expect(
       faixa().querySelector("[data-valor='concluidas'] .ui-faixa-contexto")
         .textContent,
@@ -1880,7 +1882,7 @@ describe("layout da seleção na Fila: faixa de situação, barra da lista e ⋯
     expect(
       faixa().querySelector("[data-valor='pendentes'] .ui-faixa-contexto")
         .textContent,
-    ).toBe("50%");
+    ).toBe("75%");
     // Sem o ritmo (não veio): só as concluídas de hoje, sem selo.
     expect(secao.querySelector("[data-hoje-da-fila]").textContent).toBe(
       "Hoje 0",
@@ -1888,7 +1890,8 @@ describe("layout da seleção na Fila: faixa de situação, barra da lista e ⋯
     expect(faixa().querySelector(".ui-selo")).toBeNull();
     await clicar(faixa().querySelector("[data-valor='pendentes']"));
     expect(ativa()).toBe("pendentes");
-    expect(linhas()).toEqual(["7002", "7003"]);
+    // Pendentes: as fichas pendentes e quem está no lote sem ficha (7004).
+    expect(linhas()).toEqual(["7002", "7003", "7004"]);
     await clicar(faixa().querySelector("[data-valor='em_analise']"));
     expect(secao.querySelector("[data-acao='limpar-filtros']")).toBeNull();
     await escolher(filtro("Responsável"), "eu");
