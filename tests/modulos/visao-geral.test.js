@@ -906,8 +906,11 @@ describe("tabela de processos", () => {
     await montar();
     await act(async () => estado.definirFiltro("uf", ["RR"]));
     await clicar(secao.querySelector('[data-acao="exportar"]'));
+    // O montador baixa sob demanda (fora do pacote de entrada).
+    await vi.waitFor(() =>
+      expect(document.getElementById("visaoGeralRelatorio")).not.toBeNull(),
+    );
     const montador = document.getElementById("visaoGeralRelatorio");
-    expect(montador).not.toBeNull();
     const csv = [...montador.querySelectorAll('[role="radio"]')].find(
       (b) => b.textContent.trim() === "CSV",
     );

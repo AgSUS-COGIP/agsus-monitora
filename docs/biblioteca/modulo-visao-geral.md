@@ -99,7 +99,8 @@ trabalho). De cima para baixo:
 - O CSV mantém a proteção contra fórmulas e o nome do arquivo usa a data de Brasília.
 - **Montador de relatório** (13/11/2026; `montador-de-relatorio.tsx`, lógica em
   `src/lib/visao-geral/relatorio-da-visao-geral.ts`, PDF em `src/lib/visao-geral/relatorio-da-visao-geral-em-pdf.ts`): o
-  botão Exportar abre a janela (e, desde 16/11/2026, o "Montar relatório" dos Painéis, com a área
+  botão Exportar abre a janela, que baixa só nessa hora (18/11/2026: fora do pacote de entrada, com o
+  relatório da diretoria e a exportação em Excel) (e, desde 16/11/2026, o "Montar relatório" dos Painéis, com a área
   inteira — [[modulo-paineis-de-dados]]; saiu do menu da conta). Modelo pronto (Resumo
   rápido, Completo, Diretoria) ou escolha das seções (números, tabela dos editais, atenção), das
   colunas e do formato (PDF desenhado com o timbrado de Configurações › Marca, Excel com uma aba por

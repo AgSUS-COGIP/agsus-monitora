@@ -6,7 +6,7 @@ import type {
   PropsDoPainel,
 } from "./tipos.ts";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { Suspense, lazy, useMemo, useState, useSyncExternalStore } from "react";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import {
@@ -36,9 +36,22 @@ import {
   Vagas,
 } from "./paineis.tsx";
 import { TabelaDeProcessos } from "./tabela.tsx";
-import { MontadorDeRelatorio } from "./montador-de-relatorio.tsx";
+import { ErrorBoundary } from "../../app/ErrorBoundary.tsx";
+import { importarComRecarga } from "../../lib/carga/importar-com-recarga.ts";
 import { podeBaixarAprovados } from "../../lib/acessos/access-roles.ts";
 
+/*
+  O montador de relatório (botão Exportar) baixa só quando abre: com ele vêm o
+  relatório da diretoria e a exportação em Excel, que não precisam estar no
+  pacote de entrada (orçamento de 320 KB gzip, scripts/check-bundle-size.mjs).
+*/
+const MontadorDeRelatorio = lazy(
+  importarComRecarga(() =>
+    import("./montador-de-relatorio.tsx").then((m) => ({
+      default: m.MontadorDeRelatorio,
+    })),
+  ),
+);
 /*
   A Visão geral (view `dashboard`), um módulo do app: monta direto na
   `<section id="page-dashboard">` do index.html. O legado continua dono da
@@ -187,17 +200,21 @@ export function TelaDaVisaoGeral({
         aoAbrir={abrir}
       />
       {e.montador && e.aberta ? (
-        <MontadorDeRelatorio
-          e={e}
-          aoBaixarCsv={estado.exportarCsv}
-          textos={textos}
-          configuracoes={configuracoes}
-          obterPerfil={obterPerfil}
-          agora={agora}
-          aoFechar={estado.fecharMontador}
-          supabase={supabase}
-          podeAprovados={podeBaixarAprovados(obterPerfil?.())}
-        />
+        <ErrorBoundary nome="o montador de relatório">
+          <Suspense fallback={null}>
+            <MontadorDeRelatorio
+              e={e}
+              aoBaixarCsv={estado.exportarCsv}
+              textos={textos}
+              configuracoes={configuracoes}
+              obterPerfil={obterPerfil}
+              agora={agora}
+              aoFechar={estado.fecharMontador}
+              supabase={supabase}
+              podeAprovados={podeBaixarAprovados(obterPerfil?.())}
+            />
+          </Suspense>
+        </ErrorBoundary>
       ) : null}
       {linhaAberta ? (
         <GavetaDoProcesso
