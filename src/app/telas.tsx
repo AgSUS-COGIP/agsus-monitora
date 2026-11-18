@@ -44,6 +44,9 @@ import { criarVisaoGeral } from "../modulos/visao-geral/visao-geral.tsx";
 import { criarNucleo } from "../modulos/editais/nucleo.tsx";
 import { SECOES } from "../modulos/configuracoes/secoes.ts";
 import { ContextoDaPaginaDeConfiguracoes } from "../modulos/configuracoes/pagina.ts";
+import { CabecalhoDaTela } from "../ui/cabecalho-da-tela.tsx";
+import { telaDaRota } from "../lib/navegacao/rotas.ts";
+import { nomeDaArea } from "../lib/navegacao/menu-lateral.ts";
 
 /*
   As telas do app como rotas: a navegação (src/app/navegacao.ts) diz qual
@@ -487,6 +490,23 @@ function usarTelasMontadas(view: string, aviso: string) {
     (telaNaHora(tela) || visitadas.has(tela) || telaCriada(tela));
 }
 
+/* As telas com cabeçalho próprio já usam CabecalhoDaTela; as demais recebem o mesmo padrão aqui. */
+function CabecalhoDaPagina({ view }: { view: ViewDeTela }) {
+  const navegacao = usarEstadoDaNavegacao();
+  const tela = telaDaRota(view);
+  if (!tela || tela.tituloNaTela) return null;
+  const atual = navegacao.view === view;
+  const titulo = atual ? navegacao.titulo || tela.titulo : tela.titulo;
+  return (
+    <CabecalhoDaTela
+      className="ui-cabecalho-da-pagina"
+      trilha={`${nomeDaArea(navegacao.area)} / ${titulo}`}
+      titulo={titulo}
+      descricao={atual ? navegacao.subtitulo : null}
+    />
+  );
+}
+
 /**
  * O `.content` do app: as seções das telas, o quadro dos painéis externos,
  * Configurações e o aviso de quem não tem módulo liberado.
@@ -505,7 +525,12 @@ export function Telas() {
             id={`page-${tela}`}
             className={classeDaPagina(aberta(tela))}
           >
-            {montada(tela) ? <ConteudoDaTela view={tela} /> : null}
+            {montada(tela) ? (
+              <>
+                <CabecalhoDaPagina view={tela} />
+                <ConteudoDaTela view={tela} />
+              </>
+            ) : null}
           </section>
         ))}
         <QuadroDoPainelExterno ativo={ehPainelExterno(view) && !aviso} />

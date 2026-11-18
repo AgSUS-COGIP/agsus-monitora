@@ -1882,6 +1882,14 @@ html[data-theme="dark"]
   color: var(--text-secondary);
   font-size: var(--text-body-sm);
 }
+.ui-cabecalho-descricao {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-body);
+}
+.ui-cabecalho-da-pagina {
+  margin-bottom: var(--space-4);
+}
 .ui-cabecalho-titulo {
   margin: 0;
   color: var(--text-primary);

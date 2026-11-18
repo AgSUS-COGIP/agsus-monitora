@@ -41,6 +41,10 @@ src/
 
 1. **Um visual só.** Toda tela monta com `src/ui/` e os tokens de `src/styles/tokens.css`. KPI é
    card compacto (`Kpi` em `GradeDeKpis`, ~78px). Ver [[componentes-padrao]].
+   Os títulos das telas das áreas usam `CabecalhoDaTela` no conteúdo. As telas sem cabeçalho
+   próprio recebem o componente de `app/telas.tsx`, com trilha da área, título e subtítulo
+   configurado; a barra superior fica compacta. `tituloNaTela` indica que o módulo já fornece
+   esse cabeçalho, evitando duplicação. Administração e avisos conservam o título da casca.
 2. **Um padrão de dados só:** `estado` por módulo (store fora do React, com `obter()` e
    `assinar(ouvinte)`, lido com `useSyncExternalStore`), RPC pelo cliente Supabase único
    (`getSupabaseClient()`, contrato em `src/lib/rpc-contrato.ts`), regras em `src/lib/`. Sem

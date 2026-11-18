@@ -16,6 +16,7 @@ import { classes } from "./classes.ts";
 export interface PropriedadesDoCabecalhoDaTela {
   trilha: string;
   titulo: string;
+  descricao?: ReactNode;
   edital?: ReactNode;
   secoes?: ReactNode;
   aoAtualizar?: () => void;
@@ -28,6 +29,7 @@ export interface PropriedadesDoCabecalhoDaTela {
 export function CabecalhoDaTela({
   trilha,
   titulo,
+  descricao = null,
   edital = null,
   secoes = null,
   aoAtualizar,
@@ -44,6 +46,9 @@ export function CabecalhoDaTela({
       <div className="ui-cabecalho-nome">
         {trilha ? <span className="ui-cabecalho-trilha">{trilha}</span> : null}
         <h2 className="ui-cabecalho-titulo">{titulo}</h2>
+        {descricao ? (
+          <p className="ui-cabecalho-descricao">{descricao}</p>
+        ) : null}
       </div>
       {edital ? <div className="ui-cabecalho-edital">{edital}</div> : null}
       <div className="ui-cabecalho-acoes">
