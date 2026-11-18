@@ -12,7 +12,7 @@
 
   O script `marcarSessaoGuardada`, no <head> do index.html, repete esta regra
   antes da primeira pintura, porque lá não dá para importar módulo.
-  `tests/esqueleto-da-entrada.test.js` garante que os dois dão o mesmo formato.
+  `tests/casca-sessao-e-interface-na-tela.test.js` (bloco `esqueleto-da-entrada`) garante que os dois dão o mesmo formato.
 */
 
 export const FORMATOS_DO_ESQUELETO = Object.freeze([

@@ -2,7 +2,7 @@
 Modelos da regra lidos dos editais recentes (docs/analises-no-monitora/
 regras-dos-editais-recentes.md) na conta oficial em Python
 (python/monitora/avaliacao_documental/): os MESMOS casos de lote e de
-Provisória que o vitest roda (tests/modelos-dos-editais-recentes.test.js),
+Provisória que o vitest roda (tests/avaliacao-e-recursos.test.js (bloco modelos-dos-editais-recentes)),
 lidos de tests/fixtures/avaliacao-documental/casos-dos-modelos-recentes.json.
 
 A pontuação da ficha ainda não existe em Python (fase F4); quando existir,

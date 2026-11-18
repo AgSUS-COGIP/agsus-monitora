@@ -56,8 +56,8 @@ e o Gestor o abrem.** O mapa de Projetos o liga no seu `editor-de-coordenadas.ts
   contratos cobrem só a API usada pelo editor, sem validar os retornos internos do Leaflet.
 - **Permissão e validação definitiva da gravação ficam no banco.**
 - **Testes** (RPCs simuladas, sem dados de produção): `tests/editor-de-coordenadas-projetos.test.js`,
-  `tests/modulos/modo-de-edicao.test.js`, `tests/coordenadas-dos-projetos.test.js`,
-  `tests/respostas-do-editor-de-coordenadas.test.js` e `tests/tipos/editor-de-coordenadas.tsx`;
+  `tests/mapas-e-visao-geral-na-tela.test.js` (bloco `modulos/modo-de-edicao`), `tests/mapas-e-visao-geral.test.js` (bloco `coordenadas-dos-projetos`),
+  `tests/mapas-e-visao-geral.test.js` (bloco `respostas-do-editor-de-coordenadas`) e `tests/tipos/editor-de-coordenadas.tsx`;
   `npm run typecheck:frontend`.
 
 ## Os documentos

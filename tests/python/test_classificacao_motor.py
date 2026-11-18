@@ -3,7 +3,7 @@ A classificação em Python (python/monitora/classificacao/) dá a MESMA saída 
 motor da tela (src/lib/classificacao/motor.ts) nos casos dourados de
 tests/fixtures/classificacao/casos-do-motor.json — gerados pelo motor.ts
 (scripts/classificacao/gerar-casos-do-motor.mjs) e conferidos também pelo
-vitest (tests/lib/classificacao-casos-do-motor.test.js). Dados fictícios;
+vitest (tests/classificacao.test.js (bloco lib/classificacao-casos-do-motor)). Dados fictícios;
 nada fala com o Supabase.
 """
 
@@ -129,7 +129,7 @@ if __name__ == "__main__":
 
 
 class LimiteDaConvocacao(unittest.TestCase):
-    """Múltiplo fracionário: o mesmo resultado do motor da tela (tests/lib/classificacao-motor.test.js)."""
+    """Múltiplo fracionário: o mesmo resultado do motor da tela (tests/classificacao.test.js (bloco lib/classificacao-motor))."""
 
     @staticmethod
     def _regra(multiplo):

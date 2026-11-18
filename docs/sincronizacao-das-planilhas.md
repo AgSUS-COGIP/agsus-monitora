@@ -153,6 +153,6 @@ vai para o container (`docker run --env-file .env.local`).
 - `scripts/sincronizar-entrevistas.mjs` e `scripts/sincronizar-selecao.mjs`: as cargas;
   `scripts/carga-de-planilha.mjs`: o que as duas têm em comum (credencial, leitura da aba, RPC).
 - `src/lib/entrevistas/entrevistas-da-planilha.ts` e `src/lib/selecao/selecao-da-planilha.ts`: como cada aba vira
-  linhas (testes em `tests/entrevistas-da-planilha.test.js` e `tests/selecao-da-planilha.test.js`).
+  linhas (testes em `tests/entrevistas-e-aprovados.test.js` (bloco `entrevistas-da-planilha`) e `tests/avaliacao-e-recursos.test.js` (bloco `selecao-da-planilha`)).
 - `src/lib/base/planilhas.ts` (`entrevistados`, `auditoriaDaSelecao`): ID da planilha e nome da aba.
 - `supabase/migrations/20261001090000_selecao.sql`: tabelas e regras da Seleção.
