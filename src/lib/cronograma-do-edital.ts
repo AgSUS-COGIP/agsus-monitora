@@ -8,7 +8,6 @@
   cancelado, paralisado) é a única forma de o contrariar, e exige motivo e data.
 */
 
-import { avisosDeSequencia } from "./sequencia-do-cronograma.ts";
 import type { ValidadeDoFormulario } from "./validade-do-edital.ts";
 import {
   ANO_MAXIMO,
@@ -393,8 +392,6 @@ export function analisarCronograma(
     )
       avisos.push(`As etapas ${i} e ${i + 1} possuem datas sobrepostas.`);
   }
-  // Recurso depois do preliminar e antes do final (src/lib/sequencia-do-cronograma.ts).
-  avisos.push(...avisosDeSequencia(etapas));
   if (
     edital.status_override &&
     (!edital.status_override_motivo || !edital.status_override_data)

@@ -422,9 +422,14 @@ export function criarEstadoDoNucleo({
       return false;
     }
     // Edital novo não tem cronograma anterior a justificar (o banco registra "Cadastro do edital").
-    const analise = analisarCronograma(edital, etapas, motivo, {
+    const base = analisarCronograma(edital, etapas, motivo, {
       exigirMotivo: Boolean(edital.id),
     });
+    // A regra de sequência (só avisos) baixa ao salvar, fora do pacote de entrada; sem ela, salva igual.
+    const analise = await import("../../lib/sequencia-do-cronograma.ts").then(
+      (modulo) => modulo.comSequencia(base, etapas),
+      () => base,
+    );
     if (analise.erros.length) {
       toast(analise.erros[0]!, "warn");
       return false;

@@ -40,8 +40,10 @@ Tabela, alertas, formulário e linha do tempo. A tela é `nucleo.tsx`; o estado 
 - **Sequência entre etapas dependentes** (`src/lib/sequencia-do-cronograma.ts`): recurso depois do
   resultado preliminar e até o resultado final da mesma fase (documental/curricular, títulos,
   conhecimentos, entrevista; sem o final da fase, vale o do processo seletivo). A fase é a da
-  primeira palavra-chave da atividade. Aviso ao salvar (`analisarCronograma`) e na linha do tempo
-  do edital; não impede salvar. Em 17/11/2026 avisava 4 editais: 120/2026 (recurso das entrevistas
+  primeira palavra-chave da atividade. Aviso no formulário e ao salvar (`comSequencia` sobre
+  `analisarCronograma`) e na linha do tempo do edital; não impede salvar. A regra fica fora do
+  pacote de entrada: o formulário já baixa no clique, e o salvar e a linha do tempo a importam
+  sob demanda (o orçamento de 320 KB estourou com ela dentro de `analisarCronograma`). Em 17/11/2026 avisava 4 editais: 120/2026 (recurso das entrevistas
   até 25/02/2027, final em 21/01) e 70, 71 e 74/2025 (recurso até 30/11, final em 03/11).
 - Retificação do cronograma a partir do PDF da errata (`lancar-retificacao.tsx`).
 - A atividade vai ao banco sem espaços repetidos (`cronogramaParaSalvar`): o texto colado do PDF

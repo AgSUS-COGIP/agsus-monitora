@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  analisarCronograma,
+  type EtapaDoCronograma,
+} from "../src/lib/cronograma-do-edital.ts";
+import {
   avisosDeSequencia,
+  comSequencia,
   marcarEtapas,
 } from "../src/lib/sequencia-do-cronograma.ts";
 
@@ -154,5 +159,25 @@ describe("sequência do cronograma", () => {
         { atividade: "Resultado final da Entrevista", data_inicio: "" },
       ]),
     ).toEqual([]);
+  });
+
+  it("comSequencia soma os avisos à análise do formulário, sem repetir", () => {
+    const edital = { edital: "120/2026", unidade: "DSEI Fictício" };
+    const etapas: EtapaDoCronograma[] = DO_120.map((etapa, i) => ({
+      ...etapa,
+      ordem: i + 1,
+      origem: "MANUAL",
+      observacao: "",
+      concluida: null,
+      confianca_extracao: null,
+    }));
+    const base = analisarCronograma(edital, etapas, "Errata");
+    expect(base.avisos.join(" ")).not.toContain("etapa 11 (recurso)");
+    const analise = comSequencia(base, etapas);
+    expect(analise.erros).toEqual(base.erros);
+    expect(analise.avisos).toContain(
+      "A etapa 11 (recurso) termina em 25/02/2027, depois da etapa 12 (resultado final, 21/01/2027).",
+    );
+    expect(comSequencia(analise, etapas).avisos).toEqual(analise.avisos);
   });
 });

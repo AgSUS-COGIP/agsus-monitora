@@ -1,3 +1,4 @@
+import { comSequencia } from "../../lib/sequencia-do-cronograma.ts";
 import {
   useEffect,
   useMemo,
@@ -371,11 +372,11 @@ export function ModalDoEdital({
     previa,
     areaDoEdital,
   );
-  const analise = analisarCronograma(
-    edital,
+  const analise = comSequencia(
+    analisarCronograma(edital, cronograma.etapas, cronograma.motivo, {
+      exigirMotivo: editorMexido && Boolean(id),
+    }),
     cronograma.etapas,
-    cronograma.motivo,
-    { exigirMotivo: editorMexido && Boolean(id) },
   );
   const automatico = cronograma.automatico;
   const validade = cronograma.validade;

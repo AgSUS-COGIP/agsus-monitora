@@ -5,7 +5,6 @@ import {
   hojeEmBrasilia,
   situacaoNaLinhaDoTempo,
 } from "../../lib/cronograma-do-edital.ts";
-import { avisosDeSequencia } from "../../lib/sequencia-do-cronograma.ts";
 import {
   Aviso,
   BlocosEsqueleto,
@@ -55,6 +54,25 @@ const ICONES = {
   future: "fa-circle",
 };
 
+/*
+  Recurso depois do preliminar e antes do final: aviso, quem corrige é Editais.
+  A regra baixa quando a linha do tempo abre (fora do pacote de entrada).
+*/
+function useSequencia(etapas: CronogramaLido["etapas"]): string[] {
+  const [avisos, setAvisos] = useState<string[]>([]);
+  useEffect(() => {
+    let vivo = true;
+    const lista = Array.isArray(etapas) ? etapas : [];
+    void import("../../lib/sequencia-do-cronograma.ts").then((modulo) => {
+      if (vivo) setAvisos(modulo.avisosDeSequencia(lista));
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [etapas]);
+  return avisos;
+}
+
 function Conteudo({
   dados,
   agora,
@@ -67,8 +85,7 @@ function Conteudo({
   const etapas = Array.isArray(dados.etapas) ? dados.etapas : [];
   const historico = Array.isArray(dados.historico) ? dados.historico : [];
   const hoje = hojeEmBrasilia(agora());
-  // Recurso depois do preliminar e antes do final: aviso, quem corrige é Editais.
-  const sequencia = avisosDeSequencia(etapas);
+  const sequencia = useSequencia(dados.etapas);
 
   return (
     <>

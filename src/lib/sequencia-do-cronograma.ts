@@ -148,3 +148,19 @@ export function avisosDeSequencia(
   }
   return avisos;
 }
+
+/*
+  A análise do cronograma (analisarCronograma) com os avisos de sequência
+  somados. Fica aqui, e não dentro de analisarCronograma, para a regra não
+  entrar no pacote de entrada: só o formulário do edital (carregado no
+  clique) e o salvar a usam.
+*/
+export function comSequencia<T extends { avisos: string[] }>(
+  analise: T,
+  etapas: readonly EtapaParaSequencia[],
+): T {
+  return {
+    ...analise,
+    avisos: [...new Set([...analise.avisos, ...avisosDeSequencia(etapas)])],
+  };
+}
