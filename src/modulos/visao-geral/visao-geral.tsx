@@ -6,7 +6,8 @@ import type {
   PropsDoPainel,
 } from "./tipos.ts";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { lazy, Suspense, useMemo, useState, useSyncExternalStore } from "react";
+import { importarComRecarga } from "../../lib/carga/importar-com-recarga.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import {
@@ -36,7 +37,6 @@ import {
   Vagas,
 } from "./paineis.tsx";
 import { TabelaDeProcessos } from "./tabela.tsx";
-import { MontadorDeRelatorio } from "./montador-de-relatorio.tsx";
 import { podeBaixarAprovados } from "../../lib/acessos/access-roles.ts";
 
 /*
@@ -73,6 +73,19 @@ import { podeBaixarAprovados } from "../../lib/acessos/access-roles.ts";
   Textos de Configurações › Página inicial (publicados): filtros e rótulos
   dos indicadores (`textosDaVisaoGeral`).
 */
+
+/*
+  O montador de relatório (e as regras do relatório e da diretoria) só abre no
+  Exportar: chega por import(), fora do pacote de entrada (orçamento de
+  bundle, `check:bundle-size`). Os Painéis já o pedem sob demanda.
+*/
+const MontadorDeRelatorio = lazy(
+  importarComRecarga(() =>
+    import("./montador-de-relatorio.tsx").then((m) => ({
+      default: m.MontadorDeRelatorio,
+    })),
+  ),
+);
 
 /* O mapa da Saúde Indígena lendo e pedindo ao estado da Visão geral. */
 function MapaDaSaudeIndigena({
@@ -187,17 +200,19 @@ export function TelaDaVisaoGeral({
         aoAbrir={abrir}
       />
       {e.montador && e.aberta ? (
-        <MontadorDeRelatorio
-          e={e}
-          aoBaixarCsv={estado.exportarCsv}
-          textos={textos}
-          configuracoes={configuracoes}
-          obterPerfil={obterPerfil}
-          agora={agora}
-          aoFechar={estado.fecharMontador}
-          supabase={supabase}
-          podeAprovados={podeBaixarAprovados(obterPerfil?.())}
-        />
+        <Suspense fallback={null}>
+          <MontadorDeRelatorio
+            e={e}
+            aoBaixarCsv={estado.exportarCsv}
+            textos={textos}
+            configuracoes={configuracoes}
+            obterPerfil={obterPerfil}
+            agora={agora}
+            aoFechar={estado.fecharMontador}
+            supabase={supabase}
+            podeAprovados={podeBaixarAprovados(obterPerfil?.())}
+          />
+        </Suspense>
       ) : null}
       {linhaAberta ? (
         <GavetaDoProcesso

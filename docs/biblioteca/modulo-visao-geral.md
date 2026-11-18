@@ -106,7 +106,8 @@ trabalho). De cima para baixo:
   (`classe` da coluna na `TabelaInfinita`). No celular, em cartões, rótulo e valor ficam na
   mesma linha e só a página rola.
 - O CSV mantém a proteção contra fórmulas e o nome do arquivo usa a data de Brasília.
-- **Montador de relatório** (13/11/2026; `montador-de-relatorio.tsx`, lógica em
+- **Montador de relatório** (13/11/2026; `montador-de-relatorio.tsx`, por `lazy()` desde 18/11/2026:
+  ele e as regras do relatório saíram do pacote de entrada, que estava a 0,4 KB do orçamento; lógica em
   `src/lib/visao-geral/relatorio-da-visao-geral.ts`, PDF em `src/lib/visao-geral/relatorio-da-visao-geral-em-pdf.ts`): o
   botão Exportar abre a janela (e, desde 16/11/2026, o "Montar relatório" dos Painéis, com a área
   inteira — [[modulo-paineis-de-dados]]; saiu do menu da conta). Modelo pronto (Resumo

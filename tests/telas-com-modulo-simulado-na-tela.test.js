@@ -7024,8 +7024,15 @@ bloco("modulos/visao-geral", async () => {
       await montar();
       await act(async () => estado.definirFiltro("uf", ["RR"]));
       await clicar(secao.querySelector('[data-acao="exportar"]'));
+      // O montador chega por import(), fora do pacote de entrada.
+      await vi.waitFor(
+        async () => {
+          await esperar();
+          expect(document.getElementById("visaoGeralRelatorio")).not.toBeNull();
+        },
+        { timeout: 8000 },
+      );
       const montador = document.getElementById("visaoGeralRelatorio");
-      expect(montador).not.toBeNull();
       const csv = [...montador.querySelectorAll('[role="radio"]')].find(
         (b) => b.textContent.trim() === "CSV",
       );
