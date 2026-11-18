@@ -15,10 +15,12 @@ scripts faz ou gera.
 
 - **Arquitetura, qualidade, build e smoke** (obrigatório): auth, contrato de RPC, sem
   `MutationObserver` novo, sem camadas de remendo, legado só encolhe, timestamps das migrations;
-  lint e formatação dos arquivos alterados; Vitest com cobertura (inclui o teste da biblioteca de
-  documentação; `--maxWorkers=2` em `test:coverage`: com os testes em poucos arquivos grandes,
-  desde o #887, mais processos em paralelo esgotavam a memória da máquina do GitHub, que caía sem
-  teste vermelho, "The runner has received a shutdown signal"); `npm run build` (inclui `typecheck`, segurança do HTML e orçamento de bundles);
+  lint e formatação dos arquivos alterados; Vitest com 2 processos e 20 min de limite, **sem
+  cobertura** (inclui o teste da biblioteca de documentação; desde 18/11/2026: com a cobertura e os
+  testes em poucos arquivos grandes, do #887, a máquina do GitHub caía em 2 min sem log, "The runner
+  has received a shutdown signal"; o limite era 1% e não barrava nada, e `npm run test:coverage`
+  continua para rodar à mão); `npm run build` (inclui `typecheck`, segurança do HTML e orçamento de
+  bundles);
   todos os testes do Playwright sobre o `dist/` desse build, inclusive o app com sessão e o Supabase
   simulados; o smoke e a sessão simulada de novo no servidor TypeScript, e o smoke na imagem Docker.
   Na falha, o relatório e os traces ficam no artefato `relatorio-do-playwright` ([[testes]]).

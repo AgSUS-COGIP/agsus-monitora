@@ -71,12 +71,13 @@ jobs:
       - name: Verificar formatação alterada
         run: npm run format:check
 
-      # Teto de memória por processo do Node: um arquivo de teste que dispare a memória falha com
-      # "heap out of memory" e o nome dele, em vez de derrubar a máquina sem log (desde o #887).
-      - name: Testes e cobertura
-        env:
-          NODE_OPTIONS: --max-old-space-size=4096
-        run: npm run test:coverage -- --reporter=verbose
+      # Sem a cobertura (18/11/2026): com ela, desde o #887 (testes em poucos arquivos grandes), a
+      # máquina do GitHub caía em 2 min sem log, com 4 ou 2 processos e com teto de memória. O limite
+      # era 1% e não barrava nada; a cobertura segue em `npm run test:coverage`, fora do bloqueio.
+      # Tempo próprio, para um teste preso não consumir o build e o Playwright.
+      - name: Testes
+        timeout-minutes: 20
+        run: npx vitest run --maxWorkers=2 --reporter=verbose
 
       # O Supabase deste build é fictício: os testes de navegador respondem a ele
       # por page.route (tests/sessao-simulada.spec.js). Não é segredo nem banco real.
