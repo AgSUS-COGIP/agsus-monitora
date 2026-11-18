@@ -907,6 +907,9 @@ export function diasAte(
   "Edital encerra em N dias" até 7 (perigo) e até 30 (alerta); mais longe,
   nada. Prazo vencido sem concluir não repete aqui: o selo do cronograma diz
   "Etapa atrasada". `{ tom, rotulo, icone }` ou `null`.
+  "Concluído" é o status calculado pelas datas: diz que o cronograma terminou,
+  não que o resultado saiu nem que o processo foi homologado (conferência de
+  17/11/2026). Por isso o rótulo é "Cronograma encerrado".
 */
 export function prazoDoEdital(
   linha: LinhaDoMonitoramento,
@@ -916,7 +919,7 @@ export function prazoDoEdital(
   if (["cancelado", "cancelada"].includes(status))
     return { tom: "neutro", rotulo: "Processo cancelado", icone: "fa-ban" };
   if (["concluído", "concluido"].includes(status))
-    return { tom: "neutro", rotulo: "Processo concluído", icone: "fa-check" };
+    return { tom: "neutro", rotulo: "Cronograma encerrado", icone: "fa-check" };
   const dias = diasAte(linha?.data_fim, hoje);
   if (dias === null || dias < 0) return null;
   const rotulo = `Edital encerra em ${dias} ${dias === 1 ? "dia" : "dias"}`;
@@ -926,10 +929,50 @@ export function prazoDoEdital(
 }
 
 /*
+  Há etapas cadastradas? Com o cálculo automático, sim (Editais não salva o
+  automático sem etapas). Com o manual, o banco (FC_ESTADO_DO_CRONOGRAMA,
+  20261117190000) devolve percentual, atividade atual e próxima etapa sempre
+  que há etapas, e nada disso sem elas: com etapas, ou há uma próxima, ou o
+  dia está numa etapa, ou alguma já terminou (percentual acima de zero).
+*/
+export function temCronogramaCadastrado(
+  linha: LinhaDoMonitoramento | null | undefined,
+): boolean {
+  if (!linha) return false;
+  if (linha.cronograma_automatico) return true;
+  return (
+    Number(linha.cronograma_percentual) > 0 ||
+    Boolean(txt(linha.cronograma_proxima_data)) ||
+    Boolean(txt(linha.cronograma_atividade_atual))
+  );
+}
+
+/*
+  O cronograma em poucas palavras, separando as três coisas: há etapas, o
+  cálculo (automático ou manual) e a situação excepcional pelo status
+  ("Cronograma cadastrado · cálculo manual · suspenso"). Sem etapas, `null`.
+*/
+export function descricaoDoCronograma(
+  linha: LinhaDoMonitoramento | null | undefined,
+): string | null {
+  if (!linha || !temCronogramaCadastrado(linha)) return null;
+  const partes = [
+    "Cronograma cadastrado",
+    linha.cronograma_automatico ? "cálculo automático" : "cálculo manual",
+  ];
+  const status = statusCanonico(linha.status);
+  if (["Suspenso", "Paralisado", "Cancelado"].includes(status))
+    partes.push(status.toLowerCase());
+  return partes.join(" · ");
+}
+
+/*
   A situação do cronograma (Editais): `{ tom, rotulo }`. `tom`: "done"
   (concluído/cancelado), "warning", "danger", "info" ou "neutral" — também a
-  cor da linha na tabela. Atrasada: o fim do cronograma (`data_fim`) passou e
-  o edital não concluiu (a mesma regra do crítico).
+  cor da linha na tabela. Suspenso e paralisado dizem isso (não "atrasada").
+  Atrasada: o fim do cronograma (`data_fim`) passou e o edital não concluiu
+  (a mesma regra do crítico). "Sem cronograma estruturado" só sem etapas: o
+  cálculo manual com etapas segue as regras da próxima etapa.
 */
 export function urgenciaDoCronograma(
   linha: LinhaDoMonitoramento | null,
@@ -938,15 +981,18 @@ export function urgenciaDoCronograma(
   if (!linha)
     return { tom: "neutral", rotulo: "Dados operacionais indisponíveis" };
   const status = statusCanonico(linha.status);
-  if (["Concluído", "Cancelado"].includes(status))
-    return { tom: "done", rotulo: status };
+  if (status === "Cancelado") return { tom: "done", rotulo: status };
+  if (status === "Concluído")
+    return { tom: "done", rotulo: "Cronograma encerrado" };
+  if (status === "Suspenso" || status === "Paralisado")
+    return { tom: "warning", rotulo: `Processo ${status.toLowerCase()}` };
   const fim = diasAte(linha.data_fim, hoje);
   if (fim !== null && fim < 0)
     return {
       tom: "danger",
       rotulo: `Etapa atrasada há ${Math.abs(fim)} dia(s)`,
     };
-  if (!linha.cronograma_automatico)
+  if (!temCronogramaCadastrado(linha))
     return { tom: "warning", rotulo: "Sem cronograma estruturado" };
   const dias = Number(linha.cronograma_dias_para_proxima);
   const temDias =

@@ -5,7 +5,12 @@ import {
   hojeEmBrasilia,
   situacaoNaLinhaDoTempo,
 } from "../../lib/cronograma/cronograma-do-edital.ts";
-import { BlocosEsqueleto, ErroAoCarregar, Modal } from "../../ui/index.ts";
+import {
+  Aviso,
+  BlocosEsqueleto,
+  ErroAoCarregar,
+  Modal,
+} from "../../ui/index.ts";
 import type { CronogramaLido } from "./estado.ts";
 
 /** O que a linha do tempo usa do estado da página (`estado.ts`). */
@@ -49,6 +54,27 @@ const ICONES = {
   future: "fa-circle",
 };
 
+/*
+  Recurso depois do preliminar e antes do final: aviso, quem corrige é Editais.
+  A regra baixa quando a linha do tempo abre (fora do pacote de entrada).
+*/
+function useSequencia(etapas: CronogramaLido["etapas"]): string[] {
+  const [avisos, setAvisos] = useState<string[]>([]);
+  useEffect(() => {
+    let vivo = true;
+    const lista = Array.isArray(etapas) ? etapas : [];
+    void import("../../lib/cronograma/sequencia-do-cronograma.ts").then(
+      (modulo) => {
+        if (vivo) setAvisos(modulo.avisosDeSequencia(lista));
+      },
+    );
+    return () => {
+      vivo = false;
+    };
+  }, [etapas]);
+  return avisos;
+}
+
 function Conteudo({
   dados,
   agora,
@@ -61,6 +87,7 @@ function Conteudo({
   const etapas = Array.isArray(dados.etapas) ? dados.etapas : [];
   const historico = Array.isArray(dados.historico) ? dados.historico : [];
   const hoje = hojeEmBrasilia(agora());
+  const sequencia = useSequencia(dados.etapas);
 
   return (
     <>
@@ -108,6 +135,15 @@ function Conteudo({
           <span>Linha do tempo</span>
           <strong>{etapas.length} etapa(s)</strong>
         </div>
+        {sequencia.length ? (
+          <Aviso tom="warning" papel="status">
+            <i
+              className="fa-solid fa-triangle-exclamation"
+              aria-hidden="true"
+            />{" "}
+            <span>{sequencia.join(" ")}</span>
+          </Aviso>
+        ) : null}
         <div className="nucleo-timeline-list">
           {etapas.length ? (
             etapas.map((etapa, indice) => {

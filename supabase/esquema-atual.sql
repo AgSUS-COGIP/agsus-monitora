@@ -4317,7 +4317,7 @@ COMMENT ON FUNCTION private."FC_ERRO_PONTOS_EXPERIENCIA"(p_alvo jsonb, p_pontuac
 
 CREATE FUNCTION private."FC_ESTADO_DO_CRONOGRAMA"(p_monitoramento_id uuid, p_data date) RETURNS jsonb
     LANGUAGE plpgsql STABLE SECURITY DEFINER
-    SET search_path TO 'public', 'private', 'auth', 'pg_temp'
+    SET search_path TO ''
     AS $$
 declare
   v_monitor public."TB_MONITORAMENTO_INDIGENA"%rowtype;
@@ -4331,6 +4331,8 @@ declare
   v_etapa text;
   v_percentual numeric := 0;
   v_dias integer;
+  v_calculo text;
+  v_situacao text;
 begin
   select * into v_monitor
   from public."TB_MONITORAMENTO_INDIGENA"
@@ -4340,17 +4342,91 @@ begin
     return jsonb_build_object('status', null, 'etapa', null, 'tem_cronograma', false);
   end if;
 
+  v_calculo := case when v_monitor.cronograma_automatico then 'automatico' else 'manual' end;
+
   select count(*)::integer,
          count(*) filter (where data_fim < p_data)::integer
   into v_total, v_concluidas
   from public."TB_CRONOGRAMA_MONIT_INDIG"
   where monitoramento_id = p_monitoramento_id;
 
-  if not v_monitor.cronograma_automatico or v_total = 0 then
+  if v_total = 0 then
+    v_status := coalesce(nullif(v_monitor.status_override,''), nullif(v_monitor.status,''), 'Cronograma pendente');
+    v_etapa := coalesce(nullif(v_monitor.etapa_override,''), nullif(v_monitor.etapa,''), 'Cronograma pendente');
+  else
+    select * into v_primeira
+    from public."TB_CRONOGRAMA_MONIT_INDIG"
+    where monitoramento_id = p_monitoramento_id
+    order by data_inicio, ordem
+    limit 1;
+
+    select * into v_ultima
+    from public."TB_CRONOGRAMA_MONIT_INDIG"
+    where monitoramento_id = p_monitoramento_id
+    order by data_fim desc, ordem desc
+    limit 1;
+
+    select * into v_atual
+    from public."TB_CRONOGRAMA_MONIT_INDIG"
+    where monitoramento_id = p_monitoramento_id
+      and p_data between data_inicio and data_fim
+    order by data_inicio desc, ordem desc
+    limit 1;
+
+    select * into v_proxima
+    from public."TB_CRONOGRAMA_MONIT_INDIG"
+    where monitoramento_id = p_monitoramento_id
+      and data_inicio > p_data
+    order by data_inicio, ordem
+    limit 1;
+
+    v_percentual := round(least(100, greatest(0, (v_concluidas::numeric / nullif(v_total,0)) * 100)), 1);
+
+    if p_data < v_primeira.data_inicio then
+      v_status := 'Planejado';
+      v_etapa := 'Aguardando: ' || v_primeira.atividade;
+    elsif p_data > v_ultima.data_fim then
+      v_status := 'Concluído';
+      v_etapa := v_ultima.atividade;
+      v_percentual := 100;
+    elsif v_atual.id is not null then
+      v_status := 'Em andamento';
+      v_etapa := v_atual.atividade;
+    elsif v_proxima.id is not null then
+      v_status := 'Em andamento';
+      v_etapa := 'Aguardando: ' || v_proxima.atividade;
+    else
+      v_status := 'Em andamento';
+      v_etapa := coalesce(v_ultima.atividade, 'Cronograma em andamento');
+    end if;
+
+    if v_proxima.id is not null then
+      v_dias := v_proxima.data_inicio - p_data;
+    end if;
+
+    if v_monitor.cronograma_automatico then
+      v_status := coalesce(nullif(v_monitor.status_override,''), v_status);
+      v_etapa := coalesce(nullif(v_monitor.etapa_override,''), v_etapa);
+    else
+      -- Cálculo manual: valem o status e a etapa digitados; sem eles, o calculado.
+      v_status := coalesce(nullif(v_monitor.status_override,''), nullif(v_monitor.status,''), v_status);
+      v_etapa := coalesce(nullif(v_monitor.etapa_override,''), nullif(v_monitor.etapa,''), v_etapa);
+    end if;
+  end if;
+
+  v_situacao := case
+    when translate(lower(v_status), 'áâãàéêíóôõúç', 'aaaaeeiooouc') like '%suspens%' then 'suspenso'
+    when translate(lower(v_status), 'áâãàéêíóôõúç', 'aaaaeeiooouc') like '%parali%' then 'paralisado'
+    when translate(lower(v_status), 'áâãàéêíóôõúç', 'aaaaeeiooouc') like '%cancel%' then 'cancelado'
+  end;
+
+  if v_total = 0 then
     return jsonb_build_object(
-      'status', coalesce(nullif(v_monitor.status_override,''), nullif(v_monitor.status,''), 'Cronograma pendente'),
-      'etapa', coalesce(nullif(v_monitor.etapa_override,''), nullif(v_monitor.etapa,''), 'Cronograma pendente'),
+      'status', v_status,
+      'etapa', v_etapa,
       'tem_cronograma', false,
+      'calculo', v_calculo,
+      'situacao', v_situacao,
       'percentual', 0,
       'proxima_atividade', null,
       'proxima_data', null,
@@ -4358,63 +4434,12 @@ begin
     );
   end if;
 
-  select * into v_primeira
-  from public."TB_CRONOGRAMA_MONIT_INDIG"
-  where monitoramento_id = p_monitoramento_id
-  order by data_inicio, ordem
-  limit 1;
-
-  select * into v_ultima
-  from public."TB_CRONOGRAMA_MONIT_INDIG"
-  where monitoramento_id = p_monitoramento_id
-  order by data_fim desc, ordem desc
-  limit 1;
-
-  select * into v_atual
-  from public."TB_CRONOGRAMA_MONIT_INDIG"
-  where monitoramento_id = p_monitoramento_id
-    and p_data between data_inicio and data_fim
-  order by data_inicio desc, ordem desc
-  limit 1;
-
-  select * into v_proxima
-  from public."TB_CRONOGRAMA_MONIT_INDIG"
-  where monitoramento_id = p_monitoramento_id
-    and data_inicio > p_data
-  order by data_inicio, ordem
-  limit 1;
-
-  v_percentual := round(least(100, greatest(0, (v_concluidas::numeric / nullif(v_total,0)) * 100)), 1);
-
-  if p_data < v_primeira.data_inicio then
-    v_status := 'Planejado';
-    v_etapa := 'Aguardando: ' || v_primeira.atividade;
-  elsif p_data > v_ultima.data_fim then
-    v_status := 'Concluído';
-    v_etapa := v_ultima.atividade;
-    v_percentual := 100;
-  elsif v_atual.id is not null then
-    v_status := 'Em andamento';
-    v_etapa := v_atual.atividade;
-  elsif v_proxima.id is not null then
-    v_status := 'Em andamento';
-    v_etapa := 'Aguardando: ' || v_proxima.atividade;
-  else
-    v_status := 'Em andamento';
-    v_etapa := coalesce(v_ultima.atividade, 'Cronograma em andamento');
-  end if;
-
-  if v_proxima.id is not null then
-    v_dias := v_proxima.data_inicio - p_data;
-  end if;
-
-  v_status := coalesce(nullif(v_monitor.status_override,''), v_status);
-  v_etapa := coalesce(nullif(v_monitor.etapa_override,''), v_etapa);
-
   return jsonb_build_object(
     'status', v_status,
     'etapa', v_etapa,
     'tem_cronograma', true,
+    'calculo', v_calculo,
+    'situacao', v_situacao,
     'percentual', v_percentual,
     'atividade_atual', case when v_atual.id is null then null else v_atual.atividade end,
     'proxima_atividade', case when v_proxima.id is null then null else v_proxima.atividade end,
@@ -4432,7 +4457,7 @@ $$;
 -- Name: FUNCTION "FC_ESTADO_DO_CRONOGRAMA"(p_monitoramento_id uuid, p_data date); Type: COMMENT; Schema: private; Owner: -
 --
 
-COMMENT ON FUNCTION private."FC_ESTADO_DO_CRONOGRAMA"(p_monitoramento_id uuid, p_data date) IS 'Estado do cronograma de um edital no dia p_data (status, etapa, percentual, atividade atual e próxima, datas): o cálculo de public.get_monitoramento_cronograma_estado sem a checagem de permissão (20261105170000). Só para funções SECURITY DEFINER do banco; ninguém executa direto.';
+COMMENT ON FUNCTION private."FC_ESTADO_DO_CRONOGRAMA"(p_monitoramento_id uuid, p_data date) IS 'Estado do cronograma de um edital no dia p_data: o cálculo de public.get_monitoramento_cronograma_estado sem a checagem de permissão. tem_cronograma = há etapas; calculo = automatico | manual (no manual valem o status e a etapa digitados; percentual, atividade atual, próxima etapa e datas saem das etapas nos dois); situacao = suspenso | paralisado | cancelado | null, do status final (20261117190000). Só para funções SECURITY DEFINER do banco; ninguém executa direto.';
 
 --
 -- Name: FC_ESTATISTICAS_DA_FILA(); Type: FUNCTION; Schema: private; Owner: -
@@ -15421,6 +15446,46 @@ $$;
 COMMENT ON FUNCTION private."FC_TG_CONTRATACAO_LISTA_NOVA"() IS 'Gatilho da publicação de uma lista de aprovados: pede o job "Contratado em outra lista". 20261024120000.';
 
 --
+-- Name: FC_TG_DATAS_DO_CADASTRO(); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_TG_DATAS_DO_CADASTRO"() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+  v_ids uuid[];
+begin
+  if tg_op = 'INSERT' then
+    v_ids := array[new.monitoramento_id];
+  elsif tg_op = 'DELETE' then
+    v_ids := array[old.monitoramento_id];
+  else
+    v_ids := array[new.monitoramento_id, old.monitoramento_id];
+  end if;
+
+  -- Sem etapas, as datas ficam (como em salvar_monitoramento_com_cronograma).
+  update public."TB_MONITORAMENTO_INDIGENA" m
+     set data_inicio = c.inicio,
+         data_fim = c.fim
+    from (select e.monitoramento_id, min(e.data_inicio) as inicio, max(e.data_fim) as fim
+            from public."TB_CRONOGRAMA_MONIT_INDIG" e
+           where e.monitoramento_id = any (v_ids)
+           group by e.monitoramento_id) c
+   where m.id = c.monitoramento_id
+     and m.cronograma_automatico
+     and (m.data_inicio is distinct from c.inicio or m.data_fim is distinct from c.fim);
+  return null;
+end;
+$$;
+
+--
+-- Name: FUNCTION "FC_TG_DATAS_DO_CADASTRO"(); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_TG_DATAS_DO_CADASTRO"() IS 'Gatilho (de restrição, adiado ao fim da transação) de TB_CRONOGRAMA_MONIT_INDIG: com o cronograma automático ligado, o cadastro do edital (data_inicio, data_fim) recebe o início da primeira etapa e o fim da última sempre que as etapas mudam, por qualquer caminho. Sem etapas, as datas ficam; só grava o que muda. data_fim alimenta FC_VENCIMENTO_DO_EDITAL (20261117190000).';
+
+--
 -- Name: FC_TG_EQUIPE_COM_FICHAS(); Type: FUNCTION; Schema: private; Owner: -
 --
 
@@ -25447,6 +25512,9 @@ begin
       'etapa', e ->> 'etapa',
       'cronograma_automatico', m.cronograma_automatico,
       'cronograma_total', coalesce(c.total, 0),
+      'tem_cronograma', coalesce(c.total, 0) > 0,
+      'calculo', e ->> 'calculo',
+      'situacao', e ->> 'situacao',
       'tem_resultado_final', coalesce(c.tem_resultado_final, false),
       'percentual', coalesce((e ->> 'percentual')::numeric, 0),
       'proxima_atividade', e ->> 'proxima_atividade',
@@ -25454,8 +25522,8 @@ begin
       'dias_para_proxima', (e ->> 'dias_para_proxima')::integer,
       'status_override', m.status_override,
       'alerta_tipo', case
-        when nullif(m.status_override, '') is not null then 'excepcional'
-        when not m.cronograma_automatico or coalesce(c.total, 0) = 0 then 'sem_cronograma'
+        when nullif(m.status_override, '') is not null or (e ->> 'situacao') is not null then 'excepcional'
+        when coalesce(c.total, 0) = 0 then 'sem_cronograma'
         when coalesce(c.total, 0) < 2 or not coalesce(c.tem_resultado_final, false) then 'incompleto'
         when (e ->> 'dias_para_proxima')::integer between 0 and 3 then 'proxima_3d'
         when (e ->> 'dias_para_proxima')::integer between 4 and 6 then 'proxima_7d'
@@ -25477,6 +25545,12 @@ begin
   ), '[]'::jsonb);
 end;
 $$;
+
+--
+-- Name: FUNCTION get_nucleo_cronograma_resumo(); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.get_nucleo_cronograma_resumo() IS 'Resumo do cronograma de cada edital ativo da área (Núcleo e Cronograma): status, etapa, cálculo, situação, percentual, próxima etapa e o alerta. excepcional = status_override ou situação suspenso/paralisado/cancelado; sem_cronograma = nenhuma etapa (o manual com etapas segue as regras de prazo) (20261117190000).';
 
 --
 -- Name: get_painel_dos_robos(); Type: FUNCTION; Schema: public; Owner: -
@@ -65907,6 +65981,12 @@ CREATE TRIGGER "TG_CANDAPROV_CACHE_INS" AFTER INSERT ON public."TB_CANDIDATO_APR
 CREATE TRIGGER "TG_CANDAPROV_CACHE_UPD" AFTER UPDATE ON public."TB_CANDIDATO_APROVADO" REFERENCING OLD TABLE AS antigas NEW TABLE AS novas FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_CACHE_CANDIDATO_APROVADO"();
 
 --
+-- Name: TB_CRONOGRAMA_MONIT_INDIG TG_DATAS_DO_CADASTRO; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE CONSTRAINT TRIGGER "TG_DATAS_DO_CADASTRO" AFTER INSERT OR DELETE OR UPDATE ON public."TB_CRONOGRAMA_MONIT_INDIG" DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION private."FC_TG_DATAS_DO_CADASTRO"();
+
+--
 -- Name: TB_DECISAO_LOTE TG_DECISAOLOTE_SEMAPAGAR; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -74456,6 +74536,12 @@ REVOKE ALL ON FUNCTION private."FC_TG_CONTRATACAO_BASE_MUDOU"() FROM PUBLIC;
 --
 
 REVOKE ALL ON FUNCTION private."FC_TG_CONTRATACAO_LISTA_NOVA"() FROM PUBLIC;
+
+--
+-- Name: FUNCTION "FC_TG_DATAS_DO_CADASTRO"(); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_TG_DATAS_DO_CADASTRO"() FROM PUBLIC;
 
 --
 -- Name: FUNCTION "FC_TG_EQUIPE_COM_FICHAS"(); Type: ACL; Schema: private; Owner: -

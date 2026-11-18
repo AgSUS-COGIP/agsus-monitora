@@ -361,7 +361,8 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
   get_nucleo_cronograma_resumo: {
     argumentos: [],
     critica: false,
-    resumo: "Resumo dos cronogramas da Equipe Núcleo.",
+    resumo:
+      "Resumo dos cronogramas da Equipe Núcleo: status, etapa, tem_cronograma (há etapas), calculo (automatico | manual), situacao (suspenso | paralisado | cancelado), percentual, próxima etapa e alerta_tipo. O manual com etapas não é sem_cronograma (20261117190000).",
   },
   listar_demandas_internas: {
     argumentos: [],

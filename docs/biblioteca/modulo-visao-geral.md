@@ -46,6 +46,15 @@ trabalho). De cima para baixo:
   reservada enquanto o módulo baixa (`.visao-geral-mapa-reserva`).
 - **Tabela**: a contagem não repete o total; no celular, o cartão mostra só unidade, edital,
   vagas, inscritos, contratados, sem contratação, status e atenção (`data-campo` nas células).
+- **Selo do cronograma** (`urgenciaDoCronograma`, `seloDoCronograma`, `descricaoDoCronograma` em
+  `src/lib/visao-geral/visao-geral.ts`; conferência de 17/11/2026). "Sem cronograma" só quando o edital não
+  tem etapa (`temCronogramaCadastrado`: automático, ou percentual, próxima etapa ou etapa atual
+  vindos do banco, que no manual com etapas também vêm desde a migration `20261117190000`). O
+  manual com etapas segue as regras da próxima etapa; suspenso e paralisado dizem "Processo
+  suspenso/paralisado" (não "Etapa atrasada"). A gaveta escreve "Cronograma cadastrado · cálculo
+  manual · suspenso". "Concluído" é o status calculado pelas datas e vira "Cronograma encerrado":
+  a data passar não prova resultado publicado nem processo homologado, e a validade do cadastro
+  reserva é outra conta (`FC_VENCIMENTO_DO_EDITAL`, [[modulo-editais]]).
 
 ## Dados e carregamento
 
