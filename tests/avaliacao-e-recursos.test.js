@@ -1,5 +1,7 @@
 // @vitest-environment node
 import { bloco } from "./apoio/bloco.ts";
+import * as filaDaDocumental from "../src/lib/avaliacao-documental/fila.ts";
+import { resumoPorVaga as resumoDoAndamentoPorVaga } from "../src/lib/avaliacao-documental/andamento-por-vaga.ts";
 import { describe, expect, it, vi, afterEach } from "vitest";
 import {
   analisesPorResponsavel,
@@ -2892,7 +2894,8 @@ bloco("avaliacao-documental-fila-fora-do-lote", () => {
       expect(r).toMatchObject({
         inscritos: 12,
         lote: 2,
-        pendentes: 1,
+        // No lote sem ficha também é pendente (a mesma conta do bloco por vaga).
+        pendentes: 2,
         eliminados: 8,
       });
     });
@@ -8725,6 +8728,7 @@ bloco("lib/avaliacao-documental-fila", () => {
         em_analise: 1,
         revisao: 1,
         concluidas: 1,
+        saiu: 0,
         eliminados: 1,
         fora: 2,
       });
@@ -9011,6 +9015,7 @@ bloco("lib/avaliacao-documental-fila", () => {
         em_analise: 1,
         revisao: 1,
         pendentes: 3,
+        saiu: 0,
       });
       expect(a.vagas.map((v) => v.codigo)).toEqual(["B", "A"]);
       expect(a.vagas[1]).toEqual({
@@ -9022,6 +9027,7 @@ bloco("lib/avaliacao-documental-fila", () => {
         em_analise: 1,
         revisao: 0,
         pendentes: 3,
+        saiu: 0,
       });
     });
 
@@ -17609,5 +17615,99 @@ bloco("textos-do-painel-de-analises", () => {
       expect(parecerDoDetalhe({ id: "a", analise: null })).toBeNull();
       expect(parecerDoDetalhe(null)).toBeNull();
     });
+  });
+});
+
+bloco("lib/avaliacao-documental-saiu-do-lote", () => {
+  /*
+    O lote que não fechava (93/2026, revisão de 17/11/2026): 94 concluídas e 2
+    fichas FORA_LOTE com a pré-classificação ainda NO_LOTE. Agora a faixa e o
+    bloco por vaga têm "Saiu do lote" e somam o lote. Dados fictícios.
+  */
+  const {
+    andamentoDaFila,
+    colunasDaEtapa,
+    contadoresDaFila,
+    filtrarFila,
+    naEtapa,
+    parteDoLote,
+  } = filaDaDocumental;
+  const inscrito = (n, vaga, situacao, pre = "NO_LOTE") => ({
+    id: `c${n}`,
+    codigo: String(9000 + n),
+    vaga,
+    situacao_pre: pre,
+    ficha: situacao ? { id: `f${n}`, situacao } : null,
+  });
+  const VAGA = "100001";
+  const LOTE_96 = [
+    ...Array.from({ length: 94 }, (_, i) =>
+      inscrito(i, VAGA, "CONCLUIDA", "ANALISADO"),
+    ),
+    inscrito(94, VAGA, "FORA_LOTE"),
+    inscrito(95, VAGA, "FORA_LOTE"),
+  ];
+
+  it("o lote de 96 fecha: 94 concluídas + 2 saíram, nenhuma pendente", () => {
+    const faixa = contadoresDaFila(LOTE_96);
+    const { total, vagas } = andamentoDaFila(LOTE_96, [{ codigo: VAGA }]);
+    expect(faixa).toMatchObject({
+      lote: 96,
+      concluidas: 94,
+      saiu: 2,
+      pendentes: 0,
+    });
+    expect(total).toEqual({
+      lote: 96,
+      concluidas: 94,
+      em_analise: 0,
+      revisao: 0,
+      pendentes: 0,
+      saiu: 2,
+    });
+    expect(resumoDoAndamentoPorVaga(vagas)).toBe(
+      "1 vaga · nenhuma com pendências · 1 concluída",
+    );
+  });
+
+  it("faixa e bloco dão os mesmos números e somam o lote", () => {
+    const mistura = [
+      ...LOTE_96.slice(90),
+      inscrito(200, "100002", "PENDENTE"),
+      inscrito(201, "100002", null),
+      inscrito(202, "100002", "EM_ANALISE"),
+      inscrito(203, "100002", "REVISAR"),
+      inscrito(204, "100002", "FORA_LOTE", "ELIMINADO"),
+      inscrito(205, "100002", null, "RANQUEADO"),
+    ];
+    const faixa = contadoresDaFila(mistura);
+    const { total } = andamentoDaFila(mistura, []);
+    for (const parte of [
+      "lote",
+      "concluidas",
+      "em_analise",
+      "revisao",
+      "pendentes",
+      "saiu",
+    ])
+      expect(faixa[parte]).toBe(total[parte]);
+    expect(
+      total.concluidas +
+        total.em_analise +
+        total.revisao +
+        total.pendentes +
+        total.saiu,
+    ).toBe(total.lote);
+    expect(total).toMatchObject({ lote: 10, pendentes: 2, saiu: 2 });
+    expect(naEtapa(mistura[10], "saiu")).toBe(false);
+    expect(parteDoLote(inscrito(1, VAGA, "FORA_LOTE"))).toBe("saiu");
+    expect(parteDoLote(null)).toBeNull();
+  });
+
+  it("a aba Saiu do lote filtra as duas e mostra o motivo da saída", () => {
+    expect(
+      filtrarFila(LOTE_96, { etapa: "saiu" }).map((c) => c.codigo),
+    ).toEqual(["9094", "9095"]);
+    expect(colunasDaEtapa("saiu")).toContain("motivo_saida");
   });
 });

@@ -522,7 +522,7 @@
     inset 0 1px 0 var(--state-info),
     inset 0 -1px 0 var(--state-info);
 }
-/* A barra: concluídas (verde), em análise (azul), em revisão (amarelo); o fundo é o pendente. */
+/* A barra: concluídas (verde), em análise (azul), em revisão (amarelo), saíram do lote (cinza); o fundo é o pendente. */
 .avd-andamento-barra {
   display: flex;
   height: 6px;
@@ -538,6 +538,9 @@
 }
 .avd-andamento-barra > [data-parte="revisao"] {
   background: var(--state-warning);
+}
+.avd-andamento-barra > [data-parte="saiu"] {
+  background: var(--color-status-neutral-solid);
 }
 /* A tabela da fila (TabelaInfinita): menos larga que o padrão, células ao meio. */
 .ui-tabela-rolagem table.avd-fila-lista {

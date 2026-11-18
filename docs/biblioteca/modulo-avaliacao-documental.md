@@ -37,8 +37,11 @@ todos os editais da área".
 
 ## Fila (F3)
 
-- Faixa de situação (No lote, Pendentes, Em análise, Em revisão e Concluídas, cada número um filtro
-  da etapa; "N fora do lote" embaixo); filtros (vaga, responsável, modalidade, código ou nome —
+- Faixa de situação (No lote, Pendentes, Em análise, Em revisão, Concluídas e, quando há, **Saiu do
+  lote** — no lote pela pré-classificação, mas a ficha foi para `FORA_LOTE`, como na importação da
+  planilha —, cada número um filtro da etapa; "N fora do lote" embaixo). A faixa e o "Por vaga" contam
+  por `parteDoLote` (`fila.ts`): lote = concluídas + em análise + em revisão + pendentes (ficha
+  pendente ou ainda sem ficha) + saíram do lote. Filtros (vaga, responsável, modalidade, código ou nome —
   Enter com o código abre a ficha) e **filtros salvos** por pessoa (`TB_FILTRO_FILA_ANALISE`; o
   último filtro também fica no navegador, só por conveniência). "Por vaga (N)" recolhível embaixo.
 - **Pegar próxima ficha** e o responsável "Minhas fichas" para o analista; o analista vê só as vagas

@@ -15,6 +15,8 @@ export type AndamentoDaVaga = {
   em_analise: number;
   revisao: number;
   pendentes: number;
+  /** No lote, mas a ficha saiu (FORA_LOTE): não falta analisar. */
+  saiu?: number;
 };
 
 export type OrdemPorVaga = "banco" | "vaga" | "progresso" | "pendentes";
@@ -29,7 +31,9 @@ export function cargoCurto(cargo: string | null | undefined): string {
   return curto.trim() || texto;
 }
 
-const progresso = (v: AndamentoDaVaga) => (v.lote ? v.concluidas / v.lote : 1);
+/* O que falta: o lote menos as concluídas e as que saíram do lote. */
+const fechadas = (v: AndamentoDaVaga) => v.concluidas + (v.saiu ?? 0);
+const progresso = (v: AndamentoDaVaga) => (v.lote ? fechadas(v) / v.lote : 1);
 
 /** A lista na ordem pedida; "banco" mantém a do edital. Empate: a ordem do edital. */
 export function ordenarPorVaga(
@@ -55,7 +59,7 @@ export function ordenarPorVaga(
 export function resumoPorVaga(vagas: readonly AndamentoDaVaga[]): string {
   const comPendencia = vagas.filter((v) => v.pendentes > 0).length;
   const concluidas = vagas.filter(
-    (v) => v.lote > 0 && v.concluidas === v.lote,
+    (v) => v.lote > 0 && fechadas(v) === v.lote,
   ).length;
   return [
     `${vagas.length} ${vagas.length === 1 ? "vaga" : "vagas"}`,
