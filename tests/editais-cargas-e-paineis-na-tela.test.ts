@@ -2910,7 +2910,7 @@ bloco("componentes/nucleo", () => {
       }
     });
 
-    it("edital concluído sem aprovados: botão amarelo com o aviso, e o clique mostra o toast", async () => {
+    it("edital concluído sem aprovados: botão amarelo com o aviso, e o clique abre as listas sem toast", async () => {
       const aprovados = {
         nome: "Lista de aprovados",
         conteudo: null,
@@ -2947,13 +2947,14 @@ bloco("componentes/nucleo", () => {
           "Nenhum candidato foi aprovado neste edital",
         );
         await clicar(botao("2"));
-        expect(toast).toHaveBeenCalledWith(
-          "Nenhum candidato foi aprovado neste edital",
-          "warn",
+        // O amarelo é só sinal: o clique abre o modal padrão das listas.
+        await vi.waitFor(() =>
+          expect(aprovados.openImportModal).toHaveBeenCalledWith(
+            "2",
+            expect.any(String),
+          ),
         );
-        // Só o aviso: o modal das listas não abre.
-        await esperar();
-        expect(aprovados.openImportModal).not.toHaveBeenCalled();
+        expect(toast).not.toHaveBeenCalled();
       } finally {
         registrarTelas({});
       }

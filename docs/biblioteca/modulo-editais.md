@@ -78,8 +78,9 @@ Tabela, alertas, formulário e linha do tempo. A tela é `nucleo.tsx`; o estado 
 - O botão de listas ganha aviso pelo status (`src/lib/editais/aprovados-por-edital.ts`): Cancelado ou
   Suspenso → vermelho, "Edital cancelado" / "Edital suspenso"; Concluído sem candidato aprovado
   (sem lista vigente ou com ela vazia, por `listar_listas_aprovados`, relida a cada abertura e no
-  Atualizar) → amarelo, "Nenhum candidato foi aprovado neste edital". O aviso é a legenda do botão,
-  e o clique o mostra num toast em vez de abrir as listas.
+  Atualizar) → amarelo, "Nenhum candidato foi aprovado neste edital". O aviso é a legenda do botão.
+  No vermelho, o clique mostra o aviso num toast em vez de abrir as listas; no amarelo, o clique
+  abre o modal das listas normalmente, sem toast (para importar a lista do edital concluído).
 
 ### Leitura do PDF (`api/anexos-do-edital.py`)
 
