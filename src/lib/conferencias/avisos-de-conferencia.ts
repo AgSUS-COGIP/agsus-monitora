@@ -146,6 +146,11 @@ export const CONFERENCIAS: Readonly<
     gravidade: "ATENCAO",
     titulo: "Pendência da publicação sem revisão",
   }),
+  EDITAL_CRONOGRAMA_ENCERRADO: Object.freeze({
+    modulo: "editais",
+    gravidade: "ATENCAO",
+    titulo: "Cronograma encerrado, status ainda em andamento",
+  }),
   CARGA_VARIACAO_BRUSCA: Object.freeze({
     modulo: "cargas",
     gravidade: "ATENCAO",
@@ -159,6 +164,7 @@ export const MODULOS_DOS_AVISOS = Object.freeze([
   Object.freeze({ valor: "classificacao", rotulo: "Classificação" }),
   Object.freeze({ valor: "aprovados", rotulo: "Aprovados" }),
   Object.freeze({ valor: "cargas", rotulo: "Cargas" }),
+  Object.freeze({ valor: "editais", rotulo: "Editais" }),
 ]);
 
 export const GRAVIDADES = Object.freeze({
@@ -661,6 +667,13 @@ function normalizarAnaliseDoCaso(entrada: unknown): AnaliseDoCaso {
   };
 }
 
+/** "em_andamento" (código do job) → "status Em andamento". */
+function rotuloDoStatusDoEdital(codigo: string) {
+  if (!codigo || codigo === "sem_status") return codigo ? "sem status" : "";
+  const frase = codigo.replace(/_/g, " ");
+  return `status ${frase.charAt(0).toUpperCase()}${frase.slice(1)}`;
+}
+
 /** O status gravado no caso do admitido (código do job) → como a lista o mostra. */
 const STATUS_DO_ADMITIDO: Readonly<Record<string, string>> = Object.freeze({
   convocado: "status Convocado",
@@ -760,6 +773,16 @@ export function motivoDoCaso(
     case "CLASSIFICACAO_AJUSTE_APOS_LISTA": {
       const dia = diaDoCaso(caso.lista?.aprovadoEm);
       return dia ? `Ajuste aprovado em ${dia}` : "";
+    }
+    case "EDITAL_CRONOGRAMA_ENCERRADO": {
+      const fim = diaDoCaso(d.fim);
+      const status = rotuloDoStatusDoEdital(texto(d.status));
+      return [
+        fim ? `Cronograma terminou em ${fim}` : "Cronograma terminou",
+        status,
+      ]
+        .filter(Boolean)
+        .join(" · ");
     }
     case "CARGA_VARIACAO_BRUSCA":
       return d.antes !== undefined && d.depois !== undefined
@@ -900,6 +923,9 @@ export function situacaoDoCaso(caso: Partial<Caso> | null) {
  * acesso". Nunca um UUID.
  */
 export function quemDoCaso(caso: Partial<Caso> | null) {
+  // O aviso do edital (20261118150000): o caso é o próprio edital, pelo número.
+  if (caso?.conferencia === "EDITAL_CRONOGRAMA_ENCERRADO" && caso.referencia)
+    return `Edital ${caso.referencia}`;
   const partes = [caso?.codigo, caso?.nome].map(texto).filter(Boolean);
   const resolucao = RESOLUCOES[caso?.resolucao ?? ""];
   if (resolucao)
