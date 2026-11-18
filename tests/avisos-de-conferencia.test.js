@@ -16,10 +16,10 @@ import {
   ondeDoAviso,
   tituloDaConferencia,
   tomDoSelo,
-} from "../src/lib/avisos-de-conferencia.ts";
+} from "../src/lib/conferencias/avisos-de-conferencia.ts";
 
 /*
-  Regras puras dos avisos de conferência (src/lib/avisos-de-conferencia.ts).
+  Regras puras dos avisos de conferência (src/lib/conferencias/avisos-de-conferencia.ts).
   O catálogo é conferido contra o caso dourado compartilhado com o pytest
   (tests/fixtures/conferencias/catalogo.json ↔ scripts/conferencias/catalogo.py).
 */

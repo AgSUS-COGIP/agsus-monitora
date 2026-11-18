@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   lerModelosDoBanco,
   lerConfiguracoesDoBanco,
-} from "../../src/lib/configuracao-de-convocacao.ts";
+} from "../../src/lib/aprovados/carta-de-convocacao/configuracao-de-convocacao.ts";
 import { criarEstadoDaListaDeAprovados } from "../../src/modulos/aprovados/estado.ts";
 import { clienteDosAprovados } from "../clientes-falsos.ts";
 import { definido } from "../definido.ts";

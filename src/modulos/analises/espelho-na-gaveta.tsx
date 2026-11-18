@@ -1,4 +1,4 @@
-import type { EspelhoNoPainel } from "../../lib/espelho-do-painel-de-analises.ts";
+import type { EspelhoNoPainel } from "../../lib/analises/espelho-do-painel-de-analises.ts";
 import { COLUNAS_DOS_CRITERIOS } from "../../lib/avaliacao-documental/espelho-de-nota.ts";
 import { GradeDeKv, Kv, Secao } from "../../ui/index.ts";
 

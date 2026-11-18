@@ -3,8 +3,8 @@ import {
   casaisNacionaisDoMapa,
   configuracaoDoMapa,
   terrasDoMapa,
-} from "../src/lib/mapa-saude-indigena/dados-do-mapa.ts";
-import { registrosDoDsei } from "../src/lib/mapa-saude-indigena/mapa-do-dsei.ts";
+} from "../src/lib/mapas/mapa-saude-indigena/dados-do-mapa.ts";
+import { registrosDoDsei } from "../src/lib/mapas/mapa-saude-indigena/mapa-do-dsei.ts";
 import { leafletDoMapa } from "../src/modulos/mapa-saude-indigena/tipos-do-leaflet.ts";
 import { criarLeafletFalso } from "./modulos/leaflet-falso.js";
 

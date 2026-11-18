@@ -11,7 +11,7 @@ import {
   DESENHO_DAS_FORMAS,
   TIPOS_DA_LEGENDA,
   formaDoTipo,
-} from "../../lib/mapa-saude-indigena/formas.ts";
+} from "../../lib/mapas/mapa-saude-indigena/formas.ts";
 
 /* A forma de um tipo (sede, polo, CASAI, UBSI, unidade) em SVG, decorativa. */
 export function Forma({

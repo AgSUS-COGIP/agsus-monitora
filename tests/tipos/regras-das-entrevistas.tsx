@@ -3,7 +3,7 @@ import {
   dadosDoRoteiroParaSalvar,
   opcoesDaEscala,
   moverItem,
-} from "../../src/lib/roteiro-de-entrevista.ts";
+} from "../../src/lib/entrevistas/roteiro-de-entrevista.ts";
 import {
   novoAvaliador,
   rascunhoDaConfiguracao,
@@ -11,8 +11,8 @@ import {
   avaliadoresDaCompetencia,
   calcularEntrevista,
   notasAlteradas,
-} from "../../src/lib/conducao-de-entrevista.ts";
-import type { DadosDoRoteiroParaSalvar } from "../../src/lib/tipos-do-roteiro-de-entrevista.ts";
+} from "../../src/lib/entrevistas/conducao-de-entrevista.ts";
+import type { DadosDoRoteiroParaSalvar } from "../../src/lib/entrevistas/tipos-do-roteiro-de-entrevista.ts";
 import type { DadosDaConfiguracaoDaEntrevista } from "../../src/modulos/entrevistas/tipos.ts";
 import type {
   NotaParaSalvar,

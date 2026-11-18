@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   modeloDeReferencia,
   normalizarModelo,
-} from "../src/lib/modelo-de-convocacao.ts";
+} from "../src/lib/aprovados/carta-de-convocacao/modelo-de-convocacao.ts";
 import {
   derivarQuadro,
   montarConvocacaoDaVaga,
   sequenciaDeConvocacao,
-} from "../src/lib/lista-convocacao-rules.ts";
+} from "../src/lib/aprovados/lista-convocacao-rules.ts";
 
 /*
   Regra 2 do cabeçalho de lista-convocacao-rules.ts: ser chamado pela ampla

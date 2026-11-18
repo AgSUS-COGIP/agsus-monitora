@@ -8,7 +8,7 @@
   - páginas: `/`, `/index.html`, `/auth/callback`, `/auth/callback.html`,
     idênticas byte a byte ao build e sem cache;
   - as rotas do app (`/saude-indigena/cronograma`, `/paineis/<código>`,
-    `/administracao/configuracoes/<seção>`, `/sem-acesso`: src/lib/rotas.ts)
+    `/administracao/configuracoes/<seção>`, `/sem-acesso`: src/lib/navegacao/rotas.ts)
     entregam o `index.html`, como o `rewrites` do `vercel.json` — o link
     direto e o F5 abrem a tela, em vez de 404;
   - `/up` responde 200 (saúde para Docker e CI);
@@ -54,7 +54,7 @@ const PAGINAS: ReadonlyMap<string, string> = new Map([
 ]);
 
 /*
-  As rotas do app (src/lib/rotas.ts, que a imagem do servidor não leva): a
+  As rotas do app (src/lib/navegacao/rotas.ts, que a imagem do servidor não leva): a
   área (ou `paineis`/`administracao`) e de uma a quatro partes depois (as
   Regras do edital: `/<área>/editais/<edital>/regras/<etapa>`), só com
   letras, números, hífen e sublinhado. O resto continua 404.

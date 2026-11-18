@@ -12,7 +12,7 @@ import {
   motivoDaDesativacao,
   resumoDeContas,
   valoresIniciaisDaReativacao,
-} from "../src/lib/contas-desativadas.ts";
+} from "../src/lib/acessos/contas-desativadas.ts";
 
 /*
   Contas desativadas: desativar fazia a conta sumir, sem reativar e sem o

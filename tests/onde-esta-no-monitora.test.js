@@ -3,7 +3,7 @@ import {
   normalizeOnlinePresenceList,
   ondeEstaNoMonitora,
   rotuloDoLocal,
-} from "../src/lib/online-presence";
+} from "../src/lib/sessao/online-presence";
 
 describe("onde a pessoa está, em Pessoas online", () => {
   it("página da área: nome da página e da área", () => {

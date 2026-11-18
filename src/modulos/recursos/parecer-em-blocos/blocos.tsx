@@ -26,7 +26,7 @@ import {
   type ExperienciaDoParecer,
   type FonteDoCampo,
   type ReferenciasDoEdital,
-} from "../../../lib/parecer-em-blocos.ts";
+} from "../../../lib/recursos/parecer-em-blocos.ts";
 import { Campo, Segmentado } from "../../../ui/index.ts";
 
 /*

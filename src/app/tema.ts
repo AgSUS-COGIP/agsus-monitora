@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { EVENTO_TEMA_ALTERADO } from "../lib/eventos-da-barra-lateral.ts";
+import { EVENTO_TEMA_ALTERADO } from "../lib/navegacao/eventos-da-barra-lateral.ts";
 
 /*
   O tema do app (claro/escuro), para os componentes React. Quem manda é a

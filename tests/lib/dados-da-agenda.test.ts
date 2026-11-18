@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { dadosDaAgenda } from "../../src/lib/dados-da-agenda.ts";
-import { convocadosDaLista } from "../../src/lib/agenda-das-entrevistas.ts";
+import { dadosDaAgenda } from "../../src/lib/entrevistas/dados-da-agenda.ts";
+import { convocadosDaLista } from "../../src/lib/entrevistas/agenda-das-entrevistas.ts";
 const base = {
   edital: { id: "A" },
   regra: { versao: 2, configuracao: {} },

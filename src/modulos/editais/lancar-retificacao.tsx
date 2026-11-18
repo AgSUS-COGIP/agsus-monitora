@@ -1,8 +1,8 @@
 import { useRef, useState } from "react";
 import type { ChangeEvent } from "react";
-import { formatarData } from "../../lib/cronograma-do-edital.ts";
-import type { EtapaDoCronograma } from "../../lib/cronograma-do-edital.ts";
-import { problemaDoArquivo } from "../../lib/anexos-do-edital.ts";
+import { formatarData } from "../../lib/cronograma/cronograma-do-edital.ts";
+import type { EtapaDoCronograma } from "../../lib/cronograma/cronograma-do-edital.ts";
+import { problemaDoArquivo } from "../../lib/editais/anexos-do-edital.ts";
 import {
   bloqueioDaRetificacao,
   compararRetificacao,
@@ -11,13 +11,13 @@ import {
   numeroDaErrata,
   problemasDaComparacao,
   resumoDaComparacao,
-} from "../../lib/retificacao-do-cronograma.ts";
+} from "../../lib/cronograma/retificacao-do-cronograma.ts";
 import type {
   AjustesDaRetificacao,
   LinhaDaComparacao,
   RetificacaoLida,
   SituacaoDaEtapa,
-} from "../../lib/retificacao-do-cronograma.ts";
+} from "../../lib/cronograma/retificacao-do-cronograma.ts";
 import { Aviso, Campo, Selo } from "../../ui/index.ts";
 
 /** O que a seção usa do estado da página (`estado.ts`). */
@@ -56,7 +56,7 @@ export interface PropriedadesDeLancarRetificacao {
   Nada é gravado até "Aplicar retificação", que salva o cronograma com o nome
   da retificação como número da errata e o SEI no motivo
   (`modal-do-edital.tsx` → `estado.salvarEdital`). Regras puras em
-  `src/lib/retificacao-do-cronograma.ts`.
+  `src/lib/cronograma/retificacao-do-cronograma.ts`.
 */
 
 const ROTULO: Record<SituacaoDaEtapa, { texto: string; tom: string }> = {

@@ -1,6 +1,6 @@
 # Regras das Configurações
 
-<!-- Fontes: src/modulos/configuracoes/, src/lib/publicacao-de-configuracoes.ts, src/lib/paineis-externos-das-configuracoes.ts, src/modulos/configuracoes/secoes.ts e src/lib/access-roles.ts. -->
+<!-- Fontes: src/modulos/configuracoes/, src/lib/configuracoes/publicacao-de-configuracoes.ts, src/lib/configuracoes/paineis-externos-das-configuracoes.ts, src/modulos/configuracoes/secoes.ts e src/lib/acessos/access-roles.ts. -->
 
 Regras de negócio das seções Página inicial, Tela de acesso e Aparência de
 Configurações. A tela mostra só rótulos curtos; a explicação de cada campo
@@ -84,7 +84,7 @@ publicação no histórico de Operação, de onde uma versão pode ser restaurad
 
 **perguntas:** para que serve configuracoes | tela de configuracoes | quem pode ver as configuracoes | secoes das configuracoes | administracao
 **resposta:** Configurações fica em Administração, no menu, com uma seção por item: Marca, Página inicial, Tela de acesso, Aparência, Painéis externos, Operação, Acessos, Módulos e abas e Status das atualizações. As seis primeiras abrem para quem tem Editor em Configurações; Acessos, para quem gerencia acessos; Módulos e abas e Status das atualizações, só para o administrador global. Cada pessoa vê só as seções que pode abrir.
-**fonte:** src/lib/access-roles.ts; src/modulos/configuracoes/secoes.ts
+**fonte:** src/lib/acessos/access-roles.ts; src/modulos/configuracoes/secoes.ts
 
 ## Publicar uma alteração
 
@@ -103,7 +103,7 @@ publicação no histórico de Operação, de onde uma versão pode ser restaurad
 
 **perguntas:** o que a secao marca define | secao marca | para que serve marca | para que serve a secao marca | nome da equipe | logo da equipe | texto do rodape | onde aparece a equipe responsavel
 **resposta:** Em Configurações › Marca ficam o nome da equipe, a função ou área, o texto institucional e o logo da equipe (endereço https:// ou /caminho de PNG, JPG, WEBP ou SVG), que aparecem no pé do cartão da tela de acesso, o texto do rodapé (que entra no lugar do texto institucional quando ele está vazio) e, em "Documentos oficiais", o cabeçalho da agência (uma linha por linha do timbrado: nome, endereço e site) usado no Word e na prévia "Como fica no SEI" da Classificação. A barra lateral não mostra a equipe. Vale depois de "Salvar alterações".
-**fonte:** src/modulos/configuracoes/marca.tsx; src/lib/publicacao-de-configuracoes.ts; src/app/entrada/marca.ts
+**fonte:** src/modulos/configuracoes/marca.tsx; src/lib/configuracoes/publicacao-de-configuracoes.ts; src/app/entrada/marca.ts
 **abrir:** config:marca
 
 ## Prévia da barra lateral
@@ -117,21 +117,21 @@ publicação no histórico de Operação, de onde uma versão pode ser restaurad
 
 **perguntas:** secao aparencia | para que serve aparencia | para que serve a secao aparencia | o que a secao aparencia define
 **resposta:** Em Configurações › Aparência ficam a arte de fundo e o logo da tela de acesso, a cor do painel de acesso e do texto sobre ele, e a logo e a cor da barra lateral. Cada cor mostra a razão de contraste. A arte de fundo vale na hora; o resto, depois de "Salvar alterações".
-**fonte:** src/modulos/configuracoes/aparencia.tsx; src/lib/publicacao-de-configuracoes.ts
+**fonte:** src/modulos/configuracoes/aparencia.tsx; src/lib/configuracoes/publicacao-de-configuracoes.ts
 **abrir:** config:aparencia
 
 ## Painéis externos
 
 **perguntas:** o que sao os paineis externos | paineis externos | para que serve paineis externos | para que serve a secao paineis externos | como por um painel em manutencao | painel externo
 **resposta:** Painéis externos são páginas de fora do Yeendé abertas pelo menu, no bloco Acompanhamento da área. Análises, Recursos, Entrevistas e Seleção viraram abas do próprio sistema e seus painéis externos foram arquivados; sem painel ativo, nenhum aparece no menu. Em Configurações › Painéis externos só se editam os painéis que já existem: título, endereço (https:// ou http://; painel ativo precisa de endereço), ativo e em manutenção. Ver um painel exige a marcação dele para a pessoa em Acessos.
-**fonte:** src/lib/paineis-externos-das-configuracoes.ts; src/modulos/configuracoes/paineis-externos.tsx; supabase/migrations/20260930235500_arquiva_painel_externo_selecao.sql
+**fonte:** src/lib/configuracoes/paineis-externos-das-configuracoes.ts; src/modulos/configuracoes/paineis-externos.tsx; supabase/migrations/20260930235500_arquiva_painel_externo_selecao.sql
 **abrir:** config:recursos
 
 ## Seção Operação
 
 **perguntas:** secao operacao | para que serve operacao | para que serve a secao operacao | versao do sistema | realtime do monitoramento | heartbeat de auditoria | email do suporte
 **resposta:** Em Configurações › Operação ficam a versão do sistema e a versão publicada, o Realtime do monitoramento (ativo ou inativo), o heartbeat de auditoria (1 a 60 minutos), o e-mail do suporte (para onde a Aya abre chamados) e o histórico de publicações, com Restaurar.
-**fonte:** src/modulos/configuracoes/operacao.tsx; src/lib/publicacao-de-configuracoes.ts
+**fonte:** src/modulos/configuracoes/operacao.tsx; src/lib/configuracoes/publicacao-de-configuracoes.ts
 **abrir:** config:operacao
 
 ## Tela de entrada enquanto carrega
@@ -145,7 +145,7 @@ publicação no histórico de Operação, de onde uma versão pode ser restaurad
 
 **perguntas:** comemoracoes | o que sao as comemoracoes | secao comemoracoes | configurar comemoracoes | confete | fogos | fogos de artificio | serpentina | chuva de estrelas | baloes | coracoes | marcos do ano | som da comemoracao | pular comemoracao | arara nos fogos | efeito da comemoracao | intensidade da comemoracao | nao quero ver comemoracoes
 **resposta:** As comemorações marcam só ocasiões reais do processo, nunca uma pessoa (não há ranking), e a frase diz o fato com o número, sem agradecimento. Com efeito (fogos, estrelas…), só quatro: edital todo analisado (só quando a última ficha em análise é concluída), quem concluiu a última ficha do edital, marcos do ano da área (1.000, 2.500, 5.000, 7.500 e 10.000 análises concluídas, depois a cada 5.000; quem abre o Yeendé pela primeira vez não recebe o marco já alcançado) e acesso liberado ou reativado. Fila de análises zerada, vaga pronta para a Classificação nas Entrevistas, entrevistas do dia concluídas e os marcos personalizados mostram só o aviso no topo, sem efeito. Cada pessoa vê no máximo uma comemoração com efeito por dia neste navegador; as seguintes do mesmo dia aparecem só como aviso. A meta do dia e o fim de um tour ou de uma trilha comigo não comemoram. Em Configurações › Comemorações, quem edita as configurações escolhe, para cada marco com efeito: ligado ou desligado, o efeito (Fogos, Confete, Serpentina, Chuva de estrelas, Corações, Balões, Aya comemorando ou Combinado), a intensidade (Suave, Normal ou Festa), a duração (de 2 a 15 segundos; em branco, automática), o som (desligado por padrão), uma mensagem própria e quem vê; nos marcos só de aviso, só ligado, mensagem e quem vê. Por enquanto só quem fez vê: "Toda a área online" depende de um aviso em tempo real que o Yeendé ainda não tem. Nos fogos, a tela escurece de leve, eu atravesso voando e o último estouro desenha o marco no céu (o número, um coração, uma estrela ou um visto); a frase fica só no aviso. O aviso no topo tem "Pular" e o botão de som; o som só toca depois de você interagir com a página. Com movimento reduzido no aparelho, só o aviso. Cada marco aparece uma vez por pessoa. As mudanças valem depois de "Salvar alterações", com motivo, e ficam no histórico de Operação. Para não ver comemorações neste navegador, desligue "Para mim", na linha do título de Configurações › Comemorações. O liga/desliga geral, para todos, fica em Módulos e abas › Sistema inteiro.
-**fonte:** src/lib/catalogo-de-comemoracoes.ts; src/lib/motor-de-efeitos.ts; src/lib/comemoracao.ts; src/lib/fogos.ts; src/modulos/configuracoes/comemoracoes.tsx
+**fonte:** src/lib/comemoracao/catalogo-de-comemoracoes.ts; src/lib/comemoracao/motor-de-efeitos.ts; src/lib/comemoracao/comemoracao.ts; src/lib/comemoracao/fogos.ts; src/modulos/configuracoes/comemoracoes.tsx
 **abrir:** config:comemoracoes
 
 ## Testar uma comemoração
@@ -159,5 +159,5 @@ publicação no histórico de Operação, de onde uma versão pode ser restaurad
 
 **perguntas:** marco personalizado | como criar um marco personalizado | comemorar contratados do edital | meta de analises no dia | criar comemoracao
 **resposta:** Em Configurações › Comemorações › Marcos personalizados, Adicionar marco cria uma comemoração com nome e meta: "Edital chegou a N contratados" (soma os contratados das linhas daquele edital no monitoramento) ou "Área passou de N análises no dia" (conta as análises concluídas hoje na tela de Análises curriculares da área). Como os outros marcos, aparece quando a pessoa vê o número cruzar a meta, uma vez, só com o aviso no topo (sem efeito): "Edital 012/2026: 30 contratados." ou "200 análises concluídas hoje.", ou a mensagem própria. Se vários são alcançados na mesma leitura (200, 300 e 400 análises no dia), aparece só o maior. Vale depois de "Salvar alterações".
-**fonte:** src/lib/catalogo-de-comemoracoes.ts; src/app/marcos-personalizados.ts
+**fonte:** src/lib/comemoracao/catalogo-de-comemoracoes.ts; src/app/marcos-personalizados.ts
 **abrir:** config:comemoracoes

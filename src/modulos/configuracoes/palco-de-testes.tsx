@@ -5,7 +5,7 @@ import {
   type Efeito,
   type FormaDoMarco,
   type Intensidade,
-} from "../../lib/catalogo-de-comemoracoes.ts";
+} from "../../lib/comemoracao/catalogo-de-comemoracoes.ts";
 import {
   avancarCena,
   cenaAcabou,
@@ -13,7 +13,7 @@ import {
   EFEITOS,
   ROTULOS_DOS_EFEITOS,
   ROTULOS_DOS_NIVEIS,
-} from "../../lib/motor-de-efeitos.ts";
+} from "../../lib/comemoracao/motor-de-efeitos.ts";
 import {
   criarHalos,
   desenharPrevia,

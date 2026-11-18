@@ -2,9 +2,9 @@ import type {
   DseiDoMapa,
   RegistroDoDsei,
   PropsDoMapaSaudeIndigena,
-} from "../../src/lib/mapa-saude-indigena/tipos.ts";
+} from "../../src/lib/mapas/mapa-saude-indigena/tipos.ts";
 import { MapaSaudeIndigena } from "../../src/modulos/mapa-saude-indigena/mapa-saude-indigena.tsx";
-import { configuracaoDoMapa } from "../../src/lib/mapa-saude-indigena/dados-do-mapa.ts";
+import { configuracaoDoMapa } from "../../src/lib/mapas/mapa-saude-indigena/dados-do-mapa.ts";
 const dados: unknown = {};
 const distritos: DseiDoMapa[] = configuracaoDoMapa(dados).dsei;
 const props: PropsDoMapaSaudeIndigena = {

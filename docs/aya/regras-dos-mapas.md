@@ -1,8 +1,8 @@
 # Regras dos mapas
 
 O mapa da Visão geral em cada área: DSEIs e CASAIs na Saúde Indígena, os locais das vagas em
-Projetos, nenhum na SEDE; e a auditoria das coordenadas. Fontes: `src/lib/visao-geral-da-area.ts`,
-`src/modulos/mapa-de-projetos/`, `src/lib/mapa-saude-indigena/mapa-do-dsei.ts`,
+Projetos, nenhum na SEDE; e a auditoria das coordenadas. Fontes: `src/lib/visao-geral/visao-geral-da-area.ts`,
+`src/modulos/mapa-de-projetos/`, `src/lib/mapas/mapa-saude-indigena/mapa-do-dsei.ts`,
 `docs/coordenadas/auditoria-oficial-das-coordenadas-2026-10-01.md` e a migration
 `20261001180000_locais_das_vagas_dos_projetos.sql`.
 
@@ -10,25 +10,25 @@ Projetos, nenhum na SEDE; e a auditoria das coordenadas. Fontes: `src/lib/visao-
 
 **perguntas:** de onde vem os pontos do mapa de projetos | mapa de projetos | mapa dos projetos | municipios das vagas | municipios por vagas
 **resposta:** Na Visão geral de Projetos, o mapa mostra um ponto por lugar das vagas de todos os projetos (Caminhoneiros, Saúde nas Fronteiras, Escritório Distrital e Regional, Rio Doce, MFC e CCE), na cor do projeto, com legenda, filtro e agrupamento por projeto; o tamanho do ponto segue as vagas. Os lugares foram lidos dos PDFs dos editais (município do IBGE ou só a UF, com o arquivo e a página como prova) e se juntam aos "UBS móvel" do nome da vaga. Lugar só com UF aparece como estado e não tem candidatos. A SEDE não tem mapa.
-**fonte:** supabase/migrations/20261001180000_locais_das_vagas_dos_projetos.sql; src/lib/visao-geral-da-area.ts; src/modulos/mapa-de-projetos/mapa-de-projetos.tsx
+**fonte:** supabase/migrations/20261001180000_locais_das_vagas_dos_projetos.sql; src/lib/visao-geral/visao-geral-da-area.ts; src/modulos/mapa-de-projetos/mapa-de-projetos.tsx
 
 ## Como usar o mapa de Projetos
 
 **perguntas:** como uso o mapa de projetos | clicar no municipio do mapa | filtrar o mapa por projeto | agrupar por projeto | lista municipios por vagas
 **resposta:** Clique num ponto do mapa, ou num lugar da lista "Municípios por vagas", para ver o projeto, o edital, as vagas publicadas, as lotações e os candidatos daquele lugar; o mapa aproxima e abre o resumo. A lista vem ordenada pelas vagas e a barra mostra a parte aprovada entre os já analisados. Cada lugar mostra o nome e as vagas na primeira linha e os projetos como selos na segunda (com o filtro de um projeto ou agrupada, os selos saem, porque seriam iguais). Os candidatos só aparecem quando o nome da vaga nas análises diz o lugar (como "UBS móvel Irati/PR"); vagas como as dos escritórios não dizem o município, então o lugar fica sem a contagem, em vez de mostrar um zero que não é real. Com dois ou mais projetos, o campo "Projeto" mostra só os lugares de um projeto (o mapa reenquadra) e "Agrupar por projeto" separa a lista em um bloco por projeto — um lugar de dois projetos aparece nos dois. Ponto com contorno tracejado tem mais de um projeto; lugar sem coordenada aparece na lista, mas não no mapa. "Brasil" volta ao país inteiro e "Tela cheia" amplia o painel (Esc sai).
-**fonte:** src/modulos/mapa-de-projetos/mapa-de-projetos.tsx; src/modulos/mapa-de-projetos/lista.tsx; src/lib/visao-geral-da-area.ts
+**fonte:** src/modulos/mapa-de-projetos/mapa-de-projetos.tsx; src/modulos/mapa-de-projetos/lista.tsx; src/lib/visao-geral/visao-geral-da-area.ts
 
 ## Filtros e enquadramento do mapa de Projetos
 
 **perguntas:** o mapa de projetos segue os filtros | filtro da visao geral no mapa de projetos | por que o mapa de projetos mostra o brasil inteiro | mapa de projetos igual ao da saude indigena | tamanho do ponto no mapa de projetos
 **resposta:** O mapa de Projetos segue as mesmas regras do mapa da Saúde Indígena. Os filtros e a busca da Visão geral valem para ele: com algum filtro, só ficam os lugares que têm edital no recorte, e cada lugar mostra só esses editais; sem nenhum, a lista diz "Nenhum município no recorte.". Sem filtro, o mapa mostra o Brasil inteiro; com filtro da página ou com um projeto escolhido no campo "Projeto", ele aproxima do único lugar que sobrou ou enquadra todos os que sobraram. "Agrupar por projeto" não muda o enquadramento, e "Brasil" volta ao país inteiro. O tamanho do ponto segue as vagas do lugar com a mesma escala da bolha do DSEI e não muda quando se filtra. Lugares que caem no mesmo ponto abrem em leque, com um traço até a posição real.
-**fonte:** docs/biblioteca/modulo-mapa-de-projetos.md; src/lib/enquadramento-do-brasil.ts; src/lib/visao-geral-da-area.ts
+**fonte:** docs/biblioteca/modulo-mapa-de-projetos.md; src/lib/mapas/enquadramento-do-brasil.ts; src/lib/visao-geral/visao-geral-da-area.ts
 
 ## Coordenadas dos lugares do mapa de Projetos
 
 **perguntas:** de onde vem a coordenada de um lugar de projetos | coordenadas do mapa de projetos | ponto do municipio no mapa de projetos | por que o ponto fica no meio do estado | lugar sem coordenada no mapa de projetos
 **resposta:** Cada ponto do mapa de Projetos é um lugar das vagas, e a coordenada dele fica no banco do Yeendé. Na carga inicial, o município vai para a sede municipal do IBGE (pelo código do IBGE do edital ou pelo nome do "UBS móvel" da vaga) e o lugar que o edital só diz a UF (a CCE, por exemplo) vai para o centro do estado, calculado pela média das sedes municipais. Depois disso, quem muda a posição é o administrador global ou o Gestor, pelo editor de coordenadas, e cada alteração fica registrada com autoria e motivo. Lugar sem coordenada no banco aparece na lista, mas não no mapa.
-**fonte:** supabase/migrations/20261002190000_coordenadas_mapa_projetos.sql; supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql; src/lib/visao-geral-da-area.ts
+**fonte:** supabase/migrations/20261002190000_coordenadas_mapa_projetos.sql; supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql; src/lib/visao-geral/visao-geral-da-area.ts
 
 ## Corrigir a coordenada de um lugar de Projetos
 
@@ -40,7 +40,7 @@ Projetos, nenhum na SEDE; e a auditoria das coordenadas. Fontes: `src/lib/visao-
 
 **perguntas:** lugares pendentes de projetos | gravidade dos lugares de projetos | sede do municipio ou endereco | sugestoes do lugar de projetos | lugar duvidoso no mapa de projetos
 **resposta:** A fila do editor de Projetos começa em "Só pendentes": são os lugares cuja posição ainda não foi conferida pelo administrador global ou por um Gestor. Na carga inicial, todo município aparece porque o ponto é só a sede do município (o edital diz o município, não o endereço), e todo lugar só com UF aparece porque o ponto é o centro do estado. Também ficam pendentes o lugar sem coordenada, o município cujo nome, código ou UF não batem, o mesmo município com coordenadas diferentes e o ponto fora do Brasil. A gravidade compara a posição com a referência do lugar (a sede do município pelo IBGE ou o centro da UF): "Provável erro" quando falta a coordenada, o motivo já é um erro ou a referência está a mais de 10 km; "Revisar" quando ela está entre 2 e 10 km, ou quando a lotação é um escritório e o edital só diz a UF; "Só confirmar" quando a posição é a da referência; e "Sem sugestão" quando não há posição candidata. As sugestões são a sede do município (IBGE), o centro da UF, a sede do DSEI do mapa da Saúde Indígena (para escritório distrital) e os outros lugares das vagas na mesma UF.
-**fonte:** src/lib/coordenadas-dos-projetos.ts; src/lib/editor-de-coordenadas.ts; supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql
+**fonte:** src/lib/mapas/coordenadas-dos-projetos.ts; src/lib/mapas/editor-de-coordenadas.ts; supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql
 
 ## Mapa e Satélite
 
@@ -52,4 +52,4 @@ Projetos, nenhum na SEDE; e a auditoria das coordenadas. Fontes: `src/lib/visao-
 
 **perguntas:** de onde vem as coordenadas do mapa | coordenadas do mapa | auditoria das coordenadas | ponto errado no mapa | planilha de lotacoes no mapa
 **resposta:** No mapa da Saúde Indígena, toda coordenada vem do SIGEPSI: a sede de cada DSEI (onde fica a bolha), os polos base, a ROTA, as CASAIs (inclusive as nacionais, de Brasília e São Paulo) e as unidades de lotação, com a UF pelo CEP. Do banco do Yeendé vêm só o nome, a população e as UFs administrativas de cada DSEI. O mapa desenha o que o SIGEPSI devolve; nada é recalculado na tela, e se o SIGEPSI não responde a Visão geral mostra o erro "Não foi possível carregar o mapa da Saúde Indígena: o SIGEPSI não respondeu", com "Tentar novamente". Para corrigir um ponto, a correção é feita no SIGEPSI. A planilha "Lotações, Meios de Acesso/Polo Base" também não entra no mapa. De 02/10 a 16/11/2026 o mapa desenhava as coordenadas gravadas no banco, auditadas em 01 e 02/10/2026 contra fontes oficiais; esse registro histórico está em docs/coordenadas/.
-**fonte:** src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts; docs/coordenadas/auditoria-oficial-das-coordenadas-2026-10-01.md; docs/coordenadas/pontos-so-na-planilha-de-lotacoes.md
+**fonte:** src/lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts; docs/coordenadas/auditoria-oficial-das-coordenadas-2026-10-01.md; docs/coordenadas/pontos-so-na-planilha-de-lotacoes.md

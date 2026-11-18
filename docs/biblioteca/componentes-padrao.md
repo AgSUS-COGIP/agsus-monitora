@@ -39,7 +39,7 @@ API completa (uma linha por componente) está em [docs/arquitetura-react.md](../
 | Telas da seleção | `CabecalhoDaTela`, `BarraDaLista`, `FaixaDeSituacao`, `CardDaLista`                                                                                |
 | Utilitários      | `usarEstadoDaSessao` (filtros voltam no F5), `classes(...)`                                                                                        |
 
-Nas telas com `CabecalhoDaTela` (`tituloNaTela` em `src/lib/rotas.ts`: Conduzir entrevistas,
+Nas telas com `CabecalhoDaTela` (`tituloNaTela` em `src/lib/navegacao/rotas.ts`: Conduzir entrevistas,
 Classificação, Avaliação documental e Triagem), a faixa do topo do app (`header.top`) fica compacta
 (`data-compacto`, só a partir de 901px): sem o título, que é o da tela, e com a conta menor, o perfil
 só dentro do menu (`src/app/casca/topo.tsx`).
@@ -68,7 +68,7 @@ Peças de layout só em CSS: `.ui-tela`, `.ui-card`, `.ui-titulo`, `.ui-linha-de
 Lista que pode passar de algumas centenas (convocados, fichas, vínculos, pendências) desenha 50
 por vez e mais 50 ao rolar: `TabelaInfinita` ou `TabelaDaLista` para tabela simples; para blocos
 por dia ou por vaga e cartões, `usarCargaContinua(recorte, total)` + `MaisDaCarga` depois da lista,
-com `gruposAteOLimite` (`src/lib/carga-continua.ts`) cortando os blocos. O `recorte` é estável
+com `gruposAteOLimite` (`src/lib/carga/carga-continua.ts`) cortando os blocos. O `recorte` é estável
 (lista memorizada ou chave dos filtros): recriado a cada desenho, a lista volta sempre aos 50.
 Exportação continua com tudo. Guarda: `tests/ui/carga-continua.test.ts`.
 
@@ -95,7 +95,7 @@ Onde fica:
   (só os usados entram no bundle). Ícone novo: registre lá. Sem framework,
   `criarIcone(nome, { tamanho })`; em React, `<Icone nome="…" tamanho={…} />`
   (`src/componentes/icone.tsx`). Não misture dois conjuntos no mesmo componente.
-- `src/lib/mapa-de-icones-lucide.ts` — o mapa Font Awesome → Lucide (`FA_PARA_LUCIDE`).
+- `src/lib/base/mapa-de-icones-lucide.ts` — o mapa Font Awesome → Lucide (`FA_PARA_LUCIDE`).
 - `src/styles/icones-lucide.css` — **gerado** por `npm run icones`
   (`scripts/gerar-icones-lucide.mjs`): cada classe `fa-…` vira uma máscara no `::before` do `<i>`
   (`mask-image` com o SVG, `background-color: currentColor`), então segue a cor do texto.

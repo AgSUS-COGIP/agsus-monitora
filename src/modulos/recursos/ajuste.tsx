@@ -6,7 +6,7 @@ import type {
 import type {
   RecursoDoPainel,
   DataDoRecurso,
-} from "../../lib/tipos-dos-recursos.ts";
+} from "../../lib/recursos/tipos-dos-recursos.ts";
 import type {
   ItemParaEnviar,
   PreviaDoAjuste,

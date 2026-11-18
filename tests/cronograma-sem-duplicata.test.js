@@ -47,9 +47,10 @@ describe("uma leitura só do monitoramento", () => {
       "responsavel",
       "observacoes",
     ]) {
-      expect(colunas, `${usada} é lida por src/lib/visao-geral.ts`).toContain(
-        usada,
-      );
+      expect(
+        colunas,
+        `${usada} é lida por src/lib/visao-geral/visao-geral.ts`,
+      ).toContain(usada);
     }
   });
 

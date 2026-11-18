@@ -4,9 +4,9 @@ import {
   localidadeDoCargo,
   naLocalidade,
   opcoesDeLocalidade,
-} from "../../src/lib/localidade-da-vaga.ts";
-import { filterApprovedCandidates } from "../../src/lib/lista-aprovados-rules.ts";
-import { lerRegimeEJornada } from "../../src/lib/resumo-por-cargo-e-status.ts";
+} from "../../src/lib/aprovados/localidade-da-vaga.ts";
+import { filterApprovedCandidates } from "../../src/lib/aprovados/lista-aprovados-rules.ts";
+import { lerRegimeEJornada } from "../../src/lib/aprovados/exportacao/resumo-por-cargo-e-status.ts";
 
 /* Textos de cargo como vêm das listas (sem dado pessoal). */
 describe("localidadeDoCargo", () => {

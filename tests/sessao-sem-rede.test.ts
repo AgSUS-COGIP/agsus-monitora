@@ -3,11 +3,11 @@ import { describe, expect, it } from "vitest";
 import {
   LIMITE_SEM_REDE_MS,
   sessaoSemRede,
-} from "../src/lib/sessao-sem-rede.ts";
+} from "../src/lib/sessao/sessao-sem-rede.ts";
 import {
   PERFIL_GUARDADO,
   perfilParaGuardar,
-} from "../src/lib/perfil-sem-rede.ts";
+} from "../src/lib/sessao/perfil-sem-rede.ts";
 
 /*
   Sem rede e com o token vencido, o auth-js devolve `session: null` embora a

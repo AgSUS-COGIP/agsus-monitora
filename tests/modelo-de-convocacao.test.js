@@ -6,7 +6,7 @@ import {
   modeloEmBranco,
   normalizarModelo,
   normalizarTexto,
-} from "../src/lib/modelo-de-convocacao.ts";
+} from "../src/lib/aprovados/carta-de-convocacao/modelo-de-convocacao.ts";
 import { LEI_15142_ESPALHADA } from "./modelos-de-convocacao-antigos.ts";
 
 const padrao = normalizarModelo(LEI_15142_ESPALHADA);

@@ -8,9 +8,9 @@ import {
   rascunhoParaLocal,
   recuperacaoDoRascunho,
   textoDaGravacao,
-} from "../src/lib/rascunho-da-regra.ts";
+} from "../src/lib/regras-do-edital/rascunho-da-regra.ts";
 
-/* Regras puras do rascunho guardado das regras (src/lib/rascunho-da-regra.ts). */
+/* Regras puras do rascunho guardado das regras (src/lib/regras-do-edital/rascunho-da-regra.ts). */
 const HORA_LOCAL = new Date(2026, 9, 13, 14, 5).toISOString();
 
 const DO_BANCO = {

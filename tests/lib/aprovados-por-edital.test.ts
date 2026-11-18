@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   aprovadosPorEdital,
   avisoDaListaDoEdital,
-} from "../../src/lib/aprovados-por-edital.ts";
+} from "../../src/lib/editais/aprovados-por-edital.ts";
 
 const SEM = {
   tom: "aviso",

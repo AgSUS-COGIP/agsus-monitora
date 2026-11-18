@@ -8,10 +8,10 @@ import type {
   CampoDoFiltroDosRecursos,
   FiltrosDosRecursos,
   IdentificadorDoRecurso,
-} from "../../lib/tipos-dos-recursos.ts";
+} from "../../lib/recursos/tipos-dos-recursos.ts";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { pedirFiltro, usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
-import { filtrosDeRecursos } from "../../lib/filtro-da-aya.ts";
+import { filtrosDeRecursos } from "../../lib/aya/filtro-da-aya.ts";
 import { usarTemaEscuro } from "../../app/tema.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
@@ -24,8 +24,8 @@ import {
   opcoesDosFiltros,
   ORIGENS_PADRAO,
   pendenciasPrioritarias,
-} from "../../lib/recursos-dos-candidatos.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient";
+} from "../../lib/recursos/recursos-dos-candidatos.ts";
+import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import { Aviso, EstadoVazio } from "../../ui/index.ts";
 import { irParaTela } from "../../app/ir-para-tela.ts";
 import { criarEstadoDosRecursos } from "./estado.ts";
@@ -64,7 +64,7 @@ import "./recursos.css";
   - Área: a área atual do app (menu lateral → dados-do-monitoramento.ts). Cada
     abertura carrega a área de agora; trocar de área com a tela aberta
     recarrega (e o que era da outra área sai: filtros, busca, gaveta).
-  - Sessão: o cliente Supabase único do app (src/lib/supabaseClient.ts).
+  - Sessão: o cliente Supabase único do app (src/lib/sessao/supabaseClient.ts).
   - Tema: o do app (`html[data-theme="dark"]`, o seletor da barra lateral);
     os gráficos acompanham. Tela cheia: a do app (menu da conta).
   - Aviso (toast): o do app (`window.monitoraToast`, passado por src/main.ts).

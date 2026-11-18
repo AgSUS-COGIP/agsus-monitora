@@ -2,7 +2,7 @@
 
 Avisos de conferência: o que o Yeendé confere todo dia entre os módulos, onde os avisos aparecem e
 quem pode tratar, dispensar e atribuir. Fontes: `scripts/conferencias/`, `src/modulos/conferencias/`,
-`src/lib/avisos-de-conferencia.ts` e as migrations `20261005210000_conferencias_de_consistencia.sql`,
+`src/lib/conferencias/avisos-de-conferencia.ts` e as migrations `20261005210000_conferencias_de_consistencia.sql`,
 `20261007120000_casos_dos_avisos_de_conferencia.sql` e `20261007240000_casos_dos_avisos_resolvidos.sql`.
 
 ## Avisos de conferência
@@ -40,4 +40,4 @@ quem pode tratar, dispensar e atribuir. Fontes: `scripts/conferencias/`, `src/mo
 
 **perguntas:** contratado em duas vagas | quem foi contratado em duas vagas | duas matrículas no mesmo edital | mesma contratação marcada em duas listas | mesma matrícula em duas listas | casos do aviso da lista de aprovados | convocado sem desfecho | casos do aviso das entrevistas | nota fora da escala | registro removido no aviso | sem acesso no aviso | referencia no aviso | abrir o aprovado do aviso
 **resposta:** Os casos de todos os módulos mostram quem é e o que conferir. Na lista de aprovados: o nome, o código do candidato na Empregare (quando há), o edital, a vaga e a situação com a data (por exemplo, "Contratado em 03/02/2026"); em "Duas matrículas no mesmo edital" e "Mesma contratação marcada em duas listas" aparecem todas as vagas da pessoa nas listas vigentes, com edital, vaga, situação e data, e quantas ficaram fora do seu acesso. Clicar no caso abre a Lista de aprovados só com as vagas daquela pessoa; "Ver todos" tira o recorte. Nas entrevistas: nome, código, edital, vaga, parecer e nota, e o clique abre Entrevistas já buscando o candidato, com a entrevista aberta. Na classificação aparecem a lista (tipo e data), a vaga (código e nome) ou o candidato do ajuste. Se o registro não existe mais, o caso mostra "Registro removido"; se ele é de uma área ou edital fora do seu acesso, "Sem acesso" — nunca o identificador interno.
-**fonte:** src/lib/avisos-de-conferencia.ts; supabase/migrations/20261007240000_casos_dos_avisos_resolvidos.sql
+**fonte:** src/lib/conferencias/avisos-de-conferencia.ts; supabase/migrations/20261007240000_casos_dos_avisos_resolvidos.sql

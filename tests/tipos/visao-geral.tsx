@@ -11,10 +11,10 @@ import {
   filtrosVazios,
   linhasDaResposta,
   recortar,
-} from "../../src/lib/visao-geral.ts";
+} from "../../src/lib/visao-geral/visao-geral.ts";
 import { criarEstadoDaVisaoGeral } from "../../src/modulos/visao-geral/estado.ts";
 import { TabelaDeProcessos } from "../../src/modulos/visao-geral/tabela.tsx";
-import { textosDaVisaoGeral } from "../../src/lib/visao-geral.ts";
+import { textosDaVisaoGeral } from "../../src/lib/visao-geral/visao-geral.ts";
 
 declare const clienteReal: SupabaseClient;
 const acompanhamento: ClienteDoAcompanhamento = clienteReal;

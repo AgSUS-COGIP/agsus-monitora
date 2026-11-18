@@ -77,13 +77,13 @@ ou sem as RPCs no banco, vale a regra; outra falha (rede, banco) vira `erroDaCon
   (`TB_LISTA_APROVADO` com `TP_ORIGEM` = `CLASSIFICACAO`), levando status, matrícula, sub judice e
   anexos de quem já estava na lista. Mostra o que muda em relação à lista vigente (entram, saem,
   mudam de posição, preservados, sub judice mantidos) e a revisão de quem não casou.
-- Casamento das pessoas, resumo e candidatos do retrato em `src/lib/publicacao-de-aprovados.ts`; o
+- Casamento das pessoas, resumo e candidatos do retrato em `src/lib/aprovados/publicacao-de-aprovados.ts`; o
   banco confere os vínculos e grava `TH_PUBLICACAO_APROVADO`
   (`20261005160000_lista_de_aprovados_da_classificacao.sql`). A Lista de aprovados mostra a origem
   e, no modal do edital, oferece publicar daqui.
 - A prévia exige os candidatos da lista vigente com identidades únicas e coleções válidas, sem
   descartar pessoas para montar uma revisão parcial; a confirmação valida quantidade e pendências
-  retornadas pelo banco (`src/lib/dados-da-publicacao-de-aprovados.ts`).
+  retornadas pelo banco (`src/lib/aprovados/dados-da-publicacao-de-aprovados.ts`).
 
 ## Agenda das entrevistas
 
@@ -92,7 +92,7 @@ ou sem as RPCs no banco, vale a regra; outra falha (rede, banco) vira `erroDaCon
   visão. Store em `estado-da-agenda.ts` (`obter_agenda_entrevista`, `salvar_regra_agenda_entrevista`,
   `salvar_agenda_entrevista`); a agenda salva preenche DATA e HORA do documento da convocação
   (`agendaDoDocumento`) e faz Conduzir entrevistas abrir a fila em Hoje.
-- Motor em `src/lib/agenda-das-entrevistas.ts`; banco em `20261005120000_agenda_das_entrevistas.sql`.
+- Motor em `src/lib/entrevistas/agenda-das-entrevistas.ts`; banco em `20261005120000_agenda_das_entrevistas.sql`.
 - Convocação inválida mostra erro e bloqueia a geração; a convocação registrada que não veio (rede,
   banco) mostra erro com "Tentar novamente", sem cair no cálculo atual. Falha ao atualizar o mesmo
   edital preserva a agenda aberta.
@@ -114,7 +114,7 @@ ou sem as RPCs no banco, vale a regra; outra falha (rede, banco) vira `erroDaCon
 - Textos e colunas ajustados pelo gestor ficam na regra (`DS_CONFIGURACAO.documento`, `.colunas` por
   publicação, `.desempate` = a nota abaixo de cada tabela, geral ou de cota, com empate de nota
   resolvido; sem migration); o cabeçalho da agência, em Configurações › Marca
-  (`documento_cabecalho`, `src/lib/cabecalho-dos-documentos.ts`).
+  (`documento_cabecalho`, `src/lib/base/cabecalho-dos-documentos.ts`).
 
 ## Explicações
 

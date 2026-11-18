@@ -14,18 +14,18 @@ import type {
   ValoresDosFiltros,
 } from "../../app/filtros-no-endereco.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
-import { parametroDeAreaDaRpc } from "../../lib/area-do-painel-de-analises.ts";
+import { parametroDeAreaDaRpc } from "../../lib/analises/area-do-painel-de-analises.ts";
 import { ordinal } from "../../lib/classificacao/numeros.ts";
-import { copiarTexto } from "../../lib/convite-de-acesso.ts";
-import { formatNumberBR } from "../../lib/formatters";
+import { copiarTexto } from "../../lib/acessos/convite-de-acesso.ts";
+import { formatNumberBR } from "../../lib/base/formatters";
 import {
   aptasDaFila,
   concluidasHoje,
   ritmoDaFila,
 } from "../../lib/avaliacao-documental/numeros-da-fila.ts";
 import type { RitmoDaFila } from "../../lib/avaliacao-documental/numeros-da-fila.ts";
-import { rotuloDaVersaoNaLista } from "../../lib/nome-da-versao.ts";
-import type { VersaoComNome } from "../../lib/nome-da-versao.ts";
+import { rotuloDaVersaoNaLista } from "../../lib/base/nome-da-versao.ts";
+import type { VersaoComNome } from "../../lib/base/nome-da-versao.ts";
 import {
   acoesDaFicha,
   acoesDaSelecao,

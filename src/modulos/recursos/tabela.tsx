@@ -4,8 +4,8 @@ import type {
   OrigemDoRecurso,
   IdentificadorDoRecurso,
   EtapaDoRecurso,
-} from "../../lib/tipos-dos-recursos.ts";
-import { formatNumberBR } from "../../lib/formatters";
+} from "../../lib/recursos/tipos-dos-recursos.ts";
+import { formatNumberBR } from "../../lib/base/formatters";
 import {
   ETAPAS,
   FILTROS_VAZIOS,
@@ -13,8 +13,11 @@ import {
   rotuloDaOrigem,
   rotuloDaSituacao,
   tomDaSituacao,
-} from "../../lib/recursos-dos-candidatos.ts";
-import { rotuloDoEstado, tomDoEstado } from "../../lib/resposta-do-recurso.ts";
+} from "../../lib/recursos/recursos-dos-candidatos.ts";
+import {
+  rotuloDoEstado,
+  tomDoEstado,
+} from "../../lib/recursos/resposta-do-recurso.ts";
 import { classes, Selo, TabelaInfinita } from "../../ui/index.ts";
 
 /*

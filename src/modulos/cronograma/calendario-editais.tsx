@@ -13,8 +13,8 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import { getSupabaseClient } from "../../lib/supabaseClient";
-import type { VisaoDoCalendario } from "../../lib/calendario-editais.ts";
+import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
+import type { VisaoDoCalendario } from "../../lib/cronograma/calendario-editais.ts";
 import {
   CHAVE_DA_VISAO,
   CHAVE_DOS_TIPOS_OCULTOS,
@@ -46,8 +46,8 @@ import {
   unidadesDasEtapas,
   visaoInicial,
   visaoValida,
-} from "../../lib/calendario-editais.ts";
-import { formatarDataHora } from "../../lib/cronograma-do-edital.ts";
+} from "../../lib/cronograma/calendario-editais.ts";
+import { formatarDataHora } from "../../lib/cronograma/cronograma-do-edital.ts";
 import { soDosEditais } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import {
@@ -65,7 +65,7 @@ import {
   demandaDoEditalId,
   demandasDaArea,
   juntarPorInicio,
-} from "../../lib/demandas-internas.ts";
+} from "../../lib/cronograma/demandas-internas.ts";
 import { DemandasDoCronograma } from "./demandas-internas.tsx";
 import { resumoDoDia } from "../resumo-do-dia/estado.ts";
 import type { EstadoDoResumoDoDia } from "../resumo-do-dia/estado.ts";
@@ -229,7 +229,7 @@ export function CalendarioEditais({
 
   /*
     As demandas internas da área entram como etapas do tipo "Demanda interna"
-    (src/lib/demandas-internas.ts): as vistas, a legenda e os filtros valem
+    (src/lib/cronograma/demandas-internas.ts): as vistas, a legenda e os filtros valem
     para elas sem saber que são demandas.
   */
   const demandas = useMemo(

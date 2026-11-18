@@ -19,7 +19,7 @@ import {
   rascunhoDoModelo,
   validarEmissao,
   validarModelo,
-} from "../../src/lib/carta-de-convocacao.ts";
+} from "../../src/lib/aprovados/carta-de-convocacao/carta-de-convocacao.ts";
 import {
   gerarDocxDasCartas,
   gerarZipDasCartas,
@@ -28,7 +28,7 @@ import {
   paginaDaPrevia,
   soACarta,
   textoParaSei,
-} from "../../src/lib/carta-de-convocacao-documento.ts";
+} from "../../src/lib/aprovados/carta-de-convocacao/carta-de-convocacao-documento.ts";
 import { definido } from "../definido.ts";
 
 /*

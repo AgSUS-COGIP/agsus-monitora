@@ -17,7 +17,7 @@ import {
   type ModeloDoEdital,
   type TextosDoEspelho,
 } from "../../lib/avaliacao-documental/modelo-do-espelho.ts";
-import { formatarDataHora } from "../../lib/cronograma-do-edital.ts";
+import { formatarDataHora } from "../../lib/cronograma/cronograma-do-edital.ts";
 import { Aviso, Campo, Carregando, Segmentado } from "../../ui/index.ts";
 import { ModalInstitucional } from "../../ui/modal-institucional.tsx";
 import { imprimirPagina } from "../classificacao/documento-no-navegador.ts";

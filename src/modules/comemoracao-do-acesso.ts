@@ -5,18 +5,18 @@ import {
   mensagemDaComemoracao,
   oQuePodeUsar,
   tipoDeComemoracao,
-} from "../lib/acesso-liberado.ts";
+} from "../lib/acessos/acesso-liberado.ts";
 import {
   gravarArmazenamento as gravar,
   lerArmazenamento as ler,
-} from "../lib/comemoracao.ts";
+} from "../lib/comemoracao/comemoracao.ts";
 import { comemorar } from "../app/comemoracao-sob-demanda.ts";
 import type { JanelaDaComemoracao } from "../modulos/comemoracao/desenho.ts";
 import type {
   InstanteRecebido,
   PerfilDeAcesso,
-} from "../lib/tipos-dos-acessos.ts";
-import type { TipoDeComemoracao } from "../lib/tipos-dos-acessos.ts";
+} from "../lib/acessos/tipos-dos-acessos.ts";
+import type { TipoDeComemoracao } from "../lib/acessos/tipos-dos-acessos.ts";
 
 /** A conta do auth, no que a comemoração lê. */
 export interface UsuarioDaComemoracao {
@@ -43,7 +43,7 @@ export interface OpcoesDoAcessoLiberado {
 /*
   "Boas-vindas, Ana! Seu acesso ao MONITORA foi liberado." (ou "Que bom ter
   você de volta…" na reativação), com o que a pessoa pode usar agora. Regra em
-  src/lib/acesso-liberado.ts; os fogos (com um visto desenhado no céu) e o
+  src/lib/acessos/acesso-liberado.ts; os fogos (com um visto desenhado no céu) e o
   aviso são os de todas as comemorações (src/modulos/comemoracao/), que
   respeitam prefers-reduced-motion. Armazenamento sempre em try/catch (janela privada,
   bloqueado): sem ele, as marcas não ficam e a regra da primeira entrada ainda

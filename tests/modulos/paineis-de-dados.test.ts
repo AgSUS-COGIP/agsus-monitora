@@ -17,13 +17,13 @@ import {
   esperar,
   teclar,
 } from "../componentes/interacoes.ts";
-import { paginasPermitidas } from "../../src/lib/access-roles.ts";
-import { bloqueioDaTela } from "../../src/lib/navegacao.ts";
-import { telaDaRota } from "../../src/lib/rotas.ts";
+import { paginasPermitidas } from "../../src/lib/acessos/access-roles.ts";
+import { bloqueioDaTela } from "../../src/lib/navegacao/navegacao.ts";
+import { telaDaRota } from "../../src/lib/navegacao/rotas.ts";
 import type {
   NiveisPorRecurso,
   PerfilDeAcesso,
-} from "../../src/lib/tipos-dos-acessos.ts";
+} from "../../src/lib/acessos/tipos-dos-acessos.ts";
 
 /*
   Painéis (bloco Dados do menu): a tela, a permissão pelo recurso

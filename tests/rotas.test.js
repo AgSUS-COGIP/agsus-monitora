@@ -6,12 +6,15 @@ import {
   destinoDoCaminho,
   ehRaizDoApp,
   telaDaRota,
-} from "../src/lib/rotas.ts";
-import { AREAS_DO_MENU, AREAS_DO_SISTEMA } from "../src/lib/menu-lateral.ts";
+} from "../src/lib/navegacao/rotas.ts";
+import {
+  AREAS_DO_MENU,
+  AREAS_DO_SISTEMA,
+} from "../src/lib/navegacao/menu-lateral.ts";
 import { paginaDoCaminho } from "../server/servidor.ts";
 
 /*
-  As rotas do app (src/lib/rotas.ts): a área e a tela no endereço. O caminho
+  As rotas do app (src/lib/navegacao/rotas.ts): a área e a tela no endereço. O caminho
   vai e volta sem perder nada, o que não é rota fica de fora, e a Vercel e o
   servidor entregam o index.html para toda rota (o link direto não dá 404).
 */

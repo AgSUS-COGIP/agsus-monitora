@@ -219,8 +219,8 @@ describe("na visão do país as terras recuam", () => {
   it("a camada passa o zoom do mapa para o estilo", () => {
     const camada = [
       "src/modules/indigenous-territories-layer.ts",
-      ...readdirSync("src/lib/terras-indigenas").map(
-        (nome) => `src/lib/terras-indigenas/${nome}`,
+      ...readdirSync("src/lib/mapas/terras-indigenas").map(
+        (nome) => `src/lib/mapas/terras-indigenas/${nome}`,
       ),
     ]
       .map((caminho) => readFileSync(caminho, "utf8"))

@@ -7,7 +7,7 @@ import type {
   TipoDaAcaoDaConducao,
 } from "./tipos.ts";
 import type { PayloadDasNotas } from "./tipos-da-ficha.ts";
-import type { DadosDoRoteiroParaSalvar } from "../../lib/tipos-do-roteiro-de-entrevista.ts";
+import type { DadosDoRoteiroParaSalvar } from "../../lib/entrevistas/tipos-do-roteiro-de-entrevista.ts";
 import type {
   OpcoesDoEstadoDaConducao,
   RpcDaConducao,
@@ -20,7 +20,7 @@ import {
   dadosDoEditalDaConducao,
   agendaDaConducao,
   codigoDaFalhaDaConducao,
-} from "../../lib/dados-da-conducao.ts";
+} from "../../lib/entrevistas/dados-da-conducao.ts";
 class RespostaObsoletaDaConducao extends Error {}
 /*
   Estado das visões "Conduzir entrevistas" e "Roteiros" da tela de
@@ -60,20 +60,20 @@ import {
   comTempoLimite,
   ehFalhaDeConexao,
   mensagemDeFalha,
-} from "../../lib/falha-de-rede";
+} from "../../lib/carga/falha-de-rede";
 import {
   editaisParaConduzir,
   mensagemDoErroDaEntrevista,
-} from "../../lib/conducao-de-entrevista.ts";
+} from "../../lib/entrevistas/conducao-de-entrevista.ts";
 import { classificarEdital } from "../../lib/classificacao/ajustes.ts";
 import { convocacaoDoEdital } from "../../lib/classificacao/convocacao-do-edital.ts";
-import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
-import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
+import { rotuloDaVersao } from "../../lib/base/nome-da-versao.ts";
+import { ehConflitoDeVersao } from "../../lib/base/conflito-de-versao.ts";
 import {
   FORMATO_DA_COPIA_DA_CONDUCAO,
   copiaParaOCampo,
   validadeDaCopia,
-} from "../../lib/conducao-para-o-campo.ts";
+} from "../../lib/entrevistas/conducao-para-o-campo.ts";
 
 const TEMPO_LIMITE_MS = 30000;
 
@@ -517,7 +517,7 @@ export function criarEstadoDaConducao({
       if (meu !== pedidoDoEdital) return false;
       const partes = { resposta, previsao, agenda, calculo };
       aplicar(partes, null);
-      // No aparelho, só o necessário (src/lib/conducao-para-o-campo.ts).
+      // No aparelho, só o necessário (src/lib/entrevistas/conducao-para-o-campo.ts).
       const copia = copiaParaOCampo(partes);
       ultimaGravacao = {
         soDaBanca: copia.soDaBanca,

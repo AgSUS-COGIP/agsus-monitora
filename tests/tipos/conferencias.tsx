@@ -8,7 +8,7 @@ import {
   normalizarCaso,
   normalizarAvisos,
   destinoDoCaso,
-} from "../../src/lib/avisos-de-conferencia.ts";
+} from "../../src/lib/conferencias/avisos-de-conferencia.ts";
 import type {
   ClienteDosAvisos,
   EstadoDosAvisos,

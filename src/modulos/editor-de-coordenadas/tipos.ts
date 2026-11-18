@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import type {
   CoordenadasDoMapa,
   MapaNacional,
-} from "../../lib/tipos-do-mapa.ts";
+} from "../../lib/mapas/tipos-do-mapa.ts";
 import type {
   AlteracaoDoPonto,
   FilaDoEditor,
@@ -13,12 +13,12 @@ import type {
   PendenciaDoEditor,
   PontoDoEditor,
   SugestaoDoEditor,
-} from "../../lib/tipos-do-editor-de-coordenadas.ts";
+} from "../../lib/mapas/tipos-do-editor-de-coordenadas.ts";
 
 export type AcaoDoEditor = "corrigir" | "conferir";
 export type ArgumentosDaRpc = Record<string, unknown>;
-export type { CorrecaoDoEditor } from "../../lib/tipos-do-editor-de-coordenadas.ts";
-import type { CorrecaoDoEditor } from "../../lib/tipos-do-editor-de-coordenadas.ts";
+export type { CorrecaoDoEditor } from "../../lib/mapas/tipos-do-editor-de-coordenadas.ts";
+import type { CorrecaoDoEditor } from "../../lib/mapas/tipos-do-editor-de-coordenadas.ts";
 export interface FonteDoEditor<P extends PontoDoEditor> {
   rpc: {
     salvar: string;

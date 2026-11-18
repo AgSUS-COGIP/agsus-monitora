@@ -1,6 +1,6 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { ROBOS_DE_CARGA } from "../src/lib/robos-de-carga.ts";
+import { ROBOS_DE_CARGA } from "../src/lib/automacao/robos-de-carga.ts";
 import { CONTRATO_RPC } from "../src/lib/rpc-contrato.ts";
 import { MIGRATION } from "./apoio/banco-dos-robos.ts";
 import { CATALOGO_DOS_ROBOS } from "./fixtures/catalogo-dos-robos.ts";

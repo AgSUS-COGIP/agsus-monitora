@@ -5,7 +5,7 @@ import { carregarBibliotecasDoPdf } from "../../src/lib/avaliacao-documental/esp
 import type {
   PedidoDaExportacao,
   RegistroDaExportacao,
-} from "../../src/lib/exportacao-da-lista-de-aprovados.ts";
+} from "../../src/lib/aprovados/exportacao/exportacao-da-lista-de-aprovados.ts";
 import {
   argumentosDoRegistroDoResumo,
   COLUNAS_DO_ARQUIVO_DO_RESUMO,
@@ -14,12 +14,12 @@ import {
   linhasDoArquivoDoResumo,
   nomeDoArquivoDoResumo,
   xlsxDoResumo,
-} from "../../src/lib/exportacao-do-resumo-por-cargo.ts";
-import { pdfDoResumo } from "../../src/lib/exportacao-do-resumo-por-cargo-em-pdf.ts";
+} from "../../src/lib/aprovados/exportacao/exportacao-do-resumo-por-cargo.ts";
+import { pdfDoResumo } from "../../src/lib/aprovados/exportacao/exportacao-do-resumo-por-cargo-em-pdf.ts";
 import {
   montarResumoPorCargoEStatus,
   type CandidatoDoResumo,
-} from "../../src/lib/resumo-por-cargo-e-status.ts";
+} from "../../src/lib/aprovados/exportacao/resumo-por-cargo-e-status.ts";
 
 /* Dados fictícios; o arquivo do resumo não leva nome nem id de candidato. */
 const REGISTRO: RegistroDaExportacao = {

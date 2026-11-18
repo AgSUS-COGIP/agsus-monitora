@@ -3,12 +3,12 @@ import {
   ORDEM_PADRAO_DOS_EDITAIS,
   ordenarEditais,
   proximaOrdemDosEditais,
-} from "../../src/lib/ordem-dos-editais.ts";
+} from "../../src/lib/editais/ordem-dos-editais.ts";
 import type {
   ChaveDaOrdemDosEditais,
   LinhaParaOrdenar,
   OrdemDosEditais,
-} from "../../src/lib/ordem-dos-editais.ts";
+} from "../../src/lib/editais/ordem-dos-editais.ts";
 
 type Linha = LinhaParaOrdenar & { id: string };
 

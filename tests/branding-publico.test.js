@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buscarMarcaPublica,
   mapearBrandingPublico,
-} from "../src/lib/access-branding-publico.ts";
+} from "../src/lib/entrada/access-branding-publico.ts";
 import {
   aplicarCorDoPainel,
   aplicarMarcaGuardadaNoArranque,
@@ -15,7 +15,7 @@ import {
 import {
   guardarMarca,
   lerMarcaGuardada,
-} from "../src/lib/access-branding-cache.ts";
+} from "../src/lib/entrada/access-branding-cache.ts";
 
 const URL_FALSA = "https://exemplo.supabase.co";
 const CHAVE_PUBLICA = "sb_publishable_chave_de_teste";

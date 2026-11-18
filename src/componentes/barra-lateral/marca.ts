@@ -1,4 +1,4 @@
-import { needsLightForeground } from "../../lib/access-branding.ts";
+import { needsLightForeground } from "../../lib/entrada/access-branding.ts";
 import {
   CHAVE_DA_COR_DA_BARRA,
   CHAVE_DO_LOGO_DA_BARRA,
@@ -6,7 +6,7 @@ import {
   LOGO_PADRAO_DA_BARRA,
   corDaBarraSegura,
   logoDaBarraSegura,
-} from "../../lib/marca-da-barra-lateral.ts";
+} from "../../lib/navegacao/marca-da-barra-lateral.ts";
 
 /*
   A marca da barra lateral: a logo e a cor gravadas (`ui_sidebar_logo_url`,

@@ -1,7 +1,7 @@
 /*
   GET /api/aprovados — a Lista de aprovados: os candidatos da lista VIGENTE de
   cada edital ativo (todas as áreas), sem os removidos (formato em
-  src/lib/aprovados-e-cronograma-da-api.ts; leitura `listar_aprovados_da_api`,
+  src/lib/aprovados/aprovados-e-cronograma-da-api.ts; leitura `listar_aprovados_da_api`,
   migration 20261105150000).
 
   Acesso: sem login, pela mesma chave fixa de /api/editais
@@ -58,7 +58,7 @@
 import {
   RPC_DOS_APROVADOS,
   respostaDosAprovados,
-} from "../src/lib/aprovados-e-cronograma-da-api.js";
+} from "../src/lib/aprovados/aprovados-e-cronograma-da-api.js";
 import { criarRotaComChave } from "./_rota-com-chave.js";
 
 export default criarRotaComChave({

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { criarEstadoDosAcessos } from "../../src/modulos/acessos/estado.ts";
-import { SEM_SERVIDOR } from "../../src/lib/falha-de-rede";
+import { SEM_SERVIDOR } from "../../src/lib/carga/falha-de-rede";
 
 /*
   Uma chamada que nunca volta (rede caída no meio do caminho) não pode deixar

@@ -9,7 +9,7 @@ import {
   formatarPercentual,
   tituloDeQuemFechou,
   type EncerramentoDoEdital,
-} from "../../lib/encerramento-do-edital.ts";
+} from "../../lib/encerramento-do-edital/encerramento-do-edital.ts";
 import type { EstadoDoEncerramentoControle } from "./estado.ts";
 import "./encerramento-do-edital.css";
 

@@ -3,11 +3,11 @@ export type VagasPorModalidade = Record<string, number>;
 import type {
   CategoriaDaConvocacao,
   ModeloDaConvocacao,
-} from "../tipos-da-configuracao-de-convocacao.ts";
+} from "../aprovados/carta-de-convocacao/tipos-da-configuracao-de-convocacao.ts";
 export type {
   CategoriaDaConvocacao,
   ModeloDaConvocacao,
-} from "../tipos-da-configuracao-de-convocacao.ts";
+} from "../aprovados/carta-de-convocacao/tipos-da-configuracao-de-convocacao.ts";
 
 export interface ConvocacaoDoEdital {
   editalId: string;

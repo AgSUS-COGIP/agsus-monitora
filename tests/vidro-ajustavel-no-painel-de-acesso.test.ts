@@ -8,18 +8,18 @@ import {
   normalizarCorNoVidro,
   normalizarDesfoqueDoVidro,
   porcentagemDaCorNoVidro,
-} from "../src/lib/contraste.ts";
-import { mapearBrandingPublico } from "../src/lib/access-branding-publico.ts";
+} from "../src/lib/base/contraste.ts";
+import { mapearBrandingPublico } from "../src/lib/entrada/access-branding-publico.ts";
 import {
   guardarMarca,
   lerMarcaGuardada,
   limparMarcaGuardada,
-} from "../src/lib/access-branding-cache.ts";
+} from "../src/lib/entrada/access-branding-cache.ts";
 import {
   aplicarAjusteDoVidro,
   definirMarcaDaConfiguracao,
 } from "../src/app/entrada/marca.ts";
-import { CAMPOS_DAS_SECOES } from "../src/lib/publicacao-de-configuracoes.ts";
+import { CAMPOS_DAS_SECOES } from "../src/lib/configuracoes/publicacao-de-configuracoes.ts";
 
 /*
   A COR E O DESFOQUE DO VIDRO, EM CONFIGURAÇÕES (pedido de 13/11/2026)

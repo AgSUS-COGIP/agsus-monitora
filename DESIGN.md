@@ -274,7 +274,7 @@ não os troca por skeleton: a tela fica e a barra do cabeçalho corre (`marcarAt
 alimenta por estado externo e eventos (ver `src/componentes/CLAUDE.md`). **Organizada em áreas** —
 um grupo por área do usuário (Saúde Indígena, SEDE, Projetos), cada um com Editais, Cronograma e
 Lista de aprovados (a Saúde Indígena também com Visão geral e Análises), depois Painéis e
-Administração (`src/lib/menu-lateral.ts`; área nova é uma entrada no catálogo). O item escolhido
+Administração (`src/lib/navegacao/menu-lateral.ts`; área nova é uma entrada no catálogo). O item escolhido
 define a área atual, que recorta as páginas; só o item da área atual fica ativo. Os painéis externos
 que não são de área entram em Painéis; as seções de Configurações são as páginas de Administração.
 
@@ -307,7 +307,7 @@ que não são de área entram em Painéis; as seções de Configurações são a
   Lucide de verdade, pelo registro abaixo.
 - **Resto do sistema:** o HTML e os módulos ainda escrevem `<i class="fa-solid fa-…">`, mas
   `src/styles/icones-lucide.css` (gerado por `npm run icones` a partir de
-  `src/lib/mapa-de-icones-lucide.ts`) desenha em cada classe o ícone Lucide equivalente, como
+  `src/lib/base/mapa-de-icones-lucide.ts`) desenha em cada classe o ícone Lucide equivalente, como
   máscara no `::before`. Ícone novo com classe `fa-…`: acrescente o par no mapa e rode
   `npm run icones`; `tests/icones-lucide.test.js` falha se faltar. Ao reescrever um componente,
   prefira o registro abaixo.
@@ -339,7 +339,7 @@ Regras:
 
 ## 6. Gráficos
 
-Chart.js em todo o sistema (`src/ui/grafico.tsx`, `window.Chart` via `src/lib/chartjs-global.ts`).
+Chart.js em todo o sistema (`src/ui/grafico.tsx`, `window.Chart` via `src/lib/base/chartjs-global.ts`).
 
 **Paleta categórica, em ordem fixa**, validada com o validador da skill `dataviz`: faixa de luminosidade,
 croma, separação para daltonismo (CVD), visão normal e contraste ≥ 3:1. Passou em todos.
@@ -440,7 +440,7 @@ Para contraste, calcule e não estime: a razão WCAG sai da luminância relativa
 Português do Brasil, com acentos. Verbos de ação ("Importar lista", "Publicar edital",
 "Tentar de novo"). Nada de termo de banco ou de código na tela. Erro diz o que aconteceu e o
 que fazer. Confirmação cita o objeto ("Excluir o edital 101/2026?"). Número segue o formato
-brasileiro (`1.308`, `60,5%`), com `toLocaleString("pt-BR")` (ex.: `formatarNumero` em `src/lib/editais-do-nucleo.ts`).
+brasileiro (`1.308`, `60,5%`), com `toLocaleString("pt-BR")` (ex.: `formatarNumero` em `src/lib/editais/editais-do-nucleo.ts`).
 
 ---
 

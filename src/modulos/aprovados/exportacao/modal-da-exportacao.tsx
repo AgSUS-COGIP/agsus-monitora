@@ -2,15 +2,15 @@ import type { EstadoDaAcao } from "../../../ui/botao-de-acao.tsx";
 import type {
   FormatoDaExportacao,
   PedidoDaExportacao,
-} from "../../../lib/exportacao-da-lista-de-aprovados.ts";
+} from "../../../lib/aprovados/exportacao/exportacao-da-lista-de-aprovados.ts";
 import { useEffect, useRef, useState } from "react";
 import { BotaoDeAcao, Modal, Segmentado } from "../../../ui/index.ts";
 import {
   contarRegistros,
   FORMATOS_DA_EXPORTACAO,
-} from "../../../lib/exportacao-da-lista-de-aprovados.ts";
-import { OPCOES_DO_FILTRO_DE_STATUS } from "../../../lib/lista-aprovados-rules.ts";
-import { formatNumberBR } from "../../../lib/formatters";
+} from "../../../lib/aprovados/exportacao/exportacao-da-lista-de-aprovados.ts";
+import { OPCOES_DO_FILTRO_DE_STATUS } from "../../../lib/aprovados/lista-aprovados-rules.ts";
+import { formatNumberBR } from "../../../lib/base/formatters";
 import { plural } from "../partes.tsx";
 
 /*

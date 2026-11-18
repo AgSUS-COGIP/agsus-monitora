@@ -1,18 +1,18 @@
 import {
   normalizarModelo,
   modeloDeReferencia,
-} from "../../src/lib/modelo-de-convocacao.ts";
+} from "../../src/lib/aprovados/carta-de-convocacao/modelo-de-convocacao.ts";
 import {
   comDistribuicao,
   rascunhoDoFormulario,
   argumentosDaConfiguracao,
   alterarCategoria,
-} from "../../src/lib/configuracao-de-convocacao.ts";
+} from "../../src/lib/aprovados/carta-de-convocacao/configuracao-de-convocacao.ts";
 import type {
   EstadoDaConfiguracao,
   ModeloDaConvocacao,
   EditorDaConvocacao,
-} from "../../src/lib/tipos-da-configuracao-de-convocacao.ts";
+} from "../../src/lib/aprovados/carta-de-convocacao/tipos-da-configuracao-de-convocacao.ts";
 import { FormularioDeConvocacao } from "../../src/modulos/aprovados/formulario-de-convocacao.tsx";
 import { EditorDeModelo } from "../../src/modulos/aprovados/editor-de-modelo.tsx";
 import { PreviaDaConvocacao } from "../../src/modulos/aprovados/previa-da-convocacao.tsx";

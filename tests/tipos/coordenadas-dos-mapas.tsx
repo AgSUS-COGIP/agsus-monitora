@@ -1,4 +1,4 @@
-import { aplicarCoordenada } from "../../src/lib/coordenadas-dos-projetos.ts";
+import { aplicarCoordenada } from "../../src/lib/mapas/coordenadas-dos-projetos.ts";
 import type { MunicipioDoMapa } from "../../src/modulos/mapa-de-projetos/tipos.ts";
 
 const municipios: readonly MunicipioDoMapa[] = [];

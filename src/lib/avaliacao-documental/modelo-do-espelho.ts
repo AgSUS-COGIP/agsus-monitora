@@ -9,7 +9,7 @@
   O banco guarda só o que difere do padrão (TB_MODELO_ESPELHO_NOTA.DS_TEXTOS,
   migration 20261019120000; "Restaurar padrão" grava {}), valida com as
   mesmas regras de validarModeloDoEspelho (private."FC_VALIDAR_MODELO_ESPELHO_NOTA")
-  e recusa a versão velha com PT409 (src/lib/conflito-de-versao.ts). Sem
+  e recusa a versão velha com PT409 (src/lib/base/conflito-de-versao.ts). Sem
   modelo salvo, ou com a RPC indisponível, vale o padrão.
 */
 

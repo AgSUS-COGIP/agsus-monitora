@@ -8,7 +8,7 @@ import type {
   RascunhoDaDecisao,
   SituacaoDaPendencia,
   TipoDePendencia,
-} from "../../../lib/pendencias-do-edital.ts";
+} from "../../../lib/aprovados/pendencias-do-edital.ts";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import {
@@ -25,8 +25,8 @@ import {
   textoDaAlteracao,
   textoDoDetalhe,
   TIPOS_DE_PENDENCIA,
-} from "../../../lib/pendencias-do-edital.ts";
-import { formatarDataHora } from "../../../lib/cronograma-do-edital.ts";
+} from "../../../lib/aprovados/pendencias-do-edital.ts";
+import { formatarDataHora } from "../../../lib/cronograma/cronograma-do-edital.ts";
 import {
   BlocosEsqueleto,
   Campo,

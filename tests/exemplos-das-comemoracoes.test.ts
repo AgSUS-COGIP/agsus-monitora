@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { CATALOGO_DE_MARCOS } from "../src/lib/catalogo-de-comemoracoes.ts";
-import { exemploDoMarco } from "../src/lib/exemplos-das-comemoracoes.ts";
+import { CATALOGO_DE_MARCOS } from "../src/lib/comemoracao/catalogo-de-comemoracoes.ts";
+import { exemploDoMarco } from "../src/lib/comemoracao/exemplos-das-comemoracoes.ts";
 
 /*
   O "Testar" de Configurações › Comemorações mostrava no aviso o rótulo da

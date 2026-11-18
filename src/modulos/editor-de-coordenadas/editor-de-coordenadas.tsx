@@ -5,8 +5,8 @@ import type {
   SugestaoDoEditor,
   FiltroDeGravidade,
   FolgaDoEditor,
-} from "../../lib/tipos-do-editor-de-coordenadas.ts";
-import type { CoordenadasDoMapa } from "../../lib/tipos-do-mapa.ts";
+} from "../../lib/mapas/tipos-do-editor-de-coordenadas.ts";
+import type { CoordenadasDoMapa } from "../../lib/mapas/tipos-do-mapa.ts";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   PropsDoEditor,
@@ -21,16 +21,16 @@ import {
   pendenciasDoEditor,
   historicoDoEditor,
   correcaoDoEditor,
-} from "../../lib/respostas-do-editor-de-coordenadas.ts";
+} from "../../lib/mapas/respostas-do-editor-de-coordenadas.ts";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { podeEditarCoordenadas } from "../../lib/access-roles.ts";
+import { podeEditarCoordenadas } from "../../lib/acessos/access-roles.ts";
 import {
   formatarCoordenada,
   formatarDistancia,
   lerCoordenada,
   validarCorrecaoDoMapa,
-} from "../../lib/editor-de-coordenadas.ts";
-import { CORES_DO_MAPA } from "../../lib/mapa-saude-indigena/formas.ts";
+} from "../../lib/mapas/editor-de-coordenadas.ts";
+import { CORES_DO_MAPA } from "../../lib/mapas/mapa-saude-indigena/formas.ts";
 import { Aviso, Campo, Selo, classes } from "../../ui/index.ts";
 import { usarUltimo } from "../mapa-saude-indigena/usar-ultimo.ts";
 import { FilaDeCoordenadas } from "./fila-de-coordenadas.tsx";

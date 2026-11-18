@@ -2,8 +2,8 @@
 import { StrictMode, act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { esquecerContornosDosDseis } from "../../src/lib/mapa-saude-indigena/contornos-dos-dseis.ts";
-import { ordenarTerritorios } from "../../src/lib/mapa-saude-indigena/ordem-dos-territorios.ts";
+import { esquecerContornosDosDseis } from "../../src/lib/mapas/mapa-saude-indigena/contornos-dos-dseis.ts";
+import { ordenarTerritorios } from "../../src/lib/mapas/mapa-saude-indigena/ordem-dos-territorios.ts";
 import { EVENTO_DO_FUNDO } from "../../src/modules/map-base-layer-switcher.ts";
 import { MapaSaudeIndigena } from "../../src/modulos/mapa-saude-indigena/mapa-saude-indigena.tsx";
 import { CHAVE_DA_ORDEM } from "../../src/modulos/mapa-saude-indigena/ordem-da-lista.tsx";

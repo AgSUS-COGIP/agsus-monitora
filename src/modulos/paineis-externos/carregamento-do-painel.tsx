@@ -8,7 +8,7 @@ import {
   ESPERA_MAXIMA_DO_PAINEL_MS,
   FOLGA_DO_AVISO_MS,
   rotuloDoCarregamento,
-} from "../../lib/carregamento-do-painel.ts";
+} from "../../lib/paineis/carregamento-do-painel.ts";
 import "./carregamento-do-painel.css";
 
 /*

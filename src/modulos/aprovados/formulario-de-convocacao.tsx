@@ -8,15 +8,15 @@ import type {
   VagaDoFormulario,
   EditorDaConvocacao,
   EstadoDaConfiguracao,
-} from "../../lib/tipos-da-configuracao-de-convocacao.ts";
+} from "../../lib/aprovados/carta-de-convocacao/tipos-da-configuracao-de-convocacao.ts";
 import { useMemo, useState } from "react";
-import { canConfigureCallList } from "../../lib/access-roles.ts";
+import { canConfigureCallList } from "../../lib/acessos/access-roles.ts";
 import {
   categoriasDeReserva,
   modeloDeReferencia,
   modeloEmBranco,
-} from "../../lib/modelo-de-convocacao.ts";
-import { totalDoQuadro } from "../../lib/lista-convocacao-rules.ts";
+} from "../../lib/aprovados/carta-de-convocacao/modelo-de-convocacao.ts";
+import { totalDoQuadro } from "../../lib/aprovados/lista-convocacao-rules.ts";
 import {
   comDistribuicao,
   copiaDoModelo,
@@ -26,7 +26,7 @@ import {
   rascunhoDoFormulario,
   resumirQuadro,
   resumoDoModelo,
-} from "../../lib/configuracao-de-convocacao.ts";
+} from "../../lib/aprovados/carta-de-convocacao/configuracao-de-convocacao.ts";
 import { EditorDeModelo } from "./editor-de-modelo.tsx";
 import { PreviaDaConvocacao } from "./previa-da-convocacao.tsx";
 import { BotaoDeAcao, classes } from "../../ui/index.ts";

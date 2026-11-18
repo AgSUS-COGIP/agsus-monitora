@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
-import { gruposAtribuiveis } from "../../lib/teto-de-acessos.ts";
-import { coordenacoesPorArea } from "../../lib/grupos-e-coordenacoes.ts";
-import { linhaDoPedidoDeReativacao } from "../../lib/contas-desativadas.ts";
+import { gruposAtribuiveis } from "../../lib/acessos/teto-de-acessos.ts";
+import { coordenacoesPorArea } from "../../lib/acessos/grupos-e-coordenacoes.ts";
+import { linhaDoPedidoDeReativacao } from "../../lib/acessos/contas-desativadas.ts";
 import {
   MOTIVOS_DE_RECUSA,
   MOTIVO_DE_RECUSA_OUTRO,
@@ -10,7 +10,7 @@ import {
   grupoSugeridoDoPedido,
   rotuloDoCargo,
   validarRecusa,
-} from "../../lib/solicitacao-de-acesso.ts";
+} from "../../lib/acessos/solicitacao-de-acesso.ts";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
 import {
   Aviso,
@@ -25,7 +25,7 @@ import type {
   AreaDeAcesso,
   CoordenacaoDeAcesso,
   GrupoDeAcesso,
-} from "../../lib/tipos-dos-acessos.ts";
+} from "../../lib/acessos/tipos-dos-acessos.ts";
 import type {
   EstadoDosAcessos,
   MatrizDosAcessos,

@@ -18,7 +18,7 @@
   - solta encostada numa borda (ou empurrada com as setas, com o foco nela),
     a arara se esconde e fica espiando; passar o mouse ou focar a traz um
     pouco para fora, arrastar ou as setas a tiram da borda, e a borda fica
-    guardada junto com a posição (src/lib/borda-da-aya.ts);
+    guardada junto com a posição (src/lib/aya/borda-da-aya.ts);
   - Enter envia, Shift+Enter quebra linha; até 1.200 caracteres;
   - origem de cada resposta ("Fonte oficial", "Base do MONITORA"…) e fontes oficiais;
   - o texto aparece aos poucos ("digitando"), menos com movimento reduzido.
@@ -60,24 +60,24 @@ import {
   SECOES_DA_AYA,
   SEGUNDA_MENSAGEM,
   VIEWS_DA_AYA,
-} from "../../lib/aya-paginas.ts";
+} from "../../lib/aya/aya-paginas.ts";
 import {
   chaveDoTour,
   deveConvidar,
   passoParaRetomar,
   tourDaPagina,
   trilhasDoPerfil,
-} from "../../lib/aya-tours.ts";
-import { montarChamado, pedeSuporte } from "../../lib/chamado-da-aya.ts";
-import { nomeDaArea } from "../../lib/menu-lateral.ts";
+} from "../../lib/aya/aya-tours.ts";
+import { montarChamado, pedeSuporte } from "../../lib/aya/chamado-da-aya.ts";
+import { nomeDaArea } from "../../lib/navegacao/menu-lateral.ts";
 import { collectAyaPageContext, estadoDaTela } from "./contexto.ts";
-import { responderComDados } from "../../lib/dados-da-aya.ts";
-import { isAdminGlobal } from "../../lib/access-roles.ts";
+import { responderComDados } from "../../lib/aya/dados-da-aya.ts";
+import { isAdminGlobal } from "../../lib/acessos/access-roles.ts";
 import {
   comPerguntaSemResposta,
   perguntasGuardadas,
   textoDasPerguntas,
-} from "../../lib/perguntas-sem-resposta.ts";
+} from "../../lib/aya/perguntas-sem-resposta.ts";
 import { pedirFiltro } from "../../app/pedido-de-filtro.ts";
 import { criarFontesDaAya } from "./fontes.ts";
 import {
@@ -107,21 +107,21 @@ import {
   lerPosicaoDaAya,
   passoDaSeta,
   posicaoNaJanela,
-} from "../../lib/borda-da-aya.ts";
-import type { BordaDaAya, PosicaoDaAya } from "../../lib/borda-da-aya.ts";
-import type { AcaoDaAya, SugestaoDaAya } from "../../lib/aya-paginas.ts";
-import type { PassoDoTour } from "../../lib/aya-tours.ts";
-import type { FonteOficial } from "../../lib/busca-da-aya.ts";
-import type { ChamadoDaAya } from "../../lib/chamado-da-aya.ts";
-import type { MensagemDaConversa } from "../../lib/contexto-da-aya.ts";
+} from "../../lib/aya/borda-da-aya.ts";
+import type { BordaDaAya, PosicaoDaAya } from "../../lib/aya/borda-da-aya.ts";
+import type { AcaoDaAya, SugestaoDaAya } from "../../lib/aya/aya-paginas.ts";
+import type { PassoDoTour } from "../../lib/aya/aya-tours.ts";
+import type { FonteOficial } from "../../lib/aya/busca-da-aya.ts";
+import type { ChamadoDaAya } from "../../lib/aya/chamado-da-aya.ts";
+import type { MensagemDaConversa } from "../../lib/aya/contexto-da-aya.ts";
 import type {
   AcaoDaIntencao,
   FiltroDaAcao,
-} from "../../lib/intencoes-da-aya.ts";
+} from "../../lib/aya/intencoes-da-aya.ts";
 import type {
   PerguntaBruta,
   PerguntaSemResposta,
-} from "../../lib/perguntas-sem-resposta.ts";
+} from "../../lib/aya/perguntas-sem-resposta.ts";
 import type { MotivoDoFimDoTour } from "./tour/tour.tsx";
 
 /* ---------- Tipos ---------- */
@@ -309,10 +309,11 @@ let fontesPadrao: ReturnType<typeof criarFontesDaAya> | null = null;
   ~100 KB gzip) baixa na primeira pergunta ou ao abrir o painel
   (preCarregarBase), fora do pacote principal.
 */
-let buscaDaBase: Promise<typeof import("../../lib/busca-da-aya.ts")> | null =
-  null;
+let buscaDaBase: Promise<
+  typeof import("../../lib/aya/busca-da-aya.ts")
+> | null = null;
 const preCarregarBase = () =>
-  (buscaDaBase ??= import("../../lib/busca-da-aya.ts").catch((erro) => {
+  (buscaDaBase ??= import("../../lib/aya/busca-da-aya.ts").catch((erro) => {
     buscaDaBase = null;
     throw erro;
   }));

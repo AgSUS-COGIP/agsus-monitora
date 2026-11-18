@@ -1,0 +1,281 @@
+/*
+  O MAPA NACIONAL DA SAÚDE INDÍGENA, SEM LEAFLET
+
+  O que o `drawDSEIBubbles`, o `drawCasai`, o `procCounts` e o
+  `renderPainelNacional` do `legacy-app.js` decidiam, agora como entrada →
+  saída: as bolhas dos DSEIs (tamanho pela população, cor pelos editais do
+  recorte), as CASAIs nacionais, a lista
+  "Territórios por vagas" e o enquadramento.
+
+  Os editais chegam já recortados (filtros, busca, área, DSEI escolhido): o
+  mapa só conta. Com filtro ativo, só aparecem os DSEIs e as CASAIs nacionais
+  que têm edital no recorte.
+*/
+import type { LinhaDoMonitoramento } from "../../../componentes/tipos-do-monitoramento.ts";
+import type { CoordenadasDoMapa } from "../tipos-do-mapa.ts";
+import type {
+  BolhaDoDsei,
+  ContagemDoDsei,
+  DseiDoMapa,
+  CasaiNacionalCompacta,
+  TerritorioDoMapa,
+  CasaiNacionalDoMapa,
+  EnquadramentoDoMapa,
+} from "./tipos.ts";
+import { enquadramentoDoRecorte } from "../enquadramento-do-brasil.ts";
+import { OPACIDADE_DA_BOLHA, raioDaBolha } from "../mapa-render.ts";
+import { siglaDaUf } from "../uf-ibge.ts";
+import {
+  chaveDoDsei,
+  formatarNumero,
+  numero,
+  plural,
+  temCoordenada,
+  texto,
+} from "./chaves.ts";
+import { CORES_DO_MAPA } from "./formas.ts";
+import {
+  contratadasImediatas,
+  ehCancelado,
+  temResultado,
+  vagasEfetivas,
+  vagasSemContratacao,
+} from "../../visao-geral/indicadores-do-monitoramento.ts";
+
+const VAZIO: Readonly<ContagemDoDsei> = Object.freeze({
+  editais: 0,
+  vagas: 0,
+  contratadas: 0,
+  ociosas: 0,
+});
+
+/*
+  Editais, vagas, contratadas e ociosas por DSEI (chave de `chaveDoDsei`),
+  pela regra dos indicadores da Visão geral (indicadores-do-monitoramento.ts):
+  o edital cancelado conta como processo, mas as vagas dele não entram; ociosa
+  é a vaga sem contratação de edital com resultado — a de edital ainda em
+  seleção não é ociosa. Antes a bolha somava `vagas_ociosas` de todo edital
+  (cancelado e em seleção também) e o mapa dizia mais ociosas que o KPI.
+*/
+
+export function contarPorDsei(
+  linhas: readonly LinhaDoMonitoramento[],
+): Map<string, ContagemDoDsei> {
+  const contagens = new Map<string, ContagemDoDsei>();
+  const lista: readonly LinhaDoMonitoramento[] = Array.isArray(linhas)
+    ? linhas
+    : [];
+  for (const linha of lista) {
+    const chave = chaveDoDsei(linha?.unidade);
+    if (!chave) continue;
+    const atual = contagens.get(chave) || { ...VAZIO };
+    atual.editais += 1;
+    if (!ehCancelado(linha)) {
+      // A vaga reaberta em edital mais novo do DSEI conta só no novo.
+      atual.vagas += vagasEfetivas(linha);
+      atual.contratadas += contratadasImediatas(linha);
+      if (temResultado(linha)) atual.ociosas += vagasSemContratacao(linha);
+    }
+    contagens.set(chave, atual);
+  }
+  return contagens;
+}
+
+/*
+  Uma bolha por DSEI com coordenada. Ordem: da maior para a menor, para que a
+  menor fique por cima e as duas continuem clicáveis onde se sobrepõem (o
+  leque, `leque-de-marcadores.ts`, separa as que caem no mesmo pixel).
+*/
+
+export function bolhasDosDsei({
+  dseis = [],
+  contagens = new Map(),
+  filtroAtivo = false,
+}: {
+  dseis?: readonly DseiDoMapa[];
+  contagens?: ReadonlyMap<string, ContagemDoDsei>;
+  filtroAtivo?: boolean;
+} = {}): BolhaDoDsei[] {
+  const lista: readonly DseiDoMapa[] = Array.isArray(dseis) ? dseis : [];
+  const populacaoMaxima = Math.max(0, ...lista.map((d) => numero(d?.pop))) || 1;
+
+  return lista
+    .filter((d) => d && temCoordenada(d.lat, d.lon))
+    .map((d) => {
+      const chave = chaveDoDsei(d.k);
+      const { editais, vagas, contratadas, ociosas } =
+        contagens.get(chave) || VAZIO;
+      const comEdital = editais > 0;
+      const raio = raioDaBolha(d.pop, populacaoMaxima);
+      const cores = comEdital
+        ? CORES_DO_MAPA.comEdital
+        : CORES_DO_MAPA.semEdital;
+      return {
+        dsei: d,
+        chave,
+        lat: Number(d.lat),
+        lon: Number(d.lon),
+        raio,
+        editais,
+        vagas,
+        contratadas,
+        ociosas,
+        comEdital,
+        estilo: {
+          radius: raio,
+          color: cores.borda,
+          weight: comEdital ? 3 : 1.5,
+          fillColor: cores.preenchimento,
+          fillOpacity: OPACIDADE_DA_BOLHA,
+        },
+      };
+    })
+    .filter((b) => !filtroAtivo || b.comEdital)
+    .sort((a, b) => b.raio - a.raio);
+}
+
+/*
+  "Territórios por vagas": os mesmos DSEIs que o mapa desenhou, por vagas
+  (desempate pela população). A barra é o preenchimento, contratadas ÷ vagas
+  (as vagas em seleção ainda não estão preenchidas, nem são ociosas): acima de
+  80% ok, acima de 40% atenção, o resto crítico.
+*/
+
+export function territoriosPorVagas(
+  bolhas: readonly BolhaDoDsei[],
+): TerritorioDoMapa[] {
+  const lista: readonly BolhaDoDsei[] = Array.isArray(bolhas) ? bolhas : [];
+  return [...lista]
+    .sort(
+      (a, b) => b.vagas - a.vagas || numero(b.dsei?.pop) - numero(a.dsei?.pop),
+    )
+    .map((b, indice) => {
+      const preenchidas = b.vagas
+        ? Math.round((Math.min(b.contratadas, b.vagas) / b.vagas) * 100)
+        : 0;
+      return {
+        ...b,
+        posicao: indice + 1,
+        preenchidas,
+        situacao:
+          preenchidas > 80 ? "ok" : preenchidas > 40 ? "atencao" : "critico",
+        detalhe: [
+          plural(b.ociosas, "ociosa", "ociosas"),
+          b.editais ? plural(b.editais, "processo", "processos") : "",
+          numero(b.dsei?.pop) ? `${formatarNumero(b.dsei.pop)} hab.` : "",
+        ]
+          .filter(Boolean)
+          .join(" · "),
+      };
+    });
+}
+
+/*
+  CASAIs nacionais (Brasília, São Paulo): as localizações 131 e 132 do
+  SIGEPSI (`casaisNacionaisDoSigepsi`). O clique filtra a página pela busca
+  "CASAI <cidade>", como antes.
+
+  Os editais contam pelo nome do SIGEPSI ou, sem edital com esse nome, pela
+  cidade: o SIGEPSI chama a de Brasília de "CASAI DF", e o edital está
+  cadastrado como "CASAI Brasília" (17/11/2026: o mapa dizia 0 processos).
+*/
+
+export function casaisNacionais({
+  nac = [],
+  contagens = new Map(),
+  filtroAtivo = false,
+}: {
+  nac?: readonly CasaiNacionalCompacta[];
+  contagens?: ReadonlyMap<string, ContagemDoDsei>;
+  filtroAtivo?: boolean;
+} = {}): CasaiNacionalDoMapa[] {
+  const lista: readonly CasaiNacionalCompacta[] = Array.isArray(nac) ? nac : [];
+  return lista
+    .filter((a) => Array.isArray(a) && temCoordenada(a[2], a[3]))
+    .map((a) => {
+      const nome = texto(a[0]);
+      const cidade = texto(a[4]);
+      return {
+        chave: `${nome}|${a[2]}|${a[3]}`,
+        nome,
+        cnes: texto(a[1]),
+        lat: Number(a[2]),
+        lon: Number(a[3]),
+        cidade,
+        uf: siglaDaUf(a[5]) || texto(a[5]),
+        editais: (
+          contagens.get(chaveDoDsei(nome)) ||
+          contagens.get(chaveDoDsei(cidade)) ||
+          VAZIO
+        ).editais,
+        termoDeBusca: `CASAI ${cidade}`.trim(),
+      };
+    })
+    .filter((c) => !filtroAtivo || c.editais > 0);
+}
+
+/*
+  Enquadramento do mapa nacional: a regra comum aos mapas da Visão geral
+  (`enquadramentoDoRecorte`, src/lib/mapas/enquadramento-do-brasil.ts) com os DSEIs
+  e as CASAIs que sobraram. Sem filtro, o Brasil; um ponto só, zoom 7 nele.
+*/
+
+export function enquadramentoNacional({
+  bolhas = [],
+  casais = [],
+  filtroAtivo = false,
+}: {
+  bolhas?: readonly BolhaDoDsei[];
+  casais?: readonly CasaiNacionalDoMapa[];
+  filtroAtivo?: boolean;
+} = {}): EnquadramentoDoMapa {
+  return enquadramentoDoRecorte({
+    pontos: [...bolhas, ...casais].map((p): CoordenadasDoMapa => [
+      p.lat,
+      p.lon,
+    ]),
+    filtroAtivo,
+  });
+}
+
+/* Texto da dica (tooltip) da bolha do DSEI. */
+export function dicaDaBolha(
+  bolha: BolhaDoDsei,
+  resumoDaRede: readonly string[] = [],
+) {
+  const d: Partial<DseiDoMapa> = bolha?.dsei || {};
+  const linhas = [
+    `População do DSEI: ${formatarNumero(d.pop)} indígenas`,
+    ...resumoDaRede,
+    `Estados administrativos: ${(d.ufs?.length ? d.ufs : [d.sedeuf]).filter(Boolean).join(", ")}`,
+    `Processos seletivos: ${formatarNumero(bolha?.editais)}`,
+  ];
+  if (bolha?.comEdital) {
+    linhas.push(
+      `Vagas ociosas: ${formatarNumero(bolha.ociosas)} de ${formatarNumero(bolha.vagas)}`,
+    );
+  }
+  return { titulo: `DSEI ${texto(d.n)}`, linhas };
+}
+
+export function dicaDaCasaiNacional(casai: CasaiNacionalDoMapa) {
+  return {
+    titulo: casai.nome,
+    linhas: [
+      [casai.cidade, casai.uf].filter(Boolean).join(" – "),
+      `Processos seletivos: ${formatarNumero(casai.editais)}`,
+    ],
+  };
+}
+
+export function popupDaCasaiNacional(casai: CasaiNacionalDoMapa) {
+  return {
+    titulo: casai.nome,
+    linhas: [
+      "Casa de Saúde Indígena (referência nacional)",
+      [casai.cidade, casai.uf].filter(Boolean).join(" – "),
+      casai.cnes ? `CNES: ${casai.cnes}` : "",
+      `Processos seletivos: ${formatarNumero(casai.editais)}`,
+    ].filter(Boolean),
+  };
+}

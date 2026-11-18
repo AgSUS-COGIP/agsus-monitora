@@ -3,7 +3,7 @@ import {
   bancasDoPerfil,
   copiaParaOCampo,
   validadeDaCopia,
-} from "../src/lib/conducao-para-o-campo.ts";
+} from "../src/lib/entrevistas/conducao-para-o-campo.ts";
 
 /*
   O que a condução guarda no aparelho: quem avalia leva só a sua banca; quem

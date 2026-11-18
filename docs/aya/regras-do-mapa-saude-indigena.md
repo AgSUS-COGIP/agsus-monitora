@@ -71,7 +71,7 @@ modo Calor saiu em 02/10/2026.
 
 **perguntas:** popup da unidade | o que o popup mostra | localizacao validada | fontes discordam | localizacao em validacao | coordenada confirmada | ponto do polo esta certo
 **resposta:** No Yeendé, o popup de cada ponto do mapa do DSEI traz só o que a unidade é: tipo, nome, município e UF e o código CNES (quando há). Não há frases como "Localização em validação", "Fontes discordam" ou "validada". A lista de DSEIs, a sede, os polos base, as CASAIs (todas, inclusive as nacionais) e as unidades de lotação de cada um vêm do SIGEPSI, a fonte verdadeira dos pontos, lidos a cada abertura do mapa; do banco do Yeendé vêm só o nome bem grafado, a população (o tamanho da bolha) e as UFs administrativas de cada DSEI. Se um ponto parecer errado, a correção é feita no próprio SIGEPSI: o mapa não tem editor de coordenadas.
-**fonte:** src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts; src/lib/mapa-saude-indigena/mapa-do-dsei.ts
+**fonte:** src/lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts; src/lib/mapas/mapa-saude-indigena/mapa-do-dsei.ts
 
 ## Terras Indígenas no mapa
 
@@ -95,7 +95,7 @@ modo Calor saiu em 02/10/2026.
 
 **perguntas:** corrigir coordenadas | editar latitude e longitude | arrastar o pin | mover ponto no mapa | alterar localizacao da unidade | como usar o editor de coordenadas | botao coordenadas | pontos pendentes | marcar como conferido
 **resposta:** No mapa da Saúde Indígena os pontos (sede, polos base, CASAIs e unidades) vêm do SIGEPSI, e o mapa não tem editor de coordenadas nem botão "Coordenadas", fila de pendências ou "Conferido". Para corrigir um ponto, peça a correção no próprio SIGEPSI; o mapa passa a mostrar a posição nova na abertura seguinte. O editor de coordenadas existe só no mapa de Projetos (veja as regras do mapa de Projetos).
-**fonte:** src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts; src/modulos/mapa-saude-indigena/localizacoes.ts
+**fonte:** src/lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts; src/modulos/mapa-saude-indigena/localizacoes.ts
 
 ## Quando o SIGEPSI não responde
 

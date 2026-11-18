@@ -11,7 +11,7 @@ import {
   editaisDoPedido,
   opcoesDosEditais,
   previaDoDisparo,
-} from "../../lib/painel-dos-robos.ts";
+} from "../../lib/automacao/painel-dos-robos.ts";
 import {
   estadoDoBotao,
   OPCOES_DOS_ROBOS,
@@ -20,7 +20,7 @@ import {
   MODOS_COM_ANEXOS,
   MODO_SO_ANEXOS,
   MOTIVO_DO_CONGELADO,
-} from "../../lib/robos-de-carga.ts";
+} from "../../lib/automacao/robos-de-carga.ts";
 import { Aviso, Campo, Gaveta, Segmentado } from "../../ui/index.ts";
 import { Icone } from "../icone.tsx";
 import { MultiSelectBusca } from "../multi-select-busca.tsx";
@@ -32,7 +32,7 @@ import { MultiSelectBusca } from "../multi-select-busca.tsx";
   vagas conhecidas do edital, com o cargo), modo e limite, e a prévia do que
   vai rodar antes de confirmar. Só os campos que o robô aceita
   (OPCOES_DOS_ROBOS); a mesma validação da função (validarOpcoes) e as
-  regras da prévia em src/lib/painel-dos-robos.ts. A explicação é da Aya
+  regras da prévia em src/lib/automacao/painel-dos-robos.ts. A explicação é da Aya
   (verbete "Rodar um robô com opções"). "Forçar edital com inscrições
   congeladas" (20261020170000) só aparece nos modos que gravam e pede motivo;
   o banco grava a liberação.

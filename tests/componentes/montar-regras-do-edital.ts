@@ -5,7 +5,7 @@ import type {
   ClienteDasRegras,
   PropriedadesDasRegras,
 } from "../../src/modulos/regras-do-edital/regras-do-edital.tsx";
-import type { EtapaDasRegras } from "../../src/lib/regras-do-edital.ts";
+import type { EtapaDasRegras } from "../../src/lib/regras-do-edital/regras-do-edital.ts";
 import { lojasDasRegras } from "../../src/modulos/regras-do-edital/lojas.ts";
 import { esperar } from "./interacoes.ts";
 

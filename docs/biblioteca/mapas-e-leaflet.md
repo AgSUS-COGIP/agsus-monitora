@@ -15,14 +15,14 @@ formas são comuns. Só a camada de Terras Indígenas é exclusiva da Saúde Ind
 
 ## Onde fica
 
-- `src/lib/fabrica-do-leaflet.ts` — **único lugar que cria mapa Leaflet**; as guardas preservam o
+- `src/lib/mapas/fabrica-do-leaflet.ts` — **único lugar que cria mapa Leaflet**; as guardas preservam o
   namespace `L`.
 - `src/modulos/mapa-saude-indigena/leaflet.ts` — a integração comum (criação, fundo com recurso,
   tamanho, contornos, enquadramento, leque, ícones e balões), com contratos em
   `tipos-do-leaflet.ts`; a base compartilhada (painel, legenda, tela cheia, retorno ao Brasil e
   hooks) também mora em `src/modulos/mapa-saude-indigena/` ([[mapa-saude-indigena-contratos]]).
-- `src/lib/mapa-render.ts`, `src/lib/brasil-bounds.ts` (enquadramento pelo contorno real do
-  Brasil), `src/lib/mapa-saude-indigena/*.ts` (contagens, bolhas, CASAIs, unidades, vínculos,
+- `src/lib/mapas/mapa-render.ts`, `src/lib/mapas/brasil-bounds.ts` (enquadramento pelo contorno real do
+  Brasil), `src/lib/mapas/mapa-saude-indigena/*.ts` (contagens, bolhas, CASAIs, unidades, vínculos,
   enquadramentos, formas e cores).
 - `src/modulos/mapa-saude-indigena/guarda-do-mapa.ts` — a guarda que `criarMapa` liga em cada
   mapa: limites da América do Sul, zoom de 4,5 a 19, zoom mínimo que acompanha a moldura, régua,
@@ -30,7 +30,7 @@ formas são comuns. Só a camada de Terras Indígenas é exclusiva da Saúde Ind
   `L.map` nem `L.tileLayer`.
 - Ainda no legado, envolvendo o Leaflet quando ele chega (`carregar-leaflet.ts`): o seletor
   Mapa/Satélite `src/modules/map-base-layer-switcher.ts` e a camada de Terras Indígenas (abaixo).
-- `src/lib/filtros-do-mapa.ts` — a regra dos filtros da página do mapa: comparação sem acento,
+- `src/lib/mapas/filtros-do-mapa.ts` — a regra dos filtros da página do mapa: comparação sem acento,
   opções sem duplicata, poda até estabilizar. A Visão geral guarda o estado e delega para cá;
   avisa pelo evento `agsus:filtros-alterados`.
 - Editor de coordenadas (só o mapa de Projetos): [[coordenadas]].
@@ -39,7 +39,7 @@ formas são comuns. Só a camada de Terras Indígenas é exclusiva da Saúde Ind
 
 - **A forma é a informação, a cor é reforço:** estrela = sede do DSEI, círculo = polo base, casa =
   CASAI, cruz = UBSI, losango = outra unidade de saúde (formas e cores em
-  `src/lib/mapa-saude-indigena/formas.ts`). A legenda desenha as mesmas formas.
+  `src/lib/mapas/mapa-saude-indigena/formas.ts`). A legenda desenha as mesmas formas.
 - Enquadramento inicial pelo contorno real do Brasil; arrastar não sai para o oceano aberto nem
   cria cópias laterais do mundo. Zoom de 4.5 a 19 (`MAP_MIN_ZOOM`/`MAP_MAX_ZOOM`).
 - Escolha Mapa/Satélite guardada no navegador (`agsus_map_base_layer_v1`), uma para o app inteiro,
@@ -60,7 +60,7 @@ Só no mapa da Saúde Indígena (`#map` e `#detailMap`); o de Projetos (`#mapaDo
 camadas indígenas. A geometria vem da Funai, compilada num arquivo que o mapa carrega uma vez só.
 
 - `src/modules/indigenous-territories-layer.ts` — a camada (41 KB, legado em TypeScript; **não ler
-  por inteiro**); as partes puras estão em `src/lib/terras-indigenas/` (`catalogo.ts`,
+  por inteiro**); as partes puras estão em `src/lib/mapas/terras-indigenas/` (`catalogo.ts`,
   `fases-e-estilos.ts`, `geometria.ts`, `preferencias.ts`, `textos.ts`, `tipos.ts`).
 - `scripts/compilar-terras-indigenas.mjs` gera `public/data/terras-indigenas*.json`;
   `scripts/compilar-contornos-dos-dseis.mjs` gera `public/data/contornos-dos-dseis.json`

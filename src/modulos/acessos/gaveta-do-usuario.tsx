@@ -14,14 +14,14 @@ import {
   pendenciasDoUsuario,
   resumoDoRascunho,
   separarRascunhoDaPessoa,
-} from "../../lib/matriz-de-acessos.ts";
-import { dataCurta } from "../../lib/convite-de-acesso.ts";
+} from "../../lib/acessos/matriz-de-acessos.ts";
+import { dataCurta } from "../../lib/acessos/convite-de-acesso.ts";
 import {
   PALAVRA_DE_CONFIRMACAO,
   avisoDeTransformarEmCoordenacao,
   confirmacaoDeTransformarValida,
-} from "../../lib/grupos-e-coordenacoes.ts";
-import { rotuloDoNivel } from "../../lib/permissoes-recursos.ts";
+} from "../../lib/acessos/grupos-e-coordenacoes.ts";
+import { rotuloDoNivel } from "../../lib/acessos/permissoes-recursos.ts";
 import {
   gruposAtribuiveis,
   nivelMaximo,
@@ -30,14 +30,14 @@ import {
   podeEditarUsuario,
   podeMudarCoordenacao,
   valorDoSelect,
-} from "../../lib/teto-de-acessos.ts";
+} from "../../lib/acessos/teto-de-acessos.ts";
 import {
   capacidadesDoPerfil,
   contextoDepoisDeSalvar,
   menuDoContexto,
   perfilDoContexto,
   resumoDoEscopo,
-} from "../../lib/ver-como.ts";
+} from "../../lib/acessos/ver-como.ts";
 import { Icone } from "../../componentes/icone.tsx";
 import {
   Aviso,
@@ -67,7 +67,7 @@ import type {
   RascunhoDeAcessos,
   SecaoDeConfiguracaoDoMenu,
   TetoDeAcessos,
-} from "../../lib/tipos-dos-acessos.ts";
+} from "../../lib/acessos/tipos-dos-acessos.ts";
 import type {
   EstadoDosAcessos,
   MatrizDosAcessos,

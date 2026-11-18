@@ -3,8 +3,8 @@ import {
   periodoDeInterposicao,
   type DadosParaOParecer,
   type FonteDoParecer,
-} from "../../../lib/parecer-em-blocos.ts";
-import { classificarCronograma } from "../../../lib/prazo-do-recurso.ts";
+} from "../../../lib/recursos/parecer-em-blocos.ts";
+import { classificarCronograma } from "../../../lib/recursos/prazo-do-recurso.ts";
 
 /*
   A fonte de dados do PROTÓTIPO do parecer: um caso fictício, no formato que

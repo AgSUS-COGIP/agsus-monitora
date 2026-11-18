@@ -77,7 +77,7 @@ No app:
 - O menu é o mesmo em todas as áreas: **Acompanhar** (Visão geral, painéis e Cronograma),
   **Processo seletivo** na ordem do fluxo (Editais, Triagem, Avaliação documental, Recursos,
   Entrevistas, Classificação, Lista de aprovados) e **Administração** (Aparência, Pessoas e
-  acessos, Sistema). Catálogo em `src/lib/menu-lateral.ts` (`BLOCOS_DA_AREA`/`blocoDaAba`).
+  acessos, Sistema). Catálogo em `src/lib/navegacao/menu-lateral.ts` (`BLOCOS_DA_AREA`/`blocoDaAba`).
 - A área atual é definida pelo menu e lida por `usarAreaAtual()` /
   `src/componentes/dados-do-monitoramento.ts` (`linhasDaArea`, `soDosEditais`); Editais,
   Cronograma e Lista de aprovados recortam pelos ids dos editais da área.
@@ -89,13 +89,13 @@ No app:
 - `montarRaiz()` (começo de `src/main.ts`) monta em `#raiz` e desenha, por portal, os avisos
   (`#avisosApp`), a tela de acesso (`#telaDeEntrada`) e a casca (`#appScreen`: barra lateral,
   cabeçalho e as telas). `src/app/contexto-do-app.ts` entrega a navegação e o aviso curto.
-- As telas são rotas (`src/lib/rotas.ts`, `src/app/endereco.ts`, `src/app/telas.tsx`), carregadas
+- As telas são rotas (`src/lib/navegacao/rotas.ts`, `src/app/endereco.ts`, `src/app/telas.tsx`), carregadas
   sob demanda; a navegação (`src/app/navegacao.ts`) é um estado lido pelo React. A área e a tela
   ficam no endereço (`/saude-indigena/cronograma`, `/sede/classificacao/<edital>`,
   `/administracao/configuracoes/<seção>`), com voltar, avançar e F5.
 - A Visão geral, Editais e a casca ficam no pacote principal; as demais telas baixam na primeira
   abertura (`carregar: () => import(…)`, `importarComRecarga`); o item do menu pré-carrega no
-  mouse/foco (`src/lib/carga-de-telas.ts`).
+  mouse/foco (`src/lib/carga/carga-de-telas.ts`).
 - Nenhuma tela do app abre mais em iframe; só os painéis externos (`TB_PAINEL_EXTERNO`)
   continuam no quadro ([[modulo-paineis-externos]]).
 - A ligação do app fica em `src/app/` (`sistema.ts`, `navegacao.ts`, `carga.ts`, `presenca.ts`,
@@ -108,16 +108,16 @@ O que acontece entre o login ([[seguranca]]) e a primeira tela:
 - `src/app/carga.ts` — `loadInitialData` (consultas em paralelo) e `atualizarCopiaDaSessao`.
 - `src/app/inicio-da-sessao.ts` — configuração, painéis, abas, situação e unidades numa chamada só
   (RPC `obter_inicio_da_sessao`).
-- **Linhas do monitoramento sob demanda:** só as páginas de `src/lib/telas-com-linhas.ts` (via
+- **Linhas do monitoramento sob demanda:** só as páginas de `src/lib/navegacao/telas-com-linhas.ts` (via
   `src/app/pagina-aberta.ts`) ou `usarLinhasDoMonitoramento` fazem a carga lê-las; o legado as
   publica em `src/componentes/dados-do-monitoramento.ts` ([[nova-tela-e-legado]]).
-- **Cópia da sessão no navegador:** `src/lib/copia-da-sessao.ts` decide quando a cópia guardada
+- **Cópia da sessão no navegador:** `src/lib/sessao/copia-da-sessao.ts` decide quando a cópia guardada
   pode abrir a tela (mesmo usuário, mesmo acesso, mesma versão publicada, dentro da validade) e o
   que mudou desde ela; `src/modules/copia-da-sessao-indexeddb.ts` guarda no IndexedDB. **Afrouxar
   uma regra daqui expõe dado a quem perdeu acesso.**
 - **Sem tela de carregamento:** `src/app/carregamento.ts` desenha o skeleton da entrada e a barra
   do "Atualizar dados" (a antiga `#loader` ficou só para salvamentos); o formato está em
-  `src/lib/esqueleto-da-entrada.ts`, o CSS em `src/styles/carregamento.css` (pulsa só com
+  `src/lib/entrada/esqueleto-da-entrada.ts`, o CSS em `src/styles/carregamento.css` (pulsa só com
   `opacity`, e só enquanto está ligado), e o `index.html` traz a marcação `.esqueleto-da-entrada`
   e o script `marcarSessaoGuardada`. Carregando não é zero: enquanto não chega, skeleton.
 - Painel externo que avisa quando carregou: [[modulo-paineis-externos]] (seção Protocolo).

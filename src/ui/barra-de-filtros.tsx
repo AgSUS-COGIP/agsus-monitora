@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { KeyboardEvent, ReactNode, RefObject } from "react";
-import { formatNumberBR } from "../lib/formatters";
+import { formatNumberBR } from "../lib/base/formatters";
 import { classes } from "./classes.ts";
 import { Popover } from "./popover.tsx";
 

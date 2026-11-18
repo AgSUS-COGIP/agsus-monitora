@@ -1,14 +1,14 @@
 import type { PropsDaGavetaDoAprovado } from "./tipos-dos-modais.ts";
-import type { CartaDoHistorico } from "../../lib/tipos-da-carta.ts";
+import type { CartaDoHistorico } from "../../lib/aprovados/carta-de-convocacao/tipos-da-carta.ts";
 import { useSyncExternalStore } from "react";
-import { canChangeCandidateStatus } from "../../lib/access-roles.ts";
+import { canChangeCandidateStatus } from "../../lib/acessos/access-roles.ts";
 import {
   canEditCandidateStatus,
   formatarData,
   formatarNota,
   modalidadeSemAspas,
-} from "../../lib/lista-aprovados-rules.ts";
-import { formatarDataHora } from "../../lib/cronograma-do-edital.ts";
+} from "../../lib/aprovados/lista-aprovados-rules.ts";
+import { formatarDataHora } from "../../lib/cronograma/cronograma-do-edital.ts";
 import {
   BlocosEsqueleto,
   Gaveta,

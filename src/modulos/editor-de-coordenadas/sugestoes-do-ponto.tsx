@@ -1,11 +1,11 @@
 import type {
   SugestaoDoEditor,
   GravidadeDoPonto,
-} from "../../lib/tipos-do-editor-de-coordenadas.ts";
+} from "../../lib/mapas/tipos-do-editor-de-coordenadas.ts";
 import {
   formatarDistancia,
   GRAVIDADES,
-} from "../../lib/editor-de-coordenadas.ts";
+} from "../../lib/mapas/editor-de-coordenadas.ts";
 import { EstadoVazio, Selo } from "../../ui/index.ts";
 
 /*

@@ -5,16 +5,16 @@ import type {
   ColorirPor,
   IndicadorDoDsei,
   PinturaDoMapaSimples,
-} from "../../lib/mapa-saude-indigena/mapa-simples.ts";
-import type { ContornoDoDsei } from "../../lib/mapa-saude-indigena/contornos-dos-dseis.ts";
+} from "../../lib/mapas/mapa-saude-indigena/mapa-simples.ts";
+import type { ContornoDoDsei } from "../../lib/mapas/mapa-saude-indigena/contornos-dos-dseis.ts";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import {
   OPCOES_DE_COLORIR,
   TOKEN_SEM_DADO,
   colorirValido,
   dicaDoDseiSimples,
-} from "../../lib/mapa-saude-indigena/mapa-simples.ts";
-import { carregarContornosDosDseis } from "../../lib/mapa-saude-indigena/contornos-dos-dseis.ts";
+} from "../../lib/mapas/mapa-saude-indigena/mapa-simples.ts";
+import { carregarContornosDosDseis } from "../../lib/mapas/mapa-saude-indigena/contornos-dos-dseis.ts";
 import {
   EVENTO_DO_FUNDO,
   MODO_SIMPLES,
@@ -32,7 +32,7 @@ import { usarUltimo } from "./usar-ultimo.ts";
   desenha, num pane próprio abaixo das Terras Indígenas: a silhueta do Brasil,
   os 34 DSEIs chapados (contornos locais, `contornos-dos-dseis.ts`) e o número
   de cada um no meio. As regras (números, faixas, cores, dica) estão em
-  `src/lib/mapa-saude-indigena/mapa-simples.ts`.
+  `src/lib/mapas/mapa-saude-indigena/mapa-simples.ts`.
 
   - A cor é um token por DSEI (`--mapa-simples-*`), posto no `style` do
     caminho: troca de "Colorir por" ou de tema não redesenha nada.

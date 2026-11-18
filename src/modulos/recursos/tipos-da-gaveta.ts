@@ -3,7 +3,7 @@ import type {
   IdentificadorDoRecurso,
   EtapaDoRecurso,
   OrigemDoRecurso,
-} from "../../lib/tipos-dos-recursos.ts";
+} from "../../lib/recursos/tipos-dos-recursos.ts";
 import type {
   EstadoDosRecursos,
   SnapshotDosRecursos,
@@ -13,7 +13,7 @@ import type {
 import type {
   RespostaDoRecurso,
   ModeloDaResposta,
-} from "../../lib/tipos-da-resposta-do-recurso.ts";
+} from "../../lib/recursos/tipos-da-resposta-do-recurso.ts";
 
 export interface HistoricoDoRecurso {
   acao: string;

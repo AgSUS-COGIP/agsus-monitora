@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   bolhasDosDsei,
   territoriosPorVagas,
-} from "../src/lib/mapa-saude-indigena/mapa-nacional.ts";
+} from "../src/lib/mapas/mapa-saude-indigena/mapa-nacional.ts";
 
 describe("fronteiras das regras geográficas", () => {
   it("ordena territórios sem modificar a lista congelada de bolhas", () => {

@@ -14,7 +14,7 @@ import {
   calcularKpis,
   normalizarEscopo,
   opcoesDosFiltros,
-} from "../../lib/analises-curriculares.ts";
+} from "../../lib/analises/analises-curriculares.ts";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
 import {
@@ -31,9 +31,9 @@ import {
   STATUS_DO_GRAFICO,
   temPeriodo,
   tendenciaDiaria,
-} from "../../lib/analises-curriculares.ts";
-import { formatNumberBR } from "../../lib/formatters";
-import { paletaDoPainel } from "../../lib/tema-do-painel";
+} from "../../lib/analises/analises-curriculares.ts";
+import { formatNumberBR } from "../../lib/base/formatters";
+import { paletaDoPainel } from "../../lib/paineis/tema-do-painel";
 import {
   Campo,
   CardDeGrafico,

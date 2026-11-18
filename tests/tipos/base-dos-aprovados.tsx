@@ -1,18 +1,18 @@
 import {
   readApprovedWorkbook,
   validateApprovedRows,
-} from "../../src/lib/aprovados-import.ts";
+} from "../../src/lib/aprovados/aprovados-import.ts";
 import {
   anexosPorCandidato,
   arquivoEmBase64,
   problemaDosAnexos,
-} from "../../src/lib/anexos-do-candidato.ts";
-import { expandirCandidatosCompactos } from "../../src/lib/candidatos-aprovados-compactos.ts";
+} from "../../src/lib/aprovados/anexos-do-candidato.ts";
+import { expandirCandidatosCompactos } from "../../src/lib/aprovados/candidatos-aprovados-compactos.ts";
 import type {
   PacoteDeCandidatosCompactos,
   CandidatoDaPlanilhaDeAprovados,
   MetadadosDoPdfDoCandidato,
-} from "../../src/lib/tipos-da-importacao-de-aprovados.ts";
+} from "../../src/lib/aprovados/tipos-da-importacao-de-aprovados.ts";
 
 async function contratos(arquivo: File, pacote: PacoteDeCandidatosCompactos) {
   const candidatos: CandidatoDaPlanilhaDeAprovados[] =

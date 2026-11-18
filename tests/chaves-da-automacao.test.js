@@ -10,10 +10,13 @@ import {
   semProxima,
   tarefasForaDaChave,
   ultimaExecucao,
-} from "../src/lib/chaves-da-automacao.ts";
-import { proximaExecucao } from "../src/lib/agenda-do-cron.ts";
+} from "../src/lib/automacao/chaves-da-automacao.ts";
+import { proximaExecucao } from "../src/lib/automacao/agenda-do-cron.ts";
 import { CATALOGO_DOS_ROBOS } from "./fixtures/catalogo-dos-robos.ts";
-import { normalizarSaude, visaoSimples } from "../src/lib/saude-das-cargas.ts";
+import {
+  normalizarSaude,
+  visaoSimples,
+} from "../src/lib/automacao/saude-das-cargas.ts";
 
 /*
   Chaves da automação (Configurações › Automação, 20261022190000): leitura do

@@ -6,13 +6,16 @@ import {
   useSyncExternalStore,
   type FormEvent,
 } from "react";
-import { RESOURCES, niveisDoRecurso } from "../../lib/permissoes-recursos.ts";
+import {
+  RESOURCES,
+  niveisDoRecurso,
+} from "../../lib/acessos/permissoes-recursos.ts";
 import {
   grupoParaSalvar,
   grupoVazio,
   lerGrupo,
   validarGrupo,
-} from "../../lib/grupos-e-coordenacoes.ts";
+} from "../../lib/acessos/grupos-e-coordenacoes.ts";
 import {
   Aviso,
   BlocosEsqueleto,
@@ -21,7 +24,7 @@ import {
   Segmentado,
 } from "../../ui/index.ts";
 import { CampoMotivo, ListaMestre, motivoValido } from "./partes.tsx";
-import type { NivelDeAcesso } from "../../lib/tipos-dos-acessos.ts";
+import type { NivelDeAcesso } from "../../lib/acessos/tipos-dos-acessos.ts";
 import type {
   EstadoDosAcessos,
   GrupoDosAcessos,

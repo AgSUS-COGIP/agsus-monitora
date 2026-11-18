@@ -41,7 +41,7 @@ export function obterEstadoDaBarraLateral() {
 }
 
 /*
-  `arvore` vem de `montarArvoreDoMenu` (`src/lib/menu-lateral.ts`). Opções:
+  `arvore` vem de `montarArvoreDoMenu` (`src/lib/navegacao/menu-lateral.ts`). Opções:
   - `navegar(view)`: padrão, `window.navigate` resolvido no clique; `false` =
     recusada (a área trocada antes volta);
   - `paginaAtiva(view)`: padrão, `#page-<view>` com `.active`;

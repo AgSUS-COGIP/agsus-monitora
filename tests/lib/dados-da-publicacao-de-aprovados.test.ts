@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   resultadoDaPublicacao,
   situacaoDaPublicacao,
-} from "../../src/lib/dados-da-publicacao-de-aprovados.ts";
-import { candidatosDaListaFinal } from "../../src/lib/publicacao-de-aprovados.ts";
+} from "../../src/lib/aprovados/dados-da-publicacao-de-aprovados.ts";
+import { candidatosDaListaFinal } from "../../src/lib/aprovados/publicacao-de-aprovados.ts";
 
 const vigente = {
   lista_id: "l1",

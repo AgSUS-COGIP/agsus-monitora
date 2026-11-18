@@ -6,7 +6,7 @@ import {
   normalizarVagas,
   opcoesDosEditais,
   previaDoDisparo,
-} from "../src/lib/painel-dos-robos.ts";
+} from "../src/lib/automacao/painel-dos-robos.ts";
 import {
   inputsDoPedido,
   MENSAGEM_DA_CHAVE,
@@ -16,12 +16,12 @@ import {
   separarCodigos,
   situacaoDoPedido,
   validarOpcoes,
-} from "../src/lib/robos-de-carga.ts";
+} from "../src/lib/automacao/robos-de-carga.ts";
 
 /*
   "Rodar com opções" dos robôs, sem DOM: a lista branca e a validação
-  (src/lib/robos-de-carga.ts, a mesma de disparar_robo) e a escolha de editais, a
-  prévia, o histórico e o acompanhamento (src/lib/painel-dos-robos.ts).
+  (src/lib/automacao/robos-de-carga.ts, a mesma de disparar_robo) e a escolha de editais, a
+  prévia, o histórico e o acompanhamento (src/lib/automacao/painel-dos-robos.ts).
 */
 
 const EMPREGARE = roboDeCarga("empregare");

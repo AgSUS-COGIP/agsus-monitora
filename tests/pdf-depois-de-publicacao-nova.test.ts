@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   MENSAGEM_DE_VERSAO_NOVA,
   erroDeVersaoNova,
-} from "../src/lib/importar-com-recarga.ts";
+} from "../src/lib/carga/importar-com-recarga.ts";
 
 /*
   Depois de uma publicação nova, a página que já estava aberta pede o arquivo

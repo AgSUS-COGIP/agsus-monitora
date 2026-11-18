@@ -2,12 +2,12 @@
 import { existsSync, readFileSync } from "node:fs";
 import { act, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { montarArvoreDoMenu } from "../../src/lib/menu-lateral.ts";
+import { montarArvoreDoMenu } from "../../src/lib/navegacao/menu-lateral.ts";
 import {
   avisar,
   EVENTO_BARRA_ALTERNADA,
   EVENTO_TEMA_ALTERADO,
-} from "../../src/lib/eventos-da-barra-lateral.ts";
+} from "../../src/lib/navegacao/eventos-da-barra-lateral.ts";
 import { SECOES } from "../../src/modulos/configuracoes/secoes.ts";
 import { sairDoSistema } from "../../src/app/casca/saida.ts";
 import { BarraLateral } from "../../src/componentes/barra-lateral/barra-lateral.tsx";

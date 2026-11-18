@@ -16,7 +16,7 @@ const APP_SHELL = [
 ];
 /*
   Trocada a cada build pela lista dos arquivos publicados (vite.config.js,
-  src/lib/cache-do-service-worker.ts): código, estilos, fontes e imagens de
+  src/lib/carga/cache-do-service-worker.ts): código, estilos, fontes e imagens de
   todas as telas, guardados na instalação para que qualquer tela abra sem rede,
   também a que nunca foi aberta.
 */

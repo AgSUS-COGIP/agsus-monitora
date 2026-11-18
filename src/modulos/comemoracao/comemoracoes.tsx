@@ -19,18 +19,18 @@ import {
   efeitoChamaAya,
   normalizarDuracao,
   DURACAO_PADRAO_MS,
-} from "../../lib/motor-de-efeitos.ts";
+} from "../../lib/comemoracao/motor-de-efeitos.ts";
 import {
   opacidadeDoVeu,
   posicaoDaAya,
   posicaoNaDanca,
   somDoEstouro,
-} from "../../lib/fogos-cena.ts";
-import { LIMITE_DE_PARTICULAS } from "../../lib/fogos.ts";
+} from "../../lib/comemoracao/fogos-cena.ts";
+import { LIMITE_DE_PARTICULAS } from "../../lib/comemoracao/fogos.ts";
 import {
   definirEstadoDaAya,
   EVENTO_ESTADO_DA_AYA,
-} from "../../lib/estado-da-aya.ts";
+} from "../../lib/aya/estado-da-aya.ts";
 import { Mascote } from "../aya/mascote/mascote.tsx";
 import {
   DPR_MAXIMO,
@@ -49,8 +49,8 @@ import {
 } from "./desempenho.ts";
 import { planoDaComemoracao, TEMPO_DO_AVISO_MS } from "./plano.ts";
 import "../../styles/comemoracao.css";
-import type { PosicaoDaAya } from "../../lib/fogos-cena.ts";
-import type { EstadoDaMascote } from "../../lib/estado-da-aya.ts";
+import type { PosicaoDaAya } from "../../lib/comemoracao/fogos-cena.ts";
+import type { EstadoDaMascote } from "../../lib/aya/estado-da-aya.ts";
 import type { JanelaDaComemoracao } from "./desenho.ts";
 import type { SomDasComemoracoes } from "./som.ts";
 import type { ComemoracaoNaTela, OpcoesDaComemoracao } from "./plano.ts";
@@ -59,7 +59,7 @@ import type { ComemoracaoNaTela, OpcoesDaComemoracao } from "./plano.ts";
   As comemorações em React, filhas da casca (src/app/casca/casca.tsx): o
   aviso no topo (role="status") com "Pular", o botão de som (desligado por
   padrão) e o ×, e o efeito escolhido (fogos, confete, serpentina, estrelas,
-  corações, balões, a Aya comemorando ou o combinado — src/lib/motor-de-efeitos.ts)
+  corações, balões, a Aya comemorando ou o combinado — src/lib/comemoracao/motor-de-efeitos.ts)
   num <canvas>, com um véu escuro suave quando há fogos ou estrelas e a Aya
   (a mascote de verdade, src/modulos/aya/mascote/) atravessando a tela nos
   fogos e, no Normal e no Festa, voltando no fim para dançar, dar uma
@@ -75,7 +75,7 @@ import type { ComemoracaoNaTela, OpcoesDaComemoracao } from "./plano.ts";
   conta (src/modulos/comemoracao/desempenho.ts), a qualidade cai sozinha.
 
   Cada comemoração de marco passa `marco` (id do catálogo de
-  src/lib/catalogo-de-comemoracoes.ts): Configurações › Comemorações decide
+  src/lib/comemoracao/catalogo-de-comemoracoes.ts): Configurações › Comemorações decide
   se aparece, o efeito, a intensidade, a duração, o som e a mensagem; a
   preferência pessoal (neste navegador) também desliga. `teste: true` (botão
   Testar e Palco de testes) passa por cima das duas.

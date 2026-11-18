@@ -2,7 +2,7 @@ import {
   BuscaGlobal,
   avisarEscolha,
 } from "../../src/componentes/busca-global/busca-global.tsx";
-import { buscarLinhas } from "../../src/lib/busca-global.ts";
+import { buscarLinhas } from "../../src/lib/navegacao/busca-global.ts";
 import {
   obterDadosDoMonitoramento,
   soDosEditais,

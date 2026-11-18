@@ -11,7 +11,7 @@ import {
   reivindicarSaida,
   reiniciarEstadoDeSaidaParaTestes,
   saidaJaAplicada,
-} from "../src/lib/estado-de-saida";
+} from "../src/lib/sessao/estado-de-saida";
 
 beforeEach(() => reiniciarEstadoDeSaidaParaTestes());
 
