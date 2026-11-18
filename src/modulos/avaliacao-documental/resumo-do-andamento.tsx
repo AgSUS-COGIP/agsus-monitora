@@ -14,7 +14,9 @@ import {
   card): o bloco recolhível "Por vaga (N)", fechado por padrão e lembrado
   por usuário (andamento-por-vaga.ts). Aberto, uma
   tabela enxuta: código, cargo curto e lotação, barra, concluídas de N, em
-  análise e pendentes (destacadas quando há). Os títulos das colunas
+  análise, pendentes (destacadas quando há) e, quando alguma vaga tem, as que
+  saíram do lote (a ficha foi para FORA_LOTE): a linha soma o lote, como a
+  faixa do alto. Os títulos das colunas
   ordenam; clicar numa vaga filtra a fila (de novo, tira o filtro), o mesmo
   filtro "Vaga" da linha de filtros. Contado com a lista já carregada
   (obter_fila_avaliacao), sem consulta nova.
@@ -22,10 +24,10 @@ import {
 
 type Contas = Pick<
   AndamentoDaVaga,
-  "lote" | "concluidas" | "em_analise" | "revisao" | "pendentes"
+  "lote" | "concluidas" | "em_analise" | "revisao" | "pendentes" | "saiu"
 >;
 
-/* A barra: concluídas, em análise e em revisão, na cor de cada uma; o resto é pendente. */
+/* A barra: concluídas, em análise, em revisão e saíram do lote, na cor de cada uma; o resto é pendente. */
 export function BarraDoAndamento({ a }: { a: Contas }) {
   const parte = (n: number) => `${a.lote ? (n / a.lote) * 100 : 0}%`;
   return (
@@ -40,6 +42,9 @@ export function BarraDoAndamento({ a }: { a: Contas }) {
       <span data-parte="concluidas" style={{ width: parte(a.concluidas) }} />
       <span data-parte="em_analise" style={{ width: parte(a.em_analise) }} />
       <span data-parte="revisao" style={{ width: parte(a.revisao) }} />
+      {a.saiu ? (
+        <span data-parte="saiu" style={{ width: parte(a.saiu) }} />
+      ) : null}
     </span>
   );
 }
@@ -92,6 +97,7 @@ export function AndamentoPorVaga({
   const [ordem, setOrdem] = useState<OrdemPorVaga>("banco");
   const vagas = ordenarPorVaga(andamento.vagas, ordem);
   const mostrarVagas = andamento.vagas.length > 1 || Boolean(vaga);
+  const comSaida = andamento.vagas.some((v) => (v.saiu ?? 0) > 0);
   if (!mostrarVagas) return null;
   return (
     <div
@@ -144,6 +150,7 @@ export function AndamentoPorVaga({
                 >
                   Pendentes
                 </Coluna>
+                {comSaida ? <th scope="col">Saiu do lote</th> : null}
               </tr>
             </thead>
             <tbody>
@@ -191,6 +198,7 @@ export function AndamentoPorVaga({
                       ) : null}
                     </td>
                     <td className="avd-porvaga-pendentes">{v.pendentes}</td>
+                    {comSaida ? <td data-saiu-do-lote>{v.saiu ?? 0}</td> : null}
                   </tr>
                 );
               })}

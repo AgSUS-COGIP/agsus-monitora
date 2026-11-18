@@ -134,6 +134,7 @@ describe("etapas e contadores (abas com contadores)", () => {
       em_analise: 1,
       revisao: 1,
       concluidas: 1,
+      saiu: 0,
       eliminados: 1,
       fora: 2,
     });
@@ -408,6 +409,7 @@ describe("andamento por vaga e agrupamento da tabela", () => {
       em_analise: 1,
       revisao: 1,
       pendentes: 3,
+      saiu: 0,
     });
     expect(a.vagas.map((v) => v.codigo)).toEqual(["B", "A"]);
     expect(a.vagas[1]).toEqual({
@@ -419,6 +421,7 @@ describe("andamento por vaga e agrupamento da tabela", () => {
       em_analise: 1,
       revisao: 0,
       pendentes: 3,
+      saiu: 0,
     });
   });
 

@@ -1197,8 +1197,9 @@ interface FilaProps {
 
 /*
   A faixa de situação da Fila (FaixaDeSituacao, src/ui/): No lote, Pendentes,
-  Em análise, Em revisão e Concluídas, cada um o filtro da etapa (a mesma
-  conta das abas de antes: contadoresComForaDoLote). Embaixo, a barra da
+  Em análise, Em revisão, Concluídas e Saiu do lote (só quando há), cada um
+  o filtro da etapa (a mesma conta das abas de antes: contadoresComForaDoLote;
+  as partes somam o lote, como no bloco por vaga). Embaixo, a barra da
   distribuição do lote, o selo do ritmo de hoje (uma vez só), o feito hoje
   com a meta do dia (quando o cronograma a dá) e "N fora do lote" (a etapa
   dos que não estão no lote). Inscritos e Eliminados (de um filtro salvo)
@@ -1221,6 +1222,7 @@ const ETAPAS_DA_FAIXA: ReadonlyArray<{ valor: EtapaDaFila; tom: string }> = [
   { valor: "em_analise", tom: "info" },
   { valor: "revisao", tom: "destaque" },
   { valor: "concluidas", tom: "sucesso" },
+  { valor: "saiu", tom: "neutro" },
 ];
 const rotuloDaEtapa = (valor: string) =>
   ETAPAS_DA_FILA.find((e) => e.valor === valor)?.rotulo ?? valor;
@@ -1252,7 +1254,10 @@ function FaixaDaFila({
       return `${pct} · ${formatNumberBR(aptas)} ${aptas === 1 ? "apta" : "aptas"}`;
     return pct;
   };
-  const itens: ItemDaFaixa[] = ETAPAS_DA_FAIXA.map(({ valor, tom }) => ({
+  // "Saiu do lote" só aparece quando há alguém (ou é a etapa escolhida).
+  const itens: ItemDaFaixa[] = ETAPAS_DA_FAIXA.filter(
+    ({ valor }) => valor !== "saiu" || n("saiu") > 0 || etapa === "saiu",
+  ).map(({ valor, tom }) => ({
     chave: valor,
     rotulo: rotuloDaEtapa(valor),
     valor: n(valor),
@@ -1296,6 +1301,12 @@ function FaixaDaFila({
           rotulo: "Pendentes",
           valor: n("pendentes"),
           tom: "alerta",
+        },
+        {
+          chave: "saiu",
+          rotulo: "Saiu do lote",
+          valor: n("saiu"),
+          tom: "neutro",
         },
       ]}
       rodape={rodape}
