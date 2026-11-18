@@ -32,6 +32,7 @@ CATALOGO = {
     ),
     "CLASSIFICACAO_EMPATE_PENDENTE": ("classificacao", ATENCAO, "Empate sem desempate registrado"),
     "CLASSIFICACAO_VAGA_SEM_QUADRO": ("classificacao", ATENCAO, "Vaga sem linha no quadro de vagas"),
+    "CLASSIFICACAO_VAGA_QUADRO_AMBIGUO": ("classificacao", ATENCAO, "Vaga com mais de uma linha possível no quadro"),
     "CLASSIFICACAO_AJUSTE_APOS_LISTA": ("classificacao", ATENCAO, "Ajuste de recurso aprovado depois da última lista"),
     "CLASSIFICACAO_CONVOCACAO_REGRA_ANTERIOR": (
         "classificacao",

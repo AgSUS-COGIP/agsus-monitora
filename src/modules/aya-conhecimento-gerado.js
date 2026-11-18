@@ -4309,7 +4309,7 @@ export const VERBETES_AYA = Object.freeze([
       "conferencias dos aprovados",
     ],
     resposta:
-      'Análises: aprovada com nota abaixo da mínima da regra de classificação; nota final diferente da soma das parciais (formação, cursos, experiência e critério étnico), quando as quatro estão preenchidas; experiência acima do teto, quando a regra tiver teto; data da análise no futuro ou antes da inscrição do candidato no mesmo edital; ficha concluída com a conta diferente da regra (a ficha importada da planilha fica de fora); e, só como informação, o mesmo candidato com análise em dois editais ativos. Entrevistas: convocado sem nota depois da data marcada na agenda; nota de avaliador fora da escala do roteiro; convocado que não está na lista de convocação vigente da Classificação; e dois horários para o mesmo candidato. Classificação: lista final gerada antes da última mudança nas análises; empate sem desempate registrado; vaga das análises sem linha no quadro de vagas do edital; ajuste de recurso aprovado depois da última lista; convocação para entrevista gerada com uma versão da regra anterior à vigente. Lista de aprovados: a mesma pessoa com duas matrículas Contratado no mesmo edital (crítico); a mesma matrícula Contratado em mais de uma lista, por exemplo na ampla e na cota, que é uma contratação só, quando o sistema não decidiu qual linha é a contratação — a linha que ele decide fica "Contratado em outra lista" e sai do aviso; a equipe marca esse status na linha pela qual a pessoa não foi contratada (atenção); recontratação em outro edital, com outra matrícula, não gera aviso; convocado há mais de 15 dias sem desfecho e sem admissão no RH; pessoa admitida no RH (admissão conciliada) que na lista ainda está sem o status Contratado; pessoas da publicação vinda da Classificação ainda para revisão. Cargas: vaga da Empregare cujo número de candidatos variou 50% ou mais na última carga. Editais: o cronograma já terminou pelas datas, mas o status gravado do edital ainda está em andamento (ou em outra situação que não concluído, cancelado ou encerrado), sem status manual; o sistema não muda o status sozinho, porque a Avaliação documental e a Classificação leem o status gravado: a equipe confere se o processo terminou e marca "Concluído" no edital, ou dispensa o aviso com justificativa. Esse aviso aparece no selo do topo da tela de Editais.',
+      'Análises: aprovada com nota abaixo da mínima da regra de classificação; nota final diferente da soma das parciais (formação, cursos, experiência e critério étnico), quando as quatro estão preenchidas; experiência acima do teto, quando a regra tiver teto; data da análise no futuro ou antes da inscrição do candidato no mesmo edital; ficha concluída com a conta diferente da regra (a ficha importada da planilha fica de fora); e, só como informação, o mesmo candidato com análise em dois editais ativos. Entrevistas: convocado sem nota depois da data marcada na agenda; nota de avaliador fora da escala do roteiro; convocado que não está na lista de convocação vigente da Classificação; e dois horários para o mesmo candidato. Classificação: lista final gerada antes da última mudança nas análises; empate sem desempate registrado; vaga das análises sem linha no quadro de vagas do edital; vaga com mais de uma linha possível no quadro (confirme a linha em Editais, nos anexos do edital); ajuste de recurso aprovado depois da última lista; convocação para entrevista gerada com uma versão da regra anterior à vigente. Lista de aprovados: a mesma pessoa com duas matrículas Contratado no mesmo edital (crítico); a mesma matrícula Contratado em mais de uma lista, por exemplo na ampla e na cota, que é uma contratação só, quando o sistema não decidiu qual linha é a contratação — a linha que ele decide fica "Contratado em outra lista" e sai do aviso; a equipe marca esse status na linha pela qual a pessoa não foi contratada (atenção); recontratação em outro edital, com outra matrícula, não gera aviso; convocado há mais de 15 dias sem desfecho e sem admissão no RH; pessoa admitida no RH (admissão conciliada) que na lista ainda está sem o status Contratado; pessoas da publicação vinda da Classificação ainda para revisão. Cargas: vaga da Empregare cujo número de candidatos variou 50% ou mais na última carga. Editais: o cronograma já terminou pelas datas, mas o status gravado do edital ainda está em andamento (ou em outra situação que não concluído, cancelado ou encerrado), sem status manual; o sistema não muda o status sozinho, porque a Avaliação documental e a Classificação leem o status gravado: a equipe confere se o processo terminou e marca "Concluído" no edital, ou dispensa o aviso com justificativa. Esse aviso aparece no selo do topo da tela de Editais.',
     fato: "",
     fonte: "scripts/conferencias/regras.py; scripts/conferencias/catalogo.py",
   },
@@ -6447,6 +6447,25 @@ export const VERBETES_AYA = Object.freeze([
     fato: "",
     fonte:
       "supabase/migrations/20260930233000_quadro_de_vagas_do_edital.sql; supabase/migrations/20260930235950_quadro_ignora_parenteses.sql",
+  },
+  {
+    arquivo: "regras-dos-editais.md",
+    titulo: "Vagas ligadas ao quadro",
+    perguntas: [
+      "vagas ligadas ao quadro",
+      "vinculo da vaga com o quadro",
+      "vaga ambigua no quadro",
+      "vaga ausente do quadro",
+      "confirmar linha do quadro",
+      "vaga sem linha no quadro",
+      "revisar vagas do quadro",
+    ],
+    resposta:
+      'Cada vaga com código do edital (da Empregare ou da planilha) fica ligada a uma linha do quadro de vagas, em três situações: confirmada (uma linha), ambígua (mais de uma linha possível, como o mesmo cargo em várias lotações quando o nome da vaga veio cortado, ou a lotação do nome que não bate com a linha do cargo) e ausente (nenhuma linha, como o cargo do quadro que não está no nome). O sistema liga sozinho pela regra do nome e, sem ela, pelo "CARGO N" do título da vaga na Empregare, todo dia às 5h30 e ao salvar o quadro. No formulário do edital, em Anexos do edital, "Revisar vagas" abre a fila: escolha a linha e confirme, ou marque "Sem linha" quando a vaga não tem linha; a decisão vale para a Classificação, a pré-classificação e as conferências, e "Voltar à regra" desfaz. Ao importar o quadro de novo, a vaga passa para a linha de mesmo cargo e lotação; se a linha escolhida saiu do quadro, a vaga volta a ausente com o aviso. Edital cancelado mostra "não se aplica"; vagas de outra origem, "externo"; sem vaga com código, "pendente de integração".',
+    fato: "",
+    fonte:
+      "supabase/migrations/20261118120000_vinculo_da_vaga_com_o_quadro.sql; src/lib/editais/vinculos-do-quadro.ts",
+    abrir: "nucleo",
   },
   {
     arquivo: "regras-dos-editais.md",
