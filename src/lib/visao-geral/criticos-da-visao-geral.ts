@@ -1,45 +1,15 @@
 /*
-  O "crítico" da Visão geral, CALCULADO (o campo manual `risco` não entra).
-
-  Um edital é crítico quando tem ao menos um motivo de atenção. Os mesmos
-  motivos alimentam o KPI Críticos, o bloco Atenção e a ordem da tabela.
-
-  Edital aberto (nem concluído nem cancelado):
-  - atrasada — o fim do cronograma (`data_fim`) já passou e o edital não
-    concluiu: "Etapa atrasada há N dias";
-  - parado — em andamento, sem etapa em curso hoje e sem mudança de etapa
-    (início ou fim de uma etapa do cronograma) há 15 dias ou mais: "Parado há
-    N dias". Precisa das etapas do cronograma (`listar_acompanhamento_da_
-    visao_geral`); sem elas, não é avaliado. Não conta junto com atrasada;
-  - sem inscritos — em andamento, já depois das inscrições (fase além de
-    Edital e Inscrições) e com 0 inscritos. Inscritos nulo é "a fonte do
-    funil não tem o número" (só as análises, migration 20261022200000), não
-    zero: não acende.
-  Edital concluído:
-  - contratação baixa — vagas imediatas contratadas abaixo de 50% das vagas.
-  Em qualquer edital não cancelado:
-  - marcado — gestor, coordenador ou administrador global marcou o edital
-    como crítico, com motivo (TB_EDITAL_CRITICO, migration 20261110150000;
-    `listar_editais_criticos_manuais`). É o mais grave: foi uma pessoa que
-    decidiu. Os motivos automáticos continuam valendo junto.
-  Cancelado nunca é crítico. Etapa chegando (próxima em até 3 dias) é agenda,
-  não problema: não faz o edital crítico (pedido de 02/10) — fica nas
-  boas-vindas e na cor da próxima etapa da tabela.
-
-  Os limites ficam em LIMITES_DO_CRITICO (e em docs/aya/regras-da-visao-geral.md).
+  Processos críticos da Visão geral são exclusivamente as marcações manuais
+  do gestor, coordenador ou administrador global. O motivo e a autoria vêm
+  de listar_editais_criticos_manuais. Cancelados não entram.
+  Datas, inscrições e contratação não criam marcações automáticas de crítico.
 */
 
-import { hojeEmBrasilia } from "../cronograma/cronograma-do-edital.ts";
 import {
   motivoPareceTexto,
   textoLimpo,
 } from "../avaliacao-documental/qualidade-do-motivo.ts";
-import { faseDoEdital } from "./fases-do-processo.ts";
-import {
-  contratadasImediatas,
-  ehCancelado,
-  ehConcluido,
-} from "./indicadores-do-monitoramento.ts";
+import { ehCancelado } from "./indicadores-do-monitoramento.ts";
 import type {
   EtapaDoAcompanhamento,
   LinhaDoMonitoramento,
@@ -87,11 +57,6 @@ export const MOTIVOS_DO_CRITICO = Object.freeze({
 });
 
 const txt = (valor: unknown) => String(valor ?? "").trim();
-const num = (valor: unknown) => {
-  const numero = Number(valor || 0);
-  return Number.isFinite(numero) ? numero : 0;
-};
-
 /** "AAAA-MM-DD…" → dia em número (dias desde 1970), ou null. */
 export function diaDoCalendario(valor: unknown): number | null {
   const achado = txt(valor).match(/^(\d{4})-(\d{2})-(\d{2})/);
@@ -101,9 +66,6 @@ export function diaDoCalendario(valor: unknown): number | null {
       86400000,
   );
 }
-
-const plural = (n: number, um: string, varios: string) =>
-  `${n} ${n === 1 ? um : varios}`;
 
 /** Há alguma etapa em curso hoje (início ≤ hoje ≤ fim)? */
 export function temEtapaEmCurso(
@@ -144,13 +106,6 @@ export function ultimaMudancaDeEtapa(
   return ultima;
 }
 
-const emAndamento = (linha: LinhaDoMonitoramento) =>
-  txt(linha?.status)
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .includes("andamento");
-
 /**
  * Os motivos de atenção do edital: `[{ codigo, rotulo, tom }]`, do mais grave
  * ao menos grave; vazio = não é crítico.
@@ -160,9 +115,6 @@ const emAndamento = (linha: LinhaDoMonitoramento) =>
 export function motivosDeAtencao(
   linha: LinhaDoMonitoramento | null | undefined,
   {
-    hoje,
-    etapas = null,
-    limites = LIMITES_DO_CRITICO,
     marcacao = null,
   }: {
     hoje?: string;
@@ -172,85 +124,16 @@ export function motivosDeAtencao(
   } = {},
 ): Motivo[] {
   if (!linha || ehCancelado(linha)) return [];
-  const motivo = (codigo: CodigoDoMotivo, rotulo: string) => ({
-    codigo,
-    rotulo,
-    tom: MOTIVOS_DO_CRITICO[codigo].tom,
-  });
-  const motivos: { codigo: CodigoDoMotivo; rotulo: string; tom: string }[] = [];
-  // `hoje` ausente ou fora do formato: o dia de agora em Brasília.
-  const diaDeHoje =
-    diaDoCalendario(hoje) === null ? hojeEmBrasilia() : (hoje as string);
-  const dia = diaDoCalendario(diaDeHoje)!;
-
-  const motivoDaMarcacao = txt(marcacao?.motivo);
-  if (motivoDaMarcacao) {
-    const quem = txt(marcacao?.quem);
-    motivos.push(
-      motivo(
-        "marcado",
-        `Marcado como crítico${quem ? ` por ${quem}` : ""}: ${motivoDaMarcacao}`,
-      ),
-    );
-  }
-
-  if (ehConcluido(linha)) {
-    const vagas = num(linha.vagas_total);
-    if (
-      vagas > 0 &&
-      contratadasImediatas(linha) / vagas < limites.contratacaoMinima
-    )
-      motivos.push(
-        motivo(
-          "contratacao_baixa",
-          `Contratação abaixo de ${Math.round(limites.contratacaoMinima * 100)}%`,
-        ),
-      );
-    return motivos;
-  }
-
-  const fim = diaDoCalendario(linha.data_fim);
-  const atrasada = fim !== null && fim < dia;
-  if (atrasada)
-    motivos.push(
-      motivo(
-        "atrasada",
-        `Etapa atrasada há ${plural(dia - fim, "dia", "dias")}`,
-      ),
-    );
-
-  if (
-    !atrasada &&
-    emAndamento(linha) &&
-    Array.isArray(etapas) &&
-    etapas.length
-  ) {
-    const ultima = ultimaMudancaDeEtapa(etapas, diaDeHoje);
-    if (
-      ultima !== null &&
-      !temEtapaEmCurso(etapas, diaDeHoje) &&
-      dia - ultima >= limites.diasParado
-    )
-      motivos.push(
-        motivo("parado", `Parado há ${plural(dia - ultima, "dia", "dias")}`),
-      );
-  }
-
-  const fase = linha.fase || faseDoEdital(linha);
-  if (
-    emAndamento(linha) &&
-    !["Edital", "Inscrições", "Sem cronograma"].includes(fase) &&
-    linha.inscritos !== null &&
-    linha.inscritos !== undefined &&
-    linha.inscritos !== "" &&
-    num(linha.inscritos) === 0
-  )
-    motivos.push(motivo("sem_inscritos", "Sem inscritos"));
-
-  return motivos.sort(
-    (a, b) =>
-      MOTIVOS_DO_CRITICO[a.codigo].peso - MOTIVOS_DO_CRITICO[b.codigo].peso,
-  );
+  const motivo = txt(marcacao?.motivo);
+  if (!motivo) return [];
+  const quem = txt(marcacao?.quem);
+  return [
+    {
+      codigo: "marcado",
+      rotulo: `Marcado como crítico${quem ? ` por ${quem}` : ""}: ${motivo}`,
+      tom: MOTIVOS_DO_CRITICO.marcado.tom,
+    },
+  ];
 }
 
 /** Gravidade para ordenar: o peso do motivo mais grave; sem motivo, 99. */
