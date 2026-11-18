@@ -504,15 +504,10 @@ export function PedeAcao({ e, estado, textos }: PropsComTextos) {
   const criticos = e.indicadores.criticos;
   const pendencias = posResultado(e.filtradas, { comListas: e.comListas })
     .filter(({ quantos, codigo }) => quantos || e.atalho === `pos:${codigo}`)
-    .map(({ codigo, rotulo, quantos, pessoas }) => ({
+    .map(({ codigo, rotulo, quantos }) => ({
       chave: codigo,
       titulo: rotulo,
-      detalhe: [
-        plural(quantos, "edital", "editais"),
-        pessoas !== null ? plural(pessoas, "pessoa", "pessoas") : "",
-      ]
-        .filter(Boolean)
-        .join(" · "),
+      detalhe: plural(quantos, "edital", "editais"),
       tom: codigo === "sem_lista" ? "perigo" : "alerta",
       ativo: e.atalho === `pos:${codigo}`,
       aoClicar: () => estado.alternarAtalho(`pos:${codigo}`),

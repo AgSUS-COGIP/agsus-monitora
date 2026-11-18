@@ -3753,7 +3753,7 @@ export const VERBETES_AYA = Object.freeze([
       "desmarcar critico",
     ],
     resposta:
-      'Na Visão geral, um edital só é crítico quando foi marcado manualmente como crítico pelo gestor, coordenador ou administrador global, no formulário de Editais ("Edital crítico"), com motivo de 10 a 500 caracteres. Desmarcar também pede motivo; as decisões ficam no histórico. Quem só vê lê quem marcou, quando e por quê. Datas vencidas, ausência de inscritos e taxa de contratação não tornam o processo crítico automaticamente. Contratação abaixo de 50% permanece no acompanhamento pós-resultado. Editais cancelados não entram nos críticos, mesmo quando têm marcação. O indicador, a lista de críticos e o filtro usam as mesmas marcações manuais.',
+      'Na Visão geral, um edital só é crítico quando foi marcado manualmente como crítico pelo gestor, coordenador ou administrador global, no formulário de Editais ("Edital crítico"), com motivo de 10 a 500 caracteres. Desmarcar também pede motivo; as decisões ficam no histórico. Quem só vê lê quem marcou, quando e por quê. Datas vencidas, ausência de inscritos e taxa de contratação não tornam o processo crítico automaticamente. Editais cancelados não entram nos críticos, mesmo quando têm marcação. O indicador, a lista de críticos e o filtro usam as mesmas marcações manuais.',
     fato: "Processos Críticos conta apenas editais não cancelados marcados manualmente como críticos.",
     fonte: "src/lib/visao-geral/criticos-da-visao-geral.ts",
   },
@@ -3801,7 +3801,7 @@ export const VERBETES_AYA = Object.freeze([
       "blocos da visao geral",
     ],
     resposta:
-      'Na Visão geral, o cabeçalho diz quantos editais têm etapa nos próximos 7 dias, contando hoje (pelo dia de Brasília, sem os cancelados), com o atalho para o Cronograma. "Pede ação" junta os Críticos e as pendências do pós-resultado: nos editais com resultado, os concluídos sem lista de aprovados vigente, as listas sem nenhum status, a contratação abaixo de 50% e as desistências; o clique filtra a página por aquele item. "Em andamento, por fase" mostra só as fases com edital aberto (Edital, Inscrições, Análise curricular, Recursos, Entrevistas, Resultado, Contratação, Sem cronograma ou Outra), lidas do status e da atividade do cronograma, e embaixo quantos estão concluídos e cancelados; o clique filtra a fase. Em Projetos, "Processos por projeto" mostra cada projeto com processos, abertos, vagas e contratadas; o clique filtra o projeto.',
+      'Na Visão geral, o cabeçalho diz quantos editais têm etapa nos próximos 7 dias, contando hoje (pelo dia de Brasília, sem os cancelados), com o atalho para o Cronograma. "Pede ação" junta os Críticos e as pendências do pós-resultado: nos editais com resultado, os concluídos sem lista de aprovados vigente e as listas sem nenhum status; o clique filtra a página por aquele item. "Em andamento, por fase" mostra só as fases com edital aberto (Edital, Inscrições, Análise curricular, Recursos, Entrevistas, Resultado, Contratação, Sem cronograma ou Outra), lidas do status e da atividade do cronograma, e embaixo quantos estão concluídos e cancelados; o clique filtra a fase. Em Projetos, "Processos por projeto" mostra cada projeto com processos, abertos, vagas e contratadas; o clique filtra o projeto.',
     fato: "",
     fonte: "interface do Yeendé",
   },

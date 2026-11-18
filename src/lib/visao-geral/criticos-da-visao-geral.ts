@@ -2,8 +2,7 @@
   Processos críticos da Visão geral são exclusivamente as marcações manuais
   do gestor, coordenador ou administrador global. O motivo e a autoria vêm
   de listar_editais_criticos_manuais. Cancelados não entram.
-  Contratação baixa continua no acompanhamento pós-resultado; datas e
-  inscrições não criam marcações automáticas de crítico.
+  Datas, inscrições e contratação não criam marcações automáticas de crítico.
 */
 
 import {
