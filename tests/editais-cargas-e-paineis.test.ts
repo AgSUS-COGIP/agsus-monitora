@@ -261,6 +261,7 @@ import {
   situacaoDasVagas,
   situacaoDosCandidatos,
   situacaoExcepcional,
+  somenteCadastroReserva,
   ehAbaDaPagina,
   andamentoDasEtapas,
   telasDoEdital,
@@ -6392,6 +6393,25 @@ bloco("lib/pagina-do-edital", () => {
   });
 
   describe("vagas e candidatos", () => {
+    it("só confirma cadastro reserva com quadro completo e sem imediatas", () => {
+      const linha = {
+        cargo: "Químico",
+        vagas_imediatas: 0,
+        cadastro_reserva: true,
+      };
+      expect(somenteCadastroReserva({ linhas: [linha] })).toBe(true);
+      for (const dados of [
+        null,
+        { linhas: [] },
+        { linhas: [{ ...linha, vagas_imediatas: null }] },
+        { linhas: [{ ...linha, vagas_imediatas: "" }] },
+        { linhas: [{ ...linha, vagas_imediatas: 1 }] },
+        { linhas: [linha, { ...linha, cadastro_reserva: false }] },
+        { linhas: [linha, {}] },
+      ])
+        expect(somenteCadastroReserva(dados)).toBe(false);
+    });
+
     it("0 de 70 preenchidas, com as reabertas e o cadastro reserva à parte", () => {
       expect(situacaoDasVagas({ vagas_total: 70, contratados: 0 })).toEqual({
         imediatas: 70,

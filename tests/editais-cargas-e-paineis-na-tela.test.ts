@@ -5923,10 +5923,10 @@ bloco("modulos/pagina-do-edital", () => {
     pode_editar: false,
   };
 
-  function clienteFalso() {
+  function clienteFalso(quadro = QUADRO) {
     const rpc = vi.fn(async (nome: string) =>
       nome === "obter_quadro_de_vagas"
-        ? { data: QUADRO, error: null }
+        ? { data: quadro, error: null }
         : { data: CRONOGRAMA, error: null },
     );
     return {
@@ -5966,6 +5966,7 @@ bloco("modulos/pagina-do-edital", () => {
     edital: string,
     {
       retorno = null,
+      quadro = QUADRO,
       acompanhamento = {
         listas: [
           {
@@ -5978,10 +5979,11 @@ bloco("modulos/pagina-do-edital", () => {
       },
     }: {
       retorno?: EstadoDaNavegacao["retorno"];
+      quadro?: typeof QUADRO;
       acompanhamento?: unknown;
     } = {},
   ) {
-    const cliente = clienteFalso();
+    const cliente = clienteFalso(quadro);
     const buscarAcompanhamento = vi.fn(async () => acompanhamento);
     const estado = criarEstadoDaPaginaDoEdital({
       supabase: cliente,
@@ -6021,6 +6023,35 @@ bloco("modulos/pagina-do-edital", () => {
   });
 
   describe("a página do edital", () => {
+    it("confere o quadro no Resumo e identifica edital somente de cadastro reserva", async () => {
+      act(() =>
+        publicarLinhasDoMonitoramento(
+          LINHAS.map((linha) => ({ ...linha, vagas_total: 0, contratados: 2 })),
+        ),
+      );
+      const { elemento, cliente } = await montar("105-2026", {
+        quadro: {
+          ...QUADRO,
+          linhas: QUADRO.linhas.map((linha) => ({
+            ...linha,
+            vagas_imediatas: 0,
+          })),
+        },
+      });
+      await vi.waitFor(() =>
+        expect(elemento.textContent).toContain("Somente cadastro reserva"),
+      );
+      expect(cliente.rpc).toHaveBeenCalledWith("obter_quadro_de_vagas", {
+        p_edital: ID,
+      });
+      expect(elemento.textContent).toContain("Sem vagas imediatas");
+      expect(elemento.textContent).not.toContain("0 de 0 preenchidas");
+      expect(elemento.textContent).toContain(
+        "Contratações do cadastro reserva",
+      );
+      expect(elemento.textContent).not.toContain("Imediatas sem contratação");
+    });
+
     it("acha o edital pelo número e mostra cabeçalho, vagas, candidatos e linha do tempo", async () => {
       const { elemento, cliente } = await montar("105-2026");
       const texto = elemento.textContent || "";

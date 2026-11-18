@@ -71,6 +71,10 @@ passeia pelas abas.
 - **Vagas e cargos**: o quadro de vagas (`obter_quadro_de_vagas`, lido quando a aba abre) e o
   vínculo vaga–quadro de [[modulo-editais]]: confirmadas, ambíguas (com as linhas possíveis) e
   ausentes, só para ler. O quadro é de Editais, Cronograma ou Entrevistas: sem esse recurso, aviso.
+  Com zero vagas imediatas, o Resumo também lê o quadro: só mostra **Somente cadastro reserva**
+  quando todas as linhas confirmam zero imediatas e cadastro reserva. Nesse caso, troca o
+  "0 de 0 preenchidas" por "Sem vagas imediatas" e as contratações do cadastro reserva.
+  Quadro ausente, incompleto ou com erro não comprova cadastro reserva.
 - **Etapas**: a linha do tempo inteira e as retificações.
 - **Candidatos**: os números e as telas da seleção já no edital, só as que o perfil abre. Triagem,
   Avaliação documental, Entrevistas e Classificação recebem o id (`abrirEdital`); Seleção e Lista de

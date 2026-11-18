@@ -386,6 +386,26 @@ export function historicoDoCronograma(
 
 // ── Quadro de vagas ──────────────────────────────────────────────────────
 
+/** Zero no monitoramento não comprova cadastro reserva: confere o quadro publicado. */
+export function somenteCadastroReserva(dados: unknown): boolean {
+  const linhas = registro(dados).linhas;
+  return (
+    Array.isArray(linhas) &&
+    linhas.length > 0 &&
+    linhas.every((item) => {
+      const linha = registro(item);
+      return (
+        Boolean(txt(linha.cargo)) &&
+        linha.cadastro_reserva === true &&
+        linha.vagas_imediatas !== null &&
+        linha.vagas_imediatas !== undefined &&
+        txt(linha.vagas_imediatas) !== "" &&
+        Number(linha.vagas_imediatas) === 0
+      );
+    })
+  );
+}
+
 export interface LinhaDoQuadroDaPagina {
   id: string;
   cargo: string;

@@ -44,6 +44,7 @@ import {
   situacaoDasVagas,
   situacaoDosCandidatos,
   situacaoExcepcional,
+  somenteCadastroReserva,
   telasDoEdital,
 } from "../../lib/pagina-do-edital/pagina-do-edital.ts";
 import type {
@@ -197,8 +198,40 @@ function Voltar() {
 
 // ── Vagas e candidatos ───────────────────────────────────────────────────
 
-function Vagas({ linha }: { linha: LinhaDaVisaoGeral }) {
+function Vagas({
+  linha,
+  quadro,
+}: {
+  linha: LinhaDaVisaoGeral;
+  quadro: Carga<unknown> | undefined;
+}) {
   const vagas = situacaoDasVagas(linha);
+  const soReserva =
+    vagas.imediatas === 0 &&
+    quadro?.status === "pronto" &&
+    somenteCadastroReserva(quadro.dados);
+  if (soReserva)
+    return (
+      <Bloco
+        id="peVagas"
+        titulo="Situação das vagas"
+        extra={<Selo tom="neutro">Somente cadastro reserva</Selo>}
+      >
+        <GradeDeKpis rotulo="Situação das vagas">
+          <Kpi
+            icone="fa-briefcase"
+            rotulo="Vagas imediatas"
+            valor="0"
+            detalhe="Sem vagas imediatas"
+          />
+          <Kpi
+            icone="fa-layer-group"
+            rotulo="Contratações do cadastro reserva"
+            valor={fmt(vagas.cadastroReserva)}
+          />
+        </GradeDeKpis>
+      </Bloco>
+    );
   return (
     <Bloco id="peVagas" titulo="Situação das vagas" extra={vagas.texto}>
       <GradeDeKpis rotulo="Situação das vagas">
@@ -1003,7 +1036,8 @@ function Conteudo({
     [dados, hoje],
   );
   const quadro = snapshot.quadros[id];
-  const precisaDoQuadro = aba === "vagas" || aba === "fontes";
+  const precisaDoQuadro =
+    aba === "vagas" || aba === "fontes" || Number(linha.vagas_total) === 0;
   useEffect(() => {
     if (precisaDoQuadro) void estado.carregarQuadro(id);
   }, [precisaDoQuadro, id, estado, snapshot.quadros, snapshot.abertura]);
@@ -1041,7 +1075,7 @@ function Conteudo({
         {aba === "resumo" ? (
           <>
             <div className="pagina-do-edital-grade">
-              <Vagas linha={linha} />
+              <Vagas linha={linha} quadro={quadro} />
               <Candidatos linha={linha} carregando={candidatosCarregando} />
             </div>
             <div className="pagina-do-edital-grade">
@@ -1059,7 +1093,7 @@ function Conteudo({
         ) : null}
         {aba === "vagas" ? (
           <>
-            <Vagas linha={linha} />
+            <Vagas linha={linha} quadro={quadro} />
             <QuadroDeVagas
               carga={quadro}
               aoTentar={() => void estado.carregarQuadro(id, { forcar: true })}
