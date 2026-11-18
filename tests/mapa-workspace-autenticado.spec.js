@@ -17,7 +17,7 @@ import { expect, test } from "@playwright/test";
   são pulados — nunca passam por vacuidade.
 
   A chave é literal porque `src/lib/sessao/env.ts` lê `import.meta.env`, ausente no
-  runtime do Playwright; `tests/chaves-de-sessao.test.js` falha se ela divergir
+  runtime do Playwright; `tests/casca-sessao-e-interface.test.js` (bloco `chaves-de-sessao`) falha se ela divergir
   da que a aplicação usa.
 */
 const sessionJson = process.env.E2E_SUPABASE_SESSION_JSON;

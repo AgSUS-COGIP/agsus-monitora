@@ -29,7 +29,7 @@ a equipe saiba quem já foi chamado para a contratação e aguarda apresentaçã
 - **Dado** o status "Fim de Fila", **então** ele não aparece em nenhuma opção, filtro ou indicador
   e o banco o recusa (a migration para se ainda houver alguém nele).
 
-Testes: `tests/componentes/convocado-e-carta.test.ts` (H1/H2), ensaio E3/E4,
+Testes: `tests/entrevistas-e-aprovados-na-tela.test.ts` (bloco `componentes/convocado-e-carta`) (H1/H2), ensaio E3/E4,
 `tests/convocado-e-carta-de-convocacao-migration.test.js`.
 
 ### H2. Seguir o fluxo a partir do Convocado
@@ -46,7 +46,7 @@ sem depender do admin, para registrar o resultado da convocação no mesmo dia.
 - **Dado** um candidato Contratado (ou com outro status definido), **então** o editor continua vendo
   o cadeado.
 
-Testes: `tests/componentes/convocado-e-carta.test.ts`, ensaio E3 ("editor tirou o status de um
+Testes: `tests/entrevistas-e-aprovados-na-tela.test.ts` (bloco `componentes/convocado-e-carta`), ensaio E3 ("editor tirou o status de um
 convocado").
 
 ### H3. Ver os convocados nos indicadores, filtros, ordem de chamada e CSV
@@ -66,9 +66,9 @@ não chamar a mesma pessoa duas vezes.
 - **Dado** a Seleção (`get_selecao_da_area`) e os KPIs de contratados, **então** continuam contando só
   Contratado e Migração.
 
-Testes: `tests/lista-convocacao-rules.test.js` ("status Convocado", "CSV da ordem de convocação",
-"csvDaConvocacao"), `tests/lista-aprovados-filtros-multiplos.test.js`,
-`tests/componentes/convocado-e-carta.test.ts` (H3), teste da migration ("contratados continuam só
+Testes: `tests/entrevistas-e-aprovados.test.js` (bloco `lista-convocacao-rules`) ("status Convocado", "CSV da ordem de convocação",
+"csvDaConvocacao"), `tests/entrevistas-e-aprovados.test.js` (bloco `lista-aprovados-filtros-multiplos`),
+`tests/entrevistas-e-aprovados-na-tela.test.ts` (bloco `componentes/convocado-e-carta`) (H3), teste da migration ("contratados continuam só
 Contratado e Migração").
 
 ### H3a. A lista publicada leva a convocação
@@ -127,7 +127,7 @@ edital), com campos que se preenchem sozinhos, para emitir cartas padronizadas s
 - **Dado** um leitor, **então** ele vê os modelos e as versões, sem os botões de alterar.
 
 Testes: `tests/lib/carta-de-convocacao.test.js` ("validar o modelo"),
-`tests/componentes/convocado-e-carta.test.ts` (H4), ensaio E3.
+`tests/entrevistas-e-aprovados-na-tela.test.ts` (bloco `componentes/convocado-e-carta`) (H4), ensaio E3.
 
 ### H5. Emitir a carta para um ou vários candidatos
 
@@ -152,7 +152,7 @@ para formalizar a convocação sem copiar dados à mão.
 - **Dado** um leitor, **então** ele não vê a escolha de candidatos nem o botão da carta.
 
 Testes: `tests/lib/carta-de-convocacao.test.js` ("preencher a carta", "validar a emissão",
-"o documento"), `tests/componentes/convocado-e-carta.test.ts` (H5/H6), ensaio E3/E4.
+"o documento"), `tests/entrevistas-e-aprovados-na-tela.test.ts` (bloco `componentes/convocado-e-carta`) (H5/H6), ensaio E3/E4.
 
 ### H6. Marcar como Convocado depois de emitir
 
@@ -164,7 +164,7 @@ escolhida, para não ter de abrir o status de um por um.
 - **Dado** que confirmo, **então** eles ficam Convocado com a data, o histórico do status aponta a
   carta e quem já tinha outro status fica de fora, com o motivo.
 
-Testes: `tests/componentes/convocado-e-carta.test.ts`, ensaio E3 ("marcar convocados") e E4.
+Testes: `tests/entrevistas-e-aprovados-na-tela.test.ts` (bloco `componentes/convocado-e-carta`), ensaio E3 ("marcar convocados") e E4.
 
 ### H7. Ver as cartas emitidas na gaveta do candidato
 
@@ -178,7 +178,7 @@ recebeu, para responder a dúvidas sem procurar no SEI.
 - **Dado** que a lista foi republicada, **então** as cartas da lista anterior continuam aparecendo.
 - **Dado** um editor, **então** a gaveta oferece "Alterar status" e "Carta de convocação".
 
-Testes: `tests/componentes/convocado-e-carta.test.ts` (H7), ensaio E3.
+Testes: `tests/entrevistas-e-aprovados-na-tela.test.ts` (bloco `componentes/convocado-e-carta`) (H7), ensaio E3.
 
 ### H8. Exportar a lista de aprovados com os filtros (issue #583)
 
@@ -200,8 +200,8 @@ identificação do edital e a data de emissão, para mandar à área ou anexar a
 - **Dado** 13 mil registros, **então** CSV e XLSX saem em menos de um segundo e o PDF é gerado fora da
   thread da tela.
 
-Testes: `tests/componentes/lista-aprovados.test.ts` ("Exportar a lista de aprovados"),
-`tests/lib/exportacao-da-lista-de-aprovados.test.ts`, `tests/exportacao-de-aprovados-no-banco.test.ts`.
+Testes: `tests/entrevistas-e-aprovados-na-tela.test.ts` (bloco `componentes/lista-aprovados`) ("Exportar a lista de aprovados"),
+`tests/entrevistas-e-aprovados.test.ts` (bloco `lib/exportacao-da-lista-de-aprovados`), `tests/entrevistas-e-aprovados.test.ts` (bloco `exportacao-de-aprovados-no-banco`).
 
 ### H9. Resumo por cargo e status (pedido da CORES, 11/11/2026)
 
@@ -225,6 +225,6 @@ total, para acompanhar o edital sem montar a planilha à mão.
 - **Dado** "Exportar", **então** XLSX, CSV ou PDF com as mesmas linhas da tela, sem dado pessoal,
   registrado no banco como RESUMO.
 
-Testes: `tests/lib/resumo-por-cargo-e-status.test.ts` (reproduz os subtotais da referência com dados
-fictícios), `tests/lib/exportacao-do-resumo-por-cargo.test.ts`, `tests/componentes/lista-aprovados.test.ts`
+Testes: `tests/entrevistas-e-aprovados.test.ts` (bloco `lib/resumo-por-cargo-e-status`) (reproduz os subtotais da referência com dados
+fictícios), `tests/entrevistas-e-aprovados.test.ts` (bloco `lib/exportacao-do-resumo-por-cargo`), `tests/entrevistas-e-aprovados-na-tela.test.ts` (bloco `componentes/lista-aprovados`)
 ("Resumo por cargo").

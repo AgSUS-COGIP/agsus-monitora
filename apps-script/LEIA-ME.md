@@ -354,7 +354,7 @@ três planilhas (não precisa reinstalar gatilho).
   projeto estava em outro fuso, as datas sem hora mudam uma vez e o incremental reenvia
   essas linhas no primeiro ciclo.
 
-Testes: `tests/apps-script-analises-full.test.js` (e o do incremental).
+Testes: `tests/avaliacao-e-recursos.test.js` (bloco `apps-script-analises-full`) (e o do incremental).
 
 **Ordem para aplicar:**
 
@@ -383,7 +383,7 @@ de 29/10 a 11/11. As execuções manuais, de quem tinha autorização, funcionav
 **O que mudou** (`4-orquestrador-fato-supabase.gs`, as três planilhas, `[sem-permissao]`): o
 handler confere o acesso à planilha antes de tudo. Sem acesso, registra no log o que fazer e
 sai sem tocar no estado nem na janela do ciclo; o gatilho de quem tem acesso segue normal.
-Teste: `tests/apps-script-orquestrador-sem-permissao.test.js`.
+Teste: `tests/repositorio-e-banco.test.js` (bloco `apps-script-orquestrador-sem-permissao`).
 
 **Quando acontecer:**
 

@@ -50,11 +50,11 @@ Variáveis: `HOST` (padrão `127.0.0.1`; o container usa `0.0.0.0`), `PORT` (pad
 
 ## Testes e implantação
 
-- `tests/servidor.test.js` sobe o servidor numa porta aleatória, sobre um `dist` de teste, e fixa o
+- `tests/repositorio-e-banco.test.js` (bloco `servidor`) sobe o servidor numa porta aleatória, sobre um `dist` de teste, e fixa o
   contrato acima (herdou os casos do antigo `MonitoraRoutesTest.php`). `npm run test:smoke:servidor`
   roda o smoke do Playwright contra ele; o CI roda o smoke também contra a imagem Docker
   ([[testes]]). Após editar: `npm run typecheck` e
-  `npx vitest run tests/servidor.test.js`.
+  `npx vitest run tests/repositorio-e-banco.test.js -t "servidor".
 - Imagem autossuficiente: `docker build --build-arg VITE_SUPABASE_URL --build-arg
   VITE_SUPABASE_PUBLISHABLE_KEY -t monitora .` e `docker run -p 8000:8000 monitora`. Em produção,
   ponha um proxy HTTPS na frente e preserve o domínio atual, para manter os endereços de retorno do

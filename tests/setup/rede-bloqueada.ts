@@ -34,7 +34,7 @@ beforeEach(() => {
     throw new Error(
       `Teste tentou falar com a rede: ${urlDe(entrada)}\n` +
         "Testes unitários não fazem chamadas reais. Injecte um `fetch` no teste " +
-        "(veja tests/branding-publico.test.js) em vez de depender do ambiente.",
+        "(veja tests/casca-sessao-e-interface-na-tela.test.js (bloco branding-publico)) em vez de depender do ambiente.",
     );
   };
 });

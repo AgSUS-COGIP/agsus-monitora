@@ -92,9 +92,9 @@ A conta é do job Python; `src/lib/avaliacao-documental/pre-classificacao.ts` s�
 lê o que o job gravou (`src/lib/avaliacao-documental/tela-da-pre-classificacao.ts`). Explicações para
 quem usa: `docs/aya/regras-da-avaliacao-documental.md` (Abas, Regras e Provisória da Triagem).
 
-Testes: `tests/modulos/avaliacao-documental-pre-classificacao.test.js`,
-`tests/fundamento-da-eliminacao-no-banco.test.ts` (PGlite: quem confere, auditoria, comunicado), `tests/lib/fundamento-da-eliminacao.test.ts`,
-`tests/modulos/avaliacao-documental-fundamentos-da-eliminacao.test.ts`,
+Testes: `tests/avaliacao-e-recursos-na-tela.test.js` (bloco `modulos/avaliacao-documental-pre-classificacao`),
+`tests/repositorio-e-banco.test.ts` (bloco `fundamento-da-eliminacao-no-banco`) (PGlite: quem confere, auditoria, comunicado), `tests/demais-regras.test.ts` (bloco `lib/fundamento-da-eliminacao`),
+`tests/demais-telas-na-tela.test.ts` (bloco `modulos/avaliacao-documental-fundamentos-da-eliminacao`),
 `tests/python/test_pre_classificacao.py`,
 `tests/python/test_pre_classificacao_job.py`.
 

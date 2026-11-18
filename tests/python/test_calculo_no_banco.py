@@ -1,7 +1,7 @@
 """
 O cálculo dos itens da ficha em Python com os MESMOS casos dourados da tela e do banco
 (tests/fixtures/avaliacao-documental/casos-do-calculo-no-banco.json; vitest em
-tests/lib/avaliacao-documental-calculo-no-banco.test.js; banco no ensaio de
+tests/avaliacao-e-recursos.test.js (bloco lib/avaliacao-documental-calculo-no-banco); banco no ensaio de
 supabase/ensaios/20261023090000_calculo_conferido_no_banco.sql): calculados, parciais,
 resultado e experiência, inclusive a data limite do bloco de vínculos (o fim das inscrições).
 Também a conversão de dias em anos, meses (até 11) e dias e o fim do vínculo atual do robô.

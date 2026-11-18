@@ -89,7 +89,7 @@ na Vercel. As migrations do bridge ficam no histórico; **nunca aplicar o bridge
 
 ## Testes
 
-`tests/aya-*.test.js`, `tests/busca-da-aya.test.js` e `tests/aya-conhecimento-md.test.js`.
+`tests/aya-*.test.js`, `tests/aya-e-comemoracao.test.js` (bloco `busca-da-aya`) e `tests/aya-e-comemoracao.test.js` (bloco `aya-conhecimento-md`).
 
 ## Os arquivos da base
 

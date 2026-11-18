@@ -55,7 +55,7 @@ export function normalizeAccessBackgroundUrl(value: unknown): string {
   largura (~2 KB), que ampliada já é desfocada. A configuração continua com o
   endereço original; outro endereço (a arte padrão, um https qualquer) fica
   como está. A mesma regra está no script do <head> do index.html; o teste
-  tests/arte-leve-no-acesso.test.ts impede as duas de se separarem.
+  tests/casca-sessao-e-interface-na-tela.test.ts (bloco arte-leve-no-acesso) impede as duas de se separarem.
 */
 const OBJETO_PUBLICO_DO_STORAGE =
   /^(https:\/\/[^/?#]+)\/storage\/v1\/object\/public\/([^?#]+)$/;

@@ -6,7 +6,7 @@
   private."FC_HASH_RETRATO_CLASSIFICACAO", 20261024130000) do retrato de cada
   caso dourado (tests/fixtures/classificacao/casos-do-motor.json, o retrato que
   o motor.ts grava) e de exemplos pequenos com 35 × 35.0. O vitest
-  (tests/lib/classificacao-hash-do-retrato.test.js) confere o lado da tela; o
+  (tests/classificacao.test.js (bloco lib/classificacao-hash-do-retrato)) confere o lado da tela; o
   pytest (tests/python/test_classificacao_hash_do_retrato.py) gera os mesmos
   retratos com o motor Python (que escreve 35.0) e confere o mesmo hash; o
   ensaio da migration confere os exemplos no banco. Dados fictícios.
