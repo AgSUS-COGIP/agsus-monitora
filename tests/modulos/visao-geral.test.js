@@ -628,13 +628,8 @@ describe("blocos", () => {
     alertas.mockRestore();
   });
 
-  it("Pede ação: contratação abaixo de 50% aparece e filtra", async () => {
+  it("Pede ação: sem 'Contratação abaixo de 50%' nem 'Desistências' (18/11/2026)", async () => {
     await montar();
-    expect(
-      secao.querySelector(
-        '.visao-geral-pede-acao [data-pendencia="contratacao_baixa"]',
-      ),
-    ).toBeNull();
     await act(async () =>
       publicarLinhasDoMonitoramento([
         ...LINHAS,
@@ -651,14 +646,14 @@ describe("blocos", () => {
         },
       ]),
     );
-    const item = secao.querySelector(
-      '.visao-geral-pede-acao [data-pendencia="contratacao_baixa"]',
-    );
-    expect(item.textContent).toContain("Contratação abaixo de 50%");
-    expect(item.textContent).toContain("1 edital");
-    await clicar(item);
-    expect(estado.obter().atalho).toBe("pos:contratacao_baixa");
-    expect(linhas()).toHaveLength(1);
+    const bloco = secao.querySelector(".visao-geral-pede-acao");
+    expect(
+      bloco.querySelector(
+        '[data-pendencia="contratacao_baixa"], [data-pendencia="desistencias"]',
+      ),
+    ).toBeNull();
+    expect(bloco.textContent).not.toContain("Contratação abaixo de");
+    expect(bloco.textContent).not.toContain("Desistências");
     expect(valorDoKpi("ociosas")).toBe("82");
   });
 

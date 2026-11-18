@@ -39,7 +39,8 @@ trabalho). De cima para baixo:
   (`aguardandoVagas` no estado, até `ESPERA_MAXIMA_DO_ACOMPANHAMENTO_MS`): antes, a tela mostrava
   as vagas sem o desconto das reabertas e trocava segundos depois.
 - **Pede ação** (`PedeAcao`) ao lado de **Em andamento, por fase** (`EmAndamento`,
-  `andamentoPorFase` em `src/lib/visao-geral.ts`): críticos e pós-resultado numa lista; só as fases
+  `andamentoPorFase` em `src/lib/visao-geral.ts`): críticos e pós-resultado (sem lista e lista sem
+  status; contratação abaixo de 50% e desistências saíram em 18/11/2026) numa lista; só as fases
   com edital aberto, sem as vazias, e concluídos e cancelados numa linha.
 - **Mapa** mais baixo que na tela do mapa (`--altura-do-mapa-na-visao-geral`), com a altura
   reservada enquanto o módulo baixa (`.visao-geral-mapa-reserva`).
