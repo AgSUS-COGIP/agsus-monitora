@@ -147,7 +147,9 @@ export function MapaSaudeIndigena({
           <div className="mapa-si-resumo__introducao">
             <div>
               <h2>Consulta territorial</h2>
-              <p>Selecione um distrito ou explore as unidades diretamente no mapa.</p>
+              <p>
+                Selecione um distrito ou explore as unidades diretamente no mapa.
+              </p>
             </div>
             <label className="mapa-si-resumo__seletor">
               <span>DSEI</span>
@@ -155,23 +157,44 @@ export function MapaSaudeIndigena({
                 aria-label="Selecionar DSEI no mapa"
                 value={dsei?.k ?? ""}
                 onChange={(evento) => {
-                  const escolhido = dseis.find((item) => item.k === evento.target.value);
+                  const escolhido = dseis.find(
+                    (item) => item.k === evento.target.value,
+                  );
                   if (escolhido) aoEscolherDsei?.(escolhido);
                   else if (dsei) voltarAoBrasil();
                 }}
               >
                 <option value="">Todos os DSEIs</option>
-                {[...dseis].sort((a, b) => a.n.localeCompare(b.n, "pt-BR")).map((item) => (
-                  <option key={item.k} value={item.k}>{item.n}</option>
-                ))}
+                {[...dseis]
+                  .sort((a, b) => a.n.localeCompare(b.n, "pt-BR"))
+                  .map((item) => (
+                    <option key={item.k} value={item.k}>
+                      {item.n}
+                    </option>
+                  ))}
               </select>
             </label>
           </div>
-          <div className="mapa-si-resumo__indicadores" aria-label="Indicadores do mapa">
-            <div><strong>{totais.distritos.toLocaleString("pt-BR")}</strong><span>DSEIs mapeados</span></div>
-            <div><strong>{totais.unidades.toLocaleString("pt-BR")}</strong><span>Pontos de unidades</span></div>
-            <div><strong>{totais.editais.toLocaleString("pt-BR")}</strong><span>Editais acompanhados</span></div>
-            <div><strong>{totais.vagas.toLocaleString("pt-BR")}</strong><span>Vagas acompanhadas</span></div>
+          <div
+            className="mapa-si-resumo__indicadores"
+            aria-label="Indicadores do mapa"
+          >
+            <div>
+              <strong>{totais.distritos.toLocaleString("pt-BR")}</strong>
+              <span>DSEIs mapeados</span>
+            </div>
+            <div>
+              <strong>{totais.unidades.toLocaleString("pt-BR")}</strong>
+              <span>Pontos de unidades</span>
+            </div>
+            <div>
+              <strong>{totais.editais.toLocaleString("pt-BR")}</strong>
+              <span>Editais acompanhados</span>
+            </div>
+            <div>
+              <strong>{totais.vagas.toLocaleString("pt-BR")}</strong>
+              <span>Vagas acompanhadas</span>
+            </div>
           </div>
           <p className="mapa-si-resumo__fonte">
             Unidades: localizações do SIGEPSI. Editais e vagas: monitoramento do Monitora.
