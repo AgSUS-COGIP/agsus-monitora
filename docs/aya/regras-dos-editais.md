@@ -23,14 +23,14 @@ migrations `20260928120000_edital_novo_sem_motivo.sql`, `20260928220000_edital_n
 ## Alertas de cronograma na tabela de Editais
 
 **perguntas:** alertas dos editais | etiqueta do edital | cronograma incompleto | proxima etapa em ate 3 dias | proxima etapa em ate 7 dias | situacao excepcional | cronograma regular | indicadores de editais sem numero | nao foi possivel carregar os alertas dos editais
-**resposta:** Em Editais, cada linha da tabela leva a etiqueta do seu alerta: Sem cronograma (nenhuma etapa cadastrada), Cronograma incompleto (faltam etapas), Próxima etapa em até 3 dias, Próxima etapa em até 7 dias ou Situação excepcional (registrada à mão). Cronograma regular não leva etiqueta. O indicador Próximos 7 dias soma os de até 3 e até 7 dias. Enquanto o resumo não chega, os indicadores aparecem como cartões cinzas, nunca zerados: zero é sempre um número apurado. "Nenhum edital ativo nesta área" quer dizer que não há edital cadastrado, não que houve falha; "Não foi possível carregar os alertas dos editais" é falha, e o botão "Tentar novamente" pede de novo.
+**resposta:** Em Editais, cada linha da tabela leva a etiqueta do seu alerta: Sem cronograma (nenhuma etapa cadastrada), Cronograma incompleto (faltam etapas), Próxima etapa em até 3 dias, Próxima etapa em até 7 dias ou Situação excepcional (status excepcional registrado à mão, ou suspenso, paralisado ou cancelado digitado no status com o cálculo manual). Cronograma regular não leva etiqueta. O indicador Próximos 7 dias soma os de até 3 e até 7 dias. Enquanto o resumo não chega, os indicadores aparecem como cartões cinzas, nunca zerados: zero é sempre um número apurado. "Nenhum edital ativo nesta área" quer dizer que não há edital cadastrado, não que houve falha; "Não foi possível carregar os alertas dos editais" é falha, e o botão "Tentar novamente" pede de novo.
 **fonte:** src/lib/editais/editais-do-nucleo.ts; src/modulos/editais/painel-operacional.tsx
 **abrir:** nucleo
 
 ## Status e etapa calculados pelo cronograma
 
 **perguntas:** como o status do edital e calculado | status do edital | status calculado | etapa calculada | cronograma pendente | como a etapa do edital e calculada
-**resposta:** Com o cálculo automático ligado, o status e a etapa do edital saem das datas do cronograma: antes da primeira etapa, "Planejado" e "Aguardando: …"; durante, "Em andamento" e o nome da etapa atual; depois da última, "Concluído". Sem etapas válidas (ou com o automático desligado), aparece "Cronograma pendente". Ao salvar, vale o calculado; o status excepcional (Suspenso, Cancelado ou Paralisado) é a única forma de contrariar o cálculo, e pede motivo e data da decisão.
+**resposta:** Com o cálculo automático ligado, o status e a etapa do edital saem das datas do cronograma: antes da primeira etapa, "Planejado" e "Aguardando: …"; durante, "Em andamento" e o nome da etapa atual; depois da última, "Concluído". Com o cálculo automático desligado (cálculo manual), valem o status e a etapa digitados no formulário, e o andamento e a próxima etapa continuam vindo das etapas. Sem etapas e sem status digitado, aparece "Cronograma pendente". Ao salvar, vale o calculado; o status excepcional (Suspenso, Cancelado ou Paralisado) é a única forma de contrariar o cálculo, e pede motivo e data da decisão.
 **fonte:** src/lib/cronograma/cronograma-do-edital.ts; src/lib/editais/editais-do-nucleo.ts
 
 ## Status excepcional
@@ -42,8 +42,8 @@ migrations `20260928120000_edital_novo_sem_motivo.sql`, `20260928220000_edital_n
 ## Validações do cronograma
 
 **perguntas:** validacoes do cronograma | por que o cronograma nao salva | erro no cronograma | etapas sobrepostas
-**resposta:** O cronograma não salva com etapa sem atividade ou sem datas, data final antes da inicial, ano fora de 2015 a 2100 ou atividade repetida. Só geram aviso: data fora do ano do edital, falta de etapa de resultado final e etapas sobrepostas. Em edital já cadastrado, mexer no cronograma pede o motivo da alteração, que vai para o histórico; edital novo não pede justificativa (o histórico registra "Cadastro do edital").
-**fonte:** src/lib/cronograma/cronograma-do-edital.ts; src/modulos/editais/modal-do-edital.tsx; supabase/migrations/20260928120000_edital_novo_sem_motivo.sql
+**resposta:** O cronograma não salva com etapa sem atividade ou sem datas, data final antes da inicial, ano fora de 2015 a 2100 ou atividade repetida. Só geram aviso: data fora do ano do edital, falta de etapa de resultado final, etapas sobrepostas e etapas fora de sequência (o prazo de recurso começando antes do resultado preliminar, ou o recurso e a análise dos recursos terminando depois do resultado final da mesma fase ou do processo seletivo). O aviso de sequência também aparece na linha do tempo do edital. Com o cálculo automático ligado, as datas de início e encerramento do edital acompanham a primeira e a última etapa sempre que as etapas mudam, inclusive por errata; com o cálculo manual, ficam as datas digitadas. Em edital já cadastrado, mexer no cronograma pede o motivo da alteração, que vai para o histórico; edital novo não pede justificativa (o histórico registra "Cadastro do edital").
+**fonte:** src/lib/cronograma/cronograma-do-edital.ts; src/lib/cronograma/sequencia-do-cronograma.ts; src/modulos/editais/modal-do-edital.tsx; supabase/migrations/20260928120000_edital_novo_sem_motivo.sql
 
 ## Copiar cronograma e preencher em lote
 

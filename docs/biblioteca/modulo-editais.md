@@ -25,6 +25,26 @@ Tabela, alertas, formulário e linha do tempo. A tela é `nucleo.tsx`; o estado 
   andamento, sem cronograma, incompletos, próximos 7 dias, excepcionais); cada um filtra a fila.
   Vêm de `resumo.ts` (`get_nucleo_cronograma_resumo`, uma linha por edital): UMA carga, cache curto,
   invalidada ao salvar um cronograma; a mesma carga serve o "copiar cronograma".
+- **Cronograma: etapas, cálculo e situação** (conferência de 17/11/2026, migration
+  `20261117190000`). `private."FC_ESTADO_DO_CRONOGRAMA"` separa três coisas: há etapa
+  (`tem_cronograma`), o cálculo (`calculo`: `automatico` ou `manual`; no manual valem o status e a
+  etapa digitados, e percentual, próxima etapa e datas saem das etapas do mesmo jeito) e a
+  situação excepcional (`situacao`: suspenso, paralisado ou cancelado, pelo status final). "Sem
+  cronograma" é só edital sem etapa; o alerta do resumo é `excepcional` também para o suspenso
+  digitado no manual.
+- **Datas do cadastro pelas etapas**: com o automático ligado, `data_inicio`/`data_fim` do edital
+  são o início da primeira etapa e o fim da última, por qualquer caminho (tela, script de errata,
+  SQL Editor): gatilho `TG_DATAS_DO_CADASTRO` em `TB_CRONOGRAMA_MONIT_INDIG`, adiado ao fim da
+  transação (o salvar apaga e reinsere etapa por etapa). Importa porque `data_fim` dá a validade
+  das listas (`FC_VENCIMENTO_DO_EDITAL`). O manual mantém as datas digitadas.
+- **Sequência entre etapas dependentes** (`src/lib/cronograma/sequencia-do-cronograma.ts`): recurso depois do
+  resultado preliminar e até o resultado final da mesma fase (documental/curricular, títulos,
+  conhecimentos, entrevista; sem o final da fase, vale o do processo seletivo). A fase é a da
+  primeira palavra-chave da atividade. Aviso no formulário e ao salvar (`comSequencia` sobre
+  `analisarCronograma`) e na linha do tempo do edital; não impede salvar. A regra fica fora do
+  pacote de entrada: o formulário já baixa no clique, e o salvar e a linha do tempo a importam
+  sob demanda (o orçamento de 320 KB estourou com ela dentro de `analisarCronograma`). Em 17/11/2026 avisava 4 editais: 120/2026 (recurso das entrevistas
+  até 25/02/2027, final em 21/01) e 70, 71 e 74/2025 (recurso até 30/11, final em 03/11).
 - Retificação do cronograma a partir do PDF da errata (`lancar-retificacao.tsx`).
 - A atividade vai ao banco sem espaços repetidos (`cronogramaParaSalvar`): o texto colado do PDF
   da Cebraspe vinha com espaços duplos e escondia a etapa de resultado final (16/11/2026;
