@@ -260,7 +260,7 @@ import { paginaDoCaminho } from "../server/servidor.ts";
 import {
   aptosEEliminados,
   calcularIndicadores,
-  csvDaSelecao,
+  tabelaDaSelecao,
   eliminadosAntesDaAnalise,
   FILTROS_VAZIOS,
   filtrarVagas,
@@ -5753,21 +5753,25 @@ bloco("selecao-do-painel", () => {
     });
   });
 
-  describe("CSV e cópia guardada", () => {
-    it("CSV com ; BOM, vazio em branco e célula protegida", () => {
+  describe("Exportação e cópia guardada", () => {
+    it("a tabela da exportação: números como número, vazio em branco", () => {
       const perigosa = normalizarPayload({
         vagas: [
           { id: "z", edital: "1/2026", cargo: "=HYPERLINK(1)", inscritos: 3 },
         ],
       }).vagas;
-      const csv = csvDaSelecao(perigosa);
-      expect(
-        csv.startsWith(
-          String.fromCharCode(0xfeff) + "DSEI / Unidade;Edital;Cargo;Vaga;",
-        ),
-      ).toBe(true);
-      expect(csv).toContain("'=HYPERLINK(1)");
-      expect(csv).toContain("Planilha Auditoria (dado antigo)");
+      const { colunas, linhas } = tabelaDaSelecao(perigosa);
+      expect(colunas.slice(0, 4)).toEqual([
+        "DSEI / Unidade",
+        "Edital",
+        "Cargo",
+        "Vaga",
+      ]);
+      const linha = linhas[0];
+      expect(linha[2]).toBe("=HYPERLINK(1)");
+      expect(linha[colunas.indexOf("Inscritos")]).toBe(3);
+      expect(linha[colunas.indexOf("Aptos para análise")]).toBeNull();
+      expect(linha).toContain("Planilha Auditoria (dado antigo)");
     });
 
     it("tipo da cópia e mudança sem contar gerado_em", () => {

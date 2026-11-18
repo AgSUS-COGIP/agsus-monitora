@@ -1,4 +1,8 @@
 import type {
+  CelulaParaExportar,
+  TabelaParaExportar,
+} from "../base/exportacao-da-tabela.ts";
+import type {
   RegistroDaAnalise,
   EscopoDasAnalises,
   CampoDoFiltro,
@@ -27,11 +31,10 @@ import type {
   http(s) absoluto (`urlSegura`).
 */
 import {
-  colunasDoCsvDeAnalises,
+  colunasDaExportacaoDeAnalises,
   ehAreaSaudeIndigena,
   experienciaProfissionalDaLinha,
 } from "./area-do-painel-de-analises.ts";
-import { sanitizeCsvCell } from "../seguranca/csv-security";
 import { STATUS_PENDENTES } from "./status-da-analise.ts";
 import {
   chaveDoDia,
@@ -1093,9 +1096,9 @@ export function detalheDaAnalise(
   };
 }
 
-/* ── CSV ───────────────────────────────────────────────────────────── */
+/* ── Exportação (Excel) ─────────────────────────────────────────────── */
 
-export const COLUNAS_DO_CSV = Object.freeze([
+export const COLUNAS_DA_EXPORTACAO = Object.freeze([
   "edital_status",
   "grupo",
   "unidade",
@@ -1115,27 +1118,23 @@ export const COLUNAS_DO_CSV = Object.freeze([
 ]);
 
 /*
-  O CSV do recorte (separado por `;`), com as colunas a mais fora da Saúde
-  Indígena. Quebra de linha, `;` e aspas saem da célula; célula que começa
-  como fórmula ganha um apóstrofo (csv-security.js).
+  A planilha do recorte ("Exportar em Excel"): as colunas a mais fora da Saúde
+  Indígena; texto como texto (nunca fórmula), número como número.
 */
-export function csvDasAnalises(
+export function tabelaDasAnalises(
   linhas: readonly RegistroDaAnalise[],
   area: string,
-) {
-  const colunas = colunasDoCsvDeAnalises(COLUNAS_DO_CSV, area);
-  const celula = (valor: unknown) =>
-    sanitizeCsvCell(
-      String(valor ?? "")
-        .replace(/[\r\n;]/g, " ")
-        .replace(/"/g, "'"),
-    );
-  return [
-    colunas.join(";"),
-    ...(linhas || []).map((linha) =>
-      colunas.map((c) => celula(linha[c])).join(";"),
+): Pick<TabelaParaExportar, "colunas" | "linhas"> {
+  const colunas = colunasDaExportacaoDeAnalises(COLUNAS_DA_EXPORTACAO, area);
+  return {
+    colunas,
+    linhas: (linhas || []).map((linha) =>
+      colunas.map((c): CelulaParaExportar => {
+        const valor = linha[c];
+        return typeof valor === "number" ? valor : String(valor ?? "");
+      }),
     ),
-  ].join("\n");
+  };
 }
 
 /** Valida o envelope antes de interpretar dados externos ou persistidos no navegador. */

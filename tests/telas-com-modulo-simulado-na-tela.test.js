@@ -449,7 +449,7 @@ bloco("modulos/analises", async () => {
       );
       expect(
         [...topo.querySelectorAll("button")].map((b) => b.textContent.trim()),
-      ).toEqual(["Atualizar", "Exportar"]);
+      ).toEqual(["Atualizar", "Exportar em Excel"]);
       expect(document.querySelectorAll(".status-discreto")).toHaveLength(1);
       for (const texto of [
         "Somente consulta",
@@ -1085,7 +1085,7 @@ bloco("modulos/analises", async () => {
       expect(recorte()).toBe("Recorte ativo: Situação do processo: Ativo");
     });
 
-    it("AC-1.6 — vale junto com os outros filtros; Limpar tudo tira a data; o CSV leva a data", async () => {
+    it("AC-1.6 — vale junto com os outros filtros; Limpar tudo tira a data; a planilha leva a data", async () => {
       await montar(supabaseFalso());
       await marcarNoFiltro("responsavel", "Diego");
       expect(candidatos()).toEqual(["Bruno Lima", "Clara Souza"]);
@@ -1093,9 +1093,9 @@ bloco("modulos/analises", async () => {
       await clicarNoDia(1);
       expect(candidatos()).toEqual(["Clara Souza"]);
 
-      await clicar(secao.querySelector('[data-acao="exportar"]'));
+      await clicar(secao.querySelector('[data-acao="exportar-excel"]'));
       await esperar();
-      const [csv] = baixar.mock.calls.at(-1);
+      const csv = new TextDecoder().decode(baixar.mock.calls.at(-1)[0]);
       expect(csv).toContain("Clara Souza");
       expect(csv).not.toContain("Bruno Lima");
 
@@ -1329,21 +1329,22 @@ bloco("modulos/analises", async () => {
   });
 
   describe("exportar, atualizar e a cópia do navegador", () => {
-    it("Exportar traz os pareceres antes e baixa o CSV do recorte", async () => {
+    it("Exportar em Excel traz os pareceres antes e baixa o recorte", async () => {
       const supabase = supabaseFalso();
       await montar(supabase);
       await clicar(kpi("analisado").querySelector("button"));
-      await clicar(secao.querySelector('[data-acao="exportar"]'));
+      await clicar(secao.querySelector('[data-acao="exportar-excel"]'));
       await esperar();
       expect(chamadas(supabase, "get_analises_texto_do_painel")).toHaveLength(
         1,
       );
       expect(baixar).toHaveBeenCalledTimes(1);
-      const [conteudo, nome] = baixar.mock.calls[0];
-      expect(nome).toBe("agsus_analises_curriculares_v3.csv");
-      const linhas = conteudo.split("\n");
-      expect(linhas).toHaveLength(4);
-      expect(linhas[1]).toContain("Parecer de Ana");
+      const [bytes, nome] = baixar.mock.calls[0];
+      const conteudo = new TextDecoder().decode(bytes);
+      expect(nome).toBe("agsus_analises_curriculares_v3.xlsx");
+      // A planilha: o cabeçalho e as 3 linhas do recorte, com o parecer.
+      expect(conteudo.match(/<row /g)).toHaveLength(4);
+      expect(conteudo).toContain("Parecer de Ana");
       expect(toast).toHaveBeenCalledWith(
         "Exportados 3 registros do recorte atual.",
         "info",
@@ -1503,7 +1504,7 @@ bloco("modulos/analises", async () => {
       );
     });
 
-    it("CSV com os pareceres já a caminho (busca geral): espera a mesma leitura", async () => {
+    it("Planilha com os pareceres já a caminho (busca geral): espera a mesma leitura", async () => {
       let soltar;
       const supabase = supabaseFalso({
         respostas: {
@@ -1518,7 +1519,7 @@ bloco("modulos/analises", async () => {
       let csv;
       await act(async () => {
         busca = painel.estado.garantirTextos();
-        csv = painel.estado.exportarCsv((linhas) => linhas);
+        csv = painel.estado.exportarExcel((linhas) => linhas);
       });
       await act(async () => soltar());
       expect(await busca).toBe(true);
@@ -1528,7 +1529,7 @@ bloco("modulos/analises", async () => {
       );
       expect(baixar).toHaveBeenCalledTimes(1);
       expect(toast).not.toHaveBeenCalledWith(
-        "Não foi possível trazer os pareceres para o CSV. Tente novamente.",
+        "Não foi possível trazer os pareceres para a planilha. Tente novamente.",
         "error",
       );
     });
@@ -2306,7 +2307,7 @@ bloco("modulos/entrevistas", async () => {
         [...topo.querySelectorAll(".ui-topo-acoes button")].map((b) =>
           b.textContent.trim(),
         ),
-      ).toEqual(["Atualizar", "Exportar"]);
+      ).toEqual(["Atualizar", "Exportar em Excel", "Salvar em PDF"]);
       expect(topo.querySelector('[aria-label*="tema"]')).toBeNull();
       expect(topo.querySelector('[aria-label*="tela cheia"]')).toBeNull();
       expect(document.querySelectorAll(".status-discreto")).toHaveLength(1);
@@ -2382,11 +2383,12 @@ bloco("modulos/entrevistas", async () => {
     it("Exportar baixa o CSV do recorte, com a área no nome", async () => {
       await montar(supabaseFalso({ data: PAYLOAD, error: null }));
       await escolher(document.getElementById("filtro-parecer"), "INAPTO");
-      await clicar(secao.querySelector('[data-acao="exportar"]'));
+      await clicar(secao.querySelector('[data-acao="exportar-excel"]'));
       expect(baixar).toHaveBeenCalledTimes(1);
-      const [conteudo, nome] = baixar.mock.calls[0];
+      const [bytes, nome] = baixar.mock.calls[0];
+      const conteudo = new TextDecoder().decode(bytes);
       expect(nome).toMatch(
-        /^entrevistas-saude-indigena-\d{4}-\d{2}-\d{2}\.csv$/,
+        /^entrevistas-saude-indigena-\d{4}-\d{2}-\d{2}\.xlsx$/,
       );
       expect(conteudo).toContain("Bruno");
       expect(conteudo).not.toContain("onerror");
@@ -2882,7 +2884,12 @@ bloco("modulos/recursos", async () => {
       expect(status().textContent).toMatch(/^Atualizado em 20\/09\/2026/);
       expect(
         [...topo.querySelectorAll("button")].map((b) => b.textContent.trim()),
-      ).toEqual(["Atualizar", "Exportar", "Analisar"]);
+      ).toEqual([
+        "Atualizar",
+        "Exportar em Excel",
+        "Salvar em PDF",
+        "Analisar",
+      ]);
       expect(topo.querySelector('[aria-label*="tema"]')).toBeNull();
       expect(topo.querySelector('[aria-label*="tela cheia"]')).toBeNull();
       // Uma data de carga só, e sem selo "Somente consulta".
@@ -3302,11 +3309,12 @@ bloco("modulos/recursos", async () => {
 
     it("Exportar baixa o CSV do recorte, com a área no nome", async () => {
       await montar(supabaseFalso());
-      await clicar(document.querySelector('[data-acao="exportar"]'));
+      await clicar(document.querySelector('[data-acao="exportar-excel"]'));
       expect(baixar).toHaveBeenCalledTimes(1);
-      const [conteudo, nome] = baixar.mock.calls[0];
+      const [bytes, nome] = baixar.mock.calls[0];
+      const conteudo = new TextDecoder().decode(bytes);
       expect(conteudo).toContain("Ana Ribeiro");
-      expect(nome).toMatch(/^recursos-saude-indigena-\d{4}-\d{2}-\d{2}\.csv$/);
+      expect(nome).toMatch(/^recursos-saude-indigena-\d{4}-\d{2}-\d{2}\.xlsx$/);
     });
   });
 
@@ -5534,7 +5542,7 @@ bloco("modulos/selecao", async () => {
         [...topo.querySelectorAll(".ui-topo-acoes button")].map((b) =>
           b.textContent.trim(),
         ),
-      ).toEqual(["Atualizar", "Exportar"]);
+      ).toEqual(["Atualizar", "Exportar em Excel", "Salvar em PDF"]);
       expect(topo.querySelector('[aria-label*="tema"]')).toBeNull();
       expect(topo.querySelector('[aria-label*="tela cheia"]')).toBeNull();
       // "Conferido …": a última carga, discreta e uma vez só.
@@ -5881,10 +5889,11 @@ bloco("modulos/selecao", async () => {
     it("baixa o CSV do recorte, com a área no nome e as células protegidas", async () => {
       await montar(supabaseFalso({ data: PAYLOAD, error: null }));
       await clicar(opcaoDoFiltro("filtro-unidades", "DSEI Xingu"));
-      await clicar(secao.querySelector('[data-acao="exportar"]'));
+      await clicar(secao.querySelector('[data-acao="exportar-excel"]'));
       expect(baixar).toHaveBeenCalledTimes(1);
-      const [conteudo, nome] = baixar.mock.calls[0];
-      expect(nome).toMatch(/^selecao-saude-indigena-\d{4}-\d{2}-\d{2}\.csv$/);
+      const [bytes, nome] = baixar.mock.calls[0];
+      const conteudo = new TextDecoder().decode(bytes);
+      expect(nome).toMatch(/^selecao-saude-indigena-\d{4}-\d{2}-\d{2}\.xlsx$/);
       expect(conteudo).toContain("DSEI Xingu");
       expect(conteudo).not.toContain("Caminhoneiros");
       expect(conteudo).toContain("Entrevistas do Yeendé");
@@ -5894,7 +5903,9 @@ bloco("modulos/selecao", async () => {
       await montar(
         supabaseFalso({ data: { ...PAYLOAD, vagas: [] }, error: null }),
       );
-      expect(secao.querySelector('[data-acao="exportar"]').disabled).toBe(true);
+      expect(secao.querySelector('[data-acao="exportar-excel"]').disabled).toBe(
+        true,
+      );
     });
   });
 

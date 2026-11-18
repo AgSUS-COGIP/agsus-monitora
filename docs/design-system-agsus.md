@@ -1115,6 +1115,7 @@ Tabelas são leves: sem grade, sem bordas por célula, sem container com borda e
   - abaixo da tabela, a 16px;
   - à esquerda, "1–20 de 342";
   - à direita, o seletor "20 por página" (opções 20, 50 e 100), botões anterior e próxima (`ChevronLeft` e `ChevronRight`) e até 7 números de página com reticências.
+- **Exportação:** "Exportar em Excel" e "Salvar em PDF", com esses nomes, nessa ordem e no mesmo lugar (topo da tela ou barra da tabela); exportam o recorte que está na tela. Excel em .xlsx (texto nunca vira fórmula); PDF em A4 deitado, com título, emissão e "Página N de M".
 
 ### 11.5 Listas e lista de propriedades
 

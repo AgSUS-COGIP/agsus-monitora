@@ -125,7 +125,7 @@ import {
   calcularIndicadores,
   contagemPorComparecimento,
   contagemPorParecer,
-  csvDasEntrevistas,
+  tabelaDasEntrevistas,
   dataHoraBR,
   faixasDeNota,
   FILTROS_VAZIOS,
@@ -3173,7 +3173,7 @@ bloco("entrevistas-do-painel", () => {
     });
   });
 
-  describe("pendências, datas e CSV", () => {
+  describe("pendências, datas e exportação", () => {
     const { entrevistas, aprovadosSemEntrevista, ultimaCarga } =
       normalizarPayload(PAYLOAD);
 
@@ -3203,15 +3203,18 @@ bloco("entrevistas-do-painel", () => {
       expect(dataHoraBR("x")).toBe("");
     });
 
-    it("gera o CSV com ; e BOM, protegido contra fórmula", () => {
+    it("a tabela da exportação: notas como número, texto como veio", () => {
       const perigosa = normalizarPayload({
         entrevistas: [{ id: "z", candidato: "=HYPERLINK(1)", nota: 10.5 }],
       }).entrevistas;
-      const csv = csvDasEntrevistas(perigosa);
-      expect(csv.startsWith("\uFEFFCandidato;Código;")).toBe(true);
-      expect(csv).toContain("'=HYPERLINK(1)");
-      expect(csv).toContain("10,50");
-      expect(csv).toContain("Sem análise");
+      const { colunas, linhas } = tabelaDasEntrevistas(perigosa);
+      expect(colunas.slice(0, 2)).toEqual(["Candidato", "Código"]);
+      const linha = linhas[0];
+      expect(linha[0]).toBe("=HYPERLINK(1)");
+      expect(linha[colunas.indexOf("Nota da entrevista")]).toBe(10.5);
+      expect(linha[colunas.indexOf("Resultado da análise")]).toBe(
+        "Sem análise",
+      );
     });
   });
 
@@ -5484,9 +5487,9 @@ bloco("modulos/conducao-troca-de-area", () => {
   });
 });
 
-bloco("modulos/data-no-nome-do-csv", () => {
+bloco("modulos/data-no-nome-da-exportacao", () => {
   /*
-  O nome do CSV leva o dia de Brasília. Com toISOString o dia era o de UTC:
+  O nome da planilha exportada leva o dia de Brasília. Com toISOString o dia era o de UTC:
   quem exportava depois das 21h recebia o arquivo com a data de amanhã.
 */
   const NOITE_EM_BRASILIA = () => Date.parse("2026-10-01T22:30:00-03:00");
@@ -5495,19 +5498,19 @@ bloco("modulos/data-no-nome-do-csv", () => {
     [
       "entrevistas",
       criarEstadoDasEntrevistas,
-      /^entrevistas-.*-2026-10-01\.csv$/,
+      /^entrevistas-(.*-)?2026-10-01\.xlsx$/,
     ],
-    ["recursos", criarEstadoDosRecursos, /^recursos-.*-2026-10-01\.csv$/],
-    ["seleção", criarEstadoDaSelecao, /^selecao-.*-2026-10-01\.csv$/],
+    ["recursos", criarEstadoDosRecursos, /^recursos-(.*-)?2026-10-01\.xlsx$/],
+    ["seleção", criarEstadoDaSelecao, /^selecao-(.*-)?2026-10-01\.xlsx$/],
   ];
 
-  describe("data no nome do CSV", () => {
+  describe("data no nome da planilha exportada", () => {
     it.each(casos)(
       "%s: o dia é o de Brasília, não o de UTC",
-      (_, criar, nome) => {
+      async (_, criar, nome) => {
         const baixar = vi.fn();
         const estado = criar({ baixar, agora: NOITE_EM_BRASILIA });
-        estado.exportarCsv([], []);
+        await estado.exportar("excel", [], []);
         expect(baixar).toHaveBeenCalledTimes(1);
         expect(baixar.mock.calls[0][1]).toMatch(nome);
       },

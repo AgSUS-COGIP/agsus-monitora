@@ -4,6 +4,7 @@ import * as reactDaBarraNs from "react";
 import * as alcanceDaBarraNs from "../src/lib/base/alcance-da-selecao.ts";
 import { BarraDeSelecao } from "../src/ui/barra-de-selecao.tsx";
 import { TabelaInfinita as TabelaInfinitaDaBarra } from "../src/ui/tabela-infinita.tsx";
+import { BotoesDeExportacao } from "../src/ui/botoes-de-exportacao.tsx";
 import {
   act,
   createElement,
@@ -2885,5 +2886,59 @@ bloco("componentes/barra-de-selecao", () => {
       expect(alcance()).toBe("");
       expect(pagina.checked).toBe(false);
     });
+  });
+});
+
+bloco("ui/botoes-de-exportacao", () => {
+  let raiz: Root | null = null;
+  afterEach(() => {
+    act(() => raiz?.unmount());
+    raiz = null;
+    document.body.innerHTML = "";
+  });
+  function montarBotoes(
+    propriedades: ComponentProps<typeof BotoesDeExportacao>,
+  ) {
+    const caixa = document.createElement("div");
+    document.body.append(caixa);
+    raiz = createRoot(caixa);
+    act(() => raiz!.render(h(BotoesDeExportacao, propriedades)));
+    return caixa;
+  }
+
+  it("sempre os mesmos nomes, na mesma ordem; só aparece o que a tela passa", () => {
+    const ambos = montarBotoes({ excel: vi.fn(), pdf: vi.fn() });
+    expect(
+      [...ambos.querySelectorAll("button")].map((b) => b.textContent?.trim()),
+    ).toEqual(["Exportar em Excel", "Salvar em PDF"]);
+    act(() => raiz!.render(h(BotoesDeExportacao, { excel: vi.fn() })));
+    expect(
+      [...ambos.querySelectorAll("button")].map((b) => b.dataset.acao),
+    ).toEqual(["exportar-excel"]);
+    act(() => raiz!.render(h(BotoesDeExportacao, {})));
+    expect(ambos.querySelector(".ui-exportacao")).toBeNull();
+  });
+
+  it("enquanto gera: Gerando…, ocupado e os dois desativados", async () => {
+    let terminar: () => void = () => {};
+    const pdf = vi.fn(
+      () => new Promise<void>((pronto) => (terminar = () => pronto())),
+    );
+    const caixa = montarBotoes({ excel: vi.fn(), pdf });
+    const [excelBtn, pdfBtn] = [...caixa.querySelectorAll("button")];
+    await clicar(definido(pdfBtn));
+    expect(pdfBtn?.textContent?.trim()).toBe("Gerando…");
+    expect(pdfBtn?.getAttribute("aria-busy")).toBe("true");
+    expect(excelBtn?.disabled).toBe(true);
+    await act(async () => terminar());
+    expect(pdfBtn?.textContent?.trim()).toBe("Salvar em PDF");
+    expect(excelBtn?.disabled).toBe(false);
+    expect(pdf).toHaveBeenCalledTimes(1);
+  });
+
+  it("desativado: nenhum dos dois responde", () => {
+    const excel = vi.fn();
+    const caixa = montarBotoes({ excel, desativado: true });
+    expect(caixa.querySelector("button")?.disabled).toBe(true);
   });
 });

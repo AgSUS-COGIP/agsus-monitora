@@ -5,7 +5,7 @@ import {
   opcoesDosFiltros,
   calcularIndicadores,
   pendenciasPrioritarias,
-  csvDosRecursos,
+  tabelaDosRecursos,
 } from "../../src/lib/recursos/recursos-dos-candidatos.ts";
 import {
   Graficos,
@@ -93,7 +93,7 @@ const etapaInvalida: RecursoDoPainel["etapas"] = { resposta: true };
 void [
   tela,
   campoAdicional,
-  csvDosRecursos(recursos),
+  tabelaDosRecursos(recursos),
   diasInvalidos,
   etapaInvalida,
 ];

@@ -233,8 +233,11 @@ function TelaDaArea({
                 : undefined,
             }
           : {
-              aoExportar: () => estado.exportarCsv(filtrados, origens),
-              exportarDesativado: !carregado || !filtrados.length,
+              exportacao: {
+                excel: () => estado.exportar("excel", filtrados, origens),
+                pdf: () => estado.exportar("pdf", filtrados, origens),
+                desativado: !carregado || !filtrados.length,
+              },
               aoAnalisar: podeAnalisar ? () => irParaAnalise() : undefined,
             })}
       />

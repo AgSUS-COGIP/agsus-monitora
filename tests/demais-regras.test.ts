@@ -1,6 +1,13 @@
 // @vitest-environment node
 import { bloco } from "./apoio/bloco.ts";
 import * as alcanceDaSelecaoNs from "../src/lib/base/alcance-da-selecao.ts";
+import {
+  arquivoDaTabela,
+  nomeDoArquivoExportado,
+  pdfDaTabela,
+  textoDaCelula,
+  xlsxDaTabela,
+} from "../src/lib/base/exportacao-da-tabela.ts";
 import { describe, expect, it, afterEach, beforeEach, vi } from "vitest";
 import { calcularKpis } from "../src/lib/analises/analises-curriculares.ts";
 import {
@@ -6151,5 +6158,66 @@ bloco("lib/presets-de-colunas", () => {
     );
     expect(presetDasColunas(["unidade", "edital", "status"])).toBe("");
     expect(presetDasColunas(null)).toBe("");
+  });
+});
+
+bloco("lib/base/exportacao-da-tabela", () => {
+  const TABELA = {
+    titulo: "Seleção — Saúde Indígena",
+    colunas: ["Unidade", "Cargo", "Inscritos"],
+    linhas: [
+      ["DSEI Xingu", "=HYPERLINK(1)", 1200],
+      ["DSEI Yanomami", "Médico & cia", null],
+    ],
+  };
+  const texto = (bytes: Uint8Array) => new TextDecoder().decode(bytes);
+  const QUANDO = new Date("2026-11-18T13:00:00Z");
+
+  it("nome do arquivo sem acento, espaço nem barra, com a extensão", () => {
+    expect(
+      nomeDoArquivoExportado(
+        ["Seleção", "saude-indigena", "2026-11-18"],
+        "xlsx",
+      ),
+    ).toBe("selecao-saude-indigena-2026-11-18.xlsx");
+    expect(nomeDoArquivoExportado(["A/B C", null, ""], "pdf")).toBe(
+      "a-b-c.pdf",
+    );
+    expect(nomeDoArquivoExportado([], "pdf")).toBe("exportacao.pdf");
+  });
+
+  it("Excel: texto como texto (nunca fórmula), número como número, cabeçalho com filtro", () => {
+    const xml = texto(xlsxDaTabela(TABELA, QUANDO));
+    expect(xml).toContain("Seleção — Saúde Indígena");
+    expect(xml).toContain('t="inlineStr"');
+    expect(xml).toContain("=HYPERLINK(1)");
+    expect(xml).not.toContain("<f>");
+    expect(xml).toContain("<v>1200</v>");
+    expect(xml).toContain("Médico &amp; cia");
+    expect(xml).toContain('<autoFilter ref="A1:C3"/>');
+    expect(xml.match(/<row /g)).toHaveLength(3);
+  });
+
+  it("PDF: título, emissão em Brasília, total e números à brasileira", async () => {
+    const pdf = texto(
+      await pdfDaTabela(TABELA, { quando: QUANDO, comprimir: false }),
+    );
+    expect(pdf.startsWith("%PDF")).toBe(true);
+    expect(pdf).toContain("Emitido em 18/11/2026, 10:00");
+    expect(pdf).toContain("2 registros");
+    expect(pdf).toContain("1.200");
+    expect(pdf).toContain("DSEI Yanomami");
+    expect(pdf).toContain("gina 1 de 1"); // "Página", com o á da fonte padrão
+    expect(textoDaCelula(1.5)).toBe("1,5");
+    expect(textoDaCelula(null)).toBe("");
+  });
+
+  it("os dois formatos pelo mesmo retrato", async () => {
+    const excel = await arquivoDaTabela("excel", TABELA, QUANDO);
+    expect(excel.extensao).toBe("xlsx");
+    expect(excel.tipo).toContain("spreadsheetml");
+    const pdf = await arquivoDaTabela("pdf", TABELA, QUANDO);
+    expect(pdf.extensao).toBe("pdf");
+    expect(pdf.tipo).toBe("application/pdf");
   });
 });

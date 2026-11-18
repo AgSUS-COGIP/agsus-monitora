@@ -25,20 +25,20 @@ API completa (uma linha por componente) está em [docs/arquitetura-react.md](../
 
 ## O que existe
 
-| Grupo            | Componentes                                                                                                                                        |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Topo e filtros   | `TopoDoPainel`, `PainelDeFiltros`, `ChipsDeFiltro`/`ChipDeFiltro`, `MaisOpcoes`, `LinhaDoRecorte`/`MarcasDoRecorte`                                |
-| Indicadores      | `Kpi` (card de 78px; com `aoClicar` vira filtro), `GradeDeKpis`, `FaixaDeSituacao`, `ListaDePendencias`                                            |
-| Gráficos         | `CardDeGrafico`, `Grafico` (Chart.js criado uma vez), `paletaDosGraficos` (cores dos tokens)                                                       |
-| Listas e tabelas | `TabelaInfinita` (50 por vez, avisa `agsus:content-updated`), `CardDaLista` + `TabelaDaLista`, `BarraDaLista`, `usarCargaContinua` + `MaisDaCarga` |
-| Camadas          | `Gaveta`, `TopoDaGaveta`, `Modal` (portal, Esc, foco preso), `Popover`, `MenuDeAcoes`                                                              |
-| Detalhe          | `Secao`, `Kv`, `GradeDeKv`                                                                                                                         |
-| Formulário       | `Campo` (liga o rótulo ao controle), `Segmentado` (radiogroup), `Abas` (tablist), `ContagemDaAba` (o número no rótulo)                             |
-| Estados          | `EstadoVazio`, `Carregando`, `CarregandoConteudo`, `ErroAoCarregar`, `LinhasEsqueleto`, `BlocosEsqueleto`, `Aviso`, `Selo`                         |
-| Ações            | `BotaoDeAcao` (ação que escreve no banco), `AcoesDaLinha`                                                                                          |
+| Grupo            | Componentes                                                                                                                                                                                                       |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Topo e filtros   | `TopoDoPainel`, `PainelDeFiltros`, `ChipsDeFiltro`/`ChipDeFiltro`, `MaisOpcoes`, `LinhaDoRecorte`/`MarcasDoRecorte`                                                                                               |
+| Indicadores      | `Kpi` (card de 78px; com `aoClicar` vira filtro), `GradeDeKpis`, `FaixaDeSituacao`, `ListaDePendencias`                                                                                                           |
+| Gráficos         | `CardDeGrafico`, `Grafico` (Chart.js criado uma vez), `paletaDosGraficos` (cores dos tokens)                                                                                                                      |
+| Listas e tabelas | `TabelaInfinita` (50 por vez, avisa `agsus:content-updated`), `CardDaLista` + `TabelaDaLista`, `BarraDaLista`, `usarCargaContinua` + `MaisDaCarga`                                                                |
+| Camadas          | `Gaveta`, `TopoDaGaveta`, `Modal` (portal, Esc, foco preso), `Popover`, `MenuDeAcoes`                                                                                                                             |
+| Detalhe          | `Secao`, `Kv`, `GradeDeKv`                                                                                                                                                                                        |
+| Formulário       | `Campo` (liga o rótulo ao controle), `Segmentado` (radiogroup), `Abas` (tablist), `ContagemDaAba` (o número no rótulo)                                                                                            |
+| Estados          | `EstadoVazio`, `Carregando`, `CarregandoConteudo`, `ErroAoCarregar`, `LinhasEsqueleto`, `BlocosEsqueleto`, `Aviso`, `Selo`                                                                                        |
+| Ações            | `BotaoDeAcao` (ação que escreve no banco), `AcoesDaLinha`                                                                                                                                                         |
 | Seleção em lote  | `BarraDeSelecao` ("Selecionar esta página (N)" ≠ "Selecionar todos os N resultados"; a página vem de `aoMostrar` da tabela; textos em `lib/base/alcance-da-selecao.ts`, a confirmação diz quantos serão afetados) |
-| Telas da seleção | `CabecalhoDaTela`, `BarraDaLista`, `FaixaDeSituacao`, `CardDaLista`                                                                                |
-| Utilitários      | `usarEstadoDaSessao` (filtros voltam no F5), `classes(...)`                                                                                        |
+| Telas da seleção | `CabecalhoDaTela`, `BarraDaLista`, `FaixaDeSituacao`, `CardDaLista`                                                                                                                                               |
+| Utilitários      | `usarEstadoDaSessao` (filtros voltam no F5), `classes(...)`                                                                                                                                                       |
 
 Prazos: `SeloDePrazo` diz quanto falta para uma data ("Vence em 12 dias", "Venceu há 3 dias") com
 o tom da faixa (vencido, menos de 30, 90 ou 180 dias); a lógica é `src/lib/base/prazos.ts`.
@@ -46,6 +46,11 @@ o tom da faixa (vencido, menos de 30, 90 ou 180 dias); a lógica é `src/lib/bas
 Gráficos: o `Grafico` dentro do `CardDeGrafico` traz a tabela dos valores (leitor de tela e botão
 "Tabela" do título) e percorre os itens pelas setas; nada a fazer em quem usa
 (`src/ui/tabela-do-grafico.tsx`, DS 13.5).
+
+Exportação: toda tabela exporta por `BotoesDeExportacao` — "Exportar em Excel" (.xlsx) e "Salvar
+em PDF", sempre com esse nome e nessa ordem — no topo da tela (`TopoDoPainel` `exportacao`) ou na
+barra da tabela. O arquivo sai de `src/lib/base/exportacao-da-tabela.ts` (`arquivoDaTabela`), a
+partir do mesmo retrato (título, colunas e linhas); `baixarArquivo` entrega.
 
 Nas telas com `CabecalhoDaTela` (`tituloNaTela` em `src/lib/navegacao/rotas.ts`: Conduzir entrevistas,
 Classificação, Avaliação documental e Triagem), a faixa do topo do app (`header.top`) fica compacta

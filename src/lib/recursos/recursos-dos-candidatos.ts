@@ -1,4 +1,8 @@
 import type {
+  CelulaParaExportar,
+  TabelaParaExportar,
+} from "../base/exportacao-da-tabela.ts";
+import type {
   DadosDoRecurso,
   RecursoDoPainel,
   EtapaDoRecurso,
@@ -26,7 +30,6 @@ import type {
   mudou" calculados, sem digitar.
 */
 import { hojeEmBrasilia } from "../cronograma/cronograma-do-edital.ts";
-import { sanitizeCsvCell } from "../seguranca/csv-security";
 import {
   cronogramasPorEdital,
   decididoNoPrazo,
@@ -745,52 +748,51 @@ const numeroBR = (valor: unknown) =>
     ? ""
     : String(valor).replace(".", ",");
 
-type ColunaDoCsv = readonly [
+type ColunaDaExportacao = readonly [
   string,
-  (recurso: RecursoDoPainel, origens: readonly OrigemDoRecurso[]) => unknown,
+  (
+    recurso: RecursoDoPainel,
+    origens: readonly OrigemDoRecurso[],
+  ) => CelulaParaExportar,
 ];
-export const COLUNAS_DO_CSV: readonly ColunaDoCsv[] = Object.freeze([
-  ["Nº", (r) => r.nu],
-  ["Edital", (r) => r.edital],
-  ["Unidade", (r) => r.unidade],
-  ["Origem", (r, origens) => rotuloDaOrigem(r.origem, origens)],
-  ["Código do candidato", (r) => r.codigo],
-  ["Candidato", (r) => r.candidato],
-  ["Fora das análises", (r) => simNao(r.fora_analise)],
-  ["Cargo", (r) => r.cargo],
-  ["Vaga", (r) => r.vaga],
-  ["Analista", (r) => r.analista],
-  ["Situação", (r) => rotuloDaSituacao(r.situacao)],
-  ["Decidido em", (r) => dataBR(r.decisao_em)],
-  ...ETAPAS.map((etapa): ColunaDoCsv => [
-    etapa.rotulo,
-    (r) => dataBR(r[etapa.campo]),
-  ]),
-  ["Nº processo SEI", (r) => r.processo_sei],
-  ["Nota no cadastro", (r) => numeroBR(r.nota_anterior)],
-  ["Nota atual", (r) => numeroBR(r.nota_atual)],
-  ["Mudou a nota", (r) => simNao(r.mudouNota)],
-  ["Mudou a classificação", (r) => simNao(r.mudouClassificacao)],
-  ["Prazo de resposta", (r) => dataBR(r.prazo?.data)],
-  ["Atrasado", (r) => simNao(r.atrasado)],
-  ["Dias em aberto", (r) => r.diasEmAberto ?? ""],
-  ["Cadastrado em", (r) => dataBR(r.criado_em)],
-]);
+export const COLUNAS_DA_EXPORTACAO: readonly ColunaDaExportacao[] =
+  Object.freeze([
+    ["Nº", (r) => r.nu],
+    ["Edital", (r) => r.edital],
+    ["Unidade", (r) => r.unidade],
+    ["Origem", (r, origens) => rotuloDaOrigem(r.origem, origens)],
+    ["Código do candidato", (r) => r.codigo],
+    ["Candidato", (r) => r.candidato],
+    ["Fora das análises", (r) => simNao(r.fora_analise)],
+    ["Cargo", (r) => r.cargo],
+    ["Vaga", (r) => r.vaga],
+    ["Analista", (r) => r.analista],
+    ["Situação", (r) => rotuloDaSituacao(r.situacao)],
+    ["Decidido em", (r) => dataBR(r.decisao_em)],
+    ...ETAPAS.map((etapa): ColunaDaExportacao => [
+      etapa.rotulo,
+      (r) => dataBR(r[etapa.campo]),
+    ]),
+    ["Nº processo SEI", (r) => r.processo_sei],
+    ["Nota no cadastro", (r) => numeroBR(r.nota_anterior)],
+    ["Nota atual", (r) => numeroBR(r.nota_atual)],
+    ["Mudou a nota", (r) => simNao(r.mudouNota)],
+    ["Mudou a classificação", (r) => simNao(r.mudouClassificacao)],
+    ["Prazo de resposta", (r) => dataBR(r.prazo?.data)],
+    ["Atrasado", (r) => simNao(r.atrasado)],
+    ["Dias em aberto", (r) => r.diasEmAberto ?? ""],
+    ["Cadastrado em", (r) => dataBR(r.criado_em)],
+  ]);
 
-/** CSV com `;` (Excel pt-BR), BOM e células protegidas contra fórmula. */
-export function csvDosRecursos(
-  recursos: readonly RecursoDoPainel[],
+/** A tabela da exportação (Excel e PDF, src/lib/base/exportacao-da-tabela.ts). */
+export function tabelaDosRecursos(
+  itens: readonly RecursoDoPainel[],
   origens: readonly OrigemDoRecurso[] = ORIGENS_PADRAO,
-) {
-  const celula = (valor: unknown) => {
-    const seguro = sanitizeCsvCell(valor ?? "");
-    return /[";\n\r]/.test(seguro) ? `"${seguro.replace(/"/g, '""')}"` : seguro;
-  };
-  const linhas = [
-    COLUNAS_DO_CSV.map(([titulo]) => celula(titulo)).join(";"),
-    ...recursos.map((r) =>
-      COLUNAS_DO_CSV.map(([, valor]) => celula(valor(r, origens))).join(";"),
+): Pick<TabelaParaExportar, "colunas" | "linhas"> {
+  return {
+    colunas: COLUNAS_DA_EXPORTACAO.map(([titulo]) => titulo),
+    linhas: itens.map((item) =>
+      COLUNAS_DA_EXPORTACAO.map(([, valor]) => valor(item, origens)),
     ),
-  ];
-  return `\uFEFF${linhas.join("\r\n")}\r\n`;
+  };
 }

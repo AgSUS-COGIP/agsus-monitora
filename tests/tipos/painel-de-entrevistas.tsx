@@ -93,7 +93,7 @@ criarEntrevistas({ supabase: cliente, areaAtual: () => "sede" });
 estado.carregar("sede");
 estado.carregarAgenda("edital-1");
 estado.abrirGaveta("e1");
-estado.exportarCsv(normalizarPayload({}).entrevistas);
+estado.exportar("excel", normalizarPayload({}).entrevistas);
 const snapshot = estado.obter();
 // @ts-expect-error — o snapshot só muda pelo store.
 snapshot.area = "sede";

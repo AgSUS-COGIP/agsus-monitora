@@ -136,8 +136,11 @@ function TelaDaArea({
         status={textoDoStatus(e)}
         aoAtualizar={recarregar}
         atualizarDesativado={!area || e.atualizando || e.semSessao}
-        aoExportar={() => estado.exportarCsv(filtradas)}
-        exportarDesativado={!carregado || !filtradas.length}
+        exportacao={{
+          excel: () => estado.exportar("excel", filtradas),
+          pdf: () => estado.exportar("pdf", filtradas),
+          desativado: !carregado || !filtradas.length,
+        }}
       />
 
       {e.semSessao ? (

@@ -18,6 +18,13 @@
 */
 import { hojeEmBrasilia } from "../../lib/cronograma/cronograma-do-edital.ts";
 import {
+  arquivoDaTabela,
+  nomeDoArquivoExportado,
+} from "../../lib/base/exportacao-da-tabela.ts";
+import type { FormatoDaExportacao } from "../../lib/base/exportacao-da-tabela.ts";
+import { nomeDaArea } from "../../lib/navegacao/menu-lateral.ts";
+import { baixarArquivo } from "../../ui/botoes-de-exportacao.tsx";
+import {
   criarCacheDePayload,
   ehErroDeAcesso,
   respostaInalterada,
@@ -30,7 +37,7 @@ import {
   mensagemDeFalha,
 } from "../../lib/carga/falha-de-rede";
 import {
-  csvDaSelecao,
+  tabelaDaSelecao,
   normalizarPayload,
   PAINEL_DE_SELECAO,
   payloadMudou,
@@ -78,20 +85,10 @@ function mensagemDaCarga(erro: unknown): string {
   return mensagemDeFalha(erro);
 }
 
-function baixarNoNavegador(conteudo: string, nome: string) {
-  const arquivo = new Blob([conteudo], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(arquivo);
-  const ancora = document.createElement("a");
-  ancora.href = url;
-  ancora.download = nome;
-  ancora.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
 export function criarEstadoDaSelecao({
   supabase = null,
   toast = (mensagem) => console.info(mensagem),
-  baixar = baixarNoNavegador,
+  baixar = baixarArquivo,
   armazenamento = armazenamentoDePayload,
   agora = () => Date.now(),
   tempoLimiteMs = TEMPO_LIMITE_MS,
@@ -274,9 +271,37 @@ export function criarEstadoDaSelecao({
     }
   }
 
-  function exportarCsv(vagas: readonly VagaDaSelecao[]) {
-    const dia = hojeEmBrasilia(new Date(agora()));
-    baixar(csvDaSelecao(vagas), `selecao-${estado.area}-${dia}.csv`);
+  /* "Exportar em Excel" e "Salvar em PDF": o recorte na tela. */
+  async function exportar(
+    formato: FormatoDaExportacao,
+    vagas: readonly VagaDaSelecao[],
+  ) {
+    const quando = new Date(agora());
+    try {
+      const arquivo = await arquivoDaTabela(
+        formato,
+        {
+          titulo: ["Seleção", nomeDaArea(estado.area)]
+            .filter(Boolean)
+            .join(" — "),
+          ...tabelaDaSelecao(vagas),
+        },
+        quando,
+      );
+      baixar(
+        arquivo.bytes,
+        nomeDoArquivoExportado(
+          ["selecao", estado.area, hojeEmBrasilia(quando)],
+          arquivo.extensao,
+        ),
+        arquivo.tipo,
+      );
+    } catch (erro) {
+      toast(
+        `Não foi possível gerar o arquivo: ${erro instanceof Error ? erro.message : String(erro)}`,
+        "error",
+      );
+    }
   }
 
   return {
@@ -286,7 +311,7 @@ export function criarEstadoDaSelecao({
       return () => ouvintes.delete(ouvinte);
     },
     carregar,
-    exportarCsv,
+    exportar,
     reiniciar,
   };
 }
