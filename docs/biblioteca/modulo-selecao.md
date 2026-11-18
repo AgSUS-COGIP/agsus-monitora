@@ -16,7 +16,7 @@ eliminados), da aba Resultado da Auditoria da planilha; só leitura (`get_seleca
 
 ```
 selecao.tsx     <TelaDeSelecao> e criarSelecao() (área atual, troca de área, controlador)
-estado.ts       store tipado sem React: carga da área (cópia guardada), sessão, CSV
+estado.ts       store tipado sem React: carga da área (cópia guardada), sessão, exportação
 tipos.ts        contratos do cliente, snapshot, dados normalizados e armazenamento
 paineis.tsx     topo (status e ações), filtros de escolha múltipla, KPIs, recorte, gráficos,
                 alertas da coluna Observação
@@ -46,7 +46,7 @@ continuam `unknown` e não recebem validação de formato.
 ## Testes
 
 `tests/telas-com-modulo-simulado-na-tela.test.js` (bloco `modulos/selecao`) e `tests/casca-sessao-e-interface.test.js` (bloco `selecao-do-painel`) (filtros, sessão, troca de
-área, cache, falhas e CSV, entradas malformadas e callbacks dos gráficos).
+área, cache, falhas e exportação, entradas malformadas e callbacks dos gráficos).
 `npm run typecheck:frontend` inclui `tests/tipos/selecao.tsx`.
 
 ## Relacionadas

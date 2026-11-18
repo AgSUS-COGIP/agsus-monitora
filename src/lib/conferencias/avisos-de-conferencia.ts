@@ -32,7 +32,7 @@ import type {
   UUID interno nunca aparece: registro que sumiu é "Registro removido" e o
   que está fora do acesso, "Sem acesso".
 */
-import { sanitizeCsvCell } from "../seguranca/csv-security";
+import type { TabelaParaExportar } from "../base/exportacao-da-tabela.ts";
 import { PARECERES } from "../entrevistas/entrevistas-do-painel.ts";
 
 export const CONFERENCIAS: Readonly<
@@ -1041,7 +1041,7 @@ export function filtroDoCaso(caso: Partial<Caso> | null) {
   return { busca: texto(caso?.nome), analise };
 }
 
-const COLUNAS_DO_CSV_DE_CASOS: readonly (readonly [
+const COLUNAS_DOS_CASOS: readonly (readonly [
   string,
   (caso: Caso) => unknown,
 ])[] = Object.freeze([
@@ -1068,25 +1068,22 @@ const COLUNAS_DO_CSV_DE_CASOS: readonly (readonly [
   ["Referência", (c) => referenciaVisivel(c.referencia)],
 ]);
 
-/** CSV (";") dos casos, com cada célula protegida contra fórmula. */
-export function csvDosCasos(casos: readonly Caso[] | null) {
-  const celula = (valor: unknown) =>
-    sanitizeCsvCell(
-      String(valor ?? "")
-        .replace(/[\r\n;]/g, " ")
-        .replace(/"/g, "'"),
-    );
-  return [
-    COLUNAS_DO_CSV_DE_CASOS.map(([titulo]) => titulo).join(";"),
-    ...(casos || []).map((caso) =>
-      COLUNAS_DO_CSV_DE_CASOS.map(([, valor]) => celula(valor(caso))).join(";"),
+/** A tabela da exportação (Excel e PDF) dos casos. */
+export function tabelaDosCasos(
+  casos: readonly Caso[] | null,
+): Pick<TabelaParaExportar, "colunas" | "linhas"> {
+  return {
+    colunas: COLUNAS_DOS_CASOS.map(([titulo]) => titulo),
+    linhas: (casos || []).map((caso) =>
+      COLUNAS_DOS_CASOS.map(([, valor]) => String(valor(caso) ?? "")),
     ),
-  ].join("\n");
+  };
 }
 
-/** "avisos-analise-data-invalida-2026-10-06.csv" ("avisos-busca-…" na busca geral). */
-export function nomeDoCsvDosCasos(
+/** "avisos-analise-data-invalida-2026-10-06.xlsx" ("avisos-busca-…" na busca geral). */
+export function nomeDoArquivoDosCasos(
   aviso: Pick<Aviso, "conferencia"> | null,
+  extensao: "xlsx" | "pdf",
   agora = new Date(),
 ) {
   const base =
@@ -1095,5 +1092,5 @@ export function nomeDoCsvDosCasos(
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "") || "busca";
   const dois = (n: number) => String(n).padStart(2, "0");
-  return `avisos-${base}-${agora.getFullYear()}-${dois(agora.getMonth() + 1)}-${dois(agora.getDate())}.csv`;
+  return `avisos-${base}-${agora.getFullYear()}-${dois(agora.getMonth() + 1)}-${dois(agora.getDate())}.${extensao}`;
 }

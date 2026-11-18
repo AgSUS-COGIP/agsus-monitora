@@ -1,14 +1,14 @@
 # Regras dos Painéis
 
 A página Painéis (view `paineis-de-dados`), no bloco Dados do menu de cada área: relatórios de
-conferência em tabela, para baixar em CSV e XLSX. Fontes: `src/modulos/paineis-de-dados/`,
+conferência em tabela, para baixar em Excel e PDF. Fontes: `src/modulos/paineis-de-dados/`,
 `src/lib/paineis/relatorios-dos-paineis.ts` e as migrations `20261113200000_paineis_no_bloco_dados.sql`
 (a aba e a permissão Painéis) e `20261116160000_relatorios_dos_paineis_prontos.sql` (os relatórios prontos e a leitura paginada).
 
 ## Página Painéis
 
 **perguntas:** paineis | pagina paineis | para que serve paineis | para que serve a pagina paineis | bloco dados | relatorios de conferencia | relatorios dos paineis
-**resposta:** A página Painéis, no bloco Dados do menu, reúne relatórios para conferir os dados da área escolhida, cada um numa aba: Resumo dos editais, Editais por cargo e Aprovados. Cada tabela pode ser baixada em CSV ou XLSX, com as mesmas linhas da tela. O sistema recalcula os relatórios de hora em hora; o botão Sincronizar, no topo, recalcula na hora o relatório aberto (no máximo uma vez por minuto), e ao lado dele aparece quando o cálculo foi feito. O ícone de informação ao lado dos botões diz de onde vêm os dados de cada relatório. Quem vê é quem o administrador libera em Painéis, na tela de Acessos.
+**resposta:** A página Painéis, no bloco Dados do menu, reúne relatórios para conferir os dados da área escolhida, cada um numa aba: Resumo dos editais, Editais por cargo e Aprovados. Cada tabela sai por "Exportar em Excel" ou "Salvar em PDF", com as mesmas linhas da tela. O sistema recalcula os relatórios de hora em hora; o botão Sincronizar, no topo, recalcula na hora o relatório aberto (no máximo uma vez por minuto), e ao lado dele aparece quando o cálculo foi feito. O ícone de informação ao lado dos botões diz de onde vêm os dados de cada relatório. Quem vê é quem o administrador libera em Painéis, na tela de Acessos.
 **fonte:** src/modulos/paineis-de-dados/; src/lib/paineis/relatorios-dos-paineis.ts
 **abrir:** paineis-de-dados
 

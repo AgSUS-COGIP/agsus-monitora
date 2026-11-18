@@ -6,7 +6,7 @@ atualizado: 2026-11-16
 
 # Módulo: Painéis (bloco Dados)
 
-Relatórios de conferência da área escolhida, em tabela, para baixar em CSV e XLSX: Resumo dos
+Relatórios de conferência da área escolhida, em tabela, para baixar em Excel e PDF: Resumo dos
 editais, Editais por cargo e Aprovados, um por aba. Rota `/<área>/paineis-de-dados`, pasta
 `src/modulos/paineis-de-dados/`. No menu, é o item Painéis do bloco **Dados**, abaixo de Processo
 seletivo (`BLOCO_DE_DADOS` em `src/lib/navegacao/menu-lateral.ts`). Não confundir com os painéis externos
@@ -22,7 +22,7 @@ fontes-dos-dados.tsx  a gaveta "Fontes dos dados" (uma coluna por bloco: Origem,
 paineis-de-dados.css  a alça de largura e o painel do ⓘ
 ```
 
-Regras puras em `src/lib/paineis/relatorios-dos-paineis.ts` (colunas, leitura da página, CSV, XLSX, nome do
+Regras puras em `src/lib/paineis/relatorios-dos-paineis.ts` (colunas, leitura da página, XLSX, tabela do PDF, nome do
 arquivo, largura arrastada e texto da origem) e `src/lib/paineis/fontes-dos-paineis.ts` (leitura das fontes).
 RPCs no contrato (`src/lib/rpc-contrato.ts`): `ler_relatorio_do_painel`,
 `sincronizar_relatorio_do_painel`, `listar_fontes_do_painel` e `salvar_fonte_da_coluna`.
@@ -57,8 +57,9 @@ RPCs no contrato (`src/lib/rpc-contrato.ts`): `ler_relatorio_do_painel`,
 - A tela pede só a página à vista e guarda as páginas lidas **em memória** (nunca no disco: a aba
   Aprovados tem dado pessoal); o cache cai quando o banco responde com outra data de cálculo, no
   Sincronizar (recalcula o relatório aberto) e na troca de fonte. "Sincronizado em" é a data do
-  cálculo. O download pede todas as linhas (CSV com `;`, BOM e células protegidas; XLSX com o
-  gerador de `src/lib/classificacao/exportacao.ts` e `fflate` sob demanda).
+  cálculo. O download pede todas as linhas ("Exportar em Excel": XLSX com o gerador de
+  `src/lib/classificacao/exportacao.ts` e `fflate` sob demanda; "Salvar em PDF":
+  `src/lib/base/exportacao-da-tabela.ts`).
 - **Montar relatório** (16/11/2026; antes no menu da conta): o botão no topo abre o montador da
   Visão geral (`src/modulos/visao-geral/montador-de-relatorio.tsx`, [[modulo-visao-geral]]) com
   todos os editais da área, sem os filtros da Visão geral (`recorteDaAreaInteira`, em

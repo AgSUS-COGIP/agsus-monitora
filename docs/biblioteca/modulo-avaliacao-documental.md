@@ -54,7 +54,7 @@ todos os editais da área".
   vencida: reabra a ficha"; "Em uso por … desde HH:MM" só para leitura; a coordenação libera reserva
   presa com motivo.
 - As listas são a TabelaInfinita (`src/ui/`): colunas por etapa, ordem por coluna, busca, "N de M",
-  carregamento contínuo e Exportar CSV (`csvDaFila`, csv-security).
+  carregamento contínuo e "Exportar em Excel" / "Salvar em PDF" no rodapé (`tabelaDaFila`).
 
 ## Ficha (F4, `ficha/`)
 

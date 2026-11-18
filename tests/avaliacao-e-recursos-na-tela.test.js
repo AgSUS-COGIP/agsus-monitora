@@ -5616,7 +5616,7 @@ bloco("modulos/avaliacao-documental-fila", () => {
       ).not.toBeNull();
     });
 
-    it("ordena pela coluna, mostra N de M e exporta o CSV da aba na ordem da tela", async () => {
+    it("ordena pela coluna, mostra N de M e exporta a planilha da aba na ordem da tela", async () => {
       const supabase = supabaseFalso();
       await montar(supabase);
       const ordenar = (nome) =>
@@ -5657,14 +5657,25 @@ bloco("modulos/avaliacao-documental-fila", () => {
         .spyOn(HTMLAnchorElement.prototype, "click")
         .mockImplementation(() => {});
       try {
-        await clicar(secao.querySelector("[data-acao='exportar-csv']"));
+        await clicar(secao.querySelector("[data-acao='exportar-excel']"));
+        await esperar();
         expect(blobs).toHaveLength(1);
-        const texto = await blobs[0].text();
-        const [cabeca, primeira] = texto.replace(/^\uFEFF/, "").split("\r\n");
-        expect(cabeca).toBe(
-          "Vaga;Posição;Código;Nome;Nota declarada (ART);Situação;Responsável;Reserva",
-        );
-        expect(primeira.split(";")[2]).toBe("7004");
+        // A planilha (.xlsx sem compressão): o cabeçalho da aba e as linhas na ordem da tela.
+        const texto = new TextDecoder().decode(await blobs[0].arrayBuffer());
+        const celulas = [
+          ...texto.matchAll(/<t xml:space="preserve">([^<]*)</g),
+        ].map((m) => m[1]);
+        expect(celulas.slice(0, 8)).toEqual([
+          "Vaga",
+          "Posição",
+          "Código",
+          "Nome",
+          "Nota declarada (ART)",
+          "Situação",
+          "Responsável",
+          "Reserva",
+        ]);
+        expect(texto.indexOf(">7004<")).toBeLessThan(texto.indexOf(">7003<"));
       } finally {
         clique.mockRestore();
         URL.createObjectURL = original.criar;
@@ -6770,8 +6781,8 @@ bloco("modulos/avaliacao-documental-fila", () => {
         p_sentido: "asc",
         p_apos: null,
       });
-      // O CSV lê o recorte inteiro em páginas maiores.
-      await clicar(secao.querySelector("[data-acao='exportar-csv']"));
+      // A exportação lê o recorte inteiro em páginas maiores.
+      await clicar(secao.querySelector("[data-acao='exportar-excel']"));
       await esperar();
       expect(pedidos.at(-1)).toMatchObject({ p_ordem: "nome", p_limite: 2000 });
     });

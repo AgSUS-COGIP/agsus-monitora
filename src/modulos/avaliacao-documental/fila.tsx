@@ -1,4 +1,5 @@
 import type { Dispatch, ReactNode, SetStateAction } from "react";
+import type { FormatoDaExportacao } from "../../lib/base/exportacao-da-tabela.ts";
 import {
   memo,
   useCallback,
@@ -1023,7 +1024,8 @@ interface TabelaDaFilaProps {
   recorte: string;
   /** Aba Eliminados no banco: as páginas, o CSV do recorte e o "Tentar novamente". */
   servidor?: TabelaNoServidor | null;
-  aoExportar?: (() => void) | null;
+  /** A exportação da aba que vem do banco (Eliminados). */
+  aoExportar?: ((formato: FormatoDaExportacao) => unknown) | null;
   aoTentarDeNovo?: (() => void) | null;
 }
 
@@ -1175,10 +1177,17 @@ const TabelaDaFila = memo(function TabelaDaFila({
       grupo={grupo as GrupoDaTabela}
       servidor={servidor}
       chaveDoRecorte={recorte}
-      aoExportar={() =>
-        aoExportar ? aoExportar() : fila.exportarCsv(ordenadas, etapa)
-      }
-      exportarDesativado={!servidor && !ordenadas.length}
+      exportacao={{
+        excel: () =>
+          aoExportar
+            ? aoExportar("excel")
+            : fila.exportar("excel", ordenadas, etapa),
+        pdf: () =>
+          aoExportar
+            ? aoExportar("pdf")
+            : fila.exportar("pdf", ordenadas, etapa),
+        desativado: !servidor && !ordenadas.length,
+      }}
       aoMostrar={aoMostrar}
       linha={linha}
     />
@@ -1523,7 +1532,8 @@ export function Fila({ e, fila }: FilaProps) {
     { ativo: noBanco },
   );
   const exportarDoBanco = useCallback(
-    () => void fila.exportarEliminados(filtroNoBanco, ordem),
+    (formato: FormatoDaExportacao) =>
+      fila.exportarEliminados(formato, filtroNoBanco, ordem),
     [fila, filtroNoBanco, ordem],
   );
   const precisaDeFora =

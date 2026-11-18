@@ -6,6 +6,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import { BotoesDeExportacao } from "../../ui/botoes-de-exportacao.tsx";
 import type { ReactNode } from "react";
 import {
   Abas,
@@ -387,22 +388,12 @@ function Relatorio({ estado }: { estado: EstadoDaTelaDePaineis }) {
     >
       <CardDaLista rotulo={definicao.rotulo}>
         <div className="ui-barra-da-lista">
-          <button
-            type="button"
-            className="btn secondary small"
-            onClick={() => void estado.baixar("CSV")}
-            disabled={!carregado || e.baixando !== null}
-          >
-            {e.baixando === "CSV" ? "Gerando CSV…" : "Baixar CSV"}
-          </button>
-          <button
-            type="button"
-            className="btn secondary small"
-            onClick={() => void estado.baixar("XLSX")}
-            disabled={!carregado || e.baixando !== null}
-          >
-            {e.baixando === "XLSX" ? "Gerando XLSX…" : "Baixar XLSX"}
-          </button>
+          <BotoesDeExportacao
+            pequenos
+            desativado={!carregado || e.baixando !== null}
+            excel={() => estado.baixar("XLSX")}
+            pdf={() => estado.baixar("PDF")}
+          />
           <button
             type="button"
             className="btn secondary small"
