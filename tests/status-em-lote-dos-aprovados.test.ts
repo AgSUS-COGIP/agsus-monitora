@@ -8,7 +8,7 @@ import {
   resumoDoStatusAtual,
   statusDoLotePara,
   textoDaConfirmacaoDoLote,
-} from "../src/lib/status-em-lote-dos-aprovados.ts";
+} from "../src/lib/aprovados/status-em-lote-dos-aprovados.ts";
 
 /*
   Status em lote na aba Aprovados (11/11/2026): quem muda e quem fica de fora

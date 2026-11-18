@@ -4,7 +4,7 @@ import type {
   SnapshotDasEntrevistas,
   EntrevistaDoPainel,
 } from "./tipos-do-painel.ts";
-import type { ItemDaAgenda } from "../../lib/painel-de-entrevistas.ts";
+import type { ItemDaAgenda } from "../../lib/entrevistas/painel-de-entrevistas.ts";
 /*
   Estado da tela de Entrevistas (`#page-entrevistas`, visão "Resultados"),
   fora do React: o que o banco devolve para a área atual do app, a entrevista
@@ -15,7 +15,7 @@ import type { ItemDaAgenda } from "../../lib/painel-de-entrevistas.ts";
   `entrevistas` >= leitor), área e o recorte da coordenação
   (supabase/migrations/20260929235000_entrevistas.sql).
 
-  Cópia guardada ("stale-while-revalidate", src/lib/cache-de-payload.ts, a
+  Cópia guardada ("stale-while-revalidate", src/lib/carga/cache-de-payload.ts, a
   mesma do painel de análises e da lista de aprovados): na primeira carga da
   área, a cópia do navegador (do mesmo usuário e da mesma publicação) aparece
   na hora e a versão nova é pedida por trás; a tela só redesenha se ela mudou.
@@ -26,28 +26,28 @@ import type { ItemDaAgenda } from "../../lib/painel-de-entrevistas.ts";
   permissão (42501), `semAcesso`: a tela diz "Sem acesso às Entrevistas".
   Sessão vencida (o cliente Supabase do app sem sessão): `semSessao`. Outro
   usuário entrou na mesma aba: tudo volta ao início. Falha de rede usa a
-  mensagem de src/lib/falha-de-rede.ts.
+  mensagem de src/lib/carga/falha-de-rede.ts.
 */
-import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.ts";
+import { hojeEmBrasilia } from "../../lib/cronograma/cronograma-do-edital.ts";
 import {
   criarCacheDePayload,
   ehErroDeAcesso,
   respostaInalterada,
   revalidarPayload,
   versaoDoPacote,
-} from "../../lib/cache-de-payload";
+} from "../../lib/carga/cache-de-payload";
 import {
   comTempoLimite,
   ehFalhaDeConexao,
   mensagemDeFalha,
-} from "../../lib/falha-de-rede";
+} from "../../lib/carga/falha-de-rede";
 import {
   csvDasEntrevistas,
   normalizarPayload,
   normalizarAgendaDoPainel,
   PAINEL_DE_ENTREVISTAS,
   payloadMudou,
-} from "../../lib/entrevistas-do-painel.ts";
+} from "../../lib/entrevistas/entrevistas-do-painel.ts";
 import { armazenamentoDePayload } from "../../modules/cache-de-payload-indexeddb.ts";
 import { avaliarMarcosDasEntrevistas } from "./marcos.ts";
 

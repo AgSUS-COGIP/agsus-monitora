@@ -1,4 +1,4 @@
-import { formatNumberBR } from "../../../lib/formatters";
+import { formatNumberBR } from "../../../lib/base/formatters";
 import {
   itemCompleto,
   titulosDoNivel,

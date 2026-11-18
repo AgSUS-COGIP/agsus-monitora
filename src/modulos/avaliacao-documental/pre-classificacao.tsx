@@ -10,7 +10,7 @@ import {
 import type { ReactNode, RefObject } from "react";
 import { usarFiltrosNaUrl } from "../../app/usar-filtros-na-url.ts";
 import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import type { RecorteDaPre } from "../../lib/avaliacao-documental/paginas-da-pre-classificacao.ts";
 import { ordinal } from "../../lib/classificacao/numeros.ts";
 import {
@@ -33,12 +33,12 @@ import {
   textoDoAviso,
   textoDoLote,
 } from "../../lib/avaliacao-documental/tela-da-pre-classificacao.ts";
-import { rotuloDaVersaoNaLista } from "../../lib/nome-da-versao.ts";
+import { rotuloDaVersaoNaLista } from "../../lib/base/nome-da-versao.ts";
 import type { ConfiguracaoDaTriagem } from "../../lib/triagem/regra-da-triagem.ts";
 import { ResumoDaRegraDaTriagem } from "../triagem/resumo-da-regra.tsx";
 import { usarRegraDaTriagem } from "../triagem/usar-regra-da-triagem.ts";
 import { abrirRegrasDoEdital } from "../regras-do-edital/abrir.ts";
-import { ESPERA_DO_PEDIDO_MIN } from "../../lib/robos-de-carga.ts";
+import { ESPERA_DO_PEDIDO_MIN } from "../../lib/automacao/robos-de-carga.ts";
 import {
   Aviso,
   CabecalhoDaTela,

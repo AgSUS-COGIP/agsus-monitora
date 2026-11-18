@@ -13,17 +13,17 @@ o [[modulo-mapa-de-projetos]], e o que a migração para React tirou do legado (
 
 - Painel, lista lateral, controles, legenda, tela cheia, retorno ao Brasil e o hook `usarUltimo`
   estão em TypeScript. Contratos em `tipos-do-painel.ts`; formas e cores em
-  `src/lib/mapa-saude-indigena/formas.ts`. O painel preserva o tipo das camadas de cada mapa.
+  `src/lib/mapas/mapa-saude-indigena/formas.ts`. O painel preserva o tipo das camadas de cada mapa.
 - A legenda das Terras Indígenas descreve a ponte opcional com a camada existente: sem ela, os
   controles ficam desabilitados; os ouvintes são retirados ao desmontar.
 
 ## Telas e regras
 
 - As telas principal, nacional e por DSEI estão em TSX. Contagens, bolhas, CASAIs, unidades,
-  vínculos, resumos e enquadramentos estão em `src/lib/mapa-saude-indigena/chaves.ts`,
+  vínculos, resumos e enquadramentos estão em `src/lib/mapas/mapa-saude-indigena/chaves.ts`,
   `mapa-nacional.ts` e `mapa-do-dsei.ts`.
 - Contratos de distritos, polos, registros, CASAIs, Terras Indígenas e callbacks:
-  `src/lib/mapa-saude-indigena/tipos.ts`.
+  `src/lib/mapas/mapa-saude-indigena/tipos.ts`.
 - `dados-do-mapa.ts` valida os dados externos para a exibição: ignora registros inválidos, recusa
   posições não escalares e desabilita o enquadramento de terras com caixa inválida. Polo sem
   posição válida não vira ponto na coordenada zero.
@@ -40,7 +40,7 @@ o [[modulo-mapa-de-projetos]], e o que a migração para React tirou do legado (
 
 ## SIGEPSI como fonte dos pontos
 
-- `src/lib/mapa-saude-indigena/localizacoes-do-sigepsi.ts` transforma a resposta de `/api/dseis` em
+- `src/lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts` transforma a resposta de `/api/dseis` em
   DSEIs, sedes, polos, CASAIs, unidades e CASAIs nacionais (`casaisNacionais`); `localizacoes.ts`
   (no módulo) faz o pedido. Do banco entram só nome, população e UFs administrativas do `lmap`.
 - Sem o SIGEPSI não há mapa: a Visão geral mostra o erro com "Tentar novamente", sem plano B.

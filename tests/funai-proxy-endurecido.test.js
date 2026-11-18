@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { origemDeTerceiro } from "../src/lib/origem-da-requisicao.ts";
+import { origemDeTerceiro } from "../src/lib/seguranca/origem-da-requisicao.ts";
 
 function req(headers) {
   return { headers };

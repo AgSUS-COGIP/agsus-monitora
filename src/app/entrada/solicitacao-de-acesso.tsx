@@ -7,7 +7,7 @@ import {
 } from "react";
 import { Abas, Aviso, Campo, classes } from "../../ui/index.ts";
 import { Mascote } from "../../modulos/aya/mascote/mascote.tsx";
-import type { EstadoDaMascote } from "../../lib/estado-da-aya.ts";
+import type { EstadoDaMascote } from "../../lib/aya/estado-da-aya.ts";
 import {
   AREAS_DA_SOLICITACAO,
   CARGO_OUTRO,
@@ -23,7 +23,7 @@ import {
   resumoDoPedido,
   SITUACOES,
   type CodigoDaArea,
-} from "../../lib/solicitacao-de-acesso.ts";
+} from "../../lib/acessos/solicitacao-de-acesso.ts";
 import {
   IconeDeEscudo,
   IconeDoYeende,
@@ -45,7 +45,7 @@ import {
   Indígena · SEDE) com os campos da área, o pedido enviado com Editar e
   Cancelar, a recusa com o motivo e a conta desativada com "Pedir
   reativação". O estado é de pedido-de-acesso.ts; as listas e textos, de
-  src/lib/solicitacao-de-acesso.ts. O que a tela explica, a Aya diz no balão.
+  src/lib/acessos/solicitacao-de-acesso.ts. O que a tela explica, a Aya diz no balão.
 
   Ids de antes (#accessRequestCard, #accessReqEmail, #accessReqNome,
   #accessReqJustificativa…) continuam: testes e tours os leem.

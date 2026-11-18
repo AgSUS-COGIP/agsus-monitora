@@ -24,7 +24,7 @@ tabela.tsx      base operacional consolidada (TabelaInfinita)
 selecao.css     só o que é desta tela (tokens); o resto vem de src/ui/
 ```
 
-Regras puras em `src/lib/selecao-do-painel.ts`. A carga: `src/lib/selecao-da-planilha.ts` e
+Regras puras em `src/lib/selecao/selecao-do-painel.ts`. A carga: `src/lib/selecao/selecao-da-planilha.ts` e
 `scripts/sincronizar-selecao.mjs` (`npm run sync:selecao`, diária pelo GitHub Actions; banco em
 `supabase/migrations/20261001090000_selecao.sql`; operação em
 [sincronizacao-das-planilhas.md](../sincronizacao-das-planilhas.md)). Explicações das regras para a

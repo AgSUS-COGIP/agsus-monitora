@@ -3,8 +3,8 @@ import type {
   RegistroDoDsei,
   TerraDoMapa,
   LinhaDaTerra,
-} from "../../lib/mapa-saude-indigena/tipos.ts";
-import { terrasDoMapa } from "../../lib/mapa-saude-indigena/dados-do-mapa.ts";
+} from "../../lib/mapas/mapa-saude-indigena/tipos.ts";
+import { terrasDoMapa } from "../../lib/mapas/mapa-saude-indigena/dados-do-mapa.ts";
 import type { MapaDoPainel } from "./tipos-do-painel.ts";
 import type {
   CamadaDoMapa,
@@ -15,13 +15,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   agruparPorProximidadeNaTela,
   posicoesSpiderfy,
-} from "../../lib/mapa-render.ts";
-import { formatarNumero } from "../../lib/mapa-saude-indigena/chaves.ts";
+} from "../../lib/mapas/mapa-render.ts";
+import { formatarNumero } from "../../lib/mapas/mapa-saude-indigena/chaves.ts";
 import {
   CORES_DO_MAPA,
   ESTILO_DA_LINHA_DE_VINCULO,
   TEXTO_DA_LINHA_DE_VINCULO,
-} from "../../lib/mapa-saude-indigena/formas.ts";
+} from "../../lib/mapas/mapa-saude-indigena/formas.ts";
 import {
   classificarRegistros,
   dicaDoRegistro,
@@ -36,7 +36,7 @@ import {
   textoDosVinculosExternos,
   tiposDoTerritorio,
   visiveis,
-} from "../../lib/mapa-saude-indigena/mapa-do-dsei.ts";
+} from "../../lib/mapas/mapa-saude-indigena/mapa-do-dsei.ts";
 import { EstadoVazio, classes } from "../../ui/index.ts";
 import { Forma, LegendaDoDsei } from "./legenda.tsx";
 import {

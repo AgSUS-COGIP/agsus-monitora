@@ -4,8 +4,8 @@ import {
   ordenarPorClassificacao,
   normalizarQuadro,
   csvDaConvocacao,
-} from "../../src/lib/lista-convocacao-rules.ts";
-import { modeloEmBranco } from "../../src/lib/modelo-de-convocacao.ts";
+} from "../../src/lib/aprovados/lista-convocacao-rules.ts";
+import { modeloEmBranco } from "../../src/lib/aprovados/carta-de-convocacao/modelo-de-convocacao.ts";
 import { AbaConvocacao } from "../../src/modulos/aprovados/aba-convocacao.tsx";
 import type {
   EstadoDaAbaDaConvocacao,

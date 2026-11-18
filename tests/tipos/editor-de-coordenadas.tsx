@@ -5,11 +5,11 @@ import type {
 import type {
   FiltroDeGravidade,
   PontoDoEditor,
-} from "../../src/lib/tipos-do-editor-de-coordenadas.ts";
+} from "../../src/lib/mapas/tipos-do-editor-de-coordenadas.ts";
 import {
   filaDoEditor,
   correcaoDesfazivel,
-} from "../../src/lib/editor-de-coordenadas.ts";
+} from "../../src/lib/mapas/editor-de-coordenadas.ts";
 import { FONTE_DE_PROJETOS } from "../../src/modulos/mapa-de-projetos/editor-de-coordenadas.tsx";
 import type { PontoEditavelDoProjeto } from "../../src/modulos/mapa-de-projetos/tipos.ts";
 import { SugestoesDoPonto } from "../../src/modulos/editor-de-coordenadas/sugestoes-do-ponto.tsx";

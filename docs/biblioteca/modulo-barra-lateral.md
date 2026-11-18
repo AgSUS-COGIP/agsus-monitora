@@ -28,11 +28,11 @@ alimenta por `buildNav`/`setActiveNav`.
 
 ### Regras
 
-- Regras puras em `src/lib/menu-lateral.ts`: catálogo dos grupos e abas, árvore por páginas
+- Regras puras em `src/lib/navegacao/menu-lateral.ts`: catálogo dos grupos e abas, árvore por páginas
   permitidas, áreas do usuário, blocos da área (Acompanhamento e Processo seletivo,
   `BLOCOS_DA_AREA`/`blocoDaAba`), manutenção, beta, item ativo (considera a área atual), troca de
   área, áreas abertas por padrão, transbordo e posicionamento do flutuante. **Área ou página nova
-  entra lá.** Eventos entre o legado e a barra: `src/lib/eventos-da-barra-lateral.ts`.
+  entra lá.** Eventos entre o legado e a barra: `src/lib/navegacao/eventos-da-barra-lateral.ts`.
 - `abasDoCatalogo` recebe `unknown`, ignora linhas sem identificação, rótulo ou view textuais e
   áreas sem identificação textual; sem abas válidas devolve `null` e o app usa o catálogo do código.
   Ordens aceitam números finitos ou texto numérico. Não substitui as permissões: a navegação decide
@@ -66,7 +66,7 @@ alimenta por `buildNav`/`setActiveNav`.
 
 Busca nos editais do monitoramento, filha da raiz React. Pasta `src/componentes/busca-global/`
 (`busca-global.tsx`: painel, atalhos, seleção por teclado e mouse, realce e montagem; contratos em
-`tipos.ts`); regras puras em `src/lib/busca-global.ts`.
+`tipos.ts`); regras puras em `src/lib/navegacao/busca-global.ts`.
 
 - Ctrl+K ou Cmd+K abre a busca com sessão conectada (sem botão no topo: a lupa saiu a pedido em
   17/11/2026). Pesquisa os nove campos do monitoramento, em todas as áreas, sem diferenciar maiúsculas e acentos; mantém a ordem da fonte e para em 12.
@@ -80,10 +80,10 @@ Busca nos editais do monitoramento, filha da raiz React. Pasta `src/componentes/
 `src/componentes/dados-do-monitoramento.ts`, `tipos-do-monitoramento.ts` e `usar-area-atual.ts`
 declaram o snapshot compartilhado (linhas de `TB_MONITORAMENTO_INDIGENA` e catálogo `TD_UNIDADE`),
 sua assinatura e o recorte por área (`linhasDaArea`, `soDosEditais`). Listas só leitura. Carga sob
-demanda: só as páginas de `src/lib/telas-com-linhas.ts` (via `src/app/pagina-aberta.ts`) ou
+demanda: só as páginas de `src/lib/navegacao/telas-com-linhas.ts` (via `src/app/pagina-aberta.ts`) ou
 `usarLinhasDoMonitoramento` fazem a carga lê-las.
 
-- A publicação valida com `src/lib/linhas-do-monitoramento.ts`: aceita registros, ids numéricos
+- A publicação valida com `src/lib/visao-geral/linhas-do-monitoramento.ts`: aceita registros, ids numéricos
   finitos ou texto não vazio, campos textuais conhecidos como texto ou ausentes. Nulos viram
   ausentes; registros malformados são descartados; colunas extras ficam `unknown`. Não substitui os
   contratos das consultas de cada módulo.

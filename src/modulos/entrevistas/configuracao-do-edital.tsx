@@ -3,10 +3,10 @@ import {
   completarMembrosPelaComposicao,
   MODOS_DE_LANCAMENTO,
   novoAvaliador,
-} from "../../lib/conducao-de-entrevista.ts";
-import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
-import type { PendenciaDaConfiguracao } from "../../lib/passos-do-preparar.ts";
-import { textoDaPontuacao } from "../../lib/roteiro-de-entrevista.ts";
+} from "../../lib/entrevistas/conducao-de-entrevista.ts";
+import { rotuloDaVersao } from "../../lib/base/nome-da-versao.ts";
+import type { PendenciaDaConfiguracao } from "../../lib/entrevistas/passos-do-preparar.ts";
+import { textoDaPontuacao } from "../../lib/entrevistas/roteiro-de-entrevista.ts";
 import { Aviso, Campo, Segmentado } from "../../ui/index.ts";
 import { CompetenciasDoMembro } from "./competencias-do-membro.tsx";
 import type { CompetenciaDaFicha } from "./tipos-da-ficha.ts";

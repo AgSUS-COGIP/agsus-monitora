@@ -9,7 +9,7 @@ import type { OpcoesDaMoldura } from "../../src/app/moldura.ts";
 import {
   EVENTO_BARRA_ALTERNADA,
   EVENTO_TEMA_ALTERADO,
-} from "../../src/lib/eventos-da-barra-lateral.ts";
+} from "../../src/lib/navegacao/eventos-da-barra-lateral.ts";
 import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,

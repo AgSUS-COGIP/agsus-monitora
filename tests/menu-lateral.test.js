@@ -22,7 +22,7 @@ import {
   posicaoDoPainelFlutuante,
   proximoFlutuante,
   recortarArvorePorArea,
-} from "../src/lib/menu-lateral.ts";
+} from "../src/lib/navegacao/menu-lateral.ts";
 import { SECOES } from "../src/modulos/configuracoes/secoes.ts";
 import { NOMES_DE_ICONES } from "../src/modules/icones.ts";
 

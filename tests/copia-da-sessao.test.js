@@ -10,7 +10,7 @@ import {
   montarCopia,
   partesQueMudaram,
   respostasDasConsultas,
-} from "../src/lib/copia-da-sessao";
+} from "../src/lib/sessao/copia-da-sessao";
 import {
   ESQUEMA_DA_COPIA,
   VERSAO_DA_COPIA,

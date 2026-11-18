@@ -10,9 +10,9 @@ import {
   situacoesNaFila,
   type CandidatoDoResumo,
   type ContagemDoResumo,
-} from "../../src/lib/resumo-por-cargo-e-status.ts";
-import { normalizarModelo } from "../../src/lib/modelo-de-convocacao.ts";
-import { quadroVazio } from "../../src/lib/lista-convocacao-rules.ts";
+} from "../../src/lib/aprovados/exportacao/resumo-por-cargo-e-status.ts";
+import { normalizarModelo } from "../../src/lib/aprovados/carta-de-convocacao/modelo-de-convocacao.ts";
+import { quadroVazio } from "../../src/lib/aprovados/lista-convocacao-rules.ts";
 
 /*
   Dados fictícios. A fixture grande reproduz os SUBTOTAIS da imagem de

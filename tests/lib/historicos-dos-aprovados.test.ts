@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { cartasDoHistorico } from "../../src/lib/dados-da-carta.ts";
-import { publicacaoDoEdital } from "../../src/lib/dados-do-historico-de-publicacoes.ts";
+import { cartasDoHistorico } from "../../src/lib/aprovados/carta-de-convocacao/dados-da-carta.ts";
+import { publicacaoDoEdital } from "../../src/lib/aprovados/dados-do-historico-de-publicacoes.ts";
 import { criarEstadoDaCarta } from "../../src/modulos/aprovados/carta-de-convocacao/estado.ts";
 import { definido } from "../definido.ts";
 

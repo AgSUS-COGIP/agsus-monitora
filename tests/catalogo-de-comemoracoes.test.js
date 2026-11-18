@@ -28,13 +28,13 @@ import {
   reservarEfeitoDoDia,
   CHAVE_DO_EFEITO_DO_DIA,
   serializarConfiguracao,
-} from "../src/lib/catalogo-de-comemoracoes.ts";
+} from "../src/lib/comemoracao/catalogo-de-comemoracoes.ts";
 import {
   buildChanges,
   CAMPOS_DAS_SECOES,
   errosDasSecoes,
   normalizarValoresCarregados,
-} from "../src/lib/publicacao-de-configuracoes.ts";
+} from "../src/lib/configuracoes/publicacao-de-configuracoes.ts";
 
 /*
   O catálogo e a configuração das comemorações: os marcos que o código já
@@ -68,7 +68,7 @@ describe("catálogo de marcos", () => {
     // O id aparece no arquivo que dispara a comemoração.
     for (const marco of CATALOGO_DE_MARCOS) {
       const onde = readFileSync(marco.onde, "utf8");
-      const lib = readFileSync("src/lib/comemoracao.ts", "utf8");
+      const lib = readFileSync("src/lib/comemoracao/comemoracao.ts", "utf8");
       expect(
         onde.includes(`"${marco.id}"`) || lib.includes(`"${marco.id}"`),
       ).toBe(true);
@@ -417,7 +417,7 @@ describe("publicação com histórico (mesma das outras seções)", () => {
 describe("preferência pessoal compartilhada com a mascote", () => {
   it('a chave e o formato que a arara lê: "1" = desligadas', async () => {
     const { CHAVE_COMEMORACOES_PESSOAIS } =
-      await import("../src/lib/preferencia-de-comemoracoes.ts");
+      await import("../src/lib/comemoracao/preferencia-de-comemoracoes.ts");
     expect(CHAVE_COMEMORACOES_PESSOAIS).toBe(
       "agsus_monitora_comemoracoes_desligadas",
     );

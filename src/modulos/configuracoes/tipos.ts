@@ -13,12 +13,12 @@ import type {
   RetratoDasConfiguracoesNoBanco,
   ValoresDasConfiguracoes,
   VersaoDoHistorico,
-} from "../../lib/publicacao-de-configuracoes.ts";
+} from "../../lib/configuracoes/publicacao-de-configuracoes.ts";
 import type {
   LinhaDoPainel,
   PainelExterno,
   RascunhoDosPaineis,
-} from "../../lib/paineis-externos-das-configuracoes.ts";
+} from "../../lib/configuracoes/paineis-externos-das-configuracoes.ts";
 import type { criarEstadoDasConfiguracoes } from "./estado.ts";
 import type { criarImagensDaAparencia } from "./imagens.ts";
 
@@ -36,7 +36,7 @@ export type {
   TipoDoCampo,
   ValoresDasConfiguracoes,
   VersaoDoHistorico,
-} from "../../lib/publicacao-de-configuracoes.ts";
+} from "../../lib/configuracoes/publicacao-de-configuracoes.ts";
 export type {
   AlteracoesDoPainel,
   CampoEditavelDoPainel,
@@ -47,17 +47,17 @@ export type {
   ResumoDosPaineis,
   SituacaoDoPainel,
   ValorDoCampoDoPainel,
-} from "../../lib/paineis-externos-das-configuracoes.ts";
-export type { MarcaDoAcesso } from "../../lib/access-branding.ts";
+} from "../../lib/configuracoes/paineis-externos-das-configuracoes.ts";
+export type { MarcaDoAcesso } from "../../lib/entrada/access-branding.ts";
 export type {
   CampoDaMarcaGuardada,
   MarcaGuardada,
-} from "../../lib/access-branding-cache.ts";
-export type { ArquivoDeImagem } from "../../lib/access-background-storage.ts";
+} from "../../lib/entrada/access-branding-cache.ts";
+export type { ArquivoDeImagem } from "../../lib/entrada/access-background-storage.ts";
 export type {
   TipoDoAviso,
   TomDoAviso,
-} from "../../lib/apresentacao-das-configuracoes.ts";
+} from "../../lib/configuracoes/apresentacao-das-configuracoes.ts";
 
 // ── Supabase ────────────────────────────────────────────────────────────────
 

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { calcularKpis } from "../src/lib/analises-curriculares.ts";
+import { calcularKpis } from "../src/lib/analises/analises-curriculares.ts";
 import {
   aptosEEliminados,
   formatarTaxa,
-} from "../src/lib/selecao-do-painel.ts";
+} from "../src/lib/selecao/selecao-do-painel.ts";
 import type { VagaDaSelecao } from "../src/modulos/selecao/tipos.ts";
 
 /*

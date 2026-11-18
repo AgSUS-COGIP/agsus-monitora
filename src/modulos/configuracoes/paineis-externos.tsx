@@ -4,7 +4,7 @@ import {
   resumoDosPaineis,
   SELO_DA_SITUACAO,
   situacaoDoPainel,
-} from "../../lib/paineis-externos-das-configuracoes.ts";
+} from "../../lib/configuracoes/paineis-externos-das-configuracoes.ts";
 import { EstadoVazio, Selo } from "../../ui/index.ts";
 import { Previa } from "./partes.tsx";
 import type {

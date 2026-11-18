@@ -4,11 +4,11 @@ import type {
   ItemDaFila,
   NivelDeGravidade,
   FiltroDeGravidade,
-} from "../../lib/tipos-do-editor-de-coordenadas.ts";
+} from "../../lib/mapas/tipos-do-editor-de-coordenadas.ts";
 import {
   GRAVIDADES,
   textoDePendentes,
-} from "../../lib/editor-de-coordenadas.ts";
+} from "../../lib/mapas/editor-de-coordenadas.ts";
 import { Aviso, Carregando, EstadoVazio, Selo } from "../../ui/index.ts";
 
 /* Quantos itens a lista desenha de uma vez (a visão nacional tem milhares). */

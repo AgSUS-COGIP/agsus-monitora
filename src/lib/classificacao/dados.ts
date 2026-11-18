@@ -4,7 +4,7 @@ import type {
   ResultadoDoMotor,
   TipoDeLista,
 } from "./tipos-do-resultado.ts";
-import { objetoDosRecursos } from "../dados-dos-recursos.ts";
+import { objetoDosRecursos } from "../recursos/dados-dos-recursos.ts";
 
 /*
   O que a tela de Classificação precisa em volta do motor, sem DOM:

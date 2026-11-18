@@ -10,9 +10,9 @@
   há alteração não salva (`confirmarSaida`).
 */
 
-import { exigirSessao } from "../../lib/sessao";
-import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede";
-import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
+import { exigirSessao } from "../../lib/sessao/sessao";
+import { comTempoLimite, mensagemDeFalha } from "../../lib/carga/falha-de-rede";
+import { ehConflitoDeVersao } from "../../lib/base/conflito-de-versao.ts";
 import {
   alteracoesDoRascunho,
   avisoDoConflito,
@@ -20,14 +20,17 @@ import {
   rebasearRascunho,
   registrarNoRascunho,
   separarRascunhoDaPessoa,
-} from "../../lib/matriz-de-acessos.ts";
-import { isAdminGlobal, isOwnAccessProfile } from "../../lib/access-roles.ts";
+} from "../../lib/acessos/matriz-de-acessos.ts";
+import {
+  isAdminGlobal,
+  isOwnAccessProfile,
+} from "../../lib/acessos/access-roles.ts";
 import {
   argumentosDaReativacao,
   contasDaResposta,
   mensagemDaRecusaDeReativacao,
   mensagemDeContaReativada,
-} from "../../lib/contas-desativadas.ts";
+} from "../../lib/acessos/contas-desativadas.ts";
 import type {
   ContaDesativada,
   ContextoRecebido,
@@ -37,7 +40,7 @@ import type {
   GrupoParaSalvar,
   UsuarioDaMatriz,
   ValoresDaReativacao,
-} from "../../lib/tipos-dos-acessos.ts";
+} from "../../lib/acessos/tipos-dos-acessos.ts";
 import type {
   ArgumentosDaRecusa,
   ContaDesativadaDosAcessos,
@@ -574,7 +577,7 @@ export function criarEstadoDosAcessos({
 
   /**
    * Recusa com o motivo da lista (`argumentos` de validarRecusa, em
-   * src/lib/solicitacao-de-acesso.ts). Devolve { ok, erro }.
+   * src/lib/acessos/solicitacao-de-acesso.ts). Devolve { ok, erro }.
    */
   function recusar(
     solicitacao: PedidoPendente,

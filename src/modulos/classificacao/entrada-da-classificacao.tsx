@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { formatNumberBR } from "../../lib/formatters";
-import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
+import { formatNumberBR } from "../../lib/base/formatters";
+import { rotuloDaVersao } from "../../lib/base/nome-da-versao.ts";
 import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.tsx";
 import { Selo } from "../../ui/index.ts";
 import type { EditalDaClassificacao } from "./tipos-do-estado.ts";

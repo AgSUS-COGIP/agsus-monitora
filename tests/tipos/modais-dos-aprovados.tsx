@@ -11,7 +11,7 @@ import type {
   PropsDoModalSubJudice,
   PropsDoModalDeStatus,
 } from "../../src/modulos/aprovados/tipos-dos-modais.ts";
-import type { CartaDoHistorico } from "../../src/lib/tipos-da-carta.ts";
+import type { CartaDoHistorico } from "../../src/lib/aprovados/carta-de-convocacao/tipos-da-carta.ts";
 
 const estado = criarEstadoDaListaDeAprovados();
 const candidato = {

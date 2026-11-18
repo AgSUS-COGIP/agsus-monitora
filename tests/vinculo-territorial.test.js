@@ -6,13 +6,13 @@ import {
   VINCULO_NORMAL,
   classificarVinculoTerritorial,
   siglaDaUf,
-} from "../src/lib/uf-ibge.ts";
+} from "../src/lib/mapas/uf-ibge.ts";
 import {
   DESENHO_DAS_FORMAS,
   ESTILO_DA_LINHA_DE_VINCULO as ESTILO_DA_LINHA,
   TEXTO_DA_LINHA_DE_VINCULO as TOOLTIP_DA_LINHA,
   formaDoTipo,
-} from "../src/lib/mapa-saude-indigena/formas.ts";
+} from "../src/lib/mapas/mapa-saude-indigena/formas.ts";
 import {
   classificarRegistros,
   dicaDoRegistro,
@@ -20,11 +20,11 @@ import {
   registrosExternos,
   registrosLocais,
   textoDosVinculosExternos as textoDoChip,
-} from "../src/lib/mapa-saude-indigena/mapa-do-dsei.ts";
+} from "../src/lib/mapas/mapa-saude-indigena/mapa-do-dsei.ts";
 
 /*
   As regras do vínculo territorial no mapa do DSEI (src/modulos/mapa-saude-indigena/,
-  regras em src/lib/mapa-saude-indigena/). A dica é `{ titulo, linhas }`, em
+  regras em src/lib/mapas/mapa-saude-indigena/). A dica é `{ titulo, linhas }`, em
   nós de texto; aqui, lida como uma linha só.
 */
 const tooltipDoRegistro = (registro, dsei) => {

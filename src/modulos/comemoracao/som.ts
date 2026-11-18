@@ -1,5 +1,9 @@
-import { guardarSom, podeTocarSom, somLigado } from "../../lib/fogos-cena.ts";
-import type { SomDoEstouro } from "../../lib/fogos-cena.ts";
+import {
+  guardarSom,
+  podeTocarSom,
+  somLigado,
+} from "../../lib/comemoracao/fogos-cena.ts";
+import type { SomDoEstouro } from "../../lib/comemoracao/fogos-cena.ts";
 import type { JanelaDaComemoracao } from "./desenho.ts";
 
 /*

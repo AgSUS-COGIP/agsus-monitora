@@ -14,7 +14,7 @@ function arquivosJs(raiz) {
 
 /*
   A regra que este arquivo protege: existe **um** cliente Supabase de verdade em
-  todo o frontend, criado em `src/lib/supabaseClient.ts`; tudo mais o pede por
+  todo o frontend, criado em `src/lib/sessao/supabaseClient.ts`; tudo mais o pede por
   `getSupabaseClient()` (não há mais `window.supabase`).
 
   Dois clientes reais na mesma página significam dois `GoTrueClient` disputando a
@@ -24,19 +24,22 @@ function arquivosJs(raiz) {
   Estes testes falham se alguém "consertar" um problema criando outro cliente.
 */
 describe("um único cliente Supabase", () => {
-  it("só `lib/supabaseClient.ts` importa createClient da biblioteca", () => {
+  it("só `lib/sessao/supabaseClient.ts` importa createClient da biblioteca", () => {
     const culpados = arquivosJs("src").filter((caminho) => {
       const fonte = readFileSync(caminho, "utf8");
       return /import\s*\{[^}]*\bcreateClient\b[^}]*\}\s*from\s*["']@supabase\/supabase-js["']/.test(
         fonte,
       );
     });
-    expect(culpados).toEqual([join("src", "lib", "supabaseClient.ts")]);
+    expect(culpados).toEqual([
+      join("src", "lib", "sessao", "supabaseClient.ts"),
+    ]);
   });
 
   it("nenhum módulo importa o pacote direto para montar cliente próprio", () => {
     const culpados = arquivosJs("src").filter((caminho) => {
-      if (caminho.endsWith(join("lib", "supabaseClient.ts"))) return false;
+      if (caminho.endsWith(join("lib", "sessao", "supabaseClient.ts")))
+        return false;
       const fonte = readFileSync(caminho, "utf8");
       return (
         /from\s*["']@supabase\/supabase-js["']/.test(fonte) &&
@@ -50,7 +53,7 @@ describe("um único cliente Supabase", () => {
     const declaracoes = arquivosJs("src").filter((caminho) =>
       /SUPABASE_AUTH_STORAGE_KEY\s*=/.test(readFileSync(caminho, "utf8")),
     );
-    expect(declaracoes).toEqual([join("src", "lib", "env.ts")]);
+    expect(declaracoes).toEqual([join("src", "lib", "sessao", "env.ts")]);
   });
 });
 
@@ -67,7 +70,8 @@ describe("a instância compartilhada", () => {
   });
 
   it("devolve sempre o mesmo objeto", async () => {
-    const { getSupabaseClient } = await import("../src/lib/supabaseClient");
+    const { getSupabaseClient } =
+      await import("../src/lib/sessao/supabaseClient");
     const primeiro = getSupabaseClient();
     const segundo = getSupabaseClient();
     expect(primeiro).not.toBeNull();
@@ -75,8 +79,9 @@ describe("a instância compartilhada", () => {
   });
 
   it("usa a chave de armazenamento única e o fluxo PKCE", async () => {
-    const { getSupabaseClient } = await import("../src/lib/supabaseClient");
-    const { SUPABASE_AUTH_STORAGE_KEY } = await import("../src/lib/env");
+    const { getSupabaseClient } =
+      await import("../src/lib/sessao/supabaseClient");
+    const { SUPABASE_AUTH_STORAGE_KEY } = await import("../src/lib/sessao/env");
     const cliente = getSupabaseClient();
     expect(SUPABASE_AUTH_STORAGE_KEY).toBe("agsus-monitora-auth");
     expect(cliente.auth.storageKey).toBe(SUPABASE_AUTH_STORAGE_KEY);

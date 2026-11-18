@@ -15,7 +15,7 @@ import {
   simOuNao,
 } from "../catalogo.ts";
 import { formatarNota, lerHora, numeroBR } from "../numeros.ts";
-import { compararEntrevistas } from "../../entrevista-vigente.ts";
+import { compararEntrevistas } from "../../entrevistas/entrevista-vigente.ts";
 import { exigir, texto } from "./comum.ts";
 
 /* ── Entrada ────────────────────────────────────────────────────────── */

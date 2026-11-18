@@ -7,15 +7,15 @@ import {
   normalizarAprovadosDaDiretoria,
   normalizarVagasPorCargo,
   vagasPeloTexto,
-} from "../../src/lib/relatorio-da-diretoria.ts";
+} from "../../src/lib/visao-geral/relatorio-da-diretoria.ts";
 import {
   conteudoDoRelatorio,
   MODELOS_DO_RELATORIO,
   normalizarEscolha,
   planilhasDoRelatorio,
   secoesPermitidas,
-} from "../../src/lib/relatorio-da-visao-geral.ts";
-import { filtrosVazios } from "../../src/lib/visao-geral.ts";
+} from "../../src/lib/visao-geral/relatorio-da-visao-geral.ts";
+import { filtrosVazios } from "../../src/lib/visao-geral/visao-geral.ts";
 
 const SI = "e1";
 const PROJ = "e2";

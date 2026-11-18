@@ -8,7 +8,7 @@ Cada `[[nome]]` é `docs/biblioteca/<nome>.md`.
 | `modulos/<nome>/`  | uma pasta por tela (componente, `estado.ts`, consultas, CSS da tela)        | [[nova-tela-e-legado]], `modulo-<nome>` |
 | `ui/`              | design system (Topo, Filtros, Kpi, Tabela, Gaveta, Modal…), só tokens      | [[componentes-padrao]]                 |
 | `componentes/`     | moldura: barra lateral, busca global, Status das atualizações, dados comuns | [[nova-tela-e-legado]]                 |
-| `lib/`             | lógica pura e testável (regras, contratos, formatos)                       | [[regras-do-codigo]]                   |
+| `lib/<assunto>/`   | lógica pura e testável, uma pasta por assunto (o da tela ou uma técnica)   | [[regras-do-codigo]], [[mapa-do-repositorio]] |
 | `modules/`         | LEGADO: só encolhe, nada novo                                              | [[nova-tela-e-legado]]                 |
 | `styles/`          | CSS do app (ordem de import em `main.ts`; `app.css` não se lê inteiro)     | [[css]]                                |
 | `main.ts`          | bootstrap: importa CSS e instala módulos, em ordem                          |                                        |

@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from "react";
-import { EVENTO_BARRA_ALTERNADA } from "../../lib/eventos-da-barra-lateral.ts";
+import { EVENTO_BARRA_ALTERNADA } from "../../lib/navegacao/eventos-da-barra-lateral.ts";
 
 /*
   O que a barra lê do ambiente que o legado controla: a classe de `body` que

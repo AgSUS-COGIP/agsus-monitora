@@ -4,10 +4,10 @@ import {
   movimentoDaTecla,
   moverNaGrade,
   textoDaEscala,
-} from "../src/lib/digitacao-de-notas.ts";
+} from "../src/lib/entrevistas/digitacao-de-notas.ts";
 
 /*
-  O lançamento da ficha de notas como planilha (src/lib/digitacao-de-notas.ts):
+  O lançamento da ficha de notas como planilha (src/lib/entrevistas/digitacao-de-notas.ts):
   o que fazer com o que foi digitado numa célula e para onde o foco vai.
 */
 

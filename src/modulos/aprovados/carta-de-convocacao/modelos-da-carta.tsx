@@ -4,16 +4,16 @@ import type {
   ModeloDaCarta,
   RascunhoDaCarta,
   RegistroDaCarta,
-} from "../../../lib/tipos-da-carta.ts";
+} from "../../../lib/aprovados/carta-de-convocacao/tipos-da-carta.ts";
 import { useRef, useState, useSyncExternalStore } from "react";
 import {
   CAMPOS_DA_CARTA,
   emissaoInicial,
   rascunhoDoModelo,
   validarModelo,
-} from "../../../lib/carta-de-convocacao.ts";
-import { opcoesDeEdital } from "../../../lib/lista-aprovados-rules.ts";
-import { formatarDataHora } from "../../../lib/cronograma-do-edital.ts";
+} from "../../../lib/aprovados/carta-de-convocacao/carta-de-convocacao.ts";
+import { opcoesDeEdital } from "../../../lib/aprovados/lista-aprovados-rules.ts";
+import { formatarDataHora } from "../../../lib/cronograma/cronograma-do-edital.ts";
 import {
   Aviso,
   BlocosEsqueleto,

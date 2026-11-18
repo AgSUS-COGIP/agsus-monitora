@@ -1,11 +1,14 @@
-import type { ItemDoResumo, ResumoDoDia } from "../../lib/resumo-do-dia.ts";
+import type {
+  ItemDoResumo,
+  ResumoDoDia,
+} from "../../lib/resumo-do-dia/resumo-do-dia.ts";
 import {
   chaveDoVisto,
   lerResumoDoDia,
   semDemanda,
   totalDoResumo,
-} from "../../lib/resumo-do-dia.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient";
+} from "../../lib/resumo-do-dia/resumo-do-dia.ts";
+import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 
 /*
   Estado do resumo do dia (fora do React): o resumo da pessoa logada, se o

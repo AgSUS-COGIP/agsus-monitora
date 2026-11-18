@@ -2,7 +2,7 @@ import { forwardRef } from "react";
 import type {
   DocumentoDoParecer,
   Trecho,
-} from "../../../lib/parecer-em-blocos.ts";
+} from "../../../lib/recursos/parecer-em-blocos.ts";
 
 /*
   A prévia do parecer: o documento que comporParecer monta, desenhado como

@@ -19,7 +19,7 @@ import {
   taxaDeContratacao,
   topUnidades,
   triadosEReprovados,
-} from "../src/lib/selecao-do-painel.ts";
+} from "../src/lib/selecao/selecao-do-painel.ts";
 
 /* O formato de get_selecao_da_area (20261001090000_selecao.sql). */
 const PAYLOAD = {
@@ -312,10 +312,11 @@ describe("CSV e cópia guardada", () => {
 });
 
 describe("registro da aba", async () => {
-  const { ABAS_DO_MENU } = await import("../src/lib/menu-lateral.ts");
-  const { RESOURCES } = await import("../src/lib/permissoes-recursos.ts");
+  const { ABAS_DO_MENU } = await import("../src/lib/navegacao/menu-lateral.ts");
+  const { RESOURCES } =
+    await import("../src/lib/acessos/permissoes-recursos.ts");
   const { canViewSelecao, paginasPermitidas } =
-    await import("../src/lib/access-roles.ts");
+    await import("../src/lib/acessos/access-roles.ts");
   const { NOMES_DE_ICONES } = await import("../src/modules/icones.ts");
 
   it("o Painel da Seleção fica em Acompanhar, depois do Painel de entrevistas, como beta", () => {

@@ -7,7 +7,7 @@ import {
   ehTokenVencido,
   esperaAntesDaTentativa,
   esperaPedidaPeloServidor,
-} from "../src/lib/novas-tentativas.ts";
+} from "../src/lib/sessao/novas-tentativas.ts";
 import { esperaDaReleitura } from "../src/lib/classificacao/relatorio-de-desempate.ts";
 
 const REST = "https://x.supabase.co/rest/v1/TB_CONFIGURACAO?select=*";
@@ -232,7 +232,7 @@ describe("token vencido", () => {
 
 describe("o cliente único usa esta regra", () => {
   it("desliga a repetição da biblioteca e passa o fetch por comNovasTentativas", () => {
-    const fonte = readFileSync("src/lib/supabaseClient.ts", "utf8");
+    const fonte = readFileSync("src/lib/sessao/supabaseClient.ts", "utf8");
     expect(fonte).toMatch(/db:\s*\{\s*retry:\s*false\s*\}/);
     expect(fonte).toMatch(/comNovasTentativas\(/);
   });

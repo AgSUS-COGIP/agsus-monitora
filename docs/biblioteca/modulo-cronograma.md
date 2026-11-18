@@ -8,7 +8,7 @@ atualizado: 2026-11-17
 
 Tela de leitura dos cronogramas de Editais, montada em `#page-calendario`, rota
 `/<área>/cronograma`. Pasta `src/modulos/cronograma/`; regras puras em
-`src/lib/calendario-editais.ts`. O controlador chama `render()` ao abrir e `recarregar()` para
+`src/lib/cronograma/calendario-editais.ts`. O controlador chama `render()` ao abrir e `recarregar()` para
 ignorar o cache. A área vem do app e recorta os editais já carregados. Inclui o resumo do dia do
 responsável (o sininho do topo), que leva a esta tela.
 
@@ -19,9 +19,9 @@ responsável (o sininho do topo), que leva a esta tela.
   (Lista e Semana), `estado.ts` (store externo, sessão, carga, cache, aviso de falhas parciais),
   `tipos.ts` e `demandas-internas.tsx`. CSS em `cronograma.css` e `demandas-internas.css` (cor da
   demanda: `--etapa-demanda`).
-- `calendario-editais.ts`: etapas por dia (conta no início e no fim, não no meio), filtros, grade
+- `cronograma/calendario-editais.ts`: etapas por dia (conta no início e no fim, não no meio), filtros, grade
   de 42 células, próximas etapas. Classificação de etapas e plausibilidade das datas em
-  `etapas-de-edital.ts` e `datas-do-cronograma.ts`.
+  `editais/etapas-de-edital.ts` e `cronograma/datas-do-cronograma.ts`.
 
 ## Vistas
 
@@ -52,7 +52,7 @@ outros e avisa carga incompleta. Cache de um minuto e deduplicação de pedidos 
 Editais invalida o cache; trocar de área só recorta. Respostas entram como `unknown`; edital
 precisa de ID textual ou numérico finito; etapas sem início interpretável ficam fora.
 
-**Edital suspenso fica fora** (cartão #59, `editalSuspenso` em `calendario-editais.ts`): o banco
+**Edital suspenso fica fora** (cartão #59, `editalSuspenso` em `cronograma/calendario-editais.ts`): o banco
 devolve todo edital com `ativo = true`, e o suspenso continua ativo. O resumo traz o status efetivo
 (`status`, com o excepcional `status_override` por cima das datas, como
 `private."FC_ESTADO_DO_CRONOGRAMA"`) e `status_override`; se um deles contém "suspens" (sem acento
@@ -66,7 +66,7 @@ por edital (`PGRST202`) e do cache. `listar_etapas_do_cronograma` ainda devolve 
 Itens da equipe (migration `20261104120000_cronograma_demandas_internas`): título, descrição, data
 ou período, área, edital opcional, responsáveis e conclusão. Chegam na mesma carga
 (`listar_demandas_internas`; sem a RPC, só as etapas) como etapas do tipo **Demanda interna**
-(`src/lib/demandas-internas.ts`). Em aberto com último dia no passado = **Atrasada**; "Ocultar
+(`src/lib/cronograma/demandas-internas.ts`). Em aberto com último dia no passado = **Atrasada**; "Ocultar
 concluídas". Concluir/Reabrir, Editar e Excluir (lógica) para quem pode (gestor da área ou admin
 global, decidido pelo banco em `pode_editar`/`pode_criar_em`). Responsáveis pelo edital ficam no
 formulário do edital (`src/modulos/editais/responsaveis-do-edital.tsx`).
@@ -78,7 +78,7 @@ Sininho no topo (`src/app/casca/topo.tsx`) e popup "Bom dia, {nome} — seus edi
 (`RL_RESPONSAVEL_EDITAL`) ou demanda interna (`RL_DEMANDA_INTERNA_RESPONSAVEL`). Pasta
 `src/modulos/resumo-do-dia/` (`estado.ts` com o store `resumoDoDia`, `resumo-do-dia.tsx`, e o CSS,
 em que a cor de cada linha é a do tipo no Cronograma, `data-cor`); regras puras em
-`src/lib/resumo-do-dia.ts`; migration `20261104130000_resumo_do_dia_do_responsavel`.
+`src/lib/resumo-do-dia/resumo-do-dia.ts`; migration `20261104130000_resumo_do_dia_do_responsavel`.
 
 - **Uma chamada** (`obter_meu_resumo_do_dia`) ao entrar (`src/app/sistema.ts`) e outra a cada
   clique no sininho; sem polling. O sininho mostra o número de pendências.

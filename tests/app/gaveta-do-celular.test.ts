@@ -13,7 +13,7 @@ import {
   redefinirBarraLateral,
 } from "../../src/componentes/barra-lateral/estado.ts";
 import { redefinirDadosDoMonitoramento } from "../../src/componentes/dados-do-monitoramento.ts";
-import { montarArvoreDoMenu } from "../../src/lib/menu-lateral.ts";
+import { montarArvoreDoMenu } from "../../src/lib/navegacao/menu-lateral.ts";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -226,11 +226,11 @@ describe("o que saiu com o menu do pé da tela", () => {
     expect(ler("src/styles/tokens.css")).not.toContain(
       "--recuo-da-navegacao-inferior",
     );
-    for (const nome of ["aya-tours.ts", ...readdirSync("src/lib/aya-tours")]) {
+    for (const nome of ["aya-tours.ts", ...readdirSync("src/lib/aya/tours")]) {
       const caminho =
         nome === "aya-tours.ts"
-          ? "src/lib/aya-tours.ts"
-          : `src/lib/aya-tours/${nome}`;
+          ? "src/lib/aya/aya-tours.ts"
+          : `src/lib/aya/tours/${nome}`;
       expect(ler(caminho)).not.toContain("mobileBottomNav");
     }
   });

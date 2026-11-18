@@ -5,7 +5,7 @@ import {
   normalizeAccessBackgroundUrl,
   normalizeAccessLogoUrl,
   normalizeAccessPanelColor,
-} from "../src/lib/access-branding.ts";
+} from "../src/lib/entrada/access-branding.ts";
 
 describe("access branding", () => {
   it("accepts secure and local background URLs", () => {

@@ -32,14 +32,14 @@ e desliga; **Status das atualizações** mostra a saúde e roda na hora.
 
 - `TB_ROBO_WORKFLOW` (um por workflow: se o banco pode pedir, inputs aceitos, chave) e
   `TB_TAREFA_AGENDADA` (uma por tarefa do pg_cron: chave, workflow, rótulo da tela). A tela lê por
-  `obter_catalogo_dos_robos` (`src/lib/catalogo-dos-robos.ts`, lido uma vez por tela). Não há RPC
+  `obter_catalogo_dos_robos` (`src/lib/automacao/catalogo-dos-robos.ts`, lido uma vez por tela). Não há RPC
   de escrita: o catálogo muda só por migration. O banco também confere robôs, modos e opções.
 - **Nome de robô ou de tarefa não se escreve à mão na tela:** vem do catálogo. **Horário também
-  não:** `src/lib/agenda-do-cron.ts` é a leitura única da agenda do pg_cron (próxima execução,
+  não:** `src/lib/automacao/agenda-do-cron.ts` é a leitura única da agenda do pg_cron (próxima execução,
   maior intervalo, prazo de cada carga, texto em horário de Brasília), usada pelas duas telas.
 - Workflow novo: `insert` em `TB_ROBO_WORKFLOW` (e em `TB_TAREFA_AGENDADA` se uma tarefa o pedir);
   se tiver "Rodar agora", entra em `disparar_robo` e em `ROBOS_DE_CARGA`
-  (`src/lib/robos-de-carga.ts`). `tests/catalogo-dos-robos-migration.test.ts` reprova robô fora do
+  (`src/lib/automacao/robos-de-carga.ts`). `tests/catalogo-dos-robos-migration.test.ts` reprova robô fora do
   catálogo.
 
 ## Os robôs
@@ -73,7 +73,7 @@ Chaves para ligar e desligar o que roda sozinho em cada aba, com motivo e histó
   o histórico e devolve a lista nova. Leitura: `obter_chaves_da_automacao`.
 - O "Rodar agora" não fica aqui: fica no Status das atualizações.
 - Arquivos: `automacao.tsx` (a tela), `estado.ts` (chaves lidas, mudança em curso e aviso da última
-  recusa, sem React), `automacao.css`; regras puras em `src/lib/chaves-da-automacao.ts`. Banco:
+  recusa, sem React), `automacao.css`; regras puras em `src/lib/automacao/chaves-da-automacao.ts`. Banco:
   `supabase/migrations/20261022190000_chaves_da_automacao.sql` (aplicada; no histórico do Git).
   Agenda e chaves explicadas em [docs/agenda-dos-robos.md](../agenda-dos-robos.md) (seção "Chaves
   da automação").
@@ -96,9 +96,9 @@ Explicações para a Aya:
   recente. O cartão de avisos das [[modulo-conferencias]] relê só quando muda a última conferência
   (`marcaDasConferencias`).
 - Arquivos: `estado.ts` (estado lido com `useSyncExternalStore`), `tipos.ts` (dados, dependências e
-  ações); em `src/lib/`, `saude-das-cargas.ts` (normaliza as cargas, calcula selos e resumo),
-  `painel-dos-robos.ts` (normaliza editais, vagas, histórico; monta filtros, prévia e
-  acompanhamento) e `robos-de-carga.ts` (compartilhado com a Avaliação documental).
+  ações); em `src/lib/`, `automacao/saude-das-cargas.ts` (normaliza as cargas, calcula selos e resumo),
+  `automacao/painel-dos-robos.ts` (normaliza editais, vagas, histórico; monta filtros, prévia e
+  acompanhamento) e `automacao/robos-de-carga.ts` (compartilhado com a Avaliação documental).
 - **Fronteiras:** recebem `unknown`, conferem objetos e listas, descartam o que não é registro e
   tratam datas e números inválidos. Texto não exibe objeto serializado; rótulos de dicionário não
   vêm de propriedade herdada. Links de execução só HTTP ou HTTPS. Isso não substitui a autorização

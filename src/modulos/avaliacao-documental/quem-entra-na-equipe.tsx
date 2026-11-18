@@ -1,4 +1,4 @@
-import { nomeDaArea } from "../../lib/menu-lateral.ts";
+import { nomeDaArea } from "../../lib/navegacao/menu-lateral.ts";
 
 /*
   Embaixo da lista da Equipe, só para a coordenação: quem aparece em

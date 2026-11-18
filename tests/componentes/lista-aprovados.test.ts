@@ -4,7 +4,7 @@ import type { Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Mock } from "vitest";
 import { criarListaAprovados } from "../../src/modulos/aprovados/lista-aprovados.tsx";
-import { PLANILHAS } from "../../src/lib/planilhas.ts";
+import { PLANILHAS } from "../../src/lib/base/planilhas.ts";
 import { clicar, digitar, escolher, esperar, teclar } from "./interacoes.ts";
 import {
   compactarCandidatos,

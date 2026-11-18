@@ -4,7 +4,7 @@ import { editaisDaEscolha } from "../lib/avaliacao-documental/editais.ts";
 import {
   editalEscolhido,
   sufixoDeTreinamento,
-} from "../lib/edital-de-treinamento.ts";
+} from "../lib/editais/edital-de-treinamento.ts";
 import { Campo } from "../ui/index.ts";
 import { SeloDeTreinamento } from "./selo-de-treinamento.tsx";
 

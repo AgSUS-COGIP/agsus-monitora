@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { linhaDaTerra } from "../src/lib/mapa-saude-indigena/mapa-do-dsei.ts";
+import { linhaDaTerra } from "../src/lib/mapas/mapa-saude-indigena/mapa-do-dsei.ts";
 
 /*
   O QUE O PAINEL LOGADO MOSTROU

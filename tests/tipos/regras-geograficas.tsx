@@ -3,21 +3,21 @@ import {
   casaisNacionais,
   contarPorDsei,
   enquadramentoNacional,
-} from "../../src/lib/mapa-saude-indigena/mapa-nacional.ts";
+} from "../../src/lib/mapas/mapa-saude-indigena/mapa-nacional.ts";
 import {
   registrosDoDsei,
   classificarRegistros,
   limitesDoDsei,
   visiveis,
-} from "../../src/lib/mapa-saude-indigena/mapa-do-dsei.ts";
+} from "../../src/lib/mapas/mapa-saude-indigena/mapa-do-dsei.ts";
 import type {
   CasaiNacionalCompacta,
   DseiDoMapa,
   RegistroDoDsei,
   ContagemDoDsei,
-} from "../../src/lib/mapa-saude-indigena/tipos.ts";
-import type { CoordenadasDoMapa } from "../../src/lib/tipos-do-mapa.ts";
-import { TIPO_POLO } from "../../src/lib/mapa-saude-indigena/formas.ts";
+} from "../../src/lib/mapas/mapa-saude-indigena/tipos.ts";
+import type { CoordenadasDoMapa } from "../../src/lib/mapas/tipos-do-mapa.ts";
+import { TIPO_POLO } from "../../src/lib/mapas/mapa-saude-indigena/formas.ts";
 
 const dsei: DseiDoMapa = {
   k: "CEARA",

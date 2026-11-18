@@ -6,7 +6,7 @@ import type { ReactNode, RefObject } from "react";
 import type {
   CoordenadasDoMapa,
   MapaNacional,
-} from "../../lib/tipos-do-mapa.ts";
+} from "../../lib/mapas/tipos-do-mapa.ts";
 import type { ModoDeEdicao } from "../editor-de-coordenadas/modo-de-edicao.tsx";
 
 export interface MapaDoPainel

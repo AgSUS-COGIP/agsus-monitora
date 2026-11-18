@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ReactNode } from "react";
-import type { ReaberturaDaLinha } from "../../lib/vagas-reabertas.ts";
+import type { ReaberturaDaLinha } from "../../lib/visao-geral/vagas-reabertas.ts";
 
 /** Contratos existentes de integração com o app, consumidos por esta tela. */
 declare global {
@@ -85,7 +85,7 @@ export type LinhaDoMonitoramento = {
   ultima_admissao?: string | null;
   /** Quantas admissões conciliadas o edital tem. */
   admissoes?: number;
-  /** Vagas sem contratação reabertas depois em edital mais novo (src/lib/vagas-reabertas.ts). */
+  /** Vagas sem contratação reabertas depois em edital mais novo (src/lib/visao-geral/vagas-reabertas.ts). */
   vagas_reabertas?: number;
   /** "N vagas reabertas no edital X", "Reabre N vagas do edital Y" (gaveta). */
   textos_da_reabertura?: readonly string[];
@@ -123,7 +123,7 @@ export type AdmissoesDoEdital = {
 export type Acompanhamento = {
   etapasPorEdital: Map<string, EtapaDoAcompanhamento[]>;
   /**
-   * A conta das vagas reabertas (`reaberturasDosCargos`, src/lib/vagas-reabertas.ts,
+   * A conta das vagas reabertas (`reaberturasDosCargos`, src/lib/visao-geral/vagas-reabertas.ts,
    * carregado sob demanda); ausente = cargos não carregados.
    */
   reaberturas?: (

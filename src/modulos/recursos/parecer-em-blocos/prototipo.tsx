@@ -4,7 +4,7 @@ import {
   comporParecer,
   rascunhoInicial,
   type RascunhoDoParecer,
-} from "../../../lib/parecer-em-blocos.ts";
+} from "../../../lib/recursos/parecer-em-blocos.ts";
 import { Aviso, Segmentado, Selo } from "../../../ui/index.ts";
 import { dadosFicticios } from "./dados-ficticios.ts";
 import { DocumentoDoParecerVisto } from "./documento.tsx";

@@ -6,7 +6,7 @@ import {
   paginasPermitidas,
   podeAbrirConfiguracoes,
   secaoDeConfiguracaoPermitida,
-} from "../src/lib/access-roles.ts";
+} from "../src/lib/acessos/access-roles.ts";
 import {
   abasDeAcessos,
   celulaSoLeitura,
@@ -15,7 +15,7 @@ import {
   opcoesDoModulo,
   podeEditarUsuario,
   valorDoSelect,
-} from "../src/lib/teto-de-acessos.ts";
+} from "../src/lib/acessos/teto-de-acessos.ts";
 
 const coordenador = {
   perfil: "coordenador",

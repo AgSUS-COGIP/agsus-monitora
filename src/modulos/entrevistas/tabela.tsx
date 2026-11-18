@@ -2,7 +2,7 @@ import type {
   EntrevistaDoPainel,
   AnaliseDaEntrevista,
 } from "./tipos-do-painel.ts";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import {
   badgeDoParecer,
   FILTROS_VAZIOS,
@@ -10,7 +10,7 @@ import {
   formatarNota,
   rotuloDoComparecimento,
   rotuloDoParecer,
-} from "../../lib/entrevistas-do-painel.ts";
+} from "../../lib/entrevistas/entrevistas-do-painel.ts";
 import { Selo, TabelaInfinita } from "../../ui/index.ts";
 
 /*

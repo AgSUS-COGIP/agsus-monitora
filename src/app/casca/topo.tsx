@@ -1,7 +1,7 @@
 import type { MouseEvent } from "react";
 import { chamarAcaoDaCasca, fecharMenuDaConta } from "./acoes.ts";
 import { usarEstadoDaNavegacao } from "../contexto-do-app.ts";
-import { telaDaRota } from "../../lib/rotas.ts";
+import { telaDaRota } from "../../lib/navegacao/rotas.ts";
 import { SininhoDoResumo } from "../../modulos/resumo-do-dia/resumo-do-dia.tsx";
 import {
   IconeDaTelaCheia,
@@ -16,7 +16,7 @@ import {
   13/11/2026). No celular, uma linha só, com o ☰ da gaveta antes
   do título.
 
-  Nas telas com título próprio (`tituloNaTela` em src/lib/rotas.ts: Conduzir
+  Nas telas com título próprio (`tituloNaTela` em src/lib/navegacao/rotas.ts: Conduzir
   entrevistas, Classificação, Avaliação documental e Triagem), o título daqui
   fica só para o leitor de tela e a faixa fica compacta (`data-compacto`):
   sobra só a conta, menor, com o perfil dentro do menu (17/11/2026).

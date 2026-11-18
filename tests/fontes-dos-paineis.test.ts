@@ -3,14 +3,14 @@ import { describe, expect, it } from "vitest";
 import {
   lerFontesDoPainel,
   lerFontesDoRelatorio,
-} from "../src/lib/fontes-dos-paineis.ts";
+} from "../src/lib/paineis/fontes-dos-paineis.ts";
 import {
   definicaoDoRelatorio,
   linhasDoRelatorio,
   xlsxDoRelatorio,
-} from "../src/lib/relatorios-dos-paineis.ts";
-import type { ZiparRelatorio } from "../src/lib/relatorios-dos-paineis.ts";
-import { canManagePaineisDeDados } from "../src/lib/access-roles.ts";
+} from "../src/lib/paineis/relatorios-dos-paineis.ts";
+import type { ZiparRelatorio } from "../src/lib/paineis/relatorios-dos-paineis.ts";
+import { canManagePaineisDeDados } from "../src/lib/acessos/access-roles.ts";
 
 /*
   Fontes das colunas dos Painéis no front: a leitura tolerante do que as RPCs

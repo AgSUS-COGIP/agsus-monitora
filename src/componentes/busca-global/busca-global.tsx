@@ -2,7 +2,7 @@ import type { KeyboardEvent } from "react";
 import type { ResultadoDaBusca, OpcoesDaBusca } from "./tipos.ts";
 
 /*
-  Busca global (Ctrl+K / Cmd+K), React. Lógica pura em src/lib/busca-global.ts.
+  Busca global (Ctrl+K / Cmd+K), React. Lógica pura em src/lib/navegacao/busca-global.ts.
 
   O que o legado fazia e continua aqui:
   - Ctrl+K / Cmd+K em qualquer tela abre (só com usuário conectado) e, aberta, fecha.
@@ -32,7 +32,7 @@ import {
   seloDoRisco,
   subtituloDoResultado,
   tituloDoResultado,
-} from "../../lib/busca-global.ts";
+} from "../../lib/navegacao/busca-global.ts";
 import { usarLinhasDoMonitoramento } from "../usar-linhas-do-monitoramento.ts";
 import { Modal } from "../../ui/modal.tsx";
 

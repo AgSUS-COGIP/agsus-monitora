@@ -5,8 +5,8 @@ import type {
 } from "../../src/modulos/aprovados/tipos-do-estado.ts";
 import type { EstadoDaAbaDeAprovados } from "../../src/modulos/aprovados/tipos-da-aba-de-aprovados.ts";
 import type { EstadoDaAbaDaConvocacao } from "../../src/modulos/aprovados/tipos-da-aba-de-convocacao.ts";
-import type { EstadoPaiDaCarta } from "../../src/lib/tipos-da-carta.ts";
-import type { EstadoDaConfiguracao } from "../../src/lib/tipos-da-configuracao-de-convocacao.ts";
+import type { EstadoPaiDaCarta } from "../../src/lib/aprovados/carta-de-convocacao/tipos-da-carta.ts";
+import type { EstadoDaConfiguracao } from "../../src/lib/aprovados/carta-de-convocacao/tipos-da-configuracao-de-convocacao.ts";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { criarEstadoDaListaDeAprovados } from "../../src/modulos/aprovados/estado.ts";
 import { ListaAprovados } from "../../src/modulos/aprovados/lista-aprovados.tsx";

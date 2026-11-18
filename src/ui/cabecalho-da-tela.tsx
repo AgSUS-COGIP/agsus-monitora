@@ -9,7 +9,7 @@ import { classes } from "./classes.ts";
   e o Atualizar só com o ícone (nome acessível "Atualizar").
 
   O título da página no cabeçalho do app fica só para o leitor de tela
-  nessas telas (`tituloNaTela` em src/lib/rotas.ts): aqui ele aparece uma
+  nessas telas (`tituloNaTela` em src/lib/navegacao/rotas.ts): aqui ele aparece uma
   vez, grande.
 */
 

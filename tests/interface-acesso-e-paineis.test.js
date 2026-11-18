@@ -6,7 +6,7 @@ import { criarImagensDaAparencia } from "../src/modulos/configuracoes/imagens.ts
 import {
   ACCESS_BACKGROUND_MAX_BYTES,
   validateAccessBackgroundFile,
-} from "../src/lib/access-background-storage.ts";
+} from "../src/lib/entrada/access-background-storage.ts";
 
 const app = fonteDoApp();
 const shellCss = readFileSync("src/styles/platform-shell.css", "utf8");

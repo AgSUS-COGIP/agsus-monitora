@@ -18,9 +18,9 @@ curriculares e Seleção são módulos de `src/modulos/` (o carregamento é o da
   tela é a navegação (`src/app/navegacao.ts`), que chama `mostrar(codigo)` e põe o título.
 - `src/modulos/paineis-externos/carregamento-do-painel.tsx` (+ `.css`, só tokens) — a cobertura
   enquanto o site de fora não responde (`acompanharCarregamentoDoPainel`).
-- `src/lib/carregamento-do-painel.ts` — tempos, mensagens e origens a pré-conectar.
-- `src/lib/endereco-do-painel.ts` — o endereço em que o painel abre.
-- `src/lib/paineis-externos-das-configuracoes.ts` — a seção de Configurações sem DOM (a tela é
+- `src/lib/paineis/carregamento-do-painel.ts` — tempos, mensagens e origens a pré-conectar.
+- `src/lib/paineis/endereco-do-painel.ts` — o endereço em que o painel abre.
+- `src/lib/configuracoes/paineis-externos-das-configuracoes.ts` — a seção de Configurações sem DOM (a tela é
   `src/modulos/configuracoes/paineis-externos.tsx`).
 
 ## Comportamento

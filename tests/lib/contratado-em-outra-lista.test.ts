@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { expandirCandidatosCompactos } from "../../src/lib/candidatos-aprovados-compactos.ts";
+import { expandirCandidatosCompactos } from "../../src/lib/aprovados/candidatos-aprovados-compactos.ts";
 import {
   STATUS_DO_CANDIDATO,
   matriculaNormalizada,
@@ -8,13 +8,13 @@ import {
   statusGuardaMatricula,
   summarizeApprovedCandidates,
   tomDoStatus,
-} from "../../src/lib/lista-aprovados-rules.ts";
+} from "../../src/lib/aprovados/lista-aprovados-rules.ts";
 import {
   estaForaDaFila,
   jaFoiChamado,
   statusNaFila,
-} from "../../src/lib/lista-convocacao-rules.ts";
-import type { CandidatoDasRegrasDeAprovados } from "../../src/lib/tipos-das-regras-de-aprovados.ts";
+} from "../../src/lib/aprovados/lista-convocacao-rules.ts";
+import type { CandidatoDasRegrasDeAprovados } from "../../src/lib/aprovados/tipos-das-regras-de-aprovados.ts";
 
 /*
   "Contratado em outra lista" (migration 20261024120000): o status explícito

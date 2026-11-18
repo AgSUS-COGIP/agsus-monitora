@@ -5,7 +5,7 @@ import type { EstadoDaClassificacao } from "../../src/modulos/classificacao/tipo
 import {
   gerarAgenda,
   itensParaSalvar,
-} from "../../src/lib/agenda-das-entrevistas.ts";
+} from "../../src/lib/entrevistas/agenda-das-entrevistas.ts";
 export function conferirAgenda(estado: EstadoDaClassificacao) {
   const agenda = criarEstadoDaAgenda();
   void agenda.salvarAgenda({

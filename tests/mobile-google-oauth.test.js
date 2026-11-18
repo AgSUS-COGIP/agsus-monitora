@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   isMobileOAuthContext,
   startMobileGoogleOAuth,
-} from "../src/lib/auth-flow";
+} from "../src/lib/sessao/auth-flow";
 
 /*
   O clique no celular (redirecionamento, sem popup) é decidido pela sessão do

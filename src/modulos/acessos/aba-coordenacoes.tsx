@@ -5,7 +5,7 @@ import {
   useSyncExternalStore,
   type FormEvent,
 } from "react";
-import { RESPONSAVEIS_DE_EDITAL } from "../../lib/responsavel-do-edital.ts";
+import { RESPONSAVEIS_DE_EDITAL } from "../../lib/editais/responsavel-do-edital.ts";
 import {
   coordenacaoParaSalvar,
   coordenacaoVazia,
@@ -14,7 +14,7 @@ import {
   opcoesDeUnidadesDaCoordenacao,
   resumoDaCoordenacao,
   validarCoordenacao,
-} from "../../lib/grupos-e-coordenacoes.ts";
+} from "../../lib/acessos/grupos-e-coordenacoes.ts";
 import { linhasDaArea } from "../../componentes/dados-do-monitoramento.ts";
 import { usarLinhasDoMonitoramento } from "../../componentes/usar-linhas-do-monitoramento.ts";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
@@ -23,7 +23,7 @@ import { CampoMotivo, ListaMestre, motivoValido } from "./partes.tsx";
 import type {
   AreaDeAcesso,
   RascunhoDaCoordenacao,
-} from "../../lib/tipos-dos-acessos.ts";
+} from "../../lib/acessos/tipos-dos-acessos.ts";
 import type {
   CoordenacaoDosAcessos,
   EstadoDosAcessos,

@@ -4,7 +4,7 @@ import { act, createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it } from "vitest";
 import { AvisoDeContraste } from "../src/modulos/configuracoes/partes.tsx";
-import { CAMPOS_DAS_SECOES } from "../src/lib/publicacao-de-configuracoes.ts";
+import { CAMPOS_DAS_SECOES } from "../src/lib/configuracoes/publicacao-de-configuracoes.ts";
 import {
   MINIMO_AA,
   MODO_AUTO,
@@ -16,7 +16,7 @@ import {
   corDoTextoPara,
   normalizarModo,
   razaoDeContraste,
-} from "../src/lib/contraste.ts";
+} from "../src/lib/base/contraste.ts";
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -209,12 +209,18 @@ describe("os dois campos de cor recebem o aviso", () => {
 describe("modo do texto sobre o painel", () => {
   const html = readFileSync("index.html", "utf8");
   const governanca = readFileSync(
-    "src/lib/publicacao-de-configuracoes.ts",
+    "src/lib/configuracoes/publicacao-de-configuracoes.ts",
     "utf8",
   );
   const boot = readFileSync("src/app/entrada/marca.ts", "utf8");
-  const cache = readFileSync("src/lib/access-branding-cache.ts", "utf8");
-  const publico = readFileSync("src/lib/access-branding-publico.ts", "utf8");
+  const cache = readFileSync(
+    "src/lib/entrada/access-branding-cache.ts",
+    "utf8",
+  );
+  const publico = readFileSync(
+    "src/lib/entrada/access-branding-publico.ts",
+    "utf8",
+  );
 
   it("auto é o padrão e preserva o comportamento anterior", () => {
     expect(normalizarModo(undefined)).toBe(MODO_AUTO);

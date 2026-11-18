@@ -4,7 +4,7 @@ import {
   linhaAtende,
   opcoesDoCampo,
   podarSelecoes,
-} from "../src/lib/filtros-do-mapa.ts";
+} from "../src/lib/mapas/filtros-do-mapa.ts";
 
 const CAMPOS = ["unidade", "edital", "status", "risco"];
 const vazio = () => Object.fromEntries(CAMPOS.map((c) => [c, new Set()]));

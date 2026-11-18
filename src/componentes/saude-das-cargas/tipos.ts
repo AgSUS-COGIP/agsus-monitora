@@ -1,6 +1,6 @@
 import type { ClienteDosAvisos } from "../../modulos/conferencias/tipos.ts";
 import type { ResumoDaAgenda } from "./agenda-dos-robos.tsx";
-import type { ChavesDaAutomacao } from "../../lib/chaves-da-automacao.ts";
+import type { ChavesDaAutomacao } from "../../lib/automacao/chaves-da-automacao.ts";
 export type SituacaoDaCarga =
   "em_dia" | "atrasada" | "falhou" | "em_andamento" | "nunca" | "desligada";
 export interface ExecucaoDaCarga {

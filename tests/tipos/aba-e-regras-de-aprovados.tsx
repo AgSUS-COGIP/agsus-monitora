@@ -2,8 +2,8 @@ import {
   filterApprovedCandidates,
   paginateApprovedCandidates,
   canEditCandidateStatus,
-} from "../../src/lib/lista-aprovados-rules.ts";
-import type { FiltrosDasRegrasDeAprovados } from "../../src/lib/tipos-das-regras-de-aprovados.ts";
+} from "../../src/lib/aprovados/lista-aprovados-rules.ts";
+import type { FiltrosDasRegrasDeAprovados } from "../../src/lib/aprovados/tipos-das-regras-de-aprovados.ts";
 import type {
   PropsDaAbaDeAprovados,
   EstadoDaAbaDeAprovados,

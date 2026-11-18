@@ -5,7 +5,7 @@ import {
   FILTROS_VAZIOS,
   filtrarLinhas,
   prepararLinhas,
-} from "../../src/lib/analises-curriculares.ts";
+} from "../../src/lib/analises/analises-curriculares.ts";
 import type {
   ClienteDasAnalises,
   EstadoDasAnalises,

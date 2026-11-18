@@ -1,12 +1,12 @@
 # Regras da Lista de aprovados
 
 A tela Lista de aprovados (view `approved`): status dos candidatos, importação, convocação, sub
-judice e anexos. Fontes: `src/modulos/aprovados/`, `src/lib/lista-aprovados-rules.ts`,
-`src/lib/aprovados-import.ts`, `src/lib/lista-convocacao-rules.ts`,
-`src/lib/modelo-de-convocacao.ts`, `src/lib/anexos-do-candidato.ts`, `src/lib/carta-de-convocacao.ts`, `src/lib/access-roles.ts` e as
+judice e anexos. Fontes: `src/modulos/aprovados/`, `src/lib/aprovados/lista-aprovados-rules.ts`,
+`src/lib/aprovados/aprovados-import.ts`, `src/lib/aprovados/lista-convocacao-rules.ts`,
+`src/lib/aprovados/carta-de-convocacao/modelo-de-convocacao.ts`, `src/lib/aprovados/anexos-do-candidato.ts`, `src/lib/aprovados/carta-de-convocacao/carta-de-convocacao.ts`, `src/lib/acessos/access-roles.ts` e as
 migrations `20260928235000_anexos_so_admin.sql`, `20260930200000_aprovados_por_grupo_edital_gestor_edita.sql`,
 `20261001150000_sub_judice_alteracao.sql`, `20261005160000_lista_de_aprovados_da_classificacao.sql` (lista
-publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovados.ts`) e
+publicada do resultado final da Classificação; `src/lib/aprovados/publicacao-de-aprovados.ts`) e
 `20261005180000_convocado_e_carta_de_convocacao.sql` (status Convocado e carta de convocação) e
 `20261024120000_contratado_em_outra_lista.sql` (Contratado em outra lista; regra em
 `python/monitora/aprovados/contratacao.py`).
@@ -15,45 +15,45 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 
 **perguntas:** tela da lista de aprovados | lista de aprovados | aba lista de aprovados | para que serve lista de aprovados | para que serve a lista de aprovados | status do candidato
 **resposta:** A Lista de aprovados mostra a lista vigente de cada edital da área atual, em duas abas: Aprovados (os candidatos e o status) e Convocação (a ordem de chamada, os a convocar e a carta de convocação). Os status do candidato são Convocado, Contratado, Contratado em outra lista, Desistente, Migração e Documentação Rejeitada; Contratado e Migração exigem matrícula e Convocado leva a data da convocação. Status já definido só quem tem Administrador em Aprovados altera (os demais veem um cadeado), exceto do Convocado para o status seguinte. Clicar no nome abre a gaveta do candidato, com os dados e as cartas de convocação emitidas. Quem tem Editor em Aprovados muda status; o grupo Gestor edita a lista desde que tenha a área e o edital. Quem importou ou substituiu a lista fica registrado.
-**fonte:** src/lib/lista-aprovados-rules.ts; src/modulos/aprovados/; supabase/migrations/20260930200000_aprovados_por_grupo_edital_gestor_edita.sql
+**fonte:** src/lib/aprovados/lista-aprovados-rules.ts; src/modulos/aprovados/; supabase/migrations/20260930200000_aprovados_por_grupo_edital_gestor_edita.sql
 **abrir:** approved
 
 ## Lista inativa
 
 **perguntas:** o que acontece com uma lista inativa | lista inativa | listas inativas | ativar lista | inativar lista
 **resposta:** Listas inativas continuam consultáveis, mas seus candidatos não podem ser alterados, nem receber anexos. Ativar ou inativar a lista é de quem pode importar (Editor em Importação, como o grupo Gestor); substituir ou remover o XLSX de uma lista existente é do Administrador em Importação.
-**fonte:** src/lib/lista-aprovados-rules.ts; src/lib/access-roles.ts
+**fonte:** src/lib/aprovados/lista-aprovados-rules.ts; src/lib/acessos/access-roles.ts
 
 ## Importar a lista
 
 **perguntas:** importar lista de aprovados | importacao do xlsx | colunas do xlsx | substituir lista
 **resposta:** A importação aceita só .xlsx e usa a primeira aba, com as colunas obrigatórias codigo_vaga, cargo, classificacao, nota, nome e modalidade (classificação inteira maior que 0; nota numérica, 0 ou mais); mostra até 12 erros por vez. Importa quem tem Editor em Importação (ou o grupo Gestor); substituir uma lista existente é do Administrador. A importação liga os candidatos ao edital pelo ID do edital.
-**fonte:** src/lib/aprovados-import.ts; src/lib/access-roles.ts
+**fonte:** src/lib/aprovados/aprovados-import.ts; src/lib/acessos/access-roles.ts
 
 ## Modelo de convocação
 
 **perguntas:** como funciona o modelo de convocacao | modelo de convocacao | cotas intercaladas | ordem da convocacao | sem modelo de convocacao
 **resposta:** O modelo de convocação são as regras de reserva do edital: categorias, percentuais, arredondamento e cascata. As vagas de cota entram intercaladas às de ampla (proporcional, como AC, PP, AC, AC, PP, AC, ou nas posições fixas que o edital publica) e a convocação segue a classificação. Quem concorre a cota concorre também à ampla, e ser chamado pela ampla não gasta a vaga da cota: nas vagas imediatas, quem está entre os primeiros da classificação dentro das vagas da ampla entra por ela, mesmo que a vaga de cota venha antes na sequência, e a vaga de cota vai para o próximo cotista; a sequência só define a ordem de chamada. Cota sem candidato desce a cascata e, no fim, volta para a ampla. Desistente, Documentação Rejeitada e Contratado em outra lista não ocupam vaga; Convocado, Contratado e Migração continuam na posição e não são chamados de novo. As vagas imediatas são informadas por vaga (zero vira cadastro reserva). Sem modelo, tudo sai como ampla concorrência. O modelo é compartilhado entre editais: a tela avisa quantos serão afetados e oferece "Duplicar". Modelo e vagas valem para o edital e sobrevivem à troca do XLSX. Configura-se em Editais › Regras do edital, etapa 5 Chamada para contratação (tipo de convocação, modelo de regras e vagas imediatas, com "Salvar convocação"); a aba "Lista de convocação" do modal "Listas do edital" mostra só o resumo, com "Editar nas Regras do edital". Configura quem importa a lista de aprovados e o administrador global.
-**fonte:** src/lib/lista-convocacao-rules.ts; src/lib/modelo-de-convocacao.ts; src/lib/configuracao-de-convocacao.ts; src/modulos/aprovados/chamada-para-contratacao.tsx
+**fonte:** src/lib/aprovados/lista-convocacao-rules.ts; src/lib/aprovados/carta-de-convocacao/modelo-de-convocacao.ts; src/lib/aprovados/carta-de-convocacao/configuracao-de-convocacao.ts; src/modulos/aprovados/chamada-para-contratacao.tsx
 
 ## Candidato sub judice
 
 **perguntas:** como funciona o candidato sub judice | sub judice | decisao judicial | incluir sub judice
 **resposta:** Quem tem Editor em Aprovados inclui um candidato sub judice, que fica vinculado à lista vigente do edital; remover vale só para quem foi incluído assim. Alterar nota ou modalidade por decisão judicial, e desfazer, é só do Administrador em Aprovados: a classificação é refeita e o número do processo judicial é opcional. Na Convocação, quem está sem código de vaga entra na vaga do mesmo cargo quando há uma única no próprio edital; se houver várias, o sistema não escolhe automaticamente. Vagas de outros editais não participam dessa escolha.
-**fonte:** src/lib/access-roles.ts; src/lib/lista-aprovados-rules.ts; supabase/migrations/20261001150000_sub_judice_alteracao.sql
+**fonte:** src/lib/acessos/access-roles.ts; src/lib/aprovados/lista-aprovados-rules.ts; supabase/migrations/20261001150000_sub_judice_alteracao.sql
 
 ## Anexos do candidato
 
 **perguntas:** quem pode anexar documentos ao candidato | anexos do candidato | anexar pdf ao candidato | documentos do candidato
 **resposta:** Só quem tem Administrador em Aprovados inclui e remove anexos do candidato, e só em lista ativa: PDF de até 2 MB, no máximo 5 por candidato. Ver e baixar os anexos é para quem lê a lista.
-**fonte:** src/lib/anexos-do-candidato.ts; src/lib/lista-aprovados-rules.ts; supabase/migrations/20260928235000_anexos_so_admin.sql
+**fonte:** src/lib/aprovados/anexos-do-candidato.ts; src/lib/aprovados/lista-aprovados-rules.ts; supabase/migrations/20260928235000_anexos_so_admin.sql
 
 ## Origem da lista de aprovados
 
 **perguntas:** origem da lista de aprovados | de onde vem a lista de aprovados | lista manual planilha | publicada da classificacao | lista publicada da classificacao | o que e lista manual
 **resposta:** No Yeendé, a lista de aprovados de cada edital tem uma de duas origens, mostrada na tela e no modal "Listas do edital": "Publicada da Classificação em DD/MM" — o resultado final da aba Classificação, com posição, nota, modalidade, vaga e situação (dentro das vagas ou cadastro reserva) calculados pela regra do edital, sem digitação — ou "Lista manual (planilha)", importada por XLSX com posição e nota digitadas. Edital com análise no sistema publica da Classificação; a planilha fica para editais sem análise no sistema. Cada troca de lista fica no histórico das publicações do edital.
 **fato:** No Yeendé, a lista de aprovados vem do resultado final da Classificação; a planilha XLSX fica para editais sem análise no sistema.
-**fonte:** src/lib/publicacao-de-aprovados.ts; src/modulos/aprovados/modal-listas-do-edital.tsx; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql
+**fonte:** src/lib/aprovados/publicacao-de-aprovados.ts; src/modulos/aprovados/modal-listas-do-edital.tsx; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql
 **abrir:** approved
 
 ## Publicar a lista de aprovados da Classificação
@@ -67,7 +67,7 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 
 **perguntas:** status preservado na publicacao | contratado continua contratado | publicar perde status | sub judice na publicacao | casamento dos candidatos | quem nao casou na publicacao | revisar candidatos da publicacao | substituir xlsx perde status | trocar planilha mantem status
 **resposta:** Publicar da Classificação ou substituir o XLSX fazem a mesma coisa: quem já estava na lista vigente leva para a lista nova o status (Contratado, Desistente…), a matrícula, o processo SEI, a data da convocação, o sub judice e os anexos. A pessoa é reconhecida pela análise (lista já publicada da Classificação) ou, nas listas de planilha — que não trazem CPF nem código do candidato —, pelo nome sem acento e sem diferença de maiúsculas no mesmo edital, desempatando pela vaga. Quem tinha nota ou modalidade alterada por decisão judicial continua com a da decisão (a da Classificação vira a original, para desfazer) e é recolocado pela nota; quem foi incluído sub judice e não está no resultado continua na lista como sub judice. Homônimo que não se resolve e quem sai com status ou matrícula aparecem em "Revisar" na confirmação, para dizer quem é na lista nova ou que não está; quem sai continua na lista anterior, com tudo, e fica registrado na publicação. Sub judice segue editável na Lista de aprovados. Quem é a mesma pessoa é calculado por um processo à parte (leva alguns segundos, às vezes até um minuto): "Substituir XLSX" e "Publicar como lista de aprovados" mostram antes a prévia — casados (levam o estado), quem entra, quem fica sem par e os status que ficariam sem dono — e só a confirmação grava; se a lista mudar entre a prévia e a confirmação, é preciso conferir de novo. Os contratados do edital são recontados na hora: ao publicar, substituir, ativar ou inativar a lista; ao remover a lista vigente, voltam a zero.
-**fonte:** src/lib/casamento-da-lista.ts; python/monitora/aprovados/casamento.py; supabase/migrations/20261030090000_lista_de_aprovados_substituir_preserva_o_estado.sql
+**fonte:** src/lib/aprovados/casamento-da-lista.ts; python/monitora/aprovados/casamento.py; supabase/migrations/20261030090000_lista_de_aprovados_substituir_preserva_o_estado.sql
 **abrir:** approved
 
 ## Trocar pela planilha uma lista da Classificação
@@ -88,14 +88,14 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 
 **perguntas:** contratado em outra lista | o que e contratado em outra lista | contratado nas duas listas | contratado na ampla e na cota | mesma matricula em duas linhas | contratado duas vezes | contratados contando em dobro | por que esta linha nao conta como contratado | contratado pelo sistema
 **resposta:** Quem concorre à cota concorre também à ampla, e a lista do edital tem uma linha da pessoa em cada uma. Quando as duas estão Contratado com a mesma matrícula, é uma contratação só: a linha pela qual a pessoa não foi contratada fica "Contratado em outra lista", não conta nos contratados (indicadores, Visão geral, Seleção, comemorações) nem ocupa vaga na Convocação, e continua visível na lista e no histórico. O sistema decide sozinho, todo dia e depois de cada mudança: vale a linha que a convocação daquela lista já alcançou (a posição dela está dentro do que a lista já chamou); se as duas foram alcançadas, vale a ampla concorrência, porque quem passa na ampla não ocupa vaga de cota. Se a convocação não decide, vale a linha que o RH registra na admissão da pessoa (conciliação das admissões com o RH). O selo mostra "Contratado em outra lista · pelo sistema", e o motivo aparece ao passar o mouse; o status gravado continua Contratado. A decisão não muda sozinha depois: só é refeita quando uma das linhas deixa de ser (ou passa a ser) Contratado. Quando nem a convocação nem o RH decidem (nenhuma ou mais de uma linha com admissão no RH), o selo fica Contratado com um alerta ("a equipe decide") e a conferência avisa. Para decidir ou trocar, quem tem Administrador em Aprovados escolhe o status "Contratado em outra lista" na linha pela qual a pessoa não foi contratada (a matrícula fica, opcional); ao marcar Contratado numa linha cuja matrícula já está Contratado em outra linha do edital, a tela sugere marcar a outra.
-**fonte:** python/monitora/aprovados/contratacao.py; src/lib/lista-aprovados-rules.ts; src/modulos/aprovados/partes.tsx; supabase/migrations/20261024120000_contratado_em_outra_lista.sql
+**fonte:** python/monitora/aprovados/contratacao.py; src/lib/aprovados/lista-aprovados-rules.ts; src/modulos/aprovados/partes.tsx; supabase/migrations/20261024120000_contratado_em_outra_lista.sql
 **abrir:** approved
 
 ## Status Convocado
 
 **perguntas:** status convocado | o que e convocado | convocado | data da convocacao | marcar como convocado | convocado para contratacao | fim de fila | status fim de fila | sumiu o fim de fila
 **resposta:** Convocado é o candidato chamado para a contratação que ainda vai se apresentar e entregar os documentos; o status leva a data da convocação (hoje, por padrão, nunca futura). O caminho seguinte é Contratado, Desistente ou Documentação Rejeitada: quem tem Editor em Aprovados faz essa passagem sem o cadeado, mas voltar a "Sem status" é só do Administrador em Aprovados. A data continua registrada depois que o status muda e some se o status for apagado. Convocado não conta como contratado na Seleção nem nos indicadores de contratados (que somam Contratado e Migração). O status "Fim de Fila" deixou de existir.
-**fonte:** src/lib/lista-aprovados-rules.ts; supabase/migrations/20261005180000_convocado_e_carta_de_convocacao.sql
+**fonte:** src/lib/aprovados/lista-aprovados-rules.ts; supabase/migrations/20261005180000_convocado_e_carta_de_convocacao.sql
 **abrir:** approved
 
 ## Convocação para entrevista e para contratação
@@ -109,49 +109,49 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 
 **perguntas:** exportar lista de aprovados | baixar lista de aprovados | lista de aprovados em excel | lista de aprovados em pdf | exportar aprovados xlsx csv pdf
 **resposta:** Na aba Aprovados, "Exportar" baixa a lista com os filtros da tela (edital, cargo, modalidade e situação; a busca da tabela não entra), em XLSX, CSV ou PDF. O arquivo traz a área, os editais, os filtros, quantos registros saíram, a data dos dados, a data de emissão e o número do registro da exportação. Antes de gerar, o banco confere a permissão e o total da lista vigente: se a lista mudou desde que a tela carregou, ele pede Atualizar e exportar de novo. O arquivo é gerado no navegador e cada exportação fica registrada (quem, quando, formato e filtros). Não é o "Exportar CSV" da aba Convocação, que baixa a ordem de chamada.
-**fonte:** src/modulos/aprovados/exportacao/; src/lib/exportacao-da-lista-de-aprovados.ts
+**fonte:** src/modulos/aprovados/exportacao/; src/lib/aprovados/exportacao/exportacao-da-lista-de-aprovados.ts
 **abrir:** approved
 
 ## Resumo por cargo e status
 
 **perguntas:** resumo por cargo | contagem por cargo e status | quantos contratados por cargo | cadastro de reserva por vaga | desistencia no resumo | resumo da lista | resumo por cargo lento de aprovados
 **resposta:** A aba "Resumo por cargo" conta a lista vigente com os mesmos filtros da aba Aprovados: por edital, cargo, regime e jornada, uma linha por vaga e modalidade, com subtotal e total geral. Cada vínculo (a linha da lista: vaga e modalidade) cai numa coluna só, e as colunas fecham o total de Aprovados: Contratados (Contratado e Migração), Desistentes (uma coluna só: o sistema não registra se a desistência foi voluntária ou tácita), Em reserva (o cadastro de reserva: quem está na fila de convocação depois das vagas imediatas e ainda não foi chamado) e Outros (Convocado, A convocar, Documentação Rejeitada, Contratado em outra lista, Não classificado). Passar o mouse no título da coluna mostra a definição. O cabeçalho e a coluna "Cargo e vaga" ficam fixos enquanto a tabela rola. Quem concorre à cota e à ampla tem duas linhas e conta nas duas em Aprovados; contratado por uma delas, a outra vai a Outras situações, sem contar dois contratados. Listas inativas ficam fora. O filtro Situação restringe a base. Clicar num número mostra quem está nele. A tabela mostra 50 linhas de vaga por vez e carrega mais ao rolar até o fim ou em "Carregar mais"; o Total geral é sempre do recorte inteiro. "Exportar" baixa o resumo em XLSX, CSV ou PDF, sem nomes, com o registro da exportação. Regime e jornada vêm do nome do cargo (ex.: "… - Teletrabalho - 20h" ou "Assistente Social 30h"); o grupo mostra só o que o nome traz, e a tela avisa quantos vínculos ficam sem regime ou jornada (o sistema não tem esse campo; vem do texto do cargo da lista).
-**fonte:** src/lib/resumo-por-cargo-e-status.ts; src/modulos/aprovados/aba-resumo.tsx; src/lib/exportacao-do-resumo-por-cargo.ts
+**fonte:** src/lib/aprovados/exportacao/resumo-por-cargo-e-status.ts; src/modulos/aprovados/aba-resumo.tsx; src/lib/aprovados/exportacao/exportacao-do-resumo-por-cargo.ts
 **abrir:** approved
 
 ## A convocar na ordem de chamada
 
 **perguntas:** a convocar | quem chamar agora | proximos a convocar | quem ainda nao foi chamado | ordem de chamada convocado
 **resposta:** Na aba Convocação, "A convocar" são as vagas imediatas cujo candidato ainda não foi chamado (sem status). Convocado, Contratado e Migração continuam na posição que a ordem lhes deu e não são chamados de novo; Desistente, Documentação Rejeitada e Contratado em outra lista saem da fila e o próximo toma a vaga. "Marcar quem falta convocar" marca de uma vez esses candidatos para a carta. "Exportar CSV" baixa a ordem com a situação na chamada, o status e a data da convocação.
-**fonte:** src/lib/lista-convocacao-rules.ts; src/modulos/aprovados/aba-convocacao.tsx
+**fonte:** src/lib/aprovados/lista-convocacao-rules.ts; src/modulos/aprovados/aba-convocacao.tsx
 **abrir:** approved
 
 ## Carta de convocação
 
 **perguntas:** carta de convocacao | emitir carta de convocacao | como emitir a carta de convocacao | carta para contratacao | convocar por carta
 **resposta:** Na aba Convocação, marque os candidatos e clique em "Carta de convocação" (ou use o envelope na linha ou na gaveta do candidato). Escolha o modelo (os do edital aparecem primeiro), confira a data limite, o local, os documentos e o contato desta emissão, e se sai um documento com todas ou uma carta por candidato. A prévia mostra como fica no SEI. As saídas são Copiar para o SEI, DOCX (com uma carta por candidato, vem um .zip) e PDF. A primeira saída registra a emissão: quem, quando, o modelo e a versão e os candidatos. Emitir é de quem tem Editor em Aprovados.
-**fonte:** src/modulos/aprovados/carta-de-convocacao/; src/lib/carta-de-convocacao.ts; src/lib/carta-de-convocacao-documento.ts
+**fonte:** src/modulos/aprovados/carta-de-convocacao/; src/lib/aprovados/carta-de-convocacao/carta-de-convocacao.ts; src/lib/aprovados/carta-de-convocacao/carta-de-convocacao-documento.ts
 **abrir:** approved
 
 ## Marcar convocados depois da carta
 
 **perguntas:** marcar convocados depois da carta | marcar candidatos como convocado | convocado depois da carta | carta registrada
 **resposta:** Depois que a carta é registrada, a tela oferece marcar como Convocado, com a data escolhida, os candidatos da carta que estão sem status ou já convocados; quem já tem outro status fica de fora e a tela diz o motivo. A marcação fica ligada à carta no histórico do status. Se a resposta não confirmar todos os candidatos do pedido, a tela mantém os status anteriores e pede atualizar a lista antes de tentar novamente.
-**fonte:** src/modulos/aprovados/estado.ts; src/lib/dados-do-estado-de-aprovados.ts; supabase/migrations/20261005180000_convocado_e_carta_de_convocacao.sql (marcar_candidatos_convocados)
+**fonte:** src/modulos/aprovados/estado.ts; src/lib/aprovados/dados-do-estado-de-aprovados.ts; supabase/migrations/20261005180000_convocado_e_carta_de_convocacao.sql (marcar_candidatos_convocados)
 **abrir:** approved
 
 ## Modelos da carta de convocação
 
 **perguntas:** modelo da carta de convocacao | modelos da carta | editar carta de convocacao | campos da carta | versao do modelo da carta
 **resposta:** Os modelos da carta são da área e, se preciso, de um edital, e ficam em "Modelos da carta", na aba Convocação. O texto tem um parágrafo por linha, **negrito** e campos entre chaves: {NOME}, {CPF}, {CARGO}, {VAGA}, {LOTACAO}, {UNIDADE}, {EDITAL}, {POSICAO}, {MODALIDADE}, {DATA_LIMITE}, {LOCAL}, {DOCUMENTOS}, {CONTATO} e {DATA}; a linha que é só {DOCUMENTOS} vira a lista dos documentos. O modelo guarda os valores padrão de local, documentos, contato e prazo em dias. Cada alteração é uma versão nova e, a partir da segunda, pede o motivo; modelo não se apaga, inativa-se com motivo. Quem tem Editor em Aprovados cria e altera; os demais só consultam.
-**fonte:** src/lib/carta-de-convocacao.ts; src/modulos/aprovados/carta-de-convocacao/modelos-da-carta.tsx
+**fonte:** src/lib/aprovados/carta-de-convocacao/carta-de-convocacao.ts; src/modulos/aprovados/carta-de-convocacao/modelos-da-carta.tsx
 **abrir:** approved
 
 ## CPF na carta de convocação
 
 **perguntas:** cpf na carta de convocacao | carta com cpf | cpf mascarado
 **resposta:** A lista de aprovados não guarda CPF. Se o modelo usa {CPF}, a carta sai com o espaço em branco e a emissão avisa quem ficou sem; quando houver CPF, ele aparece sempre mascarado (***.456.789-**).
-**fonte:** src/lib/carta-de-convocacao.ts
+**fonte:** src/lib/aprovados/carta-de-convocacao/carta-de-convocacao.ts
 
 ## Cartas emitidas na gaveta do candidato
 
@@ -164,14 +164,14 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 
 **perguntas:** mudar status de varios | mudar status em lote | selecionar varios candidatos | selecionar todos os candidatos | status em massa | marcar varios como desistente | convocar varios de uma vez
 **resposta:** Na aba Aprovados, quem tem Editor em Aprovados marca a caixa ao lado do nome de cada candidato, ou "Selecionar os N da tabela" para pegar todos os filtrados e buscados (não só as linhas desenhadas), e clica em "Mudar status". Em lote dá para escolher Convocado (com uma data para todos), Desistente ou Documentação Rejeitada; "Sem status" é só do Administrador em Aprovados. Contratado e Migração pedem a matrícula de cada um e continuam pelo botão de status da linha. Antes de gravar, a janela mostra quantos mudam, como estão hoje e quem fica de fora e por quê (já no status, lista inativa ou status definido que só o Administrador muda). São até 500 por vez, e cada mudança fica no histórico do candidato. Mudar um filtro ou a busca limpa a seleção.
-**fonte:** src/modulos/aprovados/status-em-lote.tsx; src/lib/status-em-lote-dos-aprovados.ts; supabase/migrations/20261111180000_status_em_lote_dos_aprovados.sql
+**fonte:** src/modulos/aprovados/status-em-lote.tsx; src/lib/aprovados/status-em-lote-dos-aprovados.ts; supabase/migrations/20261111180000_status_em_lote_dos_aprovados.sql
 **abrir:** approved
 
 ## Cadeado no status do candidato
 
 **perguntas:** cadeado no status | por que aparece um cadeado | nao consigo mudar o status | status travado | voltar para sem status | desfazer status do candidato
 **resposta:** O cadeado aparece para quem tem Editor em Aprovados quando a lista é inativa ou quando o status já foi definido e só o Administrador em Aprovados pode mudá-lo (inclusive voltar a "Sem status"). A exceção é o Convocado: o Editor o leva para Contratado, Desistente ou Documentação Rejeitada sem cadeado. Sem Editor em Aprovados, a coluna mostra só um traço. Peça a mudança a quem tem Administrador em Aprovados.
-**fonte:** src/modulos/aprovados/partes.tsx (AcaoDeStatus); src/lib/lista-aprovados-rules.ts; src/lib/access-roles.ts
+**fonte:** src/modulos/aprovados/partes.tsx (AcaoDeStatus); src/lib/aprovados/lista-aprovados-rules.ts; src/lib/acessos/access-roles.ts
 **abrir:** approved
 
 ## Carta de convocação que não aparece
@@ -185,10 +185,10 @@ publicada do resultado final da Classificação; `src/lib/publicacao-de-aprovado
 
 **perguntas:** por que o edital nao tem lista de aprovados | lista de aprovados vazia | edital nao aparece na lista de aprovados | nao tem lista de aprovados
 **resposta:** A Lista de aprovados mostra a lista vigente de cada edital da área atual (e do recorte da sua coordenação). Edital sem lista ainda não teve o resultado final publicado da Classificação nem planilha importada: publique em Classificação › Resultado final ("Publicar como lista de aprovados") ou, em edital sem análise no sistema, importe o XLSX (Editor em Importação e convocação). As listas anteriores ficam inativas, para consulta, no modal "Listas do edital".
-**fonte:** src/lib/publicacao-de-aprovados.ts; src/modulos/aprovados/modal-listas-do-edital.tsx; src/lib/access-roles.ts
+**fonte:** src/lib/aprovados/publicacao-de-aprovados.ts; src/modulos/aprovados/modal-listas-do-edital.tsx; src/lib/acessos/access-roles.ts
 **abrir:** approved
 
 **perguntas:** filtro de localidade | filtrar por localidade | filtrar por polo | filtrar por municipio | vagas em lugares diferentes | localidade da vaga
 **resposta:** Nas abas Aprovados e Resumo por cargo da Lista de aprovados, o filtro "Localidade" separa as vagas do mesmo edital que ficam em lugares diferentes (ex.: Pacaraima/RR e Boa Vista/RR, Polo Base Brasilândia, CASAI Paragominas, Distrital de Cacoal). A localidade é lida do texto do cargo da lista, no trecho que traz o lugar (UF depois de barra, Polo, PB, CASAI, Distrital, Regional, Abrangência, Sede ou nome de estado); o nome do DSEI é a unidade do edital, não a localidade. O filtro só aparece quando os editais escolhidos têm duas ou mais localidades, e ao escolher uma, o filtro Cargo passa a oferecer só os cargos dela. Cargo sem lugar no texto fica de fora quando uma localidade está escolhida. A exportação leva o mesmo recorte.
-**fonte:** src/lib/localidade-da-vaga.ts; src/modulos/aprovados/lista-aprovados.tsx
+**fonte:** src/lib/aprovados/localidade-da-vaga.ts; src/modulos/aprovados/lista-aprovados.tsx
 **abrir:** approved

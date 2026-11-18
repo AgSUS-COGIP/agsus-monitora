@@ -1,4 +1,7 @@
-import type { Avaliador, Convocado } from "../../lib/fila-de-conducao.ts";
+import type {
+  Avaliador,
+  Convocado,
+} from "../../lib/entrevistas/fila-de-conducao.ts";
 import type { Comparecimento } from "./cabecalho-da-ficha.tsx";
 import type { CopiarTexto } from "./parecer-pronto.tsx";
 import type { DadosDoEdital, Resultado } from "./tipos.ts";

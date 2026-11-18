@@ -23,9 +23,9 @@ import {
   ACCESS_BACKGROUND_FOLDER,
   createAccessBackgroundPath,
   validateAccessBackgroundFile,
-} from "../../lib/access-background-storage.ts";
-import { DEFAULT_ACCESS_BRANDING } from "../../lib/access-branding.ts";
-import { mensagemDeFalha } from "../../lib/falha-de-rede";
+} from "../../lib/entrada/access-background-storage.ts";
+import { DEFAULT_ACCESS_BRANDING } from "../../lib/entrada/access-branding.ts";
+import { mensagemDeFalha } from "../../lib/carga/falha-de-rede";
 import {
   CHAVE_DO_LOGO_DA_BARRA,
   LOGO_PADRAO_DA_BARRA,
@@ -34,7 +34,7 @@ import {
   ehImagemGuardada,
   ehLogoDaBarraGuardada,
   logoDaBarraSegura,
-} from "../../lib/marca-da-barra-lateral.ts";
+} from "../../lib/navegacao/marca-da-barra-lateral.ts";
 import type {
   AcaoDaImagem,
   GaleriaDeImagens,

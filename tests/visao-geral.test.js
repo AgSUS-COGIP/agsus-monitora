@@ -32,10 +32,10 @@ import {
   textosDaVisaoGeral,
   urgenciaDoCronograma,
   VALOR_DO_INDICADOR,
-} from "../src/lib/visao-geral.ts";
+} from "../src/lib/visao-geral/visao-geral.ts";
 
 /*
-  As regras da Visão geral (src/lib/visao-geral.ts): filtros, recorte com
+  As regras da Visão geral (src/lib/visao-geral/visao-geral.ts): filtros, recorte com
   atalho, linhas enriquecidas (fase, crítico, pós-resultado), blocos
   (Fases, Pós-resultado, Processos por projeto),
   tabela e exportação.

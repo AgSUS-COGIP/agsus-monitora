@@ -32,15 +32,15 @@ import {
   guardarMarca,
   lerMarcaGuardada,
   type MarcaGuardada,
-} from "../../lib/access-branding-cache.ts";
-import { buscarMarcaPublica } from "../../lib/access-branding-publico.ts";
+} from "../../lib/entrada/access-branding-cache.ts";
+import { buscarMarcaPublica } from "../../lib/entrada/access-branding-publico.ts";
 import {
   DEFAULT_ACCESS_BRANDING,
   enderecosDaArteNaTela,
   normalizeAccessBackgroundUrl,
   normalizeAccessLogoUrl,
   normalizeAccessPanelColor,
-} from "../../lib/access-branding.ts";
+} from "../../lib/entrada/access-branding.ts";
 import {
   DESFOQUE_DO_VIDRO_EM_PX,
   ESTILO_VIDRO,
@@ -52,7 +52,7 @@ import {
   normalizarEstilo,
   normalizarModo,
   porcentagemDaCorNoVidro,
-} from "../../lib/contraste.ts";
+} from "../../lib/base/contraste.ts";
 
 /** O rodapé institucional da tela de acesso (chaves `cogip_*`). */
 export type RodapeDaEntrada = {

@@ -33,7 +33,7 @@ import {
   rotuloDaVersao,
   nomeParaGravar,
   sugerirNomeDaVersao,
-} from "../../../lib/nome-da-versao.ts";
+} from "../../../lib/base/nome-da-versao.ts";
 import { Aviso } from "../../../ui/index.ts";
 import { nomeDoCampo } from "../../../ui/nome-da-versao.tsx";
 import { Previa } from "../previa.tsx";

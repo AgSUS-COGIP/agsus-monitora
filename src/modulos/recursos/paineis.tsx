@@ -5,12 +5,12 @@ import type {
   FiltrosDosRecursos,
   CampoDoFiltroDosRecursos,
   AoFiltrarRecursos,
-} from "../../lib/tipos-dos-recursos.ts";
+} from "../../lib/recursos/tipos-dos-recursos.ts";
 import {
   calcularIndicadores,
   opcoesDosFiltros,
   pendenciasPrioritarias,
-} from "../../lib/recursos-dos-candidatos.ts";
+} from "../../lib/recursos/recursos-dos-candidatos.ts";
 type Opcoes = ReturnType<typeof opcoesDosFiltros>;
 type Pendencia = ReturnType<typeof pendenciasPrioritarias>[number];
 type FiltroAtivo = [CampoDoFiltroDosRecursos, string, string];
@@ -20,15 +20,15 @@ type PropsDoFiltro = {
   aoFiltrar: AoFiltrarRecursos;
 };
 import { useEffect, useMemo, useRef, useState } from "react";
-import { formatNumberBR } from "../../lib/formatters";
+import { formatNumberBR } from "../../lib/base/formatters";
 import {
   esteiraDosRecursos,
   FILTROS_VAZIOS,
   impactoNoResultado,
   recursosPorAnalista,
   recursosPorSituacao,
-} from "../../lib/recursos-dos-candidatos.ts";
-import { paletaDoPainel } from "../../lib/tema-do-painel";
+} from "../../lib/recursos/recursos-dos-candidatos.ts";
+import { paletaDoPainel } from "../../lib/paineis/tema-do-painel";
 import {
   Campo,
   CardDeGrafico,

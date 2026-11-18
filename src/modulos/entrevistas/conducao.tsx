@@ -6,17 +6,17 @@ import type {
   EstadoDaConducaoComAcoes,
   Resultado,
 } from "./tipos.ts";
-import type { Convocado } from "../../lib/fila-de-conducao.ts";
+import type { Convocado } from "../../lib/entrevistas/fila-de-conducao.ts";
 import type {
   FonteDaConvocacao,
   GrupoDaConvocacao,
   OrigemDaVaga,
-} from "../../lib/tipos-da-convocacao-da-entrevista.ts";
+} from "../../lib/entrevistas/tipos-da-convocacao-da-entrevista.ts";
 import { useEffect, useMemo, useState } from "react";
 import {
   nomeDoCargo,
   textoDaJanela,
-} from "../../lib/conducao-de-entrevista.ts";
+} from "../../lib/entrevistas/conducao-de-entrevista.ts";
 import {
   aConvocar,
   avisosDaConvocacao,
@@ -27,8 +27,11 @@ import {
   textoDoLimite,
   criteriosDeDesempate,
   textoDoEmpateFinal,
-} from "../../lib/convocacao-da-entrevista.ts";
-import { gruposAteOLimite, totalDosGrupos } from "../../lib/carga-continua.ts";
+} from "../../lib/entrevistas/convocacao-da-entrevista.ts";
+import {
+  gruposAteOLimite,
+  totalDosGrupos,
+} from "../../lib/carga/carga-continua.ts";
 import {
   Aviso,
   Campo,
@@ -57,7 +60,7 @@ import { numeroBR } from "./partes.tsx";
     por vaga, na ordem dela; "Convocar selecionados" registra os da lista
     para a ficha e "Desconvocar" (com motivo, só sem notas). Uma convocação
     só — nada de ranking, regra ou vagas próprios
-    (src/lib/convocacao-da-entrevista.ts). Sem `aoConvocar`, só leitura
+    (src/lib/entrevistas/convocacao-da-entrevista.ts). Sem `aoConvocar`, só leitura
     (a Central de convocações, na Lista de aprovados): sem a coluna de
     marcar, sem "Desconvocar" e sem os botões.
   - LiberacaoDoEdital: liberar fora da janela (administrador global).

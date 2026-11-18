@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
 import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it } from "vitest";
-import { enderecosDaArteNaTela } from "../src/lib/access-branding.ts";
+import { enderecosDaArteNaTela } from "../src/lib/entrada/access-branding.ts";
 import {
   guardarMarca,
   limparMarcaGuardada,
-} from "../src/lib/access-branding-cache.ts";
+} from "../src/lib/entrada/access-branding-cache.ts";
 
 /*
   A ARTE LEVE NA TELA DE ACESSO (13/11/2026: "por que demora para carregar em

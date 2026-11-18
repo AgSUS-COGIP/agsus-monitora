@@ -7,7 +7,7 @@ import {
   formatSessionRemaining,
   getRemainingSessionMs,
   parseSessionActivityRecord,
-} from "../src/lib/session-lifecycle";
+} from "../src/lib/sessao/session-lifecycle";
 
 describe("session lifecycle", () => {
   it("formata o contador de uma hora", () => {
@@ -63,13 +63,13 @@ describe("session lifecycle", () => {
 
   it("monta o contador pelo DOM, sem innerHTML", async () => {
     vi.resetModules();
-    vi.doMock("../src/lib/supabaseClient", () => ({
+    vi.doMock("../src/lib/sessao/supabaseClient", () => ({
       getSupabaseClient: () => null,
     }));
     const definir = vi.spyOn(Element.prototype, "innerHTML", "set");
     try {
       const { installSessionLifecycle } =
-        await import("../src/lib/session-lifecycle");
+        await import("../src/lib/sessao/session-lifecycle");
       installSessionLifecycle();
 
       const timer = document.getElementById("agsusSessionTimer");
@@ -84,7 +84,7 @@ describe("session lifecycle", () => {
       expect(definir).not.toHaveBeenCalled();
     } finally {
       definir.mockRestore();
-      vi.doUnmock("../src/lib/supabaseClient");
+      vi.doUnmock("../src/lib/sessao/supabaseClient");
     }
   });
 });

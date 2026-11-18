@@ -20,7 +20,7 @@ Tipos e fronteiras dos dados (e o que saiu do legado): [[mapa-saude-indigena-con
 - **Não há editor de coordenadas neste mapa.** Os pontos vêm do SIGEPSI e se corrigem lá. O editor
   comum ([[coordenadas]]) é só do mapa de Projetos. `TopoDoMapa` e `classesDoPainel`
   (`painel-do-mapa.tsx`) aceitam `modo` opcional.
-- **Dicas e popups.** `criarMapa` liga `manterDicasDentroDoMapa` (`src/lib/dica-dentro-do-mapa.ts`):
+- **Dicas e popups.** `criarMapa` liga `manterDicasDentroDoMapa` (`src/lib/mapas/dica-dentro-do-mapa.ts`):
   perto da borda a dica troca de direção, com largura máxima relativa ao mapa (`.dica-no-mapa`);
   o popup tem `autoPan` com folga, `keepInView` e tamanhos relativos ao mapa.
 
@@ -28,14 +28,14 @@ Tipos e fronteiras dos dados (e o que saiu do legado): [[mapa-saude-indigena-con
 
 - `mapa-saude-indigena.tsx` (`<MapaSaudeIndigena>`: estado, contas memorizadas, um mapa principal
   de cada vez), `mapa-nacional.tsx` (bolhas, CASAIs nacionais, leque, "Territórios por vagas";
-  a escolha de recolher em `src/lib/mapa-recolhido.ts`) e `mapa-do-dsei.tsx` (unidades agrupadas
+  a escolha de recolher em `src/lib/mapas/mapa-recolhido.ts`) e `mapa-do-dsei.tsx` (unidades agrupadas
   por proximidade + leque, sede, vínculos externos, filtros por tipo, Terras Indígenas e povos).
 - Peças comuns aos dois mapas: `leaflet.ts`, `painel-do-mapa.tsx`, `legenda.tsx`
   (`<LegendaFlutuante>`), `tela-cheia.tsx` (`travarRolagemDaPagina` é contada: tela cheia e edição
   de Projetos), `usar-ultimo.ts`.
 - `ordem-da-lista.tsx` — "Ordenar" (Vagas, A–Z, Nº do DSEI, % preenchidas, Ociosas), escolha
-  guardada no navegador; regras em `src/lib/mapa-saude-indigena/ordem-dos-territorios.ts`.
-- Regras puras em `src/lib/mapa-saude-indigena/` (`chaves`, `formas`, `mapa-nacional`,
+  guardada no navegador; regras em `src/lib/mapas/mapa-saude-indigena/ordem-dos-territorios.ts`.
+- Regras puras em `src/lib/mapas/mapa-saude-indigena/` (`chaves`, `formas`, `mapa-nacional`,
   `mapa-do-dsei`, `localizacoes-do-sigepsi`, `contornos` com `UF_GEO` e `BR_OUTLINE`). CSS em
   `mapa-saude-indigena.css`, só tokens.
 
@@ -107,7 +107,7 @@ Terceiro botão do seletor do fundo, só no `#map` (`map-base-layer-switcher.ts`
 - A lista mostra o número do DSEI; foco/mouse na linha realça o polígono na hora. O mouse no
   polígono acende a linha só depois de parar nele (`ESPERA_DO_REALCE_NA_LISTA`, 150 ms) e nunca
   rola, reordena nem remonta a lista (só a classe `is-realce` muda). O clique abre o DSEI.
-- Numeração: `src/lib/mapa-saude-indigena/dseis-oficiais.ts` (34 nomes oficiais em ordem
+- Numeração: `src/lib/mapas/mapa-saude-indigena/dseis-oficiais.ts` (34 nomes oficiais em ordem
   alfabética, como o mapa institucional da AgSUS). Regras (faixas, sem dado, dica):
   `mapa-simples.ts`; os números são os de "Territórios por vagas", sem consulta nova. Cores:
   tokens `--mapa-simples-*` em `src/styles/tokens.css`.
@@ -139,7 +139,7 @@ Terceiro botão do seletor do fundo, só no `#map` (`map-base-layer-switcher.ts`
   (`defaultPrevented`), só sai no segundo.
 - **Enquadramento do Brasil.** Por `BRASIL_BOUNDS` (contorno real, não o retângulo antigo que
   cortava a ponta leste), com folga da maior bolha (raio + traço + 12 px) e zoom mínimo que desce
-  em quartos até o país caber (`src/lib/enquadramento-do-brasil.ts`, também da guarda do mapa). Os
+  em quartos até o país caber (`src/lib/mapas/enquadramento-do-brasil.ts`, também da guarda do mapa). Os
   mapas React têm `enquadramentoProprio` (a guarda não reenquadra por cima) e reenquadram ao mudar
   de tamanho até a pessoa mexer (`criarMapaDoBrasil`).
 

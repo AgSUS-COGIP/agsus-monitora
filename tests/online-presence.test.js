@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeOnlinePresenceList } from "../src/lib/online-presence";
+import { normalizeOnlinePresenceList } from "../src/lib/sessao/online-presence";
 
 describe("online presence", () => {
   it("normaliza, remove duplicados e ordena pessoas", () => {

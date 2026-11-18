@@ -5,12 +5,12 @@
   aberta, a publicação versionada com motivo
   (salvar_configuracoes_e_paineis_v2), o histórico e a restauração. Este
   arquivo não importa React; as RPCs ficam aqui (o check:rpc-contract só lê
-  `.js`). A regra da publicação é de `src/lib/publicacao-de-configuracoes.ts`
-  e a dos painéis, de `src/lib/paineis-externos-das-configuracoes.ts`. As
+  `.js`). A regra da publicação é de `src/lib/configuracoes/publicacao-de-configuracoes.ts`
+  e a dos painéis, de `src/lib/configuracoes/paineis-externos-das-configuracoes.ts`. As
   imagens da Aparência (arte de fundo e logo da barra) são de `imagens.ts`.
 */
 
-import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede";
+import { comTempoLimite, mensagemDeFalha } from "../../lib/carga/falha-de-rede";
 import {
   alteracoesDaVersao,
   buildChanges,
@@ -18,7 +18,7 @@ import {
   errosDasSecoes,
   linhasDasSecoes,
   normalizarValoresCarregados,
-} from "../../lib/publicacao-de-configuracoes.ts";
+} from "../../lib/configuracoes/publicacao-de-configuracoes.ts";
 import {
   chaveDoErroDoPainel,
   errosDosPaineis,
@@ -26,13 +26,13 @@ import {
   mudarRascunhoDoPainel,
   normalizarPaineis,
   paineisComRascunho,
-} from "../../lib/paineis-externos-das-configuracoes.ts";
+} from "../../lib/configuracoes/paineis-externos-das-configuracoes.ts";
 import type {
   CampoEditavelDoPainel,
   ValorDoCampoDoPainel,
-} from "../../lib/paineis-externos-das-configuracoes.ts";
-import type { ConfiguracaoCarregada } from "../../lib/publicacao-de-configuracoes.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient";
+} from "../../lib/configuracoes/paineis-externos-das-configuracoes.ts";
+import type { ConfiguracaoCarregada } from "../../lib/configuracoes/publicacao-de-configuracoes.ts";
+import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import type {
   IdDaSecaoDeConfiguracao,
   ModalDasConfiguracoes,

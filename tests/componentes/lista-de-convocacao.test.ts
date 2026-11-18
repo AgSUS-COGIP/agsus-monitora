@@ -4,7 +4,7 @@ import { createRoot } from "react-dom/client";
 import { EditorDaChamada } from "../../src/modulos/aprovados/chamada-para-contratacao.tsx";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { criarListaAprovados } from "../../src/modulos/aprovados/lista-aprovados.tsx";
-import { modeloDeReferencia } from "../../src/lib/modelo-de-convocacao.ts";
+import { modeloDeReferencia } from "../../src/lib/aprovados/carta-de-convocacao/modelo-de-convocacao.ts";
 import { LEI_15142_ESPALHADA } from "../modelos-de-convocacao-antigos.ts";
 import { clicar, digitar, escolher, esperar } from "./interacoes.ts";
 import { compactarCandidatos } from "./candidatos-compactos-falsos.ts";
@@ -16,7 +16,7 @@ import { aberturaPelasChamadasDeAntes } from "./abertura-dos-aprovados.ts";
 import { montarTela } from "../montar-tela.ts";
 import type { RespostaDoTeste } from "./abertura-dos-aprovados.ts";
 import type { CandidatoDoTeste } from "./candidatos-compactos-falsos.ts";
-import type { ReferenciaDoModelo } from "../../src/lib/tipos-da-configuracao-de-convocacao.ts";
+import type { ReferenciaDoModelo } from "../../src/lib/aprovados/carta-de-convocacao/tipos-da-configuracao-de-convocacao.ts";
 import { clienteDosAprovados } from "../clientes-falsos.ts";
 import { definido } from "../definido.ts";
 

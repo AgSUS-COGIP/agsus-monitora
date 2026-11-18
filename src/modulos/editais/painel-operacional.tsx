@@ -1,7 +1,7 @@
 import {
   indicadoresDoResumo,
   rotuloDoFiltroOperacional,
-} from "../../lib/editais-do-nucleo.ts";
+} from "../../lib/editais/editais-do-nucleo.ts";
 import {
   ChipDeFiltro,
   ChipsDeFiltro,

@@ -4,7 +4,7 @@ import type {
   DemandaInterna,
   FormularioDaDemanda,
   PessoaDaDemanda,
-} from "../../lib/demandas-internas.ts";
+} from "../../lib/cronograma/demandas-internas.ts";
 import {
   demandaAtrasada,
   formularioDaDemanda,
@@ -14,9 +14,9 @@ import {
   periodoDaDemanda,
   problemaDoFormulario,
   situacaoDaDemanda,
-} from "../../lib/demandas-internas.ts";
-import { registroDoCalendario } from "../../lib/calendario-editais.ts";
-import { formatarDataHora } from "../../lib/cronograma-do-edital.ts";
+} from "../../lib/cronograma/demandas-internas.ts";
+import { registroDoCalendario } from "../../lib/cronograma/calendario-editais.ts";
+import { formatarDataHora } from "../../lib/cronograma/cronograma-do-edital.ts";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { Aviso, Campo, Modal, classes } from "../../ui/index.ts";

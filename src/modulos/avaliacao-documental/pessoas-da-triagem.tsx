@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { RefObject } from "react";
 import { usarFiltrosNaUrl } from "../../app/usar-filtros-na-url.ts";
 import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
-import { copiarTexto } from "../../lib/convite-de-acesso.ts";
+import { copiarTexto } from "../../lib/acessos/convite-de-acesso.ts";
 import { ordinal } from "../../lib/classificacao/numeros.ts";
 import type { GrupoDaPre } from "../../lib/avaliacao-documental/paginas-da-pre-classificacao.ts";
 import {

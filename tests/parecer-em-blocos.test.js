@@ -17,7 +17,7 @@ import {
   textoDoParecer,
   textosDoModelo,
   totalSemSobreposicao,
-} from "../src/lib/parecer-em-blocos.ts";
+} from "../src/lib/recursos/parecer-em-blocos.ts";
 import {
   linhasVisiveis,
   preencherOSimulador,

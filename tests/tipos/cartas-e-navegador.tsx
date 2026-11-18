@@ -3,11 +3,11 @@ import type {
   CandidatoDaCarta,
   EstadoPaiDaCarta,
   ModeloDaCarta,
-} from "../../src/lib/tipos-da-carta.ts";
+} from "../../src/lib/aprovados/carta-de-convocacao/tipos-da-carta.ts";
 import {
   montarCartas,
   gerarDocxDasCartas,
-} from "../../src/lib/carta-de-convocacao-documento.ts";
+} from "../../src/lib/aprovados/carta-de-convocacao/carta-de-convocacao-documento.ts";
 import {
   copiarParaAreaDeTransferencia,
   imprimirPagina,

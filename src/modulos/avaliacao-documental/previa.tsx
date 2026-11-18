@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState } from "react";
-import { importarComRecarga } from "../../lib/importar-com-recarga";
+import { importarComRecarga } from "../../lib/carga/importar-com-recarga";
 import type { RegraAnalise } from "../../lib/avaliacao-documental/tipos-da-regra.ts";
 
 /*

@@ -24,7 +24,7 @@ import {
   textoDoMomento,
   textoDoPrazo,
   textoRecolhido,
-} from "../src/lib/ritmo-da-analise.ts";
+} from "../src/lib/analises/ritmo-da-analise.ts";
 
 /* O cronograma real do 114/2026 (resumido nas etapas que importam). */
 const CRONOGRAMA_114 = [

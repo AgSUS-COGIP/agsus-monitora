@@ -2,7 +2,7 @@ import type {
   PropsDaVisaoNacional,
   TerritorioDoMapa,
   DseiDoMapa,
-} from "../../lib/mapa-saude-indigena/tipos.ts";
+} from "../../lib/mapas/mapa-saude-indigena/tipos.ts";
 import type { MapaDoPainel } from "./tipos-do-painel.ts";
 import type { LequeDoMapa } from "./tipos-do-leaflet.ts";
 import {
@@ -18,11 +18,11 @@ import {
   dicaDaBolha,
   dicaDaCasaiNacional,
   popupDaCasaiNacional,
-} from "../../lib/mapa-saude-indigena/mapa-nacional.ts";
+} from "../../lib/mapas/mapa-saude-indigena/mapa-nacional.ts";
 import {
   formatarNumero,
   plural,
-} from "../../lib/mapa-saude-indigena/chaves.ts";
+} from "../../lib/mapas/mapa-saude-indigena/chaves.ts";
 import { EVENTO_DAS_TERRAS } from "../../modules/indigenous-territories-layer.ts";
 import { classes } from "../../ui/index.ts";
 import { LegendaFlutuante, LegendaNacional } from "./legenda.tsx";
@@ -30,7 +30,7 @@ import {
   indicadoresDosDseis,
   numeroDoDseiDoMapa,
   pintarDseis,
-} from "../../lib/mapa-saude-indigena/mapa-simples.ts";
+} from "../../lib/mapas/mapa-saude-indigena/mapa-simples.ts";
 import { MODO_SIMPLES } from "../../modules/map-base-layer-switcher.ts";
 import {
   LegendaDoMapaSimples,
@@ -62,7 +62,7 @@ import { OrdemDaLista, usarOrdemDosTerritorios } from "./ordem-da-lista.tsx";
 import {
   ordenarTerritorios,
   tituloDaOrdem,
-} from "../../lib/mapa-saude-indigena/ordem-dos-territorios.ts";
+} from "../../lib/mapas/mapa-saude-indigena/ordem-dos-territorios.ts";
 
 /*
   A volta de um DSEI parte da sede, no zoom em que o mapa do distrito costuma

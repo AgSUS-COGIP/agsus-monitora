@@ -2,7 +2,7 @@
 import { act, createElement, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { EVENTO_EDITAL_CONCLUIDO } from "../../src/lib/encerramento-do-edital.ts";
+import { EVENTO_EDITAL_CONCLUIDO } from "../../src/lib/encerramento-do-edital/encerramento-do-edital.ts";
 import { EncerramentoDoEdital } from "../../src/modulos/encerramento-do-edital/encerramento-do-edital.tsx";
 import { criarEstadoDoEncerramento } from "../../src/modulos/encerramento-do-edital/estado.ts";
 import {

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { ARQUIVO_DOS_CONTORNOS_DOS_DSEIS } from "../src/lib/mapa-saude-indigena/contornos-dos-dseis.ts";
+import { ARQUIVO_DOS_CONTORNOS_DOS_DSEIS } from "../src/lib/mapas/mapa-saude-indigena/contornos-dos-dseis.ts";
 import {
   AVISO_DO_SIMBOLO,
   FUNAI_PROXY_GEOJSON,

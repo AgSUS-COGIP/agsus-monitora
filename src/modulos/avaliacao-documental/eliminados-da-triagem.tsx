@@ -1,8 +1,8 @@
 import { useDeferredValue, useMemo, useState } from "react";
 import { usarFiltrosNaUrl } from "../../app/usar-filtros-na-url.ts";
 import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
-import { copiarTexto } from "../../lib/convite-de-acesso.ts";
-import { formatNumberBR } from "../../lib/formatters";
+import { copiarTexto } from "../../lib/acessos/convite-de-acesso.ts";
+import { formatNumberBR } from "../../lib/base/formatters";
 import { acoesDaPessoa } from "../../lib/avaliacao-documental/pessoas-da-triagem.ts";
 import {
   chaveDaPessoa,

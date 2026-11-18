@@ -6,13 +6,13 @@ atualizado: 2026-11-17
 
 # Planilhas: catálogo e cargas
 
-**`src/lib/planilhas.ts` é o único lugar do código com link, caminho ou bucket de planilha.** Quem
+**`src/lib/base/planilhas.ts` é o único lugar do código com link, caminho ou bucket de planilha.** Quem
 consome uma planilha importa de lá; ninguém escreve o endereço de novo em outro arquivo.
 `tests/planilhas.test.js` falha se um link de planilha aparecer fora dele. Além disso, duas abas
 vêm de planilhas do Google Drive por cargas no GitHub Actions, e as planilhas antigas de análises
 enviam ao banco pelo Apps Script.
 
-## O catálogo (`src/lib/planilhas.ts`)
+## O catálogo (`src/lib/base/planilhas.ts`)
 
 - Cada entrada diz o que a planilha é, onde mora e quem a usa (`usadaEm`): trocar um endereço é
   editar uma linha ali e nada mais. Planilha nova entra ali, com `usadaEm`.

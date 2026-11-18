@@ -14,12 +14,12 @@ import { useRef, useState } from "react";
 import {
   canAlterarPorDecisaoJudicial,
   canManageSubJudice,
-} from "../../lib/access-roles.ts";
+} from "../../lib/acessos/access-roles.ts";
 import {
   MAXIMO_DE_ANEXOS,
   formatarTamanho,
   problemaDosAnexos,
-} from "../../lib/anexos-do-candidato.ts";
+} from "../../lib/aprovados/anexos-do-candidato.ts";
 import {
   STATUS_CONTRATADO_EM_OUTRA_LISTA,
   STATUS_DO_CANDIDATO,
@@ -37,7 +37,7 @@ import {
   modalidadeSemAspas,
   statusNeedsMatricula,
   uniqueCandidateCargos,
-} from "../../lib/lista-aprovados-rules.ts";
+} from "../../lib/aprovados/lista-aprovados-rules.ts";
 import { Abas, BotaoDeAcao, classes, Modal } from "../../ui/index.ts";
 import { IconeDePdf } from "./partes.tsx";
 

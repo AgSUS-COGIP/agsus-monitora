@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { correcaoDesfazivel } from "../src/lib/editor-de-coordenadas.ts";
+import { correcaoDesfazivel } from "../src/lib/mapas/editor-de-coordenadas.ts";
 import {
   correcaoDoEditor,
   historicoDoEditor,
   pendenciasDoEditor,
-} from "../src/lib/respostas-do-editor-de-coordenadas.ts";
+} from "../src/lib/mapas/respostas-do-editor-de-coordenadas.ts";
 
 describe("respostas externas do editor de coordenadas", () => {
   it("aceita somente listas e registros nas pendências e mantém a identidade do mapa", () => {

@@ -15,7 +15,7 @@ import type { SecaoDeConfiguracao } from "./tipos.ts";
 
 /*
   Na ordem do menu, em três grupos (`grupo`, desenhados por
-  `blocosDaAdministracao` em src/lib/menu-lateral.ts): Aparência, Pessoas e
+  `blocosDaAdministracao` em src/lib/navegacao/menu-lateral.ts): Aparência, Pessoas e
   acessos, Sistema. Cada seção tem ícone próprio no menu.
 */
 export const SECOES: readonly SecaoDeConfiguracao[] = Object.freeze([

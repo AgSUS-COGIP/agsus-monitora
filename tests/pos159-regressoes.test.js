@@ -5,8 +5,8 @@ import {
   CHAVES_DAS_SECOES,
   linhasDasSecoes,
   normalizarValoresCarregados,
-} from "../src/lib/publicacao-de-configuracoes.ts";
-import { LOGO_PADRAO_DA_BARRA } from "../src/lib/marca-da-barra-lateral.ts";
+} from "../src/lib/configuracoes/publicacao-de-configuracoes.ts";
+import { LOGO_PADRAO_DA_BARRA } from "../src/lib/navegacao/marca-da-barra-lateral.ts";
 
 const app = fonteDoApp();
 const governance = readFileSync("src/modulos/configuracoes/estado.ts", "utf8");
@@ -15,7 +15,7 @@ const mapGuard = readFileSync(
   "src/modulos/mapa-saude-indigena/guarda-do-mapa.ts",
   "utf8",
 );
-const lifecycle = readFileSync("src/lib/session-lifecycle.ts", "utf8");
+const lifecycle = readFileSync("src/lib/sessao/session-lifecycle.ts", "utf8");
 // A barra lateral é React: o <img id="sideLogo"> nasce no componente da marca.
 const barraLateral = readFileSync(
   "src/componentes/barra-lateral/barra-lateral.tsx",
@@ -144,12 +144,12 @@ describe("a logo da barra lateral é o <img> real", () => {
 describe("enquadramento do Brasil medido no contorno real", () => {
   /*
     A constante contra os vértices do contorno (a cópia única, em
-    src/lib/mapa-saude-indigena/contornos.js) é conferida em
+    src/lib/mapas/mapa-saude-indigena/contornos.js) é conferida em
     tests/mapa-saude-indigena.test.js.
   */
   it("a guarda do mapa usa a medição, não um retângulo à mão", () => {
-    expect(mapGuard).toContain(
-      'import { BRASIL_BOUNDS, NAVEGACAO_BOUNDS } from "../../lib/brasil-bounds.ts"',
+    expect(mapGuard).toMatch(
+      /import\s*\{\s*BRASIL_BOUNDS,\s*NAVEGACAO_BOUNDS,?\s*\}\s*from "\.\.\/\.\.\/lib\/mapas\/brasil-bounds\.ts"/,
     );
     expect(semComentarios(mapGuard)).not.toContain("-34.9");
     expect(semComentarios(mapGuard)).not.toContain("-74.2");

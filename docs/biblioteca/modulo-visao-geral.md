@@ -20,8 +20,8 @@ dentro do ErrorBoundary da tela. O bootstrap, a navegação e a carga do monitor
   processos por projeto, tabela e detalhes.
 - `boas-vindas.tsx` e `marcos.ts`: os marcos anuais da equipe (só a comemoração, sem card).
 - `tipos.ts`: contratos do estado, callbacks, dados de leitura e componentes.
-- `src/lib/visao-geral.ts`: normalização, enriquecimento, recorte, ordenação e CSV.
-- Filtros do mapa e da tabela: lógica pura em `src/lib/filtros-do-mapa.ts`; o estado fica aqui;
+- `src/lib/visao-geral/visao-geral.ts`: normalização, enriquecimento, recorte, ordenação e CSV.
+- Filtros do mapa e da tabela: lógica pura em `src/lib/mapas/filtros-do-mapa.ts`; o estado fica aqui;
   o evento é `agsus:filtros-alterados`.
 
 ## Layout: painel de decisão (17/11/2026)
@@ -39,8 +39,8 @@ trabalho). De cima para baixo:
   (`aguardandoVagas` no estado, até `ESPERA_MAXIMA_DO_ACOMPANHAMENTO_MS`): antes, a tela mostrava
   as vagas sem o desconto das reabertas e trocava segundos depois.
 - **Pede ação** (`PedeAcao`) ao lado de **Em andamento, por fase** (`EmAndamento`,
-  `andamentoPorFase` em `src/lib/visao-geral.ts`): críticos e pós-resultado (sem lista e lista sem
-  status; contratação abaixo de 50% e desistências saíram em 18/11/2026) numa lista; só as fases
+  `andamentoPorFase` em `src/lib/visao-geral/visao-geral.ts`): críticos e pós-resultado (sem lista e
+  lista sem status; contratação abaixo de 50% e desistências saíram em 18/11/2026) numa lista; só as fases
   com edital aberto, sem as vazias, e concluídos e cancelados numa linha.
 - **Mapa** mais baixo que na tela do mapa (`--altura-do-mapa-na-visao-geral`), com a altura
   reservada enquanto o módulo baixa (`.visao-geral-mapa-reserva`).
@@ -53,7 +53,7 @@ trabalho). De cima para baixo:
   valida os campos que usa, aplica o recorte da área e exclui o edital de treinamento. Campos
   adicionais são preservados para os mapas.
 - Indicadores, tabela, mapas e CSV usam o mesmo recorte; as regras de críticos e provimento
-  continuam nos helpers existentes (`src/lib/criticos-da-visao-geral.ts`).
+  continuam nos helpers existentes (`src/lib/visao-geral/criticos-da-visao-geral.ts`).
 - **Crítico marcado à mão** (#721, migration `20261110150000`): gestor, coordenador ou
   administrador global marca o edital como crítico, com motivo, no formulário de Editais
   ([[modulo-editais]]). A Visão geral lê `listar_editais_criticos_manuais(p_area)` junto com o
@@ -72,13 +72,13 @@ trabalho). De cima para baixo:
   armazenamento não impede o uso da página.
 - Colunas padrão, para todos (13/11/2026): todas menos Observações. A chave guardada passou a
   `agsus_visible_cols_v3` (Ciclo, 1ª admissão e Última admissão), o que descartou uma vez as
-  escolhas antigas. O ciclo é padronizado como "Nº ciclo" (`src/lib/ciclo-do-edital.ts`), é
+  escolhas antigas. O ciclo é padronizado como "Nº ciclo" (`src/lib/editais/ciclo-do-edital.ts`), é
   filtro em "Mais opções" e voltou ao formulário do edital. Em 1280px a tabela rola de lado; Unidade e Edital ficam presas à esquerda
   (`classe` da coluna na `TabelaInfinita`). No celular, em cartões, rótulo e valor ficam na
   mesma linha e só a página rola.
 - O CSV mantém a proteção contra fórmulas e o nome do arquivo usa a data de Brasília.
 - **Montador de relatório** (13/11/2026; `montador-de-relatorio.tsx`, lógica em
-  `src/lib/relatorio-da-visao-geral.ts`, PDF em `src/lib/relatorio-da-visao-geral-em-pdf.ts`): o
+  `src/lib/visao-geral/relatorio-da-visao-geral.ts`, PDF em `src/lib/visao-geral/relatorio-da-visao-geral-em-pdf.ts`): o
   botão Exportar abre a janela (e, desde 16/11/2026, o "Montar relatório" dos Painéis, com a área
   inteira — [[modulo-paineis-de-dados]]; saiu do menu da conta). Modelo pronto (Resumo
   rápido, Completo, Diretoria) ou escolha das seções (números, tabela dos editais, atenção), das
@@ -92,12 +92,12 @@ trabalho). De cima para baixo:
   Aprovados leitor): cargo, nota, classificação, nome, status, matrícula e a admissão conciliada.
   A aba Aprovados só aparece para quem vê a Lista de aprovados (`podeBaixarAprovados`), e o banco
   grava cada download em `TL_EXPORTACAO_APROVADO` (`DIRETORIA`) antes de devolver os nomes. A
-  ligação vaga ↔ quadro ↔ lista é feita em `src/lib/relatorio-da-diretoria.ts`: pelo código da
+  ligação vaga ↔ quadro ↔ lista é feita em `src/lib/visao-geral/relatorio-da-diretoria.ts`: pelo código da
   vaga, pelo número do começo ou pelo texto (Projetos e SEDE guardam o texto no lugar do código);
   as vagas imediatas vêm do quadro do edital (cargo e lotação) ou do texto da vaga ("2 vagas",
   "Cadastro Reserva" = 0), e sem os dois ficam "—". No PDF, acima de 3 mil aprovados, pede o Excel.
 
-- **Vagas reabertas** (16/11/2026, `src/lib/vagas-reabertas.ts`): o mesmo DSEI reabre o mesmo
+- **Vagas reabertas** (16/11/2026, `src/lib/visao-geral/vagas-reabertas.ts`): o mesmo DSEI reabre o mesmo
   posto em editais novos, e a soma das vagas contava a vaga duas vezes. A vaga sem contratação de
   um edital com resultado, reaberta num edital mais novo da mesma unidade (iniciado depois do fim
   do anterior) e do mesmo cargo, conta só no novo: o edital antigo ganha `vagas_reabertas` no

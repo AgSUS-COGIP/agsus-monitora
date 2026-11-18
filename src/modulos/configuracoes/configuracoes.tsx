@@ -8,11 +8,11 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { usarEstadoDaNavegacao } from "../../app/contexto-do-app.ts";
-import { getSupabaseClient } from "../../lib/supabaseClient";
+import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import {
   resumoDaVersao,
   valorParaExibir,
-} from "../../lib/publicacao-de-configuracoes.ts";
+} from "../../lib/configuracoes/publicacao-de-configuracoes.ts";
 import { SECOES } from "./secoes.ts";
 import { ContextoDaPaginaDeConfiguracoes } from "./pagina.ts";
 import { Icone } from "../../componentes/icone.tsx";

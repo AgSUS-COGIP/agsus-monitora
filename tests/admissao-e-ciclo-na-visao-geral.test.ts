@@ -4,8 +4,8 @@ import {
   cicloPadronizado,
   numeroDoCiclo,
   opcoesDeCiclo,
-} from "../src/lib/ciclo-do-edital.ts";
-import { editalParaSalvar } from "../src/lib/editais-do-nucleo.ts";
+} from "../src/lib/editais/ciclo-do-edital.ts";
+import { editalParaSalvar } from "../src/lib/editais/editais-do-nucleo.ts";
 import {
   acompanhamentoDaResposta,
   COLUNAS_DA_TABELA,
@@ -14,7 +14,7 @@ import {
   enriquecerLinhas,
   filtrosVazios,
   valorParaOrdenar,
-} from "../src/lib/visao-geral.ts";
+} from "../src/lib/visao-geral/visao-geral.ts";
 
 /*
   A 1ª E A ÚLTIMA ADMISSÃO E O CICLO NA VISÃO GERAL (pedido de 13/11/2026)

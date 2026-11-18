@@ -2,8 +2,8 @@ import type {
   FormatoDaExportacao,
   PedidoDaExportacao,
   RegistroDaExportacao,
-} from "../../../lib/exportacao-da-lista-de-aprovados.ts";
-import type { ResumoPorCargoEStatus } from "../../../lib/resumo-por-cargo-e-status.ts";
+} from "../../../lib/aprovados/exportacao/exportacao-da-lista-de-aprovados.ts";
+import type { ResumoPorCargoEStatus } from "../../../lib/aprovados/exportacao/resumo-por-cargo-e-status.ts";
 import type {
   DependenciasDaExportacao,
   MarcaDaExportacao,
@@ -11,14 +11,14 @@ import type {
 import {
   MIME_DA_EXPORTACAO,
   registroDaResposta,
-} from "../../../lib/exportacao-da-lista-de-aprovados.ts";
+} from "../../../lib/aprovados/exportacao/exportacao-da-lista-de-aprovados.ts";
 import {
   argumentosDoRegistroDoResumo,
   csvDoResumo,
   nomeDoArquivoDoResumo,
   xlsxDoResumo,
-} from "../../../lib/exportacao-do-resumo-por-cargo.ts";
-import { erroDeVersaoNova } from "../../../lib/importar-com-recarga.ts";
+} from "../../../lib/aprovados/exportacao/exportacao-do-resumo-por-cargo.ts";
+import { erroDeVersaoNova } from "../../../lib/carga/importar-com-recarga.ts";
 import { mensagemDoErroDaExportacao } from "./exportar.ts";
 
 /*
@@ -43,7 +43,7 @@ const gerarPdfNaPagina: GerarPdfDoResumo = async (
 ) => {
   const [{ carregarBibliotecasDoPdf }, { pdfDoResumo }] = await Promise.all([
     import("../../../lib/avaliacao-documental/espelho-em-pdf.ts"),
-    import("../../../lib/exportacao-do-resumo-por-cargo-em-pdf.ts"),
+    import("../../../lib/aprovados/exportacao/exportacao-do-resumo-por-cargo-em-pdf.ts"),
   ]).catch((erro: unknown) => {
     throw erroDeVersaoNova(erro);
   });

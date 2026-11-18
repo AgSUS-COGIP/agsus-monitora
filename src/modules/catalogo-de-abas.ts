@@ -4,7 +4,7 @@
 
   A consulta sai junto com as outras da entrada (`iniciarConsultas` em
   src/app/carga.ts) e vai na cópia da sessão. Quem monta a árvore é
-  `montarArvoreDoMenu` (`src/lib/menu-lateral.ts`), que recebe `abasDoMenu()`.
+  `montarArvoreDoMenu` (`src/lib/navegacao/menu-lateral.ts`), que recebe `abasDoMenu()`.
 
   Sem catálogo — função ainda não publicada no banco, erro de rede, resposta
   vazia ou estranha —, vale `ABAS_DO_MENU`, o mesmo catálogo no código: o menu
@@ -14,7 +14,7 @@
   e reaplica o catálogo quando a versão dele muda no banco.
 */
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { ABAS_DO_MENU, abasDoCatalogo } from "../lib/menu-lateral.ts";
+import { ABAS_DO_MENU, abasDoCatalogo } from "../lib/navegacao/menu-lateral.ts";
 import type { AbaDoCatalogo } from "../componentes/barra-lateral/tipos.ts";
 
 /** O erro do PostgREST, no que a carga lê (`code`). */
@@ -76,7 +76,7 @@ export function abasDoMenu(): readonly AbaDoCatalogo[] {
 
 /*
   O catálogo em uso veio do banco? Só nesse caso dá para dizer que uma aba
-  foi desligada (src/lib/pagina-desligada.ts): no do código, tudo está ligado.
+  foi desligada (src/lib/navegacao/pagina-desligada.ts): no do código, tudo está ligado.
 */
 export function catalogoDoBanco(): boolean {
   return abas !== ABAS_DO_MENU;

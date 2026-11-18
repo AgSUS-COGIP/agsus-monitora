@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   guardarMarca,
   lerMarcaGuardada,
-} from "../src/lib/access-branding-cache.ts";
+} from "../src/lib/entrada/access-branding-cache.ts";
 import {
   aplicarMarcaGuardadaNoArranque,
   definirMarcaDaConfiguracao,

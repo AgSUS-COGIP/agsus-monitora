@@ -47,10 +47,13 @@ import {
   linhasDaArea,
   obterDadosDoMonitoramento,
 } from "../../componentes/dados-do-monitoramento.ts";
-import { respostaInalterada, versaoDoPacote } from "../../lib/versao-do-pacote";
-import { hojeEmBrasilia } from "../../lib/cronograma-do-edital.ts";
-import { semTreinamento } from "../../lib/edital-de-treinamento.ts";
-import { chaveDoDsei } from "../../lib/mapa-saude-indigena/chaves.ts";
+import {
+  respostaInalterada,
+  versaoDoPacote,
+} from "../../lib/carga/versao-do-pacote";
+import { hojeEmBrasilia } from "../../lib/cronograma/cronograma-do-edital.ts";
+import { semTreinamento } from "../../lib/editais/edital-de-treinamento.ts";
+import { chaveDoDsei } from "../../lib/mapas/mapa-saude-indigena/chaves.ts";
 import {
   acompanhamentoDaResposta,
   CAMPOS,
@@ -69,7 +72,7 @@ import {
   proximaOrdenacao,
   recortar,
   rotuloDoAtalho,
-} from "../../lib/visao-geral.ts";
+} from "../../lib/visao-geral/visao-geral.ts";
 
 export const CHAVE_DOS_FILTROS = "agsus_monitora_filters_v1";
 /*
@@ -83,7 +86,7 @@ export const RPC_ACOMPANHAMENTO =
   "listar_acompanhamento_da_visao_geral_se_mudou";
 /** Os editais marcados à mão como críticos (gestor, coordenador, admin global). */
 export const RPC_CRITICOS_MANUAIS = "listar_editais_criticos_manuais";
-/** Cargos das vagas e quadro de cada edital: as vagas reabertas (src/lib/vagas-reabertas.ts). */
+/** Cargos das vagas e quadro de cada edital: as vagas reabertas (src/lib/visao-geral/vagas-reabertas.ts). */
 export const RPC_VAGAS_POR_CARGO = "listar_vagas_por_cargo_da_visao_geral";
 /** Quanto as vagas esperam o acompanhamento antes de aparecer sem o desconto das reabertas. */
 export const ESPERA_MAXIMA_DO_ACOMPANHAMENTO_MS = 10_000;
@@ -450,7 +453,7 @@ export function criarEstadoDaVisaoGeral({
           ?.vagas_por_cargo;
         if (acompanhamento && cargos)
           acompanhamento.reaberturas =
-            await import("../../lib/vagas-reabertas.ts").then(
+            await import("../../lib/visao-geral/vagas-reabertas.ts").then(
               (modulo) => modulo.reaberturasDosCargos(cargos),
               () => undefined,
             );

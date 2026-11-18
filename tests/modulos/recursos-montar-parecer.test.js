@@ -14,7 +14,7 @@ import {
   comporParecer,
   linhasDeTexto,
   rascunhoInicial,
-} from "../../src/lib/parecer-em-blocos.ts";
+} from "../../src/lib/recursos/parecer-em-blocos.ts";
 import { clicar, digitar, esperar, teclar } from "../componentes/interacoes.ts";
 
 /*

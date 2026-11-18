@@ -4,7 +4,7 @@ import {
   importarComRecarga,
   JANELA_DA_RECARGA_MS,
   recarregarUmaVez,
-} from "../src/lib/importar-com-recarga";
+} from "../src/lib/carga/importar-com-recarga";
 
 /*
   Versão nova publicada com a página aberta: o pedaço baixado sob demanda (ex.:

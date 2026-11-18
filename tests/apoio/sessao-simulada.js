@@ -52,7 +52,7 @@ export const contextoDoAdmin = (
 
 /**
  * O build aponta para o Supabase simulado? O endereço vai no pedaço do
- * cliente (src/lib/supabaseClient.ts), importado pela entrada.
+ * cliente (src/lib/sessao/supabaseClient.ts), importado pela entrada.
  */
 export async function buildSimulado(request) {
   const texto = async (caminho) => (await request.get(caminho)).text();

@@ -9,7 +9,7 @@ atualizado: 2026-11-10
 Avisos diários de inconsistência entre análises, entrevistas, classificação, aprovados e cargas.
 Módulo completo em React e TypeScript em `src/modulos/conferencias/`: estado externo, cartão de
 avisos, selos dos módulos, gaveta, busca de casos, paginação, justificativa para ignorar,
-navegação e CSV. Regras puras em `src/lib/avisos-de-conferencia.ts`; contratos em `tipos.ts`.
+navegação e CSV. Regras puras em `src/lib/conferencias/avisos-de-conferencia.ts`; contratos em `tipos.ts`.
 
 As conferências são calculadas por um job Python no GitHub Actions (workflow `conferencias.yml`;
 ver [[python-e-jobs]] e [[robos-e-agenda]]). As histórias de usuário (CF-1 a CF-6) estão em
