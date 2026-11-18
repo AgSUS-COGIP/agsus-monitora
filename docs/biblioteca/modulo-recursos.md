@@ -83,8 +83,8 @@ componente desmonta.
 - `recursos/parecer-em-blocos/`: PROTÓTIPO "Montar parecer" (desligado), o simulador de pareceres da Saúde
   Indígena em blocos por etapa, com prévia. Fontes do pré-preenchimento, tabelas e RPCs propostas em
   [recursos/parecer-em-blocos.md](../recursos/parecer-em-blocos.md).
-- Testes: `tests/modulos/recursos*.test.js`, `tests/dados-dos-recursos.test.js`,
-  `tests/lib/classificacao-ajustes.test.js`, `tests/lib/dados-dos-ajustes.test.js` e os contratos de
+- Testes: `tests/modulos/recursos*.test.js`, `tests/avaliacao-e-recursos.test.js` (bloco `dados-dos-recursos`),
+  `tests/classificacao.test.js` (bloco `lib/classificacao-ajustes`), `tests/classificacao.test.js` (bloco `lib/dados-dos-ajustes`) e os contratos de
   compilação em `tests/tipos/` (`painel-de-recursos.tsx`, `estado-dos-recursos.tsx`,
   `gaveta-dos-recursos.tsx`, `resposta-e-modelos-dos-recursos.tsx`, `ajuste-dos-recursos.tsx`).
 

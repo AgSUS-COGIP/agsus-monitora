@@ -29,7 +29,7 @@ scripts/                checagens do CI, robôs, geradores e utilitários de ban
 supabase/               migrations/, rollback/, ensaios/, tests/ e o retrato esquema-atual.sql
 apps-script/            código das planilhas de análises (colado no Google; apps-script/LEIA-ME.md)
 public/                 copiado para o site: assets/ e data/ (JSON GERADO por scripts/)
-tests/                  Vitest (*.test.ts, ainda *.test.js), Playwright e pytest
+tests/                  Vitest (um *.test.ts/*.test.js por assunto, em blocos), Playwright e pytest
 server/servidor.ts      servidor web (TypeScript, Node 24, sem dependências)
 prototipos/             protótipos estáticos (ex.: parecer em blocos)
 docs/                   biblioteca, documentos longos de referência e base de conhecimento da AYA

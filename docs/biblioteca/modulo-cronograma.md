@@ -96,12 +96,12 @@ em que a cor de cada linha é a do tipo no Cronograma, `data-cor`); regras puras
 
 ## Testes
 
-`tests/tipos/cronograma.tsx` (no `typecheck:frontend`), `tests/componentes/calendario-editais.test.ts`
-(mês, área, cache, filtros, modal, foco), `tests/calendario-editais.test.js` (normalização,
-intervalos, concorrência, falhas), `tests/calendario-editais-lista.test.js` (Lista, Semana, marcos,
-bordas de mês e fuso), `tests/cronograma-sem-suspensos.test.ts` (edital suspenso fora de todas as
-vias), `tests/etapas-de-edital.test.js`, `tests/datas-do-cronograma.test.js`. Resumo do dia:
-`tests/resumo-do-dia.test.js` e `tests/componentes/resumo-do-dia.test.ts`.
+`tests/tipos/cronograma.tsx` (no `typecheck:frontend`), `tests/editais-cargas-e-paineis-na-tela.test.ts` (bloco `componentes/calendario-editais`)
+(mês, área, cache, filtros, modal, foco), `tests/editais-cargas-e-paineis.test.js` (bloco `calendario-editais`) (normalização,
+intervalos, concorrência, falhas), `tests/editais-cargas-e-paineis.test.js` (bloco `calendario-editais-lista`) (Lista, Semana, marcos,
+bordas de mês e fuso), `tests/editais-cargas-e-paineis.test.ts` (bloco `cronograma-sem-suspensos`) (edital suspenso fora de todas as
+vias), `tests/editais-cargas-e-paineis.test.js` (bloco `etapas-de-edital`), `tests/editais-cargas-e-paineis.test.js` (bloco `datas-do-cronograma`). Resumo do dia:
+`tests/aya-e-comemoracao.test.js` (bloco `resumo-do-dia`) e `tests/demais-telas-na-tela.test.ts` (bloco `componentes/resumo-do-dia`).
 
 ## Relacionadas
 

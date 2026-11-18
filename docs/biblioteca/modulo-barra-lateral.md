@@ -94,11 +94,11 @@ demanda: só as páginas de `src/lib/navegacao/telas-com-linhas.ts` (via `src/ap
 
 ## Testes
 
-- Barra: `tests/componentes/barra-lateral.test.ts` (modelo de teste React do projeto), testes da
+- Barra: `tests/casca-com-modulo-simulado-na-tela.test.ts` (bloco `componentes/barra-lateral`) (modelo de teste React do projeto), testes da
   navegação, do catálogo e do menu no celular (sem banco); `tests/tipos/barra-lateral.tsx` no
   compilador estrito (não verifica consumidores JavaScript nem o perfil em tempo de execução).
-- Busca: `tests/busca-global.test.js`, `tests/componentes/busca-global.test.ts`,
-  `tests/componentes/area-atual.test.ts`, `tests/componentes/dados-do-monitoramento.test.ts`;
+- Busca: `tests/casca-sessao-e-interface.test.js` (bloco `busca-global`), `tests/casca-sessao-e-interface-na-tela.test.ts` (bloco `componentes/busca-global`),
+  `tests/casca-sessao-e-interface-na-tela.test.ts` (bloco `componentes/area-atual`), `tests/casca-sessao-e-interface-na-tela.test.ts` (bloco `componentes/dados-do-monitoramento`);
   contratos em `tests/tipos/busca-global.tsx`.
 
 ## Relacionadas

@@ -4,7 +4,7 @@
   edital reabre com um motivo desta lista (escolha obrigatória, complemento
   opcional; "Outro" pede a descrição). O banco confere os mesmos códigos e
   rótulos em private."FC_MOTIVO_REABERTURA_ENTREVISTA"
-  (tests/reabertura-da-entrevista.test.ts compara com a migration) e as
+  (tests/entrevistas-e-aprovados.test.ts (bloco reabertura-da-entrevista) compara com a migration) e as
   mesmas regras do texto da Avaliação documental (validarReabertura).
 */
 import {

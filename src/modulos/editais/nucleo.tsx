@@ -70,6 +70,15 @@ import type { EstadoDosAprovados } from "../aprovados/tipos-do-estado.ts";
   Regras do edital: os editores de todas as etapas baixam só quando a página
   abre (fora do pacote principal, onde Editais monta).
 */
+// O selo dos avisos do edital (cronograma encerrado, 20261118150000), sob demanda: a tela de
+// Editais está no pacote de entrada, e o módulo das conferências não cabe no orçamento dele.
+const SeloDeAvisos = lazy(
+  importarComRecarga(() =>
+    import("../conferencias/avisos-de-conferencia.tsx").then((modulo) => ({
+      default: modulo.SeloDeAvisos,
+    })),
+  ),
+);
 const RegrasDoEdital = lazy(
   importarComRecarga(() => import("../regras-do-edital/regras-do-edital.tsx")),
 );
@@ -290,11 +299,10 @@ function LinhaDoEdital({
                   : `Lista de aprovados de ${nome}`
               }
               onClick={() =>
-                aviso
-                  ? estado.toast(
-                      aviso.texto,
-                      aviso.tom === "perigo" ? "error" : "warn",
-                    )
+                // Cancelado/suspenso só avisa; concluído sem aprovados (amarelo)
+                // abre as listas como os outros, para importar a lista.
+                aviso?.tom === "perigo"
+                  ? estado.toast(aviso.texto, "error")
                   : abrirListasDoEdital(String(linha.id), rotulo)
               }
             >
@@ -517,6 +525,9 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
         idDaAtualizacao="nucleoOperationalRefresh"
         atualizarDesativado={nucleo.atualizandoResumo}
       >
+        <Suspense fallback={null}>
+          <SeloDeAvisos modulo="editais" />
+        </Suspense>
         {podeEditar ? (
           <button
             id="newEditalBtn"

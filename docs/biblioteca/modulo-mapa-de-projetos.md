@@ -85,9 +85,9 @@ UF; `origens` fica como lista de `unknown`. Não audita nomes geográficos nem g
 dentro do Brasil. Coordenada ausente permite a referência local para respostas antigas;
 coordenada nula do banco mantém o lugar sem ponto. Permissões e RPCs de gravação não mudaram.
 
-Testes: `tests/visao-geral-da-area.test.js`, `tests/enquadramento-do-brasil.test.js`,
-`tests/modulos/mapa-de-projetos.test.js`, `tests/modulos/visao-geral.test.js`,
-`tests/municipios-da-resposta.test.js` e `tests/tipos/mapa-de-projetos.tsx`. Para quem usa:
+Testes: `tests/mapas-e-visao-geral.test.js` (bloco `visao-geral-da-area`), `tests/mapas-e-visao-geral.test.js` (bloco `enquadramento-do-brasil`),
+`tests/mapas-e-visao-geral-na-tela.test.js` (bloco `modulos/mapa-de-projetos`), `tests/telas-com-modulo-simulado-na-tela.test.js` (bloco `modulos/visao-geral`),
+`tests/mapas-e-visao-geral.test.js` (bloco `municipios-da-resposta`) e `tests/tipos/mapa-de-projetos.tsx`. Para quem usa:
 `docs/aya/regras-dos-mapas.md`.
 
 ## Relacionadas

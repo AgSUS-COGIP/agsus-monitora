@@ -67,11 +67,11 @@ chega como `unknown` e passa pelas leituras que já existiam; o resultado de cad
 
 ## Testes
 
-`tests/modulos/aya.test.js`, `tests/aya-paginas.test.js`, `tests/aya-respostas-chave.test.js`,
-`tests/busca-da-aya.test.js`, `tests/termos-da-aya.test.js`, `tests/conversa-da-aya.test.js`,
-`tests/chamado-da-aya.test.js`, `tests/aya-tours.test.js`, `tests/modulos/aya-tour.test.js`,
-`tests/modulos/aya-trilhas.test.js`, `tests/modulos/mascote.test.js`,
-`tests/estado-da-aya.test.js` e `tests/borda-da-aya.test.js`.
+`tests/aya-e-comemoracao-na-tela.test.js` (bloco `modulos/aya`), `tests/aya-e-comemoracao.test.js` (bloco `aya-paginas`), `tests/aya-e-comemoracao.test.js` (bloco `aya-respostas-chave`),
+`tests/aya-e-comemoracao.test.js` (bloco `busca-da-aya`), `tests/aya-e-comemoracao.test.js` (bloco `termos-da-aya`), `tests/aya-e-comemoracao.test.js` (bloco `conversa-da-aya`),
+`tests/aya-e-comemoracao.test.js` (bloco `chamado-da-aya`), `tests/aya-e-comemoracao.test.js` (bloco `aya-tours`), `tests/aya-e-comemoracao-na-tela.test.js` (bloco `modulos/aya-tour`),
+`tests/aya-e-comemoracao-na-tela.test.js` (bloco `modulos/aya-trilhas`), `tests/aya-e-comemoracao-na-tela.test.js` (bloco `modulos/mascote`),
+`tests/aya-e-comemoracao-na-tela.test.js` (bloco `estado-da-aya`) e `tests/aya-e-comemoracao.test.js` (bloco `borda-da-aya`).
 
 ## Relacionadas
 

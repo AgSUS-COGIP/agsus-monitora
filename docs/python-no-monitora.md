@@ -107,7 +107,7 @@ com a conta em `monitora.avaliacao_documental`).
 Quando a mesma regra existe nos dois lados (o catálogo das conferências hoje; amanhã as listas
 oficiais), os casos ficam num arquivo só em `tests/fixtures/<assunto>/` e **os dois** testes o
 leem: o vitest (`tests/*.test.js`) e o pytest (`tests/python/test_*.py`). Exemplo:
-`tests/fixtures/conferencias/catalogo.json`, conferido por `tests/avisos-de-conferencia.test.js` e
+`tests/fixtures/conferencias/catalogo.json`, conferido por `tests/editais-cargas-e-paineis.test.js` (bloco `avisos-de-conferencia`) e
 `tests/python/test_conferencias.py`. Mudou a regra num lado sem mudar no outro, um dos testes cai.
 
 ## Como criar um job novo
@@ -254,7 +254,7 @@ com motivo obrigatório, autor, data e histórico (migration `20261026190000_pen
 - Testes: `tests/python/test_pendencias_do_edital.py` (casos dourados em
   `tests/fixtures/pendencias-do-edital/casos.json`), `supabase/tests/pendencias_do_edital.sql`
   (permissões, motivo, histórico), `tests/pendencias-do-edital-migration.test.js`,
-  `tests/lib/pendencias-do-edital.test.js` e `tests/componentes/pendencias-do-edital.test.ts`.
+  `tests/lib/pendencias-do-edital.test.js` e `tests/entrevistas-e-aprovados-na-tela.test.ts` (bloco `componentes/pendencias-do-edital`).
 
 ## Casamento da lista de aprovados (26/10/2026)
 
@@ -312,7 +312,7 @@ menos pendentes (`distribuicao.atribuicoes_dos_novos`); o banco valida cada atri
 - **Casos dourados:** `tests/fixtures/avaliacao-documental/casos-de-pre-classificacao.json` (19
   casos, com o lote pela nota mínima e o desempate do 93/2026), a nota declarada de
   `casos-de-pontuacao.json` e a distribuição de `casos-de-distribuicao.json`, conferidos por
-  `tests/lib/avaliacao-documental-pre-classificacao.test.js`, `…-distribuicao.test.js`,
+  `tests/avaliacao-e-recursos.test.js` (bloco `lib/avaliacao-documental-pre-classificacao`), `…-distribuicao.test.js`,
   `tests/python/test_pre_classificacao.py` e `tests/python/test_distribuicao.py`.
 - **Log público:** contagens, códigos de vaga e de aviso e números de edital. O resultado por edital
   que vai ao banco é recusado se tiver `@` ou 11 dígitos seguidos.
@@ -350,10 +350,10 @@ e avisos. **A tela continua com o motor.ts**: nesta etapa o Python roda em paral
   quando a lista gerada tem relatório (`src/lib/classificacao/relatorio-de-desempate.ts`).
 - **Casos dourados**: `tests/fixtures/classificacao/casos-do-motor.json` (5 editais fictícios × 4
   listas, gerados pelo motor.ts com `scripts/classificacao/gerar-casos-do-motor.mjs`), conferidos
-  por `tests/lib/classificacao-casos-do-motor.test.js` e `tests/python/test_classificacao_motor.py`;
+  por `tests/classificacao.test.js` (bloco `lib/classificacao-casos-do-motor`) e `tests/python/test_classificacao_motor.py`;
   o formato do relatório, por `tests/fixtures/classificacao/relatorio-de-desempate.json` (gerado
   pelo Python, lido pela tela: `tests/python/test_classificacao_desempate.py` e
-  `tests/lib/classificacao-relatorio-de-desempate.test.js`).
+  `tests/classificacao.test.js` (bloco `lib/classificacao-relatorio-de-desempate`)).
 - **Conferência real (23/10/2026)**: 114/2026, 93/2026 e 30/2026, as quatro listas: 0 divergência.
 - Os apelidos dos nomes saíram na etapa 2a (abaixo): o job passou a ler os nomes reais.
 

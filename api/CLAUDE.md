@@ -15,10 +15,10 @@ Regras:
 - Código compartilhado com o front vem de `src/`; não duplicar lógica aqui.
 - Pacote enxuto: toda função `api/*.py` leva no `vercel.json` o `excludeFiles`
   `{!(api)/**,.*/**,*,api/!(*.py)}` (e `includeFiles` se importar `python/monitora`). Guarda:
-  `tests/funcoes-da-vercel-leves.test.js`.
+  `tests/repositorio-e-banco.test.js` (bloco `funcoes-da-vercel-leves`).
 - O que pode demorar mais que alguns segundos é job no GitHub Actions, não função
   ([[python-e-jobs]]).
 
-Testes: `npx vitest run tests/funai-geodata-proxy.test.js tests/editais-api.test.js
-tests/aprovados-e-cronograma-api.test.js`; `python -m pytest tests/python/test_anexos_do_edital.py
+Testes: `npx vitest run tests/repositorio-e-banco.test.js -t "funai-geodata-proxy" tests/editais-cargas-e-paineis.test.js (bloco editais-api)
+tests/entrevistas-e-aprovados.test.js (bloco aprovados-e-cronograma-api)`; `python -m pytest tests/python/test_anexos_do_edital.py
 tests/python/test_retificacao_do_cronograma.py`.

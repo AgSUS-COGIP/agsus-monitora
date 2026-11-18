@@ -77,7 +77,7 @@ export interface MapaDoEstilo {
   O filtro abaixo leva o verde da Funai exatamente a esse marrom, calculado
   pela mesma matriz da especificação que o teste usa.
 */
-// Exportado no fim do arquivo: a declaração fica numa linha só (tests/cor-da-terra-indigena.test.js a lê).
+// Exportado no fim do arquivo: a declaração fica numa linha só (tests/mapas-e-visao-geral.test.js (bloco cor-da-terra-indigena) a lê).
 const FILTRO_DO_RASTER = "hue-rotate(-83deg) saturate(1.15) brightness(0.55)";
 const COR_DA_TERRA = "#7a4a1f";
 const PREENCHIMENTO_DA_TERRA = "#d6b07a";

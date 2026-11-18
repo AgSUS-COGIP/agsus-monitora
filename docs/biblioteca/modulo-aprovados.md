@@ -173,13 +173,13 @@ convocação, anexos, convocações e pendências; erro por parte em `erros.<par
 
 ## Testes e histórias
 
-`tests/componentes/lista-aprovados.test.ts`, `lista-de-convocacao.test.ts`,
-`convocado-e-carta.test.ts`, `tests/lib/carta-de-convocacao.test.ts`,
-`tests/lib/historicos-dos-aprovados.test.ts`, `tests/lib/importacao-xlsx-de-aprovados.test.ts`,
-`tests/lib/exportacao-da-lista-de-aprovados.test.ts`, `tests/exportacao-de-aprovados-no-banco.test.ts`,
-`tests/lib/resumo-por-cargo-e-status.test.ts`, `tests/lib/exportacao-do-resumo-por-cargo.test.ts`,
-`tests/exportacao-do-resumo-migration.test.ts`,
-`tests/lista-convocacao-rules.test.js`, `tests/lista-aprovados-filtros-multiplos.test.js`,
+`tests/entrevistas-e-aprovados-na-tela.test.ts` (bloco `componentes/lista-aprovados`), `lista-de-convocacao.test.ts`,
+`convocado-e-carta.test.ts`, `tests/entrevistas-e-aprovados-na-tela.test.ts` (bloco `lib/carta-de-convocacao`),
+`tests/entrevistas-e-aprovados.test.ts` (bloco `lib/historicos-dos-aprovados`), `tests/demais-regras.test.ts` (bloco `lib/importacao-xlsx-de-aprovados`),
+`tests/entrevistas-e-aprovados.test.ts` (bloco `lib/exportacao-da-lista-de-aprovados`), `tests/entrevistas-e-aprovados.test.ts` (bloco `exportacao-de-aprovados-no-banco`),
+`tests/entrevistas-e-aprovados.test.ts` (bloco `lib/resumo-por-cargo-e-status`), `tests/entrevistas-e-aprovados.test.ts` (bloco `lib/exportacao-do-resumo-por-cargo`),
+`tests/editais-cargas-e-paineis.test.ts` (bloco `exportacao-do-resumo-migration`),
+`tests/entrevistas-e-aprovados.test.js` (bloco `lista-convocacao-rules`), `tests/entrevistas-e-aprovados.test.js` (bloco `lista-aprovados-filtros-multiplos`),
 `tests/tipos/modais-dos-aprovados.tsx`.
 [Histórias de usuário](../historias-de-usuario/lista-de-aprovados.md); para a Aya,
 `docs/aya/regras-da-lista-de-aprovados.md`.
