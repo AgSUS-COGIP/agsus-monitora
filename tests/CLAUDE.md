@@ -12,8 +12,8 @@ e Playwright).
   controlado com `digitar`, `escolher`, `clicar` e `teclar` de `tests/componentes/interacoes.ts`.
   Modelo: `tests/componentes/barra-lateral.test.ts`.
 - **Rede bloqueada** em todo teste unitário (`setup/rede-bloqueada.ts`): não desligue; use mock.
-- **Postgres de verdade** em `apoio/banco-dos-robos.ts`, `apoio/banco-dos-paineis.ts` e
-  `apoio/banco-do-fundamento.ts` (PGlite, `// @vitest-environment node`); modelo antes × depois:
+- **Postgres de verdade** em `apoio/banco-dos-robos.ts`, `apoio/banco-dos-paineis.ts`,
+  `apoio/banco-do-fundamento.ts` e `apoio/banco-do-cronograma.ts` (PGlite, `// @vitest-environment node`); modelo antes × depois:
   `catalogo-dos-robos-no-banco.test.ts`. A migration já aplicada que monta o banco fica, sem
   mudança, em `fixtures/sql-do-banco/<mesmo nome>.sql` (rollback e ensaio não vêm junto).
 - Teste novo de tela com sessão vai em `sessao-simulada.spec.js`, simulando as RPCs.

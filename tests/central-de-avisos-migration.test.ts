@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { CONTRATO_RPC } from "../src/lib/rpc-contrato.ts";
 
 /*
-  A MIGRATION DA CENTRAL DE AVISOS (20261118120000), enquanto pendente
+  A MIGRATION DA CENTRAL DE AVISOS (20261118140000), enquanto pendente
 
   Tratamento, responsável, prazo, evidência e histórico dos avisos das conferências. O comportamento
   foi ensaiado no banco (supabase/ensaios/, com um ciclo da conferência: corrigido e achado de novo
@@ -13,7 +13,7 @@ import { CONTRATO_RPC } from "../src/lib/rpc-contrato.ts";
   rollback devolve os corpos e comentários do retrato, letra por letra. Aplicada a migration (e
   regerado o retrato), este teste sai junto com ela.
 */
-const NOME = "20261118120000_central_de_avisos_das_conferencias.sql";
+const NOME = "20261118140000_central_de_avisos_das_conferencias.sql";
 const ler = (caminho: string) =>
   readFileSync(caminho, "utf8").replace(/\r/g, "");
 const RETRATO = ler("supabase/esquema-atual.sql");

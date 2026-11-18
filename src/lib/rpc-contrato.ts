@@ -361,7 +361,8 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
   get_nucleo_cronograma_resumo: {
     argumentos: [],
     critica: false,
-    resumo: "Resumo dos cronogramas da Equipe Núcleo.",
+    resumo:
+      "Resumo dos cronogramas da Equipe Núcleo: status, etapa, tem_cronograma (há etapas), calculo (automatico | manual), situacao (suspenso | paralisado | cancelado), percentual, próxima etapa e alerta_tipo. O manual com etapas não é sem_cronograma (20261117190000).",
   },
   listar_demandas_internas: {
     argumentos: [],
@@ -910,7 +911,7 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     argumentos: ["p_area", "p_modulo", "p_versao"],
     critica: false,
     resumo:
-      "listar_avisos_conferencia com versão (20261015000000): avisos abertos e os resolvidos nos últimos 30 dias que a pessoa pode ver (módulo, área e recorte do edital; cargas e avisos sem área, só o administrador global), com o tratamento da equipe, último motivo, responsável, prazo, nº de evidências, pode_gerir e pode_tratar (20261118120000), sem campos nulos e sem `exemplos` quando o aviso tem casos; p_versao igual à atual devolve só `inalterado`. Cartão do Status das atualizações e selo de cada tela.",
+      "listar_avisos_conferencia com versão (20261015000000): avisos abertos e os resolvidos nos últimos 30 dias que a pessoa pode ver (módulo, área e recorte do edital; cargas e avisos sem área, só o administrador global), com o tratamento da equipe, último motivo, responsável, prazo, nº de evidências, pode_gerir e pode_tratar (20261118140000), sem campos nulos e sem `exemplos` quando o aviso tem casos; p_versao igual à atual devolve só `inalterado`. Cartão do Status das atualizações e selo de cada tela.",
   },
   listar_casos_aviso_conferencia: {
     argumentos: [
@@ -925,7 +926,7 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     resumo:
       "Casos de um aviso de conferência, ou de todos os avisos que a pessoa vê (com busca), em páginas de até 1000 (20261007120000; 20261007240000 resolve todos os módulos): tipo e resolução (ok, removido, sem_acesso), código, nome, edital, vaga, situação e datas da análise ou do registro do módulo (aprovado, entrevista, lista, ajuste, vaga), com a permissão daquele módulo; o motivo; as análises do candidato em dois editais e as vagas da pessoa na lista de aprovados. Busca por código, nome ou vaga, sem acento. Referência só quando não é UUID. Sem CPF. Gaveta dos avisos e CSV.",
   },
-  // ── Central de avisos (20261118120000_central_de_avisos_das_conferencias.sql) ──
+  // ── Central de avisos (20261118140000_central_de_avisos_das_conferencias.sql) ──
   tratar_aviso_conferencia: {
     argumentos: ["p_id", "p_tratamento", "p_motivo"],
     critica: false,
