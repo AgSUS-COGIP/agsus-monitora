@@ -7,7 +7,7 @@
 
 import { situacaoNaLinhaDoTempo } from "../cronograma/cronograma-do-edital.ts";
 import {
-  contratacoesDoCadastroReserva,
+  contratacoesAlemDasVagas,
   contratadasImediatas,
   vagasEfetivas,
 } from "../visao-geral/indicadores-do-monitoramento.ts";
@@ -58,7 +58,7 @@ export function situacaoDasVagas(linha: LinhaDoEdital): SituacaoDasVagas {
     preenchidas,
     reabertas: Math.max(0, imediatas - vagasEfetivas(linha)),
     abertas: Math.max(0, vagasEfetivas(linha) - preenchidas),
-    cadastroReserva: contratacoesDoCadastroReserva(linha),
+    cadastroReserva: contratacoesAlemDasVagas(linha),
     texto: `${preenchidas} de ${imediatas} preenchida${imediatas === 1 ? "" : "s"}`,
   };
 }
