@@ -39,6 +39,10 @@ import {
 } from "../../lib/visao-geral/composicao-dos-numeros.ts";
 import { classes, Popover, Selo, TabelaInfinita } from "../../ui/index.ts";
 import { ComposicaoDoNumero } from "./composicao.tsx";
+import {
+  PRESETS_DE_COLUNAS,
+  presetDasColunas,
+} from "../../lib/visao-geral/presets-de-colunas.ts";
 
 /*
   A tabela de processos seletivos da Visão geral (TabelaInfinita, src/ui/):
@@ -90,12 +94,15 @@ function classesFixas(colunas: readonly ColunaDaTabela[]) {
 function MenuDeColunas({
   colunas,
   aoAlternar,
+  aoAplicarPreset,
   textos,
 }: {
   colunas: readonly ColunaDaTabela[];
   aoAlternar: EstadoDaVisaoGeral["alternarColuna"];
+  aoAplicarPreset: EstadoDaVisaoGeral["aplicarPresetDeColunas"];
   textos: TextosDaVisaoGeral;
 }) {
+  const presetAtual = presetDasColunas(colunas);
   const [aberto, setAberto] = useState(false);
   const raiz = useRef<HTMLDivElement>(null);
 
@@ -143,6 +150,24 @@ function MenuDeColunas({
         aria-label={textos.colunasTitulo}
         hidden={!aberto}
       >
+        <div
+          className="visao-geral-presets"
+          role="group"
+          aria-label="Conjuntos de colunas"
+        >
+          {PRESETS_DE_COLUNAS.map(({ id, rotulo }) => (
+            <button
+              key={id}
+              type="button"
+              className="btn secondary small"
+              data-preset={id}
+              aria-pressed={presetAtual === id}
+              onClick={() => aoAplicarPreset(id)}
+            >
+              {rotulo}
+            </button>
+          ))}
+        </div>
         <strong>{textos.colunasTitulo}</strong>
         {COLUNAS_DA_TABELA.map(({ campo, rotulo }) => (
           <label key={campo}>
@@ -612,6 +637,7 @@ export function TabelaDeProcessos({
           <MenuDeColunas
             colunas={e.colunas}
             aoAlternar={estado.alternarColuna}
+            aoAplicarPreset={estado.aplicarPresetDeColunas}
             textos={textos}
           />
         }

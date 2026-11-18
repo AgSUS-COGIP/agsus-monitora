@@ -81,6 +81,10 @@ trabalho). De cima para baixo:
   `src/lib/visao-geral/avisos-do-edital.ts`); o administrador global tem "Abrir na central de
   avisos" (`config`, seção `cargas`). O selo de Atenção da tabela abre a gaveta na seção dos avisos
   (`secaoInicial`).
+- **Conjuntos de colunas** (revisão de 17/11/2026; `src/lib/visao-geral/presets-de-colunas.ts`):
+  "Gestão", "Prazos" e "Contratação" no topo do menu "Colunas" (`aplicarPresetDeColunas` no
+  estado, guarda como a escolha uma a uma). Unidade e Edital estão em todos; a ordem é a da tabela;
+  o conjunto à vista fica `aria-pressed` (`presetDasColunas`), e mexer numa coluna o desmarca.
 - **Selo do cronograma** (`urgenciaDoCronograma`, `seloDoCronograma`, `descricaoDoCronograma` em
   `src/lib/visao-geral/visao-geral.ts`; conferência de 17/11/2026). "Sem cronograma" só quando o edital não
   tem etapa (`temCronogramaCadastrado`: automático, ou percentual, próxima etapa ou etapa atual

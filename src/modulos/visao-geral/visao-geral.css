@@ -843,3 +843,17 @@
 .visao-geral-avisos-do-edital > :not(button) {
   justify-self: stretch;
 }
+
+/* Conjuntos prontos no menu "Colunas" (Gestão, Prazos, Contratação). */
+.visao-geral-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.visao-geral-presets .btn[aria-pressed="true"] {
+  border-color: var(--focus-ring);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+}

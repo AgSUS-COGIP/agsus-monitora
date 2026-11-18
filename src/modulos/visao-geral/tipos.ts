@@ -296,6 +296,8 @@ export type EstadoDaVisaoGeral = {
   definirDadosDoMapa: (dados?: { lmap?: unknown }) => void;
   ordenarPor: (campo: ColunaDaTabela) => void;
   alternarColuna: (campo: ColunaDaTabela, visivel: boolean) => void;
+  /** Gestão, Prazos ou Contratação (src/lib/visao-geral/presets-de-colunas.ts). */
+  aplicarPresetDeColunas: (id: string) => void;
   exportarCsv: () => void;
   abrirMontador: () => void;
   fecharMontador: () => void;

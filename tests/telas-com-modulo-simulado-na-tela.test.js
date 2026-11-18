@@ -7105,6 +7105,38 @@ bloco("modulos/visao-geral", async () => {
       );
     });
 
+    it("conjuntos de colunas: Prazos troca de uma vez, guarda e fica marcado", async () => {
+      // Revisão de 17/11/2026: Gestão, Prazos e Contratação, com o seletor e as fixas.
+      await montar();
+      await clicar(botao("Colunas", secao));
+      const prazos = secao.querySelector('[data-preset="prazos"]');
+      expect(prazos.getAttribute("aria-pressed")).toBe("false");
+      await clicar(prazos);
+      expect(cabecalhos()).toEqual([
+        "Unidade",
+        "Edital",
+        "Ciclo",
+        "Início",
+        "Encerramento",
+        "Duração (dias)",
+        "Status",
+        "Fase",
+      ]);
+      expect(prazos.getAttribute("aria-pressed")).toBe("true");
+      expect(JSON.parse(armazenamento.getItem(CHAVE_DAS_COLUNAS))).toContain(
+        "data_fim",
+      );
+      // Uma coluna a mais pelo seletor: escolha própria, nenhum conjunto marcado.
+      const vagas = [
+        ...secao.querySelectorAll(".visao-geral-colunas-menu label"),
+      ]
+        .find((l) => l.textContent.trim() === "Vagas")
+        .querySelector("input");
+      await clicar(vagas);
+      expect(cabecalhos()).toContain("Vagas");
+      expect(prazos.getAttribute("aria-pressed")).toBe("false");
+    });
+
     it("colunas padrão para todos: a escolha da v2 não vale; só Observações fica fora", async () => {
       // Pedidos de 13/11/2026: quem guardou colunas antes também passa a ver as
       // do resultado (v2) e Ciclo, 1ª e Última admissão (v3).

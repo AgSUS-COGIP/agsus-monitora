@@ -42,6 +42,7 @@ import type {
   Guardado no navegador, como antes: os filtros (`agsus_monitora_filters_v1`)
   e as colunas visíveis da tabela (`agsus_visible_cols_v2`).
 */
+import { colunasDoPreset } from "../../lib/visao-geral/presets-de-colunas.ts";
 import {
   assinarDadosDoMonitoramento,
   linhasDaArea,
@@ -675,6 +676,13 @@ export function criarEstadoDaVisaoGeral({
     definirDadosDoMapa: ({ lmap = null } = {}) => publicar({ mapa: { lmap } }),
     ordenarPor: (campo) =>
       publicar({ ordenacao: proximaOrdenacao(proprio.ordenacao, campo) }),
+    /* Um conjunto pronto de colunas (Gestão, Prazos, Contratação). */
+    aplicarPresetDeColunas(id) {
+      const colunas = colunasDoPreset(id);
+      if (!colunas) return;
+      guardar(armazenamento, CHAVE_DAS_COLUNAS, colunas);
+      publicar({ colunas });
+    },
     alternarColuna(campo, visivel) {
       const colunas = alternarColuna(proprio.colunas, campo, visivel);
       if (colunas === proprio.colunas) return;

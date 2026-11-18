@@ -230,6 +230,12 @@ import {
   composicaoDoIndicador,
 } from "../src/lib/visao-geral/composicao-dos-numeros.ts";
 import { avisosDoEdital } from "../src/lib/visao-geral/avisos-do-edital.ts";
+import {
+  colunasDoPreset,
+  PRESETS_DE_COLUNAS,
+  presetDasColunas,
+} from "../src/lib/visao-geral/presets-de-colunas.ts";
+import { COLUNAS_PADRAO } from "../src/lib/visao-geral/visao-geral.ts";
 
 bloco("arredondamento-dos-percentuais", () => {
   /*
@@ -5992,5 +5998,44 @@ bloco("lib/avisos-do-edital", () => {
       expect(avisosDoEdital(lista, "")).toBeNull();
       expect(avisosDoEdital(lista, 7)?.abertos).toEqual([]);
     });
+  });
+});
+
+bloco("lib/presets-de-colunas", () => {
+  /*
+    Revisão de 17/11/2026: "Gestão", "Prazos" e "Contratação" trocam as
+    colunas de uma vez; Unidade e Edital (as presas) ficam em todos, na ordem
+    da tabela, e o menu sabe qual conjunto está à vista.
+  */
+  it("cada conjunto tem as fixas e segue a ordem da tabela", () => {
+    expect(colunasDoPreset("prazos")).toEqual([
+      "unidade",
+      "edital",
+      "ciclo",
+      "data_inicio",
+      "data_fim",
+      "duracao",
+      "status",
+      "fase",
+    ]);
+    for (const { id } of PRESETS_DE_COLUNAS) {
+      const colunas = colunasDoPreset(id)!;
+      expect(colunas.slice(0, 2)).toEqual(["unidade", "edital"]);
+      expect(colunas).toEqual(
+        COLUNAS_PADRAO.filter((c) => colunas.includes(c)),
+      );
+    }
+    expect(colunasDoPreset("inventado")).toBeNull();
+  });
+
+  it("reconhece o conjunto à vista; escolha própria não é nenhum", () => {
+    expect(presetDasColunas(colunasDoPreset("contratacao"))).toBe(
+      "contratacao",
+    );
+    expect(presetDasColunas([...colunasDoPreset("gestao")!].reverse())).toBe(
+      "gestao",
+    );
+    expect(presetDasColunas(["unidade", "edital", "status"])).toBe("");
+    expect(presetDasColunas(null)).toBe("");
   });
 });
