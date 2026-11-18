@@ -3,7 +3,7 @@
   Classificação (src/lib/avaliacao-documental/leitura-por-versao.ts): o
   payload como o banco mandou (com a versão), no IndexedDB das cópias de
   payload (src/modules/cache-de-payload-indexeddb.ts), pelas regras de
-  src/lib/cache-de-payload.ts — de um usuário só, por chave, por 7 dias.
+  src/lib/cache-de-payload.ts — de um usuário só, por chave, por 48 h.
 
   Reabrir a tela num dia seguinte (ou depois de recarregar a página) manda a
   versão guardada e recebe só { inalterado } quando nada mudou, em vez de

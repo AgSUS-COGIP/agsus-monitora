@@ -46,6 +46,8 @@ export type SnapshotDaSelecao = Readonly<{
   semAcesso: boolean;
   atualizando: boolean;
   daCopia: boolean;
+  /** Hora da cópia na tela quando a versão nova não pôde ser buscada; senão `null`. */
+  copiaDe: number | null;
   carregadoEm: number;
 }>;
 

@@ -69,6 +69,11 @@ import { classificarEdital } from "../../lib/classificacao/ajustes.ts";
 import { convocacaoDoEdital } from "../../lib/classificacao/convocacao-do-edital.ts";
 import { rotuloDaVersao } from "../../lib/nome-da-versao.ts";
 import { ehConflitoDeVersao } from "../../lib/conflito-de-versao.ts";
+import {
+  FORMATO_DA_COPIA_DA_CONDUCAO,
+  copiaParaOCampo,
+  validadeDaCopia,
+} from "../../lib/conducao-para-o-campo.ts";
 
 const TEMPO_LIMITE_MS = 30000;
 
@@ -130,6 +135,7 @@ const ESTADO_INICIAL: EstadoDaConducao = Object.freeze({
   acao: null,
   /** Convocado com a ficha de notas aberta (modo de análise, tela inteira). */
   fichaAberta: null,
+  copiaDe: null,
 });
 
 /*
@@ -154,8 +160,26 @@ export function mensagemDe(erro: unknown) {
     : mensagemDoErroDaEntrevista(erro);
 }
 
+/* Formato das cópias da condução (sobe quando o que se guarda muda). */
+const FORMATO_DA_COPIA = FORMATO_DA_COPIA_DA_CONDUCAO;
+const chaveDosEditais = (area: string, todos: boolean) =>
+  `editais:${area}:${todos ? "todos" : "janela"}`;
+const chaveDoEdital = (id: string) => `edital:${id}`;
+
+/** O que a cópia guardou, se for do formato atual; senão null. */
+function daCopia(
+  lida: { payload: unknown } | null | undefined,
+): Record<string, unknown> | null {
+  const payload = objetoDaConducao(lida?.payload);
+  return payload?.formato === FORMATO_DA_COPIA ? payload : null;
+}
+
+/* A última gravação do edital no aparelho (para o "Levar para o campo"). */
+type GravacaoDaCopia = { soDaBanca: boolean; guardou: Promise<boolean> };
+
 export function criarEstadoDaConducao({
   supabase = null,
+  copias = null,
   toast = (mensagem) => console.info(mensagem),
   aoMudarResultados = () => {},
   tempoLimiteMs = TEMPO_LIMITE_MS,
@@ -167,6 +191,7 @@ export function criarEstadoDaConducao({
   let pedidoDosRoteiros = 0;
   let pedidoDosEditais = 0;
   let geracaoDaConducao = 0;
+  let ultimaGravacao: GravacaoDaCopia | null = null;
   const ouvintes = new Set<() => void>();
 
   function publicar(mudancas: Partial<EstadoDaConducao>) {
@@ -329,14 +354,9 @@ export function criarEstadoDaConducao({
     trocarArea(area);
     const meu = ++pedidoDosEditais;
     publicar({ editais: { ...estado.editais, carregando: true, erro: "" } });
-    try {
-      const dados = objetoDaConducao(
-        await rpc(RPC_LISTAR_EDITAIS, {
-          p_area: area,
-          p_todos: Boolean(todos),
-        }),
-      );
-      if (meu !== pedidoDosEditais) return [];
+    const chave = chaveDosEditais(area, Boolean(todos));
+    const mostrarEditais = (bruto: unknown, copiaDe: number | null) => {
+      const dados = objetoDaConducao(bruto);
       const admin = dados?.admin_global === true;
       const lista = editaisParaConduzir(
         registrosDaConducao(dados?.editais).filter(
@@ -353,10 +373,27 @@ export function criarEstadoDaConducao({
           todos: admin && Boolean(todos),
           erro: lista.length ? "" : "Nenhum edital na janela da entrevista.",
         },
+        // Com um edital aberto, a data na tela é a dele.
+        ...(estado.editalId ? {} : { copiaDe }),
       });
       return lista;
+    };
+    try {
+      const bruto = await rpc(RPC_LISTAR_EDITAIS, {
+        p_area: area,
+        p_todos: Boolean(todos),
+      });
+      if (meu !== pedidoDosEditais) return [];
+      void copias?.guardar(chave, { formato: FORMATO_DA_COPIA, dados: bruto });
+      return mostrarEditais(bruto, null);
     } catch (erro) {
       if (meu !== pedidoDosEditais) return [];
+      // Sem rede: a lista guardada no aparelho, com a data dela.
+      const lida = ehFalhaDeConexao(erro) ? await copias?.ler(chave) : null;
+      const guardada = daCopia(lida);
+      if (meu !== pedidoDosEditais) return [];
+      if (lida && guardada)
+        return mostrarEditais(guardada.dados, lida.guardadoEm);
       publicar({
         editais: {
           ...EDITAIS_VAZIOS,
@@ -390,8 +427,13 @@ export function criarEstadoDaConducao({
     });
   }
 
-  function mostrarEdital(dados: DadosDoEdital | null) {
+  /* O payload do banco (abrir ou gravar) ou da cópia (`copiaDe`, sem rede). */
+  function mostrarEdital(
+    dados: DadosDoEdital | null,
+    copiaDe: number | null = null,
+  ) {
     publicar({
+      copiaDe,
       edital: dados || null,
       carregandoEdital: false,
       erroDoEdital: "",
@@ -413,14 +455,50 @@ export function criarEstadoDaConducao({
       previsao: mesmo ? estado.previsao : null,
     });
     if (!id) return false;
+
+    /* O edital, a previsão, a agenda e o cálculo, do banco ou da cópia. */
+    const aplicar = (
+      partes: {
+        resposta: unknown;
+        previsao: unknown;
+        agenda: unknown;
+        calculo: unknown;
+      },
+      copiaDe: number | null,
+    ) => {
+      const dados = dadosDoEditalDaConducao(partes.resposta);
+      if (!dados)
+        throw new Error("A resposta do edital de entrevistas é inválida.");
+      const p = objetoDaConducao(partes.previsao);
+      const situacao = p?.situacao;
+      if (
+        situacao !== "PREVISTA" &&
+        situacao !== "NAO_PREVISTA" &&
+        situacao !== "NAO_INFORMADA"
+      )
+        throw new Error("Situação de entrevistas inválida.");
+      publicar({
+        agenda: agendaDaConducao(partes.agenda),
+        calculo: (partes.calculo ?? null) as EstadoDaConducao["calculo"],
+        previsao: {
+          situacao,
+          motivo: typeof p?.motivo === "string" ? p.motivo : null,
+          pode_alterar: p?.pode_alterar === true,
+        },
+      });
+      mostrarEdital(dados, copiaDe);
+    };
+
     try {
       const [resposta, previsao, agenda] = await Promise.all([
         rpc(RPC_OBTER_EDITAL, { p_edital: id }),
         rpc(RPC_PREVISAO, { p_edital: id }),
         // A agenda que falhou não impede abrir o edital: a fila fica em Todos, com aviso.
+        // Sem rede, nada veio: o edital sai da cópia (abaixo).
         opcionalDaConducao(rpc(RPC_OBTER_AGENDA, { p_edital: id })).catch(
           (erro: unknown) => {
             if (erro instanceof RespostaObsoletaDaConducao) throw erro;
+            if (ehFalhaDeConexao(erro)) throw erro;
             toast(
               `Não foi possível carregar a agenda: ${mensagemDe(erro)}`,
               "warn",
@@ -433,31 +511,44 @@ export function criarEstadoDaConducao({
       const dados = dadosDoEditalDaConducao(resposta);
       if (!dados)
         throw new Error("A resposta do edital de entrevistas é inválida.");
-      const calculo = dados?.lista_convocacao
+      const calculo = dados.lista_convocacao
         ? null
         : await calcularConvocacao(id);
       if (meu !== pedidoDoEdital) return false;
-      const p = objetoDaConducao(previsao);
-      const situacao = p?.situacao;
-      if (
-        situacao !== "PREVISTA" &&
-        situacao !== "NAO_PREVISTA" &&
-        situacao !== "NAO_INFORMADA"
-      )
-        throw new Error("Situação de entrevistas inválida.");
-      publicar({
-        agenda: agendaDaConducao(agenda),
-        calculo,
-        previsao: {
-          situacao,
-          motivo: typeof p?.motivo === "string" ? p.motivo : null,
-          pode_alterar: p?.pode_alterar === true,
-        },
-      });
-      mostrarEdital(dados);
+      const partes = { resposta, previsao, agenda, calculo };
+      aplicar(partes, null);
+      // No aparelho, só o necessário (src/lib/conducao-para-o-campo.ts).
+      const copia = copiaParaOCampo(partes);
+      ultimaGravacao = {
+        soDaBanca: copia.soDaBanca,
+        guardou: Promise.resolve(copias?.guardar(chaveDoEdital(id), copia))
+          .then((ok) => ok === true || ok === undefined)
+          .catch(() => false),
+      };
       return true;
     } catch (erro) {
       if (meu !== pedidoDoEdital) return false;
+      // Sem rede: o edital guardado no aparelho (fila, agenda e fichas), só para consulta.
+      const lida = ehFalhaDeConexao(erro)
+        ? await copias?.ler(chaveDoEdital(id))
+        : null;
+      const guardado = daCopia(lida);
+      if (meu !== pedidoDoEdital) return false;
+      if (lida && guardado)
+        try {
+          aplicar(
+            {
+              resposta: guardado.resposta,
+              previsao: guardado.previsao,
+              agenda: guardado.agenda,
+              calculo: guardado.calculo,
+            },
+            lida.guardadoEm,
+          );
+          return true;
+        } catch {
+          // Cópia ilegível: o erro de sempre.
+        }
       publicar({ carregandoEdital: false, erroDoEdital: mensagemDe(erro) });
       return false;
     }
@@ -639,6 +730,39 @@ export function criarEstadoDaConducao({
     });
   }
 
+  /*
+    "Levar para o campo": relê o edital aberto com rede e confirma que ele
+    ficou no aparelho (a fila, a agenda e as fichas da banca de quem avalia),
+    para consultar sem rede por 48 h.
+  */
+  async function levarParaOCampo(): Promise<Resultado> {
+    const id = estado.editalId;
+    if (!id || !copias) return { erro: "Escolha o edital." };
+    ultimaGravacao = null;
+    const abriu = await abrirEdital(id);
+    const gravacao = ultimaGravacao as GravacaoDaCopia | null;
+    if (!abriu || estado.copiaDe !== null || !gravacao) {
+      const erro =
+        "Sem conexão: abra o edital com internet para levar ao campo.";
+      toast(erro, "warn");
+      return { erro };
+    }
+    if (!(await gravacao.guardou)) {
+      const erro = "Não foi possível guardar o edital neste aparelho.";
+      toast(erro, "error");
+      return { erro };
+    }
+    toast(
+      `Pronto para o campo: ${
+        gravacao.soDaBanca
+          ? "a fila e as fichas da sua banca ficam"
+          : "a fila e as fichas do edital ficam"
+      } neste aparelho até ${validadeDaCopia(Date.now())}.`,
+      "ok",
+    );
+    return { ok: true };
+  }
+
   /** Abre (id do convocado) ou fecha (null) a ficha de notas. */
   function abrirFicha(id: string | null) {
     publicar({ fichaAberta: id || null });
@@ -666,5 +790,6 @@ export function criarEstadoDaConducao({
     concluirEntrevista,
     reabrirEntrevista,
     abrirFicha,
+    levarParaOCampo,
   };
 }

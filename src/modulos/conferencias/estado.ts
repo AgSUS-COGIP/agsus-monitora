@@ -38,7 +38,7 @@ import {
   normalizarCasos,
   termoDeBusca,
 } from "../../lib/avisos-de-conferencia.ts";
-import { respostaInalterada, versaoDoPacote } from "../../lib/cache-de-payload";
+import { respostaInalterada, versaoDoPacote } from "../../lib/versao-do-pacote";
 import { comTempoLimite, mensagemDeFalha } from "../../lib/falha-de-rede";
 import {
   esquecerAvisosGuardados,

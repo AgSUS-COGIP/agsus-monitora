@@ -42,6 +42,9 @@ Regras da sessão:
 - A cópia da sessão no navegador só abre a tela para o mesmo usuário, mesmo acesso e mesma versão
   (`src/lib/copia-da-sessao.ts`): afrouxar expõe dado a quem perdeu acesso
   ([[arquitetura-do-front]]).
+- **Sem rede**, a sessão guardada e o perfil guardado servem por até 48 h, e o perfil é conferido
+  quando a rede volta ([[pwa-e-modo-offline]], `src/lib/sessao-sem-rede.ts`). Só a falha de rede
+  abre esse caminho: recusa do servidor e erro do banco seguem como antes.
 - Testes: Playwright `sessao-simulada` (app com sessão e Supabase respondido por `page.route`) e,
   com banco de desenvolvimento, `sessao-autenticada` ([[testes]]).
 

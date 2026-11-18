@@ -242,6 +242,21 @@ describe("CASAIs nacionais", () => {
     });
     expect(casais.map((c) => c.nome)).toEqual(["CASAI DF"]);
   });
+
+  it("conta pela cidade o edital cadastrado como CASAI Brasília (o SIGEPSI diz CASAI DF)", () => {
+    const casais = casaisNacionais({
+      nac,
+      contagens: contarPorDsei([
+        edital("CASAI Brasília", 1, 0),
+        edital("CASAI Brasília", 1, 0),
+        edital("CASAI São Paulo", 1, 0),
+      ]),
+    });
+    expect(casais.map((c) => [c.nome, c.editais])).toEqual([
+      ["CASAI DF", 2],
+      ["CASAI SÃO PAULO", 1],
+    ]);
+  });
 });
 
 describe("pontos de um DSEI", () => {
