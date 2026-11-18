@@ -15,7 +15,7 @@ import type { LinhaPorCargo } from "./relatorio-da-diretoria.ts";
 import { arquivosDoXlsx } from "../classificacao/exportacao.ts";
 import { hojeEmBrasilia } from "../cronograma/cronograma-do-edital.ts";
 import {
-  contratacoesDoCadastroReserva,
+  contratacoesAlemDasVagas,
   contratadasImediatas,
   ehCritica,
   vagasSemContratacao,
@@ -219,8 +219,8 @@ export function textoDaColuna(
     case "cadastro_reserva":
       return temNumero(linha[campo]) ? numero(linha[campo]) : "—";
     case "contratados": {
-      const reserva = contratacoesDoCadastroReserva(linha);
-      return `${numero(contratadasImediatas(linha))}${reserva > 0 ? ` +${numero(reserva)} CR` : ""}`;
+      const reserva = contratacoesAlemDasVagas(linha);
+      return `${numero(contratadasImediatas(linha))}${reserva > 0 ? ` +${numero(reserva)} além` : ""}`;
     }
     case "vagas_ociosas":
       return `${vagasSemContratacao(linha)} (${taxaDeOciosidade(linha).pct}%)`;
@@ -379,7 +379,7 @@ export function conteudoDoRelatorio({
     kpi_contratadas_label: indicadores.contratadas,
     kpi_em_selecao_label: indicadores.emSelecao,
     kpi_ociosas_label: indicadores.ociosas,
-    kpi_cadastro_reserva_label: indicadores.cadastroReserva,
+    kpi_alem_das_vagas_label: indicadores.alemDasVagas,
     kpi_criticos_label: indicadores.criticos,
     kpi_inscritos_label: indicadores.inscritos,
   };

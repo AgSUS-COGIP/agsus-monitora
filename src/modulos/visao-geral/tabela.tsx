@@ -1,4 +1,4 @@
-import type { MouseEvent as EventoReact, ReactElement } from "react";
+import type { MouseEvent as EventoReact, ReactElement, ReactNode } from "react";
 import type {
   ColunaDaTabela,
   EstadoDaVisaoGeral,
@@ -9,7 +9,7 @@ import type {
 import { cloneElement, useEffect, useRef, useState } from "react";
 import { formatNumberBR } from "../../lib/base/formatters";
 import {
-  contratacoesDoCadastroReserva,
+  contratacoesAlemDasVagas,
   contratadasImediatas,
   vagasSemContratacao,
 } from "../../lib/visao-geral/indicadores-do-monitoramento.ts";
@@ -26,14 +26,32 @@ import {
   taxaDeOciosidade,
   urgenciaDoCronograma,
 } from "../../lib/visao-geral/visao-geral.ts";
-import { classes, Selo, TabelaInfinita } from "../../ui/index.ts";
+import {
+  origemDoNumero,
+  TEXTO_DA_ORIGEM_AGREGADA,
+  type CampoComOrigem,
+  type OrigemDoNumero,
+  type TelaDeOrigem,
+} from "../../lib/visao-geral/origem-dos-numeros.ts";
+import {
+  composicaoDaLinha,
+  type CampoComComposicao,
+} from "../../lib/visao-geral/composicao-dos-numeros.ts";
+import { classes, Popover, Selo, TabelaInfinita } from "../../ui/index.ts";
+import { ComposicaoDoNumero } from "./composicao.tsx";
+import {
+  PRESETS_DE_COLUNAS,
+  presetDasColunas,
+} from "../../lib/visao-geral/presets-de-colunas.ts";
 
 /*
   A tabela de processos seletivos da Visão geral (TabelaInfinita, src/ui/):
   colunas que ordenam (crescente, decrescente, sem ordem), "Colunas" para
   escolher as visíveis (guardadas no navegador), o prazo do edital e o
   cronograma na célula do edital, a taxa de vagas sem contratação, a fase, os
-  motivos de atenção (selos) e a observação longa com "Ver mais". Sem coluna
+  motivos de atenção (selos) e a observação longa com "Ver mais". Aprovados,
+  Contratados, Aguardando chamada e Inscritos levam aos dados que os compõem
+  (`NumeroDaLinha`, src/lib/visao-geral/origem-dos-numeros.ts). Sem coluna
   escolhida, os críticos vêm primeiro. A linha abre os detalhes do processo
   (clique, Enter ou espaço). Unidade e Edital ficam presas à esquerda quando
   a tabela rola de lado (`classesFixas`; no celular, em cartões, não).
@@ -76,12 +94,15 @@ function classesFixas(colunas: readonly ColunaDaTabela[]) {
 function MenuDeColunas({
   colunas,
   aoAlternar,
+  aoAplicarPreset,
   textos,
 }: {
   colunas: readonly ColunaDaTabela[];
   aoAlternar: EstadoDaVisaoGeral["alternarColuna"];
+  aoAplicarPreset: EstadoDaVisaoGeral["aplicarPresetDeColunas"];
   textos: TextosDaVisaoGeral;
 }) {
+  const presetAtual = presetDasColunas(colunas);
   const [aberto, setAberto] = useState(false);
   const raiz = useRef<HTMLDivElement>(null);
 
@@ -129,6 +150,24 @@ function MenuDeColunas({
         aria-label={textos.colunasTitulo}
         hidden={!aberto}
       >
+        <div
+          className="visao-geral-presets"
+          role="group"
+          aria-label="Conjuntos de colunas"
+        >
+          {PRESETS_DE_COLUNAS.map(({ id, rotulo }) => (
+            <button
+              key={id}
+              type="button"
+              className="btn secondary small"
+              data-preset={id}
+              aria-pressed={presetAtual === id}
+              onClick={() => aoAplicarPreset(id)}
+            >
+              {rotulo}
+            </button>
+          ))}
+        </div>
         <strong>{textos.colunasTitulo}</strong>
         {COLUNAS_DA_TABELA.map(({ campo, rotulo }) => (
           <label key={campo}>
@@ -213,11 +252,139 @@ function CelulaDaObservacao({ texto }: { texto: string }) {
   );
 }
 
+/* O que a célula precisa para levar o número aos dados (TabelaDeProcessos). */
+type Origens = {
+  comListas: boolean;
+  podeAbrir: (view: TelaDeOrigem) => boolean;
+  aoAbrir: (
+    linha: LinhaDaVisaoGeral,
+    origem: Extract<OrigemDoNumero, { tipo: "tela" }>,
+  ) => void;
+  /** O selo de Atenção: os detalhes, nos avisos do edital. */
+  aoAbrirAvisos: (linha: LinhaDaVisaoGeral) => void;
+};
+
+const ROTULO_DO_NUMERO: Readonly<
+  Record<CampoComOrigem | CampoComComposicao, string>
+> = Object.freeze({
+  aprovados: "Aprovados",
+  contratados: "Contratados",
+  cadastro_reserva: "Aguardando chamada",
+  inscritos: "Inscritos",
+  vagas_total: "Vagas",
+  vagas_ociosas: "Sem contratação",
+});
+const CAMPOS_COM_ORIGEM: readonly string[] = [
+  "aprovados",
+  "contratados",
+  "cadastro_reserva",
+  "inscritos",
+];
+const CAMPOS_COM_COMPOSICAO: readonly string[] = [
+  "vagas_total",
+  "contratados",
+  "vagas_ociosas",
+  "aprovados",
+];
+const ehCampoComOrigem = (campo: string): campo is CampoComOrigem =>
+  CAMPOS_COM_ORIGEM.includes(campo);
+const ehCampoComComposicao = (campo: string): campo is CampoComComposicao =>
+  CAMPOS_COM_COMPOSICAO.includes(campo);
+
+/*
+  O número que leva aos dados (revisão de 17/11/2026): clicar abre um painel
+  pequeno com a composição, quando os dados permitem (Contratados = dentro
+  + além das vagas imediatas; Vagas = publicadas − reabertas), e o caminho
+  para a tela do módulo, já no edital, ou "Origem agregada; detalhe
+  individual não disponível" quando só há o total. Sem nada disso (sem
+  número, zero, sem acesso à tela), é texto como antes.
+*/
+function NumeroDaLinha({
+  linha,
+  campo,
+  texto,
+  extra,
+  origens,
+}: {
+  linha: LinhaDaVisaoGeral;
+  campo: CampoComOrigem | CampoComComposicao;
+  texto: string;
+  extra?: ReactNode;
+  origens: Origens;
+}) {
+  const origem = ehCampoComOrigem(campo)
+    ? origemDoNumero(linha, campo, { comListas: origens.comListas })
+    : ({ tipo: "nenhuma" } as const);
+  const comTela =
+    origem.tipo === "tela" && origens.podeAbrir(origem.view) ? origem : null;
+  const agregada = origem.tipo === "agregada";
+  const passos = ehCampoComComposicao(campo)
+    ? composicaoDaLinha(linha, campo)
+    : null;
+  if (!comTela && !agregada && !passos)
+    return (
+      <>
+        {texto}
+        {extra}
+      </>
+    );
+  const rotulo = `${ROTULO_DO_NUMERO[campo]} do ${linha.edital || "edital"}: ${texto}`;
+  return (
+    <>
+      <Popover
+        rotulo={rotulo}
+        dica={
+          passos
+            ? "Ver a composição"
+            : comTela
+              ? comTela.rotulo
+              : TEXTO_DA_ORIGEM_AGREGADA
+        }
+        gatilho={texto}
+        classeDoBotao="visao-geral-numero-botao"
+        className="visao-geral-numero-origem"
+        lado="direita"
+        acao={`origem-${campo}`}
+      >
+        {(fechar) => (
+          <div className="visao-geral-origem">
+            <strong>{rotulo}</strong>
+            {passos ? <ComposicaoDoNumero passos={passos} /> : null}
+            {comTela ? (
+              <button
+                type="button"
+                className="btn secondary small"
+                data-acao="abrir-origem"
+                onClick={() => {
+                  fechar();
+                  origens.aoAbrir(linha, comTela);
+                }}
+              >
+                <i
+                  className="fa-solid fa-arrow-right-to-bracket"
+                  aria-hidden="true"
+                />{" "}
+                {comTela.rotulo}
+              </button>
+            ) : agregada ? (
+              <p className="visao-geral-origem-agregada">
+                {TEXTO_DA_ORIGEM_AGREGADA}
+              </p>
+            ) : null}
+          </div>
+        )}
+      </Popover>
+      {extra}
+    </>
+  );
+}
+
 function celula(
   campo: ColunaDaTabela,
   linha: LinhaDaVisaoGeral,
   hoje: string | Date,
   fixas: Map<ColunaDaTabela, string>,
+  origens: Origens,
 ) {
   switch (campo) {
     case "unidade":
@@ -253,7 +420,12 @@ function celula(
     case "vagas_total":
       return (
         <td key={campo} className="num">
-          {fmt(linha.vagas_total)}
+          <NumeroDaLinha
+            linha={linha}
+            campo={campo}
+            texto={fmt(linha.vagas_total)}
+            origens={origens}
+          />
         </td>
       );
     case "duracao":
@@ -267,27 +439,39 @@ function celula(
     case "cadastro_reserva":
       return (
         <td key={campo} className="num">
-          {numeroOuTraco(linha[campo])}
+          <NumeroDaLinha
+            linha={linha}
+            campo={campo}
+            texto={numeroOuTraco(linha[campo])}
+            origens={origens}
+          />
         </td>
       );
     case "contratados": {
       /*
         Como o indicador "Contratadas" e a gaveta: as contratações dentro das
-        vagas; as do cadastro reserva vêm à parte (antes a coluna somava as
+        vagas; as além das vagas imediatas vêm à parte (antes a coluna somava as
         duas e não fechava com o indicador).
       */
-      const reserva = contratacoesDoCadastroReserva(linha);
+      const reserva = contratacoesAlemDasVagas(linha);
       return (
         <td key={campo} className="num">
-          {fmt(contratadasImediatas(linha))}
-          {reserva > 0 ? (
-            <span
-              className="visao-geral-taxa"
-              title={`${fmt(reserva)} contratado(s) do cadastro reserva, além das vagas`}
-            >
-              +{fmt(reserva)} CR
-            </span>
-          ) : null}
+          <NumeroDaLinha
+            linha={linha}
+            campo="contratados"
+            texto={fmt(contratadasImediatas(linha))}
+            origens={origens}
+            extra={
+              reserva > 0 ? (
+                <span
+                  className="visao-geral-taxa"
+                  title={`${fmt(reserva)} contratado(s) além das vagas imediatas`}
+                >
+                  +{fmt(reserva)} além
+                </span>
+              ) : null
+            }
+          />
         </td>
       );
     }
@@ -295,14 +479,21 @@ function celula(
       const taxa = taxaDeOciosidade(linha);
       return (
         <td key={campo} className="num">
-          {fmt(vagasSemContratacao(linha))}
-          <span
-            className="visao-geral-taxa"
-            data-nivel={taxa.nivel}
-            title={`${taxa.pct}% das vagas sem contratação`}
-          >
-            {taxa.pct}%
-          </span>
+          <NumeroDaLinha
+            linha={linha}
+            campo={campo}
+            texto={fmt(vagasSemContratacao(linha))}
+            origens={origens}
+            extra={
+              <span
+                className="visao-geral-taxa"
+                data-nivel={taxa.nivel}
+                title={`${taxa.pct}% das vagas sem contratação`}
+              >
+                {taxa.pct}%
+              </span>
+            }
+          />
         </td>
       );
     }
@@ -326,13 +517,20 @@ function celula(
       return (
         <td key={campo} className="visao-geral-motivos">
           {(linha.atencao || []).map((motivo) => (
-            <Selo
+            // O selo abre os detalhes nos avisos de conferência do edital.
+            <button
               key={motivo.codigo}
-              tom={seloDoMotivo(motivo)}
-              titulo={motivo.rotulo}
+              type="button"
+              className="visao-geral-selo-botao"
+              data-acao="avisos-do-edital"
+              onClick={() => origens.aoAbrirAvisos(linha)}
             >
-              <span className="visao-geral-motivo-texto">{motivo.rotulo}</span>
-            </Selo>
+              <Selo tom={seloDoMotivo(motivo)} titulo={motivo.rotulo}>
+                <span className="visao-geral-motivo-texto">
+                  {motivo.rotulo}
+                </span>
+              </Selo>
+            </button>
           ))}
         </td>
       );
@@ -348,11 +546,11 @@ function celula(
   }
 }
 
-/* Clique na linha abre os detalhes; link e botão dentro dela não. */
+/* Clique na linha abre os detalhes; link, botão e o painel de um número não. */
 const cliqueEmControle = (evento: EventoReact) =>
   Boolean(
     evento.target instanceof Element &&
-    evento.target.closest("a, button, input, label"),
+    evento.target.closest("a, button, input, label, .ui-popover"),
   );
 
 export function TabelaDeProcessos({
@@ -361,9 +559,15 @@ export function TabelaDeProcessos({
   textos,
   aoAbrir,
   agora,
+  podeAbrirTela = () => false,
+  aoAbrirOrigem = () => {},
 }: PropsComTextos & {
-  aoAbrir: (linha: LinhaDaVisaoGeral) => void;
+  aoAbrir: (linha: LinhaDaVisaoGeral, secao?: string) => void;
   agora: () => Date;
+  /** A pessoa pode abrir a tela de destino de um número (permissão da página). */
+  podeAbrirTela?: Origens["podeAbrir"];
+  /** Leva o número à tela do módulo (pedido de filtro e navegação). */
+  aoAbrirOrigem?: Origens["aoAbrir"];
 }) {
   const [rascunho, setRascunho] = useState<string | null>(null);
   const [destacada, setDestacada] = useState("");
@@ -397,6 +601,12 @@ export function TabelaDeProcessos({
   }, [destaque]);
 
   const fixas = classesFixas(e.colunas);
+  const origens: Origens = {
+    comListas: e.comListas,
+    podeAbrir: podeAbrirTela,
+    aoAbrir: aoAbrirOrigem,
+    aoAbrirAvisos: (linha) => aoAbrir(linha, "avisos"),
+  };
   const colunas = COLUNAS_DA_TABELA.filter((c) =>
     e.colunas.includes(c.campo),
   ).map(({ campo, rotulo, numero }) => ({
@@ -427,6 +637,7 @@ export function TabelaDeProcessos({
           <MenuDeColunas
             colunas={e.colunas}
             aoAlternar={estado.alternarColuna}
+            aoAplicarPreset={estado.aplicarPresetDeColunas}
             textos={textos}
           />
         }
@@ -481,7 +692,7 @@ export function TabelaDeProcessos({
                 // `data-campo`: no celular, o cartão mostra só as colunas
                 // principais (visao-geral.css); o resto fica na gaveta.
                 cloneElement(
-                  celula(campo, linha, hoje, fixas) as ReactElement<{
+                  celula(campo, linha, hoje, fixas, origens) as ReactElement<{
                     "data-campo"?: string;
                   }>,
                   { "data-campo": campo },

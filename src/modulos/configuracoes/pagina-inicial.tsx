@@ -54,7 +54,7 @@ const GRUPOS = Object.freeze([
       "kpi_contratadas_label",
       "kpi_em_selecao_label",
       "kpi_ociosas_label",
-      "kpi_cadastro_reserva_label",
+      "kpi_alem_das_vagas_label",
       "kpi_criticos_label",
       "kpi_inscritos_label",
     ],

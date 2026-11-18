@@ -223,7 +223,9 @@ import {
 } from "../src/modulos/visao-geral/estado.ts";
 import { lerMarcosDaArea } from "../src/modulos/visao-geral/marcos.ts";
 import {
-  contratacoesDoCadastroReserva,
+  textoDaCobertura,
+  situacaoDoIndicador,
+  contratacoesAlemDasVagas,
   contratadasImediatas,
   ehCancelado,
   ehConcluido,
@@ -3053,9 +3055,13 @@ bloco("indicadores-do-monitoramento", () => {
         contratadas: 130 + 4 + 1 + 0 + 0,
         emSelecao: 27,
         ociosas: 82,
-        cadastroReserva: 437 + 3 + 22,
+        alemDasVagas: 437 + 3 + 22,
         criticos: 0,
         inscritos: 0 + 300 + 3055 + 3961 + 500,
+        editais: 5,
+        inscritosInformados: 5,
+        editaisComResultado: 4,
+        editaisSemResultado: 1,
       });
       expect(k.contratadas + k.emSelecao + k.ociosas).toBe(k.vagas);
     });
@@ -3112,18 +3118,94 @@ bloco("indicadores-do-monitoramento", () => {
         contratadas: 0,
         emSelecao: 0,
         ociosas: 0,
-        cadastroReserva: 0,
+        alemDasVagas: 0,
         criticos: 0,
         inscritos: 0,
+        editais: 0,
+        inscritosInformados: 0,
+        editaisComResultado: 0,
+        editaisSemResultado: 0,
       });
     });
   });
 
+  /*
+    Revisão de 17/11/2026: o zero confirmado, o dado ausente e o que não se
+    aplica não podem aparecer iguais. Inscritos sem dado era "—" na linha e 0
+    no total.
+  */
+  describe("a situação de cada indicador", () => {
+    const dois = [
+      { id: "a", status: "Em andamento", vagas_total: 3, inscritos: 40 },
+      { id: "b", status: "Em andamento", vagas_total: 2, inscritos: null },
+    ];
+
+    it("Inscritos com parte informada mostra a cobertura", () => {
+      const k = indicadoresDoMonitoramento(dois);
+      expect(k.inscritosInformados).toBe(1);
+      expect(situacaoDoIndicador(k, "inscritos")).toEqual({
+        tipo: "valor",
+        valor: 40,
+        cobertura: "informado em 1 de 2 editais",
+      });
+    });
+
+    it("Inscritos sem nenhum número é dado ausente, não zero", () => {
+      const k = indicadoresDoMonitoramento([
+        { id: "a", status: "Em andamento", inscritos: "" },
+        { id: "b", status: "Em andamento" },
+      ]);
+      expect(situacaoDoIndicador(k, "inscritos").tipo).toBe("ausente");
+    });
+
+    it("zero informado é zero confirmado, sem cobertura", () => {
+      const k = indicadoresDoMonitoramento([
+        { id: "a", status: "Em andamento", inscritos: 0 },
+      ]);
+      expect(situacaoDoIndicador(k, "inscritos")).toEqual({
+        tipo: "valor",
+        valor: 0,
+        cobertura: "",
+      });
+    });
+
+    it("Ociosas sem edital com resultado não se aplica; Em seleção, sim", () => {
+      const k = indicadoresDoMonitoramento(dois);
+      expect(situacaoDoIndicador(k, "ociosas")).toEqual({
+        tipo: "nao_se_aplica",
+        motivo: "nenhum edital com resultado",
+      });
+      expect(situacaoDoIndicador(k, "emSelecao")).toEqual({
+        tipo: "valor",
+        valor: 5,
+        cobertura: "",
+      });
+    });
+
+    it("todos com resultado: Em seleção não se aplica", () => {
+      const k = indicadoresDoMonitoramento([
+        { id: "a", status: "Concluído", vagas_total: 2, contratados: 2 },
+      ]);
+      expect(situacaoDoIndicador(k, "emSelecao").tipo).toBe("nao_se_aplica");
+      expect(situacaoDoIndicador(k, "ociosas")).toEqual({
+        tipo: "valor",
+        valor: 0,
+        cobertura: "",
+      });
+    });
+
+    it("a cobertura só aparece quando falta algum", () => {
+      expect(textoDaCobertura(3, 3)).toBe("");
+      expect(textoDaCobertura(0, 0)).toBe("");
+      expect(textoDaCobertura(1, 1200)).toBe("informado em 1 de 1.200 editais");
+    });
+  });
+
   describe("por edital", () => {
-    it("contratadas, cadastro reserva e vagas sem contratação", () => {
+    it("contratadas, além das vagas e vagas sem contratação", () => {
       const fgv = SEDE[0];
       expect(contratadasImediatas(fgv)).toBe(130);
-      expect(contratacoesDoCadastroReserva(fgv)).toBe(437);
+      expect(contratacoesAlemDasVagas(fgv)).toBe(437);
       expect(vagasSemContratacao(fgv)).toBe(0);
       expect(vagasSemContratacao(SEDE[2])).toBe(82);
       expect(
@@ -6959,7 +7041,7 @@ bloco("visao-geral", () => {
         ["kpi_contratadas_label", "Contratadas"],
         ["kpi_em_selecao_label", "Em seleção"],
         ["kpi_ociosas_label", "Ociosas"],
-        ["kpi_cadastro_reserva_label", "Cadastro reserva"],
+        ["kpi_alem_das_vagas_label", "Contratações além das vagas imediatas"],
         ["kpi_criticos_label", "Críticos"],
         ["kpi_inscritos_label", "Inscritos"],
       ]);
@@ -6977,9 +7059,13 @@ bloco("visao-geral", () => {
         contratadas: 11,
         emSelecao: 8,
         ociosas: 6,
-        cadastroReserva: 0,
+        alemDasVagas: 0,
         criticos: 2,
         inscritos: 143,
+        editais: 4,
+        inscritosInformados: 4,
+        editaisComResultado: 1,
+        editaisSemResultado: 3,
       });
       expect(k.contratadas + k.emSelecao + k.ociosas).toBe(k.vagas);
     });

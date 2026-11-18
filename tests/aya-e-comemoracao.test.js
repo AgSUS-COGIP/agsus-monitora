@@ -76,6 +76,11 @@ import {
   gerarModulo,
 } from "../scripts/compilar-conhecimento-aya.mjs";
 import { VERBETES_AYA } from "../src/modules/aya-conhecimento-gerado.js";
+import { PERGUNTA_DO_INDICADOR } from "../src/lib/visao-geral/o-que-significa.ts";
+import {
+  consumirPerguntaParaAAya,
+  perguntarParaAAya,
+} from "../src/app/pergunta-para-a-aya.ts";
 import {
   responderAya,
   buscarNaBase,
@@ -196,12 +201,14 @@ import {
   pedirFiltro,
 } from "../src/app/pedido-de-filtro.ts";
 import {
+  filtrosDosAprovados,
   filtrosDaSelecao,
   filtrosDasAnalises,
   filtrosDeEntrevistas,
   filtrosDeRecursos,
   opcoesDoEdital,
 } from "../src/lib/aya/filtro-da-aya.ts";
+import { SEM_STATUS } from "../src/lib/aprovados/lista-aprovados-rules.ts";
 import {
   CHAVE_DO_SOM,
   guardarSom,
@@ -3031,6 +3038,50 @@ bloco("filtro-da-aya", () => {
       ).toEqual({ filtros: { edital: ["x"] }, kpi: "revisar" });
     });
   });
+
+  /*
+    Um número da Visão geral abre a Lista de aprovados no edital, pelo id (o
+    mesmo número pode estar em mais de uma unidade), com o status do número.
+  */
+  describe("Lista de aprovados pelo número da Visão geral", () => {
+    const opcoes = [
+      { valor: "uuid-a", rotulo: "80/2025 · DSEI Xingu" },
+      { valor: "uuid-b", rotulo: "80/2025 · DSEI Yanomami" },
+    ];
+
+    it("o edital pelo id e Contratados como Contratado e Migração", () => {
+      expect(
+        filtrosDosAprovados(
+          { editalId: "uuid-b", edital: "80/2025", metrica: "contratados" },
+          opcoes,
+        ),
+      ).toEqual({ editalId: ["uuid-b"], status: ["Contratado", "Migração"] });
+    });
+
+    it("Aguardando chamada é Sem status; Aprovados, sem status", () => {
+      expect(
+        filtrosDosAprovados(
+          { editalId: "uuid-a", metrica: "aguardandoChamada" },
+          opcoes,
+        )?.status,
+      ).toEqual([SEM_STATUS]);
+      expect(
+        filtrosDosAprovados(
+          { editalId: "uuid-a", metrica: "aprovados" },
+          opcoes,
+        )?.status,
+      ).toEqual([]);
+    });
+
+    it("sem o id nas opções, o primeiro pelo número; sem nenhum, nada", () => {
+      expect(
+        filtrosDosAprovados({ editalId: "x", edital: "80/2025" }, opcoes)
+          ?.editalId,
+      ).toEqual(["uuid-a"]);
+      expect(filtrosDosAprovados({ edital: "99/2026" }, opcoes)).toBeNull();
+      expect(filtrosDosAprovados(null, opcoes)).toBeNull();
+    });
+  });
 });
 
 bloco("fogos-cena", () => {
@@ -5277,5 +5328,44 @@ bloco("termos-da-aya", () => {
       expect(toleranciaPara("prazo")).toBe(1);
       expect(toleranciaPara("entrevista")).toBe(2);
     });
+  });
+});
+
+bloco("visao-geral/o-que-significa", () => {
+  /*
+    Revisão de 17/11/2026: o ⓘ de cada indicador da Visão geral manda à Aya
+    a pergunta exata do verbete daquele número; a resposta vem da base, não
+    de um texto na tela. A pergunta guardada vale uma vez só.
+  */
+  it("cada pergunta do ⓘ cai no verbete do próprio indicador", () => {
+    const titulo = {
+      vagas: "Vagas imediatas (indicador)",
+      contratadas: "Contratadas (indicador)",
+      emSelecao: "Em seleção (indicador)",
+      ociosas: "Ociosas (indicador)",
+      alemDasVagas: "Contratações além das vagas imediatas (indicador)",
+      inscritos: "Inscritos (indicador)",
+    };
+    for (const [chave, pergunta] of Object.entries(PERGUNTA_DO_INDICADOR)) {
+      const [primeiro] = buscarNaBase(
+        pergunta,
+        { pagina: "dashboard" },
+        VERBETES_AYA,
+      ).ranking;
+      expect(primeiro.verbete.titulo).toBe(titulo[chave]);
+      expect(primeiro.pontuacao).toBeGreaterThanOrEqual(LIMIAR_CONFIANTE);
+    }
+  });
+
+  it("a pergunta deixada para a Aya vale uma vez e expira", () => {
+    perguntarParaAAya("o que significa ociosas na visao geral", 1000);
+    expect(consumirPerguntaParaAAya(2000)).toBe(
+      "o que significa ociosas na visao geral",
+    );
+    expect(consumirPerguntaParaAAya(2000)).toBeNull();
+    perguntarParaAAya("o que significa inscritos na visao geral", 1000);
+    expect(consumirPerguntaParaAAya(1000 + 16_000)).toBeNull();
+    perguntarParaAAya("   ");
+    expect(consumirPerguntaParaAAya()).toBeNull();
   });
 });

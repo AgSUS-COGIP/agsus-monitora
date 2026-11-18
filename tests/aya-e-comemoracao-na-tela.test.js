@@ -1519,6 +1519,27 @@ bloco("modulos/aya-dados", async () => {
     });
   });
 
+  describe("o que significa (ⓘ de uma tela)", () => {
+    it("a pergunta deixada por uma tela abre a Aya e é enviada uma vez", async () => {
+      // Revisão de 17/11/2026: o ⓘ dos indicadores da Visão geral.
+      localStorage.setItem("agsus_monitora_arara_oculta_v1", "1");
+      await montar();
+      const { perguntarParaAAya } =
+        await import("../src/app/pergunta-para-a-aya.ts");
+      await act(async () =>
+        perguntarParaAAya("o que significa ociosas na visao geral"),
+      );
+      await act(async () => {
+        await new Promise((resolver) => setTimeout(resolver, 0));
+      });
+      expect(perguntar).toHaveBeenCalledTimes(1);
+      expect(perguntar.mock.calls[0][0].question).toBe(
+        "o que significa ociosas na visao geral",
+      );
+      expect(localStorage.getItem("agsus_monitora_arara_oculta_v1")).toBe("0");
+    });
+  });
+
   describe("perguntas sem resposta", () => {
     it("não ajudou guarda a pergunta sem dado pessoal; só o admin copia", async () => {
       await montar();

@@ -6332,6 +6332,7 @@ bloco("modulos/visao-geral", async () => {
     carregar = true,
     carregadorDeMunicipios,
     aberta = true,
+    perfilDaTela = null,
   } = {}) {
     armazenamento ||= memoria();
     estado = criarEstadoDaVisaoGeral({
@@ -6350,7 +6351,7 @@ bloco("modulos/visao-geral", async () => {
         estado,
         configuracoes: configuracoesFalsas(valores),
         toast,
-        obterPerfil: () => (comPerfil ? perfil : null),
+        obterPerfil: () => perfilDaTela || (comPerfil ? perfil : null),
         supabase,
         comemoracoesLigadas: () => comemoracoes,
         agora: () => new Date(2026, 9, 1, 9, 30),
@@ -6421,14 +6422,14 @@ bloco("modulos/visao-geral", async () => {
         "contratadas",
         "emSelecao",
         "ociosas",
-        "cadastroReserva",
+        "alemDasVagas",
         "inscritos",
       ]);
       expect(valorDoKpi("vagas")).toBe("23");
       expect(valorDoKpi("contratadas")).toBe("17");
       expect(valorDoKpi("emSelecao")).toBe("6");
       expect(valorDoKpi("ociosas")).toBe("0");
-      expect(valorDoKpi("cadastroReserva")).toBe("0");
+      expect(valorDoKpi("alemDasVagas")).toBe("0");
       expect(criticos().textContent).toContain("1 edital");
       expect(valorDoKpi("inscritos")).toBe("140");
       expect(kpi("vagas").textContent).toContain("Vagas Imediatas Previstas");
@@ -6572,6 +6573,209 @@ bloco("modulos/visao-geral", async () => {
       expect(pedidos()).toHaveLength(2);
     });
 
+    /*
+      Revisão de 17/11/2026: o número da linha leva aos dados que o compõem.
+      A Lista de aprovados abre no edital, com o status do número; a volta
+      destaca a linha; sem os registros, "Origem agregada"; sem acesso à
+      tela, o número é texto.
+    */
+    describe("os números da linha levam aos dados", () => {
+      const comLista = () => ({
+        rpc: vi.fn(async (nome) => ({
+          data:
+            nome === "listar_acompanhamento_da_visao_geral_se_mudou"
+              ? {
+                  listas: [
+                    {
+                      monitoramento_id: 3,
+                      aprovados: 8,
+                      com_status: 8,
+                      contratados: 8,
+                      desistentes: 0,
+                    },
+                  ],
+                }
+              : null,
+          error: null,
+        })),
+      });
+      const leitor = {
+        id: "p2",
+        nome: "LEITOR",
+        permissoes: { dashboard: "leitor", aprovados: "leitor" },
+      };
+      const celulaDe = (id, campo) =>
+        secao.querySelector(`tr[data-linha="${id}"] td[data-campo="${campo}"]`);
+
+      it("Contratados abre a Lista de aprovados no edital e a volta destaca a linha", async () => {
+        const { consumirPedidoDeFiltro } =
+          await import("../src/app/pedido-de-filtro.ts");
+        const navegar = vi.fn();
+        window.navigate = navegar;
+        await montar({ supabase: comLista(), perfilDaTela: leitor });
+        await esperar();
+        const gatilho = celulaDe(3, "contratados").querySelector(
+          ".visao-geral-numero-botao",
+        );
+        expect(gatilho.textContent).toBe("8");
+        await clicar(gatilho);
+        // O painel do número não abre a gaveta da linha.
+        expect(document.querySelector("#visaoGeralGaveta")).toBeNull();
+        await clicar(botao("Abrir na Lista de aprovados", secao));
+        expect(navegar).toHaveBeenCalledWith("approved");
+        expect(consumirPedidoDeFiltro("approved")).toEqual({
+          edital: "01/2026",
+          editalId: "3",
+          metrica: "contratados",
+        });
+        // Saiu e voltou: a linha de onde saiu se destaca.
+        await act(async () => estado.definirAberta(false));
+        await act(async () => estado.definirAberta(true));
+        expect(estado.obter().destaque?.id).toBe("3");
+        delete window.navigate;
+      });
+
+      it("só o total, sem a lista: Origem agregada, nunca uma lista vazia", async () => {
+        await montar({ supabase: comLista(), perfilDaTela: leitor });
+        await esperar();
+        // O 03/2026 tem 4 contratados e nenhuma lista vigente.
+        await clicar(
+          celulaDe(1, "contratados").querySelector(".visao-geral-numero-botao"),
+        );
+        const painel = celulaDe(1, "contratados").querySelector(
+          ".ui-popover-painel",
+        );
+        expect(painel.textContent).toContain(
+          "Origem agregada; detalhe individual não disponível",
+        );
+        expect(botao("Abrir na Lista de aprovados", painel)).toBeUndefined();
+      });
+
+      it("o número mostra a composição: na faixa e na linha", async () => {
+        await montar();
+        await esperar();
+        // Faixa: Vagas imediatas = Contratadas + Em seleção + Ociosas.
+        await clicar(kpi("vagas").querySelector(".visao-geral-numero-botao"));
+        const faixa = kpi("vagas").querySelector(".visao-geral-composicao");
+        expect(faixa.textContent).toContain("Contratadas17");
+        expect(faixa.textContent).toContain("Em seleção+ 6");
+        expect(faixa.textContent).toContain("Vagas imediatas= 23");
+        // Linha: 10 vagas − 4 contratadas = 6 sem contratação.
+        await clicar(
+          celulaDe(1, "vagas_ociosas").querySelector(
+            ".visao-geral-numero-botao",
+          ),
+        );
+        expect(
+          celulaDe(1, "vagas_ociosas").querySelector(".visao-geral-composicao")
+            .textContent,
+        ).toContain("Sem contratação= 6");
+        expect(document.querySelector("#visaoGeralGaveta")).toBeNull();
+      });
+
+      it("a gaveta traz o Resultado e os avisos abertos do edital; o selo de Atenção leva a eles", async () => {
+        const rpc = comLista().rpc;
+        const supabase = {
+          rpc: vi.fn(async (nome, args) =>
+            nome === "listar_avisos_conferencia_se_mudou"
+              ? {
+                  data: {
+                    avisos: [
+                      {
+                        id: "a1",
+                        conferencia: "aprovados_sem_status",
+                        gravidade: "ATENCAO",
+                        modulo: "aprovados",
+                        edital_id: "1",
+                        edital: "03/2026",
+                        quantidade: 2,
+                        situacao: "ABERTO",
+                      },
+                      {
+                        id: "a2",
+                        conferencia: "aprovados_sem_status",
+                        gravidade: "ATENCAO",
+                        modulo: "aprovados",
+                        edital_id: "2",
+                        edital: "11/2025",
+                        quantidade: 1,
+                        situacao: "ABERTO",
+                      },
+                    ],
+                  },
+                  error: null,
+                }
+              : nome === "listar_editais_criticos_manuais"
+                ? {
+                    data: [
+                      {
+                        monitoramento_id: 1,
+                        motivo: "Cronograma suspenso pela diretoria",
+                      },
+                    ],
+                    error: null,
+                  }
+                : rpc(nome, args),
+          ),
+        };
+        await montar({ supabase });
+        await esperar();
+        // O selo de Atenção do 03/2026 abre os detalhes nos avisos dele.
+        await clicar(
+          secao.querySelector(
+            'tr[data-linha="1"] [data-acao="avisos-do-edital"]',
+          ),
+        );
+        await esperar();
+        const gaveta = document.querySelector("#visaoGeralGaveta");
+        expect(gaveta).not.toBeNull();
+        const resultado = gaveta.querySelector('[data-section="resultado"]');
+        expect(resultado.textContent).toContain("Aprovados—");
+        expect(resultado.textContent).toContain(
+          "Sem lista de aprovados vigente.",
+        );
+        // Os avisos chegam por import() (fora do pacote de entrada).
+        await vi.waitFor(
+          async () => {
+            await esperar();
+            expect(
+              gaveta.querySelector("[data-avisos-do-edital]"),
+            ).not.toBeNull();
+            expect(
+              gaveta.querySelector("[data-avisos-do-edital]").textContent,
+            ).toContain("1 aviso");
+          },
+          { timeout: 8000 },
+        );
+        const avisos = gaveta.querySelector("[data-avisos-do-edital]");
+        expect(
+          supabase.rpc.mock.calls.some(
+            ([nome, args]) =>
+              nome === "listar_avisos_conferencia_se_mudou" &&
+              args.p_area === "saude-indigena",
+          ),
+        ).toBe(true);
+        // Só o aviso do edital da linha (o do 11/2025 não entra).
+        expect(avisos.textContent).toContain("1 aviso");
+        expect(avisos.textContent).not.toContain("2 avisos");
+        // Sem ser administrador global, sem o atalho para a central.
+        expect(
+          avisos.querySelector('[data-acao="abrir-central-de-avisos"]'),
+        ).toBeNull();
+      });
+
+      it("sem acesso à Lista de aprovados, o número é texto", async () => {
+        await montar({
+          supabase: comLista(),
+          perfilDaTela: { ...leitor, permissoes: { dashboard: "leitor" } },
+        });
+        await esperar();
+        const celula = celulaDe(3, "contratados");
+        expect(celula.textContent).toBe("8");
+        expect(celula.querySelector("button")).toBeNull();
+      });
+    });
+
     it("sem o acompanhamento (erro ou banco sem a função), a página segue só com as linhas", async () => {
       const aviso = vi.spyOn(console, "warn").mockImplementation(() => {});
       const supabase = {
@@ -6584,6 +6788,9 @@ bloco("modulos/visao-geral", async () => {
       await esperar();
       expect(criticos()).toBeNull();
       expect(aviso).toHaveBeenCalled();
+      // As vagas saem como cada edital publicou, e a tela diz isso.
+      expect(kpi("vagas").getAttribute("aria-busy")).toBeNull();
+      expect(kpi("vagas").textContent).toContain("sem desconto das reabertas");
       aviso.mockRestore();
     });
 
@@ -6898,6 +7105,55 @@ bloco("modulos/visao-geral", async () => {
       );
     });
 
+    it("o ⓘ de cada indicador pergunta à Aya sobre aquele número", async () => {
+      const { consumirPerguntaParaAAya } =
+        await import("../src/app/pergunta-para-a-aya.ts");
+      await montar();
+      await esperar();
+      const info = secao.querySelector('[data-acao="significado-ociosas"]');
+      expect(info.getAttribute("aria-label")).toBe("O que significa Ociosas");
+      await clicar(info);
+      expect(consumirPerguntaParaAAya()).toBe(
+        "o que significa ociosas na visao geral",
+      );
+      // Todos os números da faixa têm o ⓘ; o texto explicativo não está na tela.
+      expect(
+        secao.querySelectorAll(".visao-geral-kpis .visao-geral-numero-info"),
+      ).toHaveLength(6);
+    });
+
+    it("conjuntos de colunas: Prazos troca de uma vez, guarda e fica marcado", async () => {
+      // Revisão de 17/11/2026: Gestão, Prazos e Contratação, com o seletor e as fixas.
+      await montar();
+      await clicar(botao("Colunas", secao));
+      const prazos = secao.querySelector('[data-preset="prazos"]');
+      expect(prazos.getAttribute("aria-pressed")).toBe("false");
+      await clicar(prazos);
+      expect(cabecalhos()).toEqual([
+        "Unidade",
+        "Edital",
+        "Ciclo",
+        "Início",
+        "Encerramento",
+        "Duração (dias)",
+        "Status",
+        "Fase",
+      ]);
+      expect(prazos.getAttribute("aria-pressed")).toBe("true");
+      expect(JSON.parse(armazenamento.getItem(CHAVE_DAS_COLUNAS))).toContain(
+        "data_fim",
+      );
+      // Uma coluna a mais pelo seletor: escolha própria, nenhum conjunto marcado.
+      const vagas = [
+        ...secao.querySelectorAll(".visao-geral-colunas-menu label"),
+      ]
+        .find((l) => l.textContent.trim() === "Vagas")
+        .querySelector("input");
+      await clicar(vagas);
+      expect(cabecalhos()).toContain("Vagas");
+      expect(prazos.getAttribute("aria-pressed")).toBe("false");
+    });
+
     it("colunas padrão para todos: a escolha da v2 não vale; só Observações fica fora", async () => {
       // Pedidos de 13/11/2026: quem guardou colunas antes também passa a ver as
       // do resultado (v2) e Ciclo, 1ª e Última admissão (v3).
@@ -7021,8 +7277,15 @@ bloco("modulos/visao-geral", async () => {
       await montar();
       await act(async () => estado.definirFiltro("uf", ["RR"]));
       await clicar(secao.querySelector('[data-acao="exportar"]'));
+      // O montador chega por import(), fora do pacote de entrada.
+      await vi.waitFor(
+        async () => {
+          await esperar();
+          expect(document.getElementById("visaoGeralRelatorio")).not.toBeNull();
+        },
+        { timeout: 8000 },
+      );
       const montador = document.getElementById("visaoGeralRelatorio");
-      expect(montador).not.toBeNull();
       const csv = [...montador.querySelectorAll('[role="radio"]')].find(
         (b) => b.textContent.trim() === "CSV",
       );

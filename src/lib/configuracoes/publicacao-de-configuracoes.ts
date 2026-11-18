@@ -296,9 +296,9 @@ export const CAMPOS_DAS_SECOES: Readonly<
     texto("kpi_em_selecao_label", "Rótulo do KPI em seleção", "Em seleção"),
     texto("kpi_ociosas_label", "Rótulo do KPI vagas ociosas", "Ociosas"),
     texto(
-      "kpi_cadastro_reserva_label",
-      "Rótulo do KPI cadastro reserva",
-      "Cadastro reserva",
+      "kpi_alem_das_vagas_label",
+      "Rótulo do KPI contratações além das vagas",
+      "Contratações além das vagas imediatas",
     ),
     texto("kpi_criticos_label", "Rótulo do KPI críticos", "Críticos"),
     texto("kpi_inscritos_label", "Rótulo do KPI inscritos", "Inscritos"),

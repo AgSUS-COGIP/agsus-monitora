@@ -86,6 +86,7 @@ import {
   salvarConversa,
 } from "../../modules/aya-memoria.ts";
 import { assinarPaginaDaAya, obterPaginaDaAya } from "./estado.ts";
+import { usarPerguntaParaAAya } from "../../app/pergunta-para-a-aya.ts";
 import { OfertaDePrimeirosPassos, SecaoAprender } from "./tour/aprender.tsx";
 import {
   concluirTrilha,
@@ -1097,6 +1098,12 @@ export function Aya({
     setRostoVemDoCorpo(true);
     gravar(janela, CHAVE_OCULTA, "0");
   }
+
+  // O ⓘ "O que significa" de uma tela (src/app/pergunta-para-a-aya.ts): abre e pergunta.
+  usarPerguntaParaAAya((pergunta) => {
+    abrir();
+    void enviar(pergunta);
+  });
 
   const fechar = useCallback(() => {
     devolverFocoAArara.current = true;
