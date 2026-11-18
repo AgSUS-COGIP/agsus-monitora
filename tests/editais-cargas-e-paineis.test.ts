@@ -149,6 +149,7 @@ import {
 import { canManagePaineisDeDados } from "../src/lib/acessos/access-roles.ts";
 import { PGlite } from "@electric-sql/pglite";
 import { moldeDeBanco } from "./apoio/molde-de-banco.ts";
+import { lembrarBanco } from "./apoio/bancos-abertos.ts";
 import {
   aprovadosPorEdital,
   avisoDaListaDoEdital,
@@ -3182,7 +3183,7 @@ bloco("historico-do-edital-sem-carimbo", () => {
   };
 
   async function montar() {
-    const db = new PGlite();
+    const db = lembrarBanco(new PGlite());
     await db.exec(`
     create schema auth;
     create table auth.users (id uuid primary key, email text);

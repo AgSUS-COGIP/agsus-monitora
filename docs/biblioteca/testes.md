@@ -79,6 +79,13 @@ o "antes" fica em fixture (`tests/fixtures/sql-de-dados/`,
 de um teste de comportamento fica, sem mudança, em `tests/fixtures/sql-do-banco/<mesmo nome>.sql`
 (só para os testes; o rollback e o ensaio saem com ela, e os testes deles também).
 
+Cada PGlite segura centenas de MB fora da heap do Node, e os blocos de um assunto rodam no mesmo
+processo: o bloco (`tests/apoio/bloco.ts`) fecha o banco criado num teste ao fim dele e o do
+`beforeAll` ao fim do bloco. Os ajudantes de `tests/apoio/` e o molde (`molde-de-banco.ts`) já
+registram o banco que criam; banco criado à mão passa por `lembrarBanco`
+(`tests/apoio/bancos-abertos.ts`). Sem isso, em 18/11/2026, um só arquivo chegava a 8,5 GB e a
+máquina do GitHub caía no meio dos testes, sem log.
+
 **Limitação conhecida:** os testes de banco são, na maioria, estáticos (leem o texto das
 migrations, rollbacks e ensaios); o CI não sobe o banco do projeto. O comportamento no banco é
 conferido pelo ensaio antes de aplicar ([[banco-e-migrations]]).

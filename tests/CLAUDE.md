@@ -23,6 +23,9 @@ e Playwright).
   `apoio/banco-do-fundamento.ts` e `apoio/banco-do-cronograma.ts` (PGlite, `// @vitest-environment node`); modelo antes × depois:
   `catalogo-dos-robos-no-banco.test.ts`. A migration já aplicada que monta o banco fica, sem
   mudança, em `fixtures/sql-do-banco/<mesmo nome>.sql` (rollback e ensaio não vêm junto).
+  **O bloco fecha o banco**: o criado num teste ao fim dele, o do `beforeAll` ao fim do bloco.
+  Banco criado à mão (`new PGlite()`, `PGlite.create()`) passa por `lembrarBanco` de
+  `apoio/bancos-abertos.ts`; sem isso os bancos se somam no processo e derrubam o CI.
 - Teste novo de tela com sessão vai em `sessao-simulada.spec.js`, simulando as RPCs.
 - Spec do Playwright continua `.spec.js` (o `playwright.config.js` só casa esse padrão); o apoio que ele importa fica em `apoio/` (`sessao-simulada.js`).
 - Nome do bloco descreve o comportamento em português. Bug corrigido → teste que falharia antes.
