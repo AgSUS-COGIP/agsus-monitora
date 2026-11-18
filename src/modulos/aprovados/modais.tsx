@@ -10,7 +10,7 @@ import type {
   PropsDosCamposDaDecisao,
 } from "./tipos-dos-modais.ts";
 import type { CandidatoAprovado, ListaDeAprovados } from "./tipos-do-estado.ts";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   canAlterarPorDecisaoJudicial,
   canManageSubJudice,
@@ -194,6 +194,23 @@ export function ModalDeStatus({
   const [status, setStatus] = useState(candidato.status || "");
   const [processo, setProcesso] = useState(candidato.processo_sei || "");
   const [matricula, setMatricula] = useState(candidato.matricula || "");
+  const [observacao, setObservacao] = useState("");
+  const [observacaoCarregada, setObservacaoCarregada] = useState(false);
+  const [erroObservacao, setErroObservacao] = useState("");
+  useEffect(() => {
+    let ativo = true;
+    void estado
+      .lerObservacaoStatus(candidato.candidato_id)
+      .then((texto) => {
+        if (!ativo) return;
+        setObservacao(texto);
+        setObservacaoCarregada(true);
+      })
+      .catch(() => {
+        if (ativo) setErroObservacao("Não foi possível consultar a observação. Feche e abra novamente.");
+      });
+    return () => { ativo = false; };
+  }, [estado, candidato.candidato_id]);
   const [data, setData] = useState(dataConvocacao || hoje);
   const [anexos, setAnexos] = useState<File[]>([]);
   const [marcarOutras, setMarcarOutras] = useState(false);
@@ -323,6 +340,27 @@ export function ModalDeStatus({
               </small>
             ) : null}
           </div>
+          <div className="form-row full">
+            <label htmlFor="approvedStatusObservacao">
+              Observação <small>(opcional)</small>
+            </label>
+            <textarea
+              id="approvedStatusObservacao"
+              rows={3}
+              maxLength={2000}
+              placeholder="Registre informações relevantes sobre a situação do candidato."
+              value={observacao}
+              disabled={!observacaoCarregada}
+              onChange={(evento) => setObservacao(evento.target.value)}
+            />
+            {erroObservacao ? (
+              <small role="alert" className="approved-field-erro">{erroObservacao}</small>
+            ) : (
+              <small className="approved-field-hint">
+                {observacao.length} de 2000 caracteres
+              </small>
+            )}
+          </div>
           {outras.length ? (
             <div
               id="approvedOutraListaSugestao"
@@ -376,12 +414,13 @@ export function ModalDeStatus({
             id="approvedStatusSave"
             data-tour="aprovados-status-salvar"
             className="btn green"
-            disabled={anexosInvalidos}
+            disabled={anexosInvalidos || !observacaoCarregada}
             onClick={() =>
               void estado.salvarStatus(candidato.candidato_id, {
                 status,
                 processo,
                 matricula,
+                observacao,
                 anexos,
                 dataConvocacao: data,
                 emOutraLista:
