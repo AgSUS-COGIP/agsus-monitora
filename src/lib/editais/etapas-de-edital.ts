@@ -24,7 +24,7 @@
   Por isso `recursos` vem antes de `resultado`, que vem antes de `entrevistas` e
   de `analise`. Mover uma linha muda a classificação de etapas já existentes.
 
-  Ao mexer aqui, rode `tests/etapas-de-edital.test.js`: ele fixa as doze
+  Ao mexer aqui, rode `tests/editais-cargas-e-paineis.test.js` (bloco `etapas-de-edital`): ele fixa as doze
   atividades do modelo padrão, que é o que a maioria dos editais usa.
 */
 

@@ -45,7 +45,7 @@ salvar a versão (`aoGravarVersao` do `estado.ts`) apaga. Cinco passos:
 `conferir_regra_analise`; o administrador global pode), e a regra vigente diz à tela
 (`conferir_pede_outra_pessoa`). Migration `20261008120000_assistente_da_regra.sql`. O critério de
 aceite (refazer a v7 do 93/2026 a partir do PROJ26) está em
-`tests/lib/avaliacao-documental-assistente.test.js`.
+`tests/avaliacao-e-recursos.test.js` (bloco `lib/avaliacao-documental-assistente`).
 
 Na fase F3 a aba ganhou o lote "Todos com a nota mínima" (item 8.2.6 do 93/2026) e os desempates da
 Provisória (60 anos ou mais, experiência declarada com a pergunta, maior idade, candidatura) — hoje
@@ -73,9 +73,9 @@ cargo: …") e no banco (`private."FC_REGRA_DA_VAGA"`, `20261013130000_regra_por
   "requisito" e "extra" em `pendenciasDaFicha` (e `FC_PENDENCIAS_FICHA`);
 - prévia: o seletor "Cargo" aplica uma diferença ao candidato fictício.
 
-Testes: `tests/lib/avaliacao-documental-regra-por-cargo.test.js`,
-`tests/modulos/avaliacao-documental-ficha-por-cargo.test.js`,
-`tests/modulos/avaliacao-documental-diferencas-por-cargo.test.js`.
+Testes: `tests/avaliacao-e-recursos.test.js` (bloco `lib/avaliacao-documental-regra-por-cargo`),
+`tests/avaliacao-e-recursos-na-tela.test.js` (bloco `modulos/avaliacao-documental-ficha-por-cargo`),
+`tests/avaliacao-e-recursos-na-tela.test.js` (bloco `modulos/avaliacao-documental-diferencas-por-cargo`).
 
 ## Relacionadas
 

@@ -56,9 +56,10 @@ pagina-do-edital.css  só o que é desta tela; o resto vem de src/ui/
 
 ## Testes
 
-`tests/pagina-do-edital.test.ts` (regras), `tests/modulos/pagina-do-edital.test.ts` (tela),
-`tests/rotas.test.js` (rota), `tests/navegacao.test.js` (permissão) e `tests/app/navegacao.test.ts`
-("a página do edital": endereço, retorno e permissão).
+Blocos `lib/pagina-do-edital` (regras, `tests/editais-cargas-e-paineis.test.ts`) e
+`modulos/pagina-do-edital` (tela, `tests/editais-cargas-e-paineis-na-tela.test.ts`); a rota e a
+permissão em `tests/casca-sessao-e-interface.test.js`; endereço, retorno e permissão na navegação
+em `tests/casca-sessao-e-interface-na-tela.test.ts` (bloco `app/navegacao`, "a página do edital").
 
 ## Relacionadas
 

@@ -2,7 +2,7 @@
 
 Tela `Análises curriculares` (`src/modulos/analises/`), regras em
 `src/lib/analises/analises-curriculares.ts`. Cada critério de aceite tem um teste com o mesmo código
-(`AC-n.m`) em `tests/analises-curriculares.test.js` (regra) ou `tests/modulos/analises.test.js`
+(`AC-n.m`) em `tests/avaliacao-e-recursos.test.js` (bloco `analises-curriculares`) (regra) ou `tests/telas-com-modulo-simulado-na-tela.test.js` (bloco `modulos/analises`)
 (tela).
 
 ## AC-1 — Filtrar a tela pelo dia clicado em "Análises por data"

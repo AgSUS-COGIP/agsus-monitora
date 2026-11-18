@@ -1,7 +1,7 @@
 ---
 tipo: regra
 area: testes
-atualizado: 2026-11-17
+atualizado: 2026-11-18
 ---
 
 # Testes
@@ -13,9 +13,9 @@ que responda a pergunta.
 ## Comandos
 
 ```bash
-npx vitest run tests/<arquivo>.test.ts     # um arquivo — o padrão ao editar
-npx vitest run tests/modulos/              # uma pasta
-npx vitest run -t "trecho do nome"         # um caso
+npx vitest run tests/<assunto>.test.ts -t "<bloco>"   # um bloco — o padrão ao editar
+npx vitest run tests/<assunto>.test.ts               # um assunto inteiro
+npx vitest run -t "trecho do nome"                   # um caso
 npm test                                   # tudo (lento; só antes de entregar)
 python -m pytest                           # Python (tests/python/)
 npm run test:smoke                         # Playwright smoke (lento)
@@ -25,24 +25,43 @@ npm run test:e2e                           # todo o Playwright (muito lento; só
 
 ## Vitest
 
+- **Poucos arquivos, um por assunto, em blocos.** São 24 arquivos na raiz de `tests/`, nomeados
+  pelo assunto (`avaliacao-e-recursos`, `classificacao`, `entrevistas-e-aprovados`,
+  `mapas-e-visao-geral`, `aya-e-comemoracao`, `editais-cargas-e-paineis`,
+  `casca-sessao-e-interface`, `repositorio-e-banco`, `demais-*`), em até quatro versões: `.test.js`
+  e `.test.ts`, cada uma em node e, com o sufixo `-na-tela`, em jsdom. Dentro deles, cada
+  comportamento é um `bloco("nome", () => { … })` (`tests/apoio/bloco.ts`): o bloco é o que antes
+  era um arquivo e guarda o nome antigo (`lib/ordem-dos-editais`, `modulos/acessos`). Ao fim de cada
+  bloco, relógio, globais trocados, espiões, raízes do React abertas por `tests/montar-tela.ts`,
+  página e `localStorage` voltam ao estado limpo. O que o bloco **não** devolve é o estado interno
+  dos módulos de `src/` (eles carregam uma vez por arquivo): bloco que depende dele redefine no
+  `beforeEach` (`redefinirDadosDoMonitoramento()` e afins).
+- **Teste novo entra como bloco no arquivo do assunto; não crie arquivo novo.** Cada arquivo custa
+  ao Vitest um processo, um ambiente e a carga dos módulos: com 560 arquivos a suíte levava 4min34;
+  com 24, os mesmos 7176 casos levam 2min20.
+- **`vi.mock` vale para o arquivo inteiro** (o Vitest o sobe para o topo). Bloco que simula módulo
+  fica em `telas-com-modulo-simulado-na-tela.test.js` ou
+  `casca-com-modulo-simulado-na-tela.test.ts`, com o `vi.mock`/`vi.hoisted` no topo do arquivo;
+  simulação parcial (`...(await original())`) para não tirar nada dos outros blocos.
+- `tests/componentes/contar-renders.ts` tem de ser o primeiro import do arquivo que o usa (antes do
+  react-dom).
 - `vitest.config.js` inclui `tests/**/*.test.{js,ts,tsx}`. Os testes estão passando de `.js` para
   `.ts` em lotes: **teste novo é `.ts`** (`.tsx` só com JSX), checado por `npm run typecheck:testes`
   (`tsconfig.tests.json`, strict). Sem `any`, `@ts-ignore`/`@ts-nocheck` nem `as unknown as` (o
   lint recusa): tipe o mock com `Partial<>`/`Pick<>`, `vi.mocked` ou um ajudante tipado. Globais só
   de teste (`IS_REACT_ACT_ENVIRONMENT`) ficam em `tests/globais.d.ts`.
-- **Ambiente:** o padrão é node. Arquivo que usa DOM (`document`, `window`, React montado,
-  `localStorage`) começa com `// @vitest-environment jsdom`. Sem a anotação, quem usa `document`
+- **Ambiente:** o padrão é node. Bloco que usa DOM (`document`, `window`, React montado,
+  `localStorage`) vai no arquivo `-na-tela`, que começa com `// @vitest-environment jsdom`. Sem a anotação, quem usa `document`
   direto falha com "document is not defined", mas código que lê `globalThis.document?.` cai em
   silêncio no caminho sem DOM: injete o `documento`/`janela` ou anote o arquivo. Não anote quem
   não precisa: montar o jsdom custava o dobro do tempo dos testes (#839). O Vitest lê a anotação em
   qualquer comentário do topo do arquivo, inclusive dentro de `/* */`: não a cite por extenso num
   comentário de arquivo que roda em node.
-- Subpastas: `lib/`, `modules/`, `componentes/` (React), `modulos/` (telas de `src/modulos/`), `ui/`,
-  `analises/`, `tipos/` (casos de tipo), `fixtures/`, `apoio/`, `python/`; a maioria fica na raiz,
-  nomeada pelo comportamento (`terras-do-dsei.test.js`, `sobreposicao-na-tela.test.js`).
+- Subpastas de `tests/` guardam só apoio: `apoio/`, `setup/`, `fixtures/`, `componentes/` e
+  `modulos/` (ajudantes de montagem e imitações), `tipos/` (casos de tipo), `python/`.
 - **React:** o teste fica sem JSX (`.test.ts`): monte com a função de montagem do componente e
   envolva cada mudança em `act` (de `react`), com `globalThis.IS_REACT_ACT_ENVIRONMENT = true`.
-  Modelo: `tests/componentes/barra-lateral.test.ts`. Campo controlado não aceita `campo.value = …`
+  Modelo: `tests/casca-com-modulo-simulado-na-tela.test.ts` (bloco `componentes/barra-lateral`). Campo controlado não aceita `campo.value = …`
   seguido de evento: use `digitar`, `escolher`, `clicar` e `teclar` de
   `tests/componentes/interacoes.ts`.
 - **Rede bloqueada:** `tests/setup/rede-bloqueada.ts` bloqueia a rede em todo teste unitário,
@@ -54,7 +73,7 @@ npm run test:e2e                           # todo o Playwright (muito lento; só
 `tests/apoio/banco-dos-robos.ts` monta o banco dos robôs e das chaves com as funções reais e
 imitações de pg_cron, Vault, pg_net e sessão; roda dentro do processo, sem rede. Arquivo com
 `// @vitest-environment node`. Modelo de migration testada antes × depois:
-`tests/catalogo-dos-robos-no-banco.test.ts`. Como as migrations aplicadas saíram do repositório,
+`tests/editais-cargas-e-paineis.test.ts` (bloco `catalogo-dos-robos-no-banco`). Como as migrations aplicadas saíram do repositório,
 o "antes" fica em fixture (`tests/fixtures/sql-de-dados/`,
 `tests/fixtures/banco-antes-do-catalogo-dos-robos.sql`), e a migration aplicada que monta o banco
 de um teste de comportamento fica, sem mudança, em `tests/fixtures/sql-do-banco/<mesmo nome>.sql`
@@ -99,7 +118,7 @@ ficam no artefato `relatorio-do-playwright` do workflow `build-and-smoke.yml`
 
 ## Escrever teste
 
-- Nome do arquivo descreve o comportamento em português, não o arquivo testado.
+- Nome do bloco descreve o comportamento em português, não o arquivo testado.
 - Teste a lógica em `src/lib/` (pura). Para `src/modules/`, monte o DOM mínimo no jsdom (com a
   anotação).
 - **Bug corrigido → teste que falharia antes da correção.**

@@ -15,7 +15,7 @@
 
   Esta chamada é, portanto, isolada por construção: um `fetch` que envia apenas
   `apikey`. Não é um segundo cliente Supabase — o singleton continua a ser o
-  único, e `tests/supabase-cliente-unico.test.js` continua a valer.
+  único, e `tests/casca-sessao-e-interface.test.js` (bloco `supabase-cliente-unico`) continua a valer.
 
   MEDIDO NO BANCO REAL EM 09/09/2026
 
