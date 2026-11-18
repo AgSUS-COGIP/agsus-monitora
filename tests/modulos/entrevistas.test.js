@@ -596,7 +596,7 @@ describe("a tela dentro do app", () => {
       [...topo.querySelectorAll(".ui-topo-acoes button")].map((b) =>
         b.textContent.trim(),
       ),
-    ).toEqual(["Atualizar", "Exportar"]);
+    ).toEqual(["Atualizar", "Exportar em Excel", "Salvar em PDF"]);
     expect(topo.querySelector('[aria-label*="tema"]')).toBeNull();
     expect(topo.querySelector('[aria-label*="tela cheia"]')).toBeNull();
     expect(document.querySelectorAll(".status-discreto")).toHaveLength(1);
@@ -669,10 +669,11 @@ describe("a tela dentro do app", () => {
   it("Exportar baixa o CSV do recorte, com a área no nome", async () => {
     await montar(supabaseFalso({ data: PAYLOAD, error: null }));
     await escolher(document.getElementById("filtro-parecer"), "INAPTO");
-    await clicar(secao.querySelector('[data-acao="exportar"]'));
+    await clicar(secao.querySelector('[data-acao="exportar-excel"]'));
     expect(baixar).toHaveBeenCalledTimes(1);
-    const [conteudo, nome] = baixar.mock.calls[0];
-    expect(nome).toMatch(/^entrevistas-saude-indigena-\d{4}-\d{2}-\d{2}\.csv$/);
+    const [bytes, nome] = baixar.mock.calls[0];
+    const conteudo = new TextDecoder().decode(bytes);
+    expect(nome).toMatch(/^entrevistas-saude-indigena-\d{4}-\d{2}-\d{2}\.xlsx$/);
     expect(conteudo).toContain("Bruno");
     expect(conteudo).not.toContain("onerror");
   });

@@ -14,7 +14,10 @@
   tem (senão, da coluna V da planilha); aprovados e contratados vêm da lista de
   aprovados vigente (nulos, "—", sem lista).
 */
-import { sanitizeCsvCell } from "../seguranca/csv-security";
+import type {
+  CelulaParaExportar,
+  TabelaParaExportar,
+} from "../base/exportacao-da-tabela.ts";
 import {
   dataHoraBR,
   normalizarBusca,
@@ -398,53 +401,43 @@ export function observacoesDoRecorte(
     .sort((a, b) => b.vagas - a.vagas || ordenarPt(a.texto, b.texto));
 }
 
-/* ── Datas e CSV ────────────────────────────────────────────────────── */
+/* ── Exportação (Excel e PDF) ─────────────────────────────────────────── */
 
-const numeroDoCsv = (valor: number | null) =>
-  valor === null ? "" : String(valor);
-
-const COLUNAS_DO_CSV: readonly (readonly [
+const COLUNAS_DA_EXPORTACAO: readonly (readonly [
   string,
-  (vaga: VagaDaSelecao) => string,
+  (vaga: VagaDaSelecao) => CelulaParaExportar,
 ])[] = Object.freeze([
   ["DSEI / Unidade", (v) => v.unidade],
   ["Edital", (v) => v.edital],
   ["Cargo", (v) => v.cargo],
   ["Vaga", (v) => v.vaga || ""],
-  ["Inscritos", (v) => numeroDoCsv(v.inscritos)],
-  ["Aptos para análise", (v) => numeroDoCsv(v.aptos)],
-  ["Cancelados", (v) => numeroDoCsv(v.cancelados)],
+  ["Inscritos", (v) => (v.inscritos)],
+  ["Aptos para análise", (v) => (v.aptos)],
+  ["Cancelados", (v) => (v.cancelados)],
   [
     "Reprovados por não finalizar o questionário",
-    (v) => numeroDoCsv(v.reprovadosQuestionario),
+    (v) => (v.reprovadosQuestionario),
   ],
-  ["Eliminados por nota", (v) => numeroDoCsv(v.eliminadosNota)],
-  ["Reprovados na análise", (v) => numeroDoCsv(v.reprovadosAnalise)],
-  ["Triados", (v) => numeroDoCsv(v.triados)],
-  ["Total de eliminados", (v) => numeroDoCsv(v.totalEliminados)],
-  ["Convocados para entrevista", (v) => numeroDoCsv(v.convocados)],
+  ["Eliminados por nota", (v) => (v.eliminadosNota)],
+  ["Reprovados na análise", (v) => (v.reprovadosAnalise)],
+  ["Triados", (v) => (v.triados)],
+  ["Total de eliminados", (v) => (v.totalEliminados)],
+  ["Convocados para entrevista", (v) => (v.convocados)],
   ["Origem dos convocados", (v) => rotuloDaOrigem(v.origemConvocados)],
-  ["Aprovados", (v) => numeroDoCsv(v.aprovados)],
-  ["Contratados", (v) => numeroDoCsv(v.contratados)],
-  ["Não contratados", (v) => numeroDoCsv(v.naoContratados)],
+  ["Aprovados", (v) => (v.aprovados)],
+  ["Contratados", (v) => (v.contratados)],
+  ["Não contratados", (v) => (v.naoContratados)],
   ["Observação", (v) => v.observacao || ""],
 ]);
 
-const BOM = String.fromCharCode(0xfeff);
-
-/** CSV com `;` (Excel pt-BR), BOM e células protegidas contra fórmula. */
-export function csvDaSelecao(vagas: readonly VagaDaSelecao[]) {
-  const celula = (valor: unknown) => {
-    const seguro = sanitizeCsvCell(valor ?? "");
-    return /[";\n\r]/.test(seguro) ? `"${seguro.replace(/"/g, '""')}"` : seguro;
+/** A tabela da exportação (Excel e PDF, src/lib/base/exportacao-da-tabela.ts): vazio fica em branco. */
+export function tabelaDaSelecao(
+  vagas: readonly VagaDaSelecao[],
+): Pick<TabelaParaExportar, "colunas" | "linhas"> {
+  return {
+    colunas: COLUNAS_DA_EXPORTACAO.map(([titulo]) => titulo),
+    linhas: vagas.map((v) => COLUNAS_DA_EXPORTACAO.map(([, valor]) => valor(v))),
   };
-  const linhas = [
-    COLUNAS_DO_CSV.map(([titulo]) => celula(titulo)).join(";"),
-    ...vagas.map((v) =>
-      COLUNAS_DO_CSV.map(([, valor]) => celula(valor(v))).join(";"),
-    ),
-  ];
-  return `${BOM}${linhas.join("\r\n")}\r\n`;
 }
 
 /* ── Cópia guardada no navegador ────────────────────────────────────── */

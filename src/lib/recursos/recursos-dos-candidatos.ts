@@ -1,4 +1,8 @@
 import type {
+  CelulaParaExportar,
+  TabelaParaExportar,
+} from "../base/exportacao-da-tabela.ts";
+import type {
   DadosDoRecurso,
   RecursoDoPainel,
   EtapaDoRecurso,
@@ -26,7 +30,6 @@ import type {
   mudou" calculados, sem digitar.
 */
 import { hojeEmBrasilia } from "../cronograma/cronograma-do-edital.ts";
-import { sanitizeCsvCell } from "../seguranca/csv-security";
 import {
   cronogramasPorEdital,
   decididoNoPrazo,
@@ -745,11 +748,14 @@ const numeroBR = (valor: unknown) =>
     ? ""
     : String(valor).replace(".", ",");
 
-type ColunaDoCsv = readonly [
+type ColunaDaExportacao = readonly [
   string,
-  (recurso: RecursoDoPainel, origens: readonly OrigemDoRecurso[]) => unknown,
+  (
+    recurso: RecursoDoPainel,
+    origens: readonly OrigemDoRecurso[],
+  ) => CelulaParaExportar,
 ];
-export const COLUNAS_DO_CSV: readonly ColunaDoCsv[] = Object.freeze([
+export const COLUNAS_DA_EXPORTACAO: readonly ColunaDaExportacao[] = Object.freeze([
   ["Nº", (r) => r.nu],
   ["Edital", (r) => r.edital],
   ["Unidade", (r) => r.unidade],
@@ -762,7 +768,7 @@ export const COLUNAS_DO_CSV: readonly ColunaDoCsv[] = Object.freeze([
   ["Analista", (r) => r.analista],
   ["Situação", (r) => rotuloDaSituacao(r.situacao)],
   ["Decidido em", (r) => dataBR(r.decisao_em)],
-  ...ETAPAS.map((etapa): ColunaDoCsv => [
+  ...ETAPAS.map((etapa): ColunaDaExportacao => [
     etapa.rotulo,
     (r) => dataBR(r[etapa.campo]),
   ]),
@@ -777,20 +783,14 @@ export const COLUNAS_DO_CSV: readonly ColunaDoCsv[] = Object.freeze([
   ["Cadastrado em", (r) => dataBR(r.criado_em)],
 ]);
 
-/** CSV com `;` (Excel pt-BR), BOM e células protegidas contra fórmula. */
-export function csvDosRecursos(
-  recursos: readonly RecursoDoPainel[],
-  origens: readonly OrigemDoRecurso[] = ORIGENS_PADRAO,
-) {
-  const celula = (valor: unknown) => {
-    const seguro = sanitizeCsvCell(valor ?? "");
-    return /[";\n\r]/.test(seguro) ? `"${seguro.replace(/"/g, '""')}"` : seguro;
-  };
-  const linhas = [
-    COLUNAS_DO_CSV.map(([titulo]) => celula(titulo)).join(";"),
-    ...recursos.map((r) =>
-      COLUNAS_DO_CSV.map(([, valor]) => celula(valor(r, origens))).join(";"),
+/** A tabela da exportação (Excel e PDF, src/lib/base/exportacao-da-tabela.ts). */
+export function tabelaDosRecursos(
+  itens: readonly RecursoDoPainel[], origens: readonly OrigemDoRecurso[] = ORIGENS_PADRAO,
+): Pick<TabelaParaExportar, "colunas" | "linhas"> {
+  return {
+    colunas: COLUNAS_DA_EXPORTACAO.map(([titulo]) => titulo),
+    linhas: itens.map((item) =>
+      COLUNAS_DA_EXPORTACAO.map(([, valor]) => valor(item, origens)),
     ),
-  ];
-  return `\uFEFF${linhas.join("\r\n")}\r\n`;
+  };
 }

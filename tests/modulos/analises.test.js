@@ -345,7 +345,7 @@ describe("a tela dentro do app", () => {
     expect(status().textContent).toMatch(/^Atualizado em 30\/09, \d{2}:\d{2}$/);
     expect(
       [...topo.querySelectorAll("button")].map((b) => b.textContent.trim()),
-    ).toEqual(["Atualizar", "Exportar"]);
+    ).toEqual(["Atualizar", "Exportar em Excel"]);
     expect(document.querySelectorAll(".status-discreto")).toHaveLength(1);
     for (const texto of [
       "Somente consulta",
@@ -961,7 +961,7 @@ describe("AC-1/AC-2 — filtro por data no gráfico Análises por data", () => {
     expect(recorte()).toBe("Recorte ativo: Situação do processo: Ativo");
   });
 
-  it("AC-1.6 — vale junto com os outros filtros; Limpar tudo tira a data; o CSV leva a data", async () => {
+  it("AC-1.6 — vale junto com os outros filtros; Limpar tudo tira a data; a planilha leva a data", async () => {
     await montar(supabaseFalso());
     await marcarNoFiltro("responsavel", "Diego");
     expect(candidatos()).toEqual(["Bruno Lima", "Clara Souza"]);
@@ -969,9 +969,9 @@ describe("AC-1/AC-2 — filtro por data no gráfico Análises por data", () => {
     await clicarNoDia(1);
     expect(candidatos()).toEqual(["Clara Souza"]);
 
-    await clicar(secao.querySelector('[data-acao="exportar"]'));
+    await clicar(secao.querySelector('[data-acao="exportar-excel"]'));
     await esperar();
-    const [csv] = baixar.mock.calls.at(-1);
+    const csv = new TextDecoder().decode(baixar.mock.calls.at(-1)[0]);
     expect(csv).toContain("Clara Souza");
     expect(csv).not.toContain("Bruno Lima");
 
@@ -1198,16 +1198,17 @@ describe("gaveta de detalhe", () => {
 });
 
 describe("exportar, atualizar e a cópia do navegador", () => {
-  it("Exportar traz os pareceres antes e baixa o CSV do recorte", async () => {
+  it("Exportar em Excel traz os pareceres antes e baixa o recorte", async () => {
     const supabase = supabaseFalso();
     await montar(supabase);
     await clicar(kpi("analisado").querySelector("button"));
-    await clicar(secao.querySelector('[data-acao="exportar"]'));
+    await clicar(secao.querySelector('[data-acao="exportar-excel"]'));
     await esperar();
     expect(chamadas(supabase, "get_analises_texto_do_painel")).toHaveLength(1);
     expect(baixar).toHaveBeenCalledTimes(1);
-    const [conteudo, nome] = baixar.mock.calls[0];
-    expect(nome).toBe("agsus_analises_curriculares_v3.csv");
+    const [bytes, nome] = baixar.mock.calls[0];
+    const conteudo = new TextDecoder().decode(bytes);
+    expect(nome).toBe("agsus_analises_curriculares_v3.xlsx");
     const linhas = conteudo.split("\n");
     expect(linhas).toHaveLength(4);
     expect(linhas[1]).toContain("Parecer de Ana");
@@ -1354,7 +1355,7 @@ describe("o que já veio deixa de valer quando os dados mudam", () => {
     expect(chamadas(supabase, "get_analises_texto_do_painel")).toHaveLength(2);
   });
 
-  it("CSV com os pareceres já a caminho (busca geral): espera a mesma leitura", async () => {
+  it("Planilha com os pareceres já a caminho (busca geral): espera a mesma leitura", async () => {
     let soltar;
     const supabase = supabaseFalso({
       respostas: {
@@ -1369,7 +1370,7 @@ describe("o que já veio deixa de valer quando os dados mudam", () => {
     let csv;
     await act(async () => {
       busca = painel.estado.garantirTextos();
-      csv = painel.estado.exportarCsv((linhas) => linhas);
+      csv = painel.estado.exportarExcel((linhas) => linhas);
     });
     await act(async () => soltar());
     expect(await busca).toBe(true);
@@ -1377,7 +1378,7 @@ describe("o que já veio deixa de valer quando os dados mudam", () => {
     expect(chamadas(supabase, "get_analises_texto_do_painel")).toHaveLength(1);
     expect(baixar).toHaveBeenCalledTimes(1);
     expect(toast).not.toHaveBeenCalledWith(
-      "Não foi possível trazer os pareceres para o CSV. Tente novamente.",
+      "Não foi possível trazer os pareceres para a planilha. Tente novamente.",
       "error",
     );
   });

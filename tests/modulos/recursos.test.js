@@ -256,7 +256,12 @@ describe("a tela dentro do app", () => {
     expect(status().textContent).toMatch(/^Atualizado em 20\/09\/2026/);
     expect(
       [...topo.querySelectorAll("button")].map((b) => b.textContent.trim()),
-    ).toEqual(["Atualizar", "Exportar", "Analisar"]);
+    ).toEqual([
+      "Atualizar",
+      "Exportar em Excel",
+      "Salvar em PDF",
+      "Analisar",
+    ]);
     expect(topo.querySelector('[aria-label*="tema"]')).toBeNull();
     expect(topo.querySelector('[aria-label*="tela cheia"]')).toBeNull();
     // Uma data de carga só, e sem selo "Somente consulta".
@@ -670,11 +675,12 @@ describe("filtros", () => {
 
   it("Exportar baixa o CSV do recorte, com a área no nome", async () => {
     await montar(supabaseFalso());
-    await clicar(document.querySelector('[data-acao="exportar"]'));
+    await clicar(document.querySelector('[data-acao="exportar-excel"]'));
     expect(baixar).toHaveBeenCalledTimes(1);
-    const [conteudo, nome] = baixar.mock.calls[0];
+    const [bytes, nome] = baixar.mock.calls[0];
+    const conteudo = new TextDecoder().decode(bytes);
     expect(conteudo).toContain("Ana Ribeiro");
-    expect(nome).toMatch(/^recursos-saude-indigena-\d{4}-\d{2}-\d{2}\.csv$/);
+    expect(nome).toMatch(/^recursos-saude-indigena-\d{4}-\d{2}-\d{2}\.xlsx$/);
   });
 });
 

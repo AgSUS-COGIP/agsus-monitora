@@ -658,11 +658,16 @@ describe("Classes .ui-* e nenhum id fixo", () => {
 
   it("TopoDoPainel: só status e ações; sem tema e tela cheia, sem esses botões", async () => {
     const aoAtualizar = vi.fn();
-    const aoExportar = vi.fn();
+    const excel = vi.fn();
+    const pdf = vi.fn();
     await montarNoApp(
       h(
         TopoDoPainel,
-        { status: "Atualizado em 01/10/2026", aoAtualizar, aoExportar },
+        {
+          status: "Atualizado em 01/10/2026",
+          aoAtualizar,
+          exportacao: { excel, pdf },
+        },
         h("button", { id: "extra" }, "Extra"),
       ),
     );
@@ -674,12 +679,19 @@ describe("Classes .ui-* e nenhum id fixo", () => {
     );
     expect($('[aria-label="Usar tema escuro"]')).toBeNull();
     expect($('[aria-label="Alternar tela cheia"]')).toBeNull();
-    const exportar = definido($<HTMLElement>('[data-acao="exportar"]'));
-    expect(exportar.nextElementSibling?.id).toBe("extra");
+    const excelBtn = definido($<HTMLElement>('[data-acao="exportar-excel"]'));
+    const pdfBtn = definido($<HTMLElement>('[data-acao="salvar-pdf"]'));
+    expect(excelBtn.textContent?.trim()).toBe("Exportar em Excel");
+    expect(pdfBtn.textContent?.trim()).toBe("Salvar em PDF");
+    expect(pdfBtn.closest(".ui-exportacao")?.nextElementSibling?.id).toBe(
+      "extra",
+    );
     await clicar($('[data-acao="atualizar"]'));
-    await clicar(exportar);
+    await clicar(excelBtn);
+    await clicar(pdfBtn);
     expect(aoAtualizar).toHaveBeenCalledTimes(1);
-    expect(aoExportar).toHaveBeenCalledTimes(1);
+    expect(excel).toHaveBeenCalledTimes(1);
+    expect(pdf).toHaveBeenCalledTimes(1);
     expect(idsDoPainelDeAnalises()).toEqual([]);
   });
 

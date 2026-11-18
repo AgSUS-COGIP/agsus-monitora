@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   calcularIndicadores,
   compararEditais,
-  csvDosRecursos,
+  tabelaDosRecursos,
   dadosParaSalvar,
   diasEntre,
   enriquecerRecursos,
@@ -407,15 +407,18 @@ describe("duplicado e formulário", () => {
   });
 });
 
-describe("CSV", () => {
-  it("cabeçalho, ; e BOM, com célula protegida contra fórmula", () => {
+describe("exportação (Excel e PDF)", () => {
+  it("colunas na ordem de sempre; texto como veio (a planilha não lê fórmula)", () => {
     const [r1] = enriquecidos();
-    const csv = csvDosRecursos([
+    const { colunas, linhas } = tabelaDosRecursos([
       { ...r1, candidato: "=HYPERLINK(1)", analista: "Ana; Bia" },
     ]);
-    expect(csv.startsWith("\uFEFFNº;Edital;Unidade;Origem;")).toBe(true);
-    expect(csv).toContain(";'=HYPERLINK(1);");
-    expect(csv).toContain(';"Ana; Bia";');
-    expect(csv).toContain(";06/05/2026;Sim;10;10/05/2026");
+    expect(colunas.slice(0, 4)).toEqual(["Nº", "Edital", "Unidade", "Origem"]);
+    const linha = linhas[0];
+    expect(linha[colunas.indexOf("Candidato")]).toBe("=HYPERLINK(1)");
+    expect(linha[colunas.indexOf("Analista")]).toBe("Ana; Bia");
+    expect(linha[colunas.indexOf("Prazo de resposta")]).toBe("06/05/2026");
+    expect(linha[colunas.indexOf("Atrasado")]).toBe("Sim");
+    expect(linha[colunas.indexOf("Dias em aberto")]).toBe(10);
   });
 });

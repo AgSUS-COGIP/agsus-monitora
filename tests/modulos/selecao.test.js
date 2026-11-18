@@ -211,7 +211,7 @@ describe("a tela dentro do app", () => {
       [...topo.querySelectorAll(".ui-topo-acoes button")].map((b) =>
         b.textContent.trim(),
       ),
-    ).toEqual(["Atualizar", "Exportar"]);
+    ).toEqual(["Atualizar", "Exportar em Excel", "Salvar em PDF"]);
     expect(topo.querySelector('[aria-label*="tema"]')).toBeNull();
     expect(topo.querySelector('[aria-label*="tela cheia"]')).toBeNull();
     // "Conferido …": a última carga, discreta e uma vez só.
@@ -546,10 +546,11 @@ describe("Exportar", () => {
   it("baixa o CSV do recorte, com a área no nome e as células protegidas", async () => {
     await montar(supabaseFalso({ data: PAYLOAD, error: null }));
     await clicar(opcaoDoFiltro("filtro-unidades", "DSEI Xingu"));
-    await clicar(secao.querySelector('[data-acao="exportar"]'));
+    await clicar(secao.querySelector('[data-acao="exportar-excel"]'));
     expect(baixar).toHaveBeenCalledTimes(1);
-    const [conteudo, nome] = baixar.mock.calls[0];
-    expect(nome).toMatch(/^selecao-saude-indigena-\d{4}-\d{2}-\d{2}\.csv$/);
+    const [bytes, nome] = baixar.mock.calls[0];
+    const conteudo = new TextDecoder().decode(bytes);
+    expect(nome).toMatch(/^selecao-saude-indigena-\d{4}-\d{2}-\d{2}\.xlsx$/);
     expect(conteudo).toContain("DSEI Xingu");
     expect(conteudo).not.toContain("Caminhoneiros");
     expect(conteudo).toContain("Entrevistas do Yeendé");
@@ -559,7 +560,7 @@ describe("Exportar", () => {
     await montar(
       supabaseFalso({ data: { ...PAYLOAD, vagas: [] }, error: null }),
     );
-    expect(secao.querySelector('[data-acao="exportar"]').disabled).toBe(true);
+    expect(secao.querySelector('[data-acao="exportar-excel"]').disabled).toBe(true);
   });
 });
 

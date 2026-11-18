@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   AREA_PADRAO_DO_PAINEL,
   chaveDoCacheDoPayload,
-  colunasDoCsvDeAnalises,
+  colunasDaExportacaoDeAnalises,
   ehAreaSaudeIndigena,
   experienciaProfissionalDaLinha,
   mensagemDeAreaSemAnalises,
-  nomeDoCsvDeAnalises,
+  nomeDaPlanilhaDeAnalises,
   parametroDeAreaDaRpc,
   rotuloDaAreaDoPainel,
 } from "../src/lib/analises/area-do-painel-de-analises.ts";
@@ -93,18 +93,20 @@ describe("experiência profissional (SEDE e Projetos)", () => {
   });
 });
 
-describe("CSV e tabela vazia por área", () => {
+describe("Exportação e tabela vazia por área", () => {
   const colunas = ["grupo", "unidade", "analise"];
 
   it("a Saúde Indígena exporta as colunas de sempre", () => {
-    expect(colunasDoCsvDeAnalises(colunas, "saude-indigena")).toEqual(colunas);
-    expect(nomeDoCsvDeAnalises("saude-indigena")).toBe(
-      "agsus_analises_curriculares_v3.csv",
+    expect(colunasDaExportacaoDeAnalises(colunas, "saude-indigena")).toEqual(
+      colunas,
+    );
+    expect(nomeDaPlanilhaDeAnalises("saude-indigena")).toBe(
+      "agsus_analises_curriculares_v3.xlsx",
     );
   });
 
   it("SEDE e Projetos ganham a experiência profissional e o município no fim", () => {
-    expect(colunasDoCsvDeAnalises(colunas, "projetos")).toEqual([
+    expect(colunasDaExportacaoDeAnalises(colunas, "projetos")).toEqual([
       ...colunas,
       "experiencia_profissional_anos",
       "experiencia_profissional_meses",
@@ -112,8 +114,8 @@ describe("CSV e tabela vazia por área", () => {
       "experiencia_profissional_total",
       "municipio_uf",
     ]);
-    expect(nomeDoCsvDeAnalises("projetos")).toBe(
-      "agsus_analises_curriculares_projetos.csv",
+    expect(nomeDaPlanilhaDeAnalises("projetos")).toBe(
+      "agsus_analises_curriculares_projetos.xlsx",
     );
   });
 

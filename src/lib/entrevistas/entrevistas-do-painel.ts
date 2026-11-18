@@ -11,7 +11,10 @@
   entrevista, as notas como `[índice do critério, nota]`. O rótulo curto do
   critério é o texto antes do primeiro " (" — o texto inteiro fica no title.
 */
-import { sanitizeCsvCell } from "../seguranca/csv-security";
+import type {
+  CelulaParaExportar,
+  TabelaParaExportar,
+} from "../base/exportacao-da-tabela.ts";
 import { formatNumberBR } from "../base/formatters";
 
 import type {
@@ -623,9 +626,9 @@ export function dataHoraBR(valor: unknown) {
   return `${dois(data.getDate())}/${dois(data.getMonth() + 1)}/${data.getFullYear()} ${dois(data.getHours())}:${dois(data.getMinutes())}`;
 }
 
-const COLUNAS_DO_CSV: readonly (readonly [
+const COLUNAS_DA_EXPORTACAO: readonly (readonly [
   string,
-  (e: EntrevistaDoPainel) => string,
+  (e: EntrevistaDoPainel) => CelulaParaExportar,
 ])[] = Object.freeze([
   ["Candidato", (e) => e.candidato],
   ["Código", (e) => e.codigo || ""],
@@ -634,12 +637,12 @@ const COLUNAS_DO_CSV: readonly (readonly [
   ["Vaga", (e) => e.vaga],
   ["Cargo", (e) => e.cargo],
   ["Modalidade", (e) => e.modalidade || ""],
-  ["Nota da entrevista", (e) => formatarNota(e.nota).replace("—", "")],
+  ["Nota da entrevista", (e) => e.nota],
   ["Parecer", (e) => rotuloDoParecer(e.parecer)],
   ["Compareceu", (e) => rotuloDoComparecimento(e.compareceu)],
   [
     "Nota da análise",
-    (e) => (e.analise ? formatarNota(e.analise.nota).replace("—", "") : ""),
+    (e) => e.analise?.nota ?? null,
   ],
   [
     "Resultado da análise",
@@ -649,19 +652,16 @@ const COLUNAS_DO_CSV: readonly (readonly [
   ["Nota divergente", (e) => (e.divergente ? "Sim" : "Não")],
 ]);
 
-/** CSV com `;` (Excel pt-BR), BOM e células protegidas contra fórmula. */
-export function csvDasEntrevistas(entrevistas: readonly EntrevistaDoPainel[]) {
-  const celula = (valor: unknown) => {
-    const seguro = sanitizeCsvCell(valor ?? "");
-    return /[";\n\r]/.test(seguro) ? `"${seguro.replace(/"/g, '""')}"` : seguro;
-  };
-  const linhas = [
-    COLUNAS_DO_CSV.map(([titulo]) => celula(titulo)).join(";"),
-    ...entrevistas.map((e) =>
-      COLUNAS_DO_CSV.map(([, valor]) => celula(valor(e))).join(";"),
+/** A tabela da exportação (Excel e PDF, src/lib/base/exportacao-da-tabela.ts). */
+export function tabelaDasEntrevistas(
+  itens: readonly EntrevistaDoPainel[],
+): Pick<TabelaParaExportar, "colunas" | "linhas"> {
+  return {
+    colunas: COLUNAS_DA_EXPORTACAO.map(([titulo]) => titulo),
+    linhas: itens.map((item) =>
+      COLUNAS_DA_EXPORTACAO.map(([, valor]) => valor(item)),
     ),
-  ];
-  return `\uFEFF${linhas.join("\r\n")}\r\n`;
+  };
 }
 
 /* ── Cópia guardada no navegador ────────────────────────────────────── */

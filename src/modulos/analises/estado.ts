@@ -1,3 +1,9 @@
+import {
+  MIME_XLSX,
+  xlsxDaTabela,
+} from "../../lib/base/exportacao-da-tabela.ts";
+import { nomeDaArea } from "../../lib/navegacao/menu-lateral.ts";
+import { baixarArquivo } from "../../ui/botoes-de-exportacao.tsx";
 import type {
   SnapshotDasAnalises,
   DependenciasDasAnalises,
@@ -31,13 +37,13 @@ import type {
 */
 import {
   ESCOPO_PADRAO,
-  csvDasAnalises,
+  tabelaDasAnalises,
   normalizarEscopo,
   comIndicesDeBusca,
   prepararLinhas,
 } from "../../lib/analises/analises-curriculares.ts";
 import {
-  nomeDoCsvDeAnalises,
+  nomeDaPlanilhaDeAnalises,
   rotuloDaAreaDoPainel,
 } from "../../lib/analises/area-do-painel-de-analises.ts";
 import { chavesDoCacheAntigo } from "../../lib/analises/cache-do-painel-de-analises.ts";
@@ -94,19 +100,6 @@ function mensagemDaCarga(erro: unknown) {
   return mensagemDeFalha(erro);
 }
 
-function baixarNoNavegador(conteudo: string, nome: string) {
-  // O BOM faz o Excel abrir em UTF-8.
-  const arquivo = new Blob(["﻿" + conteudo], {
-    type: "text/csv;charset=utf-8;",
-  });
-  const url = URL.createObjectURL(arquivo);
-  const ancora = document.createElement("a");
-  ancora.href = url;
-  ancora.download = nome;
-  ancora.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
 /*
   O cache antigo do painel ficava no localStorage (agsus_analises_cache_*):
   grande demais para ele e falhava calado. Sai na primeira carga.
@@ -127,7 +120,7 @@ function limparCacheAntigo() {
 export function criarEstadoDasAnalises({
   supabase = null,
   toast = (mensagem: string) => console.info(mensagem),
-  baixar = baixarNoNavegador,
+  baixar = baixarArquivo,
   consultas = supabase ? criarConsultasDasAnalises({ supabase }) : null,
   comemoracoesLigadas = () => false,
   avaliarMarcos = avaliarMarcosDasAnalises,
@@ -426,23 +419,28 @@ export function criarEstadoDasAnalises({
   }
 
   /** CSV do recorte: `selecionar(linhas)` refaz o recorte com as linhas completas. */
-  async function exportarCsv(
-    selecionar: Parameters<EstadoDasAnalises["exportarCsv"]>[0],
+  /* "Exportar em Excel": o recorte na tela, com os pareceres. */
+  async function exportarExcel(
+    selecionar: Parameters<EstadoDasAnalises["exportarExcel"]>[0],
   ) {
     if (haLinhasSemParecer(selecionar(estado.linhas))) {
-      toast("Preparando o CSV com os pareceres…", "info");
+      toast("Preparando a planilha com os pareceres…", "info");
       if (!(await garantirTextos())) {
         toast(
-          "Não foi possível trazer os pareceres para o CSV. Tente novamente.",
+          "Não foi possível trazer os pareceres para a planilha. Tente novamente.",
           "error",
         );
         return false;
       }
     }
     const linhas = selecionar(estado.linhas);
+    const titulo = ["Análises", nomeDaArea(estado.area)]
+      .filter(Boolean)
+      .join(" — ");
     baixar(
-      csvDasAnalises(linhas, estado.area),
-      nomeDoCsvDeAnalises(estado.area),
+      xlsxDaTabela({ titulo, ...tabelaDasAnalises(linhas, estado.area) }),
+      nomeDaPlanilhaDeAnalises(estado.area),
+      MIME_XLSX,
     );
     toast(
       `Exportados ${formatNumberBR(linhas.length)} registros do recorte atual.`,
@@ -450,6 +448,7 @@ export function criarEstadoDasAnalises({
     );
     return true;
   }
+
 
   function definirDetalhe(id: string, valor: DetalheDaAnalise) {
     const detalhes = new Map(estado.detalhes);
@@ -499,7 +498,7 @@ export function criarEstadoDasAnalises({
     atualizar,
     trocarEscopo,
     garantirTextos,
-    exportarCsv,
+    exportarExcel,
     abrirDetalhe,
     fecharDetalhe: () => publicar({ gaveta: null }),
   };

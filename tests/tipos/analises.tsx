@@ -23,7 +23,7 @@ const estado: EstadoDasAnalises = criarEstadoDasAnalises({
 const tela = <TelaDeAnalises estado={estado} />;
 void tela;
 void estado.carregar("sede", { escopo: "ativo" });
-void estado.exportarCsv((linhas) => filtrarLinhas(linhas, FILTROS_VAZIOS));
+void estado.exportarExcel((linhas) => filtrarLinhas(linhas, FILTROS_VAZIOS));
 prepararLinhas([{ id: "a1" }], { area: "projetos" }).map((linha) =>
   linha.__chave.toUpperCase(),
 );
@@ -41,8 +41,8 @@ const campo: CampoDoFiltro = "departamento";
 void campo;
 // @ts-expect-error Seleções de filtro são listas de texto.
 filtrarLinhas([], { ...FILTROS_VAZIOS, edital: [2026] });
-// @ts-expect-error O CSV precisa selecionar linhas, não retornar texto.
-void estado.exportarCsv(() => "csv");
+// @ts-expect-error A exportação precisa selecionar linhas, não retornar texto.
+void estado.exportarExcel(() => "csv");
 // @ts-expect-error A tela exige um estado com ações e assinatura.
 const telaInvalida = <TelaDeAnalises estado={{}} />;
 void telaInvalida;

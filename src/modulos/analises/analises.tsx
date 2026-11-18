@@ -348,7 +348,7 @@ function TelaDaArea({
 
   // O CSV refaz o recorte com as linhas completas (com os pareceres).
   const exportar = () =>
-    void estado.exportarCsv((todas) =>
+    estado.exportarExcel((todas) =>
       filtrarPorPeriodo(
         recorteVisual(filtrarLinhas(todas, filtros), { kpi, responsavel }),
         periodo,
@@ -366,8 +366,10 @@ function TelaDaArea({
         atualizarDesativado={
           !area || e.atualizando || e.semSessao || e.semAcesso
         }
-        aoExportar={exportar}
-        exportarDesativado={!carregado || !recorte.length}
+        exportacao={{
+          excel: exportar,
+          desativado: !carregado || !recorte.length,
+        }}
       >
         <SeloDeAvisos modulo="analises" />
       </TopoDoPainel>

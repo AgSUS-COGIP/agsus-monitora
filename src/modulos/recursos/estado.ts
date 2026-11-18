@@ -59,8 +59,15 @@ import type {
   mostra o rótulo, os outros ficam desativados.
 */
 import { hojeEmBrasilia } from "../../lib/cronograma/cronograma-do-edital.ts";
+import {
+  arquivoDaTabela,
+  nomeDoArquivoExportado,
+} from "../../lib/base/exportacao-da-tabela.ts";
+import type { FormatoDaExportacao } from "../../lib/base/exportacao-da-tabela.ts";
+import { nomeDaArea } from "../../lib/navegacao/menu-lateral.ts";
+import { baixarArquivo as baixarExportacao } from "../../ui/botoes-de-exportacao.tsx";
 import { ehConflitoDeVersao } from "../../lib/base/conflito-de-versao.ts";
-import { csvDosRecursos } from "../../lib/recursos/recursos-dos-candidatos.ts";
+import { tabelaDosRecursos } from "../../lib/recursos/recursos-dos-candidatos.ts";
 import {
   BUCKET_DOS_ANEXOS,
   caminhoDoAnexo,
@@ -119,16 +126,6 @@ function mensagemDaCarga(erro: ErroDosRecursos | null) {
   if (erro?.code === "42501")
     return "Seu acesso não inclui os recursos desta área.";
   return mensagemDe(erro);
-}
-
-function baixarNoNavegador(conteudo: string, nome: string) {
-  const arquivo = new Blob([conteudo], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(arquivo);
-  const ancora = document.createElement("a");
-  ancora.href = url;
-  ancora.download = nome;
-  ancora.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function baixarBlobNoNavegador(arquivo: Blob, nome: string) {
@@ -192,7 +189,7 @@ function novoUuid() {
 export function criarEstadoDosRecursos({
   supabase = null,
   toast = (mensagem: string) => console.info(mensagem),
-  baixar = baixarNoNavegador,
+  baixar = baixarExportacao,
   baixarArquivo = baixarBlobNoNavegador,
   abrirUrl = baixarPeloEndereco,
   imprimir = imprimirNoNavegador,
@@ -697,16 +694,40 @@ export function criarEstadoDosRecursos({
       }),
     );
 
-  function exportarCsv(
-    recursos: readonly RecursoDoPainel[],
+  /* "Exportar em Excel" e "Salvar em PDF": o recorte na tela. */
+  async function exportar(
+    formato: FormatoDaExportacao,
+    itens: readonly RecursoDoPainel[],
     origens: readonly OrigemDoRecurso[],
   ) {
-    const dia = hojeEmBrasilia(new Date(agora()));
-    baixar(
-      csvDosRecursos(recursos, origens),
-      `recursos-${estado.area}-${dia}.csv`,
-    );
+    const quando = new Date(agora());
+    try {
+      const arquivo = await arquivoDaTabela(
+        formato,
+        {
+          titulo: ["Recursos", nomeDaArea(estado.area)]
+            .filter(Boolean)
+            .join(" — "),
+          ...tabelaDosRecursos(itens, origens),
+        },
+        quando,
+      );
+      baixar(
+        arquivo.bytes,
+        nomeDoArquivoExportado(
+          ["recursos", estado.area, hojeEmBrasilia(quando)],
+          arquivo.extensao,
+        ),
+        arquivo.tipo,
+      );
+    } catch (erro) {
+      toast(
+        `Não foi possível gerar o arquivo: ${erro instanceof Error ? erro.message : String(erro)}`,
+        "error",
+      );
+    }
   }
+
 
   // ── Resposta ao candidato (20260929230000) ─────────────────────────────
 
@@ -1112,7 +1133,7 @@ export function criarEstadoDosRecursos({
     salvar,
     marcarEtapa,
     excluir,
-    exportarCsv,
+    exportar,
     reiniciar,
     definirComemoracoes: (ligadas: boolean) =>
       publicar({ comemoracoes: ligadas === true }),

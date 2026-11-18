@@ -107,7 +107,7 @@ export interface SnapshotDosRecursos {
 export interface OpcoesDoEstadoDosRecursos {
   supabase?: ClienteDosRecursos | null;
   toast?: (mensagem: string, tom?: string) => void;
-  baixar?: (conteudo: string, nome: string) => void;
+  baixar?: (conteudo: Uint8Array, nome: string, tipo: string) => void;
   baixarArquivo?: (arquivo: Blob, nome: string) => void;
   abrirUrl?: (url: string) => void;
   imprimir?: (texto: string, titulo: string) => void;

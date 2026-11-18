@@ -4,7 +4,7 @@ import {
   calcularIndicadores,
   contagemPorComparecimento,
   contagemPorParecer,
-  csvDasEntrevistas,
+  tabelaDasEntrevistas,
   dataHoraBR,
   faixasDeNota,
   FILTROS_VAZIOS,
@@ -340,7 +340,7 @@ describe("KPIs e gráficos", () => {
   });
 });
 
-describe("pendências, datas e CSV", () => {
+describe("pendências, datas e exportação", () => {
   const { entrevistas, aprovadosSemEntrevista, ultimaCarga } =
     normalizarPayload(PAYLOAD);
 
@@ -370,16 +370,18 @@ describe("pendências, datas e CSV", () => {
     expect(dataHoraBR("x")).toBe("");
   });
 
-  it("gera o CSV com ; e BOM, protegido contra fórmula", () => {
+  it("a tabela da exportação: notas como número, texto como veio", () => {
     const perigosa = normalizarPayload({
       entrevistas: [{ id: "z", candidato: "=HYPERLINK(1)", nota: 10.5 }],
     }).entrevistas;
-    const csv = csvDasEntrevistas(perigosa);
-    expect(csv.startsWith("\uFEFFCandidato;Código;")).toBe(true);
-    expect(csv).toContain("'=HYPERLINK(1)");
-    expect(csv).toContain("10,50");
-    expect(csv).toContain("Sem análise");
+    const { colunas, linhas } = tabelaDasEntrevistas(perigosa);
+    expect(colunas.slice(0, 2)).toEqual(["Candidato", "Código"]);
+    const linha = linhas[0];
+    expect(linha[0]).toBe("=HYPERLINK(1)");
+    expect(linha[colunas.indexOf("Nota da entrevista")]).toBe(10.5);
+    expect(linha[colunas.indexOf("Resultado da análise")]).toBe("Sem análise");
   });
+
 });
 
 describe("registro da aba", async () => {

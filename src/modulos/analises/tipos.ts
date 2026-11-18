@@ -163,7 +163,7 @@ export interface MarcoDasAnalises {
 export interface DependenciasDasAnalises {
   supabase?: ClienteDasAnalises | null;
   toast?(mensagem: string, tom?: string): void;
-  baixar?(conteudo: string, nome: string): void;
+  baixar?(conteudo: Uint8Array, nome: string, tipo: string): void;
   consultas?: ConsultasDasAnalises | null;
   comemoracoesLigadas?(): boolean;
   avaliarMarcos?(marco: MarcoDasAnalises): unknown;
@@ -180,7 +180,7 @@ export interface EstadoDasAnalises {
   atualizar(): Promise<boolean>;
   trocarEscopo(escopo: string): Promise<boolean>;
   garantirTextos(): Promise<boolean>;
-  exportarCsv(
+  exportarExcel(
     selecionar: (
       linhas: readonly LinhaDaAnalise[],
     ) => readonly LinhaDaAnalise[],

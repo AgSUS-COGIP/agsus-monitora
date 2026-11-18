@@ -11,7 +11,7 @@ import {
   rotuloDoPeriodo,
   temPeriodo,
   calcularKpis,
-  csvDasAnalises,
+  tabelaDasAnalises,
   dataDaPlanilha,
   descricaoDoRecorte,
   detalheDaAnalise,
@@ -653,9 +653,9 @@ describe("detalhe da gaveta", () => {
   });
 });
 
-describe("CSV", () => {
-  it("colunas da Saúde Indígena; quebra, ; e aspas saem; fórmula ganha apóstrofo", () => {
-    const csv = csvDasAnalises(
+describe("exportação (Excel)", () => {
+  it("colunas da Saúde Indígena; o texto vai como veio (a planilha não lê fórmula)", () => {
+    const { colunas, linhas } = tabelaDasAnalises(
       [
         linha({
           candidato: '=HYPERLINK("x")',
@@ -664,16 +664,19 @@ describe("CSV", () => {
       ],
       "saude-indigena",
     );
-    const [cabecalho, primeira] = csv.split("\n");
-    expect(cabecalho.split(";")).toHaveLength(16);
-    expect(cabecalho).not.toContain("municipio_uf");
-    expect(primeira).toContain("'=HYPERLINK('x')");
-    expect(primeira).toContain("linha 1 linha 2  fim");
+    expect(colunas).toHaveLength(16);
+    expect(colunas).not.toContain("municipio_uf");
+    const [primeira] = linhas;
+    expect(primeira[colunas.indexOf("candidato")]).toBe('=HYPERLINK("x")');
+    expect(primeira[colunas.indexOf("analise")]).toBe("linha 1\nlinha 2; fim");
   });
 
   it("fora da Saúde Indígena, as colunas de experiência e município", () => {
-    const [cabecalho] = csvDasAnalises([], "sede").split("\n");
-    expect(cabecalho).toContain("experiencia_profissional_total;municipio_uf");
+    const { colunas } = tabelaDasAnalises([], "sede");
+    expect(colunas.slice(-2)).toEqual([
+      "experiencia_profissional_total",
+      "municipio_uf",
+    ]);
   });
 });
 
