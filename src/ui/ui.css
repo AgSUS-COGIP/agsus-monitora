@@ -2220,7 +2220,8 @@ button.ui-faixa-item:hover {
 /*
   Toque (Design System, seção 16): com ponteiro grosso, os controles das telas
   têm no mínimo 44px. Antes, Mais filtros, Limpar tudo, Colunas, Carregar mais,
-  os segmentados e os botões do mapa tinham 28–32px no celular. No mouse,
+  os segmentados, o "Tabela" dos gráficos e os botões do mapa tinham 28–32px
+  no celular. No mouse,
   nada muda. `.ui-tela-da-selecao .btn.small` entra na lista para vencer a
   regra mais específica da Seleção.
 */
@@ -2234,6 +2235,7 @@ button.ui-faixa-item:hover {
       .ui-cabecalho-acoes .ui-segmentado-opcao,
       .ui-lista-selecao .btn,
       .ui-chip,
+      .ui-grafico-alternar,
       .ui-tabela-busca,
       select
     ) {
