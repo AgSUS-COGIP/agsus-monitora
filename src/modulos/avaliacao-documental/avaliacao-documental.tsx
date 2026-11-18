@@ -501,5 +501,9 @@ export function criarAvaliacaoDocumental({
     render() {
       return atualizar(String(areaAtual() ?? "").trim());
     },
+    /* O edital vindo de outra tela (a página do edital): a rota o entrega depois do render(). */
+    abrirEdital(editalId: string) {
+      return estado.escolherEdital(editalId);
+    },
   };
 }

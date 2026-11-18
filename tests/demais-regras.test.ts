@@ -2302,7 +2302,7 @@ bloco("app/pagina-aberta", () => {
   describe("as páginas que usam as linhas", () => {
     it("Visão geral, Editais, Cronograma e Lista de aprovados; não a Avaliação documental", () => {
       expect([...TELAS_COM_LINHAS].sort()).toEqual(
-        ["approved", "calendario", "dashboard", "nucleo"].sort(),
+        ["approved", "calendario", "dashboard", "edital", "nucleo"].sort(),
       );
       for (const view of [
         "avaliacao-documental",

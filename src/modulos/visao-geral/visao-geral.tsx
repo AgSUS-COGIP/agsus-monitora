@@ -45,6 +45,7 @@ import type { ClienteDosAvisos } from "../conferencias/tipos.ts";
 import { telaPermitida } from "../../lib/navegacao/navegacao.ts";
 import { pedirFiltro } from "../../app/pedido-de-filtro.ts";
 import { irParaTela, type JanelaDoApp } from "../../app/ir-para-tela.ts";
+import { ErrorBoundary } from "../../app/ErrorBoundary.tsx";
 
 type PerfilDaNavegacao = Parameters<typeof telaPermitida>[1];
 
@@ -231,19 +232,21 @@ export function TelaDaVisaoGeral({
         }}
       />
       {e.montador && e.aberta ? (
-        <Suspense fallback={null}>
-          <MontadorDeRelatorio
-            e={e}
-            aoBaixarCsv={estado.exportarCsv}
-            textos={textos}
-            configuracoes={configuracoes}
-            obterPerfil={obterPerfil}
-            agora={agora}
-            aoFechar={estado.fecharMontador}
-            supabase={supabase}
-            podeAprovados={podeBaixarAprovados(obterPerfil?.())}
-          />
-        </Suspense>
+        <ErrorBoundary nome="o montador de relatório">
+          <Suspense fallback={null}>
+            <MontadorDeRelatorio
+              e={e}
+              aoBaixarCsv={estado.exportarCsv}
+              textos={textos}
+              configuracoes={configuracoes}
+              obterPerfil={obterPerfil}
+              agora={agora}
+              aoFechar={estado.fecharMontador}
+              supabase={supabase}
+              podeAprovados={podeBaixarAprovados(obterPerfil?.())}
+            />
+          </Suspense>
+        </ErrorBoundary>
       ) : null}
       {linhaAberta ? (
         <GavetaDoProcesso

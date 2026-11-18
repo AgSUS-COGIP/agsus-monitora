@@ -27,6 +27,7 @@ const NAVEGACAO_PARADA: LeituraDaNavegacao = Object.freeze({
   esquecerEditalEVisao: () => {},
   abrirRegrasDoEdital: () => false,
   fecharRegrasDoEdital: () => {},
+  voltarDaPaginaDoEdital: () => false,
   irParaInicio: () => {},
 });
 

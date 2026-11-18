@@ -51,6 +51,7 @@ const ACOES = [
   "montarMenu",
   "reavaliarTelaAtual",
   "esquecerEditalEVisao",
+  "voltarDaPaginaDoEdital",
 ];
 
 /** Envolve as ações da navegação em `act` (o React acompanha na hora). */

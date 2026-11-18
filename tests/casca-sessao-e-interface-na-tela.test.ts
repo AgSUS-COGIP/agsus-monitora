@@ -790,6 +790,7 @@ bloco("app/casca", () => {
         esquecerEditalEVisao: () => {},
         abrirRegrasDoEdital: () => false,
         fecharRegrasDoEdital: () => {},
+        voltarDaPaginaDoEdital: () => false,
         irParaInicio: () => {},
       };
       casca = desenharNoTeste(
@@ -1934,6 +1935,7 @@ bloco("app/moldura-na-casca", () => {
     esquecerEditalEVisao: () => {},
     abrirRegrasDoEdital: () => false,
     fecharRegrasDoEdital: () => {},
+    voltarDaPaginaDoEdital: () => false,
     irParaInicio: () => {},
   };
 
@@ -2330,6 +2332,7 @@ bloco("app/navegacao", () => {
       calendario: { render: vi.fn() },
       recursos: { render: vi.fn() },
       classificacao: { render: vi.fn(), abrirEdital: vi.fn() },
+      edital: { render: vi.fn(), abrirEdital: vi.fn() },
       "conduzir-entrevistas": {
         render: vi.fn(),
         abrirVisao: vi.fn(),
@@ -2783,6 +2786,87 @@ bloco("app/navegacao", () => {
       expect(navegacao.obter().view).toBe("recursos");
       expect(telas.nucleo.render).toHaveBeenCalledTimes(1);
       expect(avisar).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("a página do edital", () => {
+    /* O "Voltar" da página vai pelo histórico: espera o popstate do jsdom. */
+    async function voltarDaPagina(navegacao: Navegacao) {
+      await act(async () => {
+        const mudou = new Promise((resolver) =>
+          addEventListener("popstate", resolver, { once: true }),
+        );
+        expect(navegacao.voltarDaPaginaDoEdital()).toBe(true);
+        await mudou;
+      });
+    }
+
+    it("aberta de outra tela: o edital fica no endereço e o Voltar volta para ela, com os filtros", async () => {
+      const { navegacao, telas } = criar();
+      entrar(navegacao);
+      navegacao.irPara("nucleo");
+      history.replaceState(null, "", "/saude-indigena/editais?status=Suspenso");
+      navegacao.irPara("edital", { edital: "105-2026" });
+      expect(ativas()).toEqual(["page-edital"]);
+      expect(telas.edital.render).toHaveBeenCalledTimes(1);
+      await vi.waitFor(() =>
+        expect(telas.edital.abrirEdital).toHaveBeenCalledWith("105-2026"),
+      );
+      // O edital é a página: não sai do endereço depois de aberto.
+      expect(endereco()).toBe("/saude-indigena/edital/105-2026");
+      expect(navegacao.obter().edital).toBe("105-2026");
+      expect(navegacao.obter().retorno).toMatchObject({
+        view: "nucleo",
+        edital: "105-2026",
+      });
+      // Não vira a tela de entrada (sem o edital, ela não abriria).
+      expect(localStorage.getItem(CHAVE_DA_TELA_GUARDADA)).toBe("nucleo");
+
+      await voltarDaPagina(navegacao);
+      expect(ativas()).toEqual(["page-nucleo"]);
+      expect(endereco()).toBe("/saude-indigena/editais?status=Suspenso");
+    });
+
+    it("aberta por link: sem retorno, o Voltar vai à Visão geral", () => {
+      history.replaceState(null, "", "/sede/edital/105-2026");
+      const { navegacao } = criar();
+      entrar(navegacao);
+      expect(ativas()).toEqual(["page-edital"]);
+      expect(obterDadosDoMonitoramento().areaAtual).toBe("sede");
+      expect(navegacao.obter().retorno).toBeNull();
+      expect(navegacao.voltarDaPaginaDoEdital()).toBe(true);
+      expect(ativas()).toEqual(["page-dashboard"]);
+      expect(endereco()).toBe("/sede/visao-geral");
+    });
+
+    it("foi à Classificação e voltou pelo navegador: o retorno do mesmo edital continua", async () => {
+      const { navegacao } = criar();
+      entrar(navegacao);
+      navegacao.irPara("calendario");
+      navegacao.irPara("edital", { edital: "105-2026" });
+      navegacao.irPara("classificacao", { edital: EDITAL });
+      await noHistorico(-1);
+      expect(ativas()).toEqual(["page-edital"]);
+      expect(navegacao.obter().retorno).toMatchObject({ view: "calendario" });
+      await voltarDaPagina(navegacao);
+      expect(ativas()).toEqual(["page-calendario"]);
+    });
+
+    it("sem permissão (só Classificação): o link não abre a página", () => {
+      history.replaceState(null, "", "/saude-indigena/edital/105-2026");
+      const { navegacao, avisar } = criar({
+        obterPerfil: () => ({
+          id: "c",
+          ativo: true,
+          permissoes: { classificacao: "leitor" },
+        }),
+      });
+      entrar(navegacao);
+      expect(avisar).toHaveBeenCalledWith(
+        "Sem permissão para a página do edital.",
+        "warn",
+      );
+      expect(ativas()).toEqual(["page-classificacao"]);
     });
   });
 
@@ -7069,6 +7153,23 @@ bloco("componentes/busca-global", async () => {
 
       await digitar(campo(), "mt");
       expect(itens()).toHaveLength(2);
+    });
+
+    it("o resultado marcado ganha Abrir página do edital, na área dele", async () => {
+      const navigate = vi.fn(() => true);
+      vi.stubGlobal("navigate", navigate);
+      await ctrlK();
+      await digitar(campo(), "xingu");
+      expect(document.querySelector(".search-modal-acoes")).toBeNull();
+      await teclar(definido(campo()), "ArrowDown");
+      const botao = document.querySelector(".search-modal-acoes button");
+      expect(botao?.textContent).toContain("Abrir página do edital");
+      await clicar(botao);
+      expect(navigate).toHaveBeenCalledWith("edital", { edital: "3-2026" });
+      expect(dialogo()).toBeNull();
+      // Não é a escolha de antes (localizar na Visão geral).
+      expect(escolhidos).toEqual([]);
+      vi.unstubAllGlobals();
     });
 
     it("sem resultado, mensagem curta", async () => {
