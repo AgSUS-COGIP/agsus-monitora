@@ -314,26 +314,22 @@ export function acompanhamentoDaResposta(
   };
 }
 
-/* As pendências pós-resultado de uma linha (códigos de PENDENCIAS_POS_RESULTADO). */
+/*
+  As pendências pós-resultado de uma linha (códigos de PENDENCIAS_POS_RESULTADO).
+  "Contratação abaixo de 50%" e "Desistências" saíram do Pede ação em 18/11/2026,
+  a pedido do usuário: não pedem ação de quem olha a Visão Geral. A contratação
+  baixa continua como motivo de Processos Críticos (criticos-da-visao-geral.ts).
+*/
 function pendenciasDaLinha(
   linha: LinhaDoMonitoramento,
   lista: ListaDoAcompanhamento | null,
   temListas: boolean,
-  limites: { contratacaoMinima: number },
 ): Pendencia[] {
   if (ehCancelado(linha) || !temResultado(linha)) return [];
   const codigos: Pendencia[] = [];
   if (temListas && !lista) codigos.push("sem_lista");
   if (lista && num(lista.aprovados) > 0 && num(lista.com_status) === 0)
     codigos.push("sem_status");
-  const vagas = num(linha.vagas_total);
-  if (
-    ehConcluido(linha) &&
-    vagas > 0 &&
-    contratadasImediatas(linha) / vagas < limites.contratacaoMinima
-  )
-    codigos.push("contratacao_baixa");
-  if (lista && num(lista.desistentes) > 0) codigos.push("desistencias");
   return codigos;
 }
 
@@ -415,7 +411,7 @@ export function enriquecerLinhas(
       ...linha,
       ciclo: cicloPadronizado(linha?.ciclo),
       atencao: motivosDeAtencao(linha, { hoje, etapas, limites, marcacao }),
-      pos_resultado: pendenciasDaLinha(linha, lista, temListas, limites),
+      pos_resultado: pendenciasDaLinha(linha, lista, temListas),
       desistentes: lista ? num(lista.desistentes) : 0,
       ...resultadoDaLista(lista),
       primeira_admissao: admissoes?.primeira ?? null,
@@ -433,11 +429,6 @@ export const PENDENCIAS_POS_RESULTADO: readonly {
 }[] = Object.freeze([
   Object.freeze({ codigo: "sem_lista", rotulo: "Sem lista de aprovados" }),
   Object.freeze({ codigo: "sem_status", rotulo: "Lista sem status" }),
-  Object.freeze({
-    codigo: "contratacao_baixa",
-    rotulo: `Contratação abaixo de ${Math.round(LIMITES_DO_CRITICO.contratacaoMinima * 100)}%`,
-  }),
-  Object.freeze({ codigo: "desistencias", rotulo: "Desistências" }),
 ] as const);
 
 /** O rótulo do atalho no chip do recorte. */
@@ -724,30 +715,21 @@ export function andamentoPorFase(linhas: readonly LinhaDoMonitoramento[]) {
 }
 
 /**
- * "Pós-resultado": cada pendência com os editais que a têm.
- * `quantos`: editais; em Desistências, `pessoas` é o total de desistentes.
- * Sem o resumo das listas, só "Contratação abaixo de 50%".
+ * "Pós-resultado": cada pendência com quantos editais a têm (`quantos`).
+ * As duas vêm do resumo das listas; sem ele, nenhuma.
  */
 export function posResultado(
   linhas: readonly LinhaDoMonitoramento[],
   { comListas = false } = {},
 ) {
-  return PENDENCIAS_POS_RESULTADO.filter(
-    (p) => comListas || p.codigo === "contratacao_baixa",
-  ).map(({ codigo, rotulo }) => {
-    const editais = (linhas || []).filter((linha) =>
+  if (!comListas) return [];
+  return PENDENCIAS_POS_RESULTADO.map(({ codigo, rotulo }) => ({
+    codigo,
+    rotulo,
+    quantos: (linhas || []).filter((linha) =>
       (linha?.pos_resultado || []).includes(codigo),
-    );
-    return {
-      codigo,
-      rotulo,
-      quantos: editais.length,
-      pessoas:
-        codigo === "desistencias"
-          ? editais.reduce((soma, linha) => soma + num(linha.desistentes), 0)
-          : null,
-    };
-  });
+    ).length,
+  }));
 }
 
 /** Só Projetos tem "Processos por projeto" (lá a unidade é o projeto). */

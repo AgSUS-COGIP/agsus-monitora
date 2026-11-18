@@ -7011,8 +7011,9 @@ bloco("visao-geral", () => {
       expect(yanomami.atencao.map((m) => m.codigo)).toEqual([
         "contratacao_baixa",
       ]);
-      // Sem o resumo das listas, só a contratação baixa.
-      expect(yanomami.pos_resultado).toEqual(["contratacao_baixa"]);
+      // Sem o resumo das listas, nenhuma pendência (a contratação baixa fica só
+      // como motivo de atenção do crítico, acima).
+      expect(yanomami.pos_resultado).toEqual([]);
       expect(casai.fase).toBe("Sem cronograma");
       expect(cancelado.atencao).toEqual([]);
       expect(cancelado.pos_resultado).toEqual([]);
@@ -7020,22 +7021,15 @@ bloco("visao-geral", () => {
       expect(BRUTAS[0].fase).toBeUndefined();
     });
 
-    it("com o acompanhamento: lista sem status e desistências", () => {
+    it("com o acompanhamento: lista sem status (desistências e contratação baixa não são pendência)", () => {
       const yanomami = COM_ACOMPANHAMENTO.find((l) => l.id === 3);
-      expect(yanomami.pos_resultado).toEqual([
-        "sem_status",
-        "contratacao_baixa",
-        "desistencias",
-      ]);
+      expect(yanomami.pos_resultado).toEqual(["sem_status"]);
       expect(yanomami.desistentes).toBe(3);
       const semLista = enriquecerLinhas([{ ...BRUTAS[2], id: 9 }], {
         hoje: HOJE,
         acompanhamento: ACOMPANHAMENTO,
       })[0];
-      expect(semLista.pos_resultado).toEqual([
-        "sem_lista",
-        "contratacao_baixa",
-      ]);
+      expect(semLista.pos_resultado).toEqual(["sem_lista"]);
     });
   });
 
@@ -7176,25 +7170,15 @@ bloco("visao-geral", () => {
     });
 
     it("Pós-resultado: com e sem o resumo das listas", () => {
-      expect(posResultado(LINHAS)).toEqual([
-        {
-          codigo: "contratacao_baixa",
-          rotulo: "Contratação abaixo de 50%",
-          quantos: 1,
-          pessoas: null,
-        },
-      ]);
+      expect(posResultado(LINHAS)).toEqual([]);
       expect(
         posResultado(COM_ACOMPANHAMENTO, { comListas: true }).map((p) => [
           p.codigo,
           p.quantos,
-          p.pessoas,
         ]),
       ).toEqual([
-        ["sem_lista", 0, null],
-        ["sem_status", 1, null],
-        ["contratacao_baixa", 1, null],
-        ["desistencias", 1, 3],
+        ["sem_lista", 0],
+        ["sem_status", 1],
       ]);
     });
 

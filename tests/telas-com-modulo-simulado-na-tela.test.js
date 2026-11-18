@@ -3,7 +3,16 @@
 import { renders } from "./componentes/contar-renders.ts";
 import { bloco } from "./apoio/bloco.ts";
 import { act, createElement } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
@@ -119,19 +128,6 @@ vi.mock("../src/modulos/comemoracao/desenho.ts", async (original) => ({
   desenharPrevia: () => {},
   semMovimento: () => false,
 }));
-const rpcDoRetrato = vi.hoisted(() =>
-  vi.fn(async () => ({ data: 1, error: null })),
-);
-vi.mock("../src/lib/sessao/supabaseClient", async (original) => ({
-  ...(await original()),
-  getSupabaseClient: () => ({
-    rpc: rpcDoRetrato,
-    auth: {
-      getSession: async () => ({ data: { session: { user: { id: "u1" } } } }),
-    },
-  }),
-}));
-
 bloco("modulos/analises", async () => {
   /*
   Análises curriculares como módulo do app (src/modulos/analises/): monta na
@@ -6741,13 +6737,8 @@ bloco("modulos/visao-geral", async () => {
       alertas.mockRestore();
     });
 
-    it("Pede ação: contratação abaixo de 50% aparece e filtra", async () => {
+    it("Pede ação: sem 'Contratação abaixo de 50%' nem 'Desistências' (18/11/2026)", async () => {
       await montar();
-      expect(
-        secao.querySelector(
-          '.visao-geral-pede-acao [data-pendencia="contratacao_baixa"]',
-        ),
-      ).toBeNull();
       await act(async () =>
         publicarLinhasDoMonitoramento([
           ...LINHAS,
@@ -6764,14 +6755,14 @@ bloco("modulos/visao-geral", async () => {
           },
         ]),
       );
-      const item = secao.querySelector(
-        '.visao-geral-pede-acao [data-pendencia="contratacao_baixa"]',
-      );
-      expect(item.textContent).toContain("Contratação abaixo de 50%");
-      expect(item.textContent).toContain("1 edital");
-      await clicar(item);
-      expect(estado.obter().atalho).toBe("pos:contratacao_baixa");
-      expect(linhas()).toHaveLength(1);
+      const bloco = secao.querySelector(".visao-geral-pede-acao");
+      expect(
+        bloco.querySelector(
+          '[data-pendencia="contratacao_baixa"], [data-pendencia="desistencias"]',
+        ),
+      ).toBeNull();
+      expect(bloco.textContent).not.toContain("Contratação abaixo de");
+      expect(bloco.textContent).not.toContain("Desistências");
       expect(valorDoKpi("ociosas")).toBe("82");
     });
 
@@ -7848,21 +7839,46 @@ bloco("modulos/palco-de-testes-parado-escondido", async () => {
   });
 });
 
-bloco("frontend-performance-carona", async () => {
+bloco("frontend-performance-carona", () => {
   /*
   O retrato de desempenho do front (frontend_performance) vai de carona na
   batida da presença quando ela está ligada (src/app/sistema.ts), sem chamada
   própria; sem ela, numa chamada à parte, como antes.
 */
 
-  const rpc = rpcDoRetrato;
+  const rpc = vi.fn(async () => ({ data: 1, error: null }));
 
-  const {
-    PERFORMANCE_REPORT_DELAY_MS,
-    definirEnvioDoRetrato,
-    eventoDoRetrato,
-    installFrontendPerformanceMonitor,
-  } = await import("../src/lib/carga/frontend-performance-monitor");
+  /*
+    A simulação do cliente vale só para este bloco (`vi.doMock`, não
+    `vi.mock`): no topo do arquivo ela valeria para as telas dos outros blocos.
+  */
+  let PERFORMANCE_REPORT_DELAY_MS;
+  let definirEnvioDoRetrato;
+  let eventoDoRetrato;
+  let installFrontendPerformanceMonitor;
+  beforeAll(async () => {
+    vi.resetModules();
+    vi.doMock("../src/lib/sessao/supabaseClient", () => ({
+      getSupabaseClient: () => ({
+        rpc,
+        auth: {
+          getSession: async () => ({
+            data: { session: { user: { id: "u1" } } },
+          }),
+        },
+      }),
+    }));
+    ({
+      PERFORMANCE_REPORT_DELAY_MS,
+      definirEnvioDoRetrato,
+      eventoDoRetrato,
+      installFrontendPerformanceMonitor,
+    } = await import("../src/lib/carga/frontend-performance-monitor"));
+  });
+  afterAll(() => {
+    vi.doUnmock("../src/lib/sessao/supabaseClient");
+    vi.resetModules();
+  });
 
   afterEach(() => {
     vi.useRealTimers();
