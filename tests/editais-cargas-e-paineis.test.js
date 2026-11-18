@@ -670,11 +670,9 @@ bloco("avisos-de-conferencia", () => {
         "CORRIGIDO",
         "DISPENSADO",
       ]);
-      expect(opcoesDeTratamento({ podeGerir: false, podeTratar: true })).toEqual([
-        "EM_ANALISE",
-        "AGUARDANDO_DOCUMENTO",
-        "CORRIGIDO",
-      ]);
+      expect(
+        opcoesDeTratamento({ podeGerir: false, podeTratar: true }),
+      ).toEqual(["EM_ANALISE", "AGUARDANDO_DOCUMENTO", "CORRIGIDO"]);
       expect(opcoesDeTratamento(a1)).toEqual([]);
     });
 
@@ -717,7 +715,9 @@ bloco("avisos-de-conferencia", () => {
       expect(
         erroDaEvidencia({ tipo: "SEI", descricao: "25000.000001/2026-01" }),
       ).toBe("");
-      expect(erroDaEvidencia({ tipo: "LINK", descricao: "Ata" })).toMatch(/link/);
+      expect(erroDaEvidencia({ tipo: "LINK", descricao: "Ata" })).toMatch(
+        /link/,
+      );
       expect(
         erroDaEvidencia({ tipo: "LINK", descricao: "Ata", url: "http://x" }),
       ).toMatch(/https/);
@@ -730,7 +730,9 @@ bloco("avisos-de-conferencia", () => {
     });
 
     it("chave estável do caso para a evidência", () => {
-      expect(chaveDoCaso({ analiseId: "an1", codigo: "C1" })).toBe("analise:an1");
+      expect(chaveDoCaso({ analiseId: "an1", codigo: "C1" })).toBe(
+        "analise:an1",
+      );
       expect(chaveDoCaso({ codigo: "C1" })).toBe("codigo:C1");
       expect(chaveDoCaso({ aprovadoId: "ap1" })).toBe("referencia:ap1");
       expect(chaveDoCaso({})).toBeNull();
@@ -799,7 +801,10 @@ bloco("avisos-de-conferencia", () => {
         url: null,
         ativa: false,
       });
-      expect(normalizarHistorico(null)).toEqual({ eventos: [], evidencias: [] });
+      expect(normalizarHistorico(null)).toEqual({
+        eventos: [],
+        evidencias: [],
+      });
     });
   });
 });
@@ -2319,7 +2324,9 @@ bloco("casos-dos-avisos", () => {
         detalhe: { fim: "2026-10-31", status: "sem_status" },
       });
       expect(quemDoCaso(caso)).toBe("Edital 93/2026");
-      expect(caso.motivo).toBe("Cronograma terminou em 31/10/2026 · sem status");
+      expect(caso.motivo).toBe(
+        "Cronograma terminou em 31/10/2026 · sem status",
+      );
       expect(destinoDoCaso(caso)).toBeNull();
     });
 

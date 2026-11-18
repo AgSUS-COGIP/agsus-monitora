@@ -7012,7 +7012,8 @@ bloco("visao-geral", () => {
     it("Em andamento: só as fases com edital aberto; encerrados, concluídos e cancelados à parte", () => {
       const a = andamentoPorFase(LINHAS);
       const fases = fasesDosProcessos(LINHAS);
-      const quantos = (fase) => fases.find((f) => f.fase === fase)?.quantos ?? 0;
+      const quantos = (fase) =>
+        fases.find((f) => f.fase === fase)?.quantos ?? 0;
       expect(a.emAndamento.every((f) => f.quantos > 0)).toBe(true);
       expect(a.emAndamento.map((f) => f.fase)).not.toContain(
         "Cronograma encerrado",

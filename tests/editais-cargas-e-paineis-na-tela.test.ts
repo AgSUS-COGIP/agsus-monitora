@@ -307,7 +307,10 @@ bloco("componentes/avisos-de-conferencia", async () => {
         expect.anything(),
       );
 
-      await digitar(analise.querySelector("textarea"), "Conferido com a banca.");
+      await digitar(
+        analise.querySelector("textarea"),
+        "Conferido com a banca.",
+      );
       dispensado = true;
       await clicar(botao(analise, "Salvar situação"));
       await esperar();

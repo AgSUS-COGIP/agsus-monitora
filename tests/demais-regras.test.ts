@@ -2,63 +2,221 @@
 import { bloco } from "./apoio/bloco.ts";
 import { describe, expect, it, afterEach, beforeEach, vi } from "vitest";
 import { calcularKpis } from "../src/lib/analises/analises-curriculares.ts";
-import { aptosEEliminados, formatarTaxa } from "../src/lib/selecao/selecao-do-painel.ts";
+import {
+  aptosEEliminados,
+  formatarTaxa,
+} from "../src/lib/selecao/selecao-do-painel.ts";
 import { type VagaDaSelecao } from "../src/modulos/selecao/tipos.ts";
-import { categoriaNaTriagem, conferirEntrada, ehEliminacaoAdministrativa, fundamentoDoBanco, fundamentoDoComunicado, linhaDoFundamento, quadroDosFundamentos } from "../src/lib/avaliacao-documental/fundamento-da-eliminacao.ts";
+import {
+  categoriaNaTriagem,
+  conferirEntrada,
+  ehEliminacaoAdministrativa,
+  fundamentoDoBanco,
+  fundamentoDoComunicado,
+  linhaDoFundamento,
+  quadroDosFundamentos,
+} from "../src/lib/avaliacao-documental/fundamento-da-eliminacao.ts";
 import { espelhoDaEliminacaoPreAnalise } from "../src/lib/avaliacao-documental/espelho-da-pre-classificacao.ts";
 import { comunicadosDosEliminados } from "../src/lib/avaliacao-documental/documentos-em-lote.ts";
-import { marcaDaImportacao, normalizarPrevia, parciaisDaMarca, resumoDaImportacao, semMarcaDaImportacao } from "../src/lib/avaliacao-documental/importacao-da-planilha.ts";
+import {
+  marcaDaImportacao,
+  normalizarPrevia,
+  parciaisDaMarca,
+  resumoDaImportacao,
+  semMarcaDaImportacao,
+} from "../src/lib/avaliacao-documental/importacao-da-planilha.ts";
 import { lancamentoInicial } from "../src/lib/avaliacao-documental/ficha.ts";
 import { deflateRawSync } from "node:zlib";
-import { limparModalidade, normalizeApprovedHeaders, readApprovedWorkbook, validateApprovedRows } from "../src/lib/aprovados/aprovados-import.ts";
-import { zipSemCompressao, type ArquivoDoZip } from "../src/lib/recursos/documento-da-resposta.ts";
+import {
+  limparModalidade,
+  normalizeApprovedHeaders,
+  readApprovedWorkbook,
+  validateApprovedRows,
+} from "../src/lib/aprovados/aprovados-import.ts";
+import {
+  zipSemCompressao,
+  type ArquivoDoZip,
+} from "../src/lib/recursos/documento-da-resposta.ts";
 import { rotuloEmLinhas } from "../src/lib/selecao/rotulo-em-linhas.ts";
 import { criarEstadoDaAvaliacao } from "../src/modulos/avaliacao-documental/estado.ts";
 import { type ClienteDaAvaliacao } from "../src/modulos/avaliacao-documental/tipos-do-estado.ts";
 import { CATALOGO_DE_MARCOS } from "../src/lib/comemoracao/catalogo-de-comemoracoes.ts";
 import { exemploDoMarco } from "../src/lib/comemoracao/exemplos-das-comemoracoes.ts";
 import { readFileSync, existsSync } from "node:fs";
-import { COLUNAS_DO_MONITORAMENTO, INTERVALO_DO_REALTIME_MS, criarCarga, type ConsultaDaCarga, type DependenciasDaCarga, type OpcoesDaConsulta } from "../src/app/carga.ts";
+import {
+  COLUNAS_DO_MONITORAMENTO,
+  INTERVALO_DO_REALTIME_MS,
+  criarCarga,
+  type ConsultaDaCarga,
+  type DependenciasDaCarga,
+  type OpcoesDaConsulta,
+} from "../src/app/carga.ts";
 import { type OpcoesDaCargaDaConfiguracao } from "../src/app/configuracao.ts";
-import { type CopiaDaSessao, assinaturaDoAcesso, montarCopia } from "../src/lib/sessao/copia-da-sessao";
+import {
+  type CopiaDaSessao,
+  assinaturaDoAcesso,
+  montarCopia,
+} from "../src/lib/sessao/copia-da-sessao";
 import { type PerfilDeAcesso } from "../src/lib/acessos/tipos-dos-acessos.ts";
 import { definido } from "./definido.ts";
-import { obterDadosDoMonitoramento, redefinirDadosDoMonitoramento, linhasPedidas } from "../src/componentes/dados-do-monitoramento.ts";
-import { type SupabaseClient, AuthRetryableFetchError, AuthApiError } from "@supabase/supabase-js";
-import { criarInicioDaSessao, parteDoInicio } from "../src/app/inicio-da-sessao.ts";
+import {
+  obterDadosDoMonitoramento,
+  redefinirDadosDoMonitoramento,
+  linhasPedidas,
+} from "../src/componentes/dados-do-monitoramento.ts";
+import {
+  type SupabaseClient,
+  AuthRetryableFetchError,
+  AuthApiError,
+} from "@supabase/supabase-js";
+import {
+  criarInicioDaSessao,
+  parteDoInicio,
+} from "../src/app/inicio-da-sessao.ts";
 import { acompanharPaginaAberta } from "../src/app/pagina-aberta.ts";
-import { TELAS_COM_LINHAS, telaUsaAsLinhas } from "../src/lib/navegacao/telas-com-linhas.ts";
-import { buscarAcompanhamentoNoSupabase, criarEstadoDaVisaoGeral } from "../src/modulos/visao-geral/estado.ts";
-import { criarGuardaDeAlteracoes, confirmarTrocaDeArea } from "../src/app/guarda-de-alteracoes.ts";
+import {
+  TELAS_COM_LINHAS,
+  telaUsaAsLinhas,
+} from "../src/lib/navegacao/telas-com-linhas.ts";
+import {
+  buscarAcompanhamentoNoSupabase,
+  criarEstadoDaVisaoGeral,
+} from "../src/modulos/visao-geral/estado.ts";
+import {
+  criarGuardaDeAlteracoes,
+  confirmarTrocaDeArea,
+} from "../src/app/guarda-de-alteracoes.ts";
 import { criarRascunhoDaRegra } from "../src/app/rascunho-da-regra.ts";
 import { chaveDoRascunhoLocal } from "../src/lib/regras-do-edital/rascunho-da-regra.ts";
-import { medirArte, type ImagemMedivel, type MedidaDaArte } from "../src/app/entrada/marca.ts";
-import { createHtmlSecurityPlugin, sanitizeAnalyticsPageLocation, secureHtmlDocument, stripSupabaseCdnScripts } from "../src/lib/seguranca/html-security";
-import { conflitosDaPublicacao, linhasDasSecoes, normalizarValoresCarregados } from "../src/lib/configuracoes/publicacao-de-configuracoes.ts";
-import { linhasDosPaineisAlterados, normalizarPaineis } from "../src/lib/configuracoes/paineis-externos-das-configuracoes.ts";
-import { LIMITE_SEM_REDE_MS, sessaoSemRede } from "../src/lib/sessao/sessao-sem-rede.ts";
-import { PERFIL_GUARDADO, perfilParaGuardar } from "../src/lib/sessao/perfil-sem-rede.ts";
-import { ARQUIVO_DO_RETRATO, CABECALHO, limparDump, montarRetrato, tarefasComoSql } from "../scripts/gerar-esquema-atual.mjs";
-import { aplicarLocalizacoes, casaisNacionaisDoSigepsi, localizacoesPorDsei, tipoDaLocalizacao, ufDoCep } from "../src/lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts";
-import { registrosDoDsei, resumoDaRede, classificarRegistros, dicaDoRegistro } from "../src/lib/mapas/mapa-saude-indigena/mapa-do-dsei.ts";
+import {
+  medirArte,
+  type ImagemMedivel,
+  type MedidaDaArte,
+} from "../src/app/entrada/marca.ts";
+import {
+  createHtmlSecurityPlugin,
+  sanitizeAnalyticsPageLocation,
+  secureHtmlDocument,
+  stripSupabaseCdnScripts,
+} from "../src/lib/seguranca/html-security";
+import {
+  conflitosDaPublicacao,
+  linhasDasSecoes,
+  normalizarValoresCarregados,
+} from "../src/lib/configuracoes/publicacao-de-configuracoes.ts";
+import {
+  linhasDosPaineisAlterados,
+  normalizarPaineis,
+} from "../src/lib/configuracoes/paineis-externos-das-configuracoes.ts";
+import {
+  LIMITE_SEM_REDE_MS,
+  sessaoSemRede,
+} from "../src/lib/sessao/sessao-sem-rede.ts";
+import {
+  PERFIL_GUARDADO,
+  perfilParaGuardar,
+} from "../src/lib/sessao/perfil-sem-rede.ts";
+import {
+  ARQUIVO_DO_RETRATO,
+  CABECALHO,
+  limparDump,
+  montarRetrato,
+  tarefasComoSql,
+} from "../scripts/gerar-esquema-atual.mjs";
+import {
+  aplicarLocalizacoes,
+  casaisNacionaisDoSigepsi,
+  localizacoesPorDsei,
+  tipoDaLocalizacao,
+  ufDoCep,
+} from "../src/lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts";
+import {
+  registrosDoDsei,
+  resumoDaRede,
+  classificarRegistros,
+  dicaDoRegistro,
+} from "../src/lib/mapas/mapa-saude-indigena/mapa-do-dsei.ts";
 import { casaisNacionaisDoMapa } from "../src/lib/mapas/mapa-saude-indigena/dados-do-mapa.ts";
 import { type DseiDoMapa } from "../src/lib/mapas/mapa-saude-indigena/tipos.ts";
-import { type PedidoDaVercel, type RespostaDaVercel } from "../api/_tipos-da-vercel.ts";
-import { VINCULO_EXTERNO, VINCULO_INDETERMINADO, VINCULO_NORMAL } from "../src/lib/mapas/uf-ibge.ts";
-import { aprovadosNoRecorte, chaveDoTexto, linhasDeAprovados, linhasPorCargo, normalizarAprovadosDaDiretoria, normalizarVagasPorCargo, vagasPeloTexto } from "../src/lib/visao-geral/relatorio-da-diretoria.ts";
-import { conteudoDoRelatorio, MODELOS_DO_RELATORIO, normalizarEscolha, planilhasDoRelatorio, secoesPermitidas, alternarNaEscolha, modeloDaEscolha, nomeDoArquivoDoRelatorio, recorteDaAreaInteira, textoDaColuna, xlsxDoRelatorio } from "../src/lib/visao-geral/relatorio-da-visao-geral.ts";
-import { filtrosVazios, indicadoresDaVisaoGeral, acompanhamentoDaResposta, enriquecerLinhas, COLUNAS_DA_TABELA, COLUNAS_INICIAIS, csvDaVisaoGeral, duracaoEmDias, valorParaOrdenar, andamentoPorFase, opcoesDosFiltros, prazoDoEdital, statusDaVisaoGeral, urgenciaDoCronograma } from "../src/lib/visao-geral/visao-geral.ts";
+import {
+  type PedidoDaVercel,
+  type RespostaDaVercel,
+} from "../api/_tipos-da-vercel.ts";
+import {
+  VINCULO_EXTERNO,
+  VINCULO_INDETERMINADO,
+  VINCULO_NORMAL,
+} from "../src/lib/mapas/uf-ibge.ts";
+import {
+  aprovadosNoRecorte,
+  chaveDoTexto,
+  linhasDeAprovados,
+  linhasPorCargo,
+  normalizarAprovadosDaDiretoria,
+  normalizarVagasPorCargo,
+  vagasPeloTexto,
+} from "../src/lib/visao-geral/relatorio-da-diretoria.ts";
+import {
+  conteudoDoRelatorio,
+  MODELOS_DO_RELATORIO,
+  normalizarEscolha,
+  planilhasDoRelatorio,
+  secoesPermitidas,
+  alternarNaEscolha,
+  modeloDaEscolha,
+  nomeDoArquivoDoRelatorio,
+  recorteDaAreaInteira,
+  textoDaColuna,
+  xlsxDoRelatorio,
+} from "../src/lib/visao-geral/relatorio-da-visao-geral.ts";
+import {
+  filtrosVazios,
+  indicadoresDaVisaoGeral,
+  acompanhamentoDaResposta,
+  enriquecerLinhas,
+  COLUNAS_DA_TABELA,
+  COLUNAS_INICIAIS,
+  csvDaVisaoGeral,
+  duracaoEmDias,
+  valorParaOrdenar,
+  andamentoPorFase,
+  opcoesDosFiltros,
+  prazoDoEdital,
+  statusDaVisaoGeral,
+  urgenciaDoCronograma,
+} from "../src/lib/visao-geral/visao-geral.ts";
 import { strFromU8, unzipSync, zipSync } from "fflate";
 import { carregarBibliotecasDoPdf } from "../src/lib/avaliacao-documental/espelho-em-pdf.ts";
 import { pdfDoRelatorio } from "../src/lib/visao-geral/relatorio-da-visao-geral-em-pdf.ts";
-import { type Indicadores, type LinhaDaVisaoGeral, type LinhaDoMonitoramento, type Acompanhamento, type ListaDoAcompanhamento } from "../src/modulos/visao-geral/tipos.ts";
-import { calcularReaberturas, cargosDaResposta, chaveDoCargo, reaberturasDosCargos, textoDaReabertura } from "../src/lib/visao-geral/vagas-reabertas.ts";
-import { indicadoresDoMonitoramento, vagasEfetivas, vagasSemContratacao, ehConcluido, temResultado } from "../src/lib/visao-geral/indicadores-do-monitoramento.ts";
-import { CHAVE_DO_MAPA_RECOLHIDO, lerMapaRecolhido, valorDoMapaRecolhido } from "../src/lib/mapas/mapa-recolhido.ts";
+import {
+  type Indicadores,
+  type LinhaDaVisaoGeral,
+  type LinhaDoMonitoramento,
+  type Acompanhamento,
+  type ListaDoAcompanhamento,
+} from "../src/modulos/visao-geral/tipos.ts";
+import {
+  calcularReaberturas,
+  cargosDaResposta,
+  chaveDoCargo,
+  reaberturasDosCargos,
+  textoDaReabertura,
+} from "../src/lib/visao-geral/vagas-reabertas.ts";
+import {
+  indicadoresDoMonitoramento,
+  vagasEfetivas,
+  vagasSemContratacao,
+  ehConcluido,
+  temResultado,
+} from "../src/lib/visao-geral/indicadores-do-monitoramento.ts";
+import {
+  CHAVE_DO_MAPA_RECOLHIDO,
+  lerMapaRecolhido,
+  valorDoMapaRecolhido,
+} from "../src/lib/mapas/mapa-recolhido.ts";
 import { MODULOS_DOS_AVISOS } from "../src/lib/conferencias/avisos-de-conferencia.ts";
 import { CONTRATO_RPC } from "../src/lib/rpc-contrato.ts";
 import { faseDoEdital } from "../src/lib/visao-geral/fases-do-processo.ts";
-
 
 bloco("arredondamento-dos-percentuais", () => {
   /*
@@ -5265,139 +5423,139 @@ bloco("resultado-do-edital-na-visao-geral", () => {
 });
 
 bloco("aviso-de-cronograma-no-retrato", () => {
-/*
+  /*
   O AVISO "CRONOGRAMA ENCERRADO" NO BANCO (migration 20261118150000, aplicada em 18/11/2026)
 
   Pelo retrato do banco: o contexto das conferências traz o estado do cronograma pelas datas, o
   status manual e o treinamento de cada edital, e o módulo editais (recurso nucleo) é aceito em
   todas as listas. A regra está em scripts/conferencias/regras.py (tests/python/test_conferencias.py).
 */
-const RETRATO = readFileSync("supabase/esquema-atual.sql", "utf8").replace(
-  /\r/g,
-  "",
-);
+  const RETRATO = readFileSync("supabase/esquema-atual.sql", "utf8").replace(
+    /\r/g,
+    "",
+  );
 
-function corpo(funcao: string) {
-  const i = RETRATO.indexOf(`CREATE FUNCTION ${funcao}`);
-  expect(i, funcao).toBeGreaterThanOrEqual(0);
-  const resto = RETRATO.slice(i);
-  const achado = /AS (\$[A-Za-z_]*\$)/.exec(resto);
-  const tag = achado?.[1];
-  if (!achado || !tag) throw new Error(`sem corpo: ${funcao}`);
-  const ini = achado.index + achado[0].length;
-  return resto.slice(ini, resto.indexOf(tag, ini));
-}
+  function corpo(funcao: string) {
+    const i = RETRATO.indexOf(`CREATE FUNCTION ${funcao}`);
+    expect(i, funcao).toBeGreaterThanOrEqual(0);
+    const resto = RETRATO.slice(i);
+    const achado = /AS (\$[A-Za-z_]*\$)/.exec(resto);
+    const tag = achado?.[1];
+    if (!achado || !tag) throw new Error(`sem corpo: ${funcao}`);
+    const ini = achado.index + achado[0].length;
+    return resto.slice(ini, resto.indexOf(tag, ini));
+  }
 
-const LISTA =
-  "('analises', 'entrevistas', 'classificacao', 'aprovados', 'cargas', 'editais')";
+  const LISTA =
+    "('analises', 'entrevistas', 'classificacao', 'aprovados', 'cargas', 'editais')";
 
-describe("aviso de cronograma encerrado no retrato do banco", () => {
-  it("o contexto traz o cronograma pelas datas, o status manual e o treinamento", () => {
-    const sql = corpo("public.conferencia_ler_contexto(");
-    expect(sql).toContain('private."FC_ESTADO_DO_CRONOGRAMA"(m.id');
-    expect(sql).toContain("'status_manual'");
-    expect(sql).toContain("'treinamento'");
+  describe("aviso de cronograma encerrado no retrato do banco", () => {
+    it("o contexto traz o cronograma pelas datas, o status manual e o treinamento", () => {
+      const sql = corpo("public.conferencia_ler_contexto(");
+      expect(sql).toContain('private."FC_ESTADO_DO_CRONOGRAMA"(m.id');
+      expect(sql).toContain("'status_manual'");
+      expect(sql).toContain("'treinamento'");
+    });
+
+    it("o módulo editais é aceito em todas as listas e lê o recurso nucleo; a tela também o conhece", () => {
+      for (const f of [
+        'private."FC_MARCA_DA_RPC"(',
+        "public.gravar_avisos_conferencia(",
+        "public.listar_avisos_conferencia(",
+        "public.listar_casos_aviso_conferencia(",
+      ])
+        expect(corpo(f), f).toContain(LISTA);
+      expect(corpo('private."FC_CONFERENCIA_RECURSO"(')).toContain(
+        "when 'editais' then 'nucleo'",
+      );
+      expect(RETRATO).toMatch(
+        /CONSTRAINT "CK_AVISOCONF_COMODULO" CHECK .*'editais'/,
+      );
+      expect(MODULOS_DOS_AVISOS.map((m) => m.valor)).toContain("editais");
+    });
   });
-
-  it("o módulo editais é aceito em todas as listas e lê o recurso nucleo; a tela também o conhece", () => {
-    for (const f of [
-      'private."FC_MARCA_DA_RPC"(',
-      "public.gravar_avisos_conferencia(",
-      "public.listar_avisos_conferencia(",
-      "public.listar_casos_aviso_conferencia(",
-    ])
-      expect(corpo(f), f).toContain(LISTA);
-    expect(corpo('private."FC_CONFERENCIA_RECURSO"(')).toContain(
-      "when 'editais' then 'nucleo'",
-    );
-    expect(RETRATO).toMatch(
-      /CONSTRAINT "CK_AVISOCONF_COMODULO" CHECK .*'editais'/,
-    );
-    expect(MODULOS_DOS_AVISOS.map((m) => m.valor)).toContain("editais");
-  });
-});
 });
 
 bloco("central-de-avisos-no-retrato", () => {
-/*
+  /*
   A CENTRAL DE AVISOS NO BANCO (migration 20261118140000, aplicada em 18/11/2026)
 
   Pelo retrato do banco (supabase/esquema-atual.sql): o tratamento separado da situação, o histórico
   que só cresce, as evidências, as RPCs da tela (as mesmas do contrato) e a rechecagem que não apaga
   o motivo de quem tratou. O comportamento foi ensaiado no banco antes da aplicação.
 */
-const RETRATO = readFileSync("supabase/esquema-atual.sql", "utf8").replace(
-  /\r/g,
-  "",
-);
+  const RETRATO = readFileSync("supabase/esquema-atual.sql", "utf8").replace(
+    /\r/g,
+    "",
+  );
 
-function corpo(funcao: string) {
-  const i = RETRATO.indexOf(`CREATE FUNCTION ${funcao}`);
-  expect(i, funcao).toBeGreaterThanOrEqual(0);
-  const resto = RETRATO.slice(i);
-  const achado = /AS (\$[A-Za-z_]*\$)/.exec(resto);
-  const tag = achado?.[1];
-  if (!achado || !tag) throw new Error(`sem corpo: ${funcao}`);
-  const ini = achado.index + achado[0].length;
-  return resto.slice(ini, resto.indexOf(tag, ini));
-}
+  function corpo(funcao: string) {
+    const i = RETRATO.indexOf(`CREATE FUNCTION ${funcao}`);
+    expect(i, funcao).toBeGreaterThanOrEqual(0);
+    const resto = RETRATO.slice(i);
+    const achado = /AS (\$[A-Za-z_]*\$)/.exec(resto);
+    const tag = achado?.[1];
+    if (!achado || !tag) throw new Error(`sem corpo: ${funcao}`);
+    const ini = achado.index + achado[0].length;
+    return resto.slice(ini, resto.indexOf(tag, ini));
+  }
 
-describe("central de avisos no retrato do banco", () => {
-  it("tratamento, responsável e prazo no aviso; histórico e evidência em tabelas próprias", () => {
-    const aviso = RETRATO.slice(
-      RETRATO.indexOf('CREATE TABLE public."TB_AVISO_CONFERENCIA" ('),
-    );
-    const colunas = aviso.slice(0, aviso.indexOf("\n);"));
-    for (const coluna of [
-      '"TP_TRATAMENTO"',
-      '"CO_USUARIO_RESPONSAVEL"',
-      '"DT_PRAZO"',
-      '"QT_OCORRENCIA_DISPENSADA"',
-    ])
-      expect(colunas).toContain(coluna);
-    expect(colunas).not.toContain("IGNORADO");
-    expect(RETRATO).toContain('CREATE TABLE public."TH_AVISO_CONFERENCIA" (');
-    expect(RETRATO).toContain(
-      'CREATE TABLE public."TB_EVIDENCIA_AVISO_CONFERENCIA" (',
-    );
+  describe("central de avisos no retrato do banco", () => {
+    it("tratamento, responsável e prazo no aviso; histórico e evidência em tabelas próprias", () => {
+      const aviso = RETRATO.slice(
+        RETRATO.indexOf('CREATE TABLE public."TB_AVISO_CONFERENCIA" ('),
+      );
+      const colunas = aviso.slice(0, aviso.indexOf("\n);"));
+      for (const coluna of [
+        '"TP_TRATAMENTO"',
+        '"CO_USUARIO_RESPONSAVEL"',
+        '"DT_PRAZO"',
+        '"QT_OCORRENCIA_DISPENSADA"',
+      ])
+        expect(colunas).toContain(coluna);
+      expect(colunas).not.toContain("IGNORADO");
+      expect(RETRATO).toContain('CREATE TABLE public."TH_AVISO_CONFERENCIA" (');
+      expect(RETRATO).toContain(
+        'CREATE TABLE public."TB_EVIDENCIA_AVISO_CONFERENCIA" (',
+      );
+    });
+
+    it("as RPCs da tela existem com os argumentos do contrato; a de ignorar saiu", () => {
+      for (const nome of [
+        "tratar_aviso_conferencia",
+        "atribuir_aviso_conferencia",
+        "listar_responsaveis_aviso_conferencia",
+        "incluir_evidencia_aviso_conferencia",
+        "retirar_evidencia_aviso_conferencia",
+        "listar_historico_aviso_conferencia",
+      ]) {
+        const assinatura = new RegExp(
+          `CREATE FUNCTION public\\.${nome}\\(([^)]*)\\)`,
+        ).exec(RETRATO)?.[1];
+        expect(assinatura, nome).toBeDefined();
+        const argumentos = (assinatura ?? "")
+          .split(",")
+          .map((p) => p.trim().split(/\s+/)[0]);
+        expect(argumentos, nome).toEqual(CONTRATO_RPC[nome]?.argumentos);
+      }
+      expect(RETRATO).not.toContain(
+        "CREATE FUNCTION public.ignorar_aviso_conferencia(",
+      );
+    });
+
+    it("a rechecagem resolve sem apagar o motivo e grava o histórico", () => {
+      const finalizar = corpo("public.finalizar_conferencia(");
+      expect(finalizar).toContain("'RECHECADO_SEM_PROBLEMA'");
+      expect(finalizar).toContain("'NAO_ACHADO'");
+      const gravar = corpo("public.gravar_avisos_conferencia(");
+      expect(gravar).toContain("'RECHECADO_COM_PROBLEMA'");
+      expect(gravar).toContain('"QT_OCORRENCIA_DISPENSADA"');
+    });
   });
-
-  it("as RPCs da tela existem com os argumentos do contrato; a de ignorar saiu", () => {
-    for (const nome of [
-      "tratar_aviso_conferencia",
-      "atribuir_aviso_conferencia",
-      "listar_responsaveis_aviso_conferencia",
-      "incluir_evidencia_aviso_conferencia",
-      "retirar_evidencia_aviso_conferencia",
-      "listar_historico_aviso_conferencia",
-    ]) {
-      const assinatura = new RegExp(
-        `CREATE FUNCTION public\\.${nome}\\(([^)]*)\\)`,
-      ).exec(RETRATO)?.[1];
-      expect(assinatura, nome).toBeDefined();
-      const argumentos = (assinatura ?? "")
-        .split(",")
-        .map((p) => p.trim().split(/\s+/)[0]);
-      expect(argumentos, nome).toEqual(CONTRATO_RPC[nome]?.argumentos);
-    }
-    expect(RETRATO).not.toContain(
-      "CREATE FUNCTION public.ignorar_aviso_conferencia(",
-    );
-  });
-
-  it("a rechecagem resolve sem apagar o motivo e grava o histórico", () => {
-    const finalizar = corpo("public.finalizar_conferencia(");
-    expect(finalizar).toContain("'RECHECADO_SEM_PROBLEMA'");
-    expect(finalizar).toContain("'NAO_ACHADO'");
-    const gravar = corpo("public.gravar_avisos_conferencia(");
-    expect(gravar).toContain("'RECHECADO_COM_PROBLEMA'");
-    expect(gravar).toContain('"QT_OCORRENCIA_DISPENSADA"');
-  });
-});
 });
 
 bloco("cronograma-encerrado-na-visao-geral", () => {
-/*
+  /*
   Item 3 da conferência de 17/11/2026: o status "Concluído" que a Visão geral
   recebe é o calculado pelas datas. Com o cálculo automático, ele só diz que a
   última data do cronograma passou, não que o resultado saiu nem que o
@@ -5408,93 +5566,96 @@ bloco("cronograma-encerrado-na-visao-geral", () => {
   (pós-resultado, ociosas) seguem valendo.
 */
 
-const HOJE = "2026-11-18";
+  const HOJE = "2026-11-18";
 
-const AUTOMATICO = {
-  id: "a",
-  edital: "42/2026",
-  unidade: "DSEI Fictício A",
-  status: "Concluído",
-  etapa: "Resultado final do Processo Seletivo",
-  cronograma_automatico: true,
-  vagas_total: 10,
-  contratados: 2,
-  data_fim: "2026-07-31",
-};
-const MANUAL = {
-  ...AUTOMATICO,
-  id: "m",
-  edital: "13/2025",
-  cronograma_automatico: false,
-};
-const ABERTO = {
-  id: "b",
-  edital: "120/2026",
-  unidade: "DSEI Fictício B",
-  status: "Em andamento",
-  etapa: "Entrevistas",
-  cronograma_automatico: true,
-  data_fim: "2027-01-21",
-};
+  const AUTOMATICO = {
+    id: "a",
+    edital: "42/2026",
+    unidade: "DSEI Fictício A",
+    status: "Concluído",
+    etapa: "Resultado final do Processo Seletivo",
+    cronograma_automatico: true,
+    vagas_total: 10,
+    contratados: 2,
+    data_fim: "2026-07-31",
+  };
+  const MANUAL = {
+    ...AUTOMATICO,
+    id: "m",
+    edital: "13/2025",
+    cronograma_automatico: false,
+  };
+  const ABERTO = {
+    id: "b",
+    edital: "120/2026",
+    unidade: "DSEI Fictício B",
+    status: "Em andamento",
+    etapa: "Entrevistas",
+    cronograma_automatico: true,
+    data_fim: "2027-01-21",
+  };
 
-describe("cronograma encerrado não é processo concluído", () => {
-  it("status: automático vira 'Cronograma encerrado'; o digitado à mão fica", () => {
-    expect(statusDaVisaoGeral(AUTOMATICO)).toBe("Cronograma encerrado");
-    expect(statusDaVisaoGeral(MANUAL)).toBe("Concluído");
-    expect(statusDaVisaoGeral(ABERTO)).toBe("Em andamento");
-    expect(statusDaVisaoGeral({ status: "Cancelado" })).toBe("Cancelado");
-  });
-
-  it("linhas enriquecidas: status e fase dizem 'Cronograma encerrado'", () => {
-    const [auto, manual, aberto] = enriquecerLinhas(
-      [AUTOMATICO, MANUAL, ABERTO],
-      { hoje: HOJE },
-    );
-    expect([auto?.status, auto?.fase]).toEqual([
-      "Cronograma encerrado",
-      "Cronograma encerrado",
-    ]);
-    expect([manual?.status, manual?.fase]).toEqual(["Concluído", "Concluído"]);
-    expect(aberto?.status).toBe("Em andamento");
-    // O fim do cronograma continua contando (pós-resultado e ociosas).
-    expect(ehConcluido(auto)).toBe(true);
-    expect(temResultado(auto ?? {})).toBe(true);
-  });
-
-  it("filtros, CSV e o bloco de fases usam o mesmo texto", () => {
-    const linhas = enriquecerLinhas([AUTOMATICO, MANUAL, ABERTO], {
-      hoje: HOJE,
+  describe("cronograma encerrado não é processo concluído", () => {
+    it("status: automático vira 'Cronograma encerrado'; o digitado à mão fica", () => {
+      expect(statusDaVisaoGeral(AUTOMATICO)).toBe("Cronograma encerrado");
+      expect(statusDaVisaoGeral(MANUAL)).toBe("Concluído");
+      expect(statusDaVisaoGeral(ABERTO)).toBe("Em andamento");
+      expect(statusDaVisaoGeral({ status: "Cancelado" })).toBe("Cancelado");
     });
-    const opcoes = opcoesDosFiltros(linhas, filtrosVazios());
-    expect(opcoes.status).toEqual([
-      "Em andamento",
-      "Cronograma encerrado",
-      "Concluído",
-    ]);
-    expect(opcoes.fase).toContain("Cronograma encerrado");
-    expect(csvDaVisaoGeral(linhas)).toContain('"Cronograma encerrado"');
-    expect(andamentoPorFase(linhas)).toMatchObject({
-      encerrados: 1,
-      concluidos: 1,
-      cancelados: 0,
+
+    it("linhas enriquecidas: status e fase dizem 'Cronograma encerrado'", () => {
+      const [auto, manual, aberto] = enriquecerLinhas(
+        [AUTOMATICO, MANUAL, ABERTO],
+        { hoje: HOJE },
+      );
+      expect([auto?.status, auto?.fase]).toEqual([
+        "Cronograma encerrado",
+        "Cronograma encerrado",
+      ]);
+      expect([manual?.status, manual?.fase]).toEqual([
+        "Concluído",
+        "Concluído",
+      ]);
+      expect(aberto?.status).toBe("Em andamento");
+      // O fim do cronograma continua contando (pós-resultado e ociosas).
+      expect(ehConcluido(auto)).toBe(true);
+      expect(temResultado(auto ?? {})).toBe(true);
+    });
+
+    it("filtros, CSV e o bloco de fases usam o mesmo texto", () => {
+      const linhas = enriquecerLinhas([AUTOMATICO, MANUAL, ABERTO], {
+        hoje: HOJE,
+      });
+      const opcoes = opcoesDosFiltros(linhas, filtrosVazios());
+      expect(opcoes.status).toEqual([
+        "Em andamento",
+        "Cronograma encerrado",
+        "Concluído",
+      ]);
+      expect(opcoes.fase).toContain("Cronograma encerrado");
+      expect(csvDaVisaoGeral(linhas)).toContain('"Cronograma encerrado"');
+      expect(andamentoPorFase(linhas)).toMatchObject({
+        encerrados: 1,
+        concluidos: 1,
+        cancelados: 0,
+      });
+    });
+
+    it("prazo e selo: 'Cronograma encerrado', ou 'Processo concluído' só no manual", () => {
+      expect(prazoDoEdital(AUTOMATICO, HOJE)?.rotulo).toBe(
+        "Cronograma encerrado",
+      );
+      expect(prazoDoEdital(MANUAL, HOJE)?.rotulo).toBe("Processo concluído");
+      expect(urgenciaDoCronograma(AUTOMATICO, HOJE)).toEqual({
+        tom: "done",
+        rotulo: "Cronograma encerrado",
+      });
+    });
+
+    it("a fase reconhece o status já trocado", () => {
+      expect(faseDoEdital({ status: "Cronograma encerrado" })).toBe(
+        "Cronograma encerrado",
+      );
     });
   });
-
-  it("prazo e selo: 'Cronograma encerrado', ou 'Processo concluído' só no manual", () => {
-    expect(prazoDoEdital(AUTOMATICO, HOJE)?.rotulo).toBe(
-      "Cronograma encerrado",
-    );
-    expect(prazoDoEdital(MANUAL, HOJE)?.rotulo).toBe("Processo concluído");
-    expect(urgenciaDoCronograma(AUTOMATICO, HOJE)).toEqual({
-      tom: "done",
-      rotulo: "Cronograma encerrado",
-    });
-  });
-
-  it("a fase reconhece o status já trocado", () => {
-    expect(faseDoEdital({ status: "Cronograma encerrado" })).toBe(
-      "Cronograma encerrado",
-    );
-  });
-});
 });
