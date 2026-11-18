@@ -33,6 +33,11 @@ export type {
 } from "./caixa-de-marcar-todos.tsx";
 export { Campo } from "./campo.tsx";
 export type { PropriedadesDoCampo } from "./campo.tsx";
+export { ContagemDaAba, formatarContagem } from "./contagem-da-aba.tsx";
+export type {
+  PropriedadesDaContagemDaAba,
+  ValorDaContagem,
+} from "./contagem-da-aba.tsx";
 export { CardDeGrafico } from "./card-de-grafico.tsx";
 export type { PropriedadesDoCardDeGrafico } from "./card-de-grafico.tsx";
 export { classes } from "./classes.ts";
@@ -129,6 +134,8 @@ export type {
   PropriedadesDoSegmentado,
 } from "./segmentado.tsx";
 export { Selo } from "./selo.tsx";
+export { SeloDePrazo } from "./selo-de-prazo.tsx";
+export type { PropriedadesDoSeloDePrazo } from "./selo-de-prazo.tsx";
 export type { PropriedadesDoSelo } from "./selo.tsx";
 export { MaisDaCarga, usarCargaContinua } from "./carga-continua.tsx";
 export type { CargaContinua } from "./carga-continua.tsx";

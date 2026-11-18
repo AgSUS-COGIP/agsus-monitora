@@ -18,7 +18,7 @@ export type ErrosDoModelo = Partial<
   Os marcadores são os de private."FC_MARCADORES_MODELO_RESPOSTA"()
   (supabase/migrations/20260929230000_recursos_modelos_anexos_respostas.sql):
   o banco recusa modelo com marcador fora desta lista, e
-  tests/modelos-de-resposta.test.js confere que as duas listas são iguais.
+  tests/avaliacao-e-recursos.test.js (bloco modelos-de-resposta) confere que as duas listas são iguais.
 
   O texto é texto puro. `renderizarModelo` só troca `{marcador}` pelo valor,
   numa passada: um valor que traga `{outro}` ou `<b>` fica como está, sem

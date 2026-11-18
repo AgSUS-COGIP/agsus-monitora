@@ -324,7 +324,7 @@ body:not(.access-request-mode) .login-screen,
   /* Paleta do rio (a arte da tela de acesso), de apoio às cores do manual:
      floresta, folha, rio, terracota, ocre e areia. O par de texto (a cor
      sobre o `-suave` e sobre o card) passa de 4,5:1 nos dois temas
-     (`tests/paleta-do-rio.test.ts` calcula); `--paleta-ocre-vivo` é só
+     (`tests/repositorio-e-banco.test.ts` (bloco `paleta-do-rio`) calcula); `--paleta-ocre-vivo` é só
      preenchimento decorativo (2,3:1 sobre o branco), nunca texto nem ícone.
      Os `-claro` são os tons para fundo escuro (a barra lateral escura). */
   --paleta-floresta: #17493b;
@@ -348,7 +348,7 @@ body:not(.access-request-mode) .login-screen,
   /* Terras Indígenas (domínio, não paleta): as mesmas
      constantes de `indigenous-territories-layer.js` — o botão da camada e a
      legenda do mapa da Saúde Indígena leem daqui
-     (`tests/cor-da-terra-indigena.test.js` confere). */
+     (`tests/mapas-e-visao-geral.test.js` (bloco `cor-da-terra-indigena`) confere). */
   --terra-definitiva: #7a4a1f;
   --terra-fundo: #d6b07a;
   --terra-em-processo: #c8520f;

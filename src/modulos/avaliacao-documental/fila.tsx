@@ -1558,7 +1558,7 @@ export function Fila({ e, fila }: FilaProps) {
     114/2026) ficam em memória e só se refazem quando a lista (ou a vaga do
     filtro) muda: selecionar, trocar outro filtro, abrir um menu ou uma
     mensagem do estado não os recontam. Os testes de contagem estão em
-    tests/modulos/avaliacao-documental-fila-renders.test.js.
+    tests/telas-com-modulo-simulado-na-tela.test.js (bloco modulos/avaliacao-documental-fila-renders).
   */
   const posicaoNaFila = useMemo(
     () => new Map(todos.map((c, i) => [c.id, i])),

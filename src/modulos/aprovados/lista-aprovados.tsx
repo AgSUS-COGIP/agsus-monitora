@@ -32,7 +32,12 @@ import { PLANILHAS } from "../../lib/base/planilhas.ts";
 import { formatarDataHora } from "../../lib/cronograma/cronograma-do-edital.ts";
 import { soDosEditais } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
-import { classes, ErroAoCarregar, TopoDoPainel } from "../../ui/index.ts";
+import {
+  classes,
+  ContagemDaAba,
+  ErroAoCarregar,
+  TopoDoPainel,
+} from "../../ui/index.ts";
 import { AbaAprovados } from "./aba-aprovados.tsx";
 import { AbaConvocacao } from "./aba-convocacao.tsx";
 import { AbaResumo } from "./aba-resumo.tsx";
@@ -138,15 +143,22 @@ function textoDoStatus({
     : "Base carregada";
 }
 
-/* As duas visões: abas (tablist) com o visual do controle segmentado. */
+/*
+  As visões: abas (tablist) com o visual do controle segmentado. A contagem
+  ao lado do rótulo (ContagemDaAba): os aprovados no recorte e as pendências
+  abertas (em alerta); some no zero.
+*/
 function Visoes({
   aba,
   aoMudar,
+  aprovados = 0,
   pendencias = 0,
 }: {
   aba: AbaDosAprovados;
   aoMudar: (aba: AbaDosAprovados) => void;
-  /** Pendências abertas: o selo da aba (some no zero). */
+  /** Candidatos no recorte da aba Aprovados. */
+  aprovados?: number;
+  /** Pendências abertas. */
   pendencias?: number;
 }) {
   return (
@@ -174,14 +186,15 @@ function Visoes({
         >
           <i className={`fa-solid ${item.icone}`} aria-hidden="true" />
           {item.rotulo}
-          {item.nome === "pendencias" && pendencias > 0 ? (
-            <span
-              className="approved-selo-da-aba"
+          {item.nome === "aprovados" ? (
+            <ContagemDaAba valor={aprovados} id="approvedAprovadosContagem" />
+          ) : null}
+          {item.nome === "pendencias" ? (
+            <ContagemDaAba
+              valor={pendencias}
+              tom="alerta"
               id="approvedPendenciasSelo"
-              aria-label={`${pendencias} abertas`}
-            >
-              {pendencias}
-            </span>
+            />
           ) : null}
         </button>
       ))}
@@ -456,6 +469,7 @@ export function ListaAprovados({
           <Visoes
             aba={aba}
             aoMudar={setAba}
+            aprovados={filtrados.length}
             pendencias={contarAbertas(dadosDasPendencias.pendencias).total}
           />
         }

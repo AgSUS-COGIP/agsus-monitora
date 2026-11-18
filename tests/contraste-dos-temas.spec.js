@@ -6,7 +6,7 @@ import { expect, test } from "@playwright/test";
 
   Por que existe: no tema escuro, o balão das mensagens próprias do chat ficou
   quase branco com texto claro — os tokens oficiais `--color-*` não tinham
-  valor escuro. `tests/cores-so-por-token.test.js` guarda a origem (cor literal
+  valor escuro. `tests/repositorio-e-banco.test.js` (bloco `cores-so-por-token`) guarda a origem (cor literal
   nova, token sem valor escuro); este guarda o resultado na tela: monta uma
   vitrine com os pares de cor do sistema (botões, alertas, selos, campo,
   tabela, superfícies e estados oficiais) e mede a razão WCAG de cada texto

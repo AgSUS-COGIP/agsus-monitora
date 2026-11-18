@@ -90,8 +90,9 @@ Tabela, alertas, formulário e linha do tempo. A tela é `nucleo.tsx`; o estado 
 - O botão de listas ganha aviso pelo status (`src/lib/editais/aprovados-por-edital.ts`): Cancelado ou
   Suspenso → vermelho, "Edital cancelado" / "Edital suspenso"; Concluído sem candidato aprovado
   (sem lista vigente ou com ela vazia, por `listar_listas_aprovados`, relida a cada abertura e no
-  Atualizar) → amarelo, "Nenhum candidato foi aprovado neste edital". O aviso é a legenda do botão,
-  e o clique o mostra num toast em vez de abrir as listas.
+  Atualizar) → amarelo, "Nenhum candidato foi aprovado neste edital". O aviso é a legenda do botão.
+  No vermelho, o clique mostra o aviso num toast em vez de abrir as listas; no amarelo, o clique
+  abre o modal das listas normalmente, sem toast (para importar a lista do edital concluído).
 
 ### Leitura do PDF (`api/anexos-do-edital.py`)
 
@@ -158,7 +159,7 @@ conta, avisados pelos marcos de `src/modulos/analises/marcos.ts`. Banco: migrati
   datas coladas em lote), `cronograma/retificacao-do-cronograma.ts` (casa o "Leia-se" com as etapas gravadas:
   igual, data muda, nova, sumiu; número da errata e motivo com o SEI), `editais/validade-do-edital.ts`,
   `regras-do-edital/regras-do-edital.ts`, `encerramento-do-edital/encerramento-do-edital.ts` (leitura, tela a mostrar, selos e fogos).
-- Testes: `tests/componentes/nucleo.test.ts` e `tests/editais-do-nucleo.test.js` citam as
+- Testes: `tests/editais-cargas-e-paineis-na-tela.test.ts` (bloco `componentes/nucleo`) e `tests/editais-cargas-e-paineis.test.js` (bloco `editais-do-nucleo`) citam as
   [histórias de usuário de Editais](../historias-de-usuario/editais.md) (ED-1, ED-2).
 - Explicações para quem usa: [regras-dos-editais](../aya/regras-dos-editais.md) (a explicação mora
   lá, não na interface).

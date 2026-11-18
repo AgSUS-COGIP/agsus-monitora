@@ -1135,7 +1135,11 @@ th[aria-sort="descending"] .ui-ordenar i {
 .ui-aba i {
   font-size: var(--text-body);
 }
+/* O número da aba ou da opção (ContagemDaAba): informa; "alerta" pede ação. */
 .ui-aba-contagem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: 20px;
   padding: 0 var(--space-1-5);
   border-radius: var(--radius-sm);
@@ -1144,6 +1148,11 @@ th[aria-sort="descending"] .ui-ordenar i {
   font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
   font-variant-numeric: tabular-nums;
+}
+.ui-aba-contagem[data-tom="alerta"] {
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+  font-weight: var(--font-weight-semibold);
 }
 
 /* ── Segmentado ────────────────────────────────────────────────────── */

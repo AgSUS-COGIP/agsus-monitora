@@ -16,7 +16,7 @@
                       A chave é "<resposta>:<pergunta>:<arquivo>:<posição do item>";
                       o banco confere as duas (FC_VALIDAR_LEITURAS_LANCAMENTO).
   A pontuação continua a das linhas aceitas (a conta da ficha e a do banco).
-  Sem DOM e sem estado. Testes: tests/lib/avaliacao-documental-leitura-dos-arquivos.test.js.
+  Sem DOM e sem estado. Testes: tests/avaliacao-e-recursos.test.js (bloco lib/avaliacao-documental-leitura-dos-arquivos).
 */
 import { itemCompleto } from "./ficha.ts";
 import { fimDoVinculoAtual } from "./datas-do-vinculo.ts";

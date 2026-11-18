@@ -33,12 +33,15 @@ API completa (uma linha por componente) está em [docs/arquitetura-react.md](../
 | Listas e tabelas | `TabelaInfinita` (50 por vez, avisa `agsus:content-updated`), `CardDaLista` + `TabelaDaLista`, `BarraDaLista`, `usarCargaContinua` + `MaisDaCarga` |
 | Camadas          | `Gaveta`, `TopoDaGaveta`, `Modal` (portal, Esc, foco preso), `Popover`, `MenuDeAcoes`                                                              |
 | Detalhe          | `Secao`, `Kv`, `GradeDeKv`                                                                                                                         |
-| Formulário       | `Campo` (liga o rótulo ao controle), `Segmentado` (radiogroup), `Abas` (tablist)                                                                   |
+| Formulário       | `Campo` (liga o rótulo ao controle), `Segmentado` (radiogroup), `Abas` (tablist), `ContagemDaAba` (o número no rótulo)                             |
 | Estados          | `EstadoVazio`, `Carregando`, `CarregandoConteudo`, `ErroAoCarregar`, `LinhasEsqueleto`, `BlocosEsqueleto`, `Aviso`, `Selo`                         |
 | Ações            | `BotaoDeAcao` (ação que escreve no banco), `AcoesDaLinha`                                                                                          |
 | Seleção em lote  | `BarraDeSelecao` ("Selecionar esta página (N)" ≠ "Selecionar todos os N resultados"; a página vem de `aoMostrar` da tabela; textos em `lib/base/alcance-da-selecao.ts`, a confirmação diz quantos serão afetados) |
 | Telas da seleção | `CabecalhoDaTela`, `BarraDaLista`, `FaixaDeSituacao`, `CardDaLista`                                                                                |
 | Utilitários      | `usarEstadoDaSessao` (filtros voltam no F5), `classes(...)`                                                                                        |
+
+Prazos: `SeloDePrazo` diz quanto falta para uma data ("Vence em 12 dias", "Venceu há 3 dias") com
+o tom da faixa (vencido, menos de 30, 90 ou 180 dias); a lógica é `src/lib/base/prazos.ts`.
 
 Nas telas com `CabecalhoDaTela` (`tituloNaTela` em `src/lib/navegacao/rotas.ts`: Conduzir entrevistas,
 Classificação, Avaliação documental e Triagem), a faixa do topo do app (`header.top`) fica compacta
@@ -71,7 +74,7 @@ por vez e mais 50 ao rolar: `TabelaInfinita` ou `TabelaDaLista` para tabela simp
 por dia ou por vaga e cartões, `usarCargaContinua(recorte, total)` + `MaisDaCarga` depois da lista,
 com `gruposAteOLimite` (`src/lib/carga/carga-continua.ts`) cortando os blocos. O `recorte` é estável
 (lista memorizada ou chave dos filtros): recriado a cada desenho, a lista volta sempre aos 50.
-Exportação continua com tudo. Guarda: `tests/ui/carga-continua.test.ts`.
+Exportação continua com tudo. Guarda: `tests/casca-sessao-e-interface-na-tela.test.ts` (bloco `ui/carga-continua`).
 
 ## Carregando não é cartão em branco
 
@@ -79,7 +82,7 @@ Bloco que espera uma leitura (o edital escolhido, a fila, a regra…) usa
 `CarregandoConteudo` com o que está carregando por escrito ("Carregando o edital 93/2026…"):
 indicador girando, linhas de esqueleto e `role="status"`; `semMoldura` dentro de um cartão.
 Nunca um `.ui-card` com `.ui-esqueleto-linha` soltas: até 10/11/2026 elas não tinham a classe
-base e a tela ficava segundos num cartão vazio (#732). Guarda: `tests/ui/carregando-conteudo.test.ts`.
+base e a tela ficava segundos num cartão vazio (#732). Guarda: `tests/casca-sessao-e-interface-na-tela.test.ts` (bloco `ui/carregando-conteudo`).
 
 ## Ícones
 
@@ -101,7 +104,7 @@ Onde fica:
   (`scripts/gerar-icones-lucide.mjs`): cada classe `fa-…` vira uma máscara no `::before` do `<i>`
   (`mask-image` com o SVG, `background-color: currentColor`), então segue a cor do texto.
   `img-src data:` já é permitido pela CSP (`vercel.json`). Ícone novo com classe `fa-…`: acrescente
-  o par no mapa e rode `npm run icones`; `tests/icones-lucide.test.js` falha se faltar. Não edite o
+  o par no mapa e rode `npm run icones`; `tests/editais-cargas-e-paineis.test.js` (bloco `icones-lucide`) falha se faltar. Não edite o
   CSS à mão.
 
 Regras:

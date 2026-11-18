@@ -4,7 +4,7 @@ import { expect, test } from "@playwright/test";
   Protege no navegador real o que os testes unitários não alcançam: a aparência
   do aviso global depois do bundle, com a cascata toda aplicada.
 
-  A decisão (`avisoGlobal()`) é coberta em `tests/aviso-global.test.js`. Aqui
+  A decisão (`avisoGlobal()`) é coberta em `tests/editais-cargas-e-paineis-na-tela.test.js` (bloco `aviso-global`). Aqui
   verificamos o outro lado: que as três severidades chegam visualmente
   distintas, legíveis, e que a faixa não transborda no telemóvel.
 

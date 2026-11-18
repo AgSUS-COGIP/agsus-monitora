@@ -1,7 +1,7 @@
 """
 A conta da ficha em Python (python/monitora/avaliacao_documental/pontuacao.py):
 os MESMOS casos dourados do vitest (tests/fixtures/avaliacao-documental/
-casos-de-pontuacao.json, tests/lib/avaliacao-documental-pontuacao.test.js),
+casos-de-pontuacao.json, tests/avaliacao-e-recursos.test.js (bloco lib/avaliacao-documental-pontuacao)),
 incluindo a nota ajustada com justificativa da fase F4, e a conferência em
 lote do que a ficha gravou. Nada fala com o Supabase.
 

@@ -94,7 +94,7 @@ todos os editais da área".
 - O espelho é montado em `src/lib/avaliacao-documental/espelho-de-nota.ts` a partir de
   `espelho-da-ficha-gravada.ts` (a mesma entrada dos espelhos em massa e da gaveta do Painel das
   análises); o PDF é `espelho-em-pdf.ts` (jsPDF + autotable, sob demanda), com impressão digital em
-  `tests/lib/avaliacao-documental-espelho-visual.test.ts`; o ZIP usa fflate.
+  `tests/demais-telas-na-tela.test.ts` (bloco `lib/avaliacao-documental-espelho-visual`); o ZIP usa fflate.
 - **Modelo do espelho**: os textos da folha (título, saudação com `{candidato}`, nomes dos quadros,
   rótulos, rodapé…) são do edital; a coordenação edita em Documentos › "Modelo e pré-visualização",
   com prévia e "Restaurar padrão". Todos os espelhos leem o modelo na hora (`textosParaOEspelho`;
