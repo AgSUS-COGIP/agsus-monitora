@@ -6801,7 +6801,7 @@ bloco("modulos/visao-geral", async () => {
         tr.textContent.includes("Yanomami"),
       );
       expect(yanomami.querySelector("a")).toBeNull();
-      expect(yanomami.textContent).toContain("Processo concluído");
+      expect(yanomami.textContent).toContain("Cronograma encerrado");
     });
 
     it("observação longa abre com 'Ver mais'", async () => {

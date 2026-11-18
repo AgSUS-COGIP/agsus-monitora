@@ -24,6 +24,11 @@ import {
   enriquecerLinhas,
   filtrosVazios,
   valorParaOrdenar,
+  descricaoDoCronograma,
+  prazoDoEdital,
+  seloDoCronograma,
+  temCronogramaCadastrado,
+  urgenciaDoCronograma,
 } from "../src/lib/visao-geral/visao-geral.ts";
 import {
   descreverAgenda,
@@ -74,6 +79,7 @@ import {
   atividadeLimpa,
   cronogramaParaSalvar,
   novaEtapa,
+  type EtapaDoCronograma,
 } from "../src/lib/cronograma/cronograma-do-edital.ts";
 import {
   contarEtapasNoIntervalo,
@@ -202,6 +208,24 @@ import {
   vencimentoDoEdital,
   type ValidadeDoFormulario,
 } from "../src/lib/editais/validade-do-edital.ts";
+import {
+  AUTOMATICO,
+  type Banco as Banco__DoCronograma,
+  DIVERGENTE,
+  MANUAL,
+  MIGRATION as MIGRATION__2,
+  SEM_ETAPAS,
+  bancoDeHoje as bancoDeHoje__3,
+  datasDoCadastro,
+  estado,
+  md5DoCorpo,
+  valor,
+} from "./apoio/banco-do-cronograma.ts";
+import {
+  avisosDeSequencia,
+  comSequencia,
+  marcarEtapas,
+} from "../src/lib/cronograma/sequencia-do-cronograma.ts";
 
 bloco("admissao-e-ciclo-na-visao-geral", () => {
   /*
@@ -5050,6 +5074,513 @@ bloco("validade-do-edital", () => {
       const antes = estadoComparavel({}, { validade: validade("1", "0") });
       const depois = estadoComparavel({}, { validade: validade("2", "0") });
       expect(depois).not.toBe(antes);
+    });
+  });
+});
+
+bloco("cronograma-manual-e-datas-do-cadastro-no-banco", () => {
+  type Banco = Banco__DoCronograma;
+  const MIGRATION = MIGRATION__2;
+  const bancoDeHoje = bancoDeHoje__3;
+  /*
+  Migration 20261117190000 (aplicada em 18/11/2026; o SQL em
+  tests/fixtures/sql-do-banco/) num Postgres de verdade (PGlite), antes × depois. Conferência de 17/11/2026:
+  1. O edital com cálculo manual e etapas (caso do 120/2026: 13 etapas, status
+     "Suspenso" digitado) não é "sem cronograma": o estado traz percentual,
+     próxima etapa e datas; o status e a etapa digitados continuam valendo.
+  2. As datas do cadastro acompanham as etapas quando o automático está ligado
+     (gatilho adiado ao fim da transação), e o acerto pontual refaz as que
+     divergem; o manual mantém as suas.
+*/
+
+  const LONGO = 60_000;
+  const DIA = "2026-11-17";
+  const ESTADO = 'private."FC_ESTADO_DO_CRONOGRAMA"(uuid, date)';
+  const RESUMO = "public.get_nucleo_cronograma_resumo()";
+
+  let db: Banco;
+  beforeAll(() => bancoDeHoje(), LONGO);
+  beforeEach(async () => {
+    db = await bancoDeHoje();
+  }, LONGO);
+
+  const migrar = () => db.exec(MIGRATION);
+  const semChavesNovas = (e: Record<string, unknown>) => {
+    const { calculo: _c, situacao: _s, ...resto } = e;
+    return resto;
+  };
+
+  describe("antes (o defeito da conferência)", () => {
+    it("o edital manual com 13 etapas sai como sem cronograma", async () => {
+      const e = await estado(db, MANUAL, DIA);
+      expect(e.tem_cronograma).toBe(false);
+      expect(e.percentual).toBe(0);
+      expect(e.proxima_atividade).toBeNull();
+    });
+
+    it("a guarda da migration reconhece os corpos de antes", async () => {
+      expect(await md5DoCorpo(db, ESTADO)).toBe(
+        "f1a2b05143c74861b1a4971f937ac9cf",
+      );
+      expect(await md5DoCorpo(db, RESUMO)).toBe(
+        "436e0e97170a4d8ee43e01705ff574fb",
+      );
+    });
+  });
+
+  describe("depois", () => {
+    beforeEach(() => migrar(), LONGO);
+
+    it("120/2026: etapas cadastradas, cálculo manual, suspenso", async () => {
+      const e = await estado(db, MANUAL, DIA);
+      expect(e).toMatchObject({
+        tem_cronograma: true,
+        calculo: "manual",
+        situacao: "suspenso",
+        status: "Suspenso",
+        total_etapas: 13,
+        etapas_concluidas: 2,
+        percentual: 15.4,
+        proxima_atividade: "Período de inscrição",
+        proxima_data: "2026-11-19",
+        dias_para_proxima: 2,
+        data_inicio: "2026-10-21",
+        data_fim: "2027-02-25",
+      });
+      // Sem etapa digitada, a calculada.
+      expect(e.etapa).toBe("Aguardando: Período de inscrição");
+    });
+
+    it("o status excepcional vale por cima do digitado", async () => {
+      await db.query(
+        `update public."TB_MONITORAMENTO_INDIGENA" set status_override = 'Paralisado' where id = $1`,
+        [MANUAL],
+      );
+      const e = await estado(db, MANUAL, DIA);
+      expect(e.status).toBe("Paralisado");
+      expect(e.situacao).toBe("paralisado");
+    });
+
+    it("o automático tem o mesmo estado de antes (mais cálculo e situação)", async () => {
+      const hoje = await bancoDeHoje();
+      for (const edital of [AUTOMATICO, DIVERGENTE]) {
+        const antes = await estado(hoje, edital, DIA);
+        const depois = await estado(db, edital, DIA);
+        expect(semChavesNovas(depois)).toEqual(antes);
+        expect(depois.calculo).toBe("automatico");
+        expect(depois.situacao).toBeNull();
+      }
+    });
+
+    it("sem etapas continua sem cronograma, com o status digitado", async () => {
+      const e = await estado(db, SEM_ETAPAS, DIA);
+      expect(e).toMatchObject({
+        tem_cronograma: false,
+        calculo: "manual",
+        situacao: null,
+        status: "Em andamento",
+        etapa: "Inscrições",
+        percentual: 0,
+      });
+    });
+
+    it("resumo do Núcleo: o manual suspenso é excepcional, não sem cronograma", async () => {
+      const resumo = await valor<Record<string, unknown>[]>(db, RESUMO);
+      const porId = new Map(resumo.map((r) => [r.id, r]));
+      expect(porId.get(MANUAL)).toMatchObject({
+        alerta_tipo: "excepcional",
+        tem_cronograma: true,
+        calculo: "manual",
+        situacao: "suspenso",
+      });
+      expect(porId.get(SEM_ETAPAS)).toMatchObject({
+        alerta_tipo: "sem_cronograma",
+        tem_cronograma: false,
+      });
+    });
+
+    it("o acerto refaz as datas do automático que divergiam, e só elas", async () => {
+      expect(await datasDoCadastro(db, DIVERGENTE)).toEqual({
+        inicio: "2026-09-08",
+        fim: "2026-12-03",
+      });
+      expect(await datasDoCadastro(db, AUTOMATICO)).toEqual({
+        inicio: "2026-06-16",
+        fim: "2026-08-12",
+      });
+      // O manual mantém as datas do cadastro, mesmo com etapas até 25/02/2027.
+      expect(await datasDoCadastro(db, MANUAL)).toEqual({
+        inicio: "2026-10-21",
+        fim: "2026-12-10",
+      });
+    });
+
+    it("o gatilho leva as datas do automático às etapas, por qualquer caminho", async () => {
+      // Errata: a última etapa muda de data.
+      await db.query(
+        `update public."TB_CRONOGRAMA_MONIT_INDIG" set data_fim = '2026-08-26', data_inicio = '2026-08-26'
+        where monitoramento_id = $1 and ordem = 2`,
+        [AUTOMATICO],
+      );
+      expect((await datasDoCadastro(db, AUTOMATICO))?.fim).toBe("2026-08-26");
+      // Etapa nova antes da primeira.
+      await db.query(
+        `insert into public."TB_CRONOGRAMA_MONIT_INDIG" (monitoramento_id, ordem, atividade, data_inicio, data_fim)
+       values ($1, 0, 'Aviso prévio', '2026-06-01', '2026-06-02')`,
+        [AUTOMATICO],
+      );
+      expect((await datasDoCadastro(db, AUTOMATICO))?.inicio).toBe(
+        "2026-06-01",
+      );
+      // Sem etapas, as datas ficam.
+      await db.query(
+        `delete from public."TB_CRONOGRAMA_MONIT_INDIG" where monitoramento_id = $1`,
+        [AUTOMATICO],
+      );
+      expect(await datasDoCadastro(db, AUTOMATICO)).toEqual({
+        inicio: "2026-06-01",
+        fim: "2026-08-26",
+      });
+    });
+
+    it("o gatilho não toca o manual", async () => {
+      await db.query(
+        `update public."TB_CRONOGRAMA_MONIT_INDIG" set data_fim = '2027-03-01' where monitoramento_id = $1 and ordem = 13`,
+        [MANUAL],
+      );
+      expect((await datasDoCadastro(db, MANUAL))?.fim).toBe("2026-12-10");
+    });
+
+    it("apaga e reinsere numa transação (o salvar) grava as datas uma vez, no fim", async () => {
+      await db.exec(`
+      create table public.gravacoes (fim date);
+      create function public.contar() returns trigger language plpgsql as $$
+      begin insert into public.gravacoes values (new.data_fim); return null; end $$;
+      create trigger contar after update on public."TB_MONITORAMENTO_INDIGENA"
+        for each row execute function public.contar();
+    `);
+      await db.exec(`
+      begin;
+      delete from public."TB_CRONOGRAMA_MONIT_INDIG" where monitoramento_id = '${AUTOMATICO}';
+      insert into public."TB_CRONOGRAMA_MONIT_INDIG" (monitoramento_id, ordem, atividade, data_inicio, data_fim) values
+        ('${AUTOMATICO}', 1, 'Publicação do Edital', '2026-06-16', '2026-06-16');
+      insert into public."TB_CRONOGRAMA_MONIT_INDIG" (monitoramento_id, ordem, atividade, data_inicio, data_fim) values
+        ('${AUTOMATICO}', 2, 'Resultado', '2026-07-01', '2026-07-01');
+      insert into public."TB_CRONOGRAMA_MONIT_INDIG" (monitoramento_id, ordem, atividade, data_inicio, data_fim) values
+        ('${AUTOMATICO}', 3, 'Resultado final do Processo Seletivo', '2026-09-30', '2026-09-30');
+      commit;
+    `);
+      const gravacoes = await db.query<{ fim: string }>(
+        `select fim::text as fim from public.gravacoes`,
+      );
+      expect(gravacoes.rows).toEqual([{ fim: "2026-09-30" }]);
+    });
+
+    it("a guarda recusa aplicar de novo", async () => {
+      await expect(migrar()).rejects.toThrow(/md5/);
+    });
+  });
+});
+
+bloco("cronograma-manual-na-visao-geral", () => {
+  /*
+  Conferência de 17/11/2026: a Visão geral tratava "cálculo manual" como "sem
+  etapas". O caso é o do 120/2026 (13 etapas, cálculo automático desligado,
+  status "Suspenso" digitado), que aparecia como "Sem cronograma" e "Cronograma
+  ainda não cadastrado". Com a migration 20261117190000, o banco devolve
+  percentual e próxima etapa também no manual. E "Concluído" (status calculado
+  pelas datas) não prova que o resultado saiu: o rótulo é "Cronograma
+  encerrado".
+*/
+
+  const HOJE = "2026-11-17";
+
+  // A linha do 120/2026 como listar_monitoramento_operacional a devolve depois da migration.
+  const MANUAL_SUSPENSO = {
+    edital: "120/2026",
+    status: "Suspenso",
+    cronograma_automatico: false,
+    cronograma_percentual: 15.4,
+    cronograma_proxima_atividade: "Período de inscrição",
+    cronograma_proxima_data: "2026-11-19",
+    cronograma_dias_para_proxima: 2,
+    cronograma_atividade_atual: undefined,
+    data_inicio: "2026-10-21",
+    data_fim: "2027-02-25",
+  };
+
+  describe("cálculo manual não é falta de etapas", () => {
+    it("120/2026: cronograma cadastrado, cálculo manual, suspenso", () => {
+      expect(temCronogramaCadastrado(MANUAL_SUSPENSO)).toBe(true);
+      expect(descricaoDoCronograma(MANUAL_SUSPENSO)).toBe(
+        "Cronograma cadastrado · cálculo manual · suspenso",
+      );
+      expect(urgenciaDoCronograma(MANUAL_SUSPENSO, HOJE)).toEqual({
+        tom: "warning",
+        rotulo: "Processo suspenso",
+      });
+      expect(seloDoCronograma(MANUAL_SUSPENSO, HOJE)?.rotulo).toBe(
+        "Processo suspenso",
+      );
+    });
+
+    it("suspenso não vira etapa atrasada quando o fim passa", () => {
+      expect(
+        urgenciaDoCronograma(
+          { ...MANUAL_SUSPENSO, data_fim: "2026-11-01" },
+          HOJE,
+        ).rotulo,
+      ).toBe("Processo suspenso");
+    });
+
+    it("manual em andamento com etapas segue a próxima etapa", () => {
+      const linha = { ...MANUAL_SUSPENSO, status: "Em andamento" };
+      expect(descricaoDoCronograma(linha)).toBe(
+        "Cronograma cadastrado · cálculo manual",
+      );
+      expect(urgenciaDoCronograma(linha, HOJE)).toEqual({
+        tom: "danger",
+        rotulo: "Próxima etapa em 2 dia(s)",
+      });
+    });
+
+    it("manual com etapas: qualquer um dos sinais basta", () => {
+      const vazio = {
+        cronograma_automatico: false,
+        cronograma_percentual: 0,
+        cronograma_proxima_data: undefined,
+        cronograma_atividade_atual: undefined,
+      };
+      expect(temCronogramaCadastrado(vazio)).toBe(false);
+      expect(
+        temCronogramaCadastrado({ ...vazio, cronograma_percentual: 100 }),
+      ).toBe(true);
+      expect(
+        temCronogramaCadastrado({
+          ...vazio,
+          cronograma_atividade_atual: "Entrevistas",
+        }),
+      ).toBe(true);
+      expect(
+        temCronogramaCadastrado({
+          ...vazio,
+          cronograma_proxima_data: "2026-12-01",
+        }),
+      ).toBe(true);
+    });
+
+    it("manual sem etapas continua sem cronograma", () => {
+      const linha = {
+        status: "Em andamento",
+        cronograma_automatico: false,
+        cronograma_percentual: 0,
+        data_fim: "2026-12-31",
+      };
+      expect(descricaoDoCronograma(linha)).toBeNull();
+      expect(seloDoCronograma(linha, HOJE)?.rotulo).toBe("Sem cronograma");
+    });
+
+    it("automático: cálculo automático na descrição", () => {
+      expect(
+        descricaoDoCronograma({
+          status: "Em andamento",
+          cronograma_automatico: true,
+        }),
+      ).toBe("Cronograma cadastrado · cálculo automático");
+    });
+  });
+
+  describe("a data passar não prova o resultado", () => {
+    it("concluído pelo cronograma diz 'Cronograma encerrado'", () => {
+      expect(prazoDoEdital({ status: "Concluído" }, HOJE)?.rotulo).toBe(
+        "Cronograma encerrado",
+      );
+      expect(urgenciaDoCronograma({ status: "Concluído" }, HOJE)).toEqual({
+        tom: "done",
+        rotulo: "Cronograma encerrado",
+      });
+    });
+  });
+});
+
+bloco("sequencia-do-cronograma", () => {
+  /*
+  A sequência entre etapas dependentes (src/lib/cronograma/sequencia-do-cronograma.ts).
+  Caso da conferência de 17/11/2026: no 120/2026 o recurso das entrevistas
+  (etapa 11) vai de 14/01 a 25/02/2027, depois do resultado final (21/01).
+*/
+
+  const e = (
+    atividade: string,
+    data_inicio: string,
+    data_fim = data_inicio,
+  ) => ({
+    atividade,
+    data_inicio,
+    data_fim,
+  });
+
+  const DO_120 = [
+    e("Publicação do Edital", "2026-10-21"),
+    e("Impugnação do Edital", "2026-11-14", "2026-11-16"),
+    e(
+      "Período de inscrição e Envio dos Documentos Comprobatórios de Requisitos",
+      "2026-11-19",
+      "2026-11-23",
+    ),
+    e("Publicação da Lista Geral de Classificação Provisória", "2026-11-25"),
+    e(
+      "Resultado Preliminar da Avaliação Documental e de Títulos",
+      "2026-12-08",
+    ),
+    e(
+      "Prazo de recurso referente ao resultado preliminar da Avaliação Documental e de Títulos",
+      "2026-12-09",
+      "2026-12-10",
+    ),
+    e("Resultado Final da Avaliação Documental e de Títulos", "2026-12-17"),
+    e("Convocação para a Entrevista", "2026-12-18"),
+    e("Período de Entrevistas", "2027-01-05", "2027-01-11"),
+    e("Resultado Preliminar das Entrevistas", "2027-01-13"),
+    e(
+      "Prazo para recursos referentes ao resultado preliminar das entrevistas",
+      "2027-01-14",
+      "2027-02-25",
+    ),
+    e("Resultado final da Entrevista", "2027-01-21"),
+    e("Resultado final do Processo Seletivo", "2027-01-21"),
+  ];
+
+  describe("sequência do cronograma", () => {
+    it("120/2026: o recurso das entrevistas termina depois do resultado final", () => {
+      expect(avisosDeSequencia(DO_120)).toEqual([
+        "A etapa 11 (recurso) termina em 25/02/2027, depois da etapa 12 (resultado final, 21/01/2027).",
+      ]);
+    });
+
+    it("corrigido, nenhum aviso", () => {
+      const corrigido = DO_120.map((etapa, i) =>
+        i === 10 ? { ...etapa, data_fim: "2027-01-15" } : etapa,
+      );
+      expect(avisosDeSequencia(corrigido)).toEqual([]);
+    });
+
+    it("recurso antes do preliminar e final antes do preliminar", () => {
+      expect(
+        avisosDeSequencia([
+          e("Resultado Preliminar da Análise Curricular", "2026-08-10"),
+          e(
+            "Recurso contra o Resultado Preliminar da Análise Curricular",
+            "2026-08-08",
+            "2026-08-09",
+          ),
+          e("Resultado final da análise curricular", "2026-08-05"),
+        ]),
+      ).toEqual([
+        "A etapa 3 (resultado final) vem em 05/08/2026, antes da etapa 1 (resultado preliminar, 10/08/2026).",
+        "A etapa 2 (recurso) começa em 08/08/2026, antes da etapa 1 (resultado preliminar, 10/08/2026).",
+        "A etapa 2 (recurso) termina em 09/08/2026, depois da etapa 3 (resultado final, 05/08/2026).",
+      ]);
+    });
+
+    it("sem resultado final da fase, vale o do processo seletivo", () => {
+      expect(
+        avisosDeSequencia([
+          e("Resultado Preliminar da Entrevista", "2026-09-01"),
+          e(
+            "Análise e resposta aos recursos — entrevistas",
+            "2026-09-02",
+            "2026-09-20",
+          ),
+          e("Divulgação do resultado final do Processo Seletivo", "2026-09-15"),
+        ]),
+      ).toEqual([
+        "A etapa 2 (análise dos recursos) termina em 20/09/2026, depois da etapa 3 (resultado final, 15/09/2026).",
+      ]);
+    });
+
+    it("preliminar com abertura do prazo de recurso conta como preliminar", () => {
+      const [etapa] = marcarEtapas([
+        e(
+          "Resultado preliminar da análise curricular e abertura do prazo de recurso",
+          "2026-07-01",
+        ),
+      ]);
+      expect(etapa).toMatchObject({ papel: "preliminar", fase: "documental" });
+    });
+
+    it("a fase é a da primeira palavra-chave; títulos sozinho é fase própria", () => {
+      expect(
+        marcarEtapas([
+          e(
+            "Resultado Final da Avaliação Curricular e convocação para a Entrevista",
+            "2025-07-25",
+          ),
+          e(
+            "Resultado Preliminar da Avaliação Documental e de Títulos",
+            "2026-12-08",
+          ),
+          e(
+            "Divulgação do edital de resultado provisório na avaliação de títulos",
+            "2027-01-12",
+          ),
+        ]).map(({ fase, papel }) => [fase, papel]),
+      ).toEqual([
+        ["documental", "final"],
+        ["documental", "preliminar"],
+        ["titulos", "preliminar"],
+      ]);
+      // O recurso dos títulos se mede pelo resultado final dos títulos, não pelo da documental.
+      expect(
+        avisosDeSequencia([
+          e(
+            "Divulgação do edital de resultado final na análise documental",
+            "2026-12-29",
+          ),
+          e(
+            "Divulgação do edital de resultado provisório na avaliação de títulos",
+            "2027-01-12",
+          ),
+          e(
+            "Prazo para a interposição de recursos contra o resultado provisório na avaliação de títulos",
+            "2027-01-13",
+            "2027-01-14",
+          ),
+          e(
+            "Divulgação do edital de resultado final na avaliação de títulos e de resultado final no processo seletivo",
+            "2027-01-26",
+          ),
+        ]),
+      ).toEqual([]);
+    });
+
+    it("etapa sem data ou fora do padrão não entra", () => {
+      expect(
+        marcarEtapas([
+          e("Análise Curricular", "2026-07-01"),
+          { atividade: "Resultado final da Entrevista", data_inicio: "" },
+        ]),
+      ).toEqual([]);
+    });
+
+    it("comSequencia soma os avisos à análise do formulário, sem repetir", () => {
+      const edital = { edital: "120/2026", unidade: "DSEI Fictício" };
+      const etapas: EtapaDoCronograma[] = DO_120.map((etapa, i) => ({
+        ...etapa,
+        ordem: i + 1,
+        origem: "MANUAL",
+        observacao: "",
+        concluida: null,
+        confianca_extracao: null,
+      }));
+      const base = analisarCronograma(edital, etapas, "Errata");
+      expect(base.avisos.join(" ")).not.toContain("etapa 11 (recurso)");
+      const analise = comSequencia(base, etapas);
+      expect(analise.erros).toEqual(base.erros);
+      expect(analise.avisos).toContain(
+        "A etapa 11 (recurso) termina em 25/02/2027, depois da etapa 12 (resultado final, 21/01/2027).",
+      );
+      expect(comSequencia(analise, etapas).avisos).toEqual(analise.avisos);
     });
   });
 });
