@@ -16,8 +16,8 @@ import {
   13/11/2026). No celular, uma linha só, com o ☰ da gaveta antes
   do título.
 
-  Nas telas com título próprio (`tituloNaTela` em src/lib/navegacao/rotas.ts: Conduzir
-  entrevistas, Classificação, Avaliação documental e Triagem), o título daqui
+  Nas telas das áreas, o título fica no conteúdo (`CabecalhoDaTela`, pelo módulo
+  ou por src/app/telas.tsx). O título daqui
   fica só para o leitor de tela e a faixa fica compacta (`data-compacto`):
   sobra só a conta, menor, com o perfil dentro do menu (17/11/2026).
 
@@ -47,10 +47,10 @@ export function Topo() {
   );
 }
 
-/* A tela aberta tem título próprio? Com um aviso no lugar da página, a tela não está lá. */
+/* Toda tela das áreas tem o cabeçalho padrão no conteúdo. Aviso e Administração mantêm o da casca. */
 function usarTituloNaTela() {
   const { view, aviso } = usarEstadoDaNavegacao();
-  return !aviso && Boolean(telaDaRota(view)?.tituloNaTela);
+  return !aviso && Boolean(telaDaRota(view));
 }
 
 /* Nas telas com título próprio (`tituloNaTela`), o daqui fica só para o leitor de tela. */

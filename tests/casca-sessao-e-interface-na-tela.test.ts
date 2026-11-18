@@ -811,8 +811,8 @@ bloco("app/casca", () => {
       expect(topo.querySelector(".page-title")?.classList).toContain("sr-only");
     });
 
-    it("nas outras telas (e com aviso no lugar da página) fica como sempre", () => {
-      expect(topoNa("dashboard").hasAttribute("data-compacto")).toBe(false);
+    it("as outras telas das áreas também usam título no conteúdo; avisos mantêm o da casca", () => {
+      expect(topoNa("dashboard").hasAttribute("data-compacto")).toBe(true);
       act(() => casca?.desmontar());
       expect(
         topoNa("classificacao", "sem-acesso").hasAttribute("data-compacto"),
@@ -2412,6 +2412,29 @@ bloco("app/navegacao", () => {
   });
 
   describe("troca de tela", () => {
+    it("usa o cabeçalho padrão nas telas do menu sem duplicar o dos módulos", () => {
+      const { navegacao } = criar();
+      entrar(navegacao);
+      for (const view of ["dashboard", "nucleo", "calendario", "recursos"]) {
+        navegacao.irPara(view);
+        const pagina = definido($("page-" + view));
+        expect(pagina.querySelectorAll(".ui-cabecalho-da-pagina")).toHaveLength(
+          1,
+        );
+        expect(pagina.querySelector(".ui-cabecalho-titulo")?.textContent).toBe(
+          navegacao.obter().titulo ||
+            TELAS_DAS_AREAS.find((tela) => tela.view === view)?.titulo,
+        );
+        expect(
+          pagina.querySelector(".ui-cabecalho-trilha")?.textContent,
+        ).toContain("Saúde Indígena / ");
+      }
+      navegacao.irPara("classificacao");
+      expect(
+        $("page-classificacao")?.querySelector(".ui-cabecalho-da-pagina"),
+      ).toBeNull();
+    });
+
     it("deixa só a página pedida ativa, com título, menu, endereço e render da tela", () => {
       const { navegacao, telas } = criar();
       entrar(navegacao);
@@ -2975,7 +2998,7 @@ bloco("app/navegacao", () => {
       );
       const erro = vi.spyOn(console, "error").mockImplementation(() => {});
       novo.navegacao.irPara("recursos");
-      expect($("page-recursos")?.textContent).toBe("Carregando…");
+      expect($("page-recursos")?.textContent).toContain("Carregando…");
       await act(async () => falhar());
       expect($("page-recursos")?.textContent).toContain(
         "Não foi possível carregar esta tela.",
@@ -2984,7 +3007,7 @@ bloco("app/navegacao", () => {
       expect(botao.textContent).toBe("Tentar de novo");
       await act(async () => botao.click());
       await vi.waitFor(() =>
-        expect($("page-recursos")?.textContent).toBe("Painel carregado"),
+        expect($("page-recursos")?.textContent).toContain("Painel carregado"),
       );
       expect(tentativas).toBe(2);
       expect(render).toHaveBeenCalledTimes(1);
