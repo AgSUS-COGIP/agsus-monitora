@@ -18,7 +18,7 @@
        FC_CONFERENCIA_RECURSO e as listas de módulos de gravar_avisos_conferencia,
        listar_avisos_conferencia, listar_casos_aviso_conferencia e FC_MARCA_DA_RPC passam a aceitá-lo.
 
-  DEPENDE DE 20261118120000_central_de_avisos_das_conferencias (aplicada antes): gravar, listar e listar_casos partem dos corpos dela.
+  DEPENDE DE 20261118140000_central_de_avisos_das_conferencias (aplicada antes): gravar, listar e listar_casos partem dos corpos dela.
   GUARDAS: já aplicada (o módulo editais já é aceito); a central não aplicada; as seis funções no
   corpo esperado (md5 do prosrc sem retorno de carro).
 
@@ -32,7 +32,7 @@ begin;
 do $$
 begin
   if to_regclass('public."TH_AVISO_CONFERENCIA"') is null then
-    raise exception 'Aplique antes 20261118120000_central_de_avisos_das_conferencias.';
+    raise exception 'Aplique antes 20261118140000_central_de_avisos_das_conferencias.';
   end if;
   if private."FC_CONFERENCIA_RECURSO"('editais') is not null then
     raise exception 'Já aplicada: o módulo editais já existe.';
@@ -44,12 +44,12 @@ begin
      or md5(replace((select prosrc from pg_proc where oid = to_regprocedure('private."FC_MARCA_DA_RPC"(text, text, uuid, text, text)')), chr(13), ''))
        is distinct from '23e9e210e7aa00fdc1b2e6ecb11ced61'
      or md5(replace((select prosrc from pg_proc where oid = to_regprocedure('public.gravar_avisos_conferencia(text, jsonb)')), chr(13), ''))
-       is distinct from '6443f23fc74d5b9ae033f219ccae3561'
+       is distinct from 'e108d7d69d6d6f861c4bc7fa1fea40ee'
      or md5(replace((select prosrc from pg_proc where oid = to_regprocedure('public.listar_avisos_conferencia(text, text)')), chr(13), ''))
-       is distinct from '0e9933193d1167d55c94116854cedaec'
+       is distinct from '8b3cb6fd177345d5fcac864cac4a9857'
      or md5(replace((select prosrc from pg_proc where oid = to_regprocedure('public.listar_casos_aviso_conferencia(uuid, text, text, text, integer, integer)')), chr(13), ''))
-       is distinct from 'e21ee015e3b00dfad0c8dee4027ec194' then
-    raise exception 'Uma das funções mudou depois de 20261118120000_central_de_avisos_das_conferencias: junte as mudanças antes de aplicar.';
+       is distinct from '98157f553abf27da3e345303c48c11e0' then
+    raise exception 'Uma das funções mudou depois de 20261118140000_central_de_avisos_das_conferencias: junte as mudanças antes de aplicar.';
   end if;
 end;
 $$;
@@ -342,7 +342,7 @@ begin
       insert into public."TH_AVISO_CONFERENCIA" ("CO_AVISO_CONFERENCIA", "TP_EVENTO", "TP_TRATAMENTO_ANTERIOR", "TP_TRATAMENTO", "TP_SITUACAO", "QT_OCORRENCIA", "DS_MOTIVO", "CO_EXECUCAO")
       values (v_id, 'ACHADO', null, 'PENDENTE', 'ABERTO', v_qt, null, p_execucao);
       v_novos := v_novos + 1;
-    -- 20261118120000: o dispensado volta a pendente se a quantidade passar da dispensada; o resolvido
+    -- 20261118140000: o dispensado volta a pendente se a quantidade passar da dispensada; o resolvido
     -- reabre; tudo vai para o histórico (TH_AVISO_CONFERENCIA), nada se apaga.
     elsif v_atual."TP_SITUACAO" = 'RESOLVIDO'
        or (v_atual."TP_TRATAMENTO" = 'DISPENSADO' and v_qt > v_atual."QT_OCORRENCIA_DISPENSADA") then
@@ -403,7 +403,7 @@ begin
 end;
 $_$;
 
-COMMENT ON FUNCTION public.gravar_avisos_conferencia(p_execucao text, p_avisos jsonb) IS 'Grava até 1000 avisos de uma execução (um por conferência + escopo): novo abre; resolvido reabre; dispensado volta a pendente só se a quantidade passou da dispensada; corrigido antes da execução e achado de novo volta para em análise; aberto atualiza quantidade e exemplos. Cada mudança vai para TH_AVISO_CONFERENCIA (20261118120000). Com ''casos'' (até 5000: análise, código do candidato, referência, tipo da referência e o detalhe que motivou), troca os casos do aviso. Recusa (22023) exemplo ou caso que não seja id ou código (espaço, @, 11 dígitos), tipo desconhecido e resumo com cara de dado pessoal. Só service_role.';
+COMMENT ON FUNCTION public.gravar_avisos_conferencia(p_execucao text, p_avisos jsonb) IS 'Grava até 1000 avisos de uma execução (um por conferência + escopo): novo abre; resolvido reabre; dispensado volta a pendente só se a quantidade passou da dispensada; corrigido antes da execução e achado de novo volta para em análise; aberto atualiza quantidade e exemplos. Cada mudança vai para TH_AVISO_CONFERENCIA (20261118140000). Com ''casos'' (até 5000: análise, código do candidato, referência, tipo da referência e o detalhe que motivou), troca os casos do aviso. Recusa (22023) exemplo ou caso que não seja id ou código (espaço, @, 11 dígitos), tipo desconhecido e resumo com cara de dado pessoal. Só service_role.';
 
 CREATE OR REPLACE FUNCTION public.listar_avisos_conferencia(p_area text DEFAULT NULL::text, p_modulo text DEFAULT NULL::text) RETURNS json
     LANGUAGE plpgsql STABLE SECURITY DEFINER
@@ -450,7 +450,7 @@ begin
           'primeira_vez', a."DT_PRIMEIRA_VEZ",
           'ultima_vez', a."DT_ULTIMA_VEZ",
           'resolvido_em', a."DT_RESOLUCAO",
-          -- 20261118120000: o tratamento da equipe, o último motivo, responsável, prazo e evidências.
+          -- 20261118140000: o tratamento da equipe, o último motivo, responsável, prazo e evidências.
           'tratamento', a."TP_TRATAMENTO",
           'tratado_em', a."DT_TRATAMENTO",
           'tratado_por', private."FC_NOME_DO_USUARIO"(a."CO_USUARIO_TRATAMENTO"),
@@ -482,7 +482,7 @@ begin
 end;
 $$;
 
-COMMENT ON FUNCTION public.listar_avisos_conferencia(p_area text, p_modulo text) IS 'Avisos de conferência abertos e os resolvidos nos últimos 30 dias (json) que quem chama pode ver: o módulo (leitor), a área e o edital no recorte; cargas e avisos sem área, só o administrador global. Filtra por área e módulo (opcionais). Com o tratamento da equipe, o último motivo, responsável, prazo e quantas evidências (20261118120000); pode_gerir (dispensar, atribuir) e pode_tratar (o gestor ou o responsável).';
+COMMENT ON FUNCTION public.listar_avisos_conferencia(p_area text, p_modulo text) IS 'Avisos de conferência abertos e os resolvidos nos últimos 30 dias (json) que quem chama pode ver: o módulo (leitor), a área e o edital no recorte; cargas e avisos sem área, só o administrador global. Filtra por área e módulo (opcionais). Com o tratamento da equipe, o último motivo, responsável, prazo e quantas evidências (20261118140000); pode_gerir (dispensar, atribuir) e pode_tratar (o gestor ou o responsável).';
 
 CREATE OR REPLACE FUNCTION public.listar_casos_aviso_conferencia(p_aviso uuid DEFAULT NULL::uuid, p_busca text DEFAULT NULL::text, p_area text DEFAULT NULL::text, p_modulo text DEFAULT NULL::text, p_limite integer DEFAULT 50, p_deslocamento integer DEFAULT 0) RETURNS json
     LANGUAGE plpgsql STABLE SECURITY DEFINER
@@ -521,7 +521,7 @@ begin
     select a."CO_AVISO_CONFERENCIA" as id, a."CO_CONFERENCIA" as conferencia, a."CO_MODULO" as modulo,
            a."CO_AREA" as area, a."CO_MONITORAMENTO" as edital
       from public."TB_AVISO_CONFERENCIA" a
-     -- 20261118120000: os casos do aviso resolvido também se abrem (pelo id); a busca, só nos abertos.
+     -- 20261118140000: os casos do aviso resolvido também se abrem (pelo id); a busca, só nos abertos.
      where (a."TP_SITUACAO" = 'ABERTO' or a."CO_AVISO_CONFERENCIA" = p_aviso)
        and (p_aviso is null or a."CO_AVISO_CONFERENCIA" = p_aviso)
        and (v_area is null or a."CO_AREA" = v_area)

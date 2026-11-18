@@ -7,13 +7,13 @@ import { MODULOS_DOS_AVISOS } from "../src/lib/conferencias/avisos-de-conferenci
   A MIGRATION DO AVISO "CRONOGRAMA ENCERRADO" (20261118150000), enquanto pendente
 
   O contexto das conferências traz o estado do cronograma pelas datas e o módulo editais (recurso
-  nucleo) passa a ser aceito. Depende da central de avisos (20261118120000): gravar, listar e
+  nucleo) passa a ser aceito. Depende da central de avisos (20261118140000): gravar, listar e
   listar_casos partem dos corpos dela; o contexto, FC_CONFERENCIA_RECURSO e FC_MARCA_DA_RPC, do
   retrato. A regra está em scripts/conferencias/regras.py (tests/python/test_conferencias.py).
   Aplicada a migration (e regerado o retrato), este teste sai junto com ela.
 */
 const NOME = "20261118150000_aviso_de_cronograma_encerrado.sql";
-const CENTRAL = "20261118120000_central_de_avisos_das_conferencias.sql";
+const CENTRAL = "20261118140000_central_de_avisos_das_conferencias.sql";
 const ler = (caminho: string) =>
   readFileSync(caminho, "utf8").replace(/\r/g, "");
 const RETRATO = ler("supabase/esquema-atual.sql");

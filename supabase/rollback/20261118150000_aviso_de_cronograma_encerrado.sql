@@ -1,6 +1,6 @@
 /*
   ROLLBACK de 20261118150000_aviso_de_cronograma_encerrado: as seis funções voltam ao corpo de antes (o contexto, FC_CONFERENCIA_RECURSO e
-  FC_MARCA_DA_RPC do retrato de 18/11/2026; gravar, listar e listar_casos de 20261118120000_central_de_avisos_das_conferencias), e
+  FC_MARCA_DA_RPC do retrato de 18/11/2026; gravar, listar e listar_casos de 20261118140000_central_de_avisos_das_conferencias), e
   CK_AVISOCONF_COMODULO, sem editais. Os avisos do módulo editais SAEM (com histórico e evidências, em
   cascata): o modelo antigo não os aceita. Guarda: só roda com as funções no corpo desta migration.
   Depois: delete from public.migracoes_aplicadas where caminho = 'migrations/20261118150000_aviso_de_cronograma_encerrado.sql';
@@ -17,11 +17,11 @@ begin
      or md5(replace((select prosrc from pg_proc where oid = to_regprocedure('private."FC_MARCA_DA_RPC"(text, text, uuid, text, text)')), chr(13), ''))
        is distinct from 'ed4747beef8f3de1309a3a41f6b27a08'
      or md5(replace((select prosrc from pg_proc where oid = to_regprocedure('public.gravar_avisos_conferencia(text, jsonb)')), chr(13), ''))
-       is distinct from '81f595df0296f4a6e76a72b77d1a12a1'
+       is distinct from 'ce99cb82e9623d0211fc52d79aacd6ac'
      or md5(replace((select prosrc from pg_proc where oid = to_regprocedure('public.listar_avisos_conferencia(text, text)')), chr(13), ''))
-       is distinct from '512f6cc7a0bc7222eeacd47055a525f6'
+       is distinct from '274562e7715d9e7d1ceae8b03256d8dd'
      or md5(replace((select prosrc from pg_proc where oid = to_regprocedure('public.listar_casos_aviso_conferencia(uuid, text, text, text, integer, integer)')), chr(13), ''))
-       is distinct from 'a1dea0698fa279ee355ae2a3d0a3d695' then
+       is distinct from '27d4cc773d879f083b515ec2f7b6c022' then
     raise exception 'As funções não estão com o corpo de 20261118150000_aviso_de_cronograma_encerrado: nada a desfazer, ou mudaram depois.';
   end if;
 end;
@@ -305,7 +305,7 @@ begin
       insert into public."TH_AVISO_CONFERENCIA" ("CO_AVISO_CONFERENCIA", "TP_EVENTO", "TP_TRATAMENTO_ANTERIOR", "TP_TRATAMENTO", "TP_SITUACAO", "QT_OCORRENCIA", "DS_MOTIVO", "CO_EXECUCAO")
       values (v_id, 'ACHADO', null, 'PENDENTE', 'ABERTO', v_qt, null, p_execucao);
       v_novos := v_novos + 1;
-    -- 20261118120000: o dispensado volta a pendente se a quantidade passar da dispensada; o resolvido
+    -- 20261118140000: o dispensado volta a pendente se a quantidade passar da dispensada; o resolvido
     -- reabre; tudo vai para o histórico (TH_AVISO_CONFERENCIA), nada se apaga.
     elsif v_atual."TP_SITUACAO" = 'RESOLVIDO'
        or (v_atual."TP_TRATAMENTO" = 'DISPENSADO' and v_qt > v_atual."QT_OCORRENCIA_DISPENSADA") then
@@ -366,7 +366,7 @@ begin
 end;
 $_$;
 
-COMMENT ON FUNCTION public.gravar_avisos_conferencia(p_execucao text, p_avisos jsonb) IS 'Grava até 1000 avisos de uma execução (um por conferência + escopo): novo abre; resolvido reabre; dispensado volta a pendente só se a quantidade passou da dispensada; corrigido antes da execução e achado de novo volta para em análise; aberto atualiza quantidade e exemplos. Cada mudança vai para TH_AVISO_CONFERENCIA (20261118120000). Com ''casos'' (até 5000: análise, código do candidato, referência, tipo da referência e o detalhe que motivou), troca os casos do aviso. Recusa (22023) exemplo ou caso que não seja id ou código (espaço, @, 11 dígitos), tipo desconhecido e resumo com cara de dado pessoal. Só service_role.';
+COMMENT ON FUNCTION public.gravar_avisos_conferencia(p_execucao text, p_avisos jsonb) IS 'Grava até 1000 avisos de uma execução (um por conferência + escopo): novo abre; resolvido reabre; dispensado volta a pendente só se a quantidade passou da dispensada; corrigido antes da execução e achado de novo volta para em análise; aberto atualiza quantidade e exemplos. Cada mudança vai para TH_AVISO_CONFERENCIA (20261118140000). Com ''casos'' (até 5000: análise, código do candidato, referência, tipo da referência e o detalhe que motivou), troca os casos do aviso. Recusa (22023) exemplo ou caso que não seja id ou código (espaço, @, 11 dígitos), tipo desconhecido e resumo com cara de dado pessoal. Só service_role.';
 
 CREATE OR REPLACE FUNCTION public.listar_avisos_conferencia(p_area text DEFAULT NULL::text, p_modulo text DEFAULT NULL::text) RETURNS json
     LANGUAGE plpgsql STABLE SECURITY DEFINER
@@ -413,7 +413,7 @@ begin
           'primeira_vez', a."DT_PRIMEIRA_VEZ",
           'ultima_vez', a."DT_ULTIMA_VEZ",
           'resolvido_em', a."DT_RESOLUCAO",
-          -- 20261118120000: o tratamento da equipe, o último motivo, responsável, prazo e evidências.
+          -- 20261118140000: o tratamento da equipe, o último motivo, responsável, prazo e evidências.
           'tratamento', a."TP_TRATAMENTO",
           'tratado_em', a."DT_TRATAMENTO",
           'tratado_por', private."FC_NOME_DO_USUARIO"(a."CO_USUARIO_TRATAMENTO"),
@@ -445,7 +445,7 @@ begin
 end;
 $$;
 
-COMMENT ON FUNCTION public.listar_avisos_conferencia(p_area text, p_modulo text) IS 'Avisos de conferência abertos e os resolvidos nos últimos 30 dias (json) que quem chama pode ver: o módulo (leitor), a área e o edital no recorte; cargas e avisos sem área, só o administrador global. Filtra por área e módulo (opcionais). Com o tratamento da equipe, o último motivo, responsável, prazo e quantas evidências (20261118120000); pode_gerir (dispensar, atribuir) e pode_tratar (o gestor ou o responsável).';
+COMMENT ON FUNCTION public.listar_avisos_conferencia(p_area text, p_modulo text) IS 'Avisos de conferência abertos e os resolvidos nos últimos 30 dias (json) que quem chama pode ver: o módulo (leitor), a área e o edital no recorte; cargas e avisos sem área, só o administrador global. Filtra por área e módulo (opcionais). Com o tratamento da equipe, o último motivo, responsável, prazo e quantas evidências (20261118140000); pode_gerir (dispensar, atribuir) e pode_tratar (o gestor ou o responsável).';
 
 CREATE OR REPLACE FUNCTION public.listar_casos_aviso_conferencia(p_aviso uuid DEFAULT NULL::uuid, p_busca text DEFAULT NULL::text, p_area text DEFAULT NULL::text, p_modulo text DEFAULT NULL::text, p_limite integer DEFAULT 50, p_deslocamento integer DEFAULT 0) RETURNS json
     LANGUAGE plpgsql STABLE SECURITY DEFINER
@@ -484,7 +484,7 @@ begin
     select a."CO_AVISO_CONFERENCIA" as id, a."CO_CONFERENCIA" as conferencia, a."CO_MODULO" as modulo,
            a."CO_AREA" as area, a."CO_MONITORAMENTO" as edital
       from public."TB_AVISO_CONFERENCIA" a
-     -- 20261118120000: os casos do aviso resolvido também se abrem (pelo id); a busca, só nos abertos.
+     -- 20261118140000: os casos do aviso resolvido também se abrem (pelo id); a busca, só nos abertos.
      where (a."TP_SITUACAO" = 'ABERTO' or a."CO_AVISO_CONFERENCIA" = p_aviso)
        and (p_aviso is null or a."CO_AVISO_CONFERENCIA" = p_aviso)
        and (v_area is null or a."CO_AREA" = v_area)
