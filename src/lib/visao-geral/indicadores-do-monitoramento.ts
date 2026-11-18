@@ -15,7 +15,7 @@
     fase Contratação).
   - Cancelados não entram em nenhum (nem em Inscritos): as vagas deles não
     estão em seleção nem ociosas.
-  - Críticos: editais com algum motivo de atenção (`criticos-da-visao-geral.ts`).
+  - Críticos: editais marcados manualmente (`criticos-da-visao-geral.ts`).
   - Vaga reaberta conta uma vez só (`vagas-reabertas.ts`): a vaga sem
     contratação que um edital mais novo da mesma unidade reabriu sai do
     edital antigo (`vagas_reabertas`, preenchido no enriquecimento) e fica no
@@ -88,9 +88,11 @@ export const contratacoesDoCadastroReserva = (linha: Linha): number =>
 export const vagasSemContratacao = (linha: Linha): number =>
   Math.max(0, vagasEfetivas(linha) - contratadasImediatas(linha));
 
-/** A linha tem algum motivo de atenção (`atencao`, preenchido pelo recorte). */
+/** A linha tem marcação manual de crítico (`atencao`, preenchido pelo recorte). */
 export const ehCritica = (linha: Linha): boolean =>
-  Array.isArray(linha?.atencao) && linha.atencao.length > 0;
+  !ehCancelado(linha) &&
+  Array.isArray(linha?.atencao) &&
+  linha.atencao.some((motivo) => motivo.codigo === "marcado");
 
 /** Os números da faixa de indicadores. */
 export function indicadoresDoMonitoramento(

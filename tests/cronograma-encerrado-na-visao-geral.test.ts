@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { faseDoEdital } from "../src/lib/visao-geral/fases-do-processo.ts";
-import { ehConcluido } from "../src/lib/visao-geral/indicadores-do-monitoramento.ts";
+import {
+  ehConcluido,
+  temResultado,
+} from "../src/lib/visao-geral/indicadores-do-monitoramento.ts";
 import {
   andamentoPorFase,
   csvDaVisaoGeral,
@@ -20,7 +23,7 @@ import {
   calculavam "Concluído"). A Visão geral mostra "Cronograma encerrado" no
   status, na fase, nos filtros, no CSV e nos contadores; o "Concluído" digitado
   à mão (cálculo manual) continua "Concluído". As regras que dependem do fim
-  (contratação baixa, pós-resultado, ociosas) seguem valendo.
+  (pós-resultado, ociosas) seguem valendo.
 */
 
 const HOJE = "2026-11-18";
@@ -71,9 +74,9 @@ describe("cronograma encerrado não é processo concluído", () => {
     ]);
     expect([manual?.status, manual?.fase]).toEqual(["Concluído", "Concluído"]);
     expect(aberto?.status).toBe("Em andamento");
-    // O fim do cronograma continua contando: contratação baixa é motivo de atenção.
-    expect(auto?.atencao?.map((m) => m.codigo)).toContain("contratacao_baixa");
+    // O fim do cronograma continua contando (pós-resultado e ociosas).
     expect(ehConcluido(auto)).toBe(true);
+    expect(temResultado(auto ?? {})).toBe(true);
   });
 
   it("filtros, CSV e o bloco de fases usam o mesmo texto", () => {

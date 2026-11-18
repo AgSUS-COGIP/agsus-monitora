@@ -62,8 +62,8 @@ trabalho). De cima para baixo:
   o status por "Cronograma encerrado", e tabela, gaveta, filtro, busca, CSV, fase (no fluxo, no
   lugar de Concluído, tom neutro) e "Em andamento, por fase" ("N com cronograma encerrado") herdam
   a troca. O "Concluído" digitado à mão (cálculo manual) fica "Concluído" (fase fora do fluxo,
-  "Processo concluído" no prazo). `ehConcluido` reconhece os dois: contratação baixa,
-  pós-resultado e ociosas seguem iguais. Sem migration: a Avaliação documental e a Classificação
+  "Processo concluído" no prazo). `ehConcluido` reconhece os dois: pós-resultado e ociosas seguem
+  iguais. Sem migration: a Avaliação documental e a Classificação
   continuam lendo o status gravado, e a diferença entre gravado e calculado é aviso das
   [[modulo-conferencias]].
 

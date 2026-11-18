@@ -125,9 +125,12 @@ describe("as contas da faixa de indicadores fecham", () => {
     });
   });
 
-  it("Críticos conta as linhas com motivo de atenção (o recorte preenche `atencao`)", () => {
+  it("Críticos conta somente marcações manuais e exclui cancelados", () => {
     const linhas = [
-      { status: "Em andamento", atencao: [{ codigo: "prazo" }] },
+      { status: "Em andamento", atencao: [{ codigo: "marcado" }] },
+      { status: "Em andamento", atencao: [{ codigo: "atrasada" }] },
+      { status: "Concluído", atencao: [{ codigo: "contratacao_baixa" }] },
+      { status: "Cancelado", atencao: [{ codigo: "marcado" }] },
       { status: "Em andamento", atencao: [] },
       { status: "Concluído" },
     ];

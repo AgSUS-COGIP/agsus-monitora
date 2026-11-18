@@ -318,8 +318,8 @@ export function acompanhamentoDaResposta(
 /*
   As pendências pós-resultado de uma linha (códigos de PENDENCIAS_POS_RESULTADO).
   "Contratação abaixo de 50%" e "Desistências" saíram do Pede ação em 18/11/2026,
-  a pedido do usuário: não pedem ação de quem olha a Visão Geral. A contratação
-  baixa continua como motivo de Processos Críticos (criticos-da-visao-geral.ts).
+  a pedido do usuário: não pedem ação de quem olha a Visão Geral. Crítico
+  depende exclusivamente da marcação manual (criticos-da-visao-geral.ts).
 */
 function pendenciasDaLinha(
   linha: LinhaDoMonitoramento,

@@ -57,7 +57,7 @@ const BRUTAS = [
     contratados: 4,
     vagas_ociosas: 6,
     inscritos: 80,
-    // Crítico por atraso (etapa chegando não faz crítico).
+    // Há atraso, mas a classificação de crítico vem da marcação manual.
     data_fim: "2026-09-28",
     cronograma_automatico: true,
     cronograma_dias_para_proxima: 2,
@@ -121,6 +121,10 @@ const BRUTAS = [
 ];
 
 const ACOMPANHAMENTO = acompanhamentoDaResposta({
+  criticos_manuais: [
+    { monitoramento_id: 1, motivo: "Cronograma suspenso pela diretoria" },
+    { monitoramento_id: 3, motivo: "Revisão da contratação pela diretoria" },
+  ],
   etapas: [
     {
       monitoramento_id: 1,
@@ -152,7 +156,12 @@ const ACOMPANHAMENTO = acompanhamentoDaResposta({
   ],
 });
 
-const LINHAS = enriquecerLinhas(BRUTAS, { hoje: HOJE });
+const LINHAS = enriquecerLinhas(BRUTAS, {
+  hoje: HOJE,
+  acompanhamento: {
+    criticosPorEdital: ACOMPANHAMENTO.criticosPorEdital,
+  },
+});
 const COM_ACOMPANHAMENTO = enriquecerLinhas(BRUTAS, {
   hoje: HOJE,
   acompanhamento: ACOMPANHAMENTO,
@@ -218,18 +227,15 @@ describe("linhas enriquecidas", () => {
     const [xingu, analise, yanomami, casai, cancelado] = LINHAS;
     expect(xingu.fase).toBe("Entrevistas");
     expect(xingu.atencao.map((m) => m.rotulo)).toEqual([
-      "Etapa atrasada há 3 dias",
+      "Marcado como crítico: Cronograma suspenso pela diretoria",
     ]);
     expect(analise.fase).toBe("Análise curricular");
     expect(analise.atencao).toEqual([]);
     // "Concluído" pelas datas: a Visão geral diz "Cronograma encerrado" (status e fase).
     expect(yanomami.fase).toBe("Cronograma encerrado");
     expect(yanomami.status).toBe("Cronograma encerrado");
-    expect(yanomami.atencao.map((m) => m.codigo)).toEqual([
-      "contratacao_baixa",
-    ]);
-    // Sem o resumo das listas, nenhuma pendência (a contratação baixa fica só
-    // como motivo de atenção do crítico, acima).
+    expect(yanomami.atencao.map((m) => m.codigo)).toEqual(["marcado"]);
+    // Sem o resumo das listas, nenhuma pendência pós-resultado.
     expect(yanomami.pos_resultado).toEqual([]);
     expect(casai.fase).toBe("Sem cronograma");
     expect(cancelado.atencao).toEqual([]);
@@ -269,7 +275,7 @@ describe("recorte", () => {
     ).toEqual([3]);
     expect(
       ids(recortar(LINHAS, { filtros: filtrosVazios(), atalho: "criticos" })),
-    ).toEqual([1, 3]);
+    ).toEqual([3, 1]);
     expect(
       ids(
         recortar(COM_ACOMPANHAMENTO, {
@@ -287,9 +293,8 @@ describe("recorte", () => {
 
   it("sem ordenação, os críticos primeiro, depois mais vagas sem contratação", () => {
     const fila = recortar(LINHAS, { filtros: filtrosVazios() });
-    // 1 (prazo, peso 2), 3 (contratação baixa, peso 5), depois 5 (6 sem
-    // contratação), 4 (2) e 2 (0).
-    expect(ids(fila)).toEqual([1, 3, 5, 4, 2]);
+    // 3 e 1 marcados manualmente, empatados em gravidade; depois 5, 4 e 2.
+    expect(ids(fila)).toEqual([3, 1, 5, 4, 2]);
     const porVagas = recortar(LINHAS, {
       filtros: filtrosVazios(),
       ordenacao: { campo: "vagas_total", direcao: "desc" },
@@ -299,7 +304,7 @@ describe("recorte", () => {
       filtros: filtrosVazios(),
       ordenacao: { campo: "atencao", direcao: "asc" },
     });
-    expect(ids(porAtencao).slice(0, 2)).toEqual([1, 3]);
+    expect(ids(porAtencao).slice(0, 2)).toEqual([3, 1]);
   });
 
   it("o cabeçalho alterna crescente, decrescente e sem ordem", () => {
