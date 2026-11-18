@@ -16,7 +16,9 @@ scripts faz ou gera.
 - **Arquitetura, qualidade, build e smoke** (obrigatório): auth, contrato de RPC, sem
   `MutationObserver` novo, sem camadas de remendo, legado só encolhe, timestamps das migrations;
   lint e formatação dos arquivos alterados; Vitest com cobertura (inclui o teste da biblioteca de
-  documentação); `npm run build` (inclui `typecheck`, segurança do HTML e orçamento de bundles);
+  documentação; `--maxWorkers=2` em `test:coverage`: com os testes em poucos arquivos grandes,
+  desde o #887, mais processos em paralelo esgotavam a memória da máquina do GitHub, que caía sem
+  teste vermelho, "The runner has received a shutdown signal"); `npm run build` (inclui `typecheck`, segurança do HTML e orçamento de bundles);
   todos os testes do Playwright sobre o `dist/` desse build, inclusive o app com sessão e o Supabase
   simulados; o smoke e a sessão simulada de novo no servidor TypeScript, e o smoke na imagem Docker.
   Na falha, o relatório e os traces ficam no artefato `relatorio-do-playwright` ([[testes]]).

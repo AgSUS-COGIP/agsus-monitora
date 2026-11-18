@@ -9,7 +9,7 @@
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage.enabled=true --coverage.provider=v8 --coverage.reporter=text --coverage.thresholds.lines=1 --coverage.thresholds.functions=1 --coverage.thresholds.statements=1 --coverage.thresholds.branches=1",
+    "test:coverage": "vitest run --maxWorkers=2 --coverage.enabled=true --coverage.provider=v8 --coverage.reporter=text --coverage.thresholds.lines=1 --coverage.thresholds.functions=1 --coverage.thresholds.statements=1 --coverage.thresholds.branches=1",
     "test:e2e": "playwright test",
     "test:smoke": "playwright test tests/smoke.spec.js",
     "lint": "node scripts/check-changed-lint.mjs",
