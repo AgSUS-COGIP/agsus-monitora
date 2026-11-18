@@ -11,7 +11,7 @@
   - `sugestoes`: 3 a 5 perguntas típicas da página (o painel não mostra mais
     os botões, pedido de 02/10; ficam como garantia de cobertura da base). O
     `rotulo` é o texto curto; a `pergunta` é o que vai para a Aya. Toda pergunta daqui tem resposta
-    direta num verbete de `docs/aya/` (teste em tests/aya-paginas.test.js), para
+    direta num verbete de `docs/aya/` (teste em tests/aya-e-comemoracao.test.js (bloco aya-paginas)), para
     a sugestão nunca cair no "não sei".
 
   As views são as do legado (`currentView`: `dashboard`, `nucleo`…), na ordem

@@ -8,7 +8,7 @@ Regras do diretório:
 - **Sem DOM e sem estado global.** Entrada → saída, com teste em `tests/<nome>.test.ts` (ou
   `tests/lib/`). A UI pertence a `src/modulos/`.
 - **Arquivo novo vai para a pasta do assunto, nunca solto na raiz** (quebra o CI pelo teste
-  `tests/scripts/check-lib-sem-arquivo-solto.test.ts`; à mão, `npm run check:lib-por-assunto`). Serve a uma tela só → a pasta com o nome dela em `src/modulos/` (`aprovados/`,
+  `tests/repositorio-e-banco.test.ts` (bloco `scripts/check-lib-sem-arquivo-solto`); à mão, `npm run check:lib-por-assunto`). Serve a uma tela só → a pasta com o nome dela em `src/modulos/` (`aprovados/`,
   `entrevistas/`…); várias telas usam → pasta técnica: `sessao/`, `seguranca/`, `entrada/`,
   `navegacao/`, `carga/` ou `base/` (só o que três ou mais assuntos usam). Pasta com mais de 30
   arquivos diretos ganha subpasta.

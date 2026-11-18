@@ -1,6 +1,6 @@
 /*
   O que obter_catalogo_dos_robos devolve logo depois da migration 20261109180000.
-  tests/catalogo-dos-robos-migration.test.ts confere que é igual às linhas que a
+  tests/editais-cargas-e-paineis.test.ts (bloco catalogo-dos-robos-migration) confere que é igual às linhas que a
   migration grava: se o catálogo mudar no banco, este arquivo tem de mudar junto.
 */
 const w = (

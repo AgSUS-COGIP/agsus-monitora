@@ -6,9 +6,11 @@ export default defineConfig({
   plugins: [react()],
   test: {
     /*
-      node por padrão: montar o jsdom custava 2495 s somados numa suíte de 557
-      arquivos (o dobro do tempo dos testes), e metade deles não usa DOM.
-      Arquivo que usa DOM começa com `// @vitest-environment jsdom`.
+      Poucos arquivos, um por assunto, com um `bloco` por comportamento
+      (tests/apoio/bloco.ts): cada arquivo custa um processo, um ambiente e a
+      carga dos módulos. Com 560 arquivos, só montar o jsdom somava 2495 s (o
+      dobro do tempo dos testes). node por padrão; o arquivo `-na-tela` começa
+      com `// @vitest-environment jsdom`.
     */
     environment: "node",
     globals: false,

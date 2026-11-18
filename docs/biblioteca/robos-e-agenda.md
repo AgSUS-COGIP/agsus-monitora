@@ -39,7 +39,7 @@ e desliga; **Status das atualizações** mostra a saúde e roda na hora.
   maior intervalo, prazo de cada carga, texto em horário de Brasília), usada pelas duas telas.
 - Workflow novo: `insert` em `TB_ROBO_WORKFLOW` (e em `TB_TAREFA_AGENDADA` se uma tarefa o pedir);
   se tiver "Rodar agora", entra em `disparar_robo` e em `ROBOS_DE_CARGA`
-  (`src/lib/automacao/robos-de-carga.ts`). `tests/catalogo-dos-robos-migration.test.ts` reprova robô fora do
+  (`src/lib/automacao/robos-de-carga.ts`). `tests/editais-cargas-e-paineis.test.ts` (bloco `catalogo-dos-robos-migration`) reprova robô fora do
   catálogo.
 
 ## Os robôs
@@ -104,7 +104,7 @@ Explicações para a Aya:
   vêm de propriedade herdada. Links de execução só HTTP ou HTTPS. Isso não substitui a autorização
   do banco. Consumidores que continuam em JavaScript não são todos verificados pelo compilador.
 - Testes: saúde, painel, treinamento, formulário e API;
-  `tests/saude-das-cargas-fronteiras.test.js` (respostas malformadas e disparo simulado);
+  `tests/editais-cargas-e-paineis.test.js` (bloco `saude-das-cargas-fronteiras`) (respostas malformadas e disparo simulado);
   `tests/tipos/saude-das-cargas.tsx` (contratos e rejeições). Rede bloqueada.
 
 ## Relacionadas

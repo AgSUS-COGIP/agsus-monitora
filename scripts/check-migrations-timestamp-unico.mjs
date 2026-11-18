@@ -7,7 +7,7 @@ import { resolverBase } from "./arquivos-alterados.mjs";
   Duas branches mescladas em paralelo podem escolher o mesmo horário para a
   migration nova (05/11/2026: 20261105190000_area_na_api.sql e
   20261105190000_fontes_apos_leitura_da_api_de_editais.sql). O teste
-  tests/estado-das-migrations.test.js só via o repetido depois, já na main,
+  tests/repositorio-e-banco.test.js (bloco estado-das-migrations) só via o repetido depois, já na main,
   e aí o jeito era registrar em REPETIDOS_CONHECIDOS — renumerar migration
   aplicada não pode.
 

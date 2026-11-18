@@ -933,6 +933,7 @@ Descrição curta do contexto (1–2 linhas)
   | Hover | `text-primary` |
 
 - **Quantidade:** no máximo 6 abas. Em telas estreitas, as abas rolam horizontalmente.
+- **Contagem no rótulo:** quando o número atrás da aba ajuda a decidir o clique, ele vai ao lado do rótulo ("Alertas 18.325", "Cobertura 3%"; milhar com ponto), em `caption` sobre `state-info-soft`; em `state-warning-soft` quando pede ação (pendências abertas). Some no zero. Vale também para o controle segmentado (`ContagemDaAba`).
 - **Controle segmentado:** para alternar a representação do mesmo dado (por exemplo, "Tabela | Gráfico"), com no máximo 4 opções. Trilho em `bg-muted` com `radius-md` e padding de 2px; segmento ativo em `bg-canvas` com `shadow-sm`.
 
 ### 10.6 Navegação
@@ -1216,6 +1217,8 @@ Avaliações concluídas        ← label, text-secondary
 | `warning` | Pendente, Prazo próximo, Incompleto, Aguardando |
 | `danger` | Atrasado, Reprovado, Erro, Falha, Bloqueado |
 | `neutral` | Rascunho, Inativo, Cancelado, Arquivado |
+
+**Faixas de prazo** (`SeloDePrazo`, `src/lib/base/prazos.ts`): o texto diz quanto falta ("Vence hoje", "Vence em 12 dias", "Venceu há 3 dias") e a cor só complementa. Vencido em `danger`; vence em menos de 30 dias em `warning`; em menos de 90 em `info`; o resto `neutral`. No próprio dia ainda vale ("Vence hoje"). Os filtros por faixa usam os rótulos "Vencido" e "Vence em menos de 30, 90 ou 180 dias".
 
 ### 11.9 Barras de progresso
 

@@ -3,7 +3,7 @@
 
   Único lugar do código com link, caminho ou bucket de planilha. Quem consome uma
   planilha importa daqui; ninguém escreve o endereço de novo em outro arquivo.
-  `tests/planilhas.test.js` falha se um link de planilha aparecer fora deste arquivo.
+  `tests/editais-cargas-e-paineis.test.js` (bloco `planilhas`) falha se um link de planilha aparecer fora deste arquivo.
 
   Cada entrada diz o que a planilha é, onde ela mora e quem a usa (`usadaEm`), para
   que trocar um endereço seja editar uma linha aqui e nada mais.

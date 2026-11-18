@@ -8,7 +8,7 @@ atualizado: 2026-11-17
 
 **`src/lib/base/planilhas.ts` é o único lugar do código com link, caminho ou bucket de planilha.** Quem
 consome uma planilha importa de lá; ninguém escreve o endereço de novo em outro arquivo.
-`tests/planilhas.test.js` falha se um link de planilha aparecer fora dele. Além disso, duas abas
+`tests/editais-cargas-e-paineis.test.js` (bloco `planilhas`) falha se um link de planilha aparecer fora dele. Além disso, duas abas
 vêm de planilhas do Google Drive por cargas no GitHub Actions, e as planilhas antigas de análises
 enviam ao banco pelo Apps Script.
 

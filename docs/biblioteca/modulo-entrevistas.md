@@ -143,9 +143,9 @@ pela função: quem monta os dados liga cada nome à análise do candidato antes
 - **Troca de área ou sessão**: respostas de agenda e de gravações anteriores à troca são
   descartadas (inclusive para o mesmo edital); a gravação já enviada ao banco não é cancelada.
 - CSS só com tokens em `entrevistas.css`.
-- Testes: `tests/modulos/entrevistas.test.js`, `conduzir-entrevistas.test.js`,
+- Testes: `tests/telas-com-modulo-simulado-na-tela.test.js` (bloco `modulos/entrevistas`), `conduzir-entrevistas.test.js`,
   `agenda-do-painel-de-entrevistas.test.js`, os de `tests/*entrevista*.test.js`,
-  `tests/digitacao-de-notas.test.js` e `tests/preparar-e-fila-de-entrevistas.test.js`; contratos de
+  `tests/entrevistas-e-aprovados.test.js` (bloco `digitacao-de-notas`) e `tests/entrevistas-e-aprovados.test.js` (bloco `preparar-e-fila-de-entrevistas`); contratos de
   compilação em `tests/tipos/` (`painel-de-entrevistas.tsx`, `ficha-de-entrevistas.tsx`,
   `estado-da-conducao.tsx`, `editor-de-roteiros.tsx`, `convocacao-de-entrevistas.tsx`,
   `regras-das-entrevistas.tsx`).

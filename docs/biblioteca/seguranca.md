@@ -83,7 +83,7 @@ fixado ([[rpc-e-contrato]]). Não desligar RLS para "resolver" permissão.
 - `tests/setup/rede-bloqueada.ts` bloqueia a rede em todo teste unitário (um teste já chamou o
   Supabase de produção via `.env.local`).
 - O servidor e o `dist/` não servem `CLAUDE.md`, `.env` nem arquivo com ponto
-  (`tests/servidor.test.js`).
+  (`tests/repositorio-e-banco.test.js` (bloco `servidor`)).
 
 ## Processo
 
