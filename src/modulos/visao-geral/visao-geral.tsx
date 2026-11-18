@@ -7,7 +7,8 @@ import type {
 } from "./tipos.ts";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ComponentType } from "react";
-import { Suspense, lazy, useMemo, useState, useSyncExternalStore } from "react";
+import { lazy, Suspense, useMemo, useState, useSyncExternalStore } from "react";
+import { importarComRecarga } from "../../lib/carga/importar-com-recarga.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import {
@@ -22,7 +23,6 @@ import {
 import { criarCarregadorDeMunicipios } from "../mapa-de-projetos/carregador.ts";
 // O mapa de Projetos (e o Leaflet) baixa quando monta: ./mapas-sob-demanda.tsx.
 import { MapaDeProjetos } from "./mapas-sob-demanda.tsx";
-import { importarComRecarga } from "../../lib/carga/importar-com-recarga.ts";
 import type { PropsDoCartaoDoMapa } from "./cartao-do-mapa.tsx";
 import { MarcosDoAno } from "./boas-vindas.tsx";
 import {
@@ -39,8 +39,17 @@ import {
   Vagas,
 } from "./paineis.tsx";
 import { TabelaDeProcessos } from "./tabela.tsx";
-import { MontadorDeRelatorio } from "./montador-de-relatorio.tsx";
-import { podeBaixarAprovados } from "../../lib/acessos/access-roles.ts";
+import {
+  podeBaixarAprovados,
+  secaoDeConfiguracaoPermitida,
+} from "../../lib/acessos/access-roles.ts";
+import type { ClienteDosAvisos } from "../conferencias/tipos.ts";
+import { telaPermitida } from "../../lib/navegacao/navegacao.ts";
+import { pedirFiltro } from "../../app/pedido-de-filtro.ts";
+import { irParaTela, type JanelaDoApp } from "../../app/ir-para-tela.ts";
+import { ErrorBoundary } from "../../app/ErrorBoundary.tsx";
+
+type PerfilDaNavegacao = Parameters<typeof telaPermitida>[1];
 
 /*
   A Visão geral (view `dashboard`), um módulo do app: monta direto na
@@ -90,6 +99,19 @@ const CartaoDoMapa = lazy<ComponentType<PropsDoCartaoDoMapa>>(() =>
   baixarCartaoDoMapa().catch(() => ({ default: SemCartao })),
 );
 
+/*
+  O montador de relatório (e as regras do relatório e da diretoria) só abre no
+  Exportar: chega por import(), fora do pacote de entrada (orçamento de
+  bundle, `check:bundle-size`). Os Painéis já o pedem sob demanda.
+*/
+const MontadorDeRelatorio = lazy(
+  importarComRecarga(() =>
+    import("./montador-de-relatorio.tsx").then((m) => ({
+      default: m.MontadorDeRelatorio,
+    })),
+  ),
+);
+
 function usarTextos(configuracoes: Configuracoes) {
   const { valores } = useSyncExternalStore(
     configuracoes.assinar,
@@ -114,9 +136,22 @@ export function TelaDaVisaoGeral({
   const textos = usarTextos(configuracoes);
   const mapa = mapaDaVisaoGeral(e.area);
   const [aberta, setAberta] = useState<string | null>(null);
+  // A seção da gaveta à vista: "avisos" quando veio do selo de Atenção.
+  const [secaoDaGaveta, setSecaoDaGaveta] = useState("");
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
   // A linha aberta segue os dados: recarga atualiza a gaveta; se sumir, fecha.
-  const abrir = (linha: LinhaDaVisaoGeral) => setAberta(String(linha.id));
+  const abrir = (linha: LinhaDaVisaoGeral, secao = "") => {
+    setSecaoDaGaveta(secao);
+    setAberta(String(linha.id));
+  };
+  // A central de avisos (Configurações › Status das atualizações) é do administrador global.
+  const perfilAtual = obterPerfil?.() || null;
+  const abrirCentral = secaoDeConfiguracaoPermitida(perfilAtual, "cargas")
+    ? () => {
+        setAberta(null);
+        (window as JanelaDoApp).navigate?.("config", { secao: "cargas" });
+      }
+    : null;
   const linhaAberta = aberta
     ? e.linhasDaArea.find((linha) => String(linha.id) === aberta) || null
     : null;
@@ -174,23 +209,40 @@ export function TelaDaVisaoGeral({
         textos={textos}
         agora={agora}
         aoAbrir={abrir}
+        podeAbrirTela={(view) =>
+          telaPermitida(view, (obterPerfil?.() || null) as PerfilDaNavegacao)
+        }
+        aoAbrirOrigem={(linha, origem) => {
+          // A volta destaca a linha; a tela de destino abre já no edital.
+          estado.sairPelaLinha(linha.id);
+          pedirFiltro(origem.view, origem.pedido);
+          irParaTela({ view: origem.view });
+        }}
       />
       {e.montador && e.aberta ? (
-        <MontadorDeRelatorio
-          e={e}
-          aoBaixarCsv={estado.exportarCsv}
-          textos={textos}
-          configuracoes={configuracoes}
-          obterPerfil={obterPerfil}
-          agora={agora}
-          aoFechar={estado.fecharMontador}
-          supabase={supabase}
-          podeAprovados={podeBaixarAprovados(obterPerfil?.())}
-        />
+        <ErrorBoundary nome="o montador de relatório">
+          <Suspense fallback={null}>
+            <MontadorDeRelatorio
+              e={e}
+              aoBaixarCsv={estado.exportarCsv}
+              textos={textos}
+              configuracoes={configuracoes}
+              obterPerfil={obterPerfil}
+              agora={agora}
+              aoFechar={estado.fecharMontador}
+              supabase={supabase}
+              podeAprovados={podeBaixarAprovados(obterPerfil?.())}
+            />
+          </Suspense>
+        </ErrorBoundary>
       ) : null}
       {linhaAberta ? (
         <GavetaDoProcesso
           linha={linhaAberta}
+          area={e.area}
+          supabase={supabase as ClienteDosAvisos | null}
+          aoAbrirCentral={abrirCentral}
+          secaoInicial={secaoDaGaveta}
           aoFechar={() => setAberta(null)}
           aoVoltarALinha={() => {
             setAberta(null);

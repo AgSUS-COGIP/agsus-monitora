@@ -20,12 +20,26 @@ import {
 } from "../../lib/entrada/boas-vindas.ts";
 import { formatNumberBR } from "../../lib/base/formatters";
 import {
+  situacaoDoIndicador,
+  type SituacaoDoIndicador,
+} from "../../lib/visao-geral/indicadores-do-monitoramento.ts";
+import {
   andamentoPorFase,
   CAMPOS_DO_FILTRO,
   posResultado,
   processosPorProjeto,
   rotuloDoAtalho,
 } from "../../lib/visao-geral/visao-geral.ts";
+import {
+  composicaoDoIndicador,
+  type Composicao,
+} from "../../lib/visao-geral/composicao-dos-numeros.ts";
+import { ComposicaoDoNumero } from "./composicao.tsx";
+import {
+  PERGUNTA_DO_INDICADOR,
+  type IndicadorComSignificado,
+} from "../../lib/visao-geral/o-que-significa.ts";
+import { perguntarParaAAya } from "../../app/pergunta-para-a-aya.ts";
 import {
   ChipDeFiltro,
   ChipsDeFiltro,
@@ -34,6 +48,7 @@ import {
   ListaDePendencias,
   MaisOpcoes,
   PainelDeFiltros,
+  Popover,
 } from "../../ui/index.ts";
 import { useState } from "react";
 
@@ -47,8 +62,8 @@ import { useState } from "react";
   - Filtros: o painel só aparece quando aberto pelo botão; os chips do
     recorte ficam sempre à vista, com "Limpar tudo".
   - Vagas: as vagas imediatas e as três parcelas delas (contratadas, em
-    seleção, ociosas) com a barra da divisão; cadastro reserva e inscritos
-    numa linha embaixo. Esperam o acompanhamento (`aguardandoVagas`) para não
+    seleção, ociosas) com a barra da divisão; as contratações além das vagas
+    imediatas e os inscritos numa linha embaixo. Esperam o acompanhamento (`aguardandoVagas`) para não
     mostrar um número que muda segundos depois.
   - Pede ação: os críticos e as pendências do pós-resultado, numa lista só.
   - Em andamento: as fases só dos editais abertos, sem as vazias.
@@ -348,6 +363,12 @@ export function Filtros({
 const TITULO_DAS_REABERTAS =
   "Cada vaga conta uma vez: a vaga sem contratação reaberta em edital mais novo da mesma unidade, para o mesmo cargo, conta só no edital novo.";
 
+/*
+  Um número da faixa. Quatro jeitos de aparecer (revisão de 17/11/2026):
+  carregando (o esqueleto), o valor (o zero confirmado é "0"), e "—" com o
+  porquê quando o dado falta ou não se aplica ao recorte
+  (`situacaoDoIndicador`).
+*/
 function Numero({
   chave,
   rotulo,
@@ -356,6 +377,8 @@ function Numero({
   titulo,
   tom,
   esperando,
+  situacao,
+  passos,
 }: {
   chave: string;
   rotulo: string;
@@ -364,33 +387,92 @@ function Numero({
   titulo?: string;
   tom?: string;
   esperando: boolean;
+  situacao?: SituacaoDoIndicador;
+  /** A composição do número: clicar nele abre as parcelas. */
+  passos?: Composicao | null;
 }) {
+  const semValor = situacao && situacao.tipo !== "valor" ? situacao : null;
+  const texto = semValor
+    ? semValor.motivo
+    : [detalhe, situacao?.tipo === "valor" ? situacao.cobertura : ""]
+        .filter(Boolean)
+        .join(" · ");
   return (
     <div
       className="visao-geral-numero"
       data-kpi={chave}
       data-tom={tom}
+      data-situacao={esperando ? "pendente" : semValor?.tipo || "valor"}
       aria-busy={esperando || undefined}
       title={titulo}
     >
-      <span className="visao-geral-numero-rotulo">{rotulo}</span>
+      <span className="visao-geral-numero-rotulo">
+        {rotulo}
+        {Object.hasOwn(PERGUNTA_DO_INDICADOR, chave) ? (
+          // "O que significa": a resposta vem da Aya (docs/aya/), não da tela.
+          <button
+            type="button"
+            className="visao-geral-numero-info"
+            data-acao={`significado-${chave}`}
+            aria-label={`O que significa ${rotulo}`}
+            title={`O que significa ${rotulo}`}
+            onClick={() =>
+              perguntarParaAAya(
+                PERGUNTA_DO_INDICADOR[chave as IndicadorComSignificado],
+              )
+            }
+          >
+            <i className="fa-solid fa-circle-info" aria-hidden="true" />
+          </button>
+        ) : null}
+      </span>
       {esperando ? (
         <span className="ui-kpi-valor ui-esqueleto" aria-hidden="true" />
+      ) : passos && !semValor ? (
+        <Popover
+          rotulo={`${rotulo}: ${fmt(valor)}`}
+          dica="Ver a composição"
+          gatilho={fmt(valor)}
+          classeDoBotao="ui-kpi-valor visao-geral-numero-botao"
+          className="visao-geral-numero-origem"
+          lado="esquerda"
+          acao={`composicao-${chave}`}
+        >
+          <div className="visao-geral-origem">
+            <strong>{rotulo}</strong>
+            <ComposicaoDoNumero passos={passos} />
+          </div>
+        </Popover>
       ) : (
-        <span className="ui-kpi-valor">{fmt(valor)}</span>
+        <span className="ui-kpi-valor">{semValor ? "—" : fmt(valor)}</span>
       )}
-      {detalhe && !esperando ? (
-        <span className="visao-geral-numero-detalhe">{detalhe}</span>
+      {texto && !esperando ? (
+        <span className="visao-geral-numero-detalhe">{texto}</span>
       ) : null}
     </div>
   );
+}
+
+/* O detalhe das vagas imediatas: o desconto das reabertas, ou que ele faltou. */
+function detalheDasVagas(e: SnapshotDaVisaoGeral) {
+  const k = e.indicadores;
+  if (e.semDescontoDasReabertas)
+    return { detalhe: "sem desconto das reabertas" };
+  if (k.reabertas > 0)
+    return {
+      detalhe: `sem ${fmt(k.reabertas)} reabertas`,
+      titulo: TITULO_DAS_REABERTAS,
+    };
+  return {};
 }
 
 export function Vagas({ e, textos }: Omit<PropsComTextos, "estado">) {
   const k = e.indicadores;
   const esperando = !e.carregado || e.aguardandoVagas;
   const rotulo = textos.rotulos;
-  const daVaga = (n: number) => `${parte(n, k.vagas)}% das vagas`;
+  // Sem vagas no recorte, a porcentagem não se aplica.
+  const daVaga = (n: number) =>
+    k.vagas > 0 ? `${parte(n, k.vagas)}% das vagas` : undefined;
   return (
     <section
       className="ui-card visao-geral-kpis visao-geral-vagas"
@@ -400,18 +482,15 @@ export function Vagas({ e, textos }: Omit<PropsComTextos, "estado">) {
       <div className="visao-geral-vagas-numeros">
         <Numero
           chave="vagas"
+          passos={composicaoDoIndicador(e.filtradas, "vagas")}
           rotulo={rotulo.kpi_vagas_label}
           valor={k.vagas}
           esperando={esperando}
-          {...(k.reabertas > 0
-            ? {
-                detalhe: `sem ${fmt(k.reabertas)} reabertas`,
-                titulo: TITULO_DAS_REABERTAS,
-              }
-            : {})}
+          {...detalheDasVagas(e)}
         />
         <Numero
           chave="contratadas"
+          passos={composicaoDoIndicador(e.filtradas, "contratadas")}
           tom="sucesso"
           rotulo={rotulo.kpi_contratadas_label}
           valor={k.contratadas}
@@ -420,19 +499,23 @@ export function Vagas({ e, textos }: Omit<PropsComTextos, "estado">) {
         />
         <Numero
           chave="emSelecao"
+          passos={composicaoDoIndicador(e.filtradas, "emSelecao")}
           tom="info"
           rotulo={rotulo.kpi_em_selecao_label}
           valor={k.emSelecao}
           detalhe={daVaga(k.emSelecao)}
           esperando={esperando}
+          situacao={situacaoDoIndicador(k, "emSelecao")}
         />
         <Numero
           chave="ociosas"
+          passos={composicaoDoIndicador(e.filtradas, "ociosas")}
           tom="alerta"
           rotulo={rotulo.kpi_ociosas_label}
           valor={k.ociosas}
           detalhe={daVaga(k.ociosas)}
           esperando={esperando}
+          situacao={situacaoDoIndicador(k, "ociosas")}
         />
       </div>
       {!esperando && k.vagas > 0 ? (
@@ -458,9 +541,10 @@ export function Vagas({ e, textos }: Omit<PropsComTextos, "estado">) {
       )}
       <div className="visao-geral-vagas-outros">
         <Numero
-          chave="cadastroReserva"
-          rotulo={rotulo.kpi_cadastro_reserva_label}
-          valor={k.cadastroReserva}
+          chave="alemDasVagas"
+          passos={composicaoDoIndicador(e.filtradas, "alemDasVagas")}
+          rotulo={rotulo.kpi_alem_das_vagas_label}
+          valor={k.alemDasVagas}
           esperando={!e.carregado}
         />
         <Numero
@@ -468,6 +552,7 @@ export function Vagas({ e, textos }: Omit<PropsComTextos, "estado">) {
           rotulo={rotulo.kpi_inscritos_label}
           valor={k.inscritos}
           esperando={!e.carregado}
+          situacao={situacaoDoIndicador(k, "inscritos")}
         />
       </div>
     </section>

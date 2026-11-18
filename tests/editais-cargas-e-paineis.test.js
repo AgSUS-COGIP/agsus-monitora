@@ -5123,6 +5123,20 @@ bloco("importar-com-recarga", () => {
       expect(recarregar).not.toHaveBeenCalled();
     });
 
+    it("o CSS da tela que não baixou (Vite) também recarrega", async () => {
+      const recarregar = vi.fn();
+      void importarComRecarga(
+        () =>
+          Promise.reject(
+            new Error(
+              "Unable to preload CSS for /assets/calendario-editais-C6Way2G9.css",
+            ),
+          ),
+        { armazenamento: memoria(), recarregar, agora: 20_000 },
+      )();
+      await vi.waitFor(() => expect(recarregar).toHaveBeenCalledOnce());
+    });
+
     it("erro que não é de carregamento é repassado sem recarregar", async () => {
       const recarregar = vi.fn();
       await expect(
@@ -7533,6 +7547,66 @@ bloco("service-worker-policy", () => {
       expect(policy.getRequestStrategy({ destination: "style" })).toBe(
         "network-first",
       );
+    });
+
+    it("arquivo com hash no nome vem do cache primeiro: depois da publicação o da versão anterior dá 404", () => {
+      for (const destination of ["script", "style", "font", "image"])
+        expect(
+          policy.getRequestStrategy({
+            destination,
+            url: "https://yeende.app/assets/calendario-editais-C6Way2G9.js",
+          }),
+        ).toBe("cache-first");
+      expect(
+        policy.getRequestStrategy({
+          destination: "script",
+          url: "https://yeende.app/sw-policy.js",
+        }),
+      ).toBe("network-first");
+      // fetch() da página (destination vazio) não passa pelo cache.
+      expect(
+        policy.getRequestStrategy({
+          url: "https://yeende.app/assets/calendario-editais-C6Way2G9.js",
+        }),
+      ).toBe("network-only");
+    });
+
+    it("rede primeiro: erro da rede (404, 500) usa a cópia guardada", () => {
+      expect(policy.prefersCachedCopy({ ok: true, type: "basic" })).toBe(false);
+      expect(
+        policy.prefersCachedCopy({
+          ok: false,
+          status: 0,
+          type: "opaqueredirect",
+        }),
+      ).toBe(false);
+      expect(
+        policy.prefersCachedCopy({ ok: false, status: 404, type: "basic" }),
+      ).toBe(true);
+      expect(
+        policy.prefersCachedCopy({ ok: false, status: 503, type: "basic" }),
+      ).toBe(true);
+      expect(policy.prefersCachedCopy(undefined)).toBe(true);
+    });
+
+    it("na troca de versão herda os pedaços com hash da anterior que a nova não tem", () => {
+      const o = "https://yeende.app";
+      const anterior = [
+        `${o}/`,
+        `${o}/assets/main-AAAAAAAA.js`,
+        `${o}/assets/telas-BBBBBBBB.js`,
+        `${o}/assets/comum-CCCCCCCC.js`,
+        `${o}/fonts/geist-latin.woff2`,
+        `${o}/assets/velho-DDDDDDDD.js`,
+      ];
+      const novo = [`${o}/`, `${o}/assets/comum-CCCCCCCC.js`];
+      // Ordem inversa: os herdados de versões mais velhas entram primeiro e saem primeiro do limite.
+      expect(policy.entriesToCarry(anterior, novo)).toEqual([
+        `${o}/assets/velho-DDDDDDDD.js`,
+        `${o}/assets/telas-BBBBBBBB.js`,
+        `${o}/assets/main-AAAAAAAA.js`,
+      ]);
+      expect(policy.entriesToCarry([], novo)).toEqual([]);
     });
 
     it("mantém cache-first para recursos visuais estáticos", () => {

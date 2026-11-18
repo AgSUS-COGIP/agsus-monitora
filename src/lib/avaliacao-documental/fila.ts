@@ -30,6 +30,7 @@ export type EtapaDaFila =
   | "em_analise"
   | "revisao"
   | "concluidas"
+  | "saiu"
   | "eliminados"
   | "fora";
 
@@ -106,6 +107,8 @@ export interface ContagemDoAndamento {
   em_analise: number;
   revisao: number;
   pendentes: number;
+  /** No lote pela pré-classificação, mas a ficha saiu (FORA_LOTE). */
+  saiu: number;
 }
 
 export interface AndamentoDaFila {
@@ -184,6 +187,7 @@ export type ChaveDaColuna =
   | "situacao"
   | "resultado"
   | "motivo"
+  | "motivo_saida"
   | "motivo_revisao"
   | "responsavel"
   | "reserva"
@@ -208,6 +212,7 @@ export const ETAPAS_DA_FILA: ReadonlyArray<{
   { valor: "em_analise", rotulo: "Em análise" },
   { valor: "revisao", rotulo: "Em revisão" },
   { valor: "concluidas", rotulo: "Concluídas" },
+  { valor: "saiu", rotulo: "Saiu do lote" },
   { valor: "eliminados", rotulo: "Eliminados" },
   { valor: "fora", rotulo: "Fora do lote" },
 ]);
@@ -222,13 +227,36 @@ export const SITUACOES_DA_FICHA: Readonly<
   FORA_LOTE: { rotulo: "Fora do lote", tom: "reprovado" },
 });
 
-const SITUACAO_DA_ETAPA: Readonly<Record<string, SituacaoDaFicha>> = {
-  pendentes: "PENDENTE",
-  em_analise: "EM_ANALISE",
-  revisao: "REVISAR",
-  concluidas: "CONCLUIDA",
-};
 const NO_LOTE: ReadonlySet<unknown> = new Set(["NO_LOTE", "ANALISADO"]);
+
+/** As partes do lote: cada inscrito do lote cai em uma só. */
+export type ParteDoLote =
+  "concluidas" | "em_analise" | "revisao" | "pendentes" | "saiu";
+
+const PARTE_DA_SITUACAO: Readonly<Record<string, ParteDoLote>> = {
+  CONCLUIDA: "concluidas",
+  EM_ANALISE: "em_analise",
+  REVISAR: "revisao",
+  FORA_LOTE: "saiu",
+};
+
+/**
+ * A parte do lote do inscrito (null fora do lote). Pendente: ficha pendente
+ * ou ainda sem ficha. "saiu": no lote pela pré-classificação, mas a ficha foi
+ * para FORA_LOTE (a importação da planilha a tirou, por exemplo). A faixa do
+ * alto, as abas e o bloco por vaga contam por aqui, então lote = concluídas +
+ * em análise + em revisão + pendentes + saíram do lote.
+ */
+export function parteDoLote(
+  c: InscritoNaFila | null | undefined,
+): ParteDoLote | null {
+  if (!c || !NO_LOTE.has(c.situacao_pre)) return null;
+  return PARTE_DA_SITUACAO[c.ficha?.situacao as string] ?? "pendentes";
+}
+
+const PARTES_DO_LOTE: ReadonlySet<unknown> = new Set(
+  Object.values(PARTE_DA_SITUACAO).concat("pendentes"),
+);
 
 /** O inscrito está na etapa? */
 export function naEtapa(
@@ -240,8 +268,7 @@ export function naEtapa(
   if (etapa === "lote") return NO_LOTE.has(c.situacao_pre);
   if (etapa === "eliminados") return c.situacao_pre === "ELIMINADO";
   if (etapa === "fora") return !NO_LOTE.has(c.situacao_pre);
-  const situacao = SITUACAO_DA_ETAPA[etapa];
-  return Boolean(situacao) && c.ficha?.situacao === situacao;
+  return PARTES_DO_LOTE.has(etapa) && parteDoLote(c) === etapa;
 }
 
 /** Os contadores de cada etapa (as abas do topo). */
@@ -295,20 +322,21 @@ function ordemDasVagas(
 function contarAndamento(
   lista: readonly InscritoNaFila[],
 ): ContagemDoAndamento {
-  const doLote = lista.filter(noLote);
-  const conta = (situacao: SituacaoDaFicha) =>
-    doLote.filter((c) => c.ficha?.situacao === situacao).length;
-  const concluidas = conta("CONCLUIDA");
-  const em_analise = conta("EM_ANALISE");
-  const revisao = conta("REVISAR");
-  return {
-    lote: doLote.length,
-    concluidas,
-    em_analise,
-    revisao,
-    // Pendente: ficha na fila ou quem está no lote e ainda não tem ficha.
-    pendentes: doLote.length - concluidas - em_analise - revisao,
+  const conta: ContagemDoAndamento = {
+    lote: 0,
+    concluidas: 0,
+    em_analise: 0,
+    revisao: 0,
+    pendentes: 0,
+    saiu: 0,
   };
+  for (const c of lista) {
+    const parte = parteDoLote(c);
+    if (!parte) continue;
+    conta.lote += 1;
+    conta[parte] += 1;
+  }
+  return conta;
 }
 
 /**
@@ -747,6 +775,10 @@ export const COLUNAS_DA_FILA: Readonly<Record<ChaveDaColuna, ColunaDaFila>> =
     },
     // O último motivo de "Mandar para revisão" (a coordenação ou a conferência
     // automática da ficha concluída que ficou com pendência: FC_LINHAS_DA_FILA).
+    motivo_saida: {
+      rotulo: "Motivo da saída",
+      valor: (c) => String(c.ficha?.motivo_saida ?? "").trim(),
+    },
     motivo_revisao: {
       rotulo: "Motivo da revisão",
       valor: (c) => String(c.ficha?.motivo_revisao ?? "").trim(),
@@ -826,6 +858,7 @@ const COLUNAS_DA_ETAPA: Readonly<
     "responsavel",
     "concluida_em",
   ],
+  saiu: ["vaga", "posicao", "codigo", "nome", "art", "motivo_saida"],
   eliminados: ["codigo", "nome", "vaga", "motivo", "art"],
   fora: ["vaga", "posicao", "codigo", "nome", "art", "situacao"],
 });

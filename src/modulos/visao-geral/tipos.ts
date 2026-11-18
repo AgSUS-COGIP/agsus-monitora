@@ -146,16 +146,24 @@ export type Indicadores = {
   contratadas: number;
   emSelecao: number;
   ociosas: number;
-  cadastroReserva: number;
+  alemDasVagas: number;
   criticos: number;
   inscritos: number;
+  /** Editais do recorte sem os cancelados: a base da cobertura. */
+  editais: number;
+  /** Desses, quantos têm o número de inscritos (o resto é "—", não zero). */
+  inscritosInformados: number;
+  /** Editais com resultado (as vagas sem contratação deles são Ociosas). */
+  editaisComResultado: number;
+  /** Editais sem resultado (as vagas sem contratação deles estão Em seleção). */
+  editaisSemResultado: number;
 };
 export type ChaveDoIndicador =
   | "kpi_vagas_label"
   | "kpi_contratadas_label"
   | "kpi_em_selecao_label"
   | "kpi_ociosas_label"
-  | "kpi_cadastro_reserva_label"
+  | "kpi_alem_das_vagas_label"
   | "kpi_criticos_label"
   | "kpi_inscritos_label";
 export type TextosDaVisaoGeral = {
@@ -252,6 +260,11 @@ export type SnapshotDaVisaoGeral = Readonly<
      * a tela mostra o esqueleto em vez de um número que vai mudar.
      */
     aguardandoVagas: boolean;
+    /**
+     * O acompanhamento falhou, passou do tempo ou veio sem os cargos: as
+     * vagas aparecem como cada edital publicou, sem o desconto das reabertas.
+     */
+    semDescontoDasReabertas: boolean;
   }
 >;
 export type EstadoDaVisaoGeral = {
@@ -276,10 +289,14 @@ export type EstadoDaVisaoGeral = {
   esquecer: () => void;
   localizar: (linha: LinhaDoMonitoramento | null) => void;
   destacar: (id: string | number | undefined) => void;
+  /** Um número levou a outra tela: ao voltar, esta linha se destaca. */
+  sairPelaLinha: (id: string | number | undefined) => void;
   definirBusca: (busca: string) => void;
   definirDadosDoMapa: (dados?: { lmap?: unknown }) => void;
   ordenarPor: (campo: ColunaDaTabela) => void;
   alternarColuna: (campo: ColunaDaTabela, visivel: boolean) => void;
+  /** Gestão, Prazos ou Contratação (src/lib/visao-geral/presets-de-colunas.ts). */
+  aplicarPresetDeColunas: (id: string) => void;
   exportarCsv: () => void;
   abrirMontador: () => void;
   fecharMontador: () => void;

@@ -10,6 +10,7 @@ import {
   paginasPermitidas,
   permissaoLegada,
   podeAbrirConfiguracoes,
+  podeAbrirPaginaDoEdital,
 } from "../acessos/access-roles";
 
 /*
@@ -131,6 +132,7 @@ const BLOQUEIOS: Readonly<
   selecao: [canViewSelecao, "Sem permissão para Seleção."],
   "paineis-de-dados": [canViewPaineisDeDados, "Sem permissão para Painéis."],
   config: [podeAbrirConfiguracoes, "Sem permissão para Configurações."],
+  edital: [podeAbrirPaginaDoEdital, "Sem permissão para a página do edital."],
 });
 
 /**

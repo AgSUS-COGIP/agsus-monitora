@@ -369,6 +369,21 @@ export function permissaoLegada(
 }
 
 /** Páginas do sistema que o perfil abre (a barra, a navegação e o "Ver como" usam a mesma regra). */
+/**
+ * A página do edital (`/<área>/edital/<número>`): quem vê os editais por
+ * alguma das telas que os mostram inteiros (Visão geral, Editais ou
+ * Cronograma). O banco confere de novo (`get_monitoramento_cronograma`
+ * exige uma delas e o acesso ao edital).
+ */
+export function podeAbrirPaginaDoEdital(profile: unknown): boolean {
+  const perfil = comoPerfil(profile);
+  return (
+    permissaoLegada(perfil, "ind") ||
+    permissaoLegada(perfil, "cores") ||
+    permissaoLegada(perfil, perfil?.permissoes ? "calendario" : "cores")
+  );
+}
+
 export function paginasPermitidas(profile: unknown): PaginasPermitidas {
   const pode = (perm: PermissaoLegada) =>
     permissaoLegada(comoPerfil(profile), perm);
@@ -391,6 +406,7 @@ export function paginasPermitidas(profile: unknown): PaginasPermitidas {
     selecao: canViewSelecao(profile),
     "paineis-de-dados": canViewPaineisDeDados(profile),
     config: podeAbrirConfiguracoes(profile),
+    edital: podeAbrirPaginaDoEdital(profile),
   };
 }
 

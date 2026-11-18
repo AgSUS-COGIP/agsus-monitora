@@ -19,6 +19,8 @@ export type FiltroPedido = object;
 /** O filtro que a tela recebe ao consumir o pedido. */
 export type FiltroDoPedido = {
   edital?: string;
+  /** O id do edital (monitoramento), quando quem pede tem: a Visão geral. */
+  editalId?: string;
   metrica?: string;
   busca?: string;
   entrevista?: string;

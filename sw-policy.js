@@ -2,8 +2,15 @@
   const NETWORK_FIRST_DESTINATIONS = new Set(["script", "style", "worker"]);
   const CACHE_FIRST_DESTINATIONS = new Set(["image", "font", "manifest"]);
 
-  function getRequestStrategy({ mode = "", destination = "" } = {}) {
+  /*
+    O arquivo com o hash no nome nunca muda (`isHashedAsset`): vem do cache
+    primeiro. Era rede primeiro, e depois de uma publicação a Vercel responde
+    404 ao pedaço da versão anterior, que a aba ainda aberta pede ao abrir uma
+    tela; o 404 chegava à página mesmo com a cópia guardada.
+  */
+  function getRequestStrategy({ mode = "", destination = "", url = "" } = {}) {
     if (mode === "navigate") return "network-first";
+    if (isHashedAsset(url) && destination !== "") return "cache-first";
     if (NETWORK_FIRST_DESTINATIONS.has(destination)) return "network-first";
     if (CACHE_FIRST_DESTINATIONS.has(destination)) return "cache-first";
     return "network-only";
@@ -41,10 +48,41 @@
     return /^\/assets\/.+-[\w-]{8}\.[a-z0-9]+$/i.test(pathname);
   }
 
+  /*
+    Rede primeiro: a resposta da rede vale, salvo erro (404, 500) havendo
+    cópia guardada. O redirecionamento de uma navegação (`opaqueredirect`)
+    vale como veio.
+  */
+  function prefersCachedCopy(response) {
+    if (!response) return true;
+    return !response.ok && response.type !== "opaqueredirect";
+  }
+
+  /*
+    Na troca de versão, os arquivos com hash da versão anterior que a nova não
+    tem passam para o cache novo: a aba que ficou aberta ainda roda o código
+    anterior e pede os pedaços dele, que a Vercel já não tem. Entram no fim
+    da fila do limite (`entriesBeyondLimit`) na ordem inversa da do cache
+    anterior: os da versão anterior por último, os herdados de versões mais
+    velhas antes, e estes saem primeiro.
+  */
+  function entriesToCarry(previousUrls = [], keep = []) {
+    const fixed = new Set(keep);
+    const carry = [];
+    for (const url of [...previousUrls].reverse()) {
+      if (!isHashedAsset(url) || fixed.has(url)) continue;
+      fixed.add(url);
+      carry.push(url);
+    }
+    return carry;
+  }
+
   scope.AgSUSPwaCachePolicy = {
     getRequestStrategy,
     isResponseCacheable,
     entriesBeyondLimit,
     isHashedAsset,
+    prefersCachedCopy,
+    entriesToCarry,
   };
 })(self);

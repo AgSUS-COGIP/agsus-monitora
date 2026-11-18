@@ -50,6 +50,7 @@ import {
 import { formatarDataHora } from "../../lib/cronograma/cronograma-do-edital.ts";
 import { soDosEditais } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
+import { abrirPaginaDoEdital } from "../pagina-do-edital/abrir.ts";
 import {
   BlocosEsqueleto,
   Campo,
@@ -191,7 +192,7 @@ export function CalendarioEditais({
     área escolhida no menu. O cache de `estado.ts` continua um só: trocar de
     área não repete os pedidos.
   */
-  const { ids, area } = usarAreaAtual();
+  const { ids, area, linhas: linhasDaArea } = usarAreaAtual();
   const etapasDosEditais = useMemo(
     () => soDosEditais(carga.etapas, ids, "editalId"),
     [carga.etapas, ids],
@@ -286,6 +287,10 @@ export function CalendarioEditais({
     [editais, filtradas],
   );
   const editalDaLinha = editalDaLinhaDoTempo(editalEscolhido, editaisVisiveis);
+  // O edital da linha do tempo entre as linhas da área (a demanda interna não tem página).
+  const linhaDoEditalDaLinha =
+    linhasDaArea.find((linha) => String(linha.id ?? "") === editalDaLinha) ??
+    null;
   const etapasDaLinha = useMemo(
     () => etapasDoEdital(etapas, editalDaLinha),
     [etapas, editalDaLinha],
@@ -659,6 +664,18 @@ export function CalendarioEditais({
               valor={editalDaLinha}
               aoMudar={setEditalEscolhido}
             />
+            {linhaDoEditalDaLinha ? (
+              <button
+                type="button"
+                className="btn contorno small"
+                onClick={() =>
+                  abrirPaginaDoEdital(linhaDoEditalDaLinha, linhasDaArea)
+                }
+              >
+                <i className="fa-solid fa-file-lines" aria-hidden="true" />{" "}
+                Abrir página do edital
+              </button>
+            ) : null}
           </div>
           <ol
             id="calTimeline"

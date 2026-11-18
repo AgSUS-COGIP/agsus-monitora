@@ -1667,7 +1667,7 @@ export const VERBETES_AYA = Object.freeze([
       "botao analisar na fila",
     ],
     resposta:
-      'No alto da Fila, logo abaixo do cabeçalho (o edital e as seções Fila, Documentos e Configurações), fica a faixa de situação do lote, num card só: No lote, Pendentes, Em análise, Em revisão e Concluídas, cada um com o número grande e, embaixo, a porcentagem do lote (em Concluídas, também quantas deram Apto; em No lote, quantos entraram pela regra e por decisão, ou a porcentagem dos inscritos). Clicar num número mostra aquela etapa na lista (o escolhido fica marcado). Na linha de baixo da faixa: a barra da distribuição do lote (verde concluídas, azul em análise, violeta em revisão, amarelo pendentes; o que falta é quem está no lote e ainda não tem ficha), o selo do ritmo de hoje (o mesmo do card "Ritmo da análise" do Painel das análises, quando a pessoa pode lê-lo), "Hoje N" (as concluídas hoje; com o prazo da análise no cronograma, "Hoje N de M", com a meta do dia) e "N fora do lote", que mostra quem não está no lote (eliminados e ranqueados fora do corte). Embaixo, o bloco "Por vaga (N)", fechado por padrão (o sistema lembra se você o deixou aberto): aberto, uma tabela curta com o código, o cargo e a lotação, a barra, concluídas de N, em análise e pendentes; clicar no título Vaga, Concluídas ou Pendentes ordena e clicar numa vaga filtra a lista por ela (o mesmo filtro Vaga da barra). A lista vem num card: no alto, a busca por código ou nome (a tecla "/" leva até ela; Enter com o código abre a ficha; Esc apaga), Vaga e Responsável (Qualquer, Minhas fichas, Sem responsável ou um analista), o botão "Filtros" (Modalidade e os filtros salvos), "Limpar" quando há filtro (fica na etapa), o "⋯" das ações da coordenação e "Pegar próxima ficha". A tabela mostra a pessoa numa coluna (o nome e, embaixo, "código · modalidade") e as colunas que fazem sentido na etapa: em Concluídas, a nota, o resultado (Apto ou Inapto), o responsável e a data; em Pendentes e Em análise, a posição, a nota declarada (ART), o responsável e a reserva; fora do lote, a situação. Cada linha com ficha tem "Analisar" (azul, na ficha pendente) ou "Abrir" e o "⋯": para a coordenação, "Atribuir a…", "Liberar reserva" e "Mandar para revisão" (as mesmas regras e a mesma confirmação das ações em lote, só para aquela ficha), e para todos "Copiar código". Com a vaga em "Todas", a tabela agrupa por vaga: cada grupo tem um cabeçalho com o código, o cargo, o lote ("lote 12 (11 pela regra + 1 por decisão)") e a linha de corte, e clicar nele recolhe ou mostra o grupo. O cabeçalho da tabela fica preso no alto ao rolar; clicar no nome da coluna ordena (Pessoa ordena pelo nome; de novo inverte; a terceira vez volta à ordem da Provisória). A lista mostra 50 e, ao chegar no fim da rolagem, mais 50; o rodapé diz "Mostrando N de M" e "Exportar CSV" baixa a etapa aberta com as colunas e a ordem da coluna, sem o agrupamento. Sem ninguém na etapa com os filtros, aparece "Ninguém por aqui". Cada inscrito do lote tem uma ficha: Pendente (na fila, livre ou já com um analista), Em análise (o responsável abriu), Em revisão (a coordenação mandou revisar), Concluída ou Fora do lote (saiu eliminado; a ficha fica, com o motivo). As fichas são abertas sozinhas no fim de cada triagem; a coordenação também tem "Abrir fichas do lote", no "⋯" das ações da coordenação. A lista mostra o nome do candidato a quem tem acesso de leitura à Avaliação documental, nunca o CPF.',
+      'No alto da Fila, logo abaixo do cabeçalho (o edital e as seções Fila, Documentos e Configurações), fica a faixa de situação do lote, num card só: No lote, Pendentes, Em análise, Em revisão, Concluídas e, quando há, Saiu do lote (quem está no lote pela pré-classificação mas teve a ficha tirada do lote, como na importação da planilha), cada um com o número grande e, embaixo, a porcentagem do lote (em Concluídas, também quantas deram Apto; em No lote, quantos entraram pela regra e por decisão, ou a porcentagem dos inscritos). Clicar num número mostra aquela etapa na lista (o escolhido fica marcado). Na linha de baixo da faixa: a barra da distribuição do lote (verde concluídas, azul em análise, violeta em revisão, amarelo pendentes, cinza saiu do lote; quem está no lote e ainda não tem ficha conta como pendente, e as partes somam o lote), o selo do ritmo de hoje (o mesmo do card "Ritmo da análise" do Painel das análises, quando a pessoa pode lê-lo), "Hoje N" (as concluídas hoje; com o prazo da análise no cronograma, "Hoje N de M", com a meta do dia) e "N fora do lote", que mostra quem não está no lote (eliminados e ranqueados fora do corte). Embaixo, o bloco "Por vaga (N)", fechado por padrão (o sistema lembra se você o deixou aberto): aberto, uma tabela curta com o código, o cargo e a lotação, a barra, concluídas de N, em análise, pendentes e, quando alguma vaga tem, saiu do lote (a mesma conta da faixa); clicar no título Vaga, Concluídas ou Pendentes ordena e clicar numa vaga filtra a lista por ela (o mesmo filtro Vaga da barra). A lista vem num card: no alto, a busca por código ou nome (a tecla "/" leva até ela; Enter com o código abre a ficha; Esc apaga), Vaga e Responsável (Qualquer, Minhas fichas, Sem responsável ou um analista), o botão "Filtros" (Modalidade e os filtros salvos), "Limpar" quando há filtro (fica na etapa), o "⋯" das ações da coordenação e "Pegar próxima ficha". A tabela mostra a pessoa numa coluna (o nome e, embaixo, "código · modalidade") e as colunas que fazem sentido na etapa: em Concluídas, a nota, o resultado (Apto ou Inapto), o responsável e a data; em Pendentes e Em análise, a posição, a nota declarada (ART), o responsável e a reserva; fora do lote, a situação. Cada linha com ficha tem "Analisar" (azul, na ficha pendente) ou "Abrir" e o "⋯": para a coordenação, "Atribuir a…", "Liberar reserva" e "Mandar para revisão" (as mesmas regras e a mesma confirmação das ações em lote, só para aquela ficha), e para todos "Copiar código". Com a vaga em "Todas", a tabela agrupa por vaga: cada grupo tem um cabeçalho com o código, o cargo, o lote ("lote 12 (11 pela regra + 1 por decisão)") e a linha de corte, e clicar nele recolhe ou mostra o grupo. O cabeçalho da tabela fica preso no alto ao rolar; clicar no nome da coluna ordena (Pessoa ordena pelo nome; de novo inverte; a terceira vez volta à ordem da Provisória). A lista mostra 50 e, ao chegar no fim da rolagem, mais 50; o rodapé diz "Mostrando N de M" e "Exportar CSV" baixa a etapa aberta com as colunas e a ordem da coluna, sem o agrupamento. Sem ninguém na etapa com os filtros, aparece "Ninguém por aqui". Cada inscrito do lote tem uma ficha: Pendente (na fila, livre ou já com um analista), Em análise (o responsável abriu), Em revisão (a coordenação mandou revisar), Concluída ou Fora do lote (saiu eliminado; a ficha fica, com o motivo). As fichas são abertas sozinhas no fim de cada triagem; a coordenação também tem "Abrir fichas do lote", no "⋯" das ações da coordenação. A lista mostra o nome do candidato a quem tem acesso de leitura à Avaliação documental, nunca o CPF.',
     fato: "",
     fonte:
       "src/modulos/avaliacao-documental/fila.tsx; supabase/migrations/20261006120000_fichas_fila_e_reserva.sql",
@@ -1765,7 +1765,7 @@ export const VERBETES_AYA = Object.freeze([
       "atribuir a",
     ],
     resposta:
-      'As ações da coordenação ficam no "⋯" ao lado de "Pegar próxima ficha": Distribuir as livres, Relatório de motivos, Abrir fichas do lote (quando há quem esteja no lote sem ficha) e, para o administrador global, o pedido de reinício das fichas. Espelhos e modelo do espelho ficam só na seção Documentos; a inclusão por decisão, só na Triagem. Quem não coordena não vê o "⋯" nem as caixas de marcar. A coordenação marca fichas na lista (a linha marcada fica destacada) e, na barra que aparece em cima da tabela ("N selecionadas"), escolhe: Atribuir a… (com a prévia), Liberar, Mandar para revisão (fichas pendentes ou em análise; motivo obrigatório, com pelo menos 2 palavras) ou Reabrir (fichas concluídas ou em revisão, com o motivo da lista). Ficha concluída não é atribuída direto: reabra primeiro — ela volta a Em análise com o mesmo responsável — e então use Atribuir a…; a ação que não vale para a seleção fica apagada, e "Limpar seleção" desmarca tudo. Para uma ficha só, o "⋯" da linha faz o mesmo. Toda ação pede confirmação e fica no histórico da ficha. Um analista com fichas pendentes ou em análise só sai da equipe depois que elas forem redistribuídas ou devolvidas à fila.',
+      'As ações da coordenação ficam no "⋯" ao lado de "Pegar próxima ficha": Distribuir as livres, Relatório de motivos, Abrir fichas do lote (quando há quem esteja no lote sem ficha) e, para o administrador global, o pedido de reinício das fichas. Espelhos e modelo do espelho ficam só na seção Documentos; a inclusão por decisão, só na Triagem. Quem não coordena não vê o "⋯" nem as caixas de marcar. A coordenação marca fichas na lista (a linha marcada fica destacada), ou usa "Selecionar esta página" (a caixa do cabeçalho faz o mesmo) e, com a página marcada, "Selecionar todos os N resultados" (todas as fichas do filtro). A barra em cima da tabela diz sempre o alcance ("1 ficha selecionada (de 73 no resultado)", "Todas as 73 fichas do resultado selecionadas") e, com algo marcado, oferece: Atribuir a… (com a prévia), Liberar, Mandar para revisão (fichas pendentes ou em análise; motivo obrigatório, com pelo menos 2 palavras) ou Reabrir (fichas concluídas ou em revisão, com o motivo da lista). Ficha concluída não é atribuída direto: reabra primeiro — ela volta a Em análise com o mesmo responsável — e então use Atribuir a…; a ação que não vale para a seleção fica apagada, e "Limpar seleção" desmarca tudo; trocar de etapa ou de filtro também limpa a seleção. A confirmação diz quantas fichas serão afetadas e se vão além da página. Para uma ficha só, o "⋯" da linha faz o mesmo. Toda ação pede confirmação e fica no histórico da ficha. Um analista com fichas pendentes ou em análise só sai da equipe depois que elas forem redistribuídas ou devolvidas à fila.',
     fato: "",
     fonte:
       "supabase/migrations/20261006120000_fichas_fila_e_reserva.sql; supabase/migrations/20261110140000_reabrir_fichas_em_lote_e_coordenador.sql (reabrir_fichas)",
@@ -3114,7 +3114,7 @@ export const VERBETES_AYA = Object.freeze([
       "status do candidato",
     ],
     resposta:
-      "A Lista de aprovados mostra a lista vigente de cada edital da área atual, em duas abas: Aprovados (os candidatos e o status) e Convocação (a ordem de chamada, os a convocar e a carta de convocação). Os status do candidato são Convocado, Contratado, Contratado em outra lista, Desistente, Migração e Documentação Rejeitada; Contratado e Migração exigem matrícula e Convocado leva a data da convocação. Status já definido só quem tem Administrador em Aprovados altera (os demais veem um cadeado), exceto do Convocado para o status seguinte. Clicar no nome abre a gaveta do candidato, com os dados e as cartas de convocação emitidas. Quem tem Editor em Aprovados muda status; o grupo Gestor edita a lista desde que tenha a área e o edital. Quem importou ou substituiu a lista fica registrado.",
+      'A Lista de aprovados mostra a lista vigente de cada edital da área atual, em duas abas: Aprovados (os candidatos e o status) e Convocação (a ordem de chamada, os a convocar e a carta de convocação). Os status do candidato são Convocado, Contratado, Contratado em outra lista, Desistente, Migração e Documentação Rejeitada; Contratado e Migração exigem matrícula e Convocado leva a data da convocação. Status já definido só quem tem Administrador em Aprovados altera (para os demais, "Mudar status" aparece apagado no menu da linha, com o motivo), exceto do Convocado para o status seguinte. A tabela tem colunas próprias para o código da vaga, o cargo, a lotação (o lugar que vem no texto do cargo) e o edital com a unidade, e todas ordenam. Cada linha tem uma ação principal com nome ("Mudar status" para quem pode, "Abrir" para os demais) e o "⋯" (Mais ações) com Ver detalhes, Ver anexos, Carta de convocação, Ver na Classificação e, para o administrador, as ações de decisão judicial e sub judice. Clicar no nome abre a gaveta do candidato, com os dados, a origem da linha (edital, unidade, a lista importada e a data) com "Ver nota e classificação na Classificação", e as cartas de convocação emitidas. Quem tem Editor em Aprovados muda status; o grupo Gestor edita a lista desde que tenha a área e o edital. Quem importou ou substituiu a lista fica registrado.',
     fato: "",
     fonte:
       "src/lib/aprovados/lista-aprovados-rules.ts; src/modulos/aprovados/; supabase/migrations/20260930200000_aprovados_por_grupo_edital_gestor_edita.sql",
@@ -3486,7 +3486,7 @@ export const VERBETES_AYA = Object.freeze([
       "convocar varios de uma vez",
     ],
     resposta:
-      'Na aba Aprovados, quem tem Editor em Aprovados marca a caixa ao lado do nome de cada candidato, ou "Selecionar os N da tabela" para pegar todos os filtrados e buscados (não só as linhas desenhadas), e clica em "Mudar status". Em lote dá para escolher Convocado (com uma data para todos), Desistente ou Documentação Rejeitada; "Sem status" é só do Administrador em Aprovados. Contratado e Migração pedem a matrícula de cada um e continuam pelo botão de status da linha. Antes de gravar, a janela mostra quantos mudam, como estão hoje e quem fica de fora e por quê (já no status, lista inativa ou status definido que só o Administrador muda). São até 500 por vez, e cada mudança fica no histórico do candidato. Mudar um filtro ou a busca limpa a seleção.',
+      'Na aba Aprovados, quem tem Editor em Aprovados marca a caixa ao lado do nome de cada candidato, ou "Selecionar esta página" para pegar as linhas já desenhadas; com a página marcada, aparece "Selecionar todos os N resultados", que pega todos os filtrados e buscados. A barra diz sempre o que está marcado ("50 candidatos desta página selecionados" ou "Todos os N candidatos do resultado selecionados"). Depois, clica em "Mudar status". Em lote dá para escolher Convocado (com uma data para todos), Desistente ou Documentação Rejeitada; "Sem status" é só do Administrador em Aprovados. Contratado e Migração pedem a matrícula de cada um e continuam pelo botão de status da linha. Antes de gravar, a janela mostra quantos serão afetados (e se vão além da página), quantos mudam, como estão hoje e quem fica de fora e por quê (já no status, lista inativa ou status definido que só o Administrador muda). São até 500 por vez, e cada mudança fica no histórico do candidato. Mudar um filtro ou a busca limpa a seleção.',
     fato: "",
     fonte:
       "src/modulos/aprovados/status-em-lote.tsx; src/lib/aprovados/status-em-lote-dos-aprovados.ts; supabase/migrations/20261111180000_status_em_lote_dos_aprovados.sql",
@@ -3498,13 +3498,14 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: [
       "cadeado no status",
       "por que aparece um cadeado",
+      "mudar status apagado",
       "nao consigo mudar o status",
       "status travado",
       "voltar para sem status",
       "desfazer status do candidato",
     ],
     resposta:
-      'O cadeado aparece para quem tem Editor em Aprovados quando a lista é inativa ou quando o status já foi definido e só o Administrador em Aprovados pode mudá-lo (inclusive voltar a "Sem status"). A exceção é o Convocado: o Editor o leva para Contratado, Desistente ou Documentação Rejeitada sem cadeado. Sem Editor em Aprovados, a coluna mostra só um traço. Peça a mudança a quem tem Administrador em Aprovados.',
+      'Para quem tem Editor em Aprovados, "Mudar status" aparece apagado no "⋯" da linha, com o motivo, quando a lista é inativa ("lista inativa") ou quando o status já foi definido e só o Administrador em Aprovados pode mudá-lo ("status já definido: só o admin altera"), inclusive para voltar a "Sem status". A exceção é o Convocado: o Editor o leva para Contratado, Desistente ou Documentação Rejeitada pelo botão "Mudar status" da linha. Sem Editor em Aprovados, a linha mostra só "Abrir". Peça a mudança a quem tem Administrador em Aprovados.',
     fato: "",
     fonte:
       "src/modulos/aprovados/partes.tsx (AcaoDeStatus); src/lib/aprovados/lista-aprovados-rules.ts; src/lib/acessos/access-roles.ts",
@@ -3706,12 +3707,14 @@ export const VERBETES_AYA = Object.freeze([
       "contratadas",
       "em selecao",
       "cadastro reserva",
+      "contratacoes alem das vagas imediatas",
+      "alem das vagas",
       "como fecham os kpis",
       "conta dos indicadores",
     ],
     resposta:
-      'Na Visão geral, o bloco das vagas conta os editais do recorte e fecha: Vagas imediatas = Contratadas + Em seleção + Ociosas, com a porcentagem de cada parte e uma barra da divisão; Cadastro reserva e Inscritos ficam na linha de baixo. Os números aparecem só depois que a conta das vagas reabertas chega (até 10 segundos), para não trocarem na frente de quem lê. Vagas imediatas é a soma das vagas do cadastro do edital, contando uma vez só a vaga reaberta: a vaga que ficou sem contratação num edital com resultado e voltou num edital mais novo da mesma unidade, para o mesmo cargo, conta só no edital novo (o número embaixo do indicador diz quantas saíram da soma). Contratadas são as contratações de cada edital limitadas às vagas imediatas dele (o que passa disso é Cadastro reserva, mostrado à parte). Em seleção são as vagas ainda sem contratação dos editais sem resultado (em andamento, planejados ou sem cronograma). Ociosas são as vagas sem contratação dos editais com resultado (concluídos ou na fase Contratação). Editais cancelados não entram em nenhum indicador, nem em Inscritos. Críticos (em "Pede ação") conta os editais marcados manualmente como críticos e Inscritos soma os inscritos. Os rótulos podem ser trocados em Configurações › Página inicial.',
-    fato: "Na Visão geral, Vagas imediatas = Contratadas (contratações limitadas às vagas de cada edital) + Em seleção (editais sem resultado) + Ociosas (editais concluídos ou na fase Contratação); contratações além das vagas são Cadastro reserva; cancelados não entram.",
+      'Na Visão geral, o bloco das vagas conta os editais do recorte e fecha: Vagas imediatas = Contratadas + Em seleção + Ociosas, com a porcentagem de cada parte e uma barra da divisão; Contratações além das vagas imediatas e Inscritos ficam na linha de baixo. Os números aparecem só depois que a conta das vagas reabertas chega (até 10 segundos), para não trocarem na frente de quem lê; se ela falhar, as vagas aparecem como cada edital publicou, com o aviso "sem desconto das reabertas". Vagas imediatas é a soma das vagas do cadastro do edital, contando uma vez só a vaga reaberta: a vaga que ficou sem contratação num edital com resultado e voltou num edital mais novo da mesma unidade, para o mesmo cargo, conta só no edital novo (o número embaixo do indicador diz quantas saíram da soma). Contratadas são as contratações de cada edital limitadas às vagas imediatas dele (o que passa disso é Contratações além das vagas imediatas, mostrado à parte; antes se chamava "Cadastro reserva", mas não é o cadastro reserva do edital, e sim os contratados acima das vagas). Em seleção são as vagas ainda sem contratação dos editais sem resultado (em andamento, planejados ou sem cronograma). Ociosas são as vagas sem contratação dos editais com resultado (concluídos ou na fase Contratação). Editais cancelados não entram em nenhum indicador, nem em Inscritos. Críticos (em "Pede ação") conta os editais marcados manualmente como críticos e Inscritos soma os inscritos dos editais que informaram o número: quando só parte informou, o indicador diz "informado em X de Y editais", e quando nenhum informou aparece "—" (sem dado), não zero. O zero é zero confirmado; "—" com "nenhum edital com resultado" (em Ociosas) ou "nenhum edital sem resultado" (em Em seleção) quer dizer que aquele número não se aplica ao recorte. Os rótulos podem ser trocados em Configurações › Página inicial.',
+    fato: 'Na Visão geral, Vagas imediatas = Contratadas (contratações limitadas às vagas de cada edital) + Em seleção (editais sem resultado) + Ociosas (editais concluídos ou na fase Contratação); contratações além das vagas são "Contratações além das vagas imediatas" (antes, "Cadastro reserva"); cancelados não entram; Inscritos sem número é "—", não zero.',
     fonte: "src/lib/visao-geral/indicadores-do-monitoramento.ts",
   },
   {
@@ -3825,6 +3828,78 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-visao-geral.md",
+    titulo: "Vagas imediatas (indicador)",
+    perguntas: [
+      "o que significa vagas imediatas na visao geral",
+      "significado do indicador vagas imediatas",
+    ],
+    resposta:
+      'Vagas imediatas é a soma das vagas do cadastro de cada edital do recorte (área, filtros e busca), sem os cancelados. A vaga sem contratação que um edital mais novo da mesma unidade reabriu para o mesmo cargo conta uma vez só, no edital novo: o número embaixo diz quantas saíram da soma, e "sem desconto das reabertas" aparece quando essa conta não pôde ser feita. As vagas imediatas se dividem em Contratadas + Em seleção + Ociosas; clicar no número mostra essa conta.',
+    fato: "Vagas imediatas = Contratadas + Em seleção + Ociosas, contando a vaga reaberta uma vez só.",
+    fonte: "src/lib/visao-geral/indicadores-do-monitoramento.ts",
+  },
+  {
+    arquivo: "regras-da-visao-geral.md",
+    titulo: "Contratadas (indicador)",
+    perguntas: [
+      "o que significa contratadas na visao geral",
+      "significado do indicador contratadas",
+    ],
+    resposta:
+      'Contratadas são as contratações de cada edital limitadas às vagas imediatas dele: quem foi contratado além das vagas fica em "Contratações além das vagas imediatas". As contratações vêm da lista de aprovados vigente (status Contratado ou Migração). A porcentagem é a parte das vagas imediatas já preenchida.',
+    fato: "Contratadas = contratações de cada edital até o número de vagas imediatas dele.",
+    fonte: "src/lib/visao-geral/indicadores-do-monitoramento.ts",
+  },
+  {
+    arquivo: "regras-da-visao-geral.md",
+    titulo: "Em seleção (indicador)",
+    perguntas: [
+      "o que significa em selecao na visao geral",
+      "significado do indicador em selecao",
+    ],
+    resposta:
+      'Em seleção são as vagas imediatas ainda sem contratação dos editais que ainda não têm resultado (em andamento, planejados ou sem cronograma). "—" com "nenhum edital sem resultado" quer dizer que todos os editais do recorte já têm resultado.',
+    fato: "Em seleção = vagas sem contratação dos editais sem resultado.",
+    fonte: "src/lib/visao-geral/indicadores-do-monitoramento.ts",
+  },
+  {
+    arquivo: "regras-da-visao-geral.md",
+    titulo: "Ociosas (indicador)",
+    perguntas: [
+      "o que significa ociosas na visao geral",
+      "significado do indicador ociosas",
+    ],
+    resposta:
+      'Ociosas são as vagas imediatas sem contratação dos editais que já têm resultado (concluídos, com cronograma encerrado ou na fase Contratação). "—" com "nenhum edital com resultado" quer dizer que nenhum edital do recorte chegou ao resultado.',
+    fato: "Ociosas = vagas sem contratação dos editais com resultado.",
+    fonte: "src/lib/visao-geral/indicadores-do-monitoramento.ts",
+  },
+  {
+    arquivo: "regras-da-visao-geral.md",
+    titulo: "Contratações além das vagas imediatas (indicador)",
+    perguntas: [
+      "o que significa contratacoes alem das vagas imediatas na visao geral",
+      "significado do indicador contratacoes alem das vagas",
+    ],
+    resposta:
+      'Contratações além das vagas imediatas são, em cada edital, os contratados que passam do número de vagas imediatas (contratados menos vagas, quando dá mais que zero), somados no recorte. Antes o indicador se chamava "Cadastro reserva", mas não é o cadastro reserva do edital: são contratações feitas a mais, em geral chamando o cadastro reserva. Somadas às Contratadas, dão o total contratado.',
+    fato: "Contratações além das vagas imediatas = contratados − vagas de cada edital, quando passa de zero.",
+    fonte: "src/lib/visao-geral/indicadores-do-monitoramento.ts",
+  },
+  {
+    arquivo: "regras-da-visao-geral.md",
+    titulo: "Inscritos (indicador)",
+    perguntas: [
+      "o que significa inscritos na visao geral",
+      "significado do indicador inscritos",
+    ],
+    resposta:
+      'Inscritos soma os inscritos dos editais do recorte que têm esse número (do funil do edital: Seleção, Análises ou Avaliação documental), sem os cancelados. Quando só parte dos editais tem o número, aparece "informado em X de Y editais"; quando nenhum tem, "—" (sem dado), nunca zero.',
+    fato: "Inscritos = soma dos inscritos dos editais que informaram; os sem número ficam fora e a cobertura aparece.",
+    fonte: "src/lib/visao-geral/indicadores-do-monitoramento.ts",
+  },
+  {
+    arquivo: "regras-da-visao-geral.md",
     titulo: "Tabela de processos da Visão geral",
     perguntas: [
       "tabela de processos da visao geral",
@@ -3836,9 +3911,64 @@ export const VERBETES_AYA = Object.freeze([
       "taxa de vagas sem contratacao",
     ],
     resposta:
-      'Na tabela de processos da Visão geral, a coluna Contratados mostra as contratações dentro das vagas, como o indicador "Contratadas"; as do cadastro reserva aparecem ao lado, como "+N CR". A célula do edital mostra o prazo do edital (encerra em até 7 dias em vermelho, em até 30 dias em amarelo; "Cronograma encerrado" ou cancelado em cinza) e a situação do cronograma de Editais (atrasada ou próxima etapa em até 3 dias em vermelho, em até 7 dias em amarelo; "Processo suspenso" ou "Processo paralisado" em amarelo; "Sem cronograma" só quando o edital não tem nenhuma etapa em Editais). "Cronograma encerrado" quer dizer que a última data do cronograma passou: não prova que o resultado foi publicado nem que o processo foi homologado, e a validade do cadastro reserva conta a partir da data de encerramento do edital. Por isso, na Visão geral, o status "Concluído" calculado pelas datas aparece como "Cronograma encerrado" também na coluna Status, na fase, nos filtros e no CSV; "Concluído" fica só para o que foi digitado à mão com o cálculo manual. Edital com o cálculo automático desligado (cálculo manual) e com etapas tem cronograma: os detalhes dizem "Cronograma cadastrado · cálculo manual", com o status digitado (por exemplo, "· suspenso"), e o andamento e a próxima etapa vêm das etapas. A borda esquerda da linha segue a mesma cor. "Sem contratação" é vagas menos contratados, com a porcentagem das vagas (a partir de 20% em amarelo, de 40% em vermelho). As colunas Fase e Atenção mostram a fase calculada e os motivos de crítico. Sem coluna escolhida, os críticos vêm primeiro (marcados manualmente como críticos) e depois quem tem mais vagas sem contratação. Clicar no cabeçalho ordena a coluna (crescente, decrescente e de volta à ordem padrão). "Colunas" escolhe as colunas visíveis, guardadas no navegador; o padrão, para todos, são todas menos Observações, que entra pelo menu "Colunas". Quando a tabela rola para o lado, Unidade e Edital ficam presas à esquerda. Clicar na linha (ou Enter) abre os detalhes do processo, com o andamento do cronograma ("N% do cronograma": quanto do cronograma já passou, não a contratação), a linha do tempo de Editais e o link do edital. Exportar abre o montador de relatório.',
+      'Na tabela de processos da Visão geral, a coluna Contratados mostra as contratações dentro das vagas, como o indicador "Contratadas"; as que passam das vagas imediatas aparecem ao lado, como "+N além". A célula do edital mostra o prazo do edital (encerra em até 7 dias em vermelho, em até 30 dias em amarelo; "Cronograma encerrado" ou cancelado em cinza) e a situação do cronograma de Editais (atrasada ou próxima etapa em até 3 dias em vermelho, em até 7 dias em amarelo; "Processo suspenso" ou "Processo paralisado" em amarelo; "Sem cronograma" só quando o edital não tem nenhuma etapa em Editais). "Cronograma encerrado" quer dizer que a última data do cronograma passou: não prova que o resultado foi publicado nem que o processo foi homologado, e a validade do cadastro reserva conta a partir da data de encerramento do edital. Por isso, na Visão geral, o status "Concluído" calculado pelas datas aparece como "Cronograma encerrado" também na coluna Status, na fase, nos filtros e no CSV; "Concluído" fica só para o que foi digitado à mão com o cálculo manual. Edital com o cálculo automático desligado (cálculo manual) e com etapas tem cronograma: os detalhes dizem "Cronograma cadastrado · cálculo manual", com o status digitado (por exemplo, "· suspenso"), e o andamento e a próxima etapa vêm das etapas. A borda esquerda da linha segue a mesma cor. "Sem contratação" é vagas menos contratados, com a porcentagem das vagas (a partir de 20% em amarelo, de 40% em vermelho). As colunas Fase e Atenção mostram a fase calculada e os motivos de crítico. Sem coluna escolhida, os críticos vêm primeiro (marcados manualmente como críticos) e depois quem tem mais vagas sem contratação. Clicar no cabeçalho ordena a coluna (crescente, decrescente e de volta à ordem padrão). "Colunas" escolhe as colunas visíveis, guardadas no navegador, uma a uma ou por um conjunto pronto: Gestão (vagas, contratados, sem contratação, status, fase e atenção), Prazos (ciclo, início, encerramento, duração, status e fase) e Contratação (vagas, inscritos, aprovados, aguardando chamada, contratados, sem contratação, 1ª e última admissão); Unidade e Edital estão em todos, e o conjunto à vista fica marcado; o padrão, para todos, são todas menos Observações, que entra pelo menu "Colunas". Quando a tabela rola para o lado, Unidade e Edital ficam presas à esquerda. Clicar na linha (ou Enter) abre os detalhes do processo, com o andamento do cronograma ("N% do cronograma": quanto do cronograma já passou, não a contratação), a linha do tempo de Editais e o link do edital. Exportar abre o montador de relatório.',
     fato: "",
     fonte: "interface do Yeendé",
+  },
+  {
+    arquivo: "regras-da-visao-geral.md",
+    titulo: "De onde vem cada número da tabela",
+    perguntas: [
+      "de onde vem o numero da tabela",
+      "ver os contratados do edital",
+      "abrir a lista de aprovados do edital",
+      "clicar no numero da tabela",
+      "composicao do numero",
+      "origem agregada",
+      "detalhe individual nao disponivel",
+      "ver os inscritos do edital",
+      "voltar para a linha da visao geral",
+    ],
+    resposta:
+      'Na tabela de processos da Visão geral, os números de Aprovados, Contratados, Aguardando chamada e Inscritos aparecem sublinhados quando levam aos dados que os compõem. Clicar abre um painel pequeno: Aprovados, Contratados e Aguardando chamada levam à Lista de aprovados já no edital da linha (Contratados com os status Contratado e Migração, Aguardando chamada com "Sem status"); Inscritos leva à tela de onde o número veio (a Seleção ou as Análises curriculares), também no edital. A linha é do edital: o destino nunca é um código de vaga. Quando só existe o total, sem os registros (por exemplo, contratados de um edital sem lista de aprovados vigente, ou inscritos de outra fonte), o painel diz "Origem agregada; detalhe individual não disponível", em vez de abrir uma lista vazia. Sem acesso à tela de destino, o número fica como texto. Ao voltar para a Visão geral (pelo Voltar do navegador ou pelo menu), a área, os filtros e a busca estão como estavam, e a linha de onde se saiu fica destacada.',
+    fato: 'Na tabela da Visão geral, Aprovados, Contratados e Aguardando chamada abrem a Lista de aprovados no edital; Inscritos abre a Seleção (ou as Análises, conforme a fonte); só o total vira "Origem agregada; detalhe individual não disponível".',
+    fonte: "src/lib/visao-geral/origem-dos-numeros.ts",
+  },
+  {
+    arquivo: "regras-da-visao-geral.md",
+    titulo: "Composição dos números da Visão geral",
+    perguntas: [
+      "composicao dos numeros da visao geral",
+      "ver a composicao",
+      "como se forma o numero",
+      "de onde sai o total",
+      "contratados dentro e alem das vagas",
+      "vagas publicadas menos reabertas",
+      "clicar no indicador",
+      "parcelas do numero",
+    ],
+    resposta:
+      "Na Visão geral, clicar num número sublinhado mostra as parcelas que o formam, quando os dados permitem. Na faixa das vagas: Vagas imediatas = Contratadas + Em seleção + Ociosas e, quando há vagas reabertas, Publicadas nos editais − Reabertas em edital mais novo; Contratadas e Contratações além das vagas imediatas = dentro das vagas + além delas (o total contratado); Em seleção e Ociosas = vagas dos editais sem (ou com) resultado − as contratadas nesses editais. Na tabela, por edital: Contratados = dentro das vagas imediatas + além delas; Vagas = publicadas no edital − reabertas em edital mais novo; Sem contratação = vagas publicadas − reabertas − contratadas dentro das vagas; Aprovados = já chamados (com status) + aguardando chamada (sem status). Quando o número é um só, sem parcela que o explique, não há composição.",
+    fato: "Clicar num número da Visão geral mostra a composição: Contratados = dentro + além das vagas imediatas; Vagas = publicadas − reabertas; Vagas imediatas = Contratadas + Em seleção + Ociosas.",
+    fonte: "src/lib/visao-geral/composicao-dos-numeros.ts",
+  },
+  {
+    arquivo: "regras-da-visao-geral.md",
+    titulo: "Detalhes do edital na Visão geral",
+    perguntas: [
+      "detalhes do processo",
+      "gaveta do edital",
+      "resultado do edital na visao geral",
+      "admissoes conciliadas na gaveta",
+      "avisos do edital",
+      "avisos de conferencia do edital",
+      "selo de atencao",
+      "clicar no selo de atencao",
+    ],
+    resposta:
+      'Clicar numa linha da tabela da Visão geral abre os detalhes do edital. Além da situação, do provimento e do cronograma, há o bloco Resultado: Aprovados e Aguardando chamada (da lista de aprovados vigente; sem lista, "—" e "Sem lista de aprovados vigente."), Desistentes e as admissões conciliadas com o RH (a 1ª e a última admissão e quantas foram conciliadas). Embaixo, os avisos de conferência abertos daquele edital (os mesmos da central de avisos, com os casos, o tratamento e o histórico); quem é administrador global tem também "Abrir na central de avisos" (Configurações › Status das atualizações). Clicar no selo da coluna Atenção abre os detalhes já nos avisos do edital.',
+    fato: "Os detalhes do edital na Visão geral mostram o Resultado (aprovados, aguardando chamada, desistentes e admissões conciliadas com o RH: 1ª, última e quantas) e os avisos de conferência abertos do edital; o selo de Atenção abre direto nos avisos.",
+    fonte: "src/modulos/visao-geral/gaveta.tsx",
   },
   {
     arquivo: "regras-da-visao-geral.md",
@@ -3854,7 +3984,7 @@ export const VERBETES_AYA = Object.freeze([
       "dados dos processos de 2025",
     ],
     resposta:
-      'Na tabela de processos da Visão geral, quatro colunas mostram o resultado de cada edital (estão no padrão; o menu "Colunas" as desliga). Duração (dias) são os dias corridos do início ao encerramento do edital. Inscritos vem do funil do edital ("—" quando a fonte não tem o número). Aprovados são as pessoas da lista de aprovados vigente, e Aguardando chamada, as dessa lista que ainda não têm status, isto é, não foram chamadas (não confundir com o indicador Cadastro reserva, que são os contratados além das vagas); sem lista vigente, as duas ficam "—". Contratados é a coluna de sempre. O arquivo exportado leva as quatro, mesmo com as colunas desligadas, e o ano de cada processo está no número do edital (por exemplo, 80/2025).',
+      'Na tabela de processos da Visão geral, quatro colunas mostram o resultado de cada edital (estão no padrão; o menu "Colunas" as desliga). Duração (dias) são os dias corridos do início ao encerramento do edital. Inscritos vem do funil do edital ("—" quando a fonte não tem o número). Aprovados são as pessoas da lista de aprovados vigente, e Aguardando chamada, as dessa lista que ainda não têm status, isto é, não foram chamadas (não confundir com o indicador Contratações além das vagas imediatas, que são os contratados acima das vagas); sem lista vigente, as duas ficam "—". Contratados é a coluna de sempre. O arquivo exportado leva as quatro, mesmo com as colunas desligadas, e o ano de cada processo está no número do edital (por exemplo, 80/2025).',
     fato: "",
     fonte: "interface do Yeendé",
   },
@@ -3904,7 +4034,7 @@ export const VERBETES_AYA = Object.freeze([
       "vagas nao batem",
     ],
     resposta:
-      "Os números de cada edital são recalculados pelo banco no fim de cada carga da Seleção e, de novo, às 10h; entre uma carga e outra, a lista de aprovados pode já ter mudado. Contratadas ficam limitadas às vagas imediatas de cada edital (o excedente vai para Cadastro reserva), editais cancelados não entram em nenhum indicador e as Vagas vêm do cadastro do edital, em Editais. Confira também a área atual, os filtros (guardados no navegador) e a busca, que valem para a página toda.",
+      "Os números de cada edital são recalculados pelo banco no fim de cada carga da Seleção e, de novo, às 10h; entre uma carga e outra, a lista de aprovados pode já ter mudado. Contratadas ficam limitadas às vagas imediatas de cada edital (o excedente vai para Contratações além das vagas imediatas), editais cancelados não entram em nenhum indicador e as Vagas vêm do cadastro do edital, em Editais. Confira também a área atual, os filtros (guardados no navegador) e a busca, que valem para a página toda.",
     fato: "",
     fonte:
       "src/lib/visao-geral/indicadores-do-monitoramento.ts; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql",

@@ -117,6 +117,8 @@ export type PaginasPermitidas = {
   selecao: boolean;
   "paineis-de-dados": boolean;
   config: boolean;
+  /** A página do edital (Visão geral, Editais ou Cronograma: quem vê os editais). */
+  edital: boolean;
 };
 
 /** Chaves antigas do legado (permissaoLegada). */

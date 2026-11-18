@@ -1,24 +1,25 @@
 import type { ReactNode } from "react";
+import { BotoesDeExportacao } from "./botoes-de-exportacao.tsx";
+import type { PropriedadesDosBotoesDeExportacao } from "./botoes-de-exportacao.tsx";
 
 /*
   O topo de uma tela (`.ui-topo`): as visões (um <Segmentado>, opcional), a
   data da última carga, discreta e uma vez só (`.status-discreto`), e as ações
-  (Atualizar, Exportar e os botões da tela, que entram como filhos, depois de
-  Exportar). `rotuloDaAtualizacao` troca o texto do Atualizar (os Painéis
+  (Atualizar, "Exportar em Excel" e "Salvar em PDF" — BotoesDeExportacao — e
+  os botões da tela, que entram como filhos, depois deles). `rotuloDaAtualizacao` troca o texto do Atualizar (os Painéis
   usam "Sincronizar").
 
   O título e a área já estão no cabeçalho do app, e tema e tela cheia são do
   app (barra lateral e menu da conta): o topo não os repete.
 */
 
-/** Sem `aoExportar`, o botão Exportar não aparece. */
+/** Sem `exportacao` (ou sem `excel` e `pdf` nela), os botões de exportar não aparecem. */
 export interface PropriedadesDoTopoDoPainel {
   status: ReactNode;
   aoAtualizar: () => void;
   atualizarDesativado?: boolean;
   rotuloDaAtualizacao?: string;
-  aoExportar?: () => void;
-  exportarDesativado?: boolean;
+  exportacao?: PropriedadesDosBotoesDeExportacao;
   visoes?: ReactNode;
   idDaAtualizacao?: string;
   tour?: string;
@@ -32,8 +33,7 @@ export function TopoDoPainel({
   idDaAtualizacao,
   atualizarDesativado,
   rotuloDaAtualizacao = "Atualizar",
-  aoExportar,
-  exportarDesativado,
+  exportacao,
   tour,
   children,
 }: PropriedadesDoTopoDoPainel) {
@@ -55,17 +55,7 @@ export function TopoDoPainel({
           <i className="fa-solid fa-rotate" aria-hidden="true" />{" "}
           {rotuloDaAtualizacao}
         </button>
-        {aoExportar ? (
-          <button
-            type="button"
-            className="btn secondary"
-            data-acao="exportar"
-            disabled={exportarDesativado}
-            onClick={aoExportar}
-          >
-            <i className="fa-solid fa-download" aria-hidden="true" /> Exportar
-          </button>
-        ) : null}
+        {exportacao ? <BotoesDeExportacao {...exportacao} /> : null}
         {children}
       </div>
     </header>

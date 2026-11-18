@@ -252,6 +252,7 @@ import {
   TELAS_DAS_AREAS,
   caminhoDoDestino,
   destinoDoCaminho,
+  editalEhAPagina,
   ehRaizDoApp,
   telaDaRota,
 } from "../src/lib/navegacao/rotas.ts";
@@ -259,7 +260,7 @@ import { paginaDoCaminho } from "../server/servidor.ts";
 import {
   aptosEEliminados,
   calcularIndicadores,
-  csvDaSelecao,
+  tabelaDaSelecao,
   eliminadosAntesDaAnalise,
   FILTROS_VAZIOS,
   filtrarVagas,
@@ -3976,6 +3977,29 @@ bloco("navegacao", () => {
       expect(bloqueioDaTela("calendario", GESTOR, SEM_PAINEIS)).toBe("");
     });
 
+    it("página do edital: quem vê Visão geral, Editais ou Cronograma", () => {
+      for (const recurso of ["dashboard", "nucleo", "calendario"])
+        expect(
+          bloqueioDaTela(
+            "edital",
+            comMatriz({ [recurso]: "leitor" }),
+            SEM_PAINEIS,
+          ),
+          recurso,
+        ).toBe("");
+      expect(bloqueioDaTela("edital", GESTOR, SEM_PAINEIS)).toBe("");
+      // Só a Lista de aprovados, ou só a Classificação: a página não abre.
+      for (const recurso of ["aprovados", "classificacao", "entrevistas"]) {
+        const perfil = comMatriz({ [recurso]: "editor" });
+        expect(bloqueioDaTela("edital", perfil, SEM_PAINEIS), recurso).toBe(
+          "Sem permissão para a página do edital.",
+        );
+        expect(telaPermitida("edital", perfil, SEM_PAINEIS), recurso).toBe(
+          false,
+        );
+      }
+    });
+
     it("painel externo segue os painéis liberados", () => {
       expect(bloqueioDaTela("panel:bi", GESTOR, paineisDe("bi"))).toBe("");
       expect(bloqueioDaTela("panel:outro", GESTOR, paineisDe("bi"))).toBe(
@@ -5328,10 +5352,46 @@ bloco("rotas", () => {
 
     it("todas as telas vão e voltam, em todas as áreas", () => {
       for (const { id: area } of AREAS_DO_SISTEMA)
-        for (const { view } of TELAS_DAS_AREAS) {
-          const caminho = caminhoDoDestino({ view, area });
-          expect(destinoDoCaminho(caminho), caminho).toEqual({ view, area });
+        for (const { view, editalObrigatorio } of TELAS_DAS_AREAS) {
+          // A página do edital só existe com o edital: vai e volta com ele.
+          const destino = editalObrigatorio
+            ? { view, area, edital: "105-2026" }
+            : { view, area };
+          const caminho = caminhoDoDestino(destino);
+          expect(destinoDoCaminho(caminho), caminho).toEqual(destino);
         }
+    });
+
+    it("a página do edital: /<área>/edital/<número-ano>, o edital fica e é obrigatório", () => {
+      expect(
+        caminhoDoDestino({
+          view: "edital",
+          area: "saude-indigena",
+          edital: "105-2026",
+        }),
+      ).toBe("/saude-indigena/edital/105-2026");
+      expect(destinoDoCaminho("/sede/edital/105-2026")).toEqual({
+        view: "edital",
+        area: "sede",
+        edital: "105-2026",
+      });
+      expect(destinoDoCaminho(`/projetos/edital/${EDITAL}`)).toEqual({
+        view: "edital",
+        area: "projetos",
+        edital: EDITAL,
+      });
+      // Sem o edital não é rota (nem vai para o endereço).
+      expect(destinoDoCaminho("/sede/edital")).toBeNull();
+      expect(caminhoDoDestino({ view: "edital", area: "sede" })).toBe("/");
+      // Não confunde com Editais nem com as Regras do edital.
+      expect(destinoDoCaminho("/sede/edital/105-2026/regras")).toBeNull();
+      expect(destinoDoCaminho("/sede/editais")).toEqual({
+        view: "nucleo",
+        area: "sede",
+      });
+      expect(editalEhAPagina("edital")).toBe(true);
+      expect(editalEhAPagina("classificacao")).toBe(false);
+      expect(telaDaRota("edital")?.tituloNaTela).toBe(true);
     });
 
     it("o edital só nas telas que o abrem; a visão na busca", () => {
@@ -5749,21 +5809,25 @@ bloco("selecao-do-painel", () => {
     });
   });
 
-  describe("CSV e cópia guardada", () => {
-    it("CSV com ; BOM, vazio em branco e célula protegida", () => {
+  describe("Exportação e cópia guardada", () => {
+    it("a tabela da exportação: números como número, vazio em branco", () => {
       const perigosa = normalizarPayload({
         vagas: [
           { id: "z", edital: "1/2026", cargo: "=HYPERLINK(1)", inscritos: 3 },
         ],
       }).vagas;
-      const csv = csvDaSelecao(perigosa);
-      expect(
-        csv.startsWith(
-          String.fromCharCode(0xfeff) + "DSEI / Unidade;Edital;Cargo;Vaga;",
-        ),
-      ).toBe(true);
-      expect(csv).toContain("'=HYPERLINK(1)");
-      expect(csv).toContain("Planilha Auditoria (dado antigo)");
+      const { colunas, linhas } = tabelaDaSelecao(perigosa);
+      expect(colunas.slice(0, 4)).toEqual([
+        "DSEI / Unidade",
+        "Edital",
+        "Cargo",
+        "Vaga",
+      ]);
+      const linha = linhas[0];
+      expect(linha[2]).toBe("=HYPERLINK(1)");
+      expect(linha[colunas.indexOf("Inscritos")]).toBe(3);
+      expect(linha[colunas.indexOf("Aptos para análise")]).toBeNull();
+      expect(linha).toContain("Planilha Auditoria (dado antigo)");
     });
 
     it("tipo da cópia e mudança sem contar gerado_em", () => {

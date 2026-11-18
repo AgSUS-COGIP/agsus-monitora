@@ -190,7 +190,7 @@ export interface ArmazenamentoDoPainel {
 export interface OpcoesDoEstadoDasEntrevistas {
   supabase?: ClienteDoPainel | null;
   toast?: (mensagem: string, tom?: "warn" | "error") => void;
-  baixar?: (conteudo: string, nome: string) => void;
+  baixar?: (conteudo: Uint8Array, nome: string, tipo: string) => void;
   armazenamento?: ArmazenamentoDoPainel;
   agora?: () => number;
   tempoLimiteMs?: number;
@@ -211,7 +211,10 @@ export interface EstadoDasEntrevistas {
   fecharGaveta(): void;
   abrirSemEntrevista(): void;
   fecharSemEntrevista(): void;
-  exportarCsv(entrevistas: readonly EntrevistaDoPainel[]): void;
+  exportar(
+    formato: "excel" | "pdf",
+    entrevistas: readonly EntrevistaDoPainel[],
+  ): Promise<void>;
   carregarAgenda(
     editalId: string,
   ): Promise<

@@ -12,7 +12,8 @@
     linhas da área, pelo estado da Visão geral (src/modulos/mapa/);
   - `nucleo` (Editais): a tabela é das linhas da área (`usarAreaAtual().linhas`);
   - `calendario` (Cronograma) e `approved` (Lista de aprovados): recortam pelos
-    ids dos editais da área (`usarAreaAtual().ids`).
+    ids dos editais da área (`usarAreaAtual().ids`);
+  - `edital` (a página do edital): acha o edital do endereço entre as linhas.
 
   As outras páginas que importam dados-do-monitoramento.ts leem só a área
   atual (Análises, Avaliação documental, Classificação, Entrevistas,
@@ -27,6 +28,7 @@ export const TELAS_COM_LINHAS: ReadonlySet<string> = new Set([
   "nucleo",
   "calendario",
   "approved",
+  "edital",
 ]);
 
 /** A página (view) usa as linhas do monitoramento? */

@@ -31,6 +31,12 @@ export const NOVIDADES: readonly Novidade[] = [
     visivel: true,
   },
   {
+    id: "2026-11-18-aba-aberta-na-publicacao",
+    data: "2026-11-18",
+    texto: "página aberta numa atualização recarrega sozinha",
+    visivel: false,
+  },
+  {
     id: "2026-11-17-visao-geral-painel-de-decisao",
     data: "2026-11-17",
     texto:

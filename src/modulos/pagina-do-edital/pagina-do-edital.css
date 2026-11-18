@@ -1,0 +1,287 @@
+/* A página do edital (src/modulos/pagina-do-edital/): só o que é dela; o resto vem de src/ui/. */
+
+.pagina-do-edital {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.pagina-do-edital-voltar {
+  align-self: flex-start;
+}
+
+.pagina-do-edital-situacao {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.pagina-do-edital-situacao div {
+  min-width: 0;
+}
+
+.pagina-do-edital-situacao dt {
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption);
+}
+
+.pagina-do-edital-situacao dd {
+  margin: var(--space-1) 0 0;
+  font-weight: var(--font-weight-medium);
+  overflow-wrap: anywhere;
+}
+
+.pagina-do-edital-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.pagina-do-edital-bloco {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4);
+  background: var(--color-bg-raised);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+}
+
+.pagina-do-edital-bloco h3 {
+  margin: 0;
+  font-size: var(--text-h4);
+  font-weight: var(--font-weight-semibold);
+}
+
+.pagina-do-edital-titulo-do-bloco {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.pagina-do-edital-titulo-do-bloco span,
+.pagina-do-edital-nota {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-sm);
+}
+
+/* Linha do tempo: um ponto por etapa, ligado ao próximo. */
+.pagina-do-edital-etapas {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pagina-do-edital-etapa {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--space-4) minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: start;
+  padding: var(--space-2) 0;
+}
+
+.pagina-do-edital-etapa:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: calc(var(--space-2) + var(--space-4));
+  bottom: calc(-1 * var(--space-2));
+  left: calc(var(--space-2) - 1px);
+  width: 2px;
+  background: var(--color-border-subtle);
+}
+
+.pagina-do-edital-ponto {
+  width: var(--space-4);
+  height: var(--space-4);
+  margin-top: var(--space-0-5);
+  border: 2px solid var(--color-border-default);
+  border-radius: var(--radius-full);
+  background: var(--color-bg-raised);
+}
+
+.pagina-do-edital-etapa[data-marca="concluida"] .pagina-do-edital-ponto {
+  border-color: var(--color-status-success-solid);
+  background: var(--color-status-success-solid);
+}
+
+.pagina-do-edital-etapa[data-marca="atual"] .pagina-do-edital-ponto {
+  border-color: var(--color-status-info-solid);
+  background: var(--color-status-info-bg);
+}
+
+.pagina-do-edital-etapa > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
+
+.pagina-do-edital-etapa strong {
+  font-weight: var(--font-weight-medium);
+  overflow-wrap: anywhere;
+}
+
+.pagina-do-edital-etapa[data-marca="atual"] strong {
+  font-weight: var(--font-weight-semibold);
+}
+
+.pagina-do-edital-datas,
+.pagina-do-edital-etapa small {
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-sm);
+}
+
+.pagina-do-edital-retificacoes,
+.pagina-do-edital-escolha {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pagina-do-edital-retificacoes li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.pagina-do-edital-retificacoes li:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.pagina-do-edital-retificacoes li > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.pagina-do-edital-retificacoes p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.pagina-do-edital-retificacoes span,
+.pagina-do-edital-retificacoes small {
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-sm);
+}
+
+@media (max-width: 600px) {
+  .pagina-do-edital-etapa {
+    grid-template-columns: var(--space-4) minmax(0, 1fr);
+  }
+
+  .pagina-do-edital-etapa .ui-selo {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
+
+.pagina-do-edital-painel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.pagina-do-edital-mais {
+  align-self: flex-start;
+}
+
+/* Quadro de vagas: poucas colunas, sem a largura mínima das tabelas grandes. */
+.pagina-do-edital-tabela table {
+  width: 100%;
+  min-width: 640px;
+}
+
+.pagina-do-edital-vinculos summary {
+  cursor: pointer;
+  font-weight: var(--font-weight-medium);
+}
+
+.pagina-do-edital-vinculos ul,
+.pagina-do-edital-avisos,
+.pagina-do-edital-telas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pagina-do-edital-vinculos li,
+.pagina-do-edital-avisos li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.pagina-do-edital-vinculos li span,
+.pagina-do-edital-avisos li span {
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-sm);
+}
+
+.pagina-do-edital-avisos li > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.pagina-do-edital-avisos li {
+  padding: var(--space-2) var(--space-3);
+  border-left: 3px solid var(--color-status-info-solid);
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.pagina-do-edital-avisos li[data-tom="perigo"] {
+  border-left-color: var(--color-status-danger-solid);
+}
+
+.pagina-do-edital-avisos li[data-tom="aviso"] {
+  border-left-color: var(--color-status-warning-solid);
+}
+
+.pagina-do-edital-telas {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.pagina-do-edital-fontes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.pagina-do-edital-fontes dt {
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption);
+}
+
+.pagina-do-edital-fontes dd {
+  margin: var(--space-0-5) 0 0;
+  overflow-wrap: anywhere;
+}

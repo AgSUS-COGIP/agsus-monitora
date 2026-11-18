@@ -44,6 +44,11 @@ quando o app abre). Substitui os antigos `arara-guide.js`, `arara-speaking-effec
 - Perguntas com número: intenções e entidades em `aya/intencoes-da-aya.ts`; contas e resposta em
   `aya/dados-da-aya.ts` (permissão conferida antes; só contagens e datas). O "Abrir" deixa o filtro em
   `src/app/pedido-de-filtro.ts`; Recursos, Entrevistas e Seleção aplicam com `aya/filtro-da-aya.ts`.
+- **"O que significa" de uma tela** (18/11/2026): um ⓘ deixa a pergunta em
+  `src/app/pergunta-para-a-aya.ts` (`perguntarParaAAya`, validade de 15 s); a Aya a pega uma vez
+  (`usarPerguntaParaAAya`), abre o painel e envia. Usado pelos indicadores da Visão geral, com as
+  perguntas de `src/lib/visao-geral/o-que-significa.ts` (uma por verbete "(indicador)" de
+  `docs/aya/regras-da-visao-geral.md`).
 - "Não aparece o botão": `aya/permissoes-da-aya.ts`, pelo perfil.
 - "Não ajudou" e "não entendi" guardam a pergunta sem dado pessoal (`aya/perguntas-sem-resposta.ts`);
   o administrador global copia a lista pelo painel.

@@ -18,6 +18,7 @@
 import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 import { moldeDeBanco } from "./molde-de-banco.ts";
+import { lembrarBanco } from "./bancos-abertos.ts";
 
 export const NOME_DA_MIGRATION =
   "20261109180000_catalogo_dos_robos_e_chave_unica.sql";
@@ -325,7 +326,7 @@ export interface OpcoesDoBanco {
 
 /** O banco como está hoje (antes da migration 20261109180000). */
 async function montarBancoDeHoje(opcoes: OpcoesDoBanco = {}): Promise<Banco> {
-  const db = await PGlite.create();
+  const db = lembrarBanco(await PGlite.create());
   await db.exec(INFRAESTRUTURA);
   for (const nome of FUNCOES_DE_HOJE) await db.exec(definicaoVigente(nome));
   for (const comentario of COMENTARIOS_DE_HOJE) await db.exec(comentario);

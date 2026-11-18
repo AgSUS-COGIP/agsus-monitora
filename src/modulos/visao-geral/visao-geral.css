@@ -748,3 +748,134 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* ── O número da linha que leva aos dados (tabela.tsx, NumeroDaLinha) ── */
+.visao-geral-numero-botao {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-link);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.visao-geral-numero-botao:hover,
+.visao-geral-numero-botao[aria-expanded="true"] {
+  color: var(--color-text-link-hover);
+  text-decoration-style: solid;
+}
+.visao-geral-numero-botao:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+.visao-geral-origem {
+  display: grid;
+  gap: var(--space-2);
+  text-align: left;
+  white-space: normal;
+}
+.visao-geral-origem-agregada {
+  margin: 0;
+  color: var(--text-secondary);
+}
+/* O número da faixa das vagas: a cor do indicador, sublinhado pontilhado. */
+.visao-geral-numero .visao-geral-numero-botao {
+  color: inherit;
+  text-align: left;
+}
+
+/* A composição de um número (composicao.tsx): uma conta armada. */
+.visao-geral-composicao {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  min-width: 240px;
+}
+.visao-geral-composicao-passo {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.visao-geral-composicao-passo dt {
+  color: var(--text-secondary);
+}
+.visao-geral-composicao-passo dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.visao-geral-composicao-passo[data-operacao="="] {
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--border-subtle);
+  font-weight: var(--font-weight-semibold);
+}
+.visao-geral-composicao-passo[data-operacao="="] dt {
+  color: var(--text-primary);
+}
+.visao-geral-composicao-passo[data-operacao="="]
+  + .visao-geral-composicao-passo {
+  margin-top: var(--space-2);
+}
+
+/* O selo de Atenção abre os avisos do edital na gaveta (tabela.tsx). */
+.visao-geral-selo-botao {
+  display: inline-flex;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+.visao-geral-selo-botao:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+.visao-geral-avisos-do-edital {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+.visao-geral-avisos-do-edital > :not(button) {
+  justify-self: stretch;
+}
+
+/* Conjuntos prontos no menu "Colunas" (Gestão, Prazos, Contratação). */
+.visao-geral-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.visao-geral-presets .btn[aria-pressed="true"] {
+  border-color: var(--focus-ring);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+}
+
+/* O ⓘ de cada indicador: abre a Aya com a pergunta sobre o número. */
+.visao-geral-numero-info {
+  display: inline-grid;
+  place-items: center;
+  margin-left: var(--space-1);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  cursor: pointer;
+  vertical-align: middle;
+}
+.visao-geral-numero-info:hover {
+  color: var(--text-primary);
+}
+.visao-geral-numero-info:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-full, 999px);
+}

@@ -1,5 +1,7 @@
 // @vitest-environment node
 import { bloco } from "./apoio/bloco.ts";
+import * as filaDaDocumental from "../src/lib/avaliacao-documental/fila.ts";
+import { resumoPorVaga as resumoDoAndamentoPorVaga } from "../src/lib/avaliacao-documental/andamento-por-vaga.ts";
 import { describe, expect, it, vi, afterEach } from "vitest";
 import {
   analisesPorResponsavel,
@@ -13,7 +15,7 @@ import {
   rotuloDoPeriodo,
   temPeriodo,
   calcularKpis,
-  csvDasAnalises,
+  tabelaDasAnalises,
   dataDaPlanilha,
   descricaoDoRecorte,
   detalheDaAnalise,
@@ -62,11 +64,11 @@ import vm from "node:vm";
 import {
   AREA_PADRAO_DO_PAINEL,
   chaveDoCacheDoPayload,
-  colunasDoCsvDeAnalises,
+  colunasDaExportacaoDeAnalises,
   ehAreaSaudeIndigena,
   experienciaProfissionalDaLinha,
   mensagemDeAreaSemAnalises,
-  nomeDoCsvDeAnalises,
+  nomeDaPlanilhaDeAnalises,
   parametroDeAreaDaRpc,
   rotuloDaAreaDoPainel,
 } from "../src/lib/analises/area-do-painel-de-analises.ts";
@@ -577,7 +579,7 @@ import {
   SITUACOES,
   calcularIndicadores,
   compararEditais,
-  csvDosRecursos,
+  tabelaDosRecursos,
   dadosParaSalvar,
   diasEntre as diasEntre__4,
   enriquecerRecursos,
@@ -1286,9 +1288,9 @@ bloco("analises-curriculares", () => {
     });
   });
 
-  describe("CSV", () => {
-    it("colunas da Saúde Indígena; quebra, ; e aspas saem; fórmula ganha apóstrofo", () => {
-      const csv = csvDasAnalises(
+  describe("exportação (Excel)", () => {
+    it("colunas da Saúde Indígena; o texto vai como veio (a planilha não lê fórmula)", () => {
+      const { colunas, linhas } = tabelaDasAnalises(
         [
           linha({
             candidato: '=HYPERLINK("x")',
@@ -1297,18 +1299,21 @@ bloco("analises-curriculares", () => {
         ],
         "saude-indigena",
       );
-      const [cabecalho, primeira] = csv.split("\n");
-      expect(cabecalho.split(";")).toHaveLength(16);
-      expect(cabecalho).not.toContain("municipio_uf");
-      expect(primeira).toContain("'=HYPERLINK('x')");
-      expect(primeira).toContain("linha 1 linha 2  fim");
+      expect(colunas).toHaveLength(16);
+      expect(colunas).not.toContain("municipio_uf");
+      const [primeira] = linhas;
+      expect(primeira[colunas.indexOf("candidato")]).toBe('=HYPERLINK("x")');
+      expect(primeira[colunas.indexOf("analise")]).toBe(
+        "linha 1\nlinha 2; fim",
+      );
     });
 
     it("fora da Saúde Indígena, as colunas de experiência e município", () => {
-      const [cabecalho] = csvDasAnalises([], "sede").split("\n");
-      expect(cabecalho).toContain(
-        "experiencia_profissional_total;municipio_uf",
-      );
+      const { colunas } = tabelaDasAnalises([], "sede");
+      expect(colunas.slice(-2)).toEqual([
+        "experiencia_profissional_total",
+        "municipio_uf",
+      ]);
     });
   });
 
@@ -2792,20 +2797,20 @@ bloco("area-do-painel-de-analises", () => {
     });
   });
 
-  describe("CSV e tabela vazia por área", () => {
+  describe("Exportação e tabela vazia por área", () => {
     const colunas = ["grupo", "unidade", "analise"];
 
     it("a Saúde Indígena exporta as colunas de sempre", () => {
-      expect(colunasDoCsvDeAnalises(colunas, "saude-indigena")).toEqual(
+      expect(colunasDaExportacaoDeAnalises(colunas, "saude-indigena")).toEqual(
         colunas,
       );
-      expect(nomeDoCsvDeAnalises("saude-indigena")).toBe(
-        "agsus_analises_curriculares_v3.csv",
+      expect(nomeDaPlanilhaDeAnalises("saude-indigena")).toBe(
+        "agsus_analises_curriculares_v3.xlsx",
       );
     });
 
     it("SEDE e Projetos ganham a experiência profissional e o município no fim", () => {
-      expect(colunasDoCsvDeAnalises(colunas, "projetos")).toEqual([
+      expect(colunasDaExportacaoDeAnalises(colunas, "projetos")).toEqual([
         ...colunas,
         "experiencia_profissional_anos",
         "experiencia_profissional_meses",
@@ -2813,8 +2818,8 @@ bloco("area-do-painel-de-analises", () => {
         "experiencia_profissional_total",
         "municipio_uf",
       ]);
-      expect(nomeDoCsvDeAnalises("projetos")).toBe(
-        "agsus_analises_curriculares_projetos.csv",
+      expect(nomeDaPlanilhaDeAnalises("projetos")).toBe(
+        "agsus_analises_curriculares_projetos.xlsx",
       );
     });
 
@@ -2892,7 +2897,8 @@ bloco("avaliacao-documental-fila-fora-do-lote", () => {
       expect(r).toMatchObject({
         inscritos: 12,
         lote: 2,
-        pendentes: 1,
+        // No lote sem ficha também é pendente (a mesma conta do bloco por vaga).
+        pendentes: 2,
         eliminados: 8,
       });
     });
@@ -8725,6 +8731,7 @@ bloco("lib/avaliacao-documental-fila", () => {
         em_analise: 1,
         revisao: 1,
         concluidas: 1,
+        saiu: 0,
         eliminados: 1,
         fora: 2,
       });
@@ -9011,6 +9018,7 @@ bloco("lib/avaliacao-documental-fila", () => {
         em_analise: 1,
         revisao: 1,
         pendentes: 3,
+        saiu: 0,
       });
       expect(a.vagas.map((v) => v.codigo)).toEqual(["B", "A"]);
       expect(a.vagas[1]).toEqual({
@@ -9022,6 +9030,7 @@ bloco("lib/avaliacao-documental-fila", () => {
         em_analise: 1,
         revisao: 0,
         pendentes: 3,
+        saiu: 0,
       });
     });
 
@@ -17046,16 +17055,24 @@ bloco("recursos-dos-candidatos", () => {
     });
   });
 
-  describe("CSV", () => {
-    it("cabeçalho, ; e BOM, com célula protegida contra fórmula", () => {
+  describe("exportação (Excel e PDF)", () => {
+    it("colunas na ordem de sempre; texto como veio (a planilha não lê fórmula)", () => {
       const [r1] = enriquecidos();
-      const csv = csvDosRecursos([
+      const { colunas, linhas } = tabelaDosRecursos([
         { ...r1, candidato: "=HYPERLINK(1)", analista: "Ana; Bia" },
       ]);
-      expect(csv.startsWith("\uFEFFNº;Edital;Unidade;Origem;")).toBe(true);
-      expect(csv).toContain(";'=HYPERLINK(1);");
-      expect(csv).toContain(';"Ana; Bia";');
-      expect(csv).toContain(";06/05/2026;Sim;10;10/05/2026");
+      expect(colunas.slice(0, 4)).toEqual([
+        "Nº",
+        "Edital",
+        "Unidade",
+        "Origem",
+      ]);
+      const linha = linhas[0];
+      expect(linha[colunas.indexOf("Candidato")]).toBe("=HYPERLINK(1)");
+      expect(linha[colunas.indexOf("Analista")]).toBe("Ana; Bia");
+      expect(linha[colunas.indexOf("Prazo de resposta")]).toBe("06/05/2026");
+      expect(linha[colunas.indexOf("Atrasado")]).toBe("Sim");
+      expect(linha[colunas.indexOf("Dias em aberto")]).toBe(10);
     });
   });
 });
@@ -17609,5 +17626,99 @@ bloco("textos-do-painel-de-analises", () => {
       expect(parecerDoDetalhe({ id: "a", analise: null })).toBeNull();
       expect(parecerDoDetalhe(null)).toBeNull();
     });
+  });
+});
+
+bloco("lib/avaliacao-documental-saiu-do-lote", () => {
+  /*
+    O lote que não fechava (93/2026, revisão de 17/11/2026): 94 concluídas e 2
+    fichas FORA_LOTE com a pré-classificação ainda NO_LOTE. Agora a faixa e o
+    bloco por vaga têm "Saiu do lote" e somam o lote. Dados fictícios.
+  */
+  const {
+    andamentoDaFila,
+    colunasDaEtapa,
+    contadoresDaFila,
+    filtrarFila,
+    naEtapa,
+    parteDoLote,
+  } = filaDaDocumental;
+  const inscrito = (n, vaga, situacao, pre = "NO_LOTE") => ({
+    id: `c${n}`,
+    codigo: String(9000 + n),
+    vaga,
+    situacao_pre: pre,
+    ficha: situacao ? { id: `f${n}`, situacao } : null,
+  });
+  const VAGA = "100001";
+  const LOTE_96 = [
+    ...Array.from({ length: 94 }, (_, i) =>
+      inscrito(i, VAGA, "CONCLUIDA", "ANALISADO"),
+    ),
+    inscrito(94, VAGA, "FORA_LOTE"),
+    inscrito(95, VAGA, "FORA_LOTE"),
+  ];
+
+  it("o lote de 96 fecha: 94 concluídas + 2 saíram, nenhuma pendente", () => {
+    const faixa = contadoresDaFila(LOTE_96);
+    const { total, vagas } = andamentoDaFila(LOTE_96, [{ codigo: VAGA }]);
+    expect(faixa).toMatchObject({
+      lote: 96,
+      concluidas: 94,
+      saiu: 2,
+      pendentes: 0,
+    });
+    expect(total).toEqual({
+      lote: 96,
+      concluidas: 94,
+      em_analise: 0,
+      revisao: 0,
+      pendentes: 0,
+      saiu: 2,
+    });
+    expect(resumoDoAndamentoPorVaga(vagas)).toBe(
+      "1 vaga · nenhuma com pendências · 1 concluída",
+    );
+  });
+
+  it("faixa e bloco dão os mesmos números e somam o lote", () => {
+    const mistura = [
+      ...LOTE_96.slice(90),
+      inscrito(200, "100002", "PENDENTE"),
+      inscrito(201, "100002", null),
+      inscrito(202, "100002", "EM_ANALISE"),
+      inscrito(203, "100002", "REVISAR"),
+      inscrito(204, "100002", "FORA_LOTE", "ELIMINADO"),
+      inscrito(205, "100002", null, "RANQUEADO"),
+    ];
+    const faixa = contadoresDaFila(mistura);
+    const { total } = andamentoDaFila(mistura, []);
+    for (const parte of [
+      "lote",
+      "concluidas",
+      "em_analise",
+      "revisao",
+      "pendentes",
+      "saiu",
+    ])
+      expect(faixa[parte]).toBe(total[parte]);
+    expect(
+      total.concluidas +
+        total.em_analise +
+        total.revisao +
+        total.pendentes +
+        total.saiu,
+    ).toBe(total.lote);
+    expect(total).toMatchObject({ lote: 10, pendentes: 2, saiu: 2 });
+    expect(naEtapa(mistura[10], "saiu")).toBe(false);
+    expect(parteDoLote(inscrito(1, VAGA, "FORA_LOTE"))).toBe("saiu");
+    expect(parteDoLote(null)).toBeNull();
+  });
+
+  it("a aba Saiu do lote filtra as duas e mostra o motivo da saída", () => {
+    expect(
+      filtrarFila(LOTE_96, { etapa: "saiu" }).map((c) => c.codigo),
+    ).toEqual(["9094", "9095"]);
+    expect(colunasDaEtapa("saiu")).toContain("motivo_saida");
   });
 });

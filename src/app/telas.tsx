@@ -92,6 +92,8 @@ export const TELAS_DA_CASCA: readonly ViewDeTela[] = Object.freeze([
   "selecao",
   // src/modulos/paineis-de-dados/ — Painéis (bloco Dados).
   "paineis-de-dados",
+  // src/modulos/pagina-do-edital/ — a página de um edital (/<área>/edital/<número>).
+  "edital",
 ]);
 
 const TEXTO_SEM_ACESSO =
@@ -220,6 +222,13 @@ export function registrarTelasDoApp({
       carregar: () =>
         import("../modulos/paineis-de-dados/paineis-de-dados.tsx").then((m) =>
           m.criarPaineisDeDados(),
+        ),
+    },
+    // A página do edital: baixa na primeira abertura; cada abertura relê o cronograma.
+    edital: {
+      carregar: () =>
+        import("../modulos/pagina-do-edital/pagina-do-edital.tsx").then((m) =>
+          m.criarPaginaDoEdital(),
         ),
     },
     classificacao: {

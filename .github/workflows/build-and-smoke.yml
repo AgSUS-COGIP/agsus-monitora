@@ -71,7 +71,11 @@ jobs:
       - name: Verificar formatação alterada
         run: npm run format:check
 
+      # Tempo próprio, para um teste preso não consumir o build e o Playwright. A cobertura roda
+      # com 2 processos (package.json): desde o #887 os bancos PGlite de um assunto se somam no
+      # mesmo processo, e com mais processos a máquina do GitHub ficava sem memória.
       - name: Testes e cobertura
+        timeout-minutes: 20
         run: npm run test:coverage
 
       # O Supabase deste build é fictício: os testes de navegador respondem a ele

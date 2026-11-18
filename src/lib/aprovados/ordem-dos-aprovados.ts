@@ -1,5 +1,6 @@
 import type { CandidatoDasRegrasDeAprovados } from "./tipos-das-regras-de-aprovados.ts";
 import { STATUS_CONTRATADO_EM_OUTRA_LISTA } from "./lista-aprovados-rules.ts";
+import { cargoDaVaga, localidadeDoCargo } from "./localidade-da-vaga.ts";
 
 /*
   A ordem da tabela da aba Aprovados, ao clicar no cabeçalho (o padrão das
@@ -11,7 +12,15 @@ import { STATUS_CONTRATADO_EM_OUTRA_LISTA } from "./lista-aprovados-rules.ts";
 */
 
 export type ChaveDaOrdemDosAprovados =
-  "nome" | "cargo" | "modalidade" | "classificacao" | "nota" | "situacao";
+  | "nome"
+  | "vaga"
+  | "cargo"
+  | "lotacao"
+  | "edital"
+  | "modalidade"
+  | "classificacao"
+  | "nota"
+  | "situacao";
 
 export interface OrdemDosAprovados {
   chave: ChaveDaOrdemDosAprovados | "";
@@ -44,6 +53,11 @@ function valorDaColuna(
   chave: ChaveDaOrdemDosAprovados,
 ): string | number | null {
   if (chave === "situacao") return situacaoDaLinha(linha) || null;
+  if (chave === "vaga") return texto(linha.codigo_vaga) || null;
+  if (chave === "cargo") return cargoDaVaga(linha.cargo) || null;
+  if (chave === "lotacao") return localidadeDoCargo(linha.cargo) || null;
+  if (chave === "edital")
+    return [texto(linha.edital), texto(linha.unidade)].join(" ").trim() || null;
   const bruto = linha[chave];
   if (NUMERICAS.has(chave)) {
     if (bruto === null || bruto === undefined || texto(bruto) === "")

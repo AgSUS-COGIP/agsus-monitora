@@ -19,6 +19,7 @@
 import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 import { moldeDeBanco } from "./molde-de-banco.ts";
+import { lembrarBanco } from "./bancos-abertos.ts";
 
 export const NOME_DA_MIGRATION =
   "20261110215930_fundamento_conferido_da_eliminacao.sql";
@@ -214,7 +215,7 @@ export type Banco = PGlite;
 
 /** O banco de hoje (antes da migration), com o edital fictício, a regra e a Triagem gravada. */
 async function montarBancoDeHoje(): Promise<Banco> {
-  const db = await PGlite.create();
+  const db = lembrarBanco(await PGlite.create());
   await db.exec(INFRAESTRUTURA);
   for (const f of FUNCOES_DO_RETRATO) await db.exec(funcaoDoRetrato(f));
   await db.exec(`

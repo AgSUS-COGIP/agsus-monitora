@@ -8,11 +8,16 @@ import type {
   ChaveDaOrdemDosAprovados,
   OrdemDosAprovados,
 } from "../../lib/aprovados/ordem-dos-aprovados.ts";
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import {
   OPCOES_DO_FILTRO_DE_STATUS,
-  canAlterarCandidatoSubJudice,
-  canEditSubJudice,
   filterApprovedCandidates,
   nomeDosCandidatosFiltrados,
   summarizeApprovedCandidates,
@@ -23,11 +28,25 @@ import {
   proximaOrdemDosAprovados,
 } from "../../lib/aprovados/ordem-dos-aprovados.ts";
 import { formatNumberBR } from "../../lib/base/formatters";
+import {
+  acoesDaLinhaDoAprovado,
+  type IdDaAcaoDoAprovado,
+} from "../../lib/aprovados/acoes-da-linha-dos-aprovados.ts";
+import {
+  cargoDaVaga,
+  localidadeDoCargo,
+} from "../../lib/aprovados/localidade-da-vaga.ts";
+import {
+  alcanceDaSelecao,
+  marcarPagina,
+  mesmaPagina,
+} from "../../lib/base/alcance-da-selecao.ts";
 import { resumoDasOrigens } from "../../lib/aprovados/publicacao-de-aprovados.ts";
 import { statusDoLotePara } from "../../lib/aprovados/status-em-lote-dos-aprovados.ts";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
 import {
-  BotaoDeAcao,
+  AcoesDaLinha,
+  BarraDeSelecao,
   Campo,
   GradeDeKpis,
   Kpi,
@@ -36,10 +55,8 @@ import {
   classes,
 } from "../../ui/index.ts";
 import {
-  AcaoDeAnexos,
-  AcaoDeCarta,
-  AcaoDeStatus,
   ModalidadeDoCandidato,
+  NOME_DOS_CANDIDATOS,
   NomeDoCandidato,
   NotaDoCandidato,
   plural,
@@ -64,9 +81,18 @@ import { ModalDoStatusEmLote } from "./status-em-lote.tsx";
   Clique na linha (ou Enter/Espaço com ela em foco) abre a gaveta do
   candidato, como o nome; os botões da linha fazem só a própria ação.
 
-  Status em lote (11/11/2026): quem muda status marca as linhas (ou "todos os
-  da tabela", que são os filtrados e buscados, não só os 50 desenhados) e usa
-  "Mudar status" (status-em-lote.tsx). Mudar filtro ou busca limpa a seleção.
+  Revisão de 17/11/2026: o código da vaga, o cargo, a lotação (o lugar no
+  texto do cargo: localidade-da-vaga.ts) e o edital com a unidade têm coluna
+  própria, todas ordenáveis; as ações da linha são uma principal com nome
+  ("Mudar status" ou "Abrir") e o "⋯ Mais ações de <nome>"
+  (acoes-da-linha-dos-aprovados.ts), com "Ver na Classificação" do edital.
+
+  Status em lote (11/11/2026): quem muda status marca as linhas e usa "Mudar
+  status" (status-em-lote.tsx). Desde a revisão de 17/11/2026 a barra da
+  seleção (BarraDeSelecao) separa "Selecionar esta página" (as linhas
+  desenhadas) de "Selecionar todos os N resultados" (os filtrados e
+  buscados), e a janela diz quantos serão afetados. Mudar filtro ou busca
+  limpa a seleção.
 
   A origem das listas (publicada da Classificação ou manual, por planilha) fica
   numa linha discreta acima da tabela: a do edital, quando o filtro deixa um só.
@@ -92,18 +118,21 @@ const COLUNAS: ReadonlyArray<{
 }> = [
   // Nome primeiro: é por ele que se procura; na última coluna ficava cortado
   // pela rolagem horizontal.
-  { rotulo: "Nome", chave: "nome", largura: "26%" },
-  { rotulo: "Cargo", chave: "cargo", largura: "17%" },
-  { rotulo: "Modalidade", chave: "modalidade", largura: "14%" },
+  { rotulo: "Nome", chave: "nome", largura: "19%" },
+  { rotulo: "Vaga", chave: "vaga", largura: "8%" },
+  { rotulo: "Cargo", chave: "cargo", largura: "12%" },
+  { rotulo: "Lotação", chave: "lotacao", largura: "11%" },
+  { rotulo: "Edital", chave: "edital", largura: "10%" },
+  { rotulo: "Modalidade", chave: "modalidade", largura: "9%" },
   {
     rotulo: "Classificação",
     chave: "classificacao",
     numero: true,
-    largura: "9%",
+    largura: "7%",
   },
-  { rotulo: "Nota", chave: "nota", numero: true, largura: "7%" },
-  { rotulo: "Situação", chave: "situacao", largura: "13%" },
-  { rotulo: "Ações", largura: "14%" },
+  { rotulo: "Nota", chave: "nota", numero: true, largura: "6%" },
+  { rotulo: "Situação", chave: "situacao", largura: "9%" },
+  { rotulo: "Ações", largura: "9%" },
 ];
 
 /* Sem `convocacoes`, o mesmo Map sempre (a linha memorizada compara por referência). */
@@ -113,6 +142,65 @@ const SEM_CONVOCACOES: ConvocacoesDaTabela = new Map();
 const doControle = (alvo: EventTarget | null) =>
   alvo instanceof Element &&
   Boolean(alvo.closest("button, a, input, select, textarea, label"));
+
+/*
+  As ações da linha: a principal com nome e o "⋯ Mais ações de <nome>". O
+  `data-approved-action` de cada uma é o contrato dos testes e do tour.
+*/
+function AcoesDoAprovado({
+  row,
+  estado,
+  perfil,
+  anexos,
+}: {
+  row: CandidatoDaTabelaDeAprovados;
+  estado: EstadoDaAbaDeAprovados;
+  perfil: unknown;
+  anexos: number;
+}) {
+  const id = row.candidato_id;
+  const fazer: Record<IdDaAcaoDoAprovado, () => void> = {
+    status: () => estado.abrirStatus(id),
+    candidato: () => estado.abrirCandidato(id),
+    anexos: () => estado.abrirAnexos(id),
+    carta: () => estado.abrirCarta([id]),
+    classificacao: () =>
+      estado.irParaClassificacao(String(row.edital_id ?? ""), text(row.edital)),
+    "alteracao-judicial": () => estado.abrirAlteracaoJudicial(id),
+    "remove-subjudice": () => void estado.removerSubJudice(id),
+  };
+  const { principal, outras } = acoesDaLinhaDoAprovado(perfil, row, anexos);
+  // Enquanto uma ação grava, as do menu esperam (o que o BotaoDeAcao fazia).
+  const { acao: emCurso } = useSyncExternalStore(estado.assinar, estado.obter);
+  const removendo = emCurso?.tipo === `remover-sub-judice:${id}`;
+  return (
+    <AcoesDaLinha
+      pessoa={row.nome}
+      principal={{
+        rotulo: principal.rotulo,
+        acao: principal.id,
+        dados: {
+          "data-approved-action": principal.id,
+          "data-candidate-id": id,
+        },
+        titulo: `${principal.rotulo}: ${row.nome}`,
+        aoClicar: fazer[principal.id],
+      }}
+      outras={outras.map((acao) => ({
+        id: acao.id,
+        rotulo:
+          acao.id === "remove-subjudice" && removendo
+            ? "Removendo…"
+            : acao.rotulo,
+        desabilitado:
+          acao.desabilitado ||
+          (acao.id === "remove-subjudice" && Boolean(emCurso)),
+        dados: { "data-approved-action": acao.id, "data-candidate-id": id },
+        aoEscolher: fazer[acao.id],
+      }))}
+    />
+  );
+}
 
 /*
   A linha é memorizada: carregar mais 50 (ou abrir um modal) não redesenha as
@@ -168,7 +256,17 @@ const LinhaDoAprovado = memo(function LinhaDoAprovado({
         ) : null}
         <NomeDoCandidato candidato={row} aoAbrir={estado.abrirCandidato} />
       </td>
-      <td>{row.cargo || "-"}</td>
+      <td data-coluna="vaga">{text(row.codigo_vaga) || "-"}</td>
+      <td data-coluna="cargo" title={text(row.cargo) || undefined}>
+        {cargoDaVaga(row.cargo) || "-"}
+      </td>
+      <td data-coluna="lotacao">{localidadeDoCargo(row.cargo) || "-"}</td>
+      <td data-coluna="edital">
+        {text(row.edital) || "-"}
+        {text(row.unidade) ? (
+          <span className="approved-unidade">{text(row.unidade)}</span>
+        ) : null}
+      </td>
       <td>
         <ModalidadeDoCandidato candidato={row} />
       </td>
@@ -185,53 +283,12 @@ const LinhaDoAprovado = memo(function LinhaDoAprovado({
         />
       </td>
       <td className="approved-actions">
-        <div className="approved-actions-grupo">
-          <AcaoDeAnexos
-            candidato={row}
-            anexos={anexos.get(String(row.candidato_id))}
-            aoAbrir={estado.abrirAnexos}
-          />
-          <AcaoDeStatus
-            perfil={perfil}
-            candidato={row}
-            atributos={{ "data-approved-action": "status" }}
-            aoAbrir={estado.abrirStatus}
-          />
-          <AcaoDeCarta
-            perfil={perfil}
-            candidato={row}
-            atributos={{ "data-approved-action": "carta" }}
-            aoAbrir={estado.abrirCarta}
-          />
-          {canAlterarCandidatoSubJudice(perfil, row) ? (
-            <button
-              type="button"
-              className="approved-icone-acao"
-              data-approved-action="alteracao-judicial"
-              data-candidate-id={row.candidato_id}
-              title="Alterar nota ou modalidade por decisão judicial"
-              aria-label={`Alterar nota ou modalidade de ${row.nome} por decisão judicial`}
-              onClick={() => estado.abrirAlteracaoJudicial(row.candidato_id)}
-            >
-              <i className="fa-solid fa-gavel" aria-hidden="true" />
-            </button>
-          ) : null}
-          {canEditSubJudice(perfil, row) ? (
-            <BotaoDeAcao
-              estado={estado}
-              acao={`remover-sub-judice:${row.candidato_id}`}
-              soIcone
-              className="btn icon red"
-              data-approved-action="remove-subjudice"
-              data-candidate-id={row.candidato_id}
-              title="Remover sub judice"
-              aria-label={`Remover ${row.nome} da lista como sub judice`}
-              onClick={() => void estado.removerSubJudice(row.candidato_id)}
-            >
-              <i className="fa-solid fa-user-minus" aria-hidden="true" />
-            </BotaoDeAcao>
-          ) : null}
-        </div>
+        <AcoesDoAprovado
+          row={row}
+          estado={estado}
+          perfil={perfil}
+          anexos={anexos.get(String(row.candidato_id))?.length ?? 0}
+        />
       </td>
     </tr>
   );
@@ -300,7 +357,23 @@ export function AbaAprovados({
     () => daTabela.filter((row) => selecionados.has(row.candidato_id)),
     [daTabela, selecionados],
   );
-  const todos = daTabela.length > 0 && escolhidos.length === daTabela.length;
+  // A "página": as linhas que a tabela desenhou (TabelaInfinita.aoMostrar).
+  const [pagina, setPagina] = useState<readonly string[]>([]);
+  const aoMostrar = useCallback(
+    (visiveis: readonly CandidatoDaTabelaDeAprovados[]) => {
+      const ids = visiveis.map((row) => row.candidato_id);
+      setPagina((atual) => (mesmaPagina(atual, ids) ? atual : ids));
+    },
+    [],
+  );
+  const recorte = useMemo(
+    () => daTabela.map((row) => row.candidato_id),
+    [daTabela],
+  );
+  const alcance = useMemo(
+    () => alcanceDaSelecao(selecionados, pagina, recorte),
+    [selecionados, pagina, recorte],
+  );
   const alternar = useCallback((id: string) => {
     setSelecionados((atual) => {
       const novo = new Set(atual);
@@ -309,10 +382,6 @@ export function AbaAprovados({
       return novo;
     });
   }, []);
-  const alternarTodos = () =>
-    setSelecionados(
-      todos ? new Set() : new Set(daTabela.map((row) => row.candidato_id)),
-    );
   const quantos = Object.values(filtros).filter((lista) => lista.length).length;
   const origens = carregado
     ? resumoDasOrigens(
@@ -503,50 +572,34 @@ export function AbaAprovados({
         </p>
       ) : null}
       {podeSelecionar && carregado && daTabela.length ? (
-        <div className="approved-lote" data-status-em-lote>
-          <label className="approved-lote__todos">
-            <input
-              type="checkbox"
-              checked={todos}
-              ref={(caixa) => {
-                if (caixa)
-                  caixa.indeterminate = escolhidos.length > 0 && !todos;
-              }}
-              onChange={alternarTodos}
-            />
-            {todos
-              ? `Todos os ${formatNumberBR(daTabela.length)} da tabela`
-              : `Selecionar os ${formatNumberBR(daTabela.length)} da tabela`}
-          </label>
-          {escolhidos.length ? (
-            <>
-              <span className="approved-lote__quantos" aria-live="polite">
-                {plural(escolhidos.length, "selecionado", "selecionados")}
-              </span>
-              <button
-                type="button"
-                className="btn"
-                data-abrir-status-em-lote
-                onClick={() => setLoteAberto(true)}
-              >
-                Mudar status
-              </button>
-              <button
-                type="button"
-                className="btn secondary"
-                onClick={() => setSelecionados(new Set())}
-              >
-                Limpar seleção
-              </button>
-            </>
-          ) : null}
-        </div>
+        <BarraDeSelecao
+          className="approved-lote"
+          rotulo="Seleção de candidatos"
+          tour="aprovados-selecao"
+          alcance={alcance}
+          nome={NOME_DOS_CANDIDATOS}
+          aoMarcarPagina={(sim) =>
+            setSelecionados((atual) => marcarPagina(atual, pagina, sim))
+          }
+          aoMarcarTodos={() => setSelecionados(new Set(recorte))}
+          aoLimpar={() => setSelecionados(new Set())}
+        >
+          <button
+            type="button"
+            className="btn small"
+            data-abrir-status-em-lote
+            onClick={() => setLoteAberto(true)}
+          >
+            Mudar status
+          </button>
+        </BarraDeSelecao>
       ) : null}
       {loteAberto ? (
         <ModalDoStatusEmLote
           estado={estado}
           perfil={perfil}
           candidatos={escolhidos}
+          alcance={alcance}
           aoFechar={() => setLoteAberto(false)}
           aoConcluir={() => {
             setLoteAberto(false);
@@ -588,6 +641,7 @@ export function AbaAprovados({
               ? plural(quantos, "candidato", "candidatos")
               : `${formatNumberBR(quantos)} de ${plural(candidatos.length, "candidato", "candidatos")}`
         }
+        aoMostrar={aoMostrar}
         linha={(row) => (
           <LinhaDoAprovado
             key={row.candidato_id}

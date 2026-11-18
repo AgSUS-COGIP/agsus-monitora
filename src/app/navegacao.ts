@@ -37,6 +37,7 @@ import {
 import {
   caminhoDoDestino,
   destinoDoCaminho,
+  editalEhAPagina,
   ehRaizDoApp,
   telaDaRota,
 } from "../lib/navegacao/rotas.ts";
@@ -133,6 +134,19 @@ export interface EstadoDaNavegacao {
   readonly manutencao: AvisoNoLugarDaPagina | null;
   /** A faixa acima da página (manutenção para o administrador, "salve e sai"). */
   readonly faixa: FaixaDaPagina | null;
+  /** Para onde a página do edital volta, ou `null` (aberta por link ou F5). */
+  readonly retorno: RetornoDaPaginaDoEdital | null;
+}
+
+/**
+ * De onde a página do edital foi aberta: a tela (e o título dela) que fica
+ * uma entrada antes no histórico.
+ */
+export interface RetornoDaPaginaDoEdital {
+  readonly view: string;
+  readonly titulo: string;
+  /** O edital aberto por cima dessa tela (o retorno só vale para ele). */
+  readonly edital: string;
 }
 
 /** As Regras do edital no endereço (`/<área>/editais/<edital>/regras/<etapa>`). */
@@ -154,6 +168,11 @@ export interface LeituraDaNavegacao {
   abrirRegrasDoEdital(edital: string, etapa?: string): boolean;
   /** Fecha as Regras do edital (volta à tabela de Editais). */
   fecharRegrasDoEdital(): void;
+  /**
+   * Sai da página do edital para onde a pessoa veio (pelo histórico); aberta
+   * por link, vai à Visão geral (ou a Editais, ou ao Cronograma).
+   */
+  voltarDaPaginaDoEdital(): boolean;
   /** O botão do aviso no lugar da página: a primeira página ligada do menu. */
   irParaInicio(): void;
 }
@@ -230,6 +249,7 @@ export const ESTADO_INICIAL_DA_NAVEGACAO: EstadoDaNavegacao = Object.freeze({
   regras: null,
   manutencao: null,
   faixa: null,
+  retorno: null,
 });
 
 /* O que fazer com o endereço ao abrir: nova entrada, trocar a atual. */
@@ -293,7 +313,8 @@ export function criarNavegacao({
   // ── Tela guardada e endereço pedido antes de entrar ────────────────────
 
   function guardarTela(tela: string) {
-    if (!tela) return;
+    // A página do edital só abre com o edital do endereço: entrar de novo nela, sem ele, não.
+    if (!tela || editalEhAPagina(tela)) return;
     try {
       armazenamento()?.setItem(CHAVE_DA_TELA_GUARDADA, tela);
     } catch {
@@ -671,6 +692,43 @@ export function criarNavegacao({
     return abrir({ view: tela }, "substituir") !== false;
   }
 
+  // ── Página do edital ───────────────────────────────────────────────────
+
+  /*
+    A página do edital aberta por um clique noutra tela empilha uma entrada:
+    o "Voltar" dela volta por essa entrada (com os filtros da tela de antes).
+    Aberta por link, F5 ou pelo voltar/avançar, sem retorno conhecido, a não
+    ser o do mesmo edital (foi à Classificação dele e voltou pelo navegador).
+  */
+  function retornoDaPaginaDoEdital(
+    tela: string,
+    anterior: string,
+    destino: DestinoDaRota,
+    modo: ModoDoEndereco,
+  ): RetornoDaPaginaDoEdital | null {
+    if (!editalEhAPagina(tela)) return estado.retorno;
+    const edital = destino.edital || "";
+    if (modo === "empilhar" && sistemaAberto && !estado.aviso && anterior)
+      return Object.freeze({ view: anterior, titulo: estado.titulo, edital });
+    return estado.retorno?.edital === edital ? estado.retorno : null;
+  }
+
+  function voltarDaPaginaDoEdital(): boolean {
+    const retorno = estado.retorno;
+    if (
+      editalEhAPagina(estado.view) &&
+      retorno &&
+      retorno.edital === estado.edital
+    ) {
+      endereco.voltar();
+      return true;
+    }
+    const tela = ["dashboard", "nucleo", "calendario"].find(
+      (view) => permitida(view) && !desligada(view),
+    );
+    return irPara(tela || inicialDoSistema());
+  }
+
   /* Saiu (ou ficou sem acesso): o voltar do navegador não abre mais tela. */
   function fechar() {
     sistemaAberto = false;
@@ -732,9 +790,11 @@ export function criarNavegacao({
           })
         : null;
     regrasEmpilhadas = false;
+    const retorno = retornoDaPaginaDoEdital(tela, anterior, destino, modo);
     publicar({
       view: tela,
       area: areaAtual(),
+      retorno,
       edital: regras ? "" : destino.edital || "",
       visao: destino.visao || "",
       secao: tela === "config" ? destino.secao || "" : "",
@@ -815,8 +875,10 @@ export function criarNavegacao({
     escolher outro edital lá dentro não deixa a URL mentindo.
   */
   function esquecerEditalEVisao() {
-    if (!estado.edital && !estado.visao) return;
-    publicar({ edital: "", visao: "" });
+    // Na página do edital, o edital é a página: fica no endereço.
+    const edital = editalEhAPagina(estado.view) ? estado.edital : "";
+    if (estado.edital === edital && !estado.visao) return;
+    publicar({ edital, visao: "" });
     endereco.ir(caminhoAtual(), { substituir: true });
     avisarOuvintes({ tipo: "estado" });
   }
@@ -936,6 +998,7 @@ export function criarNavegacao({
     abrirSecao,
     abrirRegrasDoEdital,
     fecharRegrasDoEdital,
+    voltarDaPaginaDoEdital,
     irParaInicio,
     fechar,
     /** Para de ouvir o voltar/avançar (testes; o app tem uma navegação só). */

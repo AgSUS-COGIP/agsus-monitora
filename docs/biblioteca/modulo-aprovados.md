@@ -16,6 +16,13 @@ de chamada de cada vaga, pelo modelo de convocação e pelas vagas imediatas) e 
 (decisões do gestor com motivo e histórico, selo de abertas). As duas primeiras leem os mesmos
 candidatos: mudar um status redesenha ambas; decidir uma pendência recarrega a lista.
 
+**Tabela da aba Aprovados** (revisão de 17/11/2026): colunas próprias para Vaga (código), Cargo
+(`cargoDaVaga`, o primeiro trecho do texto), Lotação (`localidadeDoCargo`) e Edital com a unidade,
+todas ordenáveis. As ações da linha são uma principal com nome ("Mudar status" ou "Abrir") e o
+"⋯ Mais ações de <nome>" (`src/lib/aprovados/acoes-da-linha-dos-aprovados.ts`, `AcoesDaLinha`), com
+"Ver na Classificação" do edital. A gaveta do candidato tem a seção Origem (edital, unidade, a
+lista importada e a data, e "Ver nota e classificação na Classificação").
+
 **Filtros** (os mesmos nas abas Aprovados e Resumo por cargo): Edital, Localidade, Cargo, Modalidade
 e Situação. A **Localidade** (16/11/2026) sai do texto do cargo (`src/lib/aprovados/localidade-da-vaga.ts`: o
 trecho com UF depois de barra, Polo, PB, CASAI, Distrital, Regional, Abrangência, Sede… ou nome de
@@ -70,8 +77,10 @@ o seguinte (quem edita faz); deixar sem status é do admin. Contratados (Seleç�
 Migração. Regras: `src/lib/aprovados/lista-aprovados-rules.ts` (status, trava, resumo) e
 `src/lib/aprovados/lista-convocacao-rules.ts` (ordem, "a convocar", CSV).
 
-**Status em lote** (11/11/2026): na aba Aprovados, quem muda status marca linhas (ou "Selecionar os N
-da tabela": os filtrados e buscados) e usa "Mudar status". Só Convocado (uma data para todos),
+**Status em lote** (11/11/2026): na aba Aprovados, quem muda status marca linhas e usa "Mudar
+status". A barra da seleção (`BarraDeSelecao`, desde 17/11/2026) separa "Selecionar esta página (N)"
+(as linhas desenhadas) de "Selecionar todos os N resultados" (os filtrados e buscados), e a janela
+diz quantos serão afetados e se vão além da página. Só Convocado (uma data para todos),
 Desistente, Documentação Rejeitada e, para o admin, sem status; Contratado e Migração pedem a
 matrícula de cada um e ficam na linha. A janela mostra quem muda, como está hoje e quem fica de fora
 e por quê (`src/lib/aprovados/status-em-lote-dos-aprovados.ts`); o banco repete as regras, um a um

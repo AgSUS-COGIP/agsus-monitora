@@ -5327,7 +5327,7 @@ bloco("modulos/avaliacao-documental-fila", () => {
         ["lote", "pendentes", "em_analise", "revisao", "concluidas"].map(
           numeroDaFaixa,
         ),
-      ).toEqual(["4", "2", "1", "0", "0"]);
+      ).toEqual(["4", "3", "1", "0", "0"]);
       expect(
         faixa()
           .querySelector("[data-valor='lote']")
@@ -5339,12 +5339,12 @@ bloco("modulos/avaliacao-documental-fila", () => {
       // A barra da distribuição diz a proporção no nome acessível.
       expect(
         faixa().querySelector("[role='img']").getAttribute("aria-label"),
-      ).toBe("Distribuição do lote: 25% em análise, 50% pendentes");
+      ).toBe("Distribuição do lote: 25% em análise, 75% pendentes");
       expect(linhas()).toEqual(["7001", "7002", "7003", "7004"]);
       await clicar(faixa().querySelector("[data-valor='fora']"));
       expect(linhas()).toEqual(["7009"]);
       await clicar(faixa().querySelector("[data-valor='pendentes']"));
-      expect(linhas()).toEqual(["7002", "7003"]);
+      expect(linhas()).toEqual(["7002", "7003", "7004"]);
     });
 
     it("Minhas fichas, filtro salvo e salvar um filtro novo", async () => {
@@ -6181,7 +6181,7 @@ bloco("modulos/avaliacao-documental-fila", () => {
       expect(
         faixa().querySelector("[role='img']").getAttribute("aria-label"),
       ).toBe(
-        "Distribuição do lote: 16,6% concluídas, 16,6% em análise, 50% pendentes",
+        "Distribuição do lote: 16,6% concluídas, 16,6% em análise, 66,6% pendentes",
       );
       expect(
         faixa().querySelector("[data-valor='concluidas'] .ui-faixa-contexto")
@@ -6273,12 +6273,17 @@ bloco("modulos/avaliacao-documental-fila", () => {
       expect(
         secao.querySelector("[data-acao='incluir-por-decisao']"),
       ).toBeNull();
-      expect(
-        secao.querySelector("[data-tour='avd-fila-acoes-lote']"),
-      ).toBeNull();
-      await clicar(secao.querySelector("[aria-label='Selecionar 7002']"));
+      // A barra da seleção já mostra "Selecionar esta página"; ações só com algo marcado.
       const lote = secao.querySelector("[data-tour='avd-fila-acoes-lote']");
-      expect(lote.textContent).toContain("1 selecionada");
+      expect(
+        lote.querySelector("[data-acao='selecionar-pagina']").parentElement
+          .textContent,
+      ).toMatch(/^Selecionar esta página \(\d+\)$/);
+      expect(lote.querySelector("[data-acao='liberar-reservas']")).toBeNull();
+      await clicar(secao.querySelector("[aria-label='Selecionar 7002']"));
+      expect(
+        lote.querySelector("[data-alcance-da-selecao]").textContent,
+      ).toMatch(/^1 ficha selecionada \(de \d+ no resultado\)$/);
       expect(
         secao.querySelector("[data-candidato='7002']").dataset.marcada,
       ).toBe("sim");
@@ -6299,9 +6304,50 @@ bloco("modulos/avaliacao-documental-fila", () => {
         "Abrir fichas do lote (1)",
       ]);
       await clicar(lote.querySelector("[data-acao='limpar-selecao']"));
-      expect(
-        secao.querySelector("[data-tour='avd-fila-acoes-lote']"),
-      ).toBeNull();
+      expect(lote.querySelector("[data-alcance-da-selecao]").textContent).toBe(
+        "",
+      );
+      expect(lote.querySelector("[data-acao='liberar-reservas']")).toBeNull();
+    });
+
+    it("alcance da seleção: esta página, depois todos os resultados; trocar a etapa limpa (revisão de 17/11)", async () => {
+      const dados = fila();
+      for (let i = 0; i < 70; i += 1)
+        dados.candidatos.push(
+          inscrito(String(7100 + i), {
+            posicao: 10 + i,
+            ficha: ficha(`f${7100 + i}`, "PENDENTE"),
+          }),
+        );
+      await montar(supabaseFalso(dados));
+      const lote = secao.querySelector("[data-tour='avd-fila-acoes-lote']");
+      const alcance = () =>
+        lote.querySelector("[data-alcance-da-selecao]").textContent;
+      // Trocar de etapa limpa a seleção: nenhuma ação pega ficha fora da tela.
+      await clicar(secao.querySelector("[aria-label='Selecionar 7002']"));
+      expect(alcance()).toMatch(/^1 ficha selecionada/);
+      await clicar(
+        secao.querySelector(".avd-fila-faixa [data-valor='pendentes']"),
+      );
+      expect(alcance()).toBe("");
+      await clicar(secao.querySelector(".avd-fila-faixa [data-valor='lote']"));
+      await clicar(lote.querySelector("[data-acao='selecionar-pagina']"));
+      expect(alcance()).toMatch(
+        /^(\d+) fichas desta página selecionadas \(de 73 no resultado\)$/,
+      );
+      const naPagina = Number(alcance().split(" ")[0]);
+      expect(naPagina).toBeLessThan(73);
+      const todos = lote.querySelector(
+        "[data-acao='selecionar-todos-os-resultados']",
+      );
+      expect(todos.textContent).toBe("Selecionar todos os 73 resultados");
+      await clicar(todos);
+      expect(alcance()).toBe("Todas as 73 fichas do resultado selecionadas");
+      await clicar(lote.querySelector("[data-acao='mandar-para-revisao']"));
+      const gaveta = document.querySelector("[data-tour='avd-fila-confirmar']");
+      expect(gaveta.textContent).toContain(
+        `73 fichas serão afetadas · todos os resultados do filtro, não só os ${naPagina} desta página`,
+      );
     });
   });
 
@@ -6937,7 +6983,7 @@ bloco("modulos/avaliacao-documental-fila", () => {
       await montar(supabaseFalso());
       expect(
         ["concluidas", "em_analise", "pendentes"].map(numeroDaFaixa),
-      ).toEqual(["0", "1", "2"]);
+      ).toEqual(["0", "1", "3"]);
       expect(
         faixa().querySelector("[data-valor='concluidas'] .ui-faixa-contexto")
           .textContent,
@@ -6945,7 +6991,7 @@ bloco("modulos/avaliacao-documental-fila", () => {
       expect(
         faixa().querySelector("[data-valor='pendentes'] .ui-faixa-contexto")
           .textContent,
-      ).toBe("50%");
+      ).toBe("75%");
       // Sem o ritmo (não veio): só as concluídas de hoje, sem selo.
       expect(secao.querySelector("[data-hoje-da-fila]").textContent).toBe(
         "Hoje 0",
@@ -6953,7 +6999,7 @@ bloco("modulos/avaliacao-documental-fila", () => {
       expect(faixa().querySelector(".ui-selo")).toBeNull();
       await clicar(faixa().querySelector("[data-valor='pendentes']"));
       expect(ativa()).toBe("pendentes");
-      expect(linhas()).toEqual(["7002", "7003"]);
+      expect(linhas()).toEqual(["7002", "7003", "7004"]);
       await clicar(faixa().querySelector("[data-valor='em_analise']"));
       expect(secao.querySelector("[data-acao='limpar-filtros']")).toBeNull();
       await escolher(filtro("Responsável"), "eu");
@@ -7036,7 +7082,7 @@ bloco("modulos/avaliacao-documental-fila", () => {
       ).toEqual(["Atribuir a…", "Mandar para revisão", "Copiar código"]);
       await clicar(linha.querySelector("[data-acao='ficha-distribuir']"));
       const gaveta = document.querySelector("[data-tour='avd-fila-confirmar']");
-      expect(gaveta.textContent).toContain("1 ficha(s)");
+      expect(gaveta.textContent).toContain("1 ficha será afetada");
       await escolher(gaveta.querySelector("select"), "u-beto");
       await clicar(gaveta.querySelector("[data-acao='confirmar-distribuir']"));
       await esperar();

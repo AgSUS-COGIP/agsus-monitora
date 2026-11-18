@@ -20,6 +20,7 @@ import type { criarAcessos } from "../modulos/acessos/acessos.tsx";
 import type { criarModulos } from "../modulos/modulos/modulos.tsx";
 import type { criarSaudeDasCargas } from "../componentes/saude-das-cargas/saude-das-cargas.tsx";
 import type { criarAutomacao } from "../modulos/automacao/automacao.tsx";
+import type { criarPaginaDoEdital } from "../modulos/pagina-do-edital/pagina-do-edital.tsx";
 
 /*
   O registro das telas do app: quem precisa de outra tela (o "Ir para…" com
@@ -70,6 +71,7 @@ export interface ControladoresDasTelas {
   "pre-classificacao": ReturnType<typeof criarPreClassificacao>;
   selecao: ReturnType<typeof criarSelecao>;
   "paineis-de-dados": ReturnType<typeof criarPaineisDeDados>;
+  edital: ReturnType<typeof criarPaginaDoEdital>;
   config: ReturnType<typeof criarConfiguracoes>;
   "secao:acessos": ReturnType<typeof criarAcessos>;
   "secao:modulos": ReturnType<typeof criarModulos>;

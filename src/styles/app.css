@@ -1120,6 +1120,13 @@ body.external-clean #externalReturnBar {
   background: var(--state-success-soft);
   color: var(--state-success);
 }
+/* "Abrir página do edital" do resultado marcado (src/componentes/busca-global/). */
+.search-modal-acoes {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--space-2) var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+}
 .search-results-vazio {
   margin: 0;
   padding: 18px;
