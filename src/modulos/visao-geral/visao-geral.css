@@ -857,3 +857,25 @@
   color: var(--text-primary);
   font-weight: var(--font-weight-semibold);
 }
+
+/* O ⓘ de cada indicador: abre a Aya com a pergunta sobre o número. */
+.visao-geral-numero-info {
+  display: inline-grid;
+  place-items: center;
+  margin-left: var(--space-1);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  cursor: pointer;
+  vertical-align: middle;
+}
+.visao-geral-numero-info:hover {
+  color: var(--text-primary);
+}
+.visao-geral-numero-info:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-full, 999px);
+}

@@ -55,6 +55,48 @@ app em React (Etapa 5, parte 1) e ficam aqui, com a Aya.
 **resposta:** A fase do edital na Visão geral vem primeiro do status (cancelado é Cancelado, planejado é Edital, e concluído é "Cronograma encerrado" quando o status vem das datas com o cálculo automático, ou Concluído só quando foi digitado à mão com o cálculo manual) e, nos demais, do texto da atividade do cronograma (a de hoje, ou a etapa mostrada), sem acento nem caixa: contratação, admissão ou posse é Contratação; prazo ou abertura de recurso é Recursos; resultado final ou homologação do resultado é Resultado; outro recurso é Recursos; entrevista é Entrevistas; análise curricular, documental, títulos, prova ou resultado preliminar é Análise curricular; inscrição é Inscrições; outro resultado é Resultado; edital, impugnação ou publicação é Edital. "Aguardando: X" conta como a fase de X; texto que nenhuma regra reconhece fica em Outra e "Cronograma pendente" em Sem cronograma.
 **fonte:** src/lib/visao-geral/fases-do-processo.ts
 
+## Vagas imediatas (indicador)
+
+**perguntas:** o que significa vagas imediatas na visao geral | significado do indicador vagas imediatas
+**resposta:** Vagas imediatas é a soma das vagas do cadastro de cada edital do recorte (área, filtros e busca), sem os cancelados. A vaga sem contratação que um edital mais novo da mesma unidade reabriu para o mesmo cargo conta uma vez só, no edital novo: o número embaixo diz quantas saíram da soma, e "sem desconto das reabertas" aparece quando essa conta não pôde ser feita. As vagas imediatas se dividem em Contratadas + Em seleção + Ociosas; clicar no número mostra essa conta.
+**fato:** Vagas imediatas = Contratadas + Em seleção + Ociosas, contando a vaga reaberta uma vez só.
+**fonte:** src/lib/visao-geral/indicadores-do-monitoramento.ts
+
+## Contratadas (indicador)
+
+**perguntas:** o que significa contratadas na visao geral | significado do indicador contratadas
+**resposta:** Contratadas são as contratações de cada edital limitadas às vagas imediatas dele: quem foi contratado além das vagas fica em "Contratações além das vagas imediatas". As contratações vêm da lista de aprovados vigente (status Contratado ou Migração). A porcentagem é a parte das vagas imediatas já preenchida.
+**fato:** Contratadas = contratações de cada edital até o número de vagas imediatas dele.
+**fonte:** src/lib/visao-geral/indicadores-do-monitoramento.ts
+
+## Em seleção (indicador)
+
+**perguntas:** o que significa em selecao na visao geral | significado do indicador em selecao
+**resposta:** Em seleção são as vagas imediatas ainda sem contratação dos editais que ainda não têm resultado (em andamento, planejados ou sem cronograma). "—" com "nenhum edital sem resultado" quer dizer que todos os editais do recorte já têm resultado.
+**fato:** Em seleção = vagas sem contratação dos editais sem resultado.
+**fonte:** src/lib/visao-geral/indicadores-do-monitoramento.ts
+
+## Ociosas (indicador)
+
+**perguntas:** o que significa ociosas na visao geral | significado do indicador ociosas
+**resposta:** Ociosas são as vagas imediatas sem contratação dos editais que já têm resultado (concluídos, com cronograma encerrado ou na fase Contratação). "—" com "nenhum edital com resultado" quer dizer que nenhum edital do recorte chegou ao resultado.
+**fato:** Ociosas = vagas sem contratação dos editais com resultado.
+**fonte:** src/lib/visao-geral/indicadores-do-monitoramento.ts
+
+## Contratações além das vagas imediatas (indicador)
+
+**perguntas:** o que significa contratacoes alem das vagas imediatas na visao geral | significado do indicador contratacoes alem das vagas
+**resposta:** Contratações além das vagas imediatas são, em cada edital, os contratados que passam do número de vagas imediatas (contratados menos vagas, quando dá mais que zero), somados no recorte. Antes o indicador se chamava "Cadastro reserva", mas não é o cadastro reserva do edital: são contratações feitas a mais, em geral chamando o cadastro reserva. Somadas às Contratadas, dão o total contratado.
+**fato:** Contratações além das vagas imediatas = contratados − vagas de cada edital, quando passa de zero.
+**fonte:** src/lib/visao-geral/indicadores-do-monitoramento.ts
+
+## Inscritos (indicador)
+
+**perguntas:** o que significa inscritos na visao geral | significado do indicador inscritos
+**resposta:** Inscritos soma os inscritos dos editais do recorte que têm esse número (do funil do edital: Seleção, Análises ou Avaliação documental), sem os cancelados. Quando só parte dos editais tem o número, aparece "informado em X de Y editais"; quando nenhum tem, "—" (sem dado), nunca zero.
+**fato:** Inscritos = soma dos inscritos dos editais que informaram; os sem número ficam fora e a cobertura aparece.
+**fonte:** src/lib/visao-geral/indicadores-do-monitoramento.ts
+
 ## Tabela de processos da Visão geral
 
 **perguntas:** tabela de processos da visao geral | como leio a tabela de processos | tabela de processos | prazo do edital | proxima etapa do cronograma | colunas da tabela | taxa de vagas sem contratacao

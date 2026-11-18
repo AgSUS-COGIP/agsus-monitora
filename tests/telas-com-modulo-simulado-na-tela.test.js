@@ -7105,6 +7105,23 @@ bloco("modulos/visao-geral", async () => {
       );
     });
 
+    it("o ⓘ de cada indicador pergunta à Aya sobre aquele número", async () => {
+      const { consumirPerguntaParaAAya } =
+        await import("../src/app/pergunta-para-a-aya.ts");
+      await montar();
+      await esperar();
+      const info = secao.querySelector('[data-acao="significado-ociosas"]');
+      expect(info.getAttribute("aria-label")).toBe("O que significa Ociosas");
+      await clicar(info);
+      expect(consumirPerguntaParaAAya()).toBe(
+        "o que significa ociosas na visao geral",
+      );
+      // Todos os números da faixa têm o ⓘ; o texto explicativo não está na tela.
+      expect(
+        secao.querySelectorAll(".visao-geral-kpis .visao-geral-numero-info"),
+      ).toHaveLength(6);
+    });
+
     it("conjuntos de colunas: Prazos troca de uma vez, guarda e fica marcado", async () => {
       // Revisão de 17/11/2026: Gestão, Prazos e Contratação, com o seletor e as fixas.
       await montar();

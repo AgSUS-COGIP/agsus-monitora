@@ -85,6 +85,11 @@ trabalho). De cima para baixo:
   "Gestão", "Prazos" e "Contratação" no topo do menu "Colunas" (`aplicarPresetDeColunas` no
   estado, guarda como a escolha uma a uma). Unidade e Edital estão em todos; a ordem é a da tabela;
   o conjunto à vista fica `aria-pressed` (`presetDasColunas`), e mexer numa coluna o desmarca.
+- **"O que significa"** (revisão de 17/11/2026): cada indicador da faixa tem um ⓘ
+  (`.visao-geral-numero-info`) que abre a Aya com a pergunta do verbete daquele número
+  (`PERGUNTA_DO_INDICADOR`, `src/lib/visao-geral/o-que-significa.ts`, por
+  `src/app/pergunta-para-a-aya.ts`; ver [[modulo-aya]]). A explicação mora nos verbetes
+  "(indicador)" de `docs/aya/regras-da-visao-geral.md`; a tela não tem texto explicativo.
 - **Selo do cronograma** (`urgenciaDoCronograma`, `seloDoCronograma`, `descricaoDoCronograma` em
   `src/lib/visao-geral/visao-geral.ts`; conferência de 17/11/2026). "Sem cronograma" só quando o edital não
   tem etapa (`temCronogramaCadastrado`: automático, ou percentual, próxima etapa ou etapa atual

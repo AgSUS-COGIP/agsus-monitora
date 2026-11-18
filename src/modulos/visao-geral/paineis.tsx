@@ -36,6 +36,11 @@ import {
 } from "../../lib/visao-geral/composicao-dos-numeros.ts";
 import { ComposicaoDoNumero } from "./composicao.tsx";
 import {
+  PERGUNTA_DO_INDICADOR,
+  type IndicadorComSignificado,
+} from "../../lib/visao-geral/o-que-significa.ts";
+import { perguntarParaAAya } from "../../app/pergunta-para-a-aya.ts";
+import {
   ChipDeFiltro,
   ChipsDeFiltro,
   ErroAoCarregar,
@@ -409,7 +414,26 @@ function Numero({
       aria-busy={esperando || undefined}
       title={titulo}
     >
-      <span className="visao-geral-numero-rotulo">{rotulo}</span>
+      <span className="visao-geral-numero-rotulo">
+        {rotulo}
+        {Object.hasOwn(PERGUNTA_DO_INDICADOR, chave) ? (
+          // "O que significa": a resposta vem da Aya (docs/aya/), não da tela.
+          <button
+            type="button"
+            className="visao-geral-numero-info"
+            data-acao={`significado-${chave}`}
+            aria-label={`O que significa ${rotulo}`}
+            title={`O que significa ${rotulo}`}
+            onClick={() =>
+              perguntarParaAAya(
+                PERGUNTA_DO_INDICADOR[chave as IndicadorComSignificado],
+              )
+            }
+          >
+            <i className="fa-solid fa-circle-info" aria-hidden="true" />
+          </button>
+        ) : null}
+      </span>
       {esperando ? (
         <span className="ui-kpi-valor ui-esqueleto" aria-hidden="true" />
       ) : passos && !semValor ? (

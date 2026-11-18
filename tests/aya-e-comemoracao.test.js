@@ -76,6 +76,11 @@ import {
   gerarModulo,
 } from "../scripts/compilar-conhecimento-aya.mjs";
 import { VERBETES_AYA } from "../src/modules/aya-conhecimento-gerado.js";
+import { PERGUNTA_DO_INDICADOR } from "../src/lib/visao-geral/o-que-significa.ts";
+import {
+  consumirPerguntaParaAAya,
+  perguntarParaAAya,
+} from "../src/app/pergunta-para-a-aya.ts";
 import {
   responderAya,
   buscarNaBase,
@@ -5323,5 +5328,44 @@ bloco("termos-da-aya", () => {
       expect(toleranciaPara("prazo")).toBe(1);
       expect(toleranciaPara("entrevista")).toBe(2);
     });
+  });
+});
+
+bloco("visao-geral/o-que-significa", () => {
+  /*
+    Revisão de 17/11/2026: o ⓘ de cada indicador da Visão geral manda à Aya
+    a pergunta exata do verbete daquele número; a resposta vem da base, não
+    de um texto na tela. A pergunta guardada vale uma vez só.
+  */
+  it("cada pergunta do ⓘ cai no verbete do próprio indicador", () => {
+    const titulo = {
+      vagas: "Vagas imediatas (indicador)",
+      contratadas: "Contratadas (indicador)",
+      emSelecao: "Em seleção (indicador)",
+      ociosas: "Ociosas (indicador)",
+      alemDasVagas: "Contratações além das vagas imediatas (indicador)",
+      inscritos: "Inscritos (indicador)",
+    };
+    for (const [chave, pergunta] of Object.entries(PERGUNTA_DO_INDICADOR)) {
+      const [primeiro] = buscarNaBase(
+        pergunta,
+        { pagina: "dashboard" },
+        VERBETES_AYA,
+      ).ranking;
+      expect(primeiro.verbete.titulo).toBe(titulo[chave]);
+      expect(primeiro.pontuacao).toBeGreaterThanOrEqual(LIMIAR_CONFIANTE);
+    }
+  });
+
+  it("a pergunta deixada para a Aya vale uma vez e expira", () => {
+    perguntarParaAAya("o que significa ociosas na visao geral", 1000);
+    expect(consumirPerguntaParaAAya(2000)).toBe(
+      "o que significa ociosas na visao geral",
+    );
+    expect(consumirPerguntaParaAAya(2000)).toBeNull();
+    perguntarParaAAya("o que significa inscritos na visao geral", 1000);
+    expect(consumirPerguntaParaAAya(1000 + 16_000)).toBeNull();
+    perguntarParaAAya("   ");
+    expect(consumirPerguntaParaAAya()).toBeNull();
   });
 });
