@@ -21,6 +21,18 @@ Tabela, alertas, formulário e linha do tempo. A tela é `nucleo.tsx`; o estado 
 `estado.ts` (trocar de usuário na mesma aba apaga o que era da sessão anterior).
 
 - Cadastro do edital e do cronograma; importa cronograma e quadro de vagas do PDF de anexos.
+- **Vagas ligadas ao quadro** (`vinculos-do-quadro.tsx`, `src/lib/editais/vinculos-do-quadro.ts`,
+  migration `20261118120000`): no quadro salvo, a fila do vínculo de cada vaga com código com a
+  linha do quadro (`TA_VAGA_QUADRO_EDITAL`): ambíguas (com as candidatas), ausentes (a linha
+  escolhida que saiu do quadro primeiro) e confirmadas. Núcleo ou Calendário (editor) confirma a
+  linha, marca "Sem linha" ou devolve à regra (`gravar_vinculo_do_quadro`); "Atualizar" refaz os
+  automáticos (`atualizar_vinculos_do_quadro`). O preenchimento automático é a regra do nome
+  (`FC_QUADRO_DA_VAGA`) e, sem ela, o "CARGO N" do título da Empregare; roda ao salvar o quadro e
+  todo dia (`agsus_vinculos_do_quadro`, 05:30 de Brasília). Reimportar o quadro passa o vínculo
+  para a linha de mesmo cargo e lotação; o manual cuja linha saiu vira ausente com pendência. A
+  Classificação, a pré-classificação e as conferências (`CLASSIFICACAO_VAGA_QUADRO_AMBIGUO`)
+  consultam o vínculo antes das palavras. Edital sem vaga com código: "não se aplica"
+  (cancelado), "externo" (Seleção sem código) ou "pendente de integração".
 - **Acompanhamento operacional** no topo da fila: oito indicadores (total, ativos, inativos, em
   andamento, sem cronograma, incompletos, próximos 7 dias, excepcionais); cada um filtra a fila.
   Vêm de `resumo.ts` (`get_nucleo_cronograma_resumo`, uma linha por edital): UMA carga, cache curto,
