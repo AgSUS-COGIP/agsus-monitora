@@ -1,0 +1,175 @@
+/*
+  Estado da página do edital, fora do React (este arquivo não importa React):
+  o cronograma de cada edital aberto (`get_monitoramento_cronograma`: estado,
+  etapas e histórico) e o acompanhamento da área (o mesmo da Visão geral:
+  listas de aprovados, desistentes, vagas reabertas). As linhas do
+  monitoramento não moram aqui: são de src/componentes/dados-do-monitoramento.ts.
+
+  Cada abertura da página (`renovar`) relê o cronograma: quem salvou em
+  Editais vê a mudança ao voltar. O acompanhamento usa a leitura com versão
+  da Visão geral: sem mudança, o banco responde só "inalterado".
+*/
+
+import { exigirSessao } from "../../lib/sessao/sessao";
+import { acompanhamentoDaResposta } from "../../lib/visao-geral/visao-geral.ts";
+import type { CronogramaLido } from "../editais/estado.ts";
+import type {
+  Acompanhamento,
+  BuscaDoAcompanhamento,
+} from "../visao-geral/tipos.ts";
+
+/** O cliente Supabase no que a página usa (o do app ou um falso nos testes). */
+export interface ClienteDaPaginaDoEdital {
+  rpc(
+    nome: "get_monitoramento_cronograma",
+    parametros: { p_monitoramento_id: string },
+  ): PromiseLike<{ data: unknown; error: unknown }>;
+  auth?: unknown;
+}
+
+/** Uma leitura: carregando, pronta (com os dados) ou com erro. */
+export type Carga<T> =
+  | { status: "carregando" }
+  | { status: "pronto"; dados: T }
+  | { status: "erro"; mensagem: string };
+
+export interface AcompanhamentoDaPagina {
+  area: string;
+  /** As linhas para as quais foi lido (outra carga das linhas lê de novo). */
+  linhas: readonly unknown[];
+  carga: Carga<Acompanhamento | null>;
+}
+
+export interface SnapshotDaPaginaDoEdital {
+  /** id do monitoramento → o cronograma lido. */
+  cronogramas: Readonly<Record<string, Carga<CronogramaLido>>>;
+  acompanhamento: AcompanhamentoDaPagina | null;
+}
+
+export interface OpcoesDoEstadoDaPagina {
+  supabase: ClienteDaPaginaDoEdital | null;
+  buscarAcompanhamento?: BuscaDoAcompanhamento | null;
+}
+
+const ESTADO_INICIAL: SnapshotDaPaginaDoEdital = Object.freeze({
+  cronogramas: Object.freeze({}),
+  acompanhamento: null,
+});
+
+const mensagemDe = (erro: unknown) =>
+  (erro as { message?: string } | null)?.message || String(erro);
+
+export function criarEstadoDaPaginaDoEdital({
+  supabase,
+  buscarAcompanhamento = null,
+}: OpcoesDoEstadoDaPagina) {
+  let estado = ESTADO_INICIAL;
+  /* Muda a cada `renovar`/`esquecer`: resposta de antes não entra. */
+  let geracao = 0;
+  const ouvintes = new Set<() => void>();
+
+  function publicar(mudancas: Partial<SnapshotDaPaginaDoEdital>) {
+    estado = Object.freeze({ ...estado, ...mudancas });
+    ouvintes.forEach((ouvinte) => ouvinte());
+  }
+
+  function guardarCronograma(id: string, carga: Carga<CronogramaLido>) {
+    publicar({ cronogramas: { ...estado.cronogramas, [id]: carga } });
+  }
+
+  /** Lê o cronograma do edital (uma vez por abertura; `forcar` relê). */
+  async function carregarCronograma(id: string, { forcar = false } = {}) {
+    if (!id) return;
+    if (!forcar && estado.cronogramas[id]) return;
+    const minha = geracao;
+    guardarCronograma(id, { status: "carregando" });
+    try {
+      if (!supabase) throw new Error("Sem conexão com o banco.");
+      await exigirSessao(supabase as Parameters<typeof exigirSessao>[0]);
+      const { data, error } = await supabase.rpc(
+        "get_monitoramento_cronograma",
+        { p_monitoramento_id: id },
+      );
+      if (error) throw error;
+      if (minha !== geracao) return;
+      // A fronteira com o banco: a resposta da RPC.
+      guardarCronograma(id, {
+        status: "pronto",
+        dados: (data || {}) as CronogramaLido,
+      });
+    } catch (erro) {
+      if (minha !== geracao) return;
+      guardarCronograma(id, { status: "erro", mensagem: mensagemDe(erro) });
+    }
+  }
+
+  /*
+    O acompanhamento da área (listas, desistentes, cargos para as vagas
+    reabertas), para as linhas desta carga. Falhar não impede a página: os
+    números das listas ficam sem valor.
+  */
+  async function carregarAcompanhamento(
+    area: string,
+    linhas: readonly unknown[],
+    editais: readonly string[],
+  ) {
+    const atual = estado.acompanhamento;
+    if (!area || !buscarAcompanhamento) return;
+    if (atual && atual.area === area && atual.linhas === linhas) return;
+    const minha = geracao;
+    publicar({
+      acompanhamento: { area, linhas, carga: { status: "carregando" } },
+    });
+    try {
+      const resposta = await buscarAcompanhamento(area, editais);
+      const acompanhamento = acompanhamentoDaResposta(resposta);
+      const cargos = (resposta as { vagas_por_cargo?: unknown } | null)
+        ?.vagas_por_cargo;
+      // As vagas reabertas: o módulo chega sob demanda, como na Visão geral.
+      if (acompanhamento && cargos)
+        acompanhamento.reaberturas =
+          await import("../../lib/visao-geral/vagas-reabertas.ts").then(
+            (modulo) => modulo.reaberturasDosCargos(cargos),
+            () => undefined,
+          );
+      if (minha !== geracao || estado.acompanhamento?.linhas !== linhas) return;
+      publicar({
+        acompanhamento: {
+          area,
+          linhas,
+          carga: { status: "pronto", dados: acompanhamento },
+        },
+      });
+    } catch (erro) {
+      if (minha !== geracao || estado.acompanhamento?.linhas !== linhas) return;
+      publicar({
+        acompanhamento: {
+          area,
+          linhas,
+          carga: { status: "erro", mensagem: mensagemDe(erro) },
+        },
+      });
+    }
+  }
+
+  return {
+    obter: () => estado,
+    assinar(ouvinte: () => void) {
+      ouvintes.add(ouvinte);
+      return () => {
+        ouvintes.delete(ouvinte);
+      };
+    },
+    carregarCronograma,
+    carregarAcompanhamento,
+    /** Nova abertura da página: o cronograma e o acompanhamento são relidos. */
+    renovar() {
+      geracao += 1;
+      publicar(ESTADO_INICIAL);
+    },
+  };
+}
+
+export type EstadoDaPaginaDoEdital = ReturnType<
+  typeof criarEstadoDaPaginaDoEdital
+>;

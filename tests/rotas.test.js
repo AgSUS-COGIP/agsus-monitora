@@ -4,6 +4,7 @@ import {
   TELAS_DAS_AREAS,
   caminhoDoDestino,
   destinoDoCaminho,
+  editalEhAPagina,
   ehRaizDoApp,
   telaDaRota,
 } from "../src/lib/navegacao/rotas.ts";
@@ -39,10 +40,46 @@ describe("caminho ↔ destino", () => {
 
   it("todas as telas vão e voltam, em todas as áreas", () => {
     for (const { id: area } of AREAS_DO_SISTEMA)
-      for (const { view } of TELAS_DAS_AREAS) {
-        const caminho = caminhoDoDestino({ view, area });
-        expect(destinoDoCaminho(caminho), caminho).toEqual({ view, area });
+      for (const { view, editalObrigatorio } of TELAS_DAS_AREAS) {
+        // A página do edital só existe com o edital: vai e volta com ele.
+        const destino = editalObrigatorio
+          ? { view, area, edital: "105-2026" }
+          : { view, area };
+        const caminho = caminhoDoDestino(destino);
+        expect(destinoDoCaminho(caminho), caminho).toEqual(destino);
       }
+  });
+
+  it("a página do edital: /<área>/edital/<número-ano>, o edital fica e é obrigatório", () => {
+    expect(
+      caminhoDoDestino({
+        view: "edital",
+        area: "saude-indigena",
+        edital: "105-2026",
+      }),
+    ).toBe("/saude-indigena/edital/105-2026");
+    expect(destinoDoCaminho("/sede/edital/105-2026")).toEqual({
+      view: "edital",
+      area: "sede",
+      edital: "105-2026",
+    });
+    expect(destinoDoCaminho(`/projetos/edital/${EDITAL}`)).toEqual({
+      view: "edital",
+      area: "projetos",
+      edital: EDITAL,
+    });
+    // Sem o edital não é rota (nem vai para o endereço).
+    expect(destinoDoCaminho("/sede/edital")).toBeNull();
+    expect(caminhoDoDestino({ view: "edital", area: "sede" })).toBe("/");
+    // Não confunde com Editais nem com as Regras do edital.
+    expect(destinoDoCaminho("/sede/edital/105-2026/regras")).toBeNull();
+    expect(destinoDoCaminho("/sede/editais")).toEqual({
+      view: "nucleo",
+      area: "sede",
+    });
+    expect(editalEhAPagina("edital")).toBe(true);
+    expect(editalEhAPagina("classificacao")).toBe(false);
+    expect(telaDaRota("edital")?.tituloNaTela).toBe(true);
   });
 
   it("o edital só nas telas que o abrem; a visão na busca", () => {

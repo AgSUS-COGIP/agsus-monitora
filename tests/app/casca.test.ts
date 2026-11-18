@@ -190,6 +190,7 @@ describe("faixa do topo", () => {
       esquecerEditalEVisao: () => {},
       abrirRegrasDoEdital: () => false,
       fecharRegrasDoEdital: () => {},
+      voltarDaPaginaDoEdital: () => false,
       irParaInicio: () => {},
     };
     casca = desenharNoTeste(

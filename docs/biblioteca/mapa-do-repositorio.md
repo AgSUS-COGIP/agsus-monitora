@@ -64,6 +64,7 @@ diretos ([[ci-e-qualidade]]).
 | Entrevistas            | `entrevistas/`                                                        | `entrevistas/`                                           |
 | Mapas e coordenadas    | `mapa-saude-indigena/`, `mapa-de-projetos/`, `editor-de-coordenadas/` | `mapas/` (+ `mapa-saude-indigena/`, `terras-indigenas/`) |
 | Módulos e abas         | `modulos/`                                                            | `navegacao/`                                             |
+| Página do edital       | `pagina-do-edital/`                                                   | `pagina-do-edital/`                                      |
 | Painéis                | `paineis-de-dados/`, `paineis-externos/`                              | `paineis/`                                               |
 | Recursos               | `recursos/`                                                           | `recursos/` (+ `parecer-em-blocos/`)                     |
 | Regras do edital       | `regras-do-edital/`                                                   | `regras-do-edital/`                                      |

@@ -106,6 +106,7 @@ const NAVEGACAO: LeituraDaNavegacao = {
   esquecerEditalEVisao: () => {},
   abrirRegrasDoEdital: () => false,
   fecharRegrasDoEdital: () => {},
+  voltarDaPaginaDoEdital: () => false,
   irParaInicio: () => {},
 };
 

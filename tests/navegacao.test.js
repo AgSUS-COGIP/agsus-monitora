@@ -99,6 +99,27 @@ describe("bloqueioDaTela", () => {
     expect(bloqueioDaTela("calendario", GESTOR, SEM_PAINEIS)).toBe("");
   });
 
+  it("página do edital: quem vê Visão geral, Editais ou Cronograma", () => {
+    for (const recurso of ["dashboard", "nucleo", "calendario"])
+      expect(
+        bloqueioDaTela(
+          "edital",
+          comMatriz({ [recurso]: "leitor" }),
+          SEM_PAINEIS,
+        ),
+        recurso,
+      ).toBe("");
+    expect(bloqueioDaTela("edital", GESTOR, SEM_PAINEIS)).toBe("");
+    // Só a Lista de aprovados, ou só a Classificação: a página não abre.
+    for (const recurso of ["aprovados", "classificacao", "entrevistas"]) {
+      const perfil = comMatriz({ [recurso]: "editor" });
+      expect(bloqueioDaTela("edital", perfil, SEM_PAINEIS), recurso).toBe(
+        "Sem permissão para a página do edital.",
+      );
+      expect(telaPermitida("edital", perfil, SEM_PAINEIS), recurso).toBe(false);
+    }
+  });
+
   it("painel externo segue os painéis liberados", () => {
     expect(bloqueioDaTela("panel:bi", GESTOR, paineisDe("bi"))).toBe("");
     expect(bloqueioDaTela("panel:outro", GESTOR, paineisDe("bi"))).toBe(
