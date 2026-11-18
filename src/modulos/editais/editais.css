@@ -659,6 +659,25 @@
   white-space: nowrap;
 }
 
+/* Fila do vínculo de cada vaga com a linha do quadro (vinculos-do-quadro.tsx). */
+.vinculos-do-quadro {
+  display: grid;
+  gap: var(--space-2);
+}
+.vinculos-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.vinculos-acoes select {
+  min-width: 0;
+  max-width: 280px;
+}
+.vinculos-pendencia {
+  color: var(--state-warning);
+}
+
 /* ── Retificação do cronograma (PDF) ────────────────────────────────── */
 
 .retificacao-box .cronograma-copy-controls {

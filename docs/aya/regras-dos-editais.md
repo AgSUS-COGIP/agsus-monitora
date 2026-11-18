@@ -71,6 +71,13 @@ migrations `20260928120000_edital_novo_sem_motivo.sql`, `20260928220000_edital_n
 **resposta:** O quadro de vagas do edital tem uma linha por cargo e lotação, com as vagas por modalidade e o total de vagas imediatas (zero quer dizer só cadastro reserva), vindo do PDF ou digitado. Salvar de novo desativa o quadro anterior. Para ligar uma vaga ao quadro, todas as palavras do cargo precisam estar no nome da vaga (vale o cargo mais específico, a lotação desempata e o texto entre parênteses é ignorado); sem ligação única, a vaga não liga.
 **fonte:** supabase/migrations/20260930233000_quadro_de_vagas_do_edital.sql; supabase/migrations/20260930235950_quadro_ignora_parenteses.sql
 
+## Vagas ligadas ao quadro
+
+**perguntas:** vagas ligadas ao quadro | vinculo da vaga com o quadro | vaga ambigua no quadro | vaga ausente do quadro | confirmar linha do quadro | vaga sem linha no quadro | revisar vagas do quadro
+**resposta:** Cada vaga com código do edital (da Empregare ou da planilha) fica ligada a uma linha do quadro de vagas, em três situações: confirmada (uma linha), ambígua (mais de uma linha possível, como o mesmo cargo em várias lotações quando o nome da vaga veio cortado, ou a lotação do nome que não bate com a linha do cargo) e ausente (nenhuma linha, como o cargo do quadro que não está no nome). O sistema liga sozinho pela regra do nome e, sem ela, pelo "CARGO N" do título da vaga na Empregare, todo dia às 5h30 e ao salvar o quadro. No formulário do edital, em Anexos do edital, "Revisar vagas" abre a fila: escolha a linha e confirme, ou marque "Sem linha" quando a vaga não tem linha; a decisão vale para a Classificação, a pré-classificação e as conferências, e "Voltar à regra" desfaz. Ao importar o quadro de novo, a vaga passa para a linha de mesmo cargo e lotação; se a linha escolhida saiu do quadro, a vaga volta a ausente com o aviso. Edital cancelado mostra "não se aplica"; vagas de outra origem, "externo"; sem vaga com código, "pendente de integração".
+**abrir:** nucleo
+**fonte:** supabase/migrations/20261118120000_vinculo_da_vaga_com_o_quadro.sql; src/lib/vinculos-do-quadro.ts
+
 ## Vagas imediatas
 
 **perguntas:** vagas imediatas | de onde vem as vagas imediatas | origem das vagas imediatas | vaga imediata

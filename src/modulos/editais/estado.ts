@@ -156,6 +156,8 @@ const RPC_UNIDADES_POR_AREA = "listar_unidades_por_area";
 const RPC_MOVER_DE_AREA = "mover_edital_de_area";
 const RPC_QUADRO = "obter_quadro_de_vagas";
 const RPC_SALVAR_QUADRO = "salvar_quadro_de_vagas";
+const RPC_GRAVAR_VINCULO = "gravar_vinculo_do_quadro";
+const RPC_ATUALIZAR_VINCULOS = "atualizar_vinculos_do_quadro";
 const RPC_REINICIAR_TREINAMENTO = "reiniciar_edital_treinamento";
 const RPC_LISTAS_APROVADOS = "listar_listas_aprovados";
 export const EVENTO_CRONOGRAMA_SALVO = "agsus:nucleo-cronograma-saved";
@@ -375,6 +377,39 @@ export function criarEstadoDoNucleo({
     const { data, error } = await supabase.rpc(RPC_SALVAR_QUADRO, {
       p_edital: id,
       p_dados: quadro,
+    });
+    if (error) throw error;
+    return data || {};
+  }
+
+  /**
+   * A equipe decide o vínculo de uma vaga com o quadro: CONFIRMAR uma linha, SEM_LINHA ou
+   * AUTOMATICO (volta à regra). Devolve o quadro com os vínculos (`obter_quadro_de_vagas`).
+   */
+  async function gravarVinculoDoQuadro(
+    id: unknown,
+    vaga: string,
+    acao: "CONFIRMAR" | "SEM_LINHA" | "AUTOMATICO",
+    quadro: string | null = null,
+  ): Promise<unknown> {
+    if (!supabase) throw new Error("Supabase indisponível.");
+    await exigirSessao(supabase);
+    const { data, error } = await supabase.rpc(RPC_GRAVAR_VINCULO, {
+      p_edital: id,
+      p_vaga: vaga,
+      p_acao: acao,
+      p_quadro: quadro,
+    });
+    if (error) throw error;
+    return data || {};
+  }
+
+  /** Refaz os vínculos automáticos (vagas novas entram). Devolve o quadro com os vínculos. */
+  async function atualizarVinculosDoQuadro(id: unknown): Promise<unknown> {
+    if (!supabase) throw new Error("Supabase indisponível.");
+    await exigirSessao(supabase);
+    const { data, error } = await supabase.rpc(RPC_ATUALIZAR_VINCULOS, {
+      p_edital: id,
     });
     if (error) throw error;
     return data || {};
@@ -649,6 +684,8 @@ export function criarEstadoDoNucleo({
     lerRetificacao,
     lerQuadroDeVagas,
     salvarQuadroDeVagas,
+    gravarVinculoDoQuadro,
+    atualizarVinculosDoQuadro,
     salvarEdital,
     moverEdital,
     reiniciarTreinamento,

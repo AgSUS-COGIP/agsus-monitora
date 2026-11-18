@@ -101,6 +101,11 @@ export const CONFERENCIAS: Readonly<
     gravidade: "ATENCAO",
     titulo: "Vaga sem linha no quadro de vagas",
   }),
+  CLASSIFICACAO_VAGA_QUADRO_AMBIGUO: Object.freeze({
+    modulo: "classificacao",
+    gravidade: "ATENCAO",
+    titulo: "Vaga com mais de uma linha possível no quadro",
+  }),
   CLASSIFICACAO_AJUSTE_APOS_LISTA: Object.freeze({
     modulo: "classificacao",
     gravidade: "ATENCAO",

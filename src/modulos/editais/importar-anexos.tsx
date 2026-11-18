@@ -18,9 +18,11 @@ import type {
   VagaDoAnexo,
 } from "../../lib/anexos-do-edital.ts";
 import type { EtapaDoCronograma } from "../../lib/cronograma-do-edital.ts";
+import { VinculosDoQuadro } from "./vinculos-do-quadro.tsx";
+import type { EstadoDosVinculos } from "./vinculos-do-quadro.tsx";
 
 /** O que a seção usa do estado da página (`estado.ts`). */
-export interface EstadoDosAnexos {
+export interface EstadoDosAnexos extends EstadoDosVinculos {
   confirmar(mensagem: string): boolean;
   /** As respostas da função Python, uma por PDF. */
   lerAnexos(
@@ -61,7 +63,8 @@ interface GravacaoDoQuadro {
     formulário; em edital novo (ainda sem id), fica pendente e vai junto com o
     edital (`estado.salvarEdital({ quadro })`).
 
-  Para edital existente mostra também o quadro já salvo. Regras puras em
+  Para edital existente mostra também o quadro já salvo e a fila do vínculo de
+  cada vaga com a linha do quadro (`vinculos-do-quadro.tsx`). Regras puras em
   `src/lib/anexos-do-edital.ts`.
 */
 
@@ -386,6 +389,17 @@ export function ImportarAnexos({
             </button>
           </div>
           {verQuadro && <TabelaDoQuadro linhas={linhasSalvas} />}
+        </div>
+      )}
+
+      {idAtual && linhasSalvas.length > 0 && (
+        <div className="anexos-resultado">
+          <VinculosDoQuadro
+            estado={estado}
+            idEdital={idAtual}
+            dados={salvo}
+            aoMudar={(dados) => setSalvo(dados as QuadroDeVagasSalvo | null)}
+          />
         </div>
       )}
     </section>
