@@ -10,7 +10,7 @@
   O QUE MUDA
     1. As abas com ordem 2 ou mais descem uma posição (no catálogo e onde uma área troca a
        ordem): o Mapa entra logo depois da Visão geral, no bloco Acompanhar.
-    2. A aba "mapa" (Mapa, ícone map-pinned, ordem 2, view mapa) no catálogo (TB_ABA), ligada
+    2. A aba "mapa" (Mapa, ícone globe, ordem 2, view mapa) no catálogo (TB_ABA), ligada
        só na Saúde Indígena (RL_ABA_AREA). O recurso é o da Visão geral (`dashboard`): quem
        abre a Visão geral abre o Mapa. Sem selo BETA.
     O espelho no código é `ABAS_DO_MENU` (src/lib/navegacao/menu-lateral.ts).
@@ -49,7 +49,7 @@ update public."RL_ABA_AREA"
 
 -- 2. A aba "Mapa", só na Saúde Indígena ----------------------------------------------------------
 insert into public."TB_ABA" ("CO_ABA", "NO_ABA", "DS_ICONE", "NU_ORDEM", "CO_VIEW", "CO_RECURSO", "TP_ABA", "ST_ATIVO", "ST_BETA")
-values ('mapa', 'Mapa', 'map-pinned', 2, 'mapa', 'dashboard', 'nativa', 'S', 'N');
+values ('mapa', 'Mapa', 'globe', 2, 'mapa', 'dashboard', 'nativa', 'S', 'N');
 
 insert into public."RL_ABA_AREA" ("CO_ABA", "CO_AREA", "ST_ATIVO")
 values ('mapa', 'saude-indigena', 'S');

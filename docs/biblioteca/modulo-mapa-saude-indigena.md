@@ -66,8 +66,8 @@ Indígena, ordem 2, recurso `dashboard` (a permissão da Visão geral): `ABAS_DO
   Visão geral.
 - **Na Visão geral** fica o cartão (`src/modulos/visao-geral/cartao-do-mapa.tsx`): DSEIs com edital
   (de 34), o de mais ociosas e o menos preenchido (`resumoDoMapa`), e "Abrir no mapa". O recorte
-  por DSEI da Visão geral (`definirDsei`, chip "DSEI") continua no estado, sem quem o ligue até o
-  painel do DSEI (fase 2) levar a ele.
+  por DSEI da Visão geral (`definirDsei`, chip "DSEI") saiu com o mapa: um DSEI ali é o filtro
+  Unidade.
 
 - **Ciclo de vida.** Trocar de área desmonta o componente e o `remove` do Leaflet (StrictMode
   limpo). O mapa do DSEI é criado ao abrir o distrito e destruído ao sair.

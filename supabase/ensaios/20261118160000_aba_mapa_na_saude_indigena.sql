@@ -41,7 +41,7 @@ update public."RL_ABA_AREA"
 
 -- 2. A aba "Mapa", só na Saúde Indígena ----------------------------------------------------------
 insert into public."TB_ABA" ("CO_ABA", "NO_ABA", "DS_ICONE", "NU_ORDEM", "CO_VIEW", "CO_RECURSO", "TP_ABA", "ST_ATIVO", "ST_BETA")
-values ('mapa', 'Mapa', 'map-pinned', 2, 'mapa', 'dashboard', 'nativa', 'S', 'N');
+values ('mapa', 'Mapa', 'globe', 2, 'mapa', 'dashboard', 'nativa', 'S', 'N');
 
 insert into public."RL_ABA_AREA" ("CO_ABA", "CO_AREA", "ST_ATIVO")
 values ('mapa', 'saude-indigena', 'S');

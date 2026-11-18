@@ -184,7 +184,7 @@ export const ABAS_DO_MENU = Object.freeze(
     {
       id: "mapa",
       rotulo: "Mapa",
-      icone: "map-pinned",
+      icone: "globe",
       ordem: 2,
       view: "mapa",
       recurso: "dashboard",

@@ -558,24 +558,18 @@ export function proximaOrdenacao(
 }
 
 /**
- * As linhas do recorte, já ordenadas.
- * `dsei`: chave do DSEI aberto no mapa; `chaveDsei(linha)`, a chave da linha
- * (a do mapa, `dseiKey` do legado). `atalho`: "criticos" ou "pos:<código>".
+ * As linhas do recorte, já ordenadas. `atalho`: "criticos" ou "pos:<código>".
  */
 export function recortar(
   linhas: readonly LinhaDaVisaoGeral[],
   {
     filtros,
     busca = "",
-    dsei = "",
-    chaveDsei,
     ordenacao,
     atalho = "",
   }: {
     filtros?: FiltrosDaVisaoGeral;
     busca?: string;
-    dsei?: string;
-    chaveDsei?: (linha: LinhaDoMonitoramento) => string;
     ordenacao?: Ordenacao;
     atalho?: Atalho;
   } = {},
@@ -584,11 +578,7 @@ export function recortar(
   return (Array.isArray(linhas) ? linhas : [])
     .filter(
       (linha) =>
-        linhaAtende(linha, estado, {
-          campos: CAMPOS,
-          dsei,
-          chaveDsei: chaveDsei || (() => ""),
-        }) &&
+        linhaAtende(linha, estado, { campos: CAMPOS }) &&
         linhaCasaComBusca(linha, busca) &&
         linhaAtendeAoAtalho(linha, atalho),
     )

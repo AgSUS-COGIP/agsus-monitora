@@ -87,7 +87,10 @@ import {
   Segmentado,
   SeloDePrazo,
 } from "../src/ui/index.ts";
-import { esquecerFiltrosDasTelas, filtrosGuardadosDaTela } from "../src/app/filtros-no-endereco.ts";
+import {
+  esquecerFiltrosDasTelas,
+  filtrosGuardadosDaTela,
+} from "../src/app/filtros-no-endereco.ts";
 import type { LinhaDoMonitoramento } from "../src/componentes/tipos-do-monitoramento.ts";
 import { caminhoDoDestino } from "../src/lib/navegacao/rotas.ts";
 import { CartaoDoMapa } from "../src/modulos/visao-geral/cartao-do-mapa.tsx";

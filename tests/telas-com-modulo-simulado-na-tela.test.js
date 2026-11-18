@@ -6587,30 +6587,31 @@ bloco("modulos/visao-geral", async () => {
       aviso.mockRestore();
     });
 
-    it("o mapa é da área: Saúde Indígena e Projetos em React, SEDE nenhum", async () => {
+    it("o mapa é da área: na Saúde Indígena o cartão do Mapa, em Projetos o mapa, na SEDE nada", async () => {
       await montar();
-      // Saúde Indígena: o componente dos DSEIs.
-      expect(secao.querySelectorAll(".mapa-si")).toHaveLength(1);
+      // Saúde Indígena: o cartão (o mapa dos DSEIs é a aba Mapa).
+      const cartao = secao.querySelector(".visao-geral-cartao-do-mapa");
+      expect(cartao).not.toBeNull();
+      expect(cartao.textContent).toContain("2 de 34");
+      expect(secao.querySelector(".mapa-si")).toBeNull();
       expect(secao.querySelector(".mapa-projetos")).toBeNull();
 
       await act(async () => definirAreaAtual("projetos"));
-      expect(secao.querySelectorAll(".mapa-si")).toHaveLength(1);
+      expect(secao.querySelector(".visao-geral-cartao-do-mapa")).toBeNull();
       expect(secao.querySelectorAll(".mapa-projetos")).toHaveLength(1);
       expect(secao.textContent).toContain("Municípios por vagas");
       expect(secao.textContent).not.toContain("Territórios por vagas");
 
       await act(async () => definirAreaAtual("sede"));
-      expect(secao.querySelector(".mapa-si")).toBeNull();
+      expect(secao.querySelector(".visao-geral-cartao-do-mapa")).toBeNull();
       expect(secao.querySelector(".visao-geral-mapa")).toBeNull();
     });
 
-    it("troca de área: só os editais dela, e o DSEI aberto e o recorte saem", async () => {
+    it("troca de área: só os editais dela, e o recorte sai", async () => {
       await montar();
-      await act(async () => estado.definirDsei("xingu", "DSEI Xingu"));
       await act(async () => estado.alternarCriticos());
       await act(async () => definirAreaAtual("sede"));
       expect(valorDoKpi("vagas")).toBe("2");
-      expect(estado.obter().dsei.chave).toBe("");
       expect(estado.obter().atalho).toBe("");
       expect(linhas()).toHaveLength(1);
     });
@@ -6683,28 +6684,17 @@ bloco("modulos/visao-geral", async () => {
       expect(mais.hidden).toBe(false);
     });
 
-    it("'Limpar tudo' zera o recorte e o mapa volta ao Brasil", async () => {
+    it("'Limpar tudo' zera o recorte", async () => {
       await montar();
       await act(async () => {
         estado.definirFiltro("uf", ["MT"]);
         estado.definirBusca("xingu");
-        estado.definirDsei("xingu", "DSEI Xingu");
         estado.alternarCriticos();
       });
-      // O chip do DSEI sai do território, sem limpar o resto.
-      const chipDoDsei = [...secao.querySelectorAll(".ui-chip")].find((c) =>
-        c.textContent.includes("DSEI Xingu"),
-      );
-      await clicar(chipDoDsei);
-      expect(estado.obter().dsei.chave).toBe("");
-      expect(estado.obter().filtros.uf).toEqual(["MT"]);
-      expect(estado.obter().busca).toBe("xingu");
-      await act(async () => estado.definirDsei("xingu", "DSEI Xingu"));
       await clicar(botao("Limpar tudo", secao));
       expect(estado.obter().filtros.uf).toEqual([]);
       expect(estado.obter().busca).toBe("");
       expect(estado.obter().atalho).toBe("");
-      expect(estado.obter().dsei.chave).toBe("");
       expect(toast).toHaveBeenLastCalledWith("Filtros limpos.");
     });
 
@@ -7187,11 +7177,12 @@ bloco("modulos/visao-geral", async () => {
   });
 
   /*
-  A Etapa 5, parte 2: o mapa da Saúde Indígena (src/modulos/mapa-saude-indigena/)
-  ligado na Visão geral, lendo o MESMO estado (linhas recortadas, DSEI aberto,
-  busca) e pedindo a ele. Leaflet falso, sem rede.
+  O mapa da Saúde Indígena (src/modulos/mapa-saude-indigena/) na aba Mapa
+  (src/modulos/mapa/), lendo o estado da Visão geral (as linhas da área
+  inteira, sem os filtros dela) e com o DSEI aberto no endereço. Leaflet
+  falso, SIGEPSI simulado, sem rede.
 */
-  describe("o mapa da Saúde Indígena na Visão geral", () => {
+  describe("o mapa da Saúde Indígena na aba Mapa", () => {
     const LMAP = {
       dsei: [
         {
@@ -7212,10 +7203,7 @@ bloco("modulos/visao-geral", async () => {
         },
       ],
     };
-    const REDE = {
-      rede: {},
-      nac: [["CASAI DF", "", -15.8, -47.9, "BRASILIA", 53]],
-    };
+    const NAC = [["CASAI DF", "", -15.8, -47.9, "BRASILIA", 53]];
     /* O SIGEPSI responde com os DSEIs do LMAP (sede = posição) e a CASAI DF. */
     async function entregarDoSigepsi() {
       const dseis = Object.fromEntries(
@@ -7232,128 +7220,129 @@ bloco("modulos/visao-geral", async () => {
         estado.definirDadosDoMapa({ lmap: LMAP });
         responderDoSigepsi({
           estado: "pronto",
-          dados: { dseis, casaisNacionais: REDE.nac },
+          dados: { dseis, casaisNacionais: NAC },
         });
       });
     }
     let leaflet;
+    let aba;
+    let raizDaAba;
+    let irPara;
     const vivo = (id) =>
       leaflet.vivos().find((m) => m.elemento.id === id) || null;
     const bolhas = (mapa) =>
       leaflet
         .desenhadas(mapa, "circleMarker")
         .filter((b) => b.opcoes.interactive !== false);
+    const url = () => location.pathname + location.search;
+
+    /* A Visão geral (o estado e as linhas) e, ao lado, a aba Mapa. */
+    async function montarMapa() {
+      await montar();
+      const { criarMapa } = await import("../src/modulos/mapa/mapa.tsx");
+      irPara = vi.fn();
+      estado.definirLidaPeloMapa(true);
+      const mapa = criarMapa({
+        estado,
+        supabase: null,
+        leaflet: async () => {},
+        irPara,
+        comAcompanhamento: true,
+      });
+      aba = document.createElement("section");
+      aba.id = "page-mapa";
+      document.body.append(aba);
+      raizDaAba = createRoot(aba);
+      await act(async () => raizDaAba.render(mapa.conteudo));
+      return mapa;
+    }
 
     beforeEach(() => {
       leaflet = criarLeafletFalso();
       globalThis.L = leaflet.L;
+      history.replaceState(null, "", "/saude-indigena/mapa");
     });
-    afterEach(() => {
+    afterEach(async () => {
+      await act(async () => raizDaAba?.unmount());
+      raizDaAba = null;
       delete globalThis.L;
       responderDoSigepsi({ estado: "carregando", dados: null });
     });
 
     it("sem o SIGEPSI, mostra o erro e 'Tentar novamente' (sem os dados do banco)", async () => {
-      await montar();
+      await montarMapa();
       await act(async () => {
         estado.definirDadosDoMapa({ lmap: LMAP });
         responderDoSigepsi({ estado: "indisponivel", dados: null });
       });
-      expect(secao.querySelector("#map")).toBeNull();
-      const erro = secao.querySelector(".visao-geral-mapa [role='alert']");
+      expect(aba.querySelector("#map")).toBeNull();
+      const erro = aba.querySelector(".mapa-tela [role='alert']");
       expect(erro.textContent).toContain("o SIGEPSI não respondeu");
       const antes = sigepsi.tentativas;
       await clicar(erro.querySelector("[data-acao='tentar-novamente']"));
       expect(sigepsi.tentativas).toBe(antes + 1);
     });
 
-    it("espera os dados do mapa e desenha um #map só, com as bolhas do recorte", async () => {
-      await montar();
-      expect(secao.querySelectorAll("#map")).toHaveLength(1);
-      expect(secao.querySelector(".mapa-si-lista__esqueleto")).not.toBeNull();
+    it("espera os dados do mapa e desenha um #map só, com a área inteira (sem os filtros da Visão geral)", async () => {
+      await montarMapa();
+      expect(document.querySelectorAll("#map")).toHaveLength(1);
+      expect(aba.querySelector(".mapa-si-lista__esqueleto")).not.toBeNull();
       await entregarDoSigepsi();
-      const mapa = vivo("map");
-      expect(bolhas(mapa)).toHaveLength(2);
-      const territorios = [...secao.querySelectorAll(".mapa-si-territorio")];
+      expect(bolhas(vivo("map"))).toHaveLength(2);
+      const territorios = [...aba.querySelectorAll(".mapa-si-territorio")];
       expect(
         territorios.map((t) => t.querySelector("strong").textContent),
       ).toEqual(["Xingu", "Yanomami"]);
-      // Filtro da página (UF RR): o ranking segue o recorte.
+      // Filtro da Visão geral (UF RR) não recorta o Mapa.
       await act(async () => estado.definirFiltro("uf", ["RR"]));
       expect(
-        secao.querySelector(".mapa-si-territorio .mapa-si-territorio__vagas b")
+        aba.querySelector(".mapa-si-territorio .mapa-si-territorio__vagas b")
           .textContent,
-      ).toBe("8");
+      ).toBe("15");
     });
 
-    it("a bolha recorta a página pelo DSEI; 'Voltar ao Brasil' sai sem limpar os filtros", async () => {
-      await montar();
+    it("a bolha abre o DSEI no endereço; 'Voltar ao Brasil' sai dele, sem recortar a Visão geral", async () => {
+      await montarMapa();
       await entregarDoSigepsi();
-      await act(async () => estado.definirFiltro("uf", ["MT"]));
       const xingu = bolhas(vivo("map")).find((b) => b.latlng[0] === -11.5);
       await act(async () => xingu.fire("click"));
-      expect(estado.obter().dsei).toEqual({ chave: "XINGU", nome: "Xingu" });
-      expect(valorDoKpi("vagas")).toBe("15");
-      // O mapa do DSEI abre no #detailMap; o chip do DSEI aparece nos filtros.
+      expect(url()).toBe("/saude-indigena/mapa/xingu");
       expect(vivo("detailMap")).not.toBeNull();
-      expect(secao.querySelectorAll("#detailMap")).toHaveLength(1);
-      expect(secao.textContent).toContain("Mapa do DSEI Xingu");
+      expect(document.querySelectorAll("#detailMap")).toHaveLength(1);
+      expect(aba.textContent).toContain("Mapa do DSEI Xingu");
+      // A Visão geral não é recortada (o recorte por DSEI saiu com o mapa).
+      expect(estado.obter().temRecorte).toBe(false);
 
-      await clicar(secao.querySelector(".mapa-si-voltar"));
-      expect(estado.obter().dsei.chave).toBe("");
-      expect(estado.obter().filtros.uf).toEqual(["MT"]);
+      await clicar(aba.querySelector(".mapa-si-voltar"));
+      expect(url()).toBe("/saude-indigena/mapa");
       expect(vivo("detailMap")).toBeNull();
     });
 
-    it("o chip DSEI volta ao Brasil com o mesmo voo do botão, sem mexer no foco", async () => {
-      await montar();
+    it("o link com o DSEI abre o mapa já no distrito", async () => {
+      history.replaceState(null, "", "/saude-indigena/mapa/yanomami");
+      await montarMapa();
       await entregarDoSigepsi();
-      await act(async () => estado.definirDsei("DSEI Xingu", "Xingu"));
       expect(vivo("detailMap")).not.toBeNull();
-      const nacional = vivo("map");
-      nacional.chamadas.length = 0;
-      const chipDoDsei = [...secao.querySelectorAll(".ui-chip")].find((c) =>
-        c.textContent.includes("Xingu"),
-      );
-      chipDoDsei.focus();
-      await clicar(chipDoDsei);
-      expect(estado.obter().dsei.chave).toBe("");
-      expect(vivo("detailMap")).toBeNull();
-      const voos = nacional.chamadas.filter(([nome]) => nome === "flyToBounds");
-      expect(voos).toHaveLength(1);
-      expect(voos[0][2].duration).toBe(0.8);
-      expect(document.activeElement?.closest?.(".mapa-si")).toBeFalsy();
+      expect(aba.textContent).toContain("Mapa do DSEI Yanomami");
     });
 
-    it("o DSEI aberto pelo chip ou por 'Limpar tudo' fecha o mapa do distrito", async () => {
-      await montar();
-      await entregarDoSigepsi();
-      await act(async () => estado.definirDsei("DSEI Xingu", "Xingu"));
-      expect(vivo("detailMap")).not.toBeNull();
-      await clicar(botao("Limpar tudo", secao));
-      expect(vivo("detailMap")).toBeNull();
-      expect(vivo("map")).not.toBeNull();
-    });
-
-    it("a CASAI nacional procura pela cidade na busca da página", async () => {
-      await montar();
+    it("a CASAI nacional leva à Visão geral com a busca pela cidade", async () => {
+      await montarMapa();
       await entregarDoSigepsi();
       const [casai] = leaflet.desenhadas(vivo("map"), "marker");
       await act(async () => casai.fire("click"));
       expect(estado.obter().busca).toBe("CASAI BRASILIA");
+      expect(irPara).toHaveBeenCalledWith("dashboard");
     });
 
     it("trocar de área destrói o mapa da Saúde Indígena (cleanup do Leaflet)", async () => {
-      await montar();
+      await montarMapa();
       await entregarDoSigepsi();
-      expect(leaflet.vivos()).toHaveLength(1);
-      await act(async () => definirAreaAtual("projetos"));
+      expect(vivo("map")).not.toBeNull();
+      await act(async () => definirAreaAtual("sede"));
       expect(vivo("map")).toBeNull();
-      expect(secao.querySelector("#map")).toBeNull();
-      // No lugar, o mapa de Projetos (outro Leaflet).
-      expect(leaflet.vivos().map((m) => m.elemento.id)).toEqual([
-        "mapaDosProjetos",
-      ]);
+      expect(aba.querySelector("#map")).toBeNull();
+      expect(aba.textContent).toContain("Saúde Indígena");
     });
   });
 

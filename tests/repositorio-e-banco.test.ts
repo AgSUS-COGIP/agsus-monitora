@@ -148,7 +148,7 @@ bloco("aba-mapa-no-banco", () => {
         aba: "mapa",
         ordem: 2,
         view: "mapa",
-        icone: "map-pinned",
+        icone: "globe",
         recurso: "dashboard",
         areas: ["saude-indigena:2"],
       });

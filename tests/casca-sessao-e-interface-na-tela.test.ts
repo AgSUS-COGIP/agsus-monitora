@@ -3502,11 +3502,13 @@ bloco("app/pagina-desligada", () => {
         definirAreaAtual("saude-indigena");
       });
 
-      // A Triagem (mesmo recurso, antes da Avaliação documental no menu) fica
-      // desligada aqui para a primeira página ligada ser a Avaliação documental.
+      // A Triagem (mesmo recurso, antes da Avaliação documental no menu) e o
+      // Mapa (permissão da Visão geral) ficam desligados aqui para a primeira
+      // página ligada ser a Avaliação documental.
       it("sem tela guardada, entra na primeira página ligada (Avaliação documental)", async () => {
         await usarCatalogo([
           "visao-geral@saude-indigena",
+          "mapa@saude-indigena",
           "pre-classificacao@saude-indigena",
         ]);
         const { navegacao, janela } = criarAvaliador();
@@ -3520,6 +3522,7 @@ bloco("app/pagina-desligada", () => {
       it("a inicial do sistema (sair do painel externo) também", async () => {
         await usarCatalogo([
           "visao-geral@saude-indigena",
+          "mapa@saude-indigena",
           "pre-classificacao@saude-indigena",
         ]);
         const { navegacao } = criarAvaliador();
@@ -3537,6 +3540,7 @@ bloco("app/pagina-desligada", () => {
       it("sem página ligada na área atual, a de outra área — e ela vira a atual", async () => {
         await usarCatalogo([
           "visao-geral@saude-indigena",
+          "mapa@saude-indigena",
           "avaliacao-documental@saude-indigena",
           "pre-classificacao@saude-indigena",
           "pre-classificacao@sede",

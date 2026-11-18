@@ -2101,7 +2101,6 @@ bloco("modulos/mapa", () => {
     trocado por um falso que mostra o que recebeu.
   */
 
-
   const LINHAS = [
     { id: 1, unidade: "DSEI Yanomami", CO_AREA: "saude-indigena" },
     { id: 2, unidade: "DSEI Xingu", CO_AREA: "saude-indigena" },

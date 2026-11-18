@@ -6,7 +6,8 @@ import type {
   PropsDoPainel,
 } from "./tipos.ts";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import type { ComponentType } from "react";
+import { Suspense, lazy, useMemo, useState, useSyncExternalStore } from "react";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import {
@@ -21,7 +22,8 @@ import {
 import { criarCarregadorDeMunicipios } from "../mapa-de-projetos/carregador.ts";
 // O mapa de Projetos (e o Leaflet) baixa quando monta: ./mapas-sob-demanda.tsx.
 import { MapaDeProjetos } from "./mapas-sob-demanda.tsx";
-import { CartaoDoMapa } from "./cartao-do-mapa.tsx";
+import { importarComRecarga } from "../../lib/carga/importar-com-recarga.ts";
+import type { PropsDoCartaoDoMapa } from "./cartao-do-mapa.tsx";
 import { MarcosDoAno } from "./boas-vindas.tsx";
 import {
   buscarAcompanhamentoNoSupabase,
@@ -72,6 +74,21 @@ import { podeBaixarAprovados } from "../../lib/acessos/access-roles.ts";
   Textos de Configurações › Página inicial (publicados): filtros e rótulos
   dos indicadores (`textosDaVisaoGeral`).
 */
+
+/*
+  O cartão do Mapa (Saúde Indígena) baixa sob demanda: a contagem por DSEI e
+  a lista dos 34 DSEIs ficam fora do pacote de entrada (orçamento de 320 KB
+  gzip). Falhou o download, o cartão não aparece e o resto da página segue.
+*/
+const baixarCartaoDoMapa = importarComRecarga(() =>
+  import("./cartao-do-mapa.tsx").then((modulo) => ({
+    default: modulo.CartaoDoMapa,
+  })),
+);
+const SemCartao = (_props: PropsDoCartaoDoMapa) => null;
+const CartaoDoMapa = lazy<ComponentType<PropsDoCartaoDoMapa>>(() =>
+  baixarCartaoDoMapa().catch(() => ({ default: SemCartao })),
+);
 
 function usarTextos(configuracoes: Configuracoes) {
   const { valores } = useSyncExternalStore(
@@ -134,7 +151,9 @@ export function TelaDaVisaoGeral({
         <ProcessosPorProjeto e={e} estado={estado} />
       ) : null}
       {mapa === MAPA_DOS_DSEIS ? (
-        <CartaoDoMapa linhas={e.linhasDaArea} carregado={e.carregado} />
+        <Suspense fallback={null}>
+          <CartaoDoMapa linhas={e.linhasDaArea} carregado={e.carregado} />
+        </Suspense>
       ) : null}
       {mapa === MAPA_DOS_MUNICIPIOS ? (
         <div className="visao-geral-mapa" data-tour="visao-geral-mapa-projetos">

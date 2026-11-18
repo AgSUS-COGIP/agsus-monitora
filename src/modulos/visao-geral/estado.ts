@@ -31,13 +31,12 @@ import type {
   voltar pede o que ficou para trás. Sem ele (erro, banco sem a função), a
   página funciona só com as linhas.
 
-  O mapa da Saúde Indígena (src/modulos/mapa-saude-indigena/) lê daqui: as
-  linhas recortadas (`filtradas`), `temRecorte`, o DSEI aberto (`dsei`) e
-  o `lmap` do banco (`mapa.lmap`: nome, população e UFs de cada DSEI; os
-  pontos vêm do SIGEPSI), que a carga (src/app/carga.ts, com a cópia da
-  sessão) publica em `definirDadosDoMapa`. O DSEI de cada linha é `chaveDoDsei(linha.unidade)`.
-  O mapa pede `definirDsei` (bolha, ranking), `tirarDsei` ("Voltar
-  ao Brasil" ou Esc) e `definirBusca` (CASAI nacional).
+  A aba Mapa (src/modulos/mapa/) lê daqui as linhas da área (`linhasDaArea`,
+  sem os filtros desta página) e o `lmap` do banco (`mapa.lmap`: nome,
+  população e UFs de cada DSEI; os pontos vêm do SIGEPSI), que a carga
+  (src/app/carga.ts, com a cópia da sessão) publica em `definirDadosDoMapa`;
+  a CASAI nacional pede `definirBusca`. O recorte por DSEI saiu com o mapa
+  (18/11/2026): para ver um DSEI aqui, o filtro Unidade.
 
   Guardado no navegador, como antes: os filtros (`agsus_monitora_filters_v1`)
   e as colunas visíveis da tabela (`agsus_visible_cols_v2`).
@@ -53,7 +52,6 @@ import {
 } from "../../lib/carga/versao-do-pacote";
 import { hojeEmBrasilia } from "../../lib/cronograma/cronograma-do-edital.ts";
 import { semTreinamento } from "../../lib/editais/edital-de-treinamento.ts";
-import { chaveDoDsei } from "../../lib/mapas/mapa-saude-indigena/chaves.ts";
 import {
   acompanhamentoDaResposta,
   CAMPOS,
@@ -250,7 +248,6 @@ export function criarEstadoDaVisaoGeral({
   let proprio: EstadoProprio = {
     filtros: normalizarFiltros(lerGuardado(armazenamento, CHAVE_DOS_FILTROS)),
     busca: "",
-    dsei: { chave: "", nome: "" },
     atalho: "",
     mapa: { lmap: null },
     ordenacao: { campo: "", direcao: "" },
@@ -345,17 +342,12 @@ export function criarEstadoDaVisaoGeral({
     const filtradas = recortar(daArea, {
       filtros: proprio.filtros,
       busca: proprio.busca,
-      dsei: proprio.dsei.chave,
-      chaveDsei: (linha) => chaveDoDsei(linha?.unidade),
       ordenacao: proprio.ordenacao,
       atalho: proprio.atalho,
     });
     const quantosFiltros = camposAtivos(proprio.filtros);
     const temRecorte = Boolean(
-      quantosFiltros ||
-      txt(proprio.busca) ||
-      proprio.dsei.chave ||
-      proprio.atalho,
+      quantosFiltros || txt(proprio.busca) || proprio.atalho,
     );
     instantaneo = {
       ...proprio,
@@ -496,7 +488,7 @@ export function criarEstadoDaVisaoGeral({
 
   /*
     Os dados do legado mudaram (carga, recarga ou troca de área). Na troca de
-    área o DSEI aberto e o atalho saem (o mapa volta ao Brasil); filtros sem
+    área o atalho sai; filtros sem
     opção na área nova são podados — só com os dados já carregados, para não
     apagar os guardados antes da primeira carga.
   */
@@ -504,10 +496,7 @@ export function criarEstadoDaVisaoGeral({
     const { linhas, areaAtual, carregado } = dados.obter();
     const mudancas: Partial<EstadoProprio> = {};
     if (fonte.linhas !== linhas && carregado) mudancas.carregadoEm = agora();
-    if (fonte.area && fonte.area !== areaAtual) {
-      mudancas.dsei = { chave: "", nome: "" };
-      mudancas.atalho = "";
-    }
+    if (fonte.area && fonte.area !== areaAtual) mudancas.atalho = "";
     fonte = { linhas, area: areaAtual };
     proprio = { ...proprio, ...mudancas };
     if (carregado) {
@@ -568,27 +557,17 @@ export function criarEstadoDaVisaoGeral({
   }
 
   /*
-    "Limpar tudo": zera filtros, busca, atalho e o DSEI (o mapa volta ao
-    Brasil). É o único caminho que apaga o recorte.
+    "Limpar tudo": zera filtros, busca e atalho. É o único caminho que apaga
+    o recorte.
   */
   function limparTudo() {
-    publicar({
-      filtros: filtrosVazios(),
-      busca: "",
-      atalho: "",
-      dsei: { chave: "", nome: "" },
-    });
+    publicar({ filtros: filtrosVazios(), busca: "", atalho: "" });
     aviso("Filtros limpos.");
-  }
-
-  /* O chip do DSEI e o "Voltar ao Brasil" do mapa: sai do território, filtros ficam. */
-  function tirarDsei() {
-    publicar({ dsei: { chave: "", nome: "" } });
   }
 
   /*
     Busca global (Ctrl+K): a linha escolhida fica à vista — filtros trocados
-    pela unidade e pelo edital dela, sem busca, atalho nem DSEI, e a linha em
+    pela unidade e pelo edital dela, sem busca nem atalho, e a linha em
     destaque.
   */
   function localizar(linha: LinhaDoMonitoramento | null) {
@@ -600,7 +579,6 @@ export function criarEstadoDaVisaoGeral({
       filtros,
       busca: "",
       atalho: "",
-      dsei: { chave: "", nome: "" },
       destaque: { id: String(linha.id), vez: agora() },
     });
   }
@@ -643,14 +621,10 @@ export function criarEstadoDaVisaoGeral({
     alternarCriticos: () => alternarAtalho("criticos"),
     tirarAtalho: () => publicar({ atalho: "" }),
     limparTudo,
-    tirarDsei,
     localizar,
     /* "Voltar à linha" (detalhes do processo): rola até ela e destaca. */
     destacar: (id) => publicar({ destaque: { id: String(id), vez: agora() } }),
     definirBusca: (busca) => publicar({ busca: String(busca ?? "") }),
-    /* O DSEI aberto no mapa (chave do `lmap` ou nome; guarda a chave normalizada). */
-    definirDsei: (chave, nome = "") =>
-      publicar({ dsei: { chave: chaveDoDsei(chave), nome: txt(nome) } }),
     /* `lmap` de TB_CONFIG_MAPA_SAUDE_INDIG (a carga publica). */
     definirDadosDoMapa: ({ lmap = null } = {}) => publicar({ mapa: { lmap } }),
     ordenarPor: (campo) =>
@@ -667,7 +641,6 @@ export function criarEstadoDaVisaoGeral({
         filtros: filtrosVazios(),
         busca: "",
         atalho: "",
-        dsei: { chave: "", nome: "" },
         destaque: null,
         acompanhamento: null,
       });

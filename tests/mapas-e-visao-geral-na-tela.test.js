@@ -573,7 +573,6 @@ bloco("esquecer-ao-sair", () => {
       estado.definirAviso(aviso);
       estado.definirFiltro("unidade", ["DSEI Xingu"]);
       estado.definirBusca("xingu");
-      estado.definirDsei("xingu", "DSEI Xingu");
       expect(armazenamento.getItem(CHAVE_DOS_FILTROS)).toContain("DSEI Xingu");
       aviso.mockClear();
 
@@ -582,7 +581,6 @@ bloco("esquecer-ao-sair", () => {
       const agora = estado.obter();
       expect(agora.filtros.unidade).toEqual([]);
       expect(agora.busca).toBe("");
-      expect(agora.dsei).toEqual({ chave: "", nome: "" });
       expect(armazenamento.getItem(CHAVE_DOS_FILTROS)).not.toContain(
         "DSEI Xingu",
       );

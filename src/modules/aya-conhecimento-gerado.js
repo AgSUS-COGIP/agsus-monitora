@@ -3770,7 +3770,7 @@ export const VERBETES_AYA = Object.freeze([
       "filtro de fase",
     ],
     resposta:
-      'Na Visão geral, o botão Filtros do cabeçalho abre os campos Ano, Unidade, Edital e Status, com Fase e UF em "Mais opções"; os filtros aplicados ficam sempre à vista como etiquetas, com "Limpar tudo". Cada filtro aceita vários valores e as opções de um seguem os outros já escolhidos. O campo Ano escolhe de uma vez todos os editais daquele ano (pelo número, como 11/2026); outra escolha de editais aparece como "Seleção própria". A busca da tabela vale para a página toda: indicadores, blocos, tabela e, em Projetos, o mapa. Os filtros ficam guardados no navegador. Críticos e as pendências do Pós-resultado aparecem como "Recorte" entre os filtros aplicados. "Limpar tudo" apaga filtros, busca, recorte e o DSEI aberto e volta o mapa ao Brasil.',
+      'Na Visão geral, o botão Filtros do cabeçalho abre os campos Ano, Unidade, Edital e Status, com Fase e UF em "Mais opções"; os filtros aplicados ficam sempre à vista como etiquetas, com "Limpar tudo". Cada filtro aceita vários valores e as opções de um seguem os outros já escolhidos. O campo Ano escolhe de uma vez todos os editais daquele ano (pelo número, como 11/2026); outra escolha de editais aparece como "Seleção própria". A busca da tabela vale para a página toda: indicadores, blocos, tabela e, em Projetos, o mapa. Os filtros ficam guardados no navegador. Críticos e as pendências do Pós-resultado aparecem como "Recorte" entre os filtros aplicados. "Limpar tudo" apaga filtros, busca e recorte. Para ver só um DSEI, use o filtro Unidade.',
     fato: "",
     fonte: "interface do Yeendé",
   },

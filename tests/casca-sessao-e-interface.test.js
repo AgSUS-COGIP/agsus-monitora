@@ -5321,7 +5321,9 @@ bloco("rotas", () => {
       });
       expect(destinoDoCaminho("/saude-indigena/mapa/yanomami/x")).toBeNull();
       // Tela sem edital nem campo no caminho continua sem terceiro pedaço.
-      expect(destinoDoCaminho("/saude-indigena/visao-geral/yanomami")).toBeNull();
+      expect(
+        destinoDoCaminho("/saude-indigena/visao-geral/yanomami"),
+      ).toBeNull();
     });
 
     it("todas as telas vão e voltam, em todas as áreas", () => {
@@ -5791,7 +5793,8 @@ bloco("selecao-do-painel", () => {
         view: "selecao",
         recurso: "selecao",
         icone: "funnel",
-        ordem: 5,
+        // 5 até o Mapa entrar na ordem 2 (20261118160000).
+        ordem: 6,
         beta: true,
       });
       expect(NOMES_DE_ICONES).toContain("funnel");

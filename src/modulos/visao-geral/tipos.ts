@@ -212,7 +212,6 @@ export type MarcoDoAno = { ano: number; concluidas_no_ano: number };
 export type EstadoProprio = {
   filtros: FiltrosDaVisaoGeral;
   busca: string;
-  dsei: { chave: string; nome: string };
   atalho: Atalho;
   mapa: { lmap: unknown };
   ordenacao: Ordenacao;
@@ -275,11 +274,9 @@ export type EstadoDaVisaoGeral = {
   limparTudo: () => void;
   /** A pessoa saiu: o recorte volta ao vazio, sem aviso. */
   esquecer: () => void;
-  tirarDsei: () => void;
   localizar: (linha: LinhaDoMonitoramento | null) => void;
   destacar: (id: string | number | undefined) => void;
   definirBusca: (busca: string) => void;
-  definirDsei: (chave: string, nome?: string) => void;
   definirDadosDoMapa: (dados?: { lmap?: unknown }) => void;
   ordenarPor: (campo: ColunaDaTabela) => void;
   alternarColuna: (campo: ColunaDaTabela, visivel: boolean) => void;

@@ -1339,13 +1339,13 @@ bloco("aya-tours", () => {
       const titulos = (area) =>
         tourDaPagina({ view: "dashboard", area }).passos.map((p) => p.titulo);
       // Na Saúde Indígena, o cartão que leva à página Mapa (que tem tour próprio).
-    expect(titulos("saude-indigena")).toContain("Mapa");
-    expect(titulos("saude-indigena")).not.toContain("Mapa em tela cheia");
-    expect(
-      tourDaPagina({ view: "mapa", area: "saude-indigena" }).passos.map(
-        (p) => p.titulo,
-      ),
-    ).toContain("Mapa dos DSEIs");
+      expect(titulos("saude-indigena")).toContain("Mapa");
+      expect(titulos("saude-indigena")).not.toContain("Mapa em tela cheia");
+      expect(
+        tourDaPagina({ view: "mapa", area: "saude-indigena" }).passos.map(
+          (p) => p.titulo,
+        ),
+      ).toContain("Mapa dos DSEIs");
       expect(titulos("projetos")).toContain("Mapa dos projetos");
       expect(titulos("sede").some((t) => t.startsWith("Mapa"))).toBe(false);
     });

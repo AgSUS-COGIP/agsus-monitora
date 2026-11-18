@@ -2535,10 +2535,6 @@ bloco("fases-do-processo", () => {
 bloco("filtros-do-mapa", () => {
   const CAMPOS = ["unidade", "edital", "status", "risco"];
   const vazio = () => Object.fromEntries(CAMPOS.map((c) => [c, new Set()]));
-  const chaveDsei = (linha) =>
-    String(linha.unidade || "")
-      .replace(/^DSEI\s+/i, "")
-      .toUpperCase();
 
   const LINHAS = [
     {
@@ -2620,14 +2616,6 @@ bloco("filtros-do-mapa", () => {
       const estado = vazio();
       estado.risco = new Set(["Médio"]);
       expect(LINHAS.filter((l) => linhaAtende(l, estado))).toHaveLength(3);
-    });
-
-    it("filtra pelo DSEI selecionado com a chave do mapa, não por texto", () => {
-      const estado = vazio();
-      const noXingu = LINHAS.filter((l) =>
-        linhaAtende(l, estado, { dsei: "XINGU", chaveDsei }),
-      );
-      expect(noXingu.map((l) => l.edital)).toEqual(["01/2026", "03/2025"]);
     });
 
     it("aplica a regra extra de exclusão", () => {
@@ -6919,15 +6907,6 @@ bloco("visao-geral", () => {
       expect(
         ids(recortar(LINHAS, { filtros: filtrosVazios(), busca: "MEDICO" })),
       ).toEqual([1]);
-      expect(
-        ids(
-          recortar(LINHAS, {
-            filtros: filtrosVazios(),
-            dsei: "yanomami",
-            chaveDsei: (l) => l.unidade.replace("DSEI ", "").toLowerCase(),
-          }),
-        ),
-      ).toEqual([3]);
       expect(
         ids(recortar(LINHAS, { filtros: filtrosVazios(), atalho: "criticos" })),
       ).toEqual([3, 1]);

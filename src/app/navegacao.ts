@@ -908,7 +908,7 @@ export function criarNavegacao({
 
   /*
     Trocou a área (menu): o cabeçalho da Visão geral muda (o estado dela tira o
-    DSEI aberto, poda os filtros e troca o mapa). Devolve o cancelamento.
+    atalho, poda os filtros e troca o mapa). Devolve o cancelamento.
   */
   function acompanharArea() {
     let area = areaAtual();

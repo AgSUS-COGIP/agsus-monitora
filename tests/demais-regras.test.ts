@@ -224,7 +224,11 @@ import {
   situacaoDoPrazo,
   textoDosDiasRestantes,
 } from "../src/lib/base/prazos.ts";
-import { chaveDoDseiNoEndereco, dseiNoEndereco, resumoDoMapa } from "../src/lib/mapas/mapa-saude-indigena/aba-do-mapa.ts";
+import {
+  chaveDoDseiNoEndereco,
+  dseiNoEndereco,
+  resumoDoMapa,
+} from "../src/lib/mapas/mapa-saude-indigena/aba-do-mapa.ts";
 import { chaveDoDsei } from "../src/lib/mapas/mapa-saude-indigena/chaves.ts";
 
 bloco("arredondamento-dos-percentuais", () => {
@@ -2650,7 +2654,9 @@ bloco("app/pagina-aberta", () => {
       await definido(carga).carregarEntrada();
       await esperar();
       expect(chamadas).toContain("listar_monitoramento_operacional");
-      expect(chamadas).toContain("listar_acompanhamento_da_visao_geral_se_mudou");
+      expect(chamadas).toContain(
+        "listar_acompanhamento_da_visao_geral_se_mudou",
+      );
     });
 
     it("o avaliador que abre Editais depois lê as linhas uma vez; a Visão geral escondida não pede nada", async () => {

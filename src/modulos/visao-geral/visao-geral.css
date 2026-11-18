@@ -645,48 +645,6 @@
   font-size: var(--text-body-sm);
 }
 
-/* ── O cartão do Mapa (Saúde Indígena, cartao-do-mapa.tsx) ───────────── */
-
-/*
-  Uma faixa no lugar do mapa grande, que virou a aba Mapa: o título, três
-  números e "Abrir no mapa". No celular os números empilham e o botão vai
-  para baixo, com a largura toda.
-*/
-.visao-geral-cartao-do-mapa {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3) var(--space-6);
-}
-.visao-geral-cartao-do-mapa-fatos {
-  display: flex;
-  flex: 1 1 auto;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-6);
-  margin: 0;
-}
-.visao-geral-cartao-do-mapa-fato {
-  display: grid;
-  gap: var(--space-0-5);
-  min-width: 0;
-}
-.visao-geral-cartao-do-mapa-fato dt {
-  color: var(--text-secondary);
-  font-size: var(--text-body-sm);
-}
-.visao-geral-cartao-do-mapa-fato dd {
-  margin: 0;
-  font-weight: var(--font-weight-semibold);
-}
-@media (max-width: 640px) {
-  .visao-geral-cartao-do-mapa-fatos {
-    flex-direction: column;
-  }
-  .visao-geral-cartao-do-mapa-abrir {
-    width: 100%;
-  }
-}
-
 /* ── O lugar do mapa da área (Projetos) ──────────────────────────────── */
 
 /*

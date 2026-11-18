@@ -61,10 +61,7 @@ e.colunas.push("status");
 declare const bruto: unknown;
 const etapas = acompanhamentoDaResposta(bruto)?.etapasPorEdital;
 const linhas = enriquecerLinhas(linhasDaResposta(origem.obter().linhas));
-const filtradas = recortar(linhas, {
-  filtros: filtrosVazios(),
-  chaveDsei: (linha) => String(linha.unidade ?? ""),
-});
+const filtradas = recortar(linhas, { filtros: filtrosVazios() });
 const unidade: string | undefined = filtradas[0]?.unidade;
 void unidade;
 void etapas;

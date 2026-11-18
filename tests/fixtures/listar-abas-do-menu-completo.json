@@ -31,7 +31,7 @@
   {
     "co_aba": "mapa",
     "no_aba": "Mapa",
-    "ds_icone": "map-pinned",
+    "ds_icone": "globe",
     "nu_ordem": 2,
     "co_view": "mapa",
     "co_recurso": "dashboard",
@@ -41,7 +41,7 @@
         "co_area": "saude-indigena",
         "nu_ordem": 2,
         "co_view": "mapa",
-        "ds_icone": "map-pinned"
+        "ds_icone": "globe"
       }
     ]
   },

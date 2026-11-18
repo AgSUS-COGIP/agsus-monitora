@@ -1,3 +1,4 @@
+import "./cartao-do-mapa.css";
 import { useMemo } from "react";
 import type { LinhaDoMonitoramento } from "../../componentes/tipos-do-monitoramento.ts";
 import { guardarFiltrosDaTela } from "../../app/filtros-no-endereco.ts";

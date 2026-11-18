@@ -190,14 +190,12 @@ export function enderecoComBusca(
 ): string {
   const destino = destinoComCampoNoCaminho(local);
   if (!destino) return local.caminho + busca;
-  const parametros = new URLSearchParams(busca || "");
-  const visao = parametros.get(DA_NAVEGACAO) || "";
-  parametros.delete(DA_NAVEGACAO);
+  // `caminhoDoDestino` tira a visão da busca e põe o filtro no caminho.
+  const visao = new URLSearchParams(busca).get(DA_NAVEGACAO) || "";
   return caminhoDoDestino({
-    view: destino.view,
-    ...(destino.area ? { area: destino.area } : {}),
-    ...(visao ? { visao } : {}),
-    filtros: parametros.toString(),
+    ...destino,
+    visao,
+    filtros: busca.replace(/^\?/, ""),
   });
 }
 
