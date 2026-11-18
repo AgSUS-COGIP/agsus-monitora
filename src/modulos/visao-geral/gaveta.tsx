@@ -3,7 +3,7 @@ import { telaPronta } from "../../app/registro-das-telas.ts";
 import type { LinhaDaVisaoGeral } from "./tipos.ts";
 import { formatNumberBR } from "../../lib/base/formatters";
 import {
-  contratacoesDoCadastroReserva,
+  contratacoesAlemDasVagas,
   contratadasImediatas,
   vagasSemContratacao,
 } from "../../lib/visao-geral/indicadores-do-monitoramento.ts";
@@ -87,8 +87,8 @@ export function GavetaDoProcesso({
           <GradeDeKv>
             <Kv rotulo="Vagas">{fmt(linha.vagas_total)}</Kv>
             <Kv rotulo="Contratadas">{fmt(contratadasImediatas(linha))}</Kv>
-            <Kv rotulo="Cadastro reserva">
-              {fmt(contratacoesDoCadastroReserva(linha))}
+            <Kv rotulo="Além das vagas imediatas">
+              {fmt(contratacoesAlemDasVagas(linha))}
             </Kv>
             <Kv rotulo="Sem contratação">{fmt(vagasSemContratacao(linha))}</Kv>
             <Kv rotulo="Inscritos">{numeroDoFunil(linha.inscritos)}</Kv>

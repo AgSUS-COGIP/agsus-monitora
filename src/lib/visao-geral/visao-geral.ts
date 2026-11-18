@@ -636,8 +636,8 @@ export const INDICADORES: readonly (readonly [
     "alerta",
   ] as const),
   Object.freeze([
-    "kpi_cadastro_reserva_label",
-    "Cadastro reserva",
+    "kpi_alem_das_vagas_label",
+    "Contratações além das vagas imediatas",
     "fa-user-plus",
     "neutro",
   ] as const),
@@ -663,7 +663,7 @@ export const VALOR_DO_INDICADOR: Readonly<
   kpi_contratadas_label: "contratadas",
   kpi_em_selecao_label: "emSelecao",
   kpi_ociosas_label: "ociosas",
-  kpi_cadastro_reserva_label: "cadastroReserva",
+  kpi_alem_das_vagas_label: "alemDasVagas",
   kpi_criticos_label: "criticos",
   kpi_inscritos_label: "inscritos",
 });
@@ -1235,7 +1235,7 @@ export function textosDaVisaoGeral(
     kpi_contratadas_label: "",
     kpi_em_selecao_label: "",
     kpi_ociosas_label: "",
-    kpi_cadastro_reserva_label: "",
+    kpi_alem_das_vagas_label: "",
     kpi_criticos_label: "",
     kpi_inscritos_label: "",
   };

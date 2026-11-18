@@ -9,7 +9,7 @@ import type {
 import { cloneElement, useEffect, useRef, useState } from "react";
 import { formatNumberBR } from "../../lib/base/formatters";
 import {
-  contratacoesDoCadastroReserva,
+  contratacoesAlemDasVagas,
   contratadasImediatas,
   vagasSemContratacao,
 } from "../../lib/visao-geral/indicadores-do-monitoramento.ts";
@@ -273,19 +273,19 @@ function celula(
     case "contratados": {
       /*
         Como o indicador "Contratadas" e a gaveta: as contratações dentro das
-        vagas; as do cadastro reserva vêm à parte (antes a coluna somava as
+        vagas; as além das vagas imediatas vêm à parte (antes a coluna somava as
         duas e não fechava com o indicador).
       */
-      const reserva = contratacoesDoCadastroReserva(linha);
+      const reserva = contratacoesAlemDasVagas(linha);
       return (
         <td key={campo} className="num">
           {fmt(contratadasImediatas(linha))}
           {reserva > 0 ? (
             <span
               className="visao-geral-taxa"
-              title={`${fmt(reserva)} contratado(s) do cadastro reserva, além das vagas`}
+              title={`${fmt(reserva)} contratado(s) além das vagas imediatas`}
             >
-              +{fmt(reserva)} CR
+              +{fmt(reserva)} além
             </span>
           ) : null}
         </td>

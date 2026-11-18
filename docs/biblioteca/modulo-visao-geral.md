@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-17
+atualizado: 2026-11-18
 ---
 
 # Módulo: Visão geral
@@ -35,9 +35,18 @@ trabalho). De cima para baixo:
 - **Filtros** (`Filtros`): os campos abrem pelo botão; os chips do recorte e "Limpar tudo" ficam à
   vista com o painel fechado.
 - **Vagas** (`Vagas`, `.visao-geral-kpis`): as imediatas e as três parcelas, com a porcentagem e a
-  barra da divisão; cadastro reserva e inscritos embaixo. Esperam o acompanhamento
-  (`aguardandoVagas` no estado, até `ESPERA_MAXIMA_DO_ACOMPANHAMENTO_MS`): antes, a tela mostrava
-  as vagas sem o desconto das reabertas e trocava segundos depois.
+  barra da divisão; "Contratações além das vagas imediatas" (`alemDasVagas`, antes "Cadastro
+  reserva", que confundia com o cadastro reserva do edital) e inscritos embaixo. Esperam o
+  acompanhamento (`aguardandoVagas` no estado, até `ESPERA_MAXIMA_DO_ACOMPANHAMENTO_MS`): antes, a
+  tela mostrava as vagas sem o desconto das reabertas e trocava segundos depois. Se ele falha, passa
+  do tempo ou vem sem os cargos, `semDescontoDasReabertas` e o KPI diz "sem desconto das
+  reabertas".
+- **Estado de cada número** (revisão de 17/11/2026, `situacaoDoIndicador` em
+  `src/lib/visao-geral/indicadores-do-monitoramento.ts`): carregando (esqueleto), zero confirmado
+  ("0"), dado ausente ("—" e "sem dado nos editais": Inscritos sem número em nenhum edital) e não se
+  aplica ("—" e "nenhum edital com/sem resultado" em Ociosas/Em seleção). Inscritos mostra a
+  cobertura ("informado em X de Y editais") quando parte dos editais não informou; antes o "—" da
+  linha somava zero no total. `data-situacao` no `.visao-geral-numero`.
 - **Pede ação** (`PedeAcao`) ao lado de **Em andamento, por fase** (`EmAndamento`,
   `andamentoPorFase` em `src/lib/visao-geral/visao-geral.ts`): críticos e pós-resultado (sem lista e
   lista sem status; contratação abaixo de 50% e desistências saíram em 18/11/2026) numa lista; só as fases

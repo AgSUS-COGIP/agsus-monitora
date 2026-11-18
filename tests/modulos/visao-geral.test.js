@@ -316,14 +316,14 @@ describe("a tela dentro do app", () => {
       "contratadas",
       "emSelecao",
       "ociosas",
-      "cadastroReserva",
+      "alemDasVagas",
       "inscritos",
     ]);
     expect(valorDoKpi("vagas")).toBe("23");
     expect(valorDoKpi("contratadas")).toBe("17");
     expect(valorDoKpi("emSelecao")).toBe("6");
     expect(valorDoKpi("ociosas")).toBe("0");
-    expect(valorDoKpi("cadastroReserva")).toBe("0");
+    expect(valorDoKpi("alemDasVagas")).toBe("0");
     expect(criticos().textContent).toContain("1 edital");
     expect(valorDoKpi("inscritos")).toBe("140");
     expect(kpi("vagas").textContent).toContain("Vagas Imediatas Previstas");
@@ -479,6 +479,9 @@ describe("a tela dentro do app", () => {
     await esperar();
     expect(criticos()).toBeNull();
     expect(aviso).toHaveBeenCalled();
+    // As vagas saem como cada edital publicou, e a tela diz isso.
+    expect(kpi("vagas").getAttribute("aria-busy")).toBeNull();
+    expect(kpi("vagas").textContent).toContain("sem desconto das reabertas");
     aviso.mockRestore();
   });
 

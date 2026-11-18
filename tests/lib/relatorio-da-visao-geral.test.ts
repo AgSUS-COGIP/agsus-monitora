@@ -89,9 +89,13 @@ const INDICADORES: Indicadores = {
   contratadas: 63,
   emSelecao: 0,
   ociosas: 6,
-  cadastroReserva: 51,
+  alemDasVagas: 51,
   criticos: 1,
   inscritos: 3256,
+  editais: 2,
+  inscritosInformados: 2,
+  editaisComResultado: 2,
+  editaisSemResultado: 0,
 };
 
 const conteudo = (escolha = MODELOS_DO_RELATORIO[1]!.escolha) =>
@@ -171,7 +175,7 @@ describe("o conteúdo", () => {
     expect(textoDaColuna("primeira_admissao", LINHAS[0]!)).toBe("12/05/2099");
     expect(textoDaColuna("inscritos", LINHAS[1]!)).toBe("—");
     expect(textoDaColuna("ciclo", LINHAS[1]!)).toBe("—");
-    expect(textoDaColuna("contratados", LINHAS[0]!)).toBe("59 +51 CR");
+    expect(textoDaColuna("contratados", LINHAS[0]!)).toBe("59 +51 além");
     expect(textoDaColuna("vagas_ociosas", LINHAS[1]!)).toBe("6 (60%)");
     expect(textoDaColuna("duracao", LINHAS[0]!)).toBe("116");
   });

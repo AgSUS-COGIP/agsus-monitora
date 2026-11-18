@@ -323,7 +323,7 @@ describe("indicadores", () => {
       ["kpi_contratadas_label", "Contratadas"],
       ["kpi_em_selecao_label", "Em seleção"],
       ["kpi_ociosas_label", "Ociosas"],
-      ["kpi_cadastro_reserva_label", "Cadastro reserva"],
+      ["kpi_alem_das_vagas_label", "Contratações além das vagas imediatas"],
       ["kpi_criticos_label", "Críticos"],
       ["kpi_inscritos_label", "Inscritos"],
     ]);
@@ -341,9 +341,13 @@ describe("indicadores", () => {
       contratadas: 11,
       emSelecao: 8,
       ociosas: 6,
-      cadastroReserva: 0,
+      alemDasVagas: 0,
       criticos: 2,
       inscritos: 143,
+      editais: 4,
+      inscritosInformados: 4,
+      editaisComResultado: 1,
+      editaisSemResultado: 3,
     });
     expect(k.contratadas + k.emSelecao + k.ociosas).toBe(k.vagas);
   });

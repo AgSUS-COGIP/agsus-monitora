@@ -339,6 +339,21 @@ export function criarEstadoDaVisaoGeral({
     );
   }
 
+  /*
+    Sem o desconto: o pedido desta carga falhou ou passou do tempo, ou a
+    resposta veio sem os cargos (o módulo das reabertas não montou a conta).
+    A tela diz "sem desconto das reabertas" em vez de um número que parece
+    final.
+  */
+  function semDescontoDasReabertas(linhas: readonly unknown[], area: string) {
+    if (!buscarAcompanhamento || !proprio.aberta) return false;
+    const atual = acompanhamentoAtual(area);
+    if (atual) return typeof atual.reaberturas !== "function";
+    return (
+      semAcompanhamento?.linhas === linhas && semAcompanhamento?.area === area
+    );
+  }
+
   function calcular() {
     const { linhas, areaAtual, carregado, erro = "" } = dados.obter();
     const { daArea, acompanhamento, dia } = linhasEnriquecidas();
@@ -373,6 +388,8 @@ export function criarEstadoDaVisaoGeral({
       criticosAtivo: proprio.atalho === "criticos",
       indicadores: indicadoresDaVisaoGeral(filtradas),
       aguardandoVagas: carregado && aguardandoVagas(linhas, areaAtual),
+      semDescontoDasReabertas:
+        carregado && semDescontoDasReabertas(linhas, areaAtual),
     };
   }
 

@@ -216,7 +216,7 @@ describe("o estado não depende mais do DOM legado", () => {
       kpi_contratadas_label: "Rótulo do KPI contratadas",
       kpi_em_selecao_label: "Rótulo do KPI em seleção",
       kpi_ociosas_label: "Rótulo do KPI vagas ociosas",
-      kpi_cadastro_reserva_label: "Rótulo do KPI cadastro reserva",
+      kpi_alem_das_vagas_label: "Rótulo do KPI contratações além das vagas",
       kpi_criticos_label: "Rótulo do KPI críticos",
       kpi_inscritos_label: "Rótulo do KPI inscritos",
       broadcast_type: "Tipo do aviso global",
