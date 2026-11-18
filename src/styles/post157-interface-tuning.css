@@ -12,18 +12,18 @@
  */
 .login-screen {
   /* prettier-ignore */
-  background-color: var(--login-arte-cor, #eef4f8); /* acabamento: permitido(cor) — primeiro paint antes dos tokens (ver tests/piscada-do-login.test.js) */
+  background-color: var(--login-arte-cor, #eef4f8); /* acabamento: permitido(cor) — primeiro paint antes dos tokens (ver tests/casca-sessao-e-interface-na-tela.test.js (bloco piscada-do-login)) */
 }
 
 .login-outer {
   /* prettier-ignore */
-  background: var(--login-panel-color, #ffffff); /* acabamento: permitido(cor) — primeiro paint antes dos tokens (ver tests/piscada-do-login.test.js) */
+  background: var(--login-panel-color, #ffffff); /* acabamento: permitido(cor) — primeiro paint antes dos tokens (ver tests/casca-sessao-e-interface-na-tela.test.js (bloco piscada-do-login)) */
 }
 
 /* Sidebar configurável. A classe de contraste é derivada em JS da cor escolhida. */
 .sidebar {
   /* prettier-ignore */
-  background: var(--sidebar-custom-bg, #ffffff); /* acabamento: permitido(cor) — primeiro paint antes dos tokens (ver tests/piscada-do-login.test.js) */
+  background: var(--sidebar-custom-bg, #ffffff); /* acabamento: permitido(cor) — primeiro paint antes dos tokens (ver tests/casca-sessao-e-interface-na-tela.test.js (bloco piscada-do-login)) */
 }
 
 /* A logo da barra lateral é o próprio <img id="sideLogo">, cujo `src` vem de

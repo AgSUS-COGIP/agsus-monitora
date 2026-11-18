@@ -4,7 +4,7 @@
   Gera tests/fixtures/classificacao/casos-do-motor.json: editais FICTÍCIOS
   (nomes inventados, nenhum dado real) classificados pelo motor da tela
   (src/lib/classificacao/motor.ts) nas quatro listas. O vitest
-  (tests/lib/classificacao-casos-do-motor.test.js) confere que o motor.ts ainda
+  (tests/classificacao.test.js (bloco lib/classificacao-casos-do-motor)) confere que o motor.ts ainda
   dá a mesma saída; o pytest (tests/python/test_classificacao_motor.py), que o
   Python dá a MESMA saída. Mudou o motor de propósito: rode de novo e acerte o
   Python até o pytest passar.

@@ -15,7 +15,7 @@ a dívida: [[css]].
 ## Regras de ouro (leia antes de tocar em CSS)
 
 1. Cor, raio, sombra, espaçamento e z-index vêm de **token** (`var(--…)`). Nenhum hex novo fora de
-   `tokens.css` (`tests/cores-so-por-token.test.js`; exceções em
+   `tokens.css` (`tests/repositorio-e-banco.test.js` (bloco `cores-so-por-token`); exceções em
    `tests/fixtures/cores-literais-permitidas.json`).
 2. Nenhum `!important` novo e nenhum seletor `#id` novo. Se for obrigatório vencer uma regra
    legada, faça e comente a origem.
@@ -24,9 +24,9 @@ a dívida: [[css]].
 5. Confira o estilo computado no navegador (`getComputedStyle(el).prop`), não o arquivo.
 6. Contraste AA: texto ≥ 4,5:1, texto grande e bordas de controle ≥ 3:1, só com os pares do DS
    (3.4). `--brand-accent` é só preenchimento decorativo, nunca cor de texto. Calcule, não estime
-   (`tests/foco-e-borda-dos-campos.test.ts`).
+   (`tests/repositorio-e-banco.test.ts` (bloco `foco-e-borda-dos-campos`)).
 7. Pesos só 400, 500 e 600; nada abaixo de 12px; conteúdo principal com 14px; sentence case
-   (`tests/tipografia-das-telas.test.ts`).
+   (`tests/repositorio-e-banco.test.ts` (bloco `tipografia-das-telas`)).
 8. Anime só `opacity` e `transform`.
 9. Regra do escoteiro: ao mexer num componente, migre para token os valores daquele bloco.
 
@@ -74,9 +74,9 @@ contam; a cor só conta em valor de declaração (seletor `#abc` não), e `borde
 - **Camadas** (`--z-*`, em `app.css`): nada acima de `--z-toast`. A Aya fica em 10042, acima do
   cabeçalho e da barra do celular e abaixo do aviso de parabéns (10045). Quem precisa ficar acima
   da barra lateral usa `--z-overlay` (modal de busca) ou `--z-toast` (link de pular, aviso de
-  conexão, aviso de sessão); `tests/camadas-acima-da-barra.test.js` guarda a ordem.
+  conexão, aviso de sessão); `tests/repositorio-e-banco.test.js` (bloco `camadas-acima-da-barra`) guarda a ordem.
   Apelidos por papel: `--z-dropdown` = `--z-popover`, `--z-modal` = `--z-overlay`,
-  `--z-tooltip` = `--z-toast` + 1. `tests/tokens-do-acabamento.test.ts` guarda a ordem estrita.
+  `--z-tooltip` = `--z-toast` + 1. `tests/repositorio-e-banco.test.ts` (bloco `tokens-do-acabamento`) guarda a ordem estrita.
 - **Divergência com a norma (7.2):** a escala de z-index do projeto não é a da norma (100 a 700).
   Aqui: `--z-sticky` 2, `--z-header` 10010, `--z-sidebar` 10020, `--z-popover` 10040, `--z-overlay`
   20000, `--z-loader` 20025, `--z-toast` 20050. Motivo: o cabeçalho já vive em 10010 e isola o próprio contexto, e os modais
@@ -100,13 +100,13 @@ manual (que seguem na marca e nos botões): `--paleta-floresta`, `-folha`, `-rio
   (`[data-cor-da-area]`, `barra-lateral.css`).
 - **Indicadores e selos** (`src/ui/ui.css`): info no rio, sucesso na folha, alerta no ocre, perigo
   na terracota, destaque na floresta; o indicador ganha um friso de 3px na cor do tom.
-- Contraste calculado sobre `tokens.css` em `tests/paleta-do-rio.test.ts` (≥ 4,5:1 sobre o suave e
+- Contraste calculado sobre `tokens.css` em `tests/repositorio-e-banco.test.ts` (bloco `paleta-do-rio`) (≥ 4,5:1 sobre o suave e
   sobre o card, nos dois temas). Avisos e faixas de estado seguem nos `--state-*`.
 
 ## Séries de gráfico e mapa
 
 `--series-1` … `--series-6` (azul, laranja, ciano, violeta, magenta, oliva; claro e escuro em
-`tokens.css`, fixados por `tests/cores-das-series.test.js`), validadas com a skill `dataviz`
+`tokens.css`, fixados por `tests/repositorio-e-banco.test.js` (bloco `cores-das-series`)), validadas com a skill `dataviz`
 (luminosidade, croma, daltonismo, contraste ≥ 3:1). Além do DS 13:
 
 - ordem fixa, nunca ciclada; a 7ª série vira "Outros";

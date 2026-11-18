@@ -104,7 +104,7 @@ Sem chave (sempre ligadas): `agsus_robo_conferir_disparos` (fecha os pedidos do 
 `agsus_inativar_listas_vencidas`, `agsus_analises_inativar_editais_encerrados` (00:10 de Brasília: edital de análise com o período encerrado fica inativo, 20261111150000), `agsus_analises_limpar_manifesto`, `agsus_cron_limpar_historico` e
 `agsus_alinhar_chaves_da_automacao` (o alinhador, 20261109180000). Fora do banco: os gatilhos do Apps Script das planilhas de
 análises (incremental a cada 20 min) ficam no Google; a Leitura de arquivos só roda pelo Run
-workflow. Os workflows dos robôs só têm `workflow_dispatch` (`tests/workflows-dos-robos.test.js`
+workflow. Os workflows dos robôs só têm `workflow_dispatch` (`tests/editais-cargas-e-paineis.test.js` (bloco `workflows-dos-robos`)
 impede `push` e `schedule`).
 
 ## Agenda das inscrições (robô da Empregare + triagem)
@@ -235,10 +235,10 @@ RPC de escrita: o catálogo muda só por migration.
 **Workflow novo** (numa migration): um `insert into public."TB_ROBO_WORKFLOW"` com os inputs que ele
 aceita e a chave; se uma tarefa do pg_cron o pedir, um `insert into public."TB_TAREFA_AGENDADA"` com a
 chave e o workflow. `FC_DISPARAR_ROBO` não muda. Se o robô também tiver "Rodar agora", ele entra em
-`disparar_robo` (opções da tela) e em `ROBOS_DE_CARGA` — `tests/catalogo-dos-robos-migration.test.ts`
+`disparar_robo` (opções da tela) e em `ROBOS_DE_CARGA` — `tests/editais-cargas-e-paineis.test.ts` (bloco `catalogo-dos-robos-migration`)
 reprova robô da tela ou do `disparar_robo` fora do catálogo.
 
-Os testes desta parte rodam num Postgres de verdade (PGlite, `tests/catalogo-dos-robos-no-banco.test.ts`):
+Os testes desta parte rodam num Postgres de verdade (PGlite, `tests/editais-cargas-e-paineis.test.ts` (bloco `catalogo-dos-robos-no-banco`)):
 o banco de hoje, o banco com a migration e o banco com a migration e o rollback respondem igual a cada
 workflow × origem × entrada. O ensaio faz a mesma comparação no banco de produção, sem pedir nada ao
 GitHub.

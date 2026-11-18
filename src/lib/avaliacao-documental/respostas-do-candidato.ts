@@ -14,7 +14,7 @@
     os questionários — superior, técnico, médio, Motorista —, e a ficha só
     mostra as que existem no do candidato: FC_RESPOSTAS_DA_FICHA e
     respostasDoBloco), o item avisa em vez de ficar em branco.
-  Sem DOM e sem estado. Testes: tests/lib/avaliacao-documental-respostas-do-candidato.test.js.
+  Sem DOM e sem estado. Testes: tests/avaliacao-e-recursos.test.js (bloco lib/avaliacao-documental-respostas-do-candidato).
 */
 import {
   anexosDaColuna,

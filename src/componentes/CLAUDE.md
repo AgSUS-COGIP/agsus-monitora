@@ -19,5 +19,5 @@ Regras daqui:
 - Nada de `createRoot` novo; parte fixa é filha da casca (`src/app/casca/`).
 - Sem `innerHTML`/`dangerouslySetInnerHTML`; `StrictMode` ligado; modal é sempre `<Modal>`.
 - Tudo em TypeScript; nomes em português, arquivo em kebab-case, componente em PascalCase.
-- Teste em `tests/componentes/` (sem JSX, com `act`), modelo `tests/componentes/barra-lateral.test.ts`
+- Teste em `tests/componentes/` (sem JSX, com `act`), modelo `tests/casca-com-modulo-simulado-na-tela.test.ts` (bloco `componentes/barra-lateral`)
   ([[testes]]).

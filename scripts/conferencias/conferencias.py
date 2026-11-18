@@ -125,7 +125,7 @@ def lotes(avisos, tamanho=TAMANHO_DO_LOTE, casos_por_lote=CASOS_POR_LOTE):
 
 
 def conferir(chamar, dias_convocado):
-    """Roda os cinco módulos. Devolve (avisos, conferências que rodaram, conferências que falharam,
+    """Roda os módulos (o de editais só com a leitura dele no banco, 20261118150000). Devolve (avisos, conferências que rodaram, conferências que falharam,
     fichas concluídas com pendência)."""
     contexto = chamar("conferencia_ler_contexto", {}) or {}
     editais = {e["id"]: e for e in contexto.get("editais") or []}
@@ -145,9 +145,15 @@ def conferir(chamar, dias_convocado):
             chamar("conferencia_ler_aprovados", {}) or {}, contexto, acumulador, dias_convocado
         ),
         "cargas": lambda: regras.conferir_cargas(chamar("conferencia_ler_cargas", {}) or {}, acumulador),
+        "editais": lambda: regras.conferir_editais(contexto, acumulador),
     }
     rodadas, falhas = [], []
     for modulo in MODULOS:
+        # Sem o cronograma no contexto, o banco ainda não aceita o módulo editais: um aviso dele
+        # derrubaria o lote da gravação. Fica de fora, sem contar como falha.
+        if modulo == "editais" and not regras.leitura_dos_editais_disponivel(contexto):
+            log.info("Módulo editais pulado: o banco ainda não traz o cronograma no contexto.")
+            continue
         try:
             etapas[modulo]()
             rodadas += do_modulo(modulo)

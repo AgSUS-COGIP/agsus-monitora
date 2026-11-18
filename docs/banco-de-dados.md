@@ -30,7 +30,7 @@ estão em `supabase/migrations-historicas/`, junto com as demais migrations anti
 que seriam perigosas se reaplicadas (tabela `perfis_usuarios`, `search_path` não vazio, nomes
 anteriores à padronização MAD). O que foi decidido para nunca aplicar está em
 `supabase/descartadas/`. `supabase/migrations/` só tem o que se aplica, com timestamp de 14
-dígitos (`tests/migrations-pasta-limpa.test.js`). O processo completo — aplicação manual,
+dígitos (`tests/repositorio-e-banco.test.js` (bloco `migrations-pasta-limpa`)). O processo completo — aplicação manual,
 registro, sem `supabase db push` — está em `docs/biblioteca/banco-e-migrations.md`.
 
 ### 1.1 O registro do que já foi aplicado
@@ -300,7 +300,7 @@ já avaliada não é decidida duas vezes.
 As duas verificações de comportamento precisam **chamar** a função, e chamar é
 escrever. Por isso cada uma corre dentro de uma transação que sempre termina em
 `rollback`, inclusive quando passa. Nenhuma linha muda de estado, e
-`tests/verificadores-de-contrato.test.js` falha se algum `begin` deixar de ter o
+`tests/repositorio-e-banco.test.js` (bloco `verificadores-de-contrato`) falha se algum `begin` deixar de ter o
 seu `rollback`.
 
 ## 5. Conexão ao `db_dataware` corporativo
@@ -721,7 +721,7 @@ O front (`src/modules/catalogo-de-abas.ts`) pede a função junto com as outras
 consultas da entrada e guarda a resposta na cópia da sessão (parte opcional
 `abas`). Sem a função (PostgREST `PGRST202`), com erro ou resposta vazia, usa
 `ABAS_DO_MENU` (`src/lib/navegacao/menu-lateral.ts`), o mesmo catálogo no código — por
-isso o front pode ir antes da migration. `tests/catalogo-de-abas.test.js`
+isso o front pode ir antes da migration. `tests/casca-sessao-e-interface.test.js` (bloco `catalogo-de-abas`)
 confere que o seed é `ABAS_DO_MENU`, que a resposta capturada no ensaio
 (`tests/fixtures/listar-abas-do-menu.json`) é a que o seed produz e que a árvore
 do menu é a de antes em toda combinação de permissão e área.
