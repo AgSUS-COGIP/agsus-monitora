@@ -1,15 +1,15 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-10
+atualizado: 2026-11-18
 ---
 
 # Módulo: Conferências
 
 Avisos diários de inconsistência entre análises, entrevistas, classificação, aprovados e cargas.
 Módulo completo em React e TypeScript em `src/modulos/conferencias/`: estado externo, cartão de
-avisos, selos dos módulos, gaveta, busca de casos, paginação, justificativa para ignorar,
-navegação e CSV. Regras puras em `src/lib/conferencias/avisos-de-conferencia.ts`; contratos em `tipos.ts`.
+avisos, selos dos módulos, gaveta, busca de casos, paginação, a central de avisos
+(tratamento, responsável, prazo, evidência e histórico), navegação e CSV. Regras puras em `src/lib/conferencias/avisos-de-conferencia.ts`; contratos em `tipos.ts`.
 
 As conferências são calculadas por um job Python no GitHub Actions (workflow `conferencias.yml`;
 ver [[python-e-jobs]] e [[robos-e-agenda]]). As histórias de usuário (CF-1 a CF-6) estão em
@@ -21,7 +21,22 @@ ver [[python-e-jobs]] e [[robos-e-agenda]]). As histórias de usuário (CF-1 a C
   - `listar_avisos_conferencia_se_mudou` (com versão, migration `20261015000000`): cada recorte
     lido na página guarda a versão e a releitura sem mudança recebe só `inalterado`;
   - `listar_casos_aviso_conferencia`;
-  - `ignorar_aviso_conferencia`.
+  - da central de avisos (migration `20261118140000`): `tratar_aviso_conferencia`,
+    `atribuir_aviso_conferencia`, `listar_responsaveis_aviso_conferencia`,
+    `incluir_evidencia_aviso_conferencia`, `retirar_evidencia_aviso_conferencia` e
+    `listar_historico_aviso_conferencia`.
+- A central separa o que a conferência acha (`TP_SITUACAO`: aberto ou resolvido) do que a equipe
+  fez (`TP_TRATAMENTO`: pendente, em análise, aguardando documento, corrigido, dispensado com
+  justificativa; "rechecado sem problema" só a conferência põe). Tudo vai para
+  `TH_AVISO_CONFERENCIA`, que só cresce: resolver não apaga o motivo de quem tratou. A evidência
+  (`TB_EVIDENCIA_AVISO_CONFERENCIA`) aponta para o caso pela chave estável (`analise:`, `codigo:`
+  ou `referencia:`), porque o número do caso muda a cada execução.
+- Na tela, os abertos ficam agrupados por edital; dispensados e resolvidos dos últimos 30 dias,
+  recolhidos. Dispensar e atribuir: o gestor do módulo ou o administrador global; tratar e juntar
+  evidência: também o responsável. Prazo vencido só destaca.
+- Módulo `editais` (migration `20261118150000`, recurso `nucleo`): o aviso "Cronograma
+  encerrado, status ainda em andamento", um caso por edital (pelo número), com o selo no topo da
+  tela de Editais. O status não muda sozinho; a equipe marca "Concluído" ou dispensa.
 - O snapshot é lido por `useSyncExternalStore`; respostas antigas não substituem a leitura de
   outra área ou módulo.
 - O CSV lê páginas de 1000 casos, encerra quando não há casos novos e protege as células contra

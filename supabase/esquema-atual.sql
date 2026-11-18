@@ -1886,6 +1886,285 @@ $$;
 
 COMMENT ON FUNCTION private."FC_AVISOS_PARA_A_TELA"(p_avisos jsonb) IS 'listar_avisos_conferencia como a tela recebe: sem chaves nulas e sem exemplos em aviso com casos (20261015000000; separada em 20261029170000).';
 
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: TB_AVISO_CONFERENCIA; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."TB_AVISO_CONFERENCIA" (
+    "CO_AVISO_CONFERENCIA" uuid DEFAULT gen_random_uuid() NOT NULL,
+    "CO_CONFERENCIA" character varying(60) NOT NULL,
+    "DS_ESCOPO" character varying(200) NOT NULL,
+    "TP_GRAVIDADE" character varying(12) NOT NULL,
+    "CO_MODULO" character varying(20) NOT NULL,
+    "CO_AREA" text,
+    "CO_MONITORAMENTO" uuid,
+    "QT_OCORRENCIA" integer NOT NULL,
+    "DS_EXEMPLO" jsonb DEFAULT '[]'::jsonb NOT NULL,
+    "DS_RESUMO" character varying(300) NOT NULL,
+    "TP_SITUACAO" character varying(10) DEFAULT 'ABERTO'::character varying NOT NULL,
+    "DT_PRIMEIRA_VEZ" timestamp with time zone DEFAULT now() NOT NULL,
+    "DT_ULTIMA_VEZ" timestamp with time zone DEFAULT now() NOT NULL,
+    "DT_RESOLUCAO" timestamp with time zone,
+    "CO_EXECUCAO" text NOT NULL,
+    "TP_TRATAMENTO" character varying(25) DEFAULT 'PENDENTE'::character varying NOT NULL,
+    "CO_USUARIO_TRATAMENTO" uuid,
+    "DT_TRATAMENTO" timestamp with time zone,
+    "QT_OCORRENCIA_DISPENSADA" integer,
+    "CO_USUARIO_RESPONSAVEL" uuid,
+    "DT_PRAZO" date,
+    CONSTRAINT "CK_AVISOCONF_COCONFERENCIA" CHECK ((("CO_CONFERENCIA")::text ~ '^[A-Z][A-Z0-9_]{2,59}$'::text)),
+    CONSTRAINT "CK_AVISOCONF_COMODULO" CHECK ((("CO_MODULO")::text = ANY ((ARRAY['analises'::character varying, 'entrevistas'::character varying, 'classificacao'::character varying, 'aprovados'::character varying, 'cargas'::character varying, 'editais'::character varying])::text[]))),
+    CONSTRAINT "CK_AVISOCONF_DSESCOPO" CHECK ((("DS_ESCOPO")::text ~ '^[a-z_]{2,20}:[A-Za-z0-9._:/|-]{1,170}$'::text)),
+    CONSTRAINT "CK_AVISOCONF_DTPRAZO" CHECK ((("DT_PRAZO" IS NULL) OR ("CO_USUARIO_RESPONSAVEL" IS NOT NULL))),
+    CONSTRAINT "CK_AVISOCONF_EXEMPLO" CHECK (((jsonb_typeof("DS_EXEMPLO") = 'array'::text) AND (jsonb_array_length("DS_EXEMPLO") <= 20))),
+    CONSTRAINT "CK_AVISOCONF_QT" CHECK (("QT_OCORRENCIA" >= 1)),
+    CONSTRAINT "CK_AVISOCONF_QTDISPENSADA" CHECK ((((("TP_TRATAMENTO")::text = 'DISPENSADO'::text) = ("QT_OCORRENCIA_DISPENSADA" IS NOT NULL)) AND (COALESCE("QT_OCORRENCIA_DISPENSADA", 1) >= 1))),
+    CONSTRAINT "CK_AVISOCONF_RESOLUCAO" CHECK (((("TP_SITUACAO")::text = 'RESOLVIDO'::text) = ("DT_RESOLUCAO" IS NOT NULL))),
+    CONSTRAINT "CK_AVISOCONF_TPGRAVIDADE" CHECK ((("TP_GRAVIDADE")::text = ANY (ARRAY[('CRITICA'::character varying)::text, ('ATENCAO'::character varying)::text, ('INFORMATIVO'::character varying)::text]))),
+    CONSTRAINT "CK_AVISOCONF_TPSITUACAO" CHECK ((("TP_SITUACAO")::text = ANY ((ARRAY['ABERTO'::character varying, 'RESOLVIDO'::character varying])::text[]))),
+    CONSTRAINT "CK_AVISOCONF_TPTRATAMENTO" CHECK ((("TP_TRATAMENTO")::text = ANY ((ARRAY['PENDENTE'::character varying, 'EM_ANALISE'::character varying, 'AGUARDANDO_DOCUMENTO'::character varying, 'CORRIGIDO'::character varying, 'RECHECADO_SEM_PROBLEMA'::character varying, 'DISPENSADO'::character varying])::text[])))
+);
+
+--
+-- Name: TABLE "TB_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public."TB_AVISO_CONFERENCIA" IS 'Avisos das conferências de consistência (job Python scripts/conferencias/): um por conferência e escopo, com quantidade e exemplos só com ids e códigos.';
+
+--
+-- Name: COLUMN "TB_AVISO_CONFERENCIA"."CO_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."CO_AVISO_CONFERENCIA" IS 'Identificador do aviso.';
+
+--
+-- Name: COLUMN "TB_AVISO_CONFERENCIA"."CO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."CO_CONFERENCIA" IS 'Código da conferência (catálogo em scripts/conferencias/catalogo.py; ex.: ANALISE_APROVADA_ABAIXO_DO_CORTE).';
+
+--
+-- Name: COLUMN "TB_AVISO_CONFERENCIA"."DS_ESCOPO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."DS_ESCOPO" IS 'Onde a conferência achou: edital:<uuid>, area:<área> ou vaga:<código da Empregare>. Com a conferência, identifica o aviso.';
+
+--
+-- Name: COLUMN "TB_AVISO_CONFERENCIA"."TP_GRAVIDADE"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."TP_GRAVIDADE" IS 'CRITICA (resultado errado pode sair), ATENCAO (conferir) ou INFORMATIVO.';
+
+--
+-- Name: COLUMN "TB_AVISO_CONFERENCIA"."CO_MODULO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."CO_MODULO" IS 'Módulo do aviso: analises, entrevistas, classificacao, aprovados ou cargas (o selo de cada tela conta os dele).';
+
+--
+-- Name: COLUMN "TB_AVISO_CONFERENCIA"."CO_AREA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."CO_AREA" IS 'Área (TB_AREA) do edital ou do escopo; nulo = só o administrador global vê.';
+
+--
+-- Name: COLUMN "TB_AVISO_CONFERENCIA"."CO_MONITORAMENTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."CO_MONITORAMENTO" IS 'Edital (TB_MONITORAMENTO_INDIGENA.id); nulo quando o escopo é a área ou a vaga sem edital.';
+
+--
+-- Name: COLUMN "TB_AVISO_CONFERENCIA"."QT_OCORRENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."QT_OCORRENCIA" IS 'Quantos casos a conferência achou na última vez que viu o aviso.';
+
+--
+-- Name: COLUMN "TB_AVISO_CONFERENCIA"."DS_EXEMPLO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."DS_EXEMPLO" IS 'Até 20 exemplos, só ids e códigos (lista json de textos sem espaço, sem @ e sem 11 dígitos seguidos). Nunca nome, CPF ou e-mail.';
+
+--
+-- Name: COLUMN "TB_AVISO_CONFERENCIA"."DS_RESUMO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."DS_RESUMO" IS 'Frase curta montada pelo job a partir do catálogo (contagens e números de edital; sem dado pessoal).';
+
+--
+-- Name: COLUMN "TB_AVISO_CONFERENCIA"."TP_SITUACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."TP_SITUACAO" IS 'O que a conferência acha: ABERTO (achado na última execução) ou RESOLVIDO (não achado). O que a equipe fez fica em TP_TRATAMENTO (20261118140000; o antigo IGNORADO virou DISPENSADO).';
+
+--
+-- Name: COLUMN "TB_AVISO_CONFERENCIA"."DT_PRIMEIRA_VEZ"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."DT_PRIMEIRA_VEZ" IS 'Quando o aviso abriu (de novo, se tinha sido resolvido).';
+
+--
+-- Name: COLUMN "TB_AVISO_CONFERENCIA"."DT_ULTIMA_VEZ"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."DT_ULTIMA_VEZ" IS 'Última execução que achou o caso.';
+
+--
+-- Name: COLUMN "TB_AVISO_CONFERENCIA"."DT_RESOLUCAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."DT_RESOLUCAO" IS 'Quando a conferência deixou de achar (só RESOLVIDO).';
+
+--
+-- Name: COLUMN "TB_AVISO_CONFERENCIA"."CO_EXECUCAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."CO_EXECUCAO" IS 'Última execução (TL_CONFERENCIA) que achou o caso.';
+
+--
+-- Name: COLUMN "TB_AVISO_CONFERENCIA"."TP_TRATAMENTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."TP_TRATAMENTO" IS 'O que a equipe fez: PENDENTE, EM_ANALISE, AGUARDANDO_DOCUMENTO, CORRIGIDO, DISPENSADO (com justificativa) e RECHECADO_SEM_PROBLEMA (só o robô põe, quando deixa de achar). Histórico em TH_AVISO_CONFERENCIA.';
+
+--
+-- Name: COLUMN "TB_AVISO_CONFERENCIA"."CO_USUARIO_TRATAMENTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."CO_USUARIO_TRATAMENTO" IS 'Quem pôs o tratamento atual (auth.users.id); nulo quando foi a conferência.';
+
+--
+-- Name: COLUMN "TB_AVISO_CONFERENCIA"."DT_TRATAMENTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."DT_TRATAMENTO" IS 'Quando o tratamento atual foi posto.';
+
+--
+-- Name: COLUMN "TB_AVISO_CONFERENCIA"."QT_OCORRENCIA_DISPENSADA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."QT_OCORRENCIA_DISPENSADA" IS 'Quantidade quando foi dispensado: o aviso volta a PENDENTE se a conferência achar mais que isso.';
+
+--
+-- Name: COLUMN "TB_AVISO_CONFERENCIA"."CO_USUARIO_RESPONSAVEL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."CO_USUARIO_RESPONSAVEL" IS 'Quem cuida do aviso (auth.users.id; perfil ativo com acesso ao módulo). Também pode tratar e juntar evidência.';
+
+--
+-- Name: COLUMN "TB_AVISO_CONFERENCIA"."DT_PRAZO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."DT_PRAZO" IS 'Prazo para o responsável (data de Brasília); vencido só destaca na tela.';
+
+--
+-- Name: CONSTRAINT "CK_AVISOCONF_COCONFERENCIA" ON "TB_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_AVISOCONF_COCONFERENCIA" ON public."TB_AVISO_CONFERENCIA" IS 'Código em maiúsculas, dígitos e sublinhado.';
+
+--
+-- Name: CONSTRAINT "CK_AVISOCONF_COMODULO" ON "TB_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_AVISOCONF_COMODULO" ON public."TB_AVISO_CONFERENCIA" IS 'Módulos dos avisos; editais desde 20261118150000.';
+
+--
+-- Name: CONSTRAINT "CK_AVISOCONF_DSESCOPO" ON "TB_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_AVISOCONF_DSESCOPO" ON public."TB_AVISO_CONFERENCIA" IS 'Escopo tipo:identificador, sem espaço.';
+
+--
+-- Name: CONSTRAINT "CK_AVISOCONF_DTPRAZO" ON "TB_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_AVISOCONF_DTPRAZO" ON public."TB_AVISO_CONFERENCIA" IS 'Prazo só com responsável.';
+
+--
+-- Name: CONSTRAINT "CK_AVISOCONF_EXEMPLO" ON "TB_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_AVISOCONF_EXEMPLO" ON public."TB_AVISO_CONFERENCIA" IS 'Exemplos em lista json de até 20.';
+
+--
+-- Name: CONSTRAINT "CK_AVISOCONF_QT" ON "TB_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_AVISOCONF_QT" ON public."TB_AVISO_CONFERENCIA" IS 'Pelo menos um caso.';
+
+--
+-- Name: CONSTRAINT "CK_AVISOCONF_QTDISPENSADA" ON "TB_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_AVISOCONF_QTDISPENSADA" ON public."TB_AVISO_CONFERENCIA" IS 'Só o dispensado guarda a quantidade dispensada (1 ou mais).';
+
+--
+-- Name: CONSTRAINT "CK_AVISOCONF_RESOLUCAO" ON "TB_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_AVISOCONF_RESOLUCAO" ON public."TB_AVISO_CONFERENCIA" IS 'Data de resolução só (e sempre) no aviso resolvido.';
+
+--
+-- Name: CONSTRAINT "CK_AVISOCONF_TPGRAVIDADE" ON "TB_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_AVISOCONF_TPGRAVIDADE" ON public."TB_AVISO_CONFERENCIA" IS 'Gravidades válidas.';
+
+--
+-- Name: CONSTRAINT "CK_AVISOCONF_TPSITUACAO" ON "TB_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_AVISOCONF_TPSITUACAO" ON public."TB_AVISO_CONFERENCIA" IS 'ABERTO ou RESOLVIDO (20261118140000).';
+
+--
+-- Name: CONSTRAINT "CK_AVISOCONF_TPTRATAMENTO" ON "TB_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_AVISOCONF_TPTRATAMENTO" ON public."TB_AVISO_CONFERENCIA" IS 'Tratamentos da equipe e o RECHECADO_SEM_PROBLEMA do robô.';
+
+--
+-- Name: FC_AVISO_PARA_AGIR(uuid, boolean); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_AVISO_PARA_AGIR"(p_id uuid, p_gerir boolean) RETURNS public."TB_AVISO_CONFERENCIA"
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+  v_aviso public."TB_AVISO_CONFERENCIA";
+begin
+  if auth.uid() is null then
+    raise exception 'Sessão necessária' using errcode = '42501';
+  end if;
+  select * into v_aviso from public."TB_AVISO_CONFERENCIA" a where a."CO_AVISO_CONFERENCIA" = p_id for update;
+  if v_aviso."CO_AVISO_CONFERENCIA" is null
+     or not private."FC_PODE_VER_AVISO"(v_aviso."CO_MODULO", v_aviso."CO_AREA", v_aviso."CO_MONITORAMENTO") then
+    raise exception 'Aviso não encontrado' using errcode = '22023';
+  end if;
+  if not private."FC_PODE_IGNORAR_AVISO"(v_aviso."CO_MODULO", v_aviso."CO_AREA", v_aviso."CO_MONITORAMENTO")
+     and (p_gerir or v_aviso."CO_USUARIO_RESPONSAVEL" is distinct from auth.uid()) then
+    raise exception '%', case when p_gerir then 'Só o gestor do módulo ou o administrador global faz isso'
+                              else 'Só o gestor do módulo ou o responsável pelo aviso faz isso' end
+      using errcode = '42501';
+  end if;
+  if v_aviso."TP_SITUACAO" <> 'ABERTO' then
+    raise exception 'O aviso já foi resolvido pela conferência' using errcode = '22023';
+  end if;
+  return v_aviso;
+end;
+$$;
+
+--
+-- Name: FUNCTION "FC_AVISO_PARA_AGIR"(p_id uuid, p_gerir boolean); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_AVISO_PARA_AGIR"(p_id uuid, p_gerir boolean) IS 'O aviso aberto que quem chama pode mexer, travado (for update): p_gerir (dispensar, atribuir) exige o gestor do módulo ou o administrador global (FC_PODE_IGNORAR_AVISO); senão, também o responsável. 20261118140000.';
+
 --
 -- Name: FC_BASE_DA_LISTA(uuid); Type: FUNCTION; Schema: private; Owner: -
 --
@@ -2805,6 +3084,8 @@ CREATE FUNCTION private."FC_CONFERENCIA_RECURSO"(p_modulo text) RETURNS text
     when 'entrevistas' then 'entrevistas'
     when 'classificacao' then 'classificacao'
     when 'aprovados' then 'aprovados'
+    -- 20261118150000: os avisos do edital (cronograma × status) seguem quem edita os editais.
+    when 'editais' then 'nucleo'
   end;
 $$;
 
@@ -5109,10 +5390,6 @@ $_$;
 
 COMMENT ON FUNCTION private."FC_EXIGIR_EXECUCAO_CONFERENCIA"(p_execucao text) IS 'Recusa (22023) identificador inválido ou execução de conferências que não está em andamento.';
 
-SET default_tablespace = '';
-
-SET default_table_access_method = heap;
-
 --
 -- Name: TL_PRE_CLASSIFICACAO; Type: TABLE; Schema: public; Owner: -
 --
@@ -6102,7 +6379,7 @@ begin
      using public."TB_AVISO_CONFERENCIA" a
      where a."CO_AVISO_CONFERENCIA" = k."CO_AVISO_CONFERENCIA"
        and a."CO_CONFERENCIA" = p_conferencia
-       and a."TP_SITUACAO" in ('ABERTO', 'IGNORADO')
+       and a."TP_SITUACAO" = 'ABERTO'
        and k."DS_REFERENCIA" = any (select c::text from unnest(p_candidatos) c)
     returning k."CO_AVISO_CONFERENCIA"
   )
@@ -6117,11 +6394,25 @@ begin
                                          where k."CO_AVISO_CONFERENCIA" = a."CO_AVISO_CONFERENCIA")::integer)
    where a."CO_AVISO_CONFERENCIA" = any (v_avisos)
      and exists (select 1 from public."TB_CASO_AVISO_CONFERENCIA" k where k."CO_AVISO_CONFERENCIA" = a."CO_AVISO_CONFERENCIA");
-  update public."TB_AVISO_CONFERENCIA" a
-     set "TP_SITUACAO" = 'RESOLVIDO', "DT_RESOLUCAO" = now(),
-         "CO_USUARIO_IGNORADO" = null, "DT_IGNORADO" = null, "DS_MOTIVO_IGNORADO" = null, "QT_OCORRENCIA_IGNORADA" = null
-   where a."CO_AVISO_CONFERENCIA" = any (v_avisos)
-     and not exists (select 1 from public."TB_CASO_AVISO_CONFERENCIA" k where k."CO_AVISO_CONFERENCIA" = a."CO_AVISO_CONFERENCIA");
+  -- 20261118140000: o aviso sem caso fica resolvido como rechecado sem problema (o dispensado fica), no histórico.
+  with alvo as (
+    select a."CO_AVISO_CONFERENCIA" as id, a."TP_TRATAMENTO" as antes, a."QT_OCORRENCIA" as qt
+      from public."TB_AVISO_CONFERENCIA" a
+     where a."CO_AVISO_CONFERENCIA" = any (v_avisos)
+       and not exists (select 1 from public."TB_CASO_AVISO_CONFERENCIA" k where k."CO_AVISO_CONFERENCIA" = a."CO_AVISO_CONFERENCIA")
+  ),
+  mudou as (
+    update public."TB_AVISO_CONFERENCIA" a
+       set "TP_SITUACAO" = 'RESOLVIDO', "DT_RESOLUCAO" = now(),
+           "TP_TRATAMENTO" = case when x.antes = 'DISPENSADO' then 'DISPENSADO' else 'RECHECADO_SEM_PROBLEMA' end,
+           "DT_TRATAMENTO" = case when x.antes = 'DISPENSADO' then a."DT_TRATAMENTO" else now() end
+      from alvo x
+     where a."CO_AVISO_CONFERENCIA" = x.id
+    returning a."CO_AVISO_CONFERENCIA" as id, a."TP_TRATAMENTO" as depois
+  )
+  insert into public."TH_AVISO_CONFERENCIA" ("CO_AVISO_CONFERENCIA", "TP_EVENTO", "TP_TRATAMENTO_ANTERIOR", "TP_TRATAMENTO", "TP_SITUACAO", "QT_OCORRENCIA", "DS_MOTIVO", "CO_USUARIO")
+  select x.id, 'NAO_ACHADO', x.antes, m.depois, 'RESOLVIDO', x.qt, 'Casos decididos na pendência do edital', auth.uid()
+    from alvo x join mudou m on m.id = x.id;
   return cardinality(v_avisos);
 end;
 $$;
@@ -6130,7 +6421,7 @@ $$;
 -- Name: FUNCTION "FC_FECHAR_CASOS_DO_AVISO"(p_conferencia text, p_candidatos uuid[]); Type: COMMENT; Schema: private; Owner: -
 --
 
-COMMENT ON FUNCTION private."FC_FECHAR_CASOS_DO_AVISO"(p_conferencia text, p_candidatos uuid[]) IS 'Tira dos avisos abertos (ou ignorados) da conferência os casos das linhas decididas na pendência e resolve o aviso que fica sem caso. 20261026190000.';
+COMMENT ON FUNCTION private."FC_FECHAR_CASOS_DO_AVISO"(p_conferencia text, p_candidatos uuid[]) IS 'Tira dos avisos abertos da conferência os casos das linhas decididas na pendência e resolve o aviso que fica sem caso. 20261026190000; histórico e tratamento em 20261118140000.';
 
 --
 -- Name: FC_FECHAR_PENDENCIA(uuid, text, text, jsonb, boolean); Type: FUNCTION; Schema: private; Owner: -
@@ -8880,7 +9171,7 @@ begin
     if v_area is not null and not exists (select 1 from public."TB_AREA" a where a."CO_AREA" = v_area) then
       raise exception 'Área inválida' using errcode = '22023';
     end if;
-    if v_modulo is not null and v_modulo not in ('analises', 'entrevistas', 'classificacao', 'aprovados', 'cargas') then
+    if v_modulo is not null and v_modulo not in ('analises', 'entrevistas', 'classificacao', 'aprovados', 'cargas', 'editais') then
       raise exception 'Módulo inválido' using errcode = '22023';
     end if;
     return private."FC_MARCA_DA_LEITURA"('avisos_conferencia', concat_ws('|', coalesce(v_area, ''), coalesce(v_modulo, '')));
@@ -11163,6 +11454,29 @@ $$;
 --
 
 COMMENT ON FUNCTION private."FC_PODE_PARECER_RECURSO"() IS 'Quem está logado tem o parecer jurídico dos recursos (recursos_parecer = editor)?';
+
+--
+-- Name: FC_PODE_SER_RESPONSAVEL_AVISO(uuid, text); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_PODE_SER_RESPONSAVEL_AVISO"(p_usuario uuid, p_modulo text) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  select p_usuario is not null and exists (
+    select 1 from public."TB_PERFIL_USUARIO" p
+     where p.user_id = p_usuario and p.ativo is true
+       and (private."FC_ADMIN_GLOBAL_ATIVO"(p_usuario)
+            or (private."FC_CONFERENCIA_RECURSO"(p_modulo) is not null
+                and private."FC_NIVEL_EFETIVO"(p.id, p.perfil, private."FC_CONFERENCIA_RECURSO"(p_modulo))
+                      in ('leitor', 'editor', 'admin'))));
+$$;
+
+--
+-- Name: FUNCTION "FC_PODE_SER_RESPONSAVEL_AVISO"(p_usuario uuid, p_modulo text); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_PODE_SER_RESPONSAVEL_AVISO"(p_usuario uuid, p_modulo text) IS 'O usuário (auth.users.id) pode ser responsável por um aviso do módulo? Perfil ativo com acesso ao módulo (leitor ou mais) ou administrador global; cargas, só o administrador global (20261118140000).';
 
 --
 -- Name: FC_PODE_SUBSTITUIR_LISTA(); Type: FUNCTION; Schema: private; Owner: -
@@ -20693,6 +21007,54 @@ $$;
 COMMENT ON FUNCTION public.arquivar_modelo_resposta_recurso(p_modelo_id uuid, p_motivo text) IS 'Arquiva (lógico, com motivo) a versão vigente do modelo: some da escolha, continua nas respostas que o usaram. Exige recursos = admin.';
 
 --
+-- Name: atribuir_aviso_conferencia(uuid, uuid, date); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.atribuir_aviso_conferencia(p_id uuid, p_responsavel uuid, p_prazo date DEFAULT NULL::date) RETURNS json
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+  v_aviso public."TB_AVISO_CONFERENCIA";
+  v_hoje date := (now() at time zone 'America/Sao_Paulo')::date;
+begin
+  v_aviso := private."FC_AVISO_PARA_AGIR"(p_id, true);
+  if p_prazo is not null and p_responsavel is null then
+    raise exception 'Prazo só com responsável' using errcode = '22023';
+  end if;
+  if p_prazo is not null and p_prazo < v_hoje and p_prazo is distinct from v_aviso."DT_PRAZO" then
+    raise exception 'O prazo não pode ser antes de hoje' using errcode = '22023';
+  end if;
+  if p_prazo > v_hoje + 365 then
+    raise exception 'Prazo de até um ano' using errcode = '22023';
+  end if;
+  if p_responsavel is not null and not private."FC_PODE_SER_RESPONSAVEL_AVISO"(p_responsavel, v_aviso."CO_MODULO") then
+    raise exception 'O responsável precisa ter acesso ao módulo do aviso' using errcode = '22023';
+  end if;
+  if p_responsavel is not distinct from v_aviso."CO_USUARIO_RESPONSAVEL" and p_prazo is not distinct from v_aviso."DT_PRAZO" then
+    return json_build_object('id', p_id, 'inalterado', true);
+  end if;
+
+  update public."TB_AVISO_CONFERENCIA" set "CO_USUARIO_RESPONSAVEL" = p_responsavel, "DT_PRAZO" = p_prazo
+   where "CO_AVISO_CONFERENCIA" = p_id;
+  insert into public."TH_AVISO_CONFERENCIA" (
+    "CO_AVISO_CONFERENCIA", "TP_EVENTO", "TP_TRATAMENTO_ANTERIOR", "TP_TRATAMENTO", "TP_SITUACAO", "QT_OCORRENCIA",
+    "CO_USUARIO_RESPONSAVEL", "DT_PRAZO", "CO_USUARIO")
+  values (p_id, 'RESPONSAVEL', v_aviso."TP_TRATAMENTO", v_aviso."TP_TRATAMENTO", 'ABERTO', v_aviso."QT_OCORRENCIA",
+          p_responsavel, p_prazo, auth.uid());
+
+  return json_build_object('id', p_id, 'responsavel_id', p_responsavel,
+                           'responsavel', private."FC_NOME_DO_USUARIO"(p_responsavel), 'prazo', p_prazo);
+end;
+$$;
+
+--
+-- Name: FUNCTION atribuir_aviso_conferencia(p_id uuid, p_responsavel uuid, p_prazo date); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.atribuir_aviso_conferencia(p_id uuid, p_responsavel uuid, p_prazo date) IS 'Põe (ou tira, com nulo) o responsável e o prazo de um aviso aberto (20261118140000): só o gestor do módulo ou o administrador global; o responsável é um perfil ativo com acesso ao módulo (FC_PODE_SER_RESPONSAVEL_AVISO); prazo só com responsável, de hoje a um ano. Grava o histórico.';
+
+--
 -- Name: atualizar_cache_aprovados(text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -22223,7 +22585,15 @@ CREATE FUNCTION public.conferencia_ler_contexto() RETURNS jsonb
     'editais', (
       select coalesce(jsonb_agg(jsonb_build_object(
           'id', m.id, 'numero', private."FC_NUMERO_EDITAL"(m.edital), 'area', m."CO_AREA",
-          'ativo', coalesce(m.ativo, false), 'status', m.status) order by m."CO_AREA", m.edital), '[]'::jsonb)
+          'ativo', coalesce(m.ativo, false), 'status', m.status,
+          -- 20261118150000: o estado do cronograma pelas datas (FC_ESTADO_DO_CRONOGRAMA, no dia de
+          -- Brasília), se o status é manual (status_override) e se é edital de treinamento.
+          'status_manual', nullif(btrim(coalesce(m.status_override, '')), '') is not null,
+          'treinamento', private."FC_EH_TREINAMENTO"(m."ST_TREINAMENTO"),
+          'cronograma', (select jsonb_build_object('status', x ->> 'status', 'tem', x -> 'tem_cronograma',
+                                                   'data_fim', x ->> 'data_fim')
+                           from private."FC_ESTADO_DO_CRONOGRAMA"(m.id, (now() at time zone 'America/Sao_Paulo')::date) x))
+          order by m."CO_AREA", m.edital), '[]'::jsonb)
         from public."TB_MONITORAMENTO_INDIGENA" m
     ),
     'regras', (
@@ -22243,7 +22613,7 @@ $$;
 -- Name: FUNCTION conferencia_ler_contexto(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.conferencia_ler_contexto() IS 'Conferências (job Python): editais (id, número, área, ativo), o dia de hoje em Brasília e a regra de classificação vigente de cada edital (nota mínima documental e teto de experiência, quando a regra tiver). Sem dado pessoal. Só service_role.';
+COMMENT ON FUNCTION public.conferencia_ler_contexto() IS 'Conferências (job Python): editais (id, número, área, ativo, status, se o status é manual, se é treinamento e o estado do cronograma pelas datas: status, se tem cronograma e o fim; 20261118150000), o dia de hoje em Brasília e a regra de classificação vigente de cada edital (nota mínima documental e teto de experiência, quando a regra tiver). Sem dado pessoal. Só service_role.';
 
 --
 -- Name: conferencia_ler_entrevistas(); Type: FUNCTION; Schema: public; Owner: -
@@ -24525,15 +24895,35 @@ begin
   end if;
 
   -- Só conferência que rodou até o fim resolve: a que falhou deixa os avisos como estavam.
+  -- 20261118140000: o tratamento vira "rechecado sem problema" (o dispensado continua dispensado) e o
+  -- histórico guarda o que era; o motivo de quem tratou não se apaga.
   if v_mensagem is null then
-    update public."TB_AVISO_CONFERENCIA" set
-      "TP_SITUACAO" = 'RESOLVIDO', "DT_RESOLUCAO" = now(),
-      "CO_USUARIO_IGNORADO" = null, "DT_IGNORADO" = null, "DS_MOTIVO_IGNORADO" = null, "QT_OCORRENCIA_IGNORADA" = null
-     where "CO_CONFERENCIA" = any (v_conferencias)
-       and not ("CO_CONFERENCIA" = any (v_falhas))
-       and "TP_SITUACAO" in ('ABERTO', 'IGNORADO')
-       and "CO_EXECUCAO" <> p_execucao;
-    get diagnostics v_resolvidos = row_count;
+    with alvo as (
+      select a."CO_AVISO_CONFERENCIA" as id, a."TP_TRATAMENTO" as antes, a."QT_OCORRENCIA" as qt
+        from public."TB_AVISO_CONFERENCIA" a
+       where a."CO_CONFERENCIA" = any (v_conferencias)
+         and not (a."CO_CONFERENCIA" = any (v_falhas))
+         and a."TP_SITUACAO" = 'ABERTO'
+         and a."CO_EXECUCAO" <> p_execucao
+         for update
+    ),
+    mudou as (
+      update public."TB_AVISO_CONFERENCIA" a set
+        "TP_SITUACAO" = 'RESOLVIDO', "DT_RESOLUCAO" = now(),
+        "TP_TRATAMENTO" = case when x.antes = 'DISPENSADO' then 'DISPENSADO' else 'RECHECADO_SEM_PROBLEMA' end,
+        "CO_USUARIO_TRATAMENTO" = case when x.antes = 'DISPENSADO' then a."CO_USUARIO_TRATAMENTO" end,
+        "DT_TRATAMENTO" = case when x.antes = 'DISPENSADO' then a."DT_TRATAMENTO" else now() end
+        from alvo x
+       where a."CO_AVISO_CONFERENCIA" = x.id
+      returning a."CO_AVISO_CONFERENCIA" as id, a."TP_TRATAMENTO" as depois
+    ),
+    historico as (
+      insert into public."TH_AVISO_CONFERENCIA" ("CO_AVISO_CONFERENCIA", "TP_EVENTO", "TP_TRATAMENTO_ANTERIOR", "TP_TRATAMENTO", "TP_SITUACAO", "QT_OCORRENCIA", "CO_EXECUCAO")
+      select x.id, 'NAO_ACHADO', x.antes, m.depois, 'RESOLVIDO', x.qt, p_execucao
+        from alvo x join mudou m on m.id = x.id
+      returning 1
+    )
+    select count(*) into v_resolvidos from historico;
   end if;
 
   select count(*) into v_abertos from public."TB_AVISO_CONFERENCIA" a where a."TP_SITUACAO" = 'ABERTO';
@@ -24558,7 +24948,7 @@ $_$;
 -- Name: FUNCTION finalizar_conferencia(p_execucao text, p_conferencias text[], p_falhas text[], p_erro text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.finalizar_conferencia(p_execucao text, p_conferencias text[], p_falhas text[], p_erro text) IS 'Fecha a execução das conferências: os avisos abertos ou ignorados das conferências que rodaram até o fim e não foram achados de novo viram RESOLVIDO; com p_erro, nada é resolvido e a execução FALHOU; com falhas, PARCIAL. Só service_role.';
+COMMENT ON FUNCTION public.finalizar_conferencia(p_execucao text, p_conferencias text[], p_falhas text[], p_erro text) IS 'Fecha a execução das conferências: os avisos abertos das conferências que rodaram até o fim e não foram achados de novo viram RESOLVIDO, com o tratamento RECHECADO_SEM_PROBLEMA (o DISPENSADO fica) e o evento NAO_ACHADO no histórico (20261118140000); com p_erro, nada é resolvido e a execução FALHOU; com falhas, PARCIAL. Só service_role.';
 
 --
 -- Name: finalizar_pre_classificacao(text, jsonb, text); Type: FUNCTION; Schema: public; Owner: -
@@ -26918,7 +27308,7 @@ begin
     if v_gravidade is null or v_gravidade not in ('CRITICA', 'ATENCAO', 'INFORMATIVO') then
       raise exception 'Gravidade inválida em %', v_conferencia using errcode = '22023';
     end if;
-    if v_modulo is null or v_modulo not in ('analises', 'entrevistas', 'classificacao', 'aprovados', 'cargas') then
+    if v_modulo is null or v_modulo not in ('analises', 'entrevistas', 'classificacao', 'aprovados', 'cargas', 'editais') then
       raise exception 'Módulo inválido em %', v_conferencia using errcode = '22023';
     end if;
     if v_area is not null and not exists (select 1 from public."TB_AREA" a where a."CO_AREA" = v_area) then
@@ -26988,18 +27378,41 @@ begin
         "QT_OCORRENCIA", "DS_EXEMPLO", "DS_RESUMO", "CO_EXECUCAO")
       values (v_conferencia, v_escopo, v_gravidade, v_modulo, v_area, v_edital, v_qt, v_exemplos, v_resumo, p_execucao)
       returning "CO_AVISO_CONFERENCIA" into v_id;
+      insert into public."TH_AVISO_CONFERENCIA" ("CO_AVISO_CONFERENCIA", "TP_EVENTO", "TP_TRATAMENTO_ANTERIOR", "TP_TRATAMENTO", "TP_SITUACAO", "QT_OCORRENCIA", "DS_MOTIVO", "CO_EXECUCAO")
+      values (v_id, 'ACHADO', null, 'PENDENTE', 'ABERTO', v_qt, null, p_execucao);
       v_novos := v_novos + 1;
+    -- 20261118140000: o dispensado volta a pendente se a quantidade passar da dispensada; o resolvido
+    -- reabre; tudo vai para o histórico (TH_AVISO_CONFERENCIA), nada se apaga.
     elsif v_atual."TP_SITUACAO" = 'RESOLVIDO'
-       or (v_atual."TP_SITUACAO" = 'IGNORADO' and v_qt > v_atual."QT_OCORRENCIA_IGNORADA") then
+       or (v_atual."TP_TRATAMENTO" = 'DISPENSADO' and v_qt > v_atual."QT_OCORRENCIA_DISPENSADA") then
       v_id := v_atual."CO_AVISO_CONFERENCIA";
       update public."TB_AVISO_CONFERENCIA" set
         "TP_GRAVIDADE" = v_gravidade, "CO_MODULO" = v_modulo, "CO_AREA" = v_area, "CO_MONITORAMENTO" = v_edital,
         "QT_OCORRENCIA" = v_qt, "DS_EXEMPLO" = v_exemplos, "DS_RESUMO" = v_resumo, "CO_EXECUCAO" = p_execucao,
         "TP_SITUACAO" = 'ABERTO', "DT_ULTIMA_VEZ" = now(), "DT_RESOLUCAO" = null,
         "DT_PRIMEIRA_VEZ" = case when v_atual."TP_SITUACAO" = 'RESOLVIDO' then now() else "DT_PRIMEIRA_VEZ" end,
-        "CO_USUARIO_IGNORADO" = null, "DT_IGNORADO" = null, "DS_MOTIVO_IGNORADO" = null, "QT_OCORRENCIA_IGNORADA" = null
+        "TP_TRATAMENTO" = 'PENDENTE', "QT_OCORRENCIA_DISPENSADA" = null,
+        "CO_USUARIO_TRATAMENTO" = null, "DT_TRATAMENTO" = now()
        where "CO_AVISO_CONFERENCIA" = v_id;
+      insert into public."TH_AVISO_CONFERENCIA" ("CO_AVISO_CONFERENCIA", "TP_EVENTO", "TP_TRATAMENTO_ANTERIOR", "TP_TRATAMENTO", "TP_SITUACAO", "QT_OCORRENCIA", "DS_MOTIVO", "CO_EXECUCAO")
+      values (v_id, 'REABERTO', v_atual."TP_TRATAMENTO", 'PENDENTE', 'ABERTO', v_qt,
+              case when v_atual."TP_SITUACAO" = 'RESOLVIDO' then 'Achado de novo depois de resolvido'
+                   else 'A quantidade passou da dispensada (' || v_atual."QT_OCORRENCIA_DISPENSADA" || ')' end,
+              p_execucao);
       v_reabertos := v_reabertos + 1;
+    elsif v_atual."TP_TRATAMENTO" = 'CORRIGIDO'
+          and v_atual."DT_TRATAMENTO" < (select c."DT_INICIO" from public."TL_CONFERENCIA" c where c."CO_EXECUCAO" = p_execucao) then
+      -- Marcado como corrigido antes desta execução, e ela ainda acha: volta para análise.
+      v_id := v_atual."CO_AVISO_CONFERENCIA";
+      update public."TB_AVISO_CONFERENCIA" set
+        "TP_GRAVIDADE" = v_gravidade, "CO_MODULO" = v_modulo, "CO_AREA" = v_area, "CO_MONITORAMENTO" = v_edital,
+        "QT_OCORRENCIA" = v_qt, "DS_EXEMPLO" = v_exemplos, "DS_RESUMO" = v_resumo, "CO_EXECUCAO" = p_execucao,
+        "DT_ULTIMA_VEZ" = now(), "TP_TRATAMENTO" = 'EM_ANALISE', "CO_USUARIO_TRATAMENTO" = null, "DT_TRATAMENTO" = now()
+       where "CO_AVISO_CONFERENCIA" = v_id;
+      insert into public."TH_AVISO_CONFERENCIA" ("CO_AVISO_CONFERENCIA", "TP_EVENTO", "TP_TRATAMENTO_ANTERIOR", "TP_TRATAMENTO", "TP_SITUACAO", "QT_OCORRENCIA", "DS_MOTIVO", "CO_EXECUCAO")
+      values (v_id, 'RECHECADO_COM_PROBLEMA', 'CORRIGIDO', 'EM_ANALISE', 'ABERTO', v_qt,
+              'Marcado como corrigido, mas a conferência ainda acha o problema', p_execucao);
+      v_mantidos := v_mantidos + 1;
     else
       v_id := v_atual."CO_AVISO_CONFERENCIA";
       update public."TB_AVISO_CONFERENCIA" set
@@ -27033,7 +27446,7 @@ $_$;
 -- Name: FUNCTION gravar_avisos_conferencia(p_execucao text, p_avisos jsonb); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.gravar_avisos_conferencia(p_execucao text, p_avisos jsonb) IS 'Grava até 1000 avisos de uma execução (um por conferência + escopo): novo abre; resolvido reabre; ignorado reabre só se a quantidade passou da ignorada; aberto atualiza quantidade e exemplos. Com ''casos'' (até 5000: análise, código do candidato, referência, tipo da referência e o detalhe que motivou), troca os casos do aviso. Recusa (22023) exemplo ou caso que não seja id ou código (espaço, @, 11 dígitos), tipo desconhecido e resumo com cara de dado pessoal. Só service_role.';
+COMMENT ON FUNCTION public.gravar_avisos_conferencia(p_execucao text, p_avisos jsonb) IS 'Grava até 1000 avisos de uma execução (um por conferência + escopo): novo abre; resolvido reabre; dispensado volta a pendente só se a quantidade passou da dispensada; corrigido antes da execução e achado de novo volta para em análise; aberto atualiza quantidade e exemplos. Cada mudança vai para TH_AVISO_CONFERENCIA (20261118140000). Com ''casos'' (até 5000: análise, código do candidato, referência, tipo da referência e o detalhe que motivou), troca os casos do aviso. Recusa (22023) exemplo ou caso que não seja id ou código (espaço, @, 11 dígitos), tipo desconhecido e resumo com cara de dado pessoal. Só service_role.';
 
 --
 -- Name: gravar_casamento_da_lista(text, uuid, jsonb, text); Type: FUNCTION; Schema: public; Owner: -
@@ -28155,51 +28568,6 @@ $$;
 COMMENT ON FUNCTION public.gravar_vinculo_do_quadro(p_edital uuid, p_vaga text, p_acao text, p_quadro uuid) IS 'A equipe decide o vínculo de uma vaga com o quadro: CONFIRMAR (p_quadro, linha vigente do edital), SEM_LINHA (a vaga não tem linha; o aviso some) ou AUTOMATICO (devolve à regra). Vira MANUAL, com histórico. Núcleo ou Calendário (editor) e o edital. Devolve obter_quadro_de_vagas. 20261118120000.';
 
 --
--- Name: ignorar_aviso_conferencia(uuid, text); Type: FUNCTION; Schema: public; Owner: -
---
-
-CREATE FUNCTION public.ignorar_aviso_conferencia(p_id uuid, p_motivo text) RETURNS json
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO ''
-    AS $$
-declare
-  v_aviso public."TB_AVISO_CONFERENCIA";
-  v_motivo text := btrim(coalesce(p_motivo, ''));
-begin
-  if auth.uid() is null then
-    raise exception 'Sessão necessária' using errcode = '42501';
-  end if;
-  if length(v_motivo) not between 10 and 500 then
-    raise exception 'Escreva o motivo (10 a 500 caracteres)' using errcode = '22023';
-  end if;
-  select * into v_aviso from public."TB_AVISO_CONFERENCIA" a where a."CO_AVISO_CONFERENCIA" = p_id for update;
-  if v_aviso."CO_AVISO_CONFERENCIA" is null
-     or not private."FC_PODE_VER_AVISO"(v_aviso."CO_MODULO", v_aviso."CO_AREA", v_aviso."CO_MONITORAMENTO") then
-    raise exception 'Aviso não encontrado' using errcode = '22023';
-  end if;
-  if not private."FC_PODE_IGNORAR_AVISO"(v_aviso."CO_MODULO", v_aviso."CO_AREA", v_aviso."CO_MONITORAMENTO") then
-    raise exception 'Só o gestor do módulo ou o administrador global ignora avisos' using errcode = '42501';
-  end if;
-  if v_aviso."TP_SITUACAO" <> 'ABERTO' then
-    raise exception 'Só aviso aberto pode ser ignorado' using errcode = '22023';
-  end if;
-
-  update public."TB_AVISO_CONFERENCIA" set
-    "TP_SITUACAO" = 'IGNORADO', "CO_USUARIO_IGNORADO" = auth.uid(), "DT_IGNORADO" = now(),
-    "DS_MOTIVO_IGNORADO" = v_motivo, "QT_OCORRENCIA_IGNORADA" = "QT_OCORRENCIA"
-   where "CO_AVISO_CONFERENCIA" = p_id;
-
-  return json_build_object('id', p_id, 'situacao', 'IGNORADO', 'ignorado_em', now());
-end;
-$$;
-
---
--- Name: FUNCTION ignorar_aviso_conferencia(p_id uuid, p_motivo text); Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON FUNCTION public.ignorar_aviso_conferencia(p_id uuid, p_motivo text) IS 'Ignora um aviso de conferência aberto, com motivo (10 a 500 caracteres): administrador global ou quem vê o aviso e administra o módulo (classificação: editor). O aviso volta a ABERTO se a quantidade crescer.';
-
---
 -- Name: importar_avaliacao_da_planilha(uuid, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -28218,6 +28586,66 @@ $$;
 --
 
 COMMENT ON FUNCTION public.importar_avaliacao_da_planilha(p_edital uuid, p_motivo text) IS 'A coordenação da avaliação do edital (gestor, coordenador da equipe ou admin global; 42501) importa os resultados da planilha como fichas concluídas e passa a avaliação para o sistema, com motivo de 10 a 2.000 (FC_IMPORTAR_AVALIACAO_DA_PLANILHA). Recusa (23514) se a prévia aponta problema.';
+
+--
+-- Name: incluir_evidencia_aviso_conferencia(uuid, text, text, text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.incluir_evidencia_aviso_conferencia(p_id uuid, p_tipo text, p_descricao text, p_url text DEFAULT NULL::text, p_chave_caso text DEFAULT NULL::text) RETURNS json
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $_$
+declare
+  v_aviso public."TB_AVISO_CONFERENCIA";
+  v_tipo text := upper(btrim(coalesce(p_tipo, '')));
+  v_descricao text := btrim(coalesce(p_descricao, ''));
+  v_url text := nullif(btrim(coalesce(p_url, '')), '');
+  v_chave text := nullif(btrim(coalesce(p_chave_caso, '')), '');
+  v_id uuid;
+begin
+  v_aviso := private."FC_AVISO_PARA_AGIR"(p_id, false);
+  if v_tipo not in ('SEI', 'LINK', 'NOTA') then
+    raise exception 'Tipo de evidência inválido' using errcode = '22023';
+  end if;
+  if length(v_descricao) not between 3 and 500 or not private."FC_TEXTO_SEGURO_DO_AVISO"(v_descricao) then
+    raise exception 'Descreva a evidência (3 a 500 caracteres, sem CPF nem e-mail)' using errcode = '22023';
+  end if;
+  if v_tipo = 'LINK' and v_url is null then
+    raise exception 'Informe o link' using errcode = '22023';
+  end if;
+  if v_url is not null and (v_url !~ '^https://[^\s]+$' or length(v_url) > 500) then
+    raise exception 'O link precisa começar com https://' using errcode = '22023';
+  end if;
+  if v_chave is not null and (
+       v_chave !~ '^(analise|codigo|referencia):[A-Za-z0-9._:/-]{1,90}$'
+       or not exists (
+         select 1 from public."TB_CASO_AVISO_CONFERENCIA" k
+          where k."CO_AVISO_CONFERENCIA" = p_id
+            and case split_part(v_chave, ':', 1)
+                  when 'analise' then k."CO_ANALISE_CURRICULAR"::text = substr(v_chave, 9)
+                  when 'codigo' then k."CO_CANDIDATO_EMPREGARE" = substr(v_chave, 8)
+                  else k."DS_REFERENCIA" = substr(v_chave, 12) end)) then
+    raise exception 'Caso não encontrado no aviso' using errcode = '22023';
+  end if;
+
+  insert into public."TB_EVIDENCIA_AVISO_CONFERENCIA" (
+    "CO_AVISO_CONFERENCIA", "DS_CHAVE_CASO", "TP_EVIDENCIA", "DS_EVIDENCIA", "DS_URL", "CO_USUARIO")
+  values (p_id, v_chave, v_tipo, v_descricao, v_url, auth.uid())
+  returning "CO_EVIDENCIA_AVISO" into v_id;
+  insert into public."TH_AVISO_CONFERENCIA" (
+    "CO_AVISO_CONFERENCIA", "TP_EVENTO", "TP_TRATAMENTO_ANTERIOR", "TP_TRATAMENTO", "TP_SITUACAO", "QT_OCORRENCIA",
+    "CO_EVIDENCIA_AVISO", "CO_USUARIO")
+  values (p_id, 'EVIDENCIA_INCLUIDA', v_aviso."TP_TRATAMENTO", v_aviso."TP_TRATAMENTO", 'ABERTO', v_aviso."QT_OCORRENCIA",
+          v_id, auth.uid());
+  return json_build_object('id', v_id);
+end;
+$_$;
+
+--
+-- Name: FUNCTION incluir_evidencia_aviso_conferencia(p_id uuid, p_tipo text, p_descricao text, p_url text, p_chave_caso text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.incluir_evidencia_aviso_conferencia(p_id uuid, p_tipo text, p_descricao text, p_url text, p_chave_caso text) IS 'Junta uma evidência a um aviso aberto (20261118140000): SEI, LINK (https obrigatório) ou NOTA, com descrição de 3 a 500 sem CPF nem e-mail, do aviso ou de um caso dele (analise:, codigo: ou referencia:). O gestor do módulo ou o responsável. Grava o histórico.';
 
 --
 -- Name: incluir_no_lote_por_decisao(uuid, text[], text, text); Type: FUNCTION; Schema: public; Owner: -
@@ -29661,7 +30089,7 @@ begin
   if v_area is not null and not exists (select 1 from public."TB_AREA" a where a."CO_AREA" = v_area) then
     raise exception 'Área inválida' using errcode = '22023';
   end if;
-  if v_modulo is not null and v_modulo not in ('analises', 'entrevistas', 'classificacao', 'aprovados', 'cargas') then
+  if v_modulo is not null and v_modulo not in ('analises', 'entrevistas', 'classificacao', 'aprovados', 'cargas', 'editais') then
     raise exception 'Módulo inválido' using errcode = '22023';
   end if;
 
@@ -29691,16 +30119,31 @@ begin
           'situacao', a."TP_SITUACAO",
           'primeira_vez', a."DT_PRIMEIRA_VEZ",
           'ultima_vez', a."DT_ULTIMA_VEZ",
-          'ignorado_em', a."DT_IGNORADO",
-          'motivo', a."DS_MOTIVO_IGNORADO",
-          'pode_ignorar', a."TP_SITUACAO" = 'ABERTO'
-                          and private."FC_PODE_IGNORAR_AVISO"(a."CO_MODULO", a."CO_AREA", a."CO_MONITORAMENTO")
+          'resolvido_em', a."DT_RESOLUCAO",
+          -- 20261118140000: o tratamento da equipe, o último motivo, responsável, prazo e evidências.
+          'tratamento', a."TP_TRATAMENTO",
+          'tratado_em', a."DT_TRATAMENTO",
+          'tratado_por', private."FC_NOME_DO_USUARIO"(a."CO_USUARIO_TRATAMENTO"),
+          'motivo', (select h."DS_MOTIVO" from public."TH_AVISO_CONFERENCIA" h
+                      where h."CO_AVISO_CONFERENCIA" = a."CO_AVISO_CONFERENCIA"
+                        and h."TP_EVENTO" in ('TRATAMENTO', 'REABERTO', 'RECHECADO_COM_PROBLEMA', 'MIGRADO')
+                      order by h."CO_EVENTO" desc limit 1),
+          'responsavel_id', a."CO_USUARIO_RESPONSAVEL",
+          'responsavel', private."FC_NOME_DO_USUARIO"(a."CO_USUARIO_RESPONSAVEL"),
+          'prazo', a."DT_PRAZO",
+          'evidencias', (select count(*) from public."TB_EVIDENCIA_AVISO_CONFERENCIA" e
+                          where e."CO_AVISO_CONFERENCIA" = a."CO_AVISO_CONFERENCIA" and e."ST_REGISTRO_ATIVO" = 'S'),
+          'pode_gerir', a."TP_SITUACAO" = 'ABERTO'
+                        and private."FC_PODE_IGNORAR_AVISO"(a."CO_MODULO", a."CO_AREA", a."CO_MONITORAMENTO"),
+          'pode_tratar', a."TP_SITUACAO" = 'ABERTO'
+                         and (a."CO_USUARIO_RESPONSAVEL" = auth.uid()
+                              or private."FC_PODE_IGNORAR_AVISO"(a."CO_MODULO", a."CO_AREA", a."CO_MONITORAMENTO"))
         ) order by case a."TP_SITUACAO" when 'ABERTO' then 0 else 1 end,
                    case a."TP_GRAVIDADE" when 'CRITICA' then 0 when 'ATENCAO' then 1 else 2 end,
                    a."DT_PRIMEIRA_VEZ"), '[]'::json)
         from public."TB_AVISO_CONFERENCIA" a
         left join public."TB_MONITORAMENTO_INDIGENA" m on m.id = a."CO_MONITORAMENTO"
-       where a."TP_SITUACAO" in ('ABERTO', 'IGNORADO')
+       where (a."TP_SITUACAO" = 'ABERTO' or a."DT_RESOLUCAO" >= now() - interval '30 days')
          and (v_area is null or a."CO_AREA" = v_area)
          and (v_modulo is null or a."CO_MODULO" = v_modulo)
          and private."FC_PODE_VER_AVISO"(a."CO_MODULO", a."CO_AREA", a."CO_MONITORAMENTO")
@@ -29713,7 +30156,7 @@ $$;
 -- Name: FUNCTION listar_avisos_conferencia(p_area text, p_modulo text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.listar_avisos_conferencia(p_area text, p_modulo text) IS 'Avisos de conferência abertos e ignorados (json) que quem chama pode ver: o módulo (leitor), a área e o edital no recorte; cargas e avisos sem área, só o administrador global. Filtra por área e módulo (opcionais). pode_ignorar diz se a pessoa pode ignorar cada aviso aberto.';
+COMMENT ON FUNCTION public.listar_avisos_conferencia(p_area text, p_modulo text) IS 'Avisos de conferência abertos e os resolvidos nos últimos 30 dias (json) que quem chama pode ver: o módulo (leitor), a área e o edital no recorte; cargas e avisos sem área, só o administrador global. Filtra por área e módulo (opcionais). Com o tratamento da equipe, o último motivo, responsável, prazo e quantas evidências (20261118140000); pode_gerir (dispensar, atribuir) e pode_tratar (o gestor ou o responsável).';
 
 --
 -- Name: listar_avisos_conferencia_se_mudou(text, text, text); Type: FUNCTION; Schema: public; Owner: -
@@ -30077,7 +30520,7 @@ begin
   if v_area is not null and not exists (select 1 from public."TB_AREA" a where a."CO_AREA" = v_area) then
     raise exception 'Área inválida' using errcode = '22023';
   end if;
-  if v_modulo is not null and v_modulo not in ('analises', 'entrevistas', 'classificacao', 'aprovados', 'cargas') then
+  if v_modulo is not null and v_modulo not in ('analises', 'entrevistas', 'classificacao', 'aprovados', 'cargas', 'editais') then
     raise exception 'Módulo inválido' using errcode = '22023';
   end if;
   if p_aviso is null and v_busca is null then
@@ -30086,7 +30529,6 @@ begin
   if p_aviso is not null and not exists (
        select 1 from public."TB_AVISO_CONFERENCIA" a
         where a."CO_AVISO_CONFERENCIA" = p_aviso
-          and a."TP_SITUACAO" in ('ABERTO', 'IGNORADO')
           and private."FC_PODE_VER_AVISO"(a."CO_MODULO", a."CO_AREA", a."CO_MONITORAMENTO")) then
     raise exception 'Aviso não encontrado' using errcode = '22023';
   end if;
@@ -30095,7 +30537,8 @@ begin
     select a."CO_AVISO_CONFERENCIA" as id, a."CO_CONFERENCIA" as conferencia, a."CO_MODULO" as modulo,
            a."CO_AREA" as area, a."CO_MONITORAMENTO" as edital
       from public."TB_AVISO_CONFERENCIA" a
-     where a."TP_SITUACAO" in ('ABERTO', 'IGNORADO')
+     -- 20261118140000: os casos do aviso resolvido também se abrem (pelo id); a busca, só nos abertos.
+     where (a."TP_SITUACAO" = 'ABERTO' or a."CO_AVISO_CONFERENCIA" = p_aviso)
        and (p_aviso is null or a."CO_AVISO_CONFERENCIA" = p_aviso)
        and (v_area is null or a."CO_AREA" = v_area)
        and (v_modulo is null or a."CO_MODULO" = v_modulo)
@@ -30898,6 +31341,59 @@ $$;
 --
 
 COMMENT ON FUNCTION public.listar_fontes_do_painel(p_area text, p_relatorio text) IS 'Painéis › Fontes dos dados (jsonb): para a área e o relatório, cada coluna editável com o padrão, a fonte escolhida e as opções do schema painel, o histórico recente e se quem pede pode editar. Recurso paineis_dados ≥ Leitor e acesso à área.';
+
+--
+-- Name: listar_historico_aviso_conferencia(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.listar_historico_aviso_conferencia(p_id uuid) RETURNS json
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+  v_aviso public."TB_AVISO_CONFERENCIA";
+begin
+  if auth.uid() is null then
+    raise exception 'Sessão necessária' using errcode = '42501';
+  end if;
+  select * into v_aviso from public."TB_AVISO_CONFERENCIA" a where a."CO_AVISO_CONFERENCIA" = p_id;
+  if v_aviso."CO_AVISO_CONFERENCIA" is null
+     or not private."FC_PODE_VER_AVISO"(v_aviso."CO_MODULO", v_aviso."CO_AREA", v_aviso."CO_MONITORAMENTO") then
+    raise exception 'Aviso não encontrado' using errcode = '22023';
+  end if;
+  return json_build_object(
+    'schema_version', 1,
+    'eventos', (
+      select coalesce(json_agg(json_build_object(
+          'id', h."CO_EVENTO", 'evento', h."TP_EVENTO",
+          'tratamento_anterior', h."TP_TRATAMENTO_ANTERIOR", 'tratamento', h."TP_TRATAMENTO",
+          'situacao', h."TP_SITUACAO", 'quantidade', h."QT_OCORRENCIA", 'motivo', h."DS_MOTIVO",
+          'responsavel', private."FC_NOME_DO_USUARIO"(h."CO_USUARIO_RESPONSAVEL"), 'prazo', h."DT_PRAZO",
+          'evidencia', h."CO_EVIDENCIA_AVISO",
+          'por', case when h."CO_USUARIO" is null then null else private."FC_NOME_DO_USUARIO"(h."CO_USUARIO") end,
+          'robo', h."CO_EXECUCAO" is not null,
+          'em', h."DT_EVENTO") order by h."CO_EVENTO" desc), '[]'::json)
+        from public."TH_AVISO_CONFERENCIA" h
+       where h."CO_AVISO_CONFERENCIA" = p_id
+    ),
+    'evidencias', (
+      select coalesce(json_agg(json_build_object(
+          'id', e."CO_EVIDENCIA_AVISO", 'tipo', e."TP_EVIDENCIA", 'descricao', e."DS_EVIDENCIA", 'url', e."DS_URL",
+          'caso', e."DS_CHAVE_CASO", 'ativa', e."ST_REGISTRO_ATIVO" = 'S',
+          'por', private."FC_NOME_DO_USUARIO"(e."CO_USUARIO"), 'em', e."DT_CRIACAO",
+          'retirada_em', e."DT_RETIRADA") order by e."DT_CRIACAO" desc), '[]'::json)
+        from public."TB_EVIDENCIA_AVISO_CONFERENCIA" e
+       where e."CO_AVISO_CONFERENCIA" = p_id
+    )
+  );
+end;
+$$;
+
+--
+-- Name: FUNCTION listar_historico_aviso_conferencia(p_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.listar_historico_aviso_conferencia(p_id uuid) IS 'O histórico de um aviso de conferência (20261118140000): os eventos (achado, reaberto, tratamento, responsável e prazo, evidência, rechecagem), do mais novo ao mais velho, com motivo, quem (ou a conferência) e quando, e as evidências (ativas e retiradas). Quem vê o aviso.';
 
 --
 -- Name: listar_historico_coordenada_mapa_projetos(text, integer); Type: FUNCTION; Schema: public; Owner: -
@@ -32162,6 +32658,45 @@ $$;
 --
 
 COMMENT ON FUNCTION public.listar_relatorio_de_motivos(p_edital uuid, p_filtros jsonb) IS 'Relatório de motivos da avaliação documental (20261020120000): fichas do edital filtradas por bloco da regra, situação do bloco, motivo (OUTRO = Outro motivo), justificativa de nota, resultado, situação da ficha, vaga, avaliador e período de conclusão (p_filtros jsonb). Só as colunas do relatório: código e nome do candidato (sem CPF, e-mail ou telefone), vaga, cargo, lotação, situação, resultado, nota final, quem concluiu e quando, e os blocos reduzidos a situação, motivos, motivo_livre, justificativas e nota_ajustada. Páginas de até 500 pela chave da ficha (apos = proximo da anterior); total e avaliadores na primeira página. Só administrador e coordenação do edital (FC_PAPEL_AVALIACAO = COORDENADOR; 42501). Não grava nada.';
+
+--
+-- Name: listar_responsaveis_aviso_conferencia(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.listar_responsaveis_aviso_conferencia(p_id uuid) RETURNS json
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+  v_aviso public."TB_AVISO_CONFERENCIA";
+begin
+  if auth.uid() is null then
+    raise exception 'Sessão necessária' using errcode = '42501';
+  end if;
+  select * into v_aviso from public."TB_AVISO_CONFERENCIA" a where a."CO_AVISO_CONFERENCIA" = p_id;
+  if v_aviso."CO_AVISO_CONFERENCIA" is null
+     or not private."FC_PODE_VER_AVISO"(v_aviso."CO_MODULO", v_aviso."CO_AREA", v_aviso."CO_MONITORAMENTO") then
+    raise exception 'Aviso não encontrado' using errcode = '22023';
+  end if;
+  if not private."FC_PODE_IGNORAR_AVISO"(v_aviso."CO_MODULO", v_aviso."CO_AREA", v_aviso."CO_MONITORAMENTO") then
+    raise exception 'Só o gestor do módulo ou o administrador global atribui o aviso' using errcode = '42501';
+  end if;
+  return (
+    select coalesce(json_agg(json_build_object('id', x.user_id, 'nome', x.nome) order by lower(x.nome)), '[]'::json)
+      from (select distinct on (p.user_id) p.user_id, coalesce(nullif(btrim(p.nome), ''), p.email) as nome
+              from public."TB_PERFIL_USUARIO" p
+             where p.user_id is not null and p.ativo is true
+               and private."FC_PODE_SER_RESPONSAVEL_AVISO"(p.user_id, v_aviso."CO_MODULO")
+             order by p.user_id) x
+  );
+end;
+$$;
+
+--
+-- Name: FUNCTION listar_responsaveis_aviso_conferencia(p_id uuid); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.listar_responsaveis_aviso_conferencia(p_id uuid) IS 'Quem pode ser responsável por um aviso (20261118140000): perfis ativos com acesso ao módulo, com id (auth.users.id) e nome. Só o gestor do módulo ou o administrador global.';
 
 --
 -- Name: listar_resumos_pergunta_pendentes(text[], boolean); Type: FUNCTION; Schema: public; Owner: -
@@ -39927,6 +40462,50 @@ end;
 $$;
 
 --
+-- Name: retirar_evidencia_aviso_conferencia(uuid, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.retirar_evidencia_aviso_conferencia(p_evidencia uuid, p_motivo text) RETURNS json
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+  v_evidencia public."TB_EVIDENCIA_AVISO_CONFERENCIA";
+  v_aviso public."TB_AVISO_CONFERENCIA";
+  v_motivo text := btrim(coalesce(p_motivo, ''));
+begin
+  if auth.uid() is null then
+    raise exception 'Sessão necessária' using errcode = '42501';
+  end if;
+  select * into v_evidencia from public."TB_EVIDENCIA_AVISO_CONFERENCIA" e
+   where e."CO_EVIDENCIA_AVISO" = p_evidencia and e."ST_REGISTRO_ATIVO" = 'S';
+  if v_evidencia."CO_EVIDENCIA_AVISO" is null then
+    raise exception 'Evidência não encontrada' using errcode = '22023';
+  end if;
+  v_aviso := private."FC_AVISO_PARA_AGIR"(v_evidencia."CO_AVISO_CONFERENCIA", false);
+  if length(v_motivo) not between 3 and 500 or not private."FC_TEXTO_SEGURO_DO_AVISO"(v_motivo) then
+    raise exception 'Escreva o motivo (3 a 500 caracteres, sem CPF nem e-mail)' using errcode = '22023';
+  end if;
+
+  update public."TB_EVIDENCIA_AVISO_CONFERENCIA" set
+    "ST_REGISTRO_ATIVO" = 'N', "CO_USUARIO_RETIRADA" = auth.uid(), "DT_RETIRADA" = now()
+   where "CO_EVIDENCIA_AVISO" = p_evidencia;
+  insert into public."TH_AVISO_CONFERENCIA" (
+    "CO_AVISO_CONFERENCIA", "TP_EVENTO", "TP_TRATAMENTO_ANTERIOR", "TP_TRATAMENTO", "TP_SITUACAO", "QT_OCORRENCIA",
+    "DS_MOTIVO", "CO_EVIDENCIA_AVISO", "CO_USUARIO")
+  values (v_aviso."CO_AVISO_CONFERENCIA", 'EVIDENCIA_RETIRADA', v_aviso."TP_TRATAMENTO", v_aviso."TP_TRATAMENTO", 'ABERTO',
+          v_aviso."QT_OCORRENCIA", v_motivo, p_evidencia, auth.uid());
+  return json_build_object('id', p_evidencia, 'retirada', true);
+end;
+$$;
+
+--
+-- Name: FUNCTION retirar_evidencia_aviso_conferencia(p_evidencia uuid, p_motivo text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.retirar_evidencia_aviso_conferencia(p_evidencia uuid, p_motivo text) IS 'Retira (exclusão lógica) uma evidência de um aviso aberto, com motivo de 3 a 500 (20261118140000). O gestor do módulo ou o responsável. Grava o histórico.';
+
+--
 -- Name: revisar_ficha_concluida_com_pendencia(uuid, integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -43788,6 +44367,53 @@ $$;
 --
 
 COMMENT ON FUNCTION public.transicionar_resposta_recurso(p_resposta_id uuid, p_acao text, p_revisao integer, p_comentario text) IS 'Transição da resposta: enviar_revisao, reabrir (com comentário) e marcar_enviada (só com o recurso decidido; marca também a etapa resposta_candidato) por quem edita; aprovar e devolver (com comentário) só com o parecer jurídico (recursos_parecer). Em revisão (ou depois de passar por ela), quem escreveu ou enviou não aprova; aprovar exige o recurso decidido com a situação do modelo. Revisão → 40001. Exige recursos >= editor, a área e a coordenação do edital.';
+
+--
+-- Name: tratar_aviso_conferencia(uuid, text, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.tratar_aviso_conferencia(p_id uuid, p_tratamento text, p_motivo text DEFAULT NULL::text) RETURNS json
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+  v_tratamento text := upper(btrim(coalesce(p_tratamento, '')));
+  v_motivo text := nullif(btrim(coalesce(p_motivo, '')), '');
+  v_aviso public."TB_AVISO_CONFERENCIA";
+begin
+  if v_tratamento not in ('EM_ANALISE', 'AGUARDANDO_DOCUMENTO', 'CORRIGIDO', 'DISPENSADO') then
+    raise exception 'Situação inválida' using errcode = '22023';
+  end if;
+  v_aviso := private."FC_AVISO_PARA_AGIR"(p_id, v_tratamento = 'DISPENSADO');
+  if v_tratamento = 'DISPENSADO' and (v_motivo is null or length(v_motivo) not between 10 and 500) then
+    raise exception 'Escreva a justificativa (10 a 500 caracteres)' using errcode = '22023';
+  end if;
+  if v_tratamento in ('AGUARDANDO_DOCUMENTO', 'CORRIGIDO') and (v_motivo is null or length(v_motivo) < 3) then
+    raise exception 'Escreva o que falta ou o que foi corrigido (3 a 500 caracteres)' using errcode = '22023';
+  end if;
+  if v_motivo is not null and (length(v_motivo) not between 3 and 500 or not private."FC_TEXTO_SEGURO_DO_AVISO"(v_motivo)) then
+    raise exception 'Motivo de 3 a 500 caracteres, sem CPF nem e-mail' using errcode = '22023';
+  end if;
+
+  update public."TB_AVISO_CONFERENCIA" set
+    "TP_TRATAMENTO" = v_tratamento,
+    "QT_OCORRENCIA_DISPENSADA" = case when v_tratamento = 'DISPENSADO' then "QT_OCORRENCIA" end,
+    "CO_USUARIO_TRATAMENTO" = auth.uid(), "DT_TRATAMENTO" = now()
+   where "CO_AVISO_CONFERENCIA" = p_id;
+  insert into public."TH_AVISO_CONFERENCIA" (
+    "CO_AVISO_CONFERENCIA", "TP_EVENTO", "TP_TRATAMENTO_ANTERIOR", "TP_TRATAMENTO", "TP_SITUACAO", "QT_OCORRENCIA",
+    "DS_MOTIVO", "CO_USUARIO")
+  values (p_id, 'TRATAMENTO', v_aviso."TP_TRATAMENTO", v_tratamento, 'ABERTO', v_aviso."QT_OCORRENCIA", v_motivo, auth.uid());
+
+  return json_build_object('id', p_id, 'tratamento', v_tratamento, 'tratado_em', now());
+end;
+$$;
+
+--
+-- Name: FUNCTION tratar_aviso_conferencia(p_id uuid, p_tratamento text, p_motivo text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.tratar_aviso_conferencia(p_id uuid, p_tratamento text, p_motivo text) IS 'Muda o tratamento de um aviso aberto (20261118140000): EM_ANALISE, AGUARDANDO_DOCUMENTO e CORRIGIDO (o gestor do módulo ou o responsável; os dois últimos com motivo), DISPENSADO (só o gestor ou o administrador global, justificativa de 10 a 500). Grava o histórico. O RECHECADO_SEM_PROBLEMA é só da conferência.';
 
 --
 -- Name: usuario_pode_ler_analises(); Type: FUNCTION; Schema: public; Owner: -
@@ -48817,215 +49443,6 @@ COMMENT ON CONSTRAINT "CK_AREA_STATIVO" ON public."TB_AREA" IS 'Flag S/N.';
 COMMENT ON CONSTRAINT "CK_AREA_TPSITUACAO" ON public."TB_AREA" IS 'Situações válidas.';
 
 --
--- Name: TB_AVISO_CONFERENCIA; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public."TB_AVISO_CONFERENCIA" (
-    "CO_AVISO_CONFERENCIA" uuid DEFAULT gen_random_uuid() NOT NULL,
-    "CO_CONFERENCIA" character varying(60) NOT NULL,
-    "DS_ESCOPO" character varying(200) NOT NULL,
-    "TP_GRAVIDADE" character varying(12) NOT NULL,
-    "CO_MODULO" character varying(20) NOT NULL,
-    "CO_AREA" text,
-    "CO_MONITORAMENTO" uuid,
-    "QT_OCORRENCIA" integer NOT NULL,
-    "DS_EXEMPLO" jsonb DEFAULT '[]'::jsonb NOT NULL,
-    "DS_RESUMO" character varying(300) NOT NULL,
-    "TP_SITUACAO" character varying(10) DEFAULT 'ABERTO'::character varying NOT NULL,
-    "DT_PRIMEIRA_VEZ" timestamp with time zone DEFAULT now() NOT NULL,
-    "DT_ULTIMA_VEZ" timestamp with time zone DEFAULT now() NOT NULL,
-    "DT_RESOLUCAO" timestamp with time zone,
-    "CO_USUARIO_IGNORADO" uuid,
-    "DT_IGNORADO" timestamp with time zone,
-    "DS_MOTIVO_IGNORADO" character varying(500),
-    "QT_OCORRENCIA_IGNORADA" integer,
-    "CO_EXECUCAO" text NOT NULL,
-    CONSTRAINT "CK_AVISOCONF_COCONFERENCIA" CHECK ((("CO_CONFERENCIA")::text ~ '^[A-Z][A-Z0-9_]{2,59}$'::text)),
-    CONSTRAINT "CK_AVISOCONF_COMODULO" CHECK ((("CO_MODULO")::text = ANY (ARRAY[('analises'::character varying)::text, ('entrevistas'::character varying)::text, ('classificacao'::character varying)::text, ('aprovados'::character varying)::text, ('cargas'::character varying)::text]))),
-    CONSTRAINT "CK_AVISOCONF_DSESCOPO" CHECK ((("DS_ESCOPO")::text ~ '^[a-z_]{2,20}:[A-Za-z0-9._:/|-]{1,170}$'::text)),
-    CONSTRAINT "CK_AVISOCONF_EXEMPLO" CHECK (((jsonb_typeof("DS_EXEMPLO") = 'array'::text) AND (jsonb_array_length("DS_EXEMPLO") <= 20))),
-    CONSTRAINT "CK_AVISOCONF_IGNORADO" CHECK ((((("TP_SITUACAO")::text = 'IGNORADO'::text) = ("CO_USUARIO_IGNORADO" IS NOT NULL)) AND (("CO_USUARIO_IGNORADO" IS NULL) = ("DT_IGNORADO" IS NULL)) AND (("CO_USUARIO_IGNORADO" IS NULL) = ("DS_MOTIVO_IGNORADO" IS NULL)) AND (("CO_USUARIO_IGNORADO" IS NULL) = ("QT_OCORRENCIA_IGNORADA" IS NULL)))),
-    CONSTRAINT "CK_AVISOCONF_QT" CHECK ((("QT_OCORRENCIA" >= 1) AND (COALESCE("QT_OCORRENCIA_IGNORADA", 1) >= 1))),
-    CONSTRAINT "CK_AVISOCONF_RESOLUCAO" CHECK (((("TP_SITUACAO")::text = 'RESOLVIDO'::text) = ("DT_RESOLUCAO" IS NOT NULL))),
-    CONSTRAINT "CK_AVISOCONF_TPGRAVIDADE" CHECK ((("TP_GRAVIDADE")::text = ANY (ARRAY[('CRITICA'::character varying)::text, ('ATENCAO'::character varying)::text, ('INFORMATIVO'::character varying)::text]))),
-    CONSTRAINT "CK_AVISOCONF_TPSITUACAO" CHECK ((("TP_SITUACAO")::text = ANY (ARRAY[('ABERTO'::character varying)::text, ('RESOLVIDO'::character varying)::text, ('IGNORADO'::character varying)::text])))
-);
-
---
--- Name: TABLE "TB_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON TABLE public."TB_AVISO_CONFERENCIA" IS 'Avisos das conferências de consistência (job Python scripts/conferencias/): um por conferência e escopo, com quantidade e exemplos só com ids e códigos.';
-
---
--- Name: COLUMN "TB_AVISO_CONFERENCIA"."CO_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."CO_AVISO_CONFERENCIA" IS 'Identificador do aviso.';
-
---
--- Name: COLUMN "TB_AVISO_CONFERENCIA"."CO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."CO_CONFERENCIA" IS 'Código da conferência (catálogo em scripts/conferencias/catalogo.py; ex.: ANALISE_APROVADA_ABAIXO_DO_CORTE).';
-
---
--- Name: COLUMN "TB_AVISO_CONFERENCIA"."DS_ESCOPO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."DS_ESCOPO" IS 'Onde a conferência achou: edital:<uuid>, area:<área> ou vaga:<código da Empregare>. Com a conferência, identifica o aviso.';
-
---
--- Name: COLUMN "TB_AVISO_CONFERENCIA"."TP_GRAVIDADE"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."TP_GRAVIDADE" IS 'CRITICA (resultado errado pode sair), ATENCAO (conferir) ou INFORMATIVO.';
-
---
--- Name: COLUMN "TB_AVISO_CONFERENCIA"."CO_MODULO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."CO_MODULO" IS 'Módulo do aviso: analises, entrevistas, classificacao, aprovados ou cargas (o selo de cada tela conta os dele).';
-
---
--- Name: COLUMN "TB_AVISO_CONFERENCIA"."CO_AREA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."CO_AREA" IS 'Área (TB_AREA) do edital ou do escopo; nulo = só o administrador global vê.';
-
---
--- Name: COLUMN "TB_AVISO_CONFERENCIA"."CO_MONITORAMENTO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."CO_MONITORAMENTO" IS 'Edital (TB_MONITORAMENTO_INDIGENA.id); nulo quando o escopo é a área ou a vaga sem edital.';
-
---
--- Name: COLUMN "TB_AVISO_CONFERENCIA"."QT_OCORRENCIA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."QT_OCORRENCIA" IS 'Quantos casos a conferência achou na última vez que viu o aviso.';
-
---
--- Name: COLUMN "TB_AVISO_CONFERENCIA"."DS_EXEMPLO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."DS_EXEMPLO" IS 'Até 20 exemplos, só ids e códigos (lista json de textos sem espaço, sem @ e sem 11 dígitos seguidos). Nunca nome, CPF ou e-mail.';
-
---
--- Name: COLUMN "TB_AVISO_CONFERENCIA"."DS_RESUMO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."DS_RESUMO" IS 'Frase curta montada pelo job a partir do catálogo (contagens e números de edital; sem dado pessoal).';
-
---
--- Name: COLUMN "TB_AVISO_CONFERENCIA"."TP_SITUACAO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."TP_SITUACAO" IS 'ABERTO; RESOLVIDO (a conferência rodou e não achou mais); IGNORADO (com motivo; volta a ABERTO se a quantidade crescer).';
-
---
--- Name: COLUMN "TB_AVISO_CONFERENCIA"."DT_PRIMEIRA_VEZ"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."DT_PRIMEIRA_VEZ" IS 'Quando o aviso abriu (de novo, se tinha sido resolvido).';
-
---
--- Name: COLUMN "TB_AVISO_CONFERENCIA"."DT_ULTIMA_VEZ"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."DT_ULTIMA_VEZ" IS 'Última execução que achou o caso.';
-
---
--- Name: COLUMN "TB_AVISO_CONFERENCIA"."DT_RESOLUCAO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."DT_RESOLUCAO" IS 'Quando a conferência deixou de achar (só RESOLVIDO).';
-
---
--- Name: COLUMN "TB_AVISO_CONFERENCIA"."CO_USUARIO_IGNORADO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."CO_USUARIO_IGNORADO" IS 'Quem ignorou (auth.users.id); só IGNORADO.';
-
---
--- Name: COLUMN "TB_AVISO_CONFERENCIA"."DT_IGNORADO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."DT_IGNORADO" IS 'Quando ignorou.';
-
---
--- Name: COLUMN "TB_AVISO_CONFERENCIA"."DS_MOTIVO_IGNORADO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."DS_MOTIVO_IGNORADO" IS 'Motivo informado ao ignorar (10 a 500 caracteres).';
-
---
--- Name: COLUMN "TB_AVISO_CONFERENCIA"."QT_OCORRENCIA_IGNORADA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."QT_OCORRENCIA_IGNORADA" IS 'Quantidade no momento em que foi ignorado: se crescer, o aviso volta a ABERTO.';
-
---
--- Name: COLUMN "TB_AVISO_CONFERENCIA"."CO_EXECUCAO"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON COLUMN public."TB_AVISO_CONFERENCIA"."CO_EXECUCAO" IS 'Última execução (TL_CONFERENCIA) que achou o caso.';
-
---
--- Name: CONSTRAINT "CK_AVISOCONF_COCONFERENCIA" ON "TB_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_AVISOCONF_COCONFERENCIA" ON public."TB_AVISO_CONFERENCIA" IS 'Código em maiúsculas, dígitos e sublinhado.';
-
---
--- Name: CONSTRAINT "CK_AVISOCONF_COMODULO" ON "TB_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_AVISOCONF_COMODULO" ON public."TB_AVISO_CONFERENCIA" IS 'Módulos válidos.';
-
---
--- Name: CONSTRAINT "CK_AVISOCONF_DSESCOPO" ON "TB_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_AVISOCONF_DSESCOPO" ON public."TB_AVISO_CONFERENCIA" IS 'Escopo tipo:identificador, sem espaço.';
-
---
--- Name: CONSTRAINT "CK_AVISOCONF_EXEMPLO" ON "TB_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_AVISOCONF_EXEMPLO" ON public."TB_AVISO_CONFERENCIA" IS 'Exemplos em lista json de até 20.';
-
---
--- Name: CONSTRAINT "CK_AVISOCONF_IGNORADO" ON "TB_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_AVISOCONF_IGNORADO" ON public."TB_AVISO_CONFERENCIA" IS 'Quem, quando, motivo e quantidade só (e sempre) no aviso ignorado.';
-
---
--- Name: CONSTRAINT "CK_AVISOCONF_QT" ON "TB_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_AVISOCONF_QT" ON public."TB_AVISO_CONFERENCIA" IS 'Quantidades positivas.';
-
---
--- Name: CONSTRAINT "CK_AVISOCONF_RESOLUCAO" ON "TB_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_AVISOCONF_RESOLUCAO" ON public."TB_AVISO_CONFERENCIA" IS 'Data de resolução só (e sempre) no aviso resolvido.';
-
---
--- Name: CONSTRAINT "CK_AVISOCONF_TPGRAVIDADE" ON "TB_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_AVISOCONF_TPGRAVIDADE" ON public."TB_AVISO_CONFERENCIA" IS 'Gravidades válidas.';
-
---
--- Name: CONSTRAINT "CK_AVISOCONF_TPSITUACAO" ON "TB_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
---
-
-COMMENT ON CONSTRAINT "CK_AVISOCONF_TPSITUACAO" ON public."TB_AVISO_CONFERENCIA" IS 'Situações válidas.';
-
---
 -- Name: TB_BRIDGE_AYA; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -51759,6 +52176,138 @@ COMMENT ON COLUMN public."TB_ENTREVISTA_VAGA"."QT_VAGA_IMEDIATA" IS 'Vagas de pr
 --
 
 COMMENT ON CONSTRAINT "CK_ENTREVISTAVAGA_QT" ON public."TB_ENTREVISTA_VAGA" IS 'Quantidade válida.';
+
+--
+-- Name: TB_EVIDENCIA_AVISO_CONFERENCIA; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."TB_EVIDENCIA_AVISO_CONFERENCIA" (
+    "CO_EVIDENCIA_AVISO" uuid DEFAULT gen_random_uuid() NOT NULL,
+    "CO_AVISO_CONFERENCIA" uuid NOT NULL,
+    "DS_CHAVE_CASO" character varying(100),
+    "TP_EVIDENCIA" character varying(10) NOT NULL,
+    "DS_EVIDENCIA" character varying(500) NOT NULL,
+    "DS_URL" character varying(500),
+    "ST_REGISTRO_ATIVO" character varying(1) DEFAULT 'S'::character varying NOT NULL,
+    "CO_USUARIO" uuid NOT NULL,
+    "DT_CRIACAO" timestamp with time zone DEFAULT now() NOT NULL,
+    "CO_USUARIO_RETIRADA" uuid,
+    "DT_RETIRADA" timestamp with time zone,
+    CONSTRAINT "CK_EVIDAVISOCONF_DSCHAVECASO" CHECK ((("DS_CHAVE_CASO" IS NULL) OR (("DS_CHAVE_CASO")::text ~ '^(analise|codigo|referencia):[A-Za-z0-9._:/-]{1,90}$'::text))),
+    CONSTRAINT "CK_EVIDAVISOCONF_DSEVIDENCIA" CHECK (((length(btrim(("DS_EVIDENCIA")::text)) >= 3) AND (length(btrim(("DS_EVIDENCIA")::text)) <= 500))),
+    CONSTRAINT "CK_EVIDAVISOCONF_DSURL" CHECK ((("DS_URL" IS NULL) OR (("DS_URL")::text ~ '^https://[^\s]+$'::text))),
+    CONSTRAINT "CK_EVIDAVISOCONF_RETIRADA" CHECK ((((("ST_REGISTRO_ATIVO")::text = 'N'::text) = ("DT_RETIRADA" IS NOT NULL)) AND (("DT_RETIRADA" IS NULL) = ("CO_USUARIO_RETIRADA" IS NULL)))),
+    CONSTRAINT "CK_EVIDAVISOCONF_STREGATIVO" CHECK ((("ST_REGISTRO_ATIVO")::text = ANY ((ARRAY['S'::character varying, 'N'::character varying])::text[]))),
+    CONSTRAINT "CK_EVIDAVISOCONF_TPEVIDENCIA" CHECK ((("TP_EVIDENCIA")::text = ANY ((ARRAY['SEI'::character varying, 'LINK'::character varying, 'NOTA'::character varying])::text[])))
+);
+
+--
+-- Name: TABLE "TB_EVIDENCIA_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public."TB_EVIDENCIA_AVISO_CONFERENCIA" IS 'Evidências de um aviso de conferência (20261118140000): processo SEI, link (https) ou nota, do aviso ou de um caso (pela chave estável do caso). Retirar é lógico; RLS sem policy (só as RPCs).';
+
+--
+-- Name: COLUMN "TB_EVIDENCIA_AVISO_CONFERENCIA"."CO_EVIDENCIA_AVISO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_EVIDENCIA_AVISO_CONFERENCIA"."CO_EVIDENCIA_AVISO" IS 'Identificador da evidência.';
+
+--
+-- Name: COLUMN "TB_EVIDENCIA_AVISO_CONFERENCIA"."CO_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_EVIDENCIA_AVISO_CONFERENCIA"."CO_AVISO_CONFERENCIA" IS 'Aviso (TB_AVISO_CONFERENCIA).';
+
+--
+-- Name: COLUMN "TB_EVIDENCIA_AVISO_CONFERENCIA"."DS_CHAVE_CASO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_EVIDENCIA_AVISO_CONFERENCIA"."DS_CHAVE_CASO" IS 'Caso do aviso: analise:<id>, codigo:<código> ou referencia:<id> (o NU_CASO muda a cada execução). Nulo = o aviso todo.';
+
+--
+-- Name: COLUMN "TB_EVIDENCIA_AVISO_CONFERENCIA"."TP_EVIDENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_EVIDENCIA_AVISO_CONFERENCIA"."TP_EVIDENCIA" IS 'SEI (número do processo), LINK (documento por link) ou NOTA (texto).';
+
+--
+-- Name: COLUMN "TB_EVIDENCIA_AVISO_CONFERENCIA"."DS_EVIDENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_EVIDENCIA_AVISO_CONFERENCIA"."DS_EVIDENCIA" IS 'O número do SEI, a descrição do link ou a nota (3 a 500 caracteres, sem CPF nem e-mail).';
+
+--
+-- Name: COLUMN "TB_EVIDENCIA_AVISO_CONFERENCIA"."DS_URL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_EVIDENCIA_AVISO_CONFERENCIA"."DS_URL" IS 'Link https do documento (opcional no SEI e na nota).';
+
+--
+-- Name: COLUMN "TB_EVIDENCIA_AVISO_CONFERENCIA"."ST_REGISTRO_ATIVO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_EVIDENCIA_AVISO_CONFERENCIA"."ST_REGISTRO_ATIVO" IS 'S ativa; N retirada.';
+
+--
+-- Name: COLUMN "TB_EVIDENCIA_AVISO_CONFERENCIA"."CO_USUARIO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_EVIDENCIA_AVISO_CONFERENCIA"."CO_USUARIO" IS 'Quem incluiu (auth.users.id).';
+
+--
+-- Name: COLUMN "TB_EVIDENCIA_AVISO_CONFERENCIA"."DT_CRIACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_EVIDENCIA_AVISO_CONFERENCIA"."DT_CRIACAO" IS 'Quando foi incluída.';
+
+--
+-- Name: COLUMN "TB_EVIDENCIA_AVISO_CONFERENCIA"."CO_USUARIO_RETIRADA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_EVIDENCIA_AVISO_CONFERENCIA"."CO_USUARIO_RETIRADA" IS 'Quem retirou.';
+
+--
+-- Name: COLUMN "TB_EVIDENCIA_AVISO_CONFERENCIA"."DT_RETIRADA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_EVIDENCIA_AVISO_CONFERENCIA"."DT_RETIRADA" IS 'Quando foi retirada.';
+
+--
+-- Name: CONSTRAINT "CK_EVIDAVISOCONF_DSCHAVECASO" ON "TB_EVIDENCIA_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_EVIDAVISOCONF_DSCHAVECASO" ON public."TB_EVIDENCIA_AVISO_CONFERENCIA" IS 'Chave do caso: tipo e identificador.';
+
+--
+-- Name: CONSTRAINT "CK_EVIDAVISOCONF_DSEVIDENCIA" ON "TB_EVIDENCIA_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_EVIDAVISOCONF_DSEVIDENCIA" ON public."TB_EVIDENCIA_AVISO_CONFERENCIA" IS 'Texto de 3 a 500 caracteres.';
+
+--
+-- Name: CONSTRAINT "CK_EVIDAVISOCONF_DSURL" ON "TB_EVIDENCIA_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_EVIDAVISOCONF_DSURL" ON public."TB_EVIDENCIA_AVISO_CONFERENCIA" IS 'Só link https.';
+
+--
+-- Name: CONSTRAINT "CK_EVIDAVISOCONF_RETIRADA" ON "TB_EVIDENCIA_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_EVIDAVISOCONF_RETIRADA" ON public."TB_EVIDENCIA_AVISO_CONFERENCIA" IS 'Retirada com quem e quando.';
+
+--
+-- Name: CONSTRAINT "CK_EVIDAVISOCONF_STREGATIVO" ON "TB_EVIDENCIA_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_EVIDAVISOCONF_STREGATIVO" ON public."TB_EVIDENCIA_AVISO_CONFERENCIA" IS 'S ou N.';
+
+--
+-- Name: CONSTRAINT "CK_EVIDAVISOCONF_TPEVIDENCIA" ON "TB_EVIDENCIA_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_EVIDAVISOCONF_TPEVIDENCIA" ON public."TB_EVIDENCIA_AVISO_CONFERENCIA" IS 'SEI, LINK ou NOTA.';
 
 --
 -- Name: TB_FILTRO_FILA_ANALISE; Type: TABLE; Schema: public; Owner: -
@@ -57104,6 +57653,158 @@ ALTER TABLE public."TH_ANEXO_RECURSO" ALTER COLUMN "CO_HISTORICO_ANEXO" ADD GENE
 );
 
 --
+-- Name: TH_AVISO_CONFERENCIA; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."TH_AVISO_CONFERENCIA" (
+    "CO_EVENTO" bigint NOT NULL,
+    "CO_AVISO_CONFERENCIA" uuid NOT NULL,
+    "TP_EVENTO" character varying(30) NOT NULL,
+    "TP_TRATAMENTO_ANTERIOR" character varying(25),
+    "TP_TRATAMENTO" character varying(25),
+    "TP_SITUACAO" character varying(10) NOT NULL,
+    "QT_OCORRENCIA" integer NOT NULL,
+    "DS_MOTIVO" character varying(500),
+    "CO_USUARIO_RESPONSAVEL" uuid,
+    "DT_PRAZO" date,
+    "CO_EVIDENCIA_AVISO" uuid,
+    "CO_USUARIO" uuid,
+    "CO_EXECUCAO" text,
+    "DT_EVENTO" timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT "CK_HISTAVISOCONF_DSMOTIVO" CHECK ((("DS_MOTIVO" IS NULL) OR ((length(btrim(("DS_MOTIVO")::text)) >= 3) AND (length(btrim(("DS_MOTIVO")::text)) <= 500)))),
+    CONSTRAINT "CK_HISTAVISOCONF_TPEVENTO" CHECK ((("TP_EVENTO")::text = ANY ((ARRAY['ACHADO'::character varying, 'REABERTO'::character varying, 'TRATAMENTO'::character varying, 'RESPONSAVEL'::character varying, 'EVIDENCIA_INCLUIDA'::character varying, 'EVIDENCIA_RETIRADA'::character varying, 'RECHECADO_COM_PROBLEMA'::character varying, 'NAO_ACHADO'::character varying, 'MIGRADO'::character varying])::text[]))),
+    CONSTRAINT "CK_HISTAVISOCONF_TPSITUACAO" CHECK ((("TP_SITUACAO")::text = ANY ((ARRAY['ABERTO'::character varying, 'RESOLVIDO'::character varying])::text[]))),
+    CONSTRAINT "CK_HISTAVISOCONF_TPTRATAMENTO" CHECK (((("TP_TRATAMENTO" IS NULL) OR (("TP_TRATAMENTO")::text = ANY ((ARRAY['PENDENTE'::character varying, 'EM_ANALISE'::character varying, 'AGUARDANDO_DOCUMENTO'::character varying, 'CORRIGIDO'::character varying, 'RECHECADO_SEM_PROBLEMA'::character varying, 'DISPENSADO'::character varying])::text[]))) AND (("TP_TRATAMENTO_ANTERIOR" IS NULL) OR (("TP_TRATAMENTO_ANTERIOR")::text = ANY ((ARRAY['PENDENTE'::character varying, 'EM_ANALISE'::character varying, 'AGUARDANDO_DOCUMENTO'::character varying, 'CORRIGIDO'::character varying, 'RECHECADO_SEM_PROBLEMA'::character varying, 'DISPENSADO'::character varying])::text[])))))
+);
+
+--
+-- Name: TABLE "TH_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public."TH_AVISO_CONFERENCIA" IS 'Histórico de cada aviso de conferência (20261118140000): o que a conferência achou ou deixou de achar e o que a equipe fez (tratamento, responsável, prazo, evidência), com motivo, quem (ou a execução) e quando. Só cresce; RLS sem policy (só as RPCs).';
+
+--
+-- Name: COLUMN "TH_AVISO_CONFERENCIA"."CO_EVENTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_AVISO_CONFERENCIA"."CO_EVENTO" IS 'Identificador do evento (identity, em ordem).';
+
+--
+-- Name: COLUMN "TH_AVISO_CONFERENCIA"."CO_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_AVISO_CONFERENCIA"."CO_AVISO_CONFERENCIA" IS 'Aviso (TB_AVISO_CONFERENCIA).';
+
+--
+-- Name: COLUMN "TH_AVISO_CONFERENCIA"."TP_EVENTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_AVISO_CONFERENCIA"."TP_EVENTO" IS 'ACHADO, REABERTO, TRATAMENTO, RESPONSAVEL, EVIDENCIA_INCLUIDA, EVIDENCIA_RETIRADA, RECHECADO_COM_PROBLEMA, NAO_ACHADO ou MIGRADO (o IGNORADO de antes).';
+
+--
+-- Name: COLUMN "TH_AVISO_CONFERENCIA"."TP_TRATAMENTO_ANTERIOR"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_AVISO_CONFERENCIA"."TP_TRATAMENTO_ANTERIOR" IS 'Tratamento antes do evento.';
+
+--
+-- Name: COLUMN "TH_AVISO_CONFERENCIA"."TP_TRATAMENTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_AVISO_CONFERENCIA"."TP_TRATAMENTO" IS 'Tratamento depois do evento.';
+
+--
+-- Name: COLUMN "TH_AVISO_CONFERENCIA"."TP_SITUACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_AVISO_CONFERENCIA"."TP_SITUACAO" IS 'Situação do aviso depois do evento (ABERTO ou RESOLVIDO).';
+
+--
+-- Name: COLUMN "TH_AVISO_CONFERENCIA"."QT_OCORRENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_AVISO_CONFERENCIA"."QT_OCORRENCIA" IS 'Quantidade de casos no evento.';
+
+--
+-- Name: COLUMN "TH_AVISO_CONFERENCIA"."DS_MOTIVO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_AVISO_CONFERENCIA"."DS_MOTIVO" IS 'Motivo, justificativa ou explicação do evento (3 a 500 caracteres, sem CPF nem e-mail).';
+
+--
+-- Name: COLUMN "TH_AVISO_CONFERENCIA"."CO_USUARIO_RESPONSAVEL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_AVISO_CONFERENCIA"."CO_USUARIO_RESPONSAVEL" IS 'Responsável depois do evento RESPONSAVEL.';
+
+--
+-- Name: COLUMN "TH_AVISO_CONFERENCIA"."DT_PRAZO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_AVISO_CONFERENCIA"."DT_PRAZO" IS 'Prazo depois do evento RESPONSAVEL.';
+
+--
+-- Name: COLUMN "TH_AVISO_CONFERENCIA"."CO_EVIDENCIA_AVISO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_AVISO_CONFERENCIA"."CO_EVIDENCIA_AVISO" IS 'Evidência incluída ou retirada (TB_EVIDENCIA_AVISO_CONFERENCIA).';
+
+--
+-- Name: COLUMN "TH_AVISO_CONFERENCIA"."CO_USUARIO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_AVISO_CONFERENCIA"."CO_USUARIO" IS 'Quem fez (auth.users.id); nulo quando foi a conferência.';
+
+--
+-- Name: COLUMN "TH_AVISO_CONFERENCIA"."CO_EXECUCAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_AVISO_CONFERENCIA"."CO_EXECUCAO" IS 'Execução da conferência (TL_CONFERENCIA) que fez, quando foi o robô.';
+
+--
+-- Name: COLUMN "TH_AVISO_CONFERENCIA"."DT_EVENTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_AVISO_CONFERENCIA"."DT_EVENTO" IS 'Quando.';
+
+--
+-- Name: CONSTRAINT "CK_HISTAVISOCONF_DSMOTIVO" ON "TH_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_HISTAVISOCONF_DSMOTIVO" ON public."TH_AVISO_CONFERENCIA" IS 'Motivo de 3 a 500 caracteres.';
+
+--
+-- Name: CONSTRAINT "CK_HISTAVISOCONF_TPEVENTO" ON "TH_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_HISTAVISOCONF_TPEVENTO" ON public."TH_AVISO_CONFERENCIA" IS 'Eventos conhecidos.';
+
+--
+-- Name: CONSTRAINT "CK_HISTAVISOCONF_TPSITUACAO" ON "TH_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_HISTAVISOCONF_TPSITUACAO" ON public."TH_AVISO_CONFERENCIA" IS 'ABERTO ou RESOLVIDO.';
+
+--
+-- Name: CONSTRAINT "CK_HISTAVISOCONF_TPTRATAMENTO" ON "TH_AVISO_CONFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_HISTAVISOCONF_TPTRATAMENTO" ON public."TH_AVISO_CONFERENCIA" IS 'Tratamentos conhecidos (os mesmos de TB_AVISO_CONFERENCIA).';
+
+--
+-- Name: TH_AVISO_CONFERENCIA_CO_EVENTO_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public."TH_AVISO_CONFERENCIA" ALTER COLUMN "CO_EVENTO" ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public."TH_AVISO_CONFERENCIA_CO_EVENTO_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
 -- Name: TH_CANDIDATO_APROVADO; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -62157,6 +62858,13 @@ ALTER TABLE ONLY public."TB_CONVOCACAO_EDITAL"
     ADD CONSTRAINT "PK_CONVOCACAO_EDITAL" PRIMARY KEY ("CO_EDITAL");
 
 --
+-- Name: TB_EVIDENCIA_AVISO_CONFERENCIA PK_EVIDAVISOCONF; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TB_EVIDENCIA_AVISO_CONFERENCIA"
+    ADD CONSTRAINT "PK_EVIDAVISOCONF" PRIMARY KEY ("CO_EVIDENCIA_AVISO");
+
+--
 -- Name: TB_PEDIDO_CASAMENTO_LISTA PK_PEDIDO_CASAMENTO_LISTA; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -63023,6 +63731,13 @@ ALTER TABLE ONLY public."TH_AGENDA_ENTREVISTA"
 
 ALTER TABLE ONLY public."TH_ANEXO_RECURSO"
     ADD CONSTRAINT "PK_TH_ANEXO_RECURSO" PRIMARY KEY ("CO_HISTORICO_ANEXO");
+
+--
+-- Name: TH_AVISO_CONFERENCIA PK_TH_AVISO_CONFERENCIA; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TH_AVISO_CONFERENCIA"
+    ADD CONSTRAINT "PK_TH_AVISO_CONFERENCIA" PRIMARY KEY ("CO_EVENTO");
 
 --
 -- Name: TH_CANDIDATO_SUB_JUDICE PK_TH_CANDIDATO_SUB_JUDICE; Type: CONSTRAINT; Schema: public; Owner: -
@@ -64297,16 +65012,28 @@ CREATE INDEX "IN_ANALISTAEDT_USUARIO" ON public."RL_ANALISTA_EDITAL" USING btree
 COMMENT ON INDEX public."IN_ANALISTAEDT_USUARIO" IS 'Papéis ativos de uma pessoa (porteiro das RPCs).';
 
 --
+-- Name: IN_AVISOCONF_COUSURESP; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "IN_AVISOCONF_COUSURESP" ON public."TB_AVISO_CONFERENCIA" USING btree ("CO_USUARIO_RESPONSAVEL") WHERE ("CO_USUARIO_RESPONSAVEL" IS NOT NULL);
+
+--
+-- Name: INDEX "IN_AVISOCONF_COUSURESP"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON INDEX public."IN_AVISOCONF_COUSURESP" IS 'Avisos de cada responsável.';
+
+--
 -- Name: IN_AVISOCONF_VIGENTE; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX "IN_AVISOCONF_VIGENTE" ON public."TB_AVISO_CONFERENCIA" USING btree ("CO_MODULO", "CO_AREA") WHERE (("TP_SITUACAO")::text = ANY (ARRAY[('ABERTO'::character varying)::text, ('IGNORADO'::character varying)::text]));
+CREATE INDEX "IN_AVISOCONF_VIGENTE" ON public."TB_AVISO_CONFERENCIA" USING btree ("CO_MODULO", "CO_AREA") WHERE (("TP_SITUACAO")::text = 'ABERTO'::text);
 
 --
 -- Name: INDEX "IN_AVISOCONF_VIGENTE"; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON INDEX public."IN_AVISOCONF_VIGENTE" IS 'Avisos abertos e ignorados por módulo e área (tela e selos).';
+COMMENT ON INDEX public."IN_AVISOCONF_VIGENTE" IS 'Avisos abertos por módulo e área (tela e selos).';
 
 --
 -- Name: IN_CANDAPROVADO_DTCONVOCACAO; Type: INDEX; Schema: public; Owner: -
@@ -64945,6 +65672,18 @@ CREATE INDEX "IN_FKENTREVISTA_COROTEIRO" ON public."TB_ENTREVISTA" USING btree (
 COMMENT ON INDEX public."IN_FKENTREVISTA_COROTEIRO" IS 'Chave estrangeira para TB_ROTEIRO_ENTREVISTA (20261022183000).';
 
 --
+-- Name: IN_FKEVIDAVISOCONF_COAVISO; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "IN_FKEVIDAVISOCONF_COAVISO" ON public."TB_EVIDENCIA_AVISO_CONFERENCIA" USING btree ("CO_AVISO_CONFERENCIA") WHERE (("ST_REGISTRO_ATIVO")::text = 'S'::text);
+
+--
+-- Name: INDEX "IN_FKEVIDAVISOCONF_COAVISO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON INDEX public."IN_FKEVIDAVISOCONF_COAVISO" IS 'Chave estrangeira para TB_AVISO_CONFERENCIA (evidências ativas).';
+
+--
 -- Name: IN_FKFICHAANALISE_CONCLUSAO; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -65027,6 +65766,18 @@ CREATE INDEX "IN_FKHISTAVALIACAO_CO" ON public."TH_ENTREVISTA_AVALIACAO" USING b
 --
 
 COMMENT ON INDEX public."IN_FKHISTAVALIACAO_CO" IS 'Histórico por entrevista.';
+
+--
+-- Name: IN_FKHISTAVISOCONF_COAVISO; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "IN_FKHISTAVISOCONF_COAVISO" ON public."TH_AVISO_CONFERENCIA" USING btree ("CO_AVISO_CONFERENCIA", "CO_EVENTO");
+
+--
+-- Name: INDEX "IN_FKHISTAVISOCONF_COAVISO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON INDEX public."IN_FKHISTAVISOCONF_COAVISO" IS 'Chave estrangeira para TB_AVISO_CONFERENCIA, na ordem dos eventos.';
 
 --
 -- Name: IN_FKHISTCANDAPROV_CARTA; Type: INDEX; Schema: public; Owner: -
@@ -67241,6 +67992,14 @@ CREATE TRIGGER "TG_VERSAO_FONTE_DEL" AFTER DELETE ON public."TA_GRUPO_ACESSO_REC
 ALTER TABLE public."TA_GRUPO_ACESSO_RECURSO" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_DEL";
 
 --
+-- Name: TA_VAGA_QUADRO_EDITAL TG_VERSAO_FONTE_DEL; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "TG_VERSAO_FONTE_DEL" AFTER DELETE ON public."TA_VAGA_QUADRO_EDITAL" REFERENCING OLD TABLE AS antigas FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_VERSAO_FONTE"();
+
+ALTER TABLE public."TA_VAGA_QUADRO_EDITAL" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_DEL";
+
+--
 -- Name: TB_ADMISSAO_CONCILIADA TG_VERSAO_FONTE_DEL; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -67375,6 +68134,14 @@ ALTER TABLE public."TB_ENTREVISTA" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_DEL";
 CREATE TRIGGER "TG_VERSAO_FONTE_DEL" AFTER DELETE ON public."TB_ENTREVISTA_NOTA" REFERENCING OLD TABLE AS antigas FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_VERSAO_FONTE"();
 
 ALTER TABLE public."TB_ENTREVISTA_NOTA" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_DEL";
+
+--
+-- Name: TB_EVIDENCIA_AVISO_CONFERENCIA TG_VERSAO_FONTE_DEL; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "TG_VERSAO_FONTE_DEL" AFTER DELETE ON public."TB_EVIDENCIA_AVISO_CONFERENCIA" REFERENCING OLD TABLE AS antigas FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_VERSAO_FONTE"();
+
+ALTER TABLE public."TB_EVIDENCIA_AVISO_CONFERENCIA" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_DEL";
 
 --
 -- Name: TB_FICHA_ANALISE TG_VERSAO_FONTE_DEL; Type: TRIGGER; Schema: public; Owner: -
@@ -67537,6 +68304,14 @@ CREATE TRIGGER "TG_VERSAO_FONTE_DEL" AFTER DELETE ON public."TD_ALDEIA_DSEI" REF
 ALTER TABLE public."TD_ALDEIA_DSEI" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_DEL";
 
 --
+-- Name: TH_AVISO_CONFERENCIA TG_VERSAO_FONTE_DEL; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "TG_VERSAO_FONTE_DEL" AFTER DELETE ON public."TH_AVISO_CONFERENCIA" REFERENCING OLD TABLE AS antigas FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_VERSAO_FONTE"();
+
+ALTER TABLE public."TH_AVISO_CONFERENCIA" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_DEL";
+
+--
 -- Name: TH_FICHA_ANALISE TG_VERSAO_FONTE_DEL; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -67631,6 +68406,14 @@ ALTER TABLE public."RL_PERFIL_USUARIO_AREA" ENABLE ALWAYS TRIGGER "TG_VERSAO_FON
 CREATE TRIGGER "TG_VERSAO_FONTE_INS" AFTER INSERT ON public."TA_GRUPO_ACESSO_RECURSO" REFERENCING NEW TABLE AS novas FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_VERSAO_FONTE"();
 
 ALTER TABLE public."TA_GRUPO_ACESSO_RECURSO" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_INS";
+
+--
+-- Name: TA_VAGA_QUADRO_EDITAL TG_VERSAO_FONTE_INS; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "TG_VERSAO_FONTE_INS" AFTER INSERT ON public."TA_VAGA_QUADRO_EDITAL" REFERENCING NEW TABLE AS novas FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_VERSAO_FONTE"();
+
+ALTER TABLE public."TA_VAGA_QUADRO_EDITAL" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_INS";
 
 --
 -- Name: TB_ADMISSAO_CONCILIADA TG_VERSAO_FONTE_INS; Type: TRIGGER; Schema: public; Owner: -
@@ -67767,6 +68550,14 @@ ALTER TABLE public."TB_ENTREVISTA" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_INS";
 CREATE TRIGGER "TG_VERSAO_FONTE_INS" AFTER INSERT ON public."TB_ENTREVISTA_NOTA" REFERENCING NEW TABLE AS novas FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_VERSAO_FONTE"();
 
 ALTER TABLE public."TB_ENTREVISTA_NOTA" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_INS";
+
+--
+-- Name: TB_EVIDENCIA_AVISO_CONFERENCIA TG_VERSAO_FONTE_INS; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "TG_VERSAO_FONTE_INS" AFTER INSERT ON public."TB_EVIDENCIA_AVISO_CONFERENCIA" REFERENCING NEW TABLE AS novas FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_VERSAO_FONTE"();
+
+ALTER TABLE public."TB_EVIDENCIA_AVISO_CONFERENCIA" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_INS";
 
 --
 -- Name: TB_FICHA_ANALISE TG_VERSAO_FONTE_INS; Type: TRIGGER; Schema: public; Owner: -
@@ -67929,6 +68720,14 @@ CREATE TRIGGER "TG_VERSAO_FONTE_INS" AFTER INSERT ON public."TD_ALDEIA_DSEI" REF
 ALTER TABLE public."TD_ALDEIA_DSEI" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_INS";
 
 --
+-- Name: TH_AVISO_CONFERENCIA TG_VERSAO_FONTE_INS; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "TG_VERSAO_FONTE_INS" AFTER INSERT ON public."TH_AVISO_CONFERENCIA" REFERENCING NEW TABLE AS novas FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_VERSAO_FONTE"();
+
+ALTER TABLE public."TH_AVISO_CONFERENCIA" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_INS";
+
+--
 -- Name: TH_FICHA_ANALISE TG_VERSAO_FONTE_INS; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -68023,6 +68822,14 @@ ALTER TABLE public."RL_PERFIL_USUARIO_AREA" ENABLE ALWAYS TRIGGER "TG_VERSAO_FON
 CREATE TRIGGER "TG_VERSAO_FONTE_TRUNC" AFTER TRUNCATE ON public."TA_GRUPO_ACESSO_RECURSO" FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_VERSAO_FONTE"();
 
 ALTER TABLE public."TA_GRUPO_ACESSO_RECURSO" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_TRUNC";
+
+--
+-- Name: TA_VAGA_QUADRO_EDITAL TG_VERSAO_FONTE_TRUNC; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "TG_VERSAO_FONTE_TRUNC" AFTER TRUNCATE ON public."TA_VAGA_QUADRO_EDITAL" FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_VERSAO_FONTE"();
+
+ALTER TABLE public."TA_VAGA_QUADRO_EDITAL" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_TRUNC";
 
 --
 -- Name: TB_ADMISSAO_CONCILIADA TG_VERSAO_FONTE_TRUNC; Type: TRIGGER; Schema: public; Owner: -
@@ -68159,6 +68966,14 @@ ALTER TABLE public."TB_ENTREVISTA" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_TRUNC"
 CREATE TRIGGER "TG_VERSAO_FONTE_TRUNC" AFTER TRUNCATE ON public."TB_ENTREVISTA_NOTA" FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_VERSAO_FONTE"();
 
 ALTER TABLE public."TB_ENTREVISTA_NOTA" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_TRUNC";
+
+--
+-- Name: TB_EVIDENCIA_AVISO_CONFERENCIA TG_VERSAO_FONTE_TRUNC; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "TG_VERSAO_FONTE_TRUNC" AFTER TRUNCATE ON public."TB_EVIDENCIA_AVISO_CONFERENCIA" FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_VERSAO_FONTE"();
+
+ALTER TABLE public."TB_EVIDENCIA_AVISO_CONFERENCIA" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_TRUNC";
 
 --
 -- Name: TB_FICHA_ANALISE TG_VERSAO_FONTE_TRUNC; Type: TRIGGER; Schema: public; Owner: -
@@ -68321,6 +69136,14 @@ CREATE TRIGGER "TG_VERSAO_FONTE_TRUNC" AFTER TRUNCATE ON public."TD_ALDEIA_DSEI"
 ALTER TABLE public."TD_ALDEIA_DSEI" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_TRUNC";
 
 --
+-- Name: TH_AVISO_CONFERENCIA TG_VERSAO_FONTE_TRUNC; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "TG_VERSAO_FONTE_TRUNC" AFTER TRUNCATE ON public."TH_AVISO_CONFERENCIA" FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_VERSAO_FONTE"();
+
+ALTER TABLE public."TH_AVISO_CONFERENCIA" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_TRUNC";
+
+--
 -- Name: TH_FICHA_ANALISE TG_VERSAO_FONTE_TRUNC; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -68415,6 +69238,14 @@ ALTER TABLE public."RL_PERFIL_USUARIO_AREA" ENABLE ALWAYS TRIGGER "TG_VERSAO_FON
 CREATE TRIGGER "TG_VERSAO_FONTE_UPD" AFTER UPDATE ON public."TA_GRUPO_ACESSO_RECURSO" REFERENCING NEW TABLE AS novas FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_VERSAO_FONTE"();
 
 ALTER TABLE public."TA_GRUPO_ACESSO_RECURSO" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_UPD";
+
+--
+-- Name: TA_VAGA_QUADRO_EDITAL TG_VERSAO_FONTE_UPD; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "TG_VERSAO_FONTE_UPD" AFTER UPDATE ON public."TA_VAGA_QUADRO_EDITAL" REFERENCING NEW TABLE AS novas FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_VERSAO_FONTE"();
+
+ALTER TABLE public."TA_VAGA_QUADRO_EDITAL" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_UPD";
 
 --
 -- Name: TB_ADMISSAO_CONCILIADA TG_VERSAO_FONTE_UPD; Type: TRIGGER; Schema: public; Owner: -
@@ -68551,6 +69382,14 @@ ALTER TABLE public."TB_ENTREVISTA" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_UPD";
 CREATE TRIGGER "TG_VERSAO_FONTE_UPD" AFTER UPDATE ON public."TB_ENTREVISTA_NOTA" REFERENCING NEW TABLE AS novas FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_VERSAO_FONTE"();
 
 ALTER TABLE public."TB_ENTREVISTA_NOTA" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_UPD";
+
+--
+-- Name: TB_EVIDENCIA_AVISO_CONFERENCIA TG_VERSAO_FONTE_UPD; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "TG_VERSAO_FONTE_UPD" AFTER UPDATE ON public."TB_EVIDENCIA_AVISO_CONFERENCIA" REFERENCING NEW TABLE AS novas FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_VERSAO_FONTE"();
+
+ALTER TABLE public."TB_EVIDENCIA_AVISO_CONFERENCIA" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_UPD";
 
 --
 -- Name: TB_FICHA_ANALISE TG_VERSAO_FONTE_UPD; Type: TRIGGER; Schema: public; Owner: -
@@ -68711,6 +69550,14 @@ ALTER TABLE public."TB_SELECAO_VAGA" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_UPD"
 CREATE TRIGGER "TG_VERSAO_FONTE_UPD" AFTER UPDATE ON public."TD_ALDEIA_DSEI" REFERENCING NEW TABLE AS novas FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_VERSAO_FONTE"();
 
 ALTER TABLE public."TD_ALDEIA_DSEI" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_UPD";
+
+--
+-- Name: TH_AVISO_CONFERENCIA TG_VERSAO_FONTE_UPD; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER "TG_VERSAO_FONTE_UPD" AFTER UPDATE ON public."TH_AVISO_CONFERENCIA" REFERENCING NEW TABLE AS novas FOR EACH STATEMENT EXECUTE FUNCTION private."FC_TG_VERSAO_FONTE"();
+
+ALTER TABLE public."TH_AVISO_CONFERENCIA" ENABLE ALWAYS TRIGGER "TG_VERSAO_FONTE_UPD";
 
 --
 -- Name: TH_FICHA_ANALISE TG_VERSAO_FONTE_UPD; Type: TRIGGER; Schema: public; Owner: -
@@ -69384,6 +70231,20 @@ ALTER TABLE ONLY public."TB_CASO_AVISO_CONFERENCIA"
 --
 
 COMMENT ON CONSTRAINT "FK_AVISOCONF_CASOAVISO" ON public."TB_CASO_AVISO_CONFERENCIA" IS 'Aviso do caso; os casos saem junto com o aviso.';
+
+--
+-- Name: TB_EVIDENCIA_AVISO_CONFERENCIA FK_AVISOCONF_EVIDAVISOCONF; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TB_EVIDENCIA_AVISO_CONFERENCIA"
+    ADD CONSTRAINT "FK_AVISOCONF_EVIDAVISOCONF" FOREIGN KEY ("CO_AVISO_CONFERENCIA") REFERENCES public."TB_AVISO_CONFERENCIA"("CO_AVISO_CONFERENCIA") ON DELETE CASCADE;
+
+--
+-- Name: TH_AVISO_CONFERENCIA FK_AVISOCONF_HISTAVISOCONF; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TH_AVISO_CONFERENCIA"
+    ADD CONSTRAINT "FK_AVISOCONF_HISTAVISOCONF" FOREIGN KEY ("CO_AVISO_CONFERENCIA") REFERENCES public."TB_AVISO_CONFERENCIA"("CO_AVISO_CONFERENCIA") ON DELETE CASCADE;
 
 --
 -- Name: TB_CALCULO_RELATORIO_PAINEL FK_CALCRELPAINEL_AREA; Type: FK CONSTRAINT; Schema: public; Owner: -
@@ -72184,6 +73045,12 @@ ALTER TABLE public."TB_ENTREVISTA_OBSERVACAO_AVALIADOR" ENABLE ROW LEVEL SECURIT
 ALTER TABLE public."TB_ENTREVISTA_VAGA" ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: TB_EVIDENCIA_AVISO_CONFERENCIA; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public."TB_EVIDENCIA_AVISO_CONFERENCIA" ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: TB_FICHA_ANALISE; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -72542,6 +73409,12 @@ ALTER TABLE public."TH_AGENDA_ENTREVISTA" ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public."TH_ANEXO_RECURSO" ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: TH_AVISO_CONFERENCIA; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public."TH_AVISO_CONFERENCIA" ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: TH_CANDIDATO_APROVADO; Type: ROW SECURITY; Schema: public; Owner: -
@@ -73604,6 +74477,18 @@ REVOKE ALL ON FUNCTION private."FC_AVALIADOR_AVALIA"(p_avaliador uuid, p_compete
 --
 
 REVOKE ALL ON FUNCTION private."FC_AVISOS_PARA_A_TELA"(p_avisos jsonb) FROM PUBLIC;
+
+--
+-- Name: TABLE "TB_AVISO_CONFERENCIA"; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_AVISO_CONFERENCIA" TO service_role;
+
+--
+-- Name: FUNCTION "FC_AVISO_PARA_AGIR"(p_id uuid, p_gerir boolean); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_AVISO_PARA_AGIR"(p_id uuid, p_gerir boolean) FROM PUBLIC;
 
 --
 -- Name: FUNCTION "FC_BASE_DA_LISTA"(p_lista uuid); Type: ACL; Schema: private; Owner: -
@@ -74955,6 +75840,12 @@ REVOKE ALL ON FUNCTION private."FC_PODE_MARCAR_CRITICO"(p_edital uuid) FROM PUBL
 REVOKE ALL ON FUNCTION private."FC_PODE_PARECER_RECURSO"() FROM PUBLIC;
 
 --
+-- Name: FUNCTION "FC_PODE_SER_RESPONSAVEL_AVISO"(p_usuario uuid, p_modulo text); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_PODE_SER_RESPONSAVEL_AVISO"(p_usuario uuid, p_modulo text) FROM PUBLIC;
+
+--
 -- Name: FUNCTION "FC_PODE_SUBSTITUIR_LISTA"(); Type: ACL; Schema: private; Owner: -
 --
 
@@ -75939,6 +76830,13 @@ GRANT ALL ON FUNCTION public.arquivar_modelo_resposta_recurso(p_modelo_id uuid, 
 GRANT ALL ON FUNCTION public.arquivar_modelo_resposta_recurso(p_modelo_id uuid, p_motivo text) TO service_role;
 
 --
+-- Name: FUNCTION atribuir_aviso_conferencia(p_id uuid, p_responsavel uuid, p_prazo date); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.atribuir_aviso_conferencia(p_id uuid, p_responsavel uuid, p_prazo date) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.atribuir_aviso_conferencia(p_id uuid, p_responsavel uuid, p_prazo date) TO authenticated;
+
+--
 -- Name: FUNCTION atualizar_cache_aprovados(p_area text); Type: ACL; Schema: public; Owner: -
 --
 
@@ -76700,18 +77598,18 @@ GRANT ALL ON FUNCTION public.gravar_vinculo_do_quadro(p_edital uuid, p_vaga text
 GRANT ALL ON FUNCTION public.gravar_vinculo_do_quadro(p_edital uuid, p_vaga text, p_acao text, p_quadro uuid) TO service_role;
 
 --
--- Name: FUNCTION ignorar_aviso_conferencia(p_id uuid, p_motivo text); Type: ACL; Schema: public; Owner: -
---
-
-REVOKE ALL ON FUNCTION public.ignorar_aviso_conferencia(p_id uuid, p_motivo text) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.ignorar_aviso_conferencia(p_id uuid, p_motivo text) TO authenticated;
-
---
 -- Name: FUNCTION importar_avaliacao_da_planilha(p_edital uuid, p_motivo text); Type: ACL; Schema: public; Owner: -
 --
 
 REVOKE ALL ON FUNCTION public.importar_avaliacao_da_planilha(p_edital uuid, p_motivo text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.importar_avaliacao_da_planilha(p_edital uuid, p_motivo text) TO authenticated;
+
+--
+-- Name: FUNCTION incluir_evidencia_aviso_conferencia(p_id uuid, p_tipo text, p_descricao text, p_url text, p_chave_caso text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.incluir_evidencia_aviso_conferencia(p_id uuid, p_tipo text, p_descricao text, p_url text, p_chave_caso text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.incluir_evidencia_aviso_conferencia(p_id uuid, p_tipo text, p_descricao text, p_url text, p_chave_caso text) TO authenticated;
 
 --
 -- Name: FUNCTION incluir_no_lote_por_decisao(p_edital uuid, p_codigos text[], p_motivo text, p_vaga text); Type: ACL; Schema: public; Owner: -
@@ -77045,6 +77943,13 @@ REVOKE ALL ON FUNCTION public.listar_fontes_do_painel(p_area text, p_relatorio t
 GRANT ALL ON FUNCTION public.listar_fontes_do_painel(p_area text, p_relatorio text) TO authenticated;
 
 --
+-- Name: FUNCTION listar_historico_aviso_conferencia(p_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.listar_historico_aviso_conferencia(p_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.listar_historico_aviso_conferencia(p_id uuid) TO authenticated;
+
+--
 -- Name: FUNCTION listar_historico_coordenada_mapa_projetos(p_lugar text, p_limite integer); Type: ACL; Schema: public; Owner: -
 --
 
@@ -77172,6 +78077,13 @@ GRANT ALL ON FUNCTION public.listar_prioridade_anexos_empregare(p_vaga text) TO 
 
 REVOKE ALL ON FUNCTION public.listar_relatorio_de_motivos(p_edital uuid, p_filtros jsonb) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.listar_relatorio_de_motivos(p_edital uuid, p_filtros jsonb) TO authenticated;
+
+--
+-- Name: FUNCTION listar_responsaveis_aviso_conferencia(p_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.listar_responsaveis_aviso_conferencia(p_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.listar_responsaveis_aviso_conferencia(p_id uuid) TO authenticated;
 
 --
 -- Name: FUNCTION listar_resumos_pergunta_pendentes(p_editais text[], p_forcar boolean); Type: ACL; Schema: public; Owner: -
@@ -78114,6 +79026,13 @@ GRANT ALL ON FUNCTION public.restaurar_configuracoes_versao(p_versao_id uuid, p_
 GRANT ALL ON FUNCTION public.restaurar_configuracoes_versao(p_versao_id uuid, p_motivo text) TO service_role;
 
 --
+-- Name: FUNCTION retirar_evidencia_aviso_conferencia(p_evidencia uuid, p_motivo text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.retirar_evidencia_aviso_conferencia(p_evidencia uuid, p_motivo text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.retirar_evidencia_aviso_conferencia(p_evidencia uuid, p_motivo text) TO authenticated;
+
+--
 -- Name: FUNCTION revisar_ficha_concluida_com_pendencia(p_ficha uuid, p_versao integer); Type: ACL; Schema: public; Owner: -
 --
 
@@ -78430,6 +79349,13 @@ GRANT ALL ON FUNCTION public.transicionar_resposta_recurso(p_resposta_id uuid, p
 GRANT ALL ON FUNCTION public.transicionar_resposta_recurso(p_resposta_id uuid, p_acao text, p_revisao integer, p_comentario text) TO service_role;
 
 --
+-- Name: FUNCTION tratar_aviso_conferencia(p_id uuid, p_tratamento text, p_motivo text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.tratar_aviso_conferencia(p_id uuid, p_tratamento text, p_motivo text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.tratar_aviso_conferencia(p_id uuid, p_tratamento text, p_motivo text) TO authenticated;
+
+--
 -- Name: FUNCTION usuario_pode_ler_analises(); Type: ACL; Schema: public; Owner: -
 --
 
@@ -78684,12 +79610,6 @@ GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_AREA" TO service_
 GRANT SELECT ON TABLE public."TB_AREA" TO authenticated;
 
 --
--- Name: TABLE "TB_AVISO_CONFERENCIA"; Type: ACL; Schema: public; Owner: -
---
-
-GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_AVISO_CONFERENCIA" TO service_role;
-
---
 -- Name: TABLE "TB_BRIDGE_AYA"; Type: ACL; Schema: public; Owner: -
 --
 
@@ -78870,6 +79790,12 @@ GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_ENTREVISTA_OBSERV
 --
 
 GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_ENTREVISTA_VAGA" TO service_role;
+
+--
+-- Name: TABLE "TB_EVIDENCIA_AVISO_CONFERENCIA"; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TB_EVIDENCIA_AVISO_CONFERENCIA" TO service_role;
 
 --
 -- Name: TABLE "TB_FILTRO_FILA_ANALISE"; Type: ACL; Schema: public; Owner: -
@@ -79148,6 +80074,12 @@ GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TH_AGENDA_ENTREVISTA
 --
 
 GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TH_ANEXO_RECURSO" TO service_role;
+
+--
+-- Name: TABLE "TH_AVISO_CONFERENCIA"; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TH_AVISO_CONFERENCIA" TO service_role;
 
 --
 -- Name: TABLE "TH_CANDIDATO_APROVADO"; Type: ACL; Schema: public; Owner: -

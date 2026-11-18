@@ -5,14 +5,19 @@ import type {
   VinculoDoCaso,
   AnaliseDoCaso,
   DestinoDoCaso,
+  EvidenciaDoAviso,
+  GrupoDeAvisos,
+  HistoricoDoAviso,
+  Tratamento,
 } from "../../modulos/conferencias/tipos.ts";
 /*
   Avisos de conferência, sem React e sem banco: o que chega de
   `listar_avisos_conferencia_se_mudou` (20261005210000 e 20261015000000: sem
   chaves nulas e sem `exemplos` quando o aviso tem casos)
   vira a lista da tela — título de cada conferência, tom da gravidade, onde
-  (edital, área ou vaga), contagem do selo de cada módulo e a validação do
-  motivo ao ignorar.
+  (edital, área ou vaga), contagem do selo de cada módulo, o agrupamento por
+  edital e, da central de avisos (20261118140000), o tratamento da equipe,
+  responsável, prazo, evidência e histórico, com a validação de cada campo.
 
   Os avisos são gravados pelo job Python scripts/conferencias/ (todo dia às 6h
   e pelo "Rodar agora"). O catálogo (código → módulo, gravidade, título) é o
@@ -141,6 +146,11 @@ export const CONFERENCIAS: Readonly<
     gravidade: "ATENCAO",
     titulo: "Pendência da publicação sem revisão",
   }),
+  EDITAL_CRONOGRAMA_ENCERRADO: Object.freeze({
+    modulo: "editais",
+    gravidade: "ATENCAO",
+    titulo: "Cronograma encerrado, status ainda em andamento",
+  }),
   CARGA_VARIACAO_BRUSCA: Object.freeze({
     modulo: "cargas",
     gravidade: "ATENCAO",
@@ -154,6 +164,7 @@ export const MODULOS_DOS_AVISOS = Object.freeze([
   Object.freeze({ valor: "classificacao", rotulo: "Classificação" }),
   Object.freeze({ valor: "aprovados", rotulo: "Aprovados" }),
   Object.freeze({ valor: "cargas", rotulo: "Cargas" }),
+  Object.freeze({ valor: "editais", rotulo: "Editais" }),
 ]);
 
 export const GRAVIDADES = Object.freeze({
@@ -250,27 +261,37 @@ function normalizarAviso(entrada: unknown): Aviso {
       .map(texto)
       .filter(Boolean),
     resumo: texto(bruto?.resumo),
-    situacao: bruto?.situacao === "IGNORADO" ? "IGNORADO" : "ABERTO",
+    situacao: bruto?.situacao === "RESOLVIDO" ? "RESOLVIDO" : "ABERTO",
     primeiraVez: data(bruto?.primeira_vez),
     ultimaVez: data(bruto?.ultima_vez),
-    ignoradoEm: data(bruto?.ignorado_em),
+    resolvidoEm: data(bruto?.resolvido_em),
+    tratamento: tratamentoDe(bruto?.tratamento),
+    tratadoEm: data(bruto?.tratado_em),
+    tratadoPor: texto(bruto?.tratado_por),
     motivo: texto(bruto?.motivo) || null,
-    podeIgnorar: bruto?.pode_ignorar === true,
+    responsavelId: texto(bruto?.responsavel_id) || null,
+    responsavel: texto(bruto?.responsavel),
+    prazo: diaIso(bruto?.prazo),
+    evidencias: Math.max(0, Math.round(numero(bruto.evidencias) || 0)),
+    podeGerir: bruto?.pode_gerir === true,
+    podeTratar: bruto?.pode_tratar === true,
   };
 }
 
-/** O payload de `listar_avisos_conferencia` em abertos (por gravidade) e ignorados. */
+/**
+ * O payload de `listar_avisos_conferencia` em abertos (por gravidade; os que
+ * contam no selo), dispensados e resolvidos nos últimos 30 dias.
+ */
 export function normalizarAvisos(entrada: unknown): ListaDeAvisosNormalizada {
   const dados = registro(entrada);
   const avisos = (Array.isArray(dados?.avisos) ? dados.avisos : [])
     .filter(ehRegistro)
-    .map(normalizarAviso);
-  const porGravidade = (a: Aviso, b: Aviso) =>
-    GRAVIDADES[a.gravidade].ordem - GRAVIDADES[b.gravidade].ordem ||
-    (a.primeiraVez?.getTime() ?? 0) - (b.primeiraVez?.getTime() ?? 0);
+    .map(normalizarAviso)
+    .sort(porGravidade);
   const ultima = ehRegistro(dados.ultima_execucao)
     ? dados.ultima_execucao
     : null;
+  const abertos = avisos.filter((a) => a.situacao === "ABERTO");
   return {
     geradoEm: data(dados?.gerado_em),
     ultimaExecucao: ultima
@@ -280,9 +301,229 @@ export function normalizarAvisos(entrada: unknown): ListaDeAvisosNormalizada {
           situacao: texto(ultima.situacao),
         }
       : null,
-    abertos: avisos.filter((a) => a.situacao === "ABERTO").sort(porGravidade),
-    ignorados: avisos.filter((a) => a.situacao === "IGNORADO"),
+    abertos: abertos.filter((a) => a.tratamento !== "DISPENSADO"),
+    dispensados: abertos.filter((a) => a.tratamento === "DISPENSADO"),
+    resolvidos: avisos
+      .filter((a) => a.situacao === "RESOLVIDO")
+      .sort(
+        (a, b) =>
+          (b.resolvidoEm?.getTime() ?? 0) - (a.resolvidoEm?.getTime() ?? 0),
+      ),
   };
+}
+
+function porGravidade(a: Aviso, b: Aviso) {
+  return (
+    GRAVIDADES[a.gravidade].ordem - GRAVIDADES[b.gravidade].ordem ||
+    (a.primeiraVez?.getTime() ?? 0) - (b.primeiraVez?.getTime() ?? 0)
+  );
+}
+
+/* ── Tratamento, responsável, prazo e histórico (20261118140000) ── */
+
+export const TRATAMENTOS: Readonly<
+  Record<Tratamento, Readonly<{ rotulo: string; tom: string }>>
+> = Object.freeze({
+  PENDENTE: Object.freeze({ rotulo: "Pendente", tom: "neutro" }),
+  EM_ANALISE: Object.freeze({ rotulo: "Em análise", tom: "revisar" }),
+  AGUARDANDO_DOCUMENTO: Object.freeze({
+    rotulo: "Aguardando documento",
+    tom: "pendente",
+  }),
+  CORRIGIDO: Object.freeze({ rotulo: "Corrigido", tom: "revisar" }),
+  RECHECADO_SEM_PROBLEMA: Object.freeze({
+    rotulo: "Rechecado sem problema",
+    tom: "aprovado",
+  }),
+  DISPENSADO: Object.freeze({ rotulo: "Dispensado", tom: "neutro" }),
+});
+
+const tratamentoDe = (valor: unknown): Tratamento =>
+  typeof valor === "string" && Object.hasOwn(TRATAMENTOS, valor)
+    ? (valor as Tratamento)
+    : "PENDENTE";
+
+/** "aaaa-mm-dd" de uma data do banco; null se não der. */
+const diaIso = (valor: unknown): string | null =>
+  /^(\d{4}-\d{2}-\d{2})/.exec(texto(valor))?.[1] ?? null;
+
+/** Os tratamentos que quem lê pode pôr no aviso (o rechecado é só da conferência). */
+export function opcoesDeTratamento(
+  aviso: Pick<Aviso, "podeGerir" | "podeTratar">,
+): Tratamento[] {
+  if (!aviso.podeTratar && !aviso.podeGerir) return [];
+  const daEquipe: Tratamento[] = [
+    "EM_ANALISE",
+    "AGUARDANDO_DOCUMENTO",
+    "CORRIGIDO",
+  ];
+  return aviso.podeGerir ? [...daEquipe, "DISPENSADO"] : daEquipe;
+}
+
+const CARA_DE_DADO_PESSOAL = /@|\d{11}|\d{3}\.\d{3}\.\d{3}-\d{2}/;
+
+/**
+ * Erro do motivo de um tratamento, ou "": dispensar pede justificativa de 10 a
+ * 500; aguardando documento e corrigido, de 3 a 500; em análise, opcional.
+ * Sem CPF nem e-mail (o banco recusa igual).
+ */
+export function erroDoMotivoDoTratamento(
+  tratamento: Tratamento,
+  motivo: unknown,
+) {
+  const t = texto(motivo);
+  const minimo =
+    tratamento === "DISPENSADO"
+      ? LIMITES_DO_MOTIVO.minimo
+      : tratamento === "AGUARDANDO_DOCUMENTO" || tratamento === "CORRIGIDO"
+        ? 3
+        : t
+          ? 3
+          : 0;
+  if (t.length < minimo)
+    return tratamento === "DISPENSADO"
+      ? `Escreva a justificativa (pelo menos ${minimo} caracteres).`
+      : `Escreva o motivo (pelo menos ${minimo} caracteres).`;
+  if (t.length > LIMITES_DO_MOTIVO.maximo)
+    return `O motivo passa de ${LIMITES_DO_MOTIVO.maximo} caracteres.`;
+  if (CARA_DE_DADO_PESSOAL.test(t)) return "Sem CPF nem e-mail no motivo.";
+  return "";
+}
+
+/** O prazo já passou? `hoje` em "aaaa-mm-dd" (o dia de Brasília). */
+export const prazoVencido = (prazo: string | null, hoje: string) =>
+  Boolean(prazo && hoje && prazo < hoje);
+
+/** "aaaa-mm-dd" de hoje em Brasília. */
+export function hojeEmBrasilia(agora: Date = new Date()) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(agora);
+}
+
+/**
+ * Os avisos agrupados por edital (na ordem do mais grave), e dentro de cada um
+ * por gravidade: os sem edital ficam pela área ou pela vaga ("onde").
+ */
+export function agruparPorEdital(avisos: readonly Aviso[]): GrupoDeAvisos[] {
+  const grupos = new Map<string, { titulo: string; avisos: Aviso[] }>();
+  for (const aviso of [...avisos].sort(porGravidade)) {
+    const chave = aviso.editalId || aviso.onde;
+    const grupo = grupos.get(chave) || { titulo: aviso.onde, avisos: [] };
+    grupo.avisos.push(aviso);
+    grupos.set(chave, grupo);
+  }
+  return [...grupos].map(([chave, grupo]) => ({ chave, ...grupo }));
+}
+
+/** A chave estável do caso para a evidência (analise:, codigo: ou referencia:). */
+export function chaveDoCaso(caso: Partial<Caso> | null): string | null {
+  if (caso?.analiseId) return `analise:${caso.analiseId}`;
+  if (caso?.codigo) return `codigo:${caso.codigo}`;
+  const referencia =
+    caso?.aprovadoId || caso?.entrevistaId || caso?.referencia || "";
+  return referencia ? `referencia:${referencia}` : null;
+}
+
+const LIMITES_DA_EVIDENCIA = Object.freeze({ minimo: 3, maximo: 500 });
+
+/** Erro de uma evidência nova, ou "". */
+export function erroDaEvidencia({
+  tipo,
+  descricao,
+  url,
+}: {
+  tipo: string;
+  descricao: string;
+  url?: string;
+}) {
+  const t = texto(descricao);
+  const link = texto(url);
+  if (!["SEI", "LINK", "NOTA"].includes(tipo)) return "Escolha o tipo.";
+  if (t.length < LIMITES_DA_EVIDENCIA.minimo)
+    return tipo === "SEI"
+      ? "Informe o número do processo SEI."
+      : "Descreva a evidência (pelo menos 3 caracteres).";
+  if (t.length > LIMITES_DA_EVIDENCIA.maximo)
+    return `A descrição passa de ${LIMITES_DA_EVIDENCIA.maximo} caracteres.`;
+  if (CARA_DE_DADO_PESSOAL.test(t)) return "Sem CPF nem e-mail na evidência.";
+  if (tipo === "LINK" && !link) return "Informe o link.";
+  if (link && !/^https:\/\/\S+$/.test(link))
+    return "O link precisa começar com https://.";
+  return "";
+}
+
+const ROTULO_DO_TRATAMENTO = (valor: unknown) =>
+  TRATAMENTOS[tratamentoDe(valor)].rotulo;
+
+/** O que aconteceu num evento do histórico, em poucas palavras. */
+export function textoDoEvento(evento: Record<string, unknown>) {
+  const quantidade = Math.round(numero(evento.quantidade) || 0);
+  const casos = `${quantidade} ${quantidade === 1 ? "caso" : "casos"}`;
+  switch (evento.evento) {
+    case "ACHADO":
+      return `Achado pela conferência (${casos})`;
+    case "REABERTO":
+      return `Reaberto (${casos})`;
+    case "TRATAMENTO":
+      return ROTULO_DO_TRATAMENTO(evento.tratamento);
+    case "RESPONSAVEL": {
+      const quem = texto(evento.responsavel);
+      const prazo = diaDoCaso(evento.prazo);
+      if (!quem) return "Sem responsável";
+      return prazo
+        ? `Responsável: ${quem}, até ${prazo}`
+        : `Responsável: ${quem}`;
+    }
+    case "EVIDENCIA_INCLUIDA":
+      return "Evidência incluída";
+    case "EVIDENCIA_RETIRADA":
+      return "Evidência retirada";
+    case "RECHECADO_COM_PROBLEMA":
+      return `Rechecado: o problema continua (${casos})`;
+    case "NAO_ACHADO":
+      return evento.tratamento === "DISPENSADO"
+        ? "Não achado na rechecagem (segue dispensado)"
+        : "Rechecado sem problema";
+    case "MIGRADO":
+      return "Dispensado (era “ignorado”)";
+    default:
+      return texto(evento.evento);
+  }
+}
+
+const tipoDaEvidencia = (valor: unknown): EvidenciaDoAviso["tipo"] =>
+  valor === "SEI" || valor === "LINK" ? valor : "NOTA";
+
+/** `listar_historico_aviso_conferencia`: eventos (mais novo primeiro) e evidências. */
+export function normalizarHistorico(entrada: unknown): HistoricoDoAviso {
+  const dados = registro(entrada);
+  const eventos = (Array.isArray(dados.eventos) ? dados.eventos : [])
+    .filter(ehRegistro)
+    .map((e) => ({
+      id: texto(e.id),
+      texto: textoDoEvento(e),
+      motivo: texto(e.motivo),
+      por: e.robo === true ? "Conferência automática" : texto(e.por),
+      em: data(e.em),
+    }));
+  const evidencias = (Array.isArray(dados.evidencias) ? dados.evidencias : [])
+    .filter(ehRegistro)
+    .map((e) => ({
+      id: texto(e.id),
+      tipo: tipoDaEvidencia(e.tipo),
+      descricao: texto(e.descricao),
+      url: /^https:\/\//.test(texto(e.url)) ? texto(e.url) : null,
+      caso: texto(e.caso) || null,
+      ativa: e.ativa === true,
+      por: texto(e.por),
+      em: data(e.em),
+      retiradaEm: data(e.retirada_em),
+    }));
+  return { eventos, evidencias };
 }
 
 /** Avisos abertos por módulo (o selo de cada tela). */
@@ -306,7 +547,8 @@ export function filtrarPorModulo(
   return {
     ...lista,
     abertos: lista.abertos.filter((a) => a.modulo === modulo),
-    ignorados: lista.ignorados.filter((a) => a.modulo === modulo),
+    dispensados: lista.dispensados.filter((a) => a.modulo === modulo),
+    resolvidos: lista.resolvidos.filter((a) => a.modulo === modulo),
   };
 }
 
@@ -316,16 +558,6 @@ export function tomDoSelo(abertos: readonly Aviso[] | null | undefined) {
     (a, b) => GRAVIDADES[a.gravidade].ordem - GRAVIDADES[b.gravidade].ordem,
   )[0];
   return mais ? mais.tom : null;
-}
-
-/** Erro do motivo ao ignorar, ou "" quando está bom. */
-export function erroDoMotivo(motivo: unknown) {
-  const t = texto(motivo);
-  if (t.length < LIMITES_DO_MOTIVO.minimo)
-    return `Escreva o motivo (pelo menos ${LIMITES_DO_MOTIVO.minimo} caracteres).`;
-  if (t.length > LIMITES_DO_MOTIVO.maximo)
-    return `O motivo passa de ${LIMITES_DO_MOTIVO.maximo} caracteres.`;
-  return "";
 }
 
 /** "dd/mm/aaaa"; "—" sem data. */
@@ -435,6 +667,13 @@ function normalizarAnaliseDoCaso(entrada: unknown): AnaliseDoCaso {
   };
 }
 
+/** "em_andamento" (código do job) → "status Em andamento". */
+function rotuloDoStatusDoEdital(codigo: string) {
+  if (!codigo || codigo === "sem_status") return codigo ? "sem status" : "";
+  const frase = codigo.replace(/_/g, " ");
+  return `status ${frase.charAt(0).toUpperCase()}${frase.slice(1)}`;
+}
+
 /** O status gravado no caso do admitido (código do job) → como a lista o mostra. */
 const STATUS_DO_ADMITIDO: Readonly<Record<string, string>> = Object.freeze({
   convocado: "status Convocado",
@@ -534,6 +773,16 @@ export function motivoDoCaso(
     case "CLASSIFICACAO_AJUSTE_APOS_LISTA": {
       const dia = diaDoCaso(caso.lista?.aprovadoEm);
       return dia ? `Ajuste aprovado em ${dia}` : "";
+    }
+    case "EDITAL_CRONOGRAMA_ENCERRADO": {
+      const fim = diaDoCaso(d.fim);
+      const status = rotuloDoStatusDoEdital(texto(d.status));
+      return [
+        fim ? `Cronograma terminou em ${fim}` : "Cronograma terminou",
+        status,
+      ]
+        .filter(Boolean)
+        .join(" · ");
     }
     case "CARGA_VARIACAO_BRUSCA":
       return d.antes !== undefined && d.depois !== undefined
@@ -674,6 +923,9 @@ export function situacaoDoCaso(caso: Partial<Caso> | null) {
  * acesso". Nunca um UUID.
  */
 export function quemDoCaso(caso: Partial<Caso> | null) {
+  // O aviso do edital (20261118150000): o caso é o próprio edital, pelo número.
+  if (caso?.conferencia === "EDITAL_CRONOGRAMA_ENCERRADO" && caso.referencia)
+    return `Edital ${caso.referencia}`;
   const partes = [caso?.codigo, caso?.nome].map(texto).filter(Boolean);
   const resolucao = RESOLUCOES[caso?.resolucao ?? ""];
   if (resolucao)

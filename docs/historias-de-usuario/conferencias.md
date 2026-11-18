@@ -86,42 +86,56 @@ topo da minha tela quantos avisos há, **para** corrigir sem procurar.
 - **CF-4.8** — **Dado** os casos de um aviso, **quando** clico em "Exportar CSV", **então** baixo
   todos os casos, com as células protegidas contra fórmula.
 
-## CF-5 — Ignorar com motivo
+## CF-5 — Tratar o aviso (central de avisos, 18/11/2026)
 
 - **CF-5.1** — **Dado** que administro o módulo (na Classificação, edito) ou sou administrador
-  global, **quando** clico em "Ignorar", **então** escrevo o motivo (10 a 500 caracteres) e o aviso
-  vai para "Ignorados", com data e motivo.
-- **CF-5.2** — **Dado** que só leio o módulo, **quando** vejo o aviso, **então** não há botão
-  "Ignorar" e o banco recusa (42501).
-- **CF-5.3** — **Dado** um aviso ignorado, **quando** a quantidade de casos cresce, **então** ele
-  volta a ABERTO; com a mesma quantidade, continua ignorado.
+  global, **quando** clico em "Tratar" e escolho "Dispensado", **então** escrevo a justificativa
+  (10 a 500 caracteres) e o aviso vai para "Dispensados"; a justificativa fica no histórico.
+- **CF-5.2** — **Dado** que só leio o módulo e não sou o responsável, **quando** vejo o aviso,
+  **então** não há "Tratar" e o banco recusa (42501).
+- **CF-5.3** — **Dado** um aviso dispensado, **quando** a quantidade de casos cresce, **então** ele
+  volta a pendente; com a mesma quantidade, continua dispensado.
+- **CF-5.4** — **Dado** que sou o responsável ou o gestor, **quando** marco "Em análise",
+  "Aguardando documento" ou "Corrigido" (os dois últimos com motivo), **então** a situação aparece no
+  aviso e no histórico.
+- **CF-5.5** — **Dado** um aviso corrigido, **quando** a conferência seguinte ainda o acha,
+  **então** ele volta para "Em análise" ("rechecado: o problema continua" no histórico); **quando**
+  não acha, **então** fica resolvido como "Rechecado sem problema". Nada apaga o motivo de antes.
+- **CF-5.6** — **Dado** que sou o gestor, **quando** escolho o responsável (quem tem acesso ao
+  módulo) e o prazo, **então** eles aparecem no aviso; o prazo vencido fica em destaque.
+- **CF-5.7** — **Dado** que posso tratar o aviso, **quando** junto uma evidência (processo SEI, link
+  https ou nota) ao aviso ou a um caso, **então** ela aparece no histórico; retirar pede motivo e a
+  evidência continua no histórico, riscada.
+- **CF-5.8** — **Dado** a lista, **então** os abertos ficam agrupados por edital, cada aviso com a
+  data da última rechecagem; dispensados e resolvidos dos últimos 30 dias ficam recolhidos.
 
 ## CF-6 — As conferências
 
-| Código                                        | Módulo        | Gravidade   | Confere                                                                     |
-| --------------------------------------------- | ------------- | ----------- | --------------------------------------------------------------------------- |
-| `ANALISE_APROVADA_ABAIXO_DO_CORTE`            | Análises      | Crítico     | aprovada com nota abaixo da nota mínima documental da regra vigente         |
-| `ANALISE_NOTA_DIFERENTE_DA_SOMA`              | Análises      | Atenção     | nota final ≠ formação + cursos + experiência + étnico (±0,01), só com as 4  |
-| `ANALISE_EXPERIENCIA_ACIMA_DO_TETO`           | Análises      | Atenção     | experiência acima de `documental.teto_experiencia` (se a regra tiver)       |
-| `ANALISE_DATA_INVALIDA`                       | Análises      | Atenção     | data da análise no futuro ou antes da candidatura no mesmo edital           |
-| `ANALISE_FICHA_CONTA_DIVERGENTE`              | Análises      | Crítico     | ficha concluída cuja conta refeita difere da gravada (não a importada)      |
-| `ANALISE_EM_DOIS_EDITAIS`                     | Análises      | Informativo | mesmo código de candidato em dois editais ativos                            |
-| `ENTREVISTA_SEM_NOTA_APOS_DATA`               | Entrevistas   | Atenção     | data da agenda passou, sem nota e sem ausência marcada                      |
-| `ENTREVISTA_NOTA_FORA_DA_ESCALA`              | Entrevistas   | Crítico     | nota do avaliador fora da faixa/passo, lista ou níveis do roteiro           |
-| `ENTREVISTA_FORA_DA_CONVOCACAO`               | Entrevistas   | Crítico     | convocado pelo sistema fora da lista de convocação vigente                  |
-| `ENTREVISTA_HORARIO_DUPLICADO`                | Entrevistas   | Atenção     | duas entrevistas no edital, ou horários que se cruzam em dois editais       |
-| `CLASSIFICACAO_LISTA_FINAL_DESATUALIZADA`     | Classificação | Crítico     | lista FINAL gerada antes da última mudança nas análises do edital           |
-| `CLASSIFICACAO_EMPATE_PENDENTE`               | Classificação | Atenção     | última lista com empate sem desempate registrado                            |
-| `CLASSIFICACAO_VAGA_SEM_QUADRO`               | Classificação | Atenção     | vaga das análises de edital ativo sem linha no quadro (ex.: 101/2026)       |
-| `CLASSIFICACAO_VAGA_QUADRO_AMBIGUO`           | Classificação | Atenção     | vaga com mais de uma linha possível no quadro (vínculo AMBIGUO)             |
-| `CLASSIFICACAO_AJUSTE_APOS_LISTA`             | Classificação | Atenção     | ajuste de recurso aprovado depois da última lista do mesmo tipo             |
-| `CLASSIFICACAO_CONVOCACAO_REGRA_ANTERIOR`     | Classificação | Atenção     | a convocação vigente foi gerada com versão da regra anterior à vigente      |
-| `APROVADOS_CONTRATADO_DUPLICADO`              | Aprovados     | Crítico     | a mesma pessoa com duas matrículas Contratado no mesmo edital               |
-| `APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS`    | Aprovados     | Atenção     | a mesma matrícula Contratado em mais de uma linha (o par conta uma vez)     |
-| `APROVADOS_CONVOCADO_SEM_DESFECHO`            | Aprovados     | Atenção     | Convocado há mais de N dias (padrão 15) e sem admissão no RH                |
-| `APROVADOS_ADMITIDO_COM_STATUS_DESATUALIZADO` | Aprovados     | Atenção     | admissão conciliada com o RH e status que não é de contratado (lista ativa) |
-| `APROVADOS_PENDENCIA_DA_PUBLICACAO`           | Aprovados     | Atenção     | pendência da publicação vinda da Classificação ainda sem desfecho           |
-| `CARGA_VARIACAO_BRUSCA`                       | Cargas        | Atenção     | candidatos de uma vaga da Empregare variaram 50% ou mais na última carga    |
+| Código                                        | Módulo        | Gravidade   | Confere                                                                                         |
+| --------------------------------------------- | ------------- | ----------- | ----------------------------------------------------------------------------------------------- |
+| `ANALISE_APROVADA_ABAIXO_DO_CORTE`            | Análises      | Crítico     | aprovada com nota abaixo da nota mínima documental da regra vigente                             |
+| `ANALISE_NOTA_DIFERENTE_DA_SOMA`              | Análises      | Atenção     | nota final ≠ formação + cursos + experiência + étnico (±0,01), só com as 4                      |
+| `ANALISE_EXPERIENCIA_ACIMA_DO_TETO`           | Análises      | Atenção     | experiência acima de `documental.teto_experiencia` (se a regra tiver)                           |
+| `ANALISE_DATA_INVALIDA`                       | Análises      | Atenção     | data da análise no futuro ou antes da candidatura no mesmo edital                               |
+| `ANALISE_FICHA_CONTA_DIVERGENTE`              | Análises      | Crítico     | ficha concluída cuja conta refeita difere da gravada (não a importada)                          |
+| `ANALISE_EM_DOIS_EDITAIS`                     | Análises      | Informativo | mesmo código de candidato em dois editais ativos                                                |
+| `ENTREVISTA_SEM_NOTA_APOS_DATA`               | Entrevistas   | Atenção     | data da agenda passou, sem nota e sem ausência marcada                                          |
+| `ENTREVISTA_NOTA_FORA_DA_ESCALA`              | Entrevistas   | Crítico     | nota do avaliador fora da faixa/passo, lista ou níveis do roteiro                               |
+| `ENTREVISTA_FORA_DA_CONVOCACAO`               | Entrevistas   | Crítico     | convocado pelo sistema fora da lista de convocação vigente                                      |
+| `ENTREVISTA_HORARIO_DUPLICADO`                | Entrevistas   | Atenção     | duas entrevistas no edital, ou horários que se cruzam em dois editais                           |
+| `CLASSIFICACAO_LISTA_FINAL_DESATUALIZADA`     | Classificação | Crítico     | lista FINAL gerada antes da última mudança nas análises do edital                               |
+| `CLASSIFICACAO_EMPATE_PENDENTE`               | Classificação | Atenção     | última lista com empate sem desempate registrado                                                |
+| `CLASSIFICACAO_VAGA_SEM_QUADRO`               | Classificação | Atenção     | vaga das análises de edital ativo sem linha no quadro (ex.: 101/2026)                           |
+| `CLASSIFICACAO_VAGA_QUADRO_AMBIGUO`           | Classificação | Atenção     | vaga com mais de uma linha possível no quadro (vínculo AMBIGUO)                                 |
+| `CLASSIFICACAO_AJUSTE_APOS_LISTA`             | Classificação | Atenção     | ajuste de recurso aprovado depois da última lista do mesmo tipo                                 |
+| `CLASSIFICACAO_CONVOCACAO_REGRA_ANTERIOR`     | Classificação | Atenção     | a convocação vigente foi gerada com versão da regra anterior à vigente                          |
+| `APROVADOS_CONTRATADO_DUPLICADO`              | Aprovados     | Crítico     | a mesma pessoa com duas matrículas Contratado no mesmo edital                                   |
+| `APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS`    | Aprovados     | Atenção     | a mesma matrícula Contratado em mais de uma linha (o par conta uma vez)                         |
+| `APROVADOS_CONVOCADO_SEM_DESFECHO`            | Aprovados     | Atenção     | Convocado há mais de N dias (padrão 15) e sem admissão no RH                                    |
+| `APROVADOS_ADMITIDO_COM_STATUS_DESATUALIZADO` | Aprovados     | Atenção     | admissão conciliada com o RH e status que não é de contratado (lista ativa)                     |
+| `APROVADOS_PENDENCIA_DA_PUBLICACAO`           | Aprovados     | Atenção     | pendência da publicação vinda da Classificação ainda sem desfecho                               |
+| `CARGA_VARIACAO_BRUSCA`                       | Cargas        | Atenção     | candidatos de uma vaga da Empregare variaram 50% ou mais na última carga                        |
+| `EDITAL_CRONOGRAMA_ENCERRADO`                 | Editais       | Atenção     | cronograma concluído pelas datas e o status gravado ainda em outra situação (sem status manual) |
 
 "Edital ativo" nas duas linhas acima (`ANALISE_EM_DOIS_EDITAIS` e `CLASSIFICACAO_VAGA_SEM_QUADRO`)
 quer dizer ativo **e** sem situação de fim: edital Concluído, Cancelado ou Encerrado fica fora

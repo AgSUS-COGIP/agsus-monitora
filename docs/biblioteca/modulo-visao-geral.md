@@ -41,7 +41,8 @@ trabalho). De cima para baixo:
 - **Pede ação** (`PedeAcao`) ao lado de **Em andamento, por fase** (`EmAndamento`,
   `andamentoPorFase` em `src/lib/visao-geral/visao-geral.ts`): críticos e pós-resultado (sem lista e
   lista sem status; contratação abaixo de 50% e desistências saíram em 18/11/2026) numa lista; só as fases
-  com edital aberto, sem as vazias, e concluídos e cancelados numa linha.
+  com edital aberto, sem as vazias, e numa linha os com cronograma encerrado, os concluídos
+  (digitados à mão) e os cancelados.
 - **Mapa** mais baixo que na tela do mapa (`--altura-do-mapa-na-visao-geral`), com a altura
   reservada enquanto o módulo baixa (`.visao-geral-mapa-reserva`).
 - **Tabela**: a contagem não repete o total; no celular, o cartão mostra só unidade, edital,
@@ -52,9 +53,19 @@ trabalho). De cima para baixo:
   vindos do banco, que no manual com etapas também vêm desde a migration `20261117190000`). O
   manual com etapas segue as regras da próxima etapa; suspenso e paralisado dizem "Processo
   suspenso/paralisado" (não "Etapa atrasada"). A gaveta escreve "Cronograma cadastrado · cálculo
-  manual · suspenso". "Concluído" é o status calculado pelas datas e vira "Cronograma encerrado":
-  a data passar não prova resultado publicado nem processo homologado, e a validade do cadastro
-  reserva é outra conta (`FC_VENCIMENTO_DO_EDITAL`, [[modulo-editais]]).
+  manual · suspenso".
+- **"Cronograma encerrado", não "Concluído"** (`statusDaVisaoGeral`, item 3 da conferência de
+  17/11/2026). O `status` da view é o calculado; com o cálculo automático, "Concluído" só diz que
+  a última data passou (em 17/11, 52 editais gravados "Em andamento" calculavam "Concluído"). A
+  data passar não prova resultado publicado nem processo homologado, e a validade do cadastro
+  reserva é outra conta (`FC_VENCIMENTO_DO_EDITAL`, [[modulo-editais]]). `enriquecerLinhas` troca
+  o status por "Cronograma encerrado", e tabela, gaveta, filtro, busca, CSV, fase (no fluxo, no
+  lugar de Concluído, tom neutro) e "Em andamento, por fase" ("N com cronograma encerrado") herdam
+  a troca. O "Concluído" digitado à mão (cálculo manual) fica "Concluído" (fase fora do fluxo,
+  "Processo concluído" no prazo). `ehConcluido` reconhece os dois: pós-resultado e ociosas seguem
+  iguais. Sem migration: a Avaliação documental e a Classificação
+  continuam lendo o status gravado, e a diferença entre gravado e calculado é aviso das
+  [[modulo-conferencias]].
 
 ## Dados e carregamento
 

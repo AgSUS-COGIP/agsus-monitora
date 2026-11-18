@@ -152,6 +152,7 @@ export const camposAtivos = (filtros?: Partial<FiltrosDaVisaoGeral>) =>
 const ORDEM_DO_STATUS = [
   "Em Andamento",
   "Andamento",
+  "Cronograma encerrado",
   "Concluído",
   "Concluido",
   "Cancelado",
@@ -409,6 +410,7 @@ export function enriquecerLinhas(
     const admissoes = acompanhamento?.admissoesPorEdital?.get(id) || null;
     return {
       ...linha,
+      status: statusDaVisaoGeral(linha),
       ciclo: cicloPadronizado(linha?.ciclo),
       atencao: motivosDeAtencao(linha, { hoje, etapas, limites, marcacao }),
       pos_resultado: pendenciasDaLinha(linha, lista, temListas),
@@ -695,11 +697,16 @@ export function fasesDosProcessos(linhas: readonly LinhaDoMonitoramento[]) {
 
 /*
   "Em andamento, por fase" (layout A, 17/11/2026): só as fases com edital em
-  andamento, sem as vazias; concluídos e cancelados vão para a linha de baixo.
+  andamento, sem as vazias; cronograma encerrado, concluídos (digitados à mão)
+  e cancelados vão para a linha de baixo.
   Antes, as nove fases ficavam à vista, metade em zero, e "Concluído 81%"
   tomava o bloco.
 */
-const FASES_ENCERRADAS = new Set(["Concluído", "Cancelado"]);
+const FASES_ENCERRADAS = new Set([
+  "Cronograma encerrado",
+  "Concluído",
+  "Cancelado",
+]);
 
 export function andamentoPorFase(linhas: readonly LinhaDoMonitoramento[]) {
   const fases = fasesDosProcessos(linhas);
@@ -709,6 +716,7 @@ export function andamentoPorFase(linhas: readonly LinhaDoMonitoramento[]) {
     emAndamento: fases
       .filter((f) => !FASES_ENCERRADAS.has(f.fase) && f.quantos > 0)
       .map(({ fase, quantos, tom }) => ({ fase, quantos, tom })),
+    encerrados: quantosEm("Cronograma encerrado"),
     concluidos: quantosEm("Concluído"),
     cancelados: quantosEm("Cancelado"),
   };
@@ -771,11 +779,28 @@ export function processosPorProjeto(linhas: readonly LinhaDoMonitoramento[]) {
 }
 
 /*
+  O status que a Visão geral mostra, filtra, busca e exporta. Com o cálculo
+  automático, "Concluído" só vem das datas (o excepcional é suspenso, paralisado
+  ou cancelado): a última data do cronograma passou, o que não prova resultado
+  publicado nem processo homologado. Vira "Cronograma encerrado" (conferência
+  de 17/11/2026). O "Concluído" digitado à mão (cálculo manual) fica.
+  enriquecerLinhas aplica; ehConcluido e faseDoEdital reconhecem os dois.
+*/
+export function statusDaVisaoGeral(linha: LinhaDoMonitoramento | null) {
+  const status = linha?.status;
+  return statusCanonico(status) === "Concluído" &&
+    linha?.cronograma_automatico !== false
+    ? "Cronograma encerrado"
+    : status;
+}
+
+/*
   O status como a gaveta mostra ("em andamento", "Em Andamento" e
   "Andamento" são um só); vazio é "Cronograma pendente".
 */
 export function statusCanonico(valor: unknown) {
   const chave = normalizarTexto(valor);
+  if (chave.includes("cronograma encerrado")) return "Cronograma encerrado";
   if (chave.includes("conclu")) return "Concluído";
   if (chave.includes("cancel")) return "Cancelado";
   if (chave.includes("suspens")) return "Suspenso";
@@ -902,6 +927,12 @@ export function diasAte(
   return Math.round((alvo.getTime() - dia.getTime()) / 86400000);
 }
 
+/* O fim pelo status: "Concluído" só quando digitado à mão (cálculo manual). */
+const rotuloDoFim = (linha: LinhaDoMonitoramento | null) =>
+  statusCanonico(statusDaVisaoGeral(linha)) === "Concluído"
+    ? "Processo concluído"
+    : "Cronograma encerrado";
+
 /*
   O prazo do edital, na célula do edital: cancelado e concluído dizem isso;
   "Edital encerra em N dias" até 7 (perigo) e até 30 (alerta); mais longe,
@@ -918,8 +949,12 @@ export function prazoDoEdital(
   const status = low(linha?.status);
   if (["cancelado", "cancelada"].includes(status))
     return { tom: "neutro", rotulo: "Processo cancelado", icone: "fa-ban" };
-  if (["concluído", "concluido"].includes(status))
-    return { tom: "neutro", rotulo: "Cronograma encerrado", icone: "fa-check" };
+  if (["concluído", "concluido", "cronograma encerrado"].includes(status))
+    return {
+      tom: "neutro",
+      rotulo: rotuloDoFim(linha),
+      icone: "fa-check",
+    };
   const dias = diasAte(linha?.data_fim, hoje);
   if (dias === null || dias < 0) return null;
   const rotulo = `Edital encerra em ${dias} ${dias === 1 ? "dia" : "dias"}`;
@@ -982,8 +1017,8 @@ export function urgenciaDoCronograma(
     return { tom: "neutral", rotulo: "Dados operacionais indisponíveis" };
   const status = statusCanonico(linha.status);
   if (status === "Cancelado") return { tom: "done", rotulo: status };
-  if (status === "Concluído")
-    return { tom: "done", rotulo: "Cronograma encerrado" };
+  if (status === "Concluído" || status === "Cronograma encerrado")
+    return { tom: "done", rotulo: rotuloDoFim(linha) };
   if (status === "Suspenso" || status === "Paralisado")
     return { tom: "warning", rotulo: `Processo ${status.toLowerCase()}` };
   const fim = diasAte(linha.data_fim, hoje);

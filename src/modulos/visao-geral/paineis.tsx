@@ -549,9 +549,18 @@ export function PedeAcao({ e, estado, textos }: PropsComTextos) {
 /* ── Em andamento, por fase ─────────────────────────────────────────── */
 
 export function EmAndamento({ e, estado }: PropsDoPainel) {
-  const { emAndamento, concluidos, cancelados } = andamentoPorFase(e.filtradas);
+  const {
+    emAndamento,
+    encerrados: comCronogramaEncerrado,
+    concluidos,
+    cancelados,
+  } = andamentoPorFase(e.filtradas);
   const filtrada = e.filtros.fase.length === 1 ? e.filtros.fase[0] : null;
+  // "Cronograma encerrado" é a data que passou; "concluído", só o digitado à mão.
   const encerrados = [
+    comCronogramaEncerrado
+      ? `${plural(comCronogramaEncerrado, "com", "com")} cronograma encerrado`
+      : "",
     concluidos ? plural(concluidos, "concluído", "concluídos") : "",
     cancelados ? plural(cancelados, "cancelado", "cancelados") : "",
   ]

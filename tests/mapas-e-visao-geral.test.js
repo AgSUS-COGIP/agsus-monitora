@@ -2463,9 +2463,20 @@ bloco("fases-do-processo", () => {
           etapa: "Resultado final do Processo Seletivo",
         }),
       ).toBe("Cancelado");
+      // Concluído pelas datas (cálculo automático) não prova o resultado: "Cronograma encerrado".
       expect(faseDoEdital({ status: "Concluído", etapa: "Entrevistas" })).toBe(
-        "Concluído",
+        "Cronograma encerrado",
       );
+      expect(
+        faseDoEdital({ status: "Concluído", cronograma_automatico: true }),
+      ).toBe("Cronograma encerrado");
+      expect(faseDoEdital({ status: "Cronograma encerrado" })).toBe(
+        "Cronograma encerrado",
+      );
+      // Só o "Concluído" digitado à mão (cálculo manual) é Concluído.
+      expect(
+        faseDoEdital({ status: "Concluído", cronograma_automatico: false }),
+      ).toBe("Concluído");
       expect(
         faseDoEdital({
           status: "Planejado",
@@ -2505,14 +2516,16 @@ bloco("fases-do-processo", () => {
         "Entrevistas",
         "Resultado",
         "Contratação",
-        "Concluído",
+        "Cronograma encerrado",
       ]);
-      expect(ORDEM_DAS_FASES.slice(-3)).toEqual([
+      expect(ORDEM_DAS_FASES.slice(-4)).toEqual([
+        "Concluído",
         "Cancelado",
         "Sem cronograma",
         "Outra",
       ]);
       expect(tomDaFase("Concluído")).toBe("sucesso");
+      expect(tomDaFase("Cronograma encerrado")).toBe("neutro");
       expect(tomDaFase("Cancelado")).toBe("perigo");
       expect(tomDaFase("Outra")).toBe("neutro");
     });
@@ -6822,7 +6835,7 @@ bloco("visao-geral", () => {
       expect(opcoesDosFiltros(LINHAS, filtrosVazios()).fase).toEqual([
         "Análise curricular",
         "Entrevistas",
-        "Concluído",
+        "Cronograma encerrado",
         "Cancelado",
         "Sem cronograma",
       ]);
@@ -6852,7 +6865,9 @@ bloco("visao-geral", () => {
       ]);
       expect(analise.fase).toBe("Análise curricular");
       expect(analise.atencao).toEqual([]);
-      expect(yanomami.fase).toBe("Concluído");
+      // "Concluído" pelas datas: a Visão geral diz "Cronograma encerrado" (status e fase).
+      expect(yanomami.fase).toBe("Cronograma encerrado");
+      expect(yanomami.status).toBe("Cronograma encerrado");
       expect(yanomami.atencao.map((m) => m.codigo)).toEqual(["marcado"]);
       // Sem o resumo das listas, nenhuma pendência pós-resultado.
       expect(yanomami.pos_resultado).toEqual([]);
@@ -6981,7 +6996,7 @@ bloco("visao-geral", () => {
         "Entrevistas",
         "Resultado",
         "Contratação",
-        "Concluído",
+        "Cronograma encerrado",
         "Cancelado",
         "Sem cronograma",
       ]);
@@ -6994,17 +7009,22 @@ bloco("visao-geral", () => {
       expect(fases.reduce((s, f) => s + f.quantos, 0)).toBe(LINHAS.length);
     });
 
-    it("Em andamento: só as fases com edital aberto; concluídos e cancelados à parte", () => {
+    it("Em andamento: só as fases com edital aberto; encerrados, concluídos e cancelados à parte", () => {
       const a = andamentoPorFase(LINHAS);
       const fases = fasesDosProcessos(LINHAS);
-      const quantos = (fase) => fases.find((f) => f.fase === fase).quantos;
+      const quantos = (fase) => fases.find((f) => f.fase === fase)?.quantos ?? 0;
       expect(a.emAndamento.every((f) => f.quantos > 0)).toBe(true);
-      expect(a.emAndamento.map((f) => f.fase)).not.toContain("Concluído");
+      expect(a.emAndamento.map((f) => f.fase)).not.toContain(
+        "Cronograma encerrado",
+      );
       expect(a.emAndamento.map((f) => f.fase)).not.toContain("Cancelado");
-      expect(a.concluidos).toBe(quantos("Concluído"));
+      expect(a.encerrados).toBe(quantos("Cronograma encerrado"));
+      expect(a.encerrados).toBe(1);
+      expect(a.concluidos).toBe(0);
       expect(a.cancelados).toBe(quantos("Cancelado"));
       expect(
         a.emAndamento.reduce((s, f) => s + f.quantos, 0) +
+          a.encerrados +
           a.concluidos +
           a.cancelados,
       ).toBe(LINHAS.length);
