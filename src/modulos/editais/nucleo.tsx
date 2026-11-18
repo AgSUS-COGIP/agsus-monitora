@@ -299,11 +299,10 @@ function LinhaDoEdital({
                   : `Lista de aprovados de ${nome}`
               }
               onClick={() =>
-                aviso
-                  ? estado.toast(
-                      aviso.texto,
-                      aviso.tom === "perigo" ? "error" : "warn",
-                    )
+                // Cancelado/suspenso só avisa; concluído sem aprovados (amarelo)
+                // abre as listas como os outros, para importar a lista.
+                aviso?.tom === "perigo"
+                  ? estado.toast(aviso.texto, "error")
                   : abrirListasDoEdital(String(linha.id), rotulo)
               }
             >

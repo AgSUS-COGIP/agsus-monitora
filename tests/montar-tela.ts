@@ -4,6 +4,7 @@ import { flushSync } from "react-dom";
 import { createRoot } from "react-dom/client";
 import type { Root } from "react-dom/client";
 import { ErrorBoundary } from "../src/app/ErrorBoundary.tsx";
+import { registrarRaiz } from "./apoio/raizes-abertas.ts";
 import { PortaisAvulsos } from "../src/app/portais-avulsos.tsx";
 
 /*
@@ -76,7 +77,10 @@ export function desenharNoTeste(
   );
   if (sincrono) flushSync(() => raiz.render(arvore));
   else raiz.render(arvore);
-  return { raiz, desmontar: () => raiz.unmount() };
+  const desmontarDeVerdade = raiz.unmount.bind(raiz);
+  const desmontar = registrarRaiz(desmontarDeVerdade);
+  raiz.unmount = desmontar;
+  return { raiz, desmontar };
 }
 
 /**

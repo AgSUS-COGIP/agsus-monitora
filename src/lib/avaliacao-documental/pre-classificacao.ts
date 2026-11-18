@@ -8,7 +8,7 @@
   prévia da tela (tamanho sugerido do lote, retrato das listas) e é conferida
   com o Python pelos MESMOS casos dourados:
   tests/fixtures/avaliacao-documental/casos-de-pre-classificacao.json
-  (tests/lib/avaliacao-documental-pre-classificacao.test.js e
+  (tests/avaliacao-e-recursos.test.js (bloco lib/avaliacao-documental-pre-classificacao) e
   tests/python/test_pre_classificacao.py). Mudou aqui, muda lá.
 
   Regras (docs/aya/regras-da-avaliacao-documental.md):

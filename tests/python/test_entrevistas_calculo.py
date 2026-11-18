@@ -1,7 +1,7 @@
 """
 Cálculo da entrevista em Python (python/monitora/entrevistas/calculo.py): os MESMOS
 casos dourados do vitest — tests/fixtures/entrevistas/casos-de-calculo.json
-(tests/entrevistas-calculo-dourado.test.js). Nada fala com o Supabase.
+(tests/entrevistas-e-aprovados.test.js (bloco entrevistas-calculo-dourado)). Nada fala com o Supabase.
 """
 
 import json
