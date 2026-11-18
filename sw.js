@@ -5,9 +5,14 @@ const CACHE_VERSION = "agsus-monitora-dev";
 const CACHE_LIMIT = 150;
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const OFFLINE_URL = "/offline.html";
+/*
+  A casca. Sem "/index.html": a Vercel responde 308 a ele (e a "/offline.html",
+  por `cleanUrls`), e uma resposta redirecionada não serve para responder a
+  uma navegação (o navegador mostra a página de erro). A navegação sem rede
+  cai em "/", que é o index.html sem redirecionar (guardarCasca).
+*/
 const APP_SHELL = [
   "/",
-  "/index.html",
   OFFLINE_URL,
   "/manifest.webmanifest",
   "/sw-policy.js",
@@ -42,6 +47,8 @@ const {
   isResponseCacheable,
   entriesBeyondLimit,
   isHashedAsset,
+  prefersCachedCopy,
+  entriesToCarry,
 } = self.AgSUSPwaCachePolicy;
 
 const FIXED_URLS = [...APP_SHELL, ...PRECACHE].map(
@@ -86,22 +93,75 @@ async function cacheFirst(request) {
   return response;
 }
 
-async function networkFirst(request, fallbackRequest = request) {
+/* Sem rede, ou com erro da rede (404, 500) e cópia guardada: a cópia. */
+async function networkFirst(request) {
+  let response;
   try {
-    const response = await fetch(request);
+    response = await fetch(request);
+  } catch {
+    return caches.match(request, MATCH_OPTIONS);
+  }
+  if (!prefersCachedCopy(response)) {
     await storeResponse(request, response);
     return response;
-  } catch {
-    return caches.match(fallbackRequest, MATCH_OPTIONS);
   }
+  return (await caches.match(request, MATCH_OPTIONS)) || response;
 }
 
 async function networkFirstNavigation(request) {
   return (
     (await networkFirst(request)) ||
-    (await caches.match("/index.html", MATCH_OPTIONS)) ||
+    (await caches.match("/", MATCH_OPTIONS)) ||
     (await caches.match(OFFLINE_URL, MATCH_OPTIONS))
   );
+}
+
+/*
+  A casca entra no cache sem o redirecionamento: se o servidor redirecionou
+  (a Vercel em "/offline.html"), guarda o corpo como resposta direta, que
+  serve para responder a uma navegação.
+*/
+async function guardarCasca(cache) {
+  await Promise.all(
+    APP_SHELL.map(async (path) => {
+      const response = await fetch(path, { cache: "no-cache" });
+      if (!response.ok) throw new Error(`${response.status} em ${path}`);
+      await cache.put(
+        path,
+        response.redirected
+          ? new Response(await response.blob(), {
+              status: response.status,
+              statusText: response.statusText,
+              headers: response.headers,
+            })
+          : response,
+      );
+    }),
+  );
+}
+
+/*
+  Os pedaços da versão anterior que a nova não tem vêm para o cache novo
+  antes de o anterior sair (entriesToCarry): a aba que atravessou a
+  publicação continua achando o código dela. O limite do cache leva primeiro
+  os mais velhos.
+*/
+async function herdarDaVersaoAnterior(anteriores) {
+  const cache = await caches.open(STATIC_CACHE);
+  for (const nome of anteriores) {
+    const anterior = await caches.open(nome);
+    const pedidos = await anterior.keys();
+    const presentes = (await cache.keys()).map((pedido) => pedido.url);
+    const herdar = entriesToCarry(
+      pedidos.map((pedido) => pedido.url),
+      presentes,
+    );
+    for (const url of herdar) {
+      const response = await anterior.match(url, MATCH_OPTIONS);
+      if (response) await cache.put(url, response);
+    }
+  }
+  await trimCache(cache);
 }
 
 /*
@@ -126,7 +186,7 @@ async function precacheFile(cache, path) {
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(STATIC_CACHE).then(async (cache) => {
-      await cache.addAll(APP_SHELL);
+      await guardarCasca(cache);
       await Promise.allSettled(
         PRECACHE.map((path) => precacheFile(cache, path)),
       );
@@ -136,19 +196,18 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches
-      .keys()
-      .then((keys) =>
-        Promise.all(
-          keys
-            .filter(
-              (key) =>
-                key.startsWith("agsus-monitora-") && key !== STATIC_CACHE,
-            )
-            .map((key) => caches.delete(key)),
-        ),
-      )
-      .then(() => self.clients.claim()),
+    (async () => {
+      const anteriores = (await caches.keys()).filter(
+        (key) => key.startsWith("agsus-monitora-") && key !== STATIC_CACHE,
+      );
+      try {
+        await herdarDaVersaoAnterior(anteriores);
+      } catch {
+        // Sem a herança a versão nova funciona; a aba antiga recarrega se faltar pedaço.
+      }
+      await Promise.all(anteriores.map((key) => caches.delete(key)));
+      await self.clients.claim();
+    })(),
   );
 });
 
@@ -162,7 +221,11 @@ self.addEventListener("fetch", (event) => {
 
   if (!isCacheableRequest(request, url)) return;
 
-  const strategy = getRequestStrategy(request);
+  const strategy = getRequestStrategy({
+    mode: request.mode,
+    destination: request.destination,
+    url: request.url,
+  });
 
   if (strategy === "network-first") {
     event.respondWith(

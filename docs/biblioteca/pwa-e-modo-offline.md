@@ -1,7 +1,7 @@
 ---
 tipo: referencia
 area: front
-atualizado: 2026-11-17
+atualizado: 2026-11-18
 ---
 
 # PWA e modo sem rede
@@ -15,14 +15,14 @@ de 17/11/2026). Esta nota diz o que o service worker guarda, o que abre sem inte
 | ------------------------------------------------ | ---------------------------------------------------------------------------- |
 | `sw.js`                                          | o service worker: casca, arquivos do build e estratégia de cada pedido       |
 | `sw-policy.js`                                   | a política pura (estratégia, o que se guarda, limite, hash), testada à parte |
-| `src/lib/carga/cache-do-service-worker.ts`             | o que o build grava no `sw.js`: a versão e a lista `PRECACHE`                |
+| `src/lib/carga/cache-do-service-worker.ts`       | o que o build grava no `sw.js`: a versão e a lista `PRECACHE`                |
 | `vite.config.js` (`copyProgressiveWebAppAssets`) | monta a lista e publica `sw.js`, `sw-policy.js`, `offline.html`, ícones      |
 | `src/modules/pwa-lifecycle.ts`                   | registra o service worker e aplica a versão nova na próxima troca de página  |
 | `src/app/casca/aviso-de-conexao.tsx`             | "Sem conexão com a internet" e "Conexão restabelecida"                       |
 
 ## O que o service worker guarda
 
-- **Na instalação:** a casca (`APP_SHELL`: `/`, `index.html`, `offline.html`, manifesto, ícones) e
+- **Na instalação:** a casca (`APP_SHELL`: `/`, `offline.html`, manifesto, ícones) e
   **todos os arquivos publicados** que uma tela precisa para abrir: JS, CSS, fontes e imagens do
   build, de `public/` e de `icons/` (`PRECACHE`, cerca de 120 arquivos e 1,7 MB pela rede). Assim
   qualquer tela abre sem rede, também a que nunca foi aberta.
@@ -31,14 +31,41 @@ de 17/11/2026). Esta nota diz o que o service worker guarda, o que abre sem inte
 - **Na troca de versão**, o arquivo com hash do Vite no nome que a versão anterior já guardou é
   copiado de lá (`isHashedAsset`), sem baixar de novo; o resto vem da rede. Um arquivo que falhar
   não impede a instalação: entra no cache quando a tela for aberta com rede.
-- **Pelo uso:** navegação, scripts e estilos são rede primeiro (com a cópia de reserva); imagens,
+- **A casca sem redirecionamento:** a Vercel responde 308 a `/index.html` e a `/offline.html`
+  (`cleanUrls`), e uma resposta redirecionada não serve para responder a uma navegação (o navegador
+  mostra a página de erro). Por isso a casca não tem `/index.html` (a navegação sem rede cai em `/`)
+  e `guardarCasca` guarda o corpo do que veio redirecionado como resposta direta.
+- **Pelo uso:** arquivo com hash do Vite no nome (`isHashedAsset`) é cache primeiro (o nome muda
+  quando o conteúdo muda); navegação e os demais scripts e estilos são rede primeiro, e a cópia
+  guardada vale também quando a rede responde erro (404, 500: `prefersCachedCopy`); imagens,
   fontes e manifesto, cache primeiro. O limite de 150 entradas (`CACHE_LIMIT`,
   `entriesBeyondLimit`) vale só para o que entrou pelo uso: casca e `PRECACHE` nunca saem.
 - **Nunca:** outro domínio (o Supabase), `/auth/`, `/api/`, `/rest/`, `/storage/`, `/functions/`,
   pedido com `Authorization` e resposta `private`/`no-store`.
 - A busca no cache ignora o `Vary` (o `vite preview` manda `Vary: Origin`): sem isso, o módulo
   pedido com `Origin` não achava a cópia guardada na instalação.
-- Cada build tem cache próprio (`agsus-monitora-<versão>-static`); o `activate` apaga os antigos.
+- Cada build tem cache próprio (`agsus-monitora-<versão>-static`); o `activate` herda os arquivos
+  com hash da versão anterior (abaixo) e apaga os caches antigos.
+
+## Aba aberta durante a publicação
+
+Muitas publicações por dia, e a Vercel (plano Hobby, sem "skew protection") só tem a versão no ar:
+o pedaço da versão anterior responde 404. A aba que atravessou a publicação ainda roda o código
+anterior e o pede ao abrir uma tela pela primeira vez. Antes de 18/11/2026 a tela ficava parada
+("Não foi possível carregar esta tela", ou preta) até um Ctrl+Shift+R. As camadas, nesta ordem:
+
+1. **Service worker da versão anterior:** o pedaço vem do cache (cache primeiro para arquivo com
+   hash; antes, rede primeiro devolvia o 404 mesmo com a cópia guardada).
+2. **Service worker novo já no comando** (a página pede `SKIP_WAITING` assim que ele instala): o
+   `activate` copia para o cache novo os arquivos com hash da versão anterior que a nova não tem
+   (`entriesToCarry`), antes de apagar o cache anterior. Entram no limite de 150; os herdados de
+   versões mais velhas saem primeiro.
+3. **Sem o pedaço (sem service worker, cache apagado):** a tela recarrega uma vez
+   (`importarComRecarga`). A falha do CSS da tela ("Unable to preload CSS", do Vite) conta como
+   falha de carregamento; antes não contava e a recarga não acontecia.
+4. **Outro `import()` fora das telas** (modal do edital, Aya, PDF): o Vite dispara
+   `vite:preloadError` e o aviso de versão vira "Atualize para continuar", com "Atualizar agora"
+   (`src/app/aviso-de-versao.ts`; não recarrega sozinho, porque pode haver algo digitado).
 
 ## Dados sem rede
 
@@ -89,6 +116,10 @@ Decisão de 17/11/2026, para o trabalho de campo (`src/lib/sessao/sessao-sem-red
   `tests/entrevistas-e-aprovados.test.ts` (bloco `modulos/conducao-sem-rede-abre-a-copia`).
 - Entrada sem rede: `tests/demais-regras.test.ts` (bloco `sessao-sem-rede`) (a regra) e `tests/casca-sessao-e-interface-na-tela.test.ts` (bloco `app/sessao`)
   ("entrar sem rede"); "Levar para o campo": `tests/entrevistas-e-aprovados.test.ts` (bloco `conducao-para-o-campo`).
+- `tests/pwa-sem-rede.spec.js`, bloco "aba aberta durante a publicação": servidor que imita a
+  Vercel (`tests/apoio/vercel-simulada.js`: 308, 404, `rewrites`) e uma publicação que troca o hash
+  de todos os pedaços; sem service worker (recarrega uma vez), com o anterior (pedaço do cache, sem
+  recarga) e com o novo já no comando (a herança).
 - `tests/pwa-sem-rede.spec.js` (Playwright, build simulado): abre o app, espera o service worker
   terminar de guardar, desliga a rede (`context.setOffline(true)`) e troca para o Cronograma, que
   nunca foi aberto; depois dá F5 sem rede (com o Supabase simulado). O segundo teste derruba a

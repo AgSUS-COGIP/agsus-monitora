@@ -20,9 +20,13 @@ export interface OpcoesDaRecarga {
   agora?: number;
 }
 
-/** O arquivo sob demanda sumiu (publicação nova com a página aberta) ou a rede caiu. */
+/*
+  O arquivo sob demanda sumiu (publicação nova com a página aberta) ou a rede
+  caiu. "Unable to preload CSS" é do Vite: a tela que tem CSS próprio falha
+  primeiro no CSS, antes do JS, e sem esta frase não recarregava.
+*/
 export const ehFalhaDeCarregamento = (erro: unknown) =>
-  /dynamically imported module|Importing a module script failed|Failed to fetch|error loading dynamically|ChunkLoadError/i.test(
+  /dynamically imported module|Importing a module script failed|Failed to fetch|error loading dynamically|ChunkLoadError|Unable to preload CSS/i.test(
     String(
       (erro as { message?: unknown } | null | undefined)?.message || erro || "",
     ),
