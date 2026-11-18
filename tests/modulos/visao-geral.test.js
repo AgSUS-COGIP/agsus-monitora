@@ -227,6 +227,7 @@ async function montar({
   carregar = true,
   carregadorDeMunicipios,
   aberta = true,
+  perfilDaTela = null,
 } = {}) {
   armazenamento ||= memoria();
   estado = criarEstadoDaVisaoGeral({
@@ -245,7 +246,7 @@ async function montar({
       estado,
       configuracoes: configuracoesFalsas(valores),
       toast,
-      obterPerfil: () => (comPerfil ? perfil : null),
+      obterPerfil: () => perfilDaTela || (comPerfil ? perfil : null),
       supabase,
       comemoracoesLigadas: () => comemoracoes,
       agora: () => new Date(2026, 9, 1, 9, 30),
@@ -465,6 +466,96 @@ describe("a tela dentro do app", () => {
     await act(async () => estado.definirAberta(true));
     await esperar();
     expect(pedidos()).toHaveLength(2);
+  });
+
+  /*
+    Revisão de 17/11/2026: o número da linha leva aos dados que o compõem.
+    A Lista de aprovados abre no edital, com o status do número; a volta
+    destaca a linha; sem os registros, "Origem agregada"; sem acesso à
+    tela, o número é texto.
+  */
+  describe("os números da linha levam aos dados", () => {
+    const comLista = () => ({
+      rpc: vi.fn(async (nome) => ({
+        data:
+          nome === "listar_acompanhamento_da_visao_geral_se_mudou"
+            ? {
+                listas: [
+                  {
+                    monitoramento_id: 3,
+                    aprovados: 8,
+                    com_status: 8,
+                    contratados: 8,
+                    desistentes: 0,
+                  },
+                ],
+              }
+            : null,
+        error: null,
+      })),
+    });
+    const leitor = {
+      id: "p2",
+      nome: "LEITOR",
+      permissoes: { dashboard: "leitor", aprovados: "leitor" },
+    };
+    const celulaDe = (id, campo) =>
+      secao.querySelector(`tr[data-linha="${id}"] td[data-campo="${campo}"]`);
+
+    it("Contratados abre a Lista de aprovados no edital e a volta destaca a linha", async () => {
+      const { consumirPedidoDeFiltro } =
+        await import("../../src/app/pedido-de-filtro.ts");
+      const navegar = vi.fn();
+      window.navigate = navegar;
+      await montar({ supabase: comLista(), perfilDaTela: leitor });
+      await esperar();
+      const gatilho = celulaDe(3, "contratados").querySelector(
+        ".visao-geral-numero-botao",
+      );
+      expect(gatilho.textContent).toBe("8");
+      await clicar(gatilho);
+      // O painel do número não abre a gaveta da linha.
+      expect(document.querySelector("#visaoGeralGaveta")).toBeNull();
+      await clicar(botao("Abrir na Lista de aprovados", secao));
+      expect(navegar).toHaveBeenCalledWith("approved");
+      expect(consumirPedidoDeFiltro("approved")).toEqual({
+        edital: "01/2026",
+        editalId: "3",
+        metrica: "contratados",
+      });
+      // Saiu e voltou: a linha de onde saiu se destaca.
+      await act(async () => estado.definirAberta(false));
+      await act(async () => estado.definirAberta(true));
+      expect(estado.obter().destaque?.id).toBe("3");
+      delete window.navigate;
+    });
+
+    it("só o total, sem a lista: Origem agregada, nunca uma lista vazia", async () => {
+      await montar({ supabase: comLista(), perfilDaTela: leitor });
+      await esperar();
+      // O 03/2026 tem 4 contratados e nenhuma lista vigente.
+      await clicar(
+        celulaDe(1, "contratados").querySelector(".visao-geral-numero-botao"),
+      );
+      const painel = celulaDe(1, "contratados").querySelector(
+        ".ui-popover-painel",
+      );
+      expect(painel.textContent).toContain(
+        "Origem agregada; detalhe individual não disponível",
+      );
+      expect(botao("Abrir na Lista de aprovados", painel)).toBeUndefined();
+    });
+
+    it("sem acesso à Lista de aprovados, o número é texto", async () => {
+      await montar({
+        supabase: comLista(),
+        perfilDaTela: { ...leitor, permissoes: { dashboard: "leitor" } },
+      });
+      await esperar();
+      const celula = celulaDe(3, "contratados");
+      expect(celula.textContent).toBe("8");
+      expect(celula.querySelector("button")).toBeNull();
+    });
   });
 
   it("sem o acompanhamento (erro ou banco sem a função), a página segue só com as linhas", async () => {

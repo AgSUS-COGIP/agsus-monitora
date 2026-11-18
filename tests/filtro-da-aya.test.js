@@ -4,8 +4,10 @@ import {
   filtrosDasAnalises,
   filtrosDeEntrevistas,
   filtrosDeRecursos,
+  filtrosDosAprovados,
   opcoesDoEdital,
 } from "../src/lib/aya/filtro-da-aya.ts";
+import { SEM_STATUS } from "../src/lib/aprovados/lista-aprovados-rules.ts";
 
 /*
   O "Abrir" das respostas com número da Aya vira os filtros de cada tela
@@ -84,5 +86,47 @@ describe("Análises", () => {
         "revisar",
       ),
     ).toEqual({ filtros: { edital: ["x"] }, kpi: "revisar" });
+  });
+});
+
+/*
+  Um número da Visão geral abre a Lista de aprovados no edital, pelo id (o
+  mesmo número pode estar em mais de uma unidade), com o status do número.
+*/
+describe("Lista de aprovados pelo número da Visão geral", () => {
+  const opcoes = [
+    { valor: "uuid-a", rotulo: "80/2025 · DSEI Xingu" },
+    { valor: "uuid-b", rotulo: "80/2025 · DSEI Yanomami" },
+  ];
+
+  it("o edital pelo id e Contratados como Contratado e Migração", () => {
+    expect(
+      filtrosDosAprovados(
+        { editalId: "uuid-b", edital: "80/2025", metrica: "contratados" },
+        opcoes,
+      ),
+    ).toEqual({ editalId: ["uuid-b"], status: ["Contratado", "Migração"] });
+  });
+
+  it("Aguardando chamada é Sem status; Aprovados, sem status", () => {
+    expect(
+      filtrosDosAprovados(
+        { editalId: "uuid-a", metrica: "aguardandoChamada" },
+        opcoes,
+      )?.status,
+    ).toEqual([SEM_STATUS]);
+    expect(
+      filtrosDosAprovados({ editalId: "uuid-a", metrica: "aprovados" }, opcoes)
+        ?.status,
+    ).toEqual([]);
+  });
+
+  it("sem o id nas opções, o primeiro pelo número; sem nenhum, nada", () => {
+    expect(
+      filtrosDosAprovados({ editalId: "x", edital: "80/2025" }, opcoes)
+        ?.editalId,
+    ).toEqual(["uuid-a"]);
+    expect(filtrosDosAprovados({ edital: "99/2026" }, opcoes)).toBeNull();
+    expect(filtrosDosAprovados(null, opcoes)).toBeNull();
   });
 });

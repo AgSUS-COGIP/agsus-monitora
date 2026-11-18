@@ -289,6 +289,8 @@ export type EstadoDaVisaoGeral = {
   tirarDsei: () => void;
   localizar: (linha: LinhaDoMonitoramento | null) => void;
   destacar: (id: string | number | undefined) => void;
+  /** Um número levou a outra tela: ao voltar, esta linha se destaca. */
+  sairPelaLinha: (id: string | number | undefined) => void;
   definirBusca: (busca: string) => void;
   definirDsei: (chave: string, nome?: string) => void;
   definirDadosDoMapa: (dados?: { lmap?: unknown }) => void;

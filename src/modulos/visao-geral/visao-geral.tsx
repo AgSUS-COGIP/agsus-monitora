@@ -38,6 +38,11 @@ import {
 import { TabelaDeProcessos } from "./tabela.tsx";
 import { MontadorDeRelatorio } from "./montador-de-relatorio.tsx";
 import { podeBaixarAprovados } from "../../lib/acessos/access-roles.ts";
+import { telaPermitida } from "../../lib/navegacao/navegacao.ts";
+import { pedirFiltro } from "../../app/pedido-de-filtro.ts";
+import { irParaTela } from "../../app/ir-para-tela.ts";
+
+type PerfilDaNavegacao = Parameters<typeof telaPermitida>[1];
 
 /*
   A Visão geral (view `dashboard`), um módulo do app: monta direto na
@@ -185,6 +190,15 @@ export function TelaDaVisaoGeral({
         textos={textos}
         agora={agora}
         aoAbrir={abrir}
+        podeAbrirTela={(view) =>
+          telaPermitida(view, (obterPerfil?.() || null) as PerfilDaNavegacao)
+        }
+        aoAbrirOrigem={(linha, origem) => {
+          // A volta destaca a linha; a tela de destino abre já no edital.
+          estado.sairPelaLinha(linha.id);
+          pedirFiltro(origem.view, origem.pedido);
+          irParaTela({ view: origem.view });
+        }}
       />
       {e.montador && e.aberta ? (
         <MontadorDeRelatorio

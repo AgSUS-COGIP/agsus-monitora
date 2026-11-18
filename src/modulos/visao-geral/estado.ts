@@ -283,6 +283,8 @@ export function criarEstadoDaVisaoGeral({
     null;
 
   const hoje = () => hojeEmBrasilia(new Date(agora()));
+  /* A linha de onde a pessoa saiu por um número (`sairPelaLinha`). */
+  let linhaDeSaida = "";
 
   /*
     O acompanhamento vale para a área de que ele foi pedido; numa recarga, o
@@ -637,8 +639,23 @@ export function criarEstadoDaVisaoGeral({
     definirAberta(valor) {
       const nova = Boolean(valor);
       if (nova === proprio.aberta) return;
-      publicar({ aberta: nova, visitada: proprio.visitada || nova });
+      // Voltou de uma tela aberta por um número: a linha de onde saiu se destaca.
+      const volta = nova && linhaDeSaida ? linhaDeSaida : "";
+      if (nova) linhaDeSaida = "";
+      publicar({
+        aberta: nova,
+        visitada: proprio.visitada || nova,
+        ...(volta ? { destaque: { id: volta, vez: agora() } } : {}),
+      });
       pedirAcompanhamento();
+    },
+    /*
+      Um número da linha levou a outra tela (Lista de aprovados, Seleção):
+      a página guarda a linha, e ao voltar (Voltar do navegador ou menu) ela
+      rola até a linha e a destaca, com área, filtros e busca como estavam.
+    */
+    sairPelaLinha(id) {
+      linhaDeSaida = txt(id);
     },
     definirFiltro,
     alternarFiltroUnico,

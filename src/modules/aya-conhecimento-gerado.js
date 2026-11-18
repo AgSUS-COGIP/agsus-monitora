@@ -3840,6 +3840,25 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-visao-geral.md",
+    titulo: "De onde vem cada número da tabela",
+    perguntas: [
+      "de onde vem o numero da tabela",
+      "ver os contratados do edital",
+      "abrir a lista de aprovados do edital",
+      "clicar no numero da tabela",
+      "composicao do numero",
+      "origem agregada",
+      "detalhe individual nao disponivel",
+      "ver os inscritos do edital",
+      "voltar para a linha da visao geral",
+    ],
+    resposta:
+      'Na tabela de processos da Visão geral, os números de Aprovados, Contratados, Aguardando chamada e Inscritos aparecem sublinhados quando levam aos dados que os compõem. Clicar abre um painel pequeno: Aprovados, Contratados e Aguardando chamada levam à Lista de aprovados já no edital da linha (Contratados com os status Contratado e Migração, Aguardando chamada com "Sem status"); Inscritos leva à tela de onde o número veio (a Seleção ou as Análises curriculares), também no edital. A linha é do edital: o destino nunca é um código de vaga. Quando só existe o total, sem os registros (por exemplo, contratados de um edital sem lista de aprovados vigente, ou inscritos de outra fonte), o painel diz "Origem agregada; detalhe individual não disponível", em vez de abrir uma lista vazia. Sem acesso à tela de destino, o número fica como texto. Ao voltar para a Visão geral (pelo Voltar do navegador ou pelo menu), a área, os filtros e a busca estão como estavam, e a linha de onde se saiu fica destacada.',
+    fato: 'Na tabela da Visão geral, Aprovados, Contratados e Aguardando chamada abrem a Lista de aprovados no edital; Inscritos abre a Seleção (ou as Análises, conforme a fonte); só o total vira "Origem agregada; detalhe individual não disponível".',
+    fonte: "src/lib/visao-geral/origem-dos-numeros.ts",
+  },
+  {
+    arquivo: "regras-da-visao-geral.md",
     titulo: "Resultado de cada processo seletivo",
     perguntas: [
       "quanto tempo levou o processo seletivo",

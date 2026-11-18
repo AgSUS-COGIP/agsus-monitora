@@ -56,6 +56,16 @@ trabalho). De cima para baixo:
   reservada enquanto o módulo baixa (`.visao-geral-mapa-reserva`).
 - **Tabela**: a contagem não repete o total; no celular, o cartão mostra só unidade, edital,
   vagas, inscritos, contratados, sem contratação, status e atenção (`data-campo` nas células).
+- **Os números levam aos dados** (revisão de 17/11/2026; `NumeroDaLinha` em `tabela.tsx`, regra
+  em `src/lib/visao-geral/origem-dos-numeros.ts`): Aprovados, Contratados, Aguardando chamada e
+  Inscritos abrem um `Popover` com o destino. A linha é do edital (nunca um código de vaga): a
+  Lista de aprovados (`approved`) no edital pelo id, com o status do número (`filtrosDosAprovados`,
+  `src/lib/aya/filtro-da-aya.ts`: Contratados = Contratado e Migração, Aguardando chamada = sem
+  status); Inscritos, a tela da fonte do funil (Seleção ou Análises). Vai pelo pedido de filtro
+  (`src/app/pedido-de-filtro.ts`, `editalId` novo) e `irParaTela`. Só com acesso à tela
+  (`telaPermitida`); sem os registros (contratados sem lista vigente, inscritos de outra fonte),
+  "Origem agregada; detalhe individual não disponível". `sairPelaLinha` guarda a linha, e ao voltar
+  (`definirAberta(true)`) ela se destaca; área, filtros e busca ficam no estado.
 - **Selo do cronograma** (`urgenciaDoCronograma`, `seloDoCronograma`, `descricaoDoCronograma` em
   `src/lib/visao-geral/visao-geral.ts`; conferência de 17/11/2026). "Sem cronograma" só quando o edital não
   tem etapa (`temCronogramaCadastrado`: automático, ou percentual, próxima etapa ou etapa atual

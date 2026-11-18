@@ -748,3 +748,36 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* ── O número da linha que leva aos dados (tabela.tsx, NumeroDaLinha) ── */
+.visao-geral-numero-botao {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-link);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.visao-geral-numero-botao:hover,
+.visao-geral-numero-botao[aria-expanded="true"] {
+  color: var(--color-text-link-hover);
+  text-decoration-style: solid;
+}
+.visao-geral-numero-botao:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+.visao-geral-origem {
+  display: grid;
+  gap: var(--space-2);
+  text-align: left;
+  white-space: normal;
+}
+.visao-geral-origem-agregada {
+  margin: 0;
+  color: var(--text-secondary);
+}

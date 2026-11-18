@@ -13,6 +13,7 @@ import type {
 import type { FiltrosDaTabelaDeAprovados } from "./tipos-da-aba-de-aprovados.ts";
 import { useMemo, useState, useSyncExternalStore } from "react";
 import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
+import { filtrosDosAprovados } from "../../lib/aya/filtro-da-aya.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import {
   canAlterarPorDecisaoJudicial,
@@ -433,7 +434,8 @@ export function ListaAprovados({
 
   /*
     Avisos que viraram pendências abrem a aba Pendências no edital;
-    demais avisos abrem a aba Aprovados filtrada pela pessoa.
+    demais avisos abrem a aba Aprovados filtrada pela pessoa; um número da
+    Visão geral abre a aba Aprovados no edital, com o status do número.
   */
   usarPedidoDeFiltro("approved", carregado, (pedido) => {
     if (pedido?.pendencias) {
@@ -442,9 +444,15 @@ export function ListaAprovados({
       return;
     }
     const ids = (pedido?.candidatos || []).map(String).filter(Boolean);
-    if (!ids.length) return;
+    const doEdital = ids.length
+      ? null
+      : filtrosDosAprovados(
+          pedido,
+          opcoesEditais.map((o) => ({ valor: o.value, rotulo: o.label })),
+        );
+    if (!ids.length && !doEdital) return;
     setAba("aprovados");
-    setFiltros({ ...FILTROS_INICIAIS, candidatos: ids });
+    setFiltros({ ...FILTROS_INICIAIS, ...(doEdital || { candidatos: ids }) });
     setBusca("");
   });
 
