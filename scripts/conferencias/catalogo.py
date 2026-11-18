@@ -33,6 +33,11 @@ CATALOGO = {
     "CLASSIFICACAO_EMPATE_PENDENTE": ("classificacao", ATENCAO, "Empate sem desempate registrado"),
     "CLASSIFICACAO_VAGA_SEM_QUADRO": ("classificacao", ATENCAO, "Vaga sem linha no quadro de vagas"),
     "CLASSIFICACAO_AJUSTE_APOS_LISTA": ("classificacao", ATENCAO, "Ajuste de recurso aprovado depois da última lista"),
+    "CLASSIFICACAO_CONVOCACAO_REGRA_ANTERIOR": (
+        "classificacao",
+        ATENCAO,
+        "Convocação gerada com versão anterior da regra",
+    ),
     # Lista de aprovados
     "APROVADOS_CONTRATADO_DUPLICADO": ("aprovados", CRITICA, "Duas matrículas no mesmo edital"),
     "APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS": (
@@ -41,6 +46,11 @@ CATALOGO = {
         "Mesma contratação marcada em duas listas",
     ),
     "APROVADOS_CONVOCADO_SEM_DESFECHO": ("aprovados", ATENCAO, "Convocado há muitos dias sem desfecho"),
+    "APROVADOS_ADMITIDO_COM_STATUS_DESATUALIZADO": (
+        "aprovados",
+        ATENCAO,
+        "Admitido no RH com status desatualizado",
+    ),
     "APROVADOS_PENDENCIA_DA_PUBLICACAO": ("aprovados", ATENCAO, "Pendência da publicação sem revisão"),
     # Cargas
     "CARGA_VARIACAO_BRUSCA": ("cargas", ATENCAO, "Variação brusca de candidatos na Empregare"),

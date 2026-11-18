@@ -106,6 +106,11 @@ export const CONFERENCIAS: Readonly<
     gravidade: "ATENCAO",
     titulo: "Ajuste de recurso aprovado depois da última lista",
   }),
+  CLASSIFICACAO_CONVOCACAO_REGRA_ANTERIOR: Object.freeze({
+    modulo: "classificacao",
+    gravidade: "ATENCAO",
+    titulo: "Convocação gerada com versão anterior da regra",
+  }),
   APROVADOS_CONTRATADO_DUPLICADO: Object.freeze({
     modulo: "aprovados",
     gravidade: "CRITICA",
@@ -120,6 +125,11 @@ export const CONFERENCIAS: Readonly<
     modulo: "aprovados",
     gravidade: "ATENCAO",
     titulo: "Convocado há muitos dias sem desfecho",
+  }),
+  APROVADOS_ADMITIDO_COM_STATUS_DESATUALIZADO: Object.freeze({
+    modulo: "aprovados",
+    gravidade: "ATENCAO",
+    titulo: "Admitido no RH com status desatualizado",
   }),
   APROVADOS_PENDENCIA_DA_PUBLICACAO: Object.freeze({
     modulo: "aprovados",
@@ -420,6 +430,14 @@ function normalizarAnaliseDoCaso(entrada: unknown): AnaliseDoCaso {
   };
 }
 
+/** O status gravado no caso do admitido (código do job) → como a lista o mostra. */
+const STATUS_DO_ADMITIDO: Readonly<Record<string, string>> = Object.freeze({
+  convocado: "status Convocado",
+  desistente: "status Desistente",
+  documentacao_rejeitada: "status Documentação Rejeitada",
+  sem_status: "sem status",
+});
+
 /**
  * O que motivou o aviso, em uma linha curta ("Análise em 01/09/2026, antes
  * da inscrição em 10/09/2026"). "" quando o caso não traz o dado.
@@ -483,6 +501,20 @@ export function motivoDoCaso(
     case "APROVADOS_CONVOCADO_SEM_DESFECHO": {
       const dia = diaDoCaso(d.convocado_em || caso.dataConvocacao);
       return dia ? `Convocado em ${dia}, sem desfecho` : "";
+    }
+    case "APROVADOS_ADMITIDO_COM_STATUS_DESATUALIZADO": {
+      const dia = diaDoCaso(d.admissao);
+      const status = STATUS_DO_ADMITIDO[texto(d.status)] ?? "";
+      return [dia ? `Admitido no RH em ${dia}` : "Admitido no RH", status]
+        .filter(Boolean)
+        .join(" · ");
+    }
+    case "CLASSIFICACAO_CONVOCACAO_REGRA_ANTERIOR": {
+      const lista = numero(d.versao_lista);
+      const vigente = numero(d.versao_vigente);
+      return lista && vigente
+        ? `Regra v${lista} na convocação · vigente v${vigente}`
+        : "";
     }
     case "CLASSIFICACAO_LISTA_FINAL_DESATUALIZADA": {
       const dia = diaDoCaso(caso.lista?.geradaEm);

@@ -205,6 +205,32 @@ class Analises(unittest.TestCase):
         dois = avisos[("ANALISE_EM_DOIS_EDITAIS", "area:saude-indigena")]
         self.assertEqual((dois["gravidade"], dois["exemplos"]), ("INFORMATIVO", ["C1"]))
 
+    def test_sem_inscricao_no_edital_so_confere_a_data_futura(self):
+        # A inscrição vem só da candidatura no MESMO edital (20261117193000); sem ela, a data passada
+        # não é acusada (antes, a 1ª candidatura em qualquer vaga dava 43 falsos "antes da inscrição").
+        linhas = [
+            {"id": A1, "area": "saude-indigena", "edital": E1, "data_analise": "2026-09-01", "inscricao": None},
+            {"id": A2, "area": "saude-indigena", "edital": E1, "data_analise": "2026-12-01", "inscricao": None},
+        ]
+        ac = regras.Acumulador({e["id"]: e for e in CONTEXTO["editais"]})
+        regras.conferir_analises([linhas], CONTEXTO, ac)
+        aviso = _avisos(ac)[("ANALISE_DATA_INVALIDA", f"edital:{E1}")]
+        self.assertEqual(aviso["exemplos"], [A2])
+        self.assertEqual(aviso["casos"][0]["detalhe"]["motivo"], "futuro")
+
+    def test_parcial_vazia_nao_vale_zero(self):
+        # Ensaio de 17/11/2026: com parcial vazia, a nota das planilhas não é a soma das quatro colunas
+        # (3.991 falsos positivos se vazio valesse 0). Só confere com as quatro.
+        linhas = [
+            {"id": A1, "area": "saude-indigena", "edital": E1, "nota": 30, "formacao": 10, "cursos": None,
+             "experiencia": 9, "etnico": 2},
+            {"id": A2, "area": "saude-indigena", "edital": E1, "nota": 30, "formacao": 10, "cursos": 0,
+             "experiencia": 9, "etnico": 2},
+        ]  # fmt: skip
+        ac = regras.Acumulador({e["id"]: e for e in CONTEXTO["editais"]})
+        regras.conferir_analises([linhas], CONTEXTO, ac)
+        self.assertEqual(_avisos(ac)[("ANALISE_NOTA_DIFERENTE_DA_SOMA", f"edital:{E1}")]["exemplos"], [A2])
+
 
 class EditalConferido(unittest.TestCase):
     def test_ativo_e_sem_situacao_de_fim(self):
@@ -302,6 +328,13 @@ class FichasDaAvaliacao(unittest.TestCase):
         avisos = self._conferir(self._pagina(sem_regra=True))
         caso = avisos[("ANALISE_FICHA_CONTA_DIVERGENTE", f"edital:{E1}")]["casos"][0]
         self.assertEqual(caso["detalhe"], {"campos": "erro_na_conta"})
+
+    def test_ficha_importada_da_planilha_nao_avisa(self):
+        # 93/2026: a ficha importada não tem itens marcados; a conta da regra daria sempre diferente.
+        pagina = self._pagina({"nota_final": 99, "nota_apurada": 99})
+        linha = pagina["linhas"][0]
+        linha["lancamento"] = {**linha["lancamento"], "importada_da_planilha": {"em": "2026-11-16"}}
+        self.assertEqual(self._conferir(pagina), {})
 
     def test_campos_cabem_em_40_caracteres(self):
         texto = regras._campos_da_divergencia([{"campo": f"parciais.CAMPO_{i}"} for i in range(5)])
@@ -417,6 +450,52 @@ class Classificacao(unittest.TestCase):
             avisos[("CLASSIFICACAO_AJUSTE_APOS_LISTA", f"edital:{E2}")]["casos"],
             [{"referencia": "aj1", "tipo": "ajuste_recurso"}],
         )
+
+    def test_convocacao_gerada_com_regra_anterior_a_vigente(self):
+        e3 = "00000000-0000-4000-a000-0000000000e3"
+        editais = {
+            E1: {"id": E1, "numero": "93/2026", "area": "projetos", "ativo": True},
+            E2: {"id": E2, "numero": "80/2026", "area": "projetos", "ativo": True},
+            e3: {"id": e3, "numero": "70/2026", "area": "projetos", "ativo": True, "status": "Concluído"},
+        }
+        dados = {
+            "listas": [
+                {"id": "lc1", "edital": E1, "area": "projetos", "tipo": "CONVOCACAO", "versao_regra": 1,
+                 "gerada_em": "2026-10-09T13:00:00+00:00"},
+                # A final com regra antiga não é a convocação: fora desta conferência.
+                {"id": "lf1", "edital": E1, "area": "projetos", "tipo": "FINAL", "versao_regra": 1},
+                {"id": "lc2", "edital": E2, "area": "projetos", "tipo": "CONVOCACAO", "versao_regra": 3},
+                {"id": "lc3", "edital": e3, "area": "projetos", "tipo": "CONVOCACAO", "versao_regra": 1},
+                # Sem versão (leitura antes da migration): não confere.
+                {"id": "lc4", "edital": E2, "area": "projetos", "tipo": "CONVOCACAO"},
+            ],
+        }  # fmt: skip
+        analises = regras.AnalisesDaClassificacao()
+        list(analises.paginas([]))
+        ac = regras.Acumulador(editais)
+        regras.conferir_classificacao(dados, ac, analises, editais, {E1: 5, E2: 3, e3: 2})
+        avisos = _avisos(ac)
+        self.assertEqual(
+            [k for k in avisos if k[0] == "CLASSIFICACAO_CONVOCACAO_REGRA_ANTERIOR"],
+            [("CLASSIFICACAO_CONVOCACAO_REGRA_ANTERIOR", f"edital:{E1}")],
+        )
+        aviso = avisos[("CLASSIFICACAO_CONVOCACAO_REGRA_ANTERIOR", f"edital:{E1}")]
+        self.assertEqual(
+            aviso["casos"],
+            [
+                {
+                    "referencia": "lc1",
+                    "tipo": "lista_classificacao",
+                    "detalhe": {"versao_lista": 1, "versao_vigente": 5, "gerada_em": "2026-10-09"},
+                }
+            ],
+        )
+        self.assertIn("93/2026", aviso["resumo"])
+        self.assertIn("versão 1", aviso["resumo"])
+        # Sem as versões vigentes (chamada antiga), nada.
+        ac = regras.Acumulador(editais)
+        regras.conferir_classificacao(dados, ac, analises, editais)
+        self.assertNotIn("CLASSIFICACAO_CONVOCACAO_REGRA_ANTERIOR", {c for c, _ in _avisos(ac)})
 
     def test_analises_da_classificacao_pelas_paginas(self):
         analises = regras.AnalisesDaClassificacao()
@@ -540,7 +619,8 @@ class Aprovados(unittest.TestCase):
         self.assertEqual((mesma["quantidade"], mesma["exemplos"]), (1, ["c6", "c7"]))
         self.assertIn('como "Contratado em outra lista"', mesma["resumo"])
 
-    def test_mesma_matricula_em_editais_e_areas_diferentes_um_caso_por_area(self):
+    def test_mesma_matricula_em_duas_areas_conta_uma_vez(self):
+        # Antes, o par entre duas áreas virava um caso em cada área (contado duas vezes).
         m1 = "1" * 64
         dados = {
             "candidatos": [
@@ -554,11 +634,52 @@ class Aprovados(unittest.TestCase):
         regras.conferir_aprovados(dados, CONTEXTO, ac)
         avisos = _avisos(ac)
         self.assertFalse(any(c == "APROVADOS_CONTRATADO_DUPLICADO" for c, _ in avisos))
-        sede = avisos[("APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS", "area:sede")]
-        projetos = avisos[("APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS", "area:projetos")]
-        self.assertEqual(sede["casos"][0]["referencia"], "c1")
-        self.assertEqual(projetos["casos"][0]["referencia"], "c2")
-        self.assertEqual(projetos["exemplos"], ["c2", "c1"])
+        mesma = [a for (c, _), a in avisos.items() if c == "APROVADOS_MESMA_MATRICULA_EM_DUAS_LINHAS"]
+        self.assertEqual(len(mesma), 1)
+        # Na área da primeira linha (projetos < sede), com a outra nos exemplos.
+        self.assertEqual(mesma[0]["escopo"], "area:projetos")
+        self.assertEqual(mesma[0]["quantidade"], 1)
+        self.assertEqual(
+            mesma[0]["casos"], [{"referencia": "c2", "tipo": "candidato_aprovado", "detalhe": {"linhas": 2}}]
+        )
+        self.assertEqual(mesma[0]["exemplos"], ["c2", "c1"])
+
+    def test_admitido_no_rh_com_status_desatualizado(self):
+        dados = {
+            "candidatos": [
+                # Admitido no RH e ainda Convocado (há 34 dias): aviso novo, não "sem desfecho".
+                {"id": "c1", "edital": E1, "area": "saude-indigena", "status": "Convocado",
+                 "convocado_em": "2026-09-01", "admitido": True, "admissao": "2026-09-20"},
+                # Admitido e sem status; e Documentação Rejeitada.
+                {"id": "c2", "edital": E1, "area": "saude-indigena", "status": None, "admitido": True,
+                 "admissao": "2026-09-21"},
+                {"id": "c3", "edital": E1, "area": "saude-indigena", "status": "Documentação Rejeitada",
+                 "admitido": True},
+                # Contratado e Migração admitidos: certo, nada.
+                {"id": "c4", "edital": E1, "area": "saude-indigena", "status": "Contratado", "admitido": True},
+                {"id": "c5", "edital": E1, "area": "saude-indigena", "status": "Migração", "admitido": True},
+                # Convocado há 34 dias sem admissão: o "sem desfecho" de sempre.
+                {"id": "c6", "edital": E1, "area": "saude-indigena", "status": "Convocado",
+                 "convocado_em": "2026-09-01", "admitido": False},
+            ],
+        }  # fmt: skip
+        ac = regras.Acumulador({e["id"]: e for e in CONTEXTO["editais"]})
+        regras.conferir_aprovados(dados, CONTEXTO, ac)
+        avisos = _avisos(ac)
+        admitido = avisos[("APROVADOS_ADMITIDO_COM_STATUS_DESATUALIZADO", f"edital:{E1}")]
+        self.assertEqual(admitido["gravidade"], "ATENCAO")
+        self.assertEqual(admitido["exemplos"], ["c1", "c2", "c3"])
+        self.assertEqual(
+            [c["detalhe"] for c in admitido["casos"]],
+            [
+                {"status": "convocado", "admissao": "2026-09-20"},
+                {"status": "sem_status", "admissao": "2026-09-21"},
+                {"status": "documentacao_rejeitada"},
+            ],
+        )
+        self.assertIn("3 pessoas admitidas no RH", admitido["resumo"])
+        self.assertEqual(avisos[("APROVADOS_CONVOCADO_SEM_DESFECHO", f"edital:{E1}")]["exemplos"], ["c6"])
+        self.assertIn("nem admissão", avisos[("APROVADOS_CONVOCADO_SEM_DESFECHO", f"edital:{E1}")]["resumo"])
 
     def test_linha_contratado_em_outra_lista_nao_conta(self):
         # A linha da lista pela qual a pessoa não foi contratada, já marcada "Contratado em outra
