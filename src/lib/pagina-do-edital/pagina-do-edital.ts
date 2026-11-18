@@ -1,104 +1,36 @@
 /*
-  A página própria do edital (`/<área>/edital/<número-ano>`), sem DOM: qual
-  edital o endereço pede, o endereço de um edital, a situação das vagas e dos
-  candidatos e a linha do tempo das etapas. A tela é
-  src/modulos/pagina-do-edital/.
-
-  O endereço usa o número do edital ("105-2026"), que é o que a pessoa lê e
-  compartilha. Dois editais de mesmo número na área (raro, mas acontece entre
-  unidades) não cabem num endereço só: o de cada um passa a ser o id do
-  monitoramento, e o número abre a escolha entre eles.
+  A página própria do edital (`/<área>/edital/<número-ano>`), sem DOM: a
+  situação das vagas e dos candidatos, a linha do tempo das etapas, as abas,
+  o quadro de vagas e as fontes. A tela é src/modulos/pagina-do-edital/; o
+  endereço (qual edital ele pede) fica em ./endereco-do-edital.ts.
 */
 
-import { numeroDoEdital } from "../editais/numero-do-edital.ts";
 import { situacaoNaLinhaDoTempo } from "../cronograma/cronograma-do-edital.ts";
 import {
   contratacoesDoCadastroReserva,
   contratadasImediatas,
   vagasEfetivas,
 } from "../visao-geral/indicadores-do-monitoramento.ts";
+import { filaDoQuadro } from "../editais/vinculos-do-quadro.ts";
+import type { FilaDoQuadro } from "../editais/vinculos-do-quadro.ts";
 import type {
   DadosDaEtapa,
   RegistroDoHistoricoDoCronograma,
 } from "../cronograma/cronograma-do-edital.ts";
 
-/** O que a página usa de uma linha do monitoramento (`TB_MONITORAMENTO_INDIGENA`). */
-export interface LinhaDoEdital {
-  [campo: string]: unknown;
-  id?: string | number | undefined;
-  edital?: string | undefined;
-  unidade?: string | undefined;
-  vagas_total?: number | string | undefined;
-  vagas_reabertas?: number | undefined;
-  contratados?: number | string | undefined;
-  /** Pessoas na lista de aprovados vigente; nulo sem lista. */
-  aprovados?: number | null | undefined;
-  /** Aprovados da lista vigente ainda sem status; nulo sem lista. */
-  cadastro_reserva?: number | null | undefined;
-  desistentes?: number | undefined;
-}
-
-/** O que o endereço pede: um edital, a escolha entre vários, ou nenhum. */
-export type EditalDoEndereco<T> =
-  | { tipo: "um"; linha: T }
-  | { tipo: "varios"; linhas: T[] }
-  | { tipo: "nenhum" };
+export {
+  editalDoEndereco,
+  enderecoDoEdital,
+  numeroNoEndereco,
+} from "./endereco-do-edital.ts";
+export type { EditalDoEndereco, LinhaDoEdital } from "./endereco-do-edital.ts";
+import type { LinhaDoEdital } from "./endereco-do-edital.ts";
 
 const txt = (valor: unknown) => String(valor ?? "").trim();
 const num = (valor: unknown) => {
   const numero = Number(valor);
   return Number.isFinite(numero) ? numero : 0;
 };
-
-const NUMERO_NO_ENDERECO = /^(\d{1,4})-(\d{4})$/;
-
-/** "105/2026" → "105-2026" (o pedaço do endereço); "" sem número. */
-export function numeroNoEndereco(edital: unknown): string {
-  return numeroDoEdital(edital).replace("/", "-");
-}
-
-/**
- * O edital que o endereço pede, entre as linhas da área: pelo id do
- * monitoramento ou pelo número ("105-2026", "091-2026" vale como "91/2026").
- */
-export function editalDoEndereco<T extends LinhaDoEdital>(
-  pedaco: unknown,
-  linhas: readonly T[] | null | undefined,
-): EditalDoEndereco<T> {
-  const pedido = txt(pedaco);
-  const lista = Array.isArray(linhas) ? linhas : [];
-  if (!pedido) return { tipo: "nenhum" };
-  const peloId = lista.find((linha) => txt(linha.id) === pedido);
-  if (peloId) return { tipo: "um", linha: peloId };
-  const partes = pedido.match(NUMERO_NO_ENDERECO);
-  if (!partes) return { tipo: "nenhum" };
-  const numero = `${Number(partes[1])}/${partes[2]}`;
-  const doNumero = lista.filter(
-    (linha) => numeroDoEdital(linha.edital) === numero,
-  );
-  if (doNumero.length === 1) return { tipo: "um", linha: doNumero[0]! };
-  if (doNumero.length > 1) return { tipo: "varios", linhas: doNumero };
-  return { tipo: "nenhum" };
-}
-
-/**
- * O pedaço do endereço de um edital: o número, se só ele tem esse número na
- * área; senão (ou sem número), o id do monitoramento.
- */
-export function enderecoDoEdital(
-  linha: LinhaDoEdital,
-  linhasDaArea: readonly LinhaDoEdital[] | null | undefined,
-): string {
-  const numero = numeroDoEdital(linha.edital);
-  const id = txt(linha.id);
-  if (!numero) return id;
-  const iguais = (linhasDaArea || []).filter(
-    (outra) => numeroDoEdital(outra.edital) === numero,
-  ).length;
-  return iguais <= 1
-    ? numero.replace("/", "-")
-    : id || numero.replace("/", "-");
-}
 
 // ── Vagas e candidatos ───────────────────────────────────────────────────
 
@@ -315,5 +247,200 @@ export function situacaoExcepcional(
     retomada: gravado
       ? txt(monitoramento?.status_override_previsao_retomada).slice(0, 10)
       : "",
+  };
+}
+
+// ── Abas ─────────────────────────────────────────────────────────────────
+
+export type AbaDaPagina =
+  "resumo" | "vagas" | "etapas" | "candidatos" | "fontes";
+
+export const ABAS_DA_PAGINA: readonly { id: AbaDaPagina; rotulo: string }[] =
+  Object.freeze([
+    { id: "resumo", rotulo: "Resumo" },
+    { id: "vagas", rotulo: "Vagas e cargos" },
+    { id: "etapas", rotulo: "Etapas" },
+    { id: "candidatos", rotulo: "Candidatos" },
+    { id: "fontes", rotulo: "Fontes e histórico" },
+  ]);
+
+/** A aba existe? (a da URL que não existe fica no Resumo) */
+export const ehAbaDaPagina = (aba: string): aba is AbaDaPagina =>
+  ABAS_DA_PAGINA.some((item) => item.id === aba);
+
+/** A etapa atual e a próxima prevista, para o Resumo. */
+export function andamentoDasEtapas(etapas: readonly EtapaNaLinhaDoTempo[]): {
+  atuais: EtapaNaLinhaDoTempo[];
+  proxima: EtapaNaLinhaDoTempo | null;
+} {
+  return {
+    atuais: etapas.filter((etapa) => etapa.marca === "atual"),
+    proxima: etapas.find((etapa) => etapa.proxima) ?? null,
+  };
+}
+
+// ── As telas da seleção, já no edital ────────────────────────────────────
+
+/**
+ * Como a tela recebe o edital: pelo id do monitoramento (a navegação o leva
+ * à tela, `abrirEdital`) ou pelo número, num pedido de filtro
+ * (src/app/pedido-de-filtro.ts), nas telas que recortam pelo rótulo.
+ */
+export type ComoAbreOEdital = "id" | "numero";
+
+export interface TelaDoEdital {
+  view: string;
+  rotulo: string;
+  icone: string;
+  como: ComoAbreOEdital;
+}
+
+/** As telas da seleção, na ordem do processo, que abrem já no edital. */
+export const TELAS_DO_EDITAL: readonly TelaDoEdital[] = Object.freeze([
+  { view: "selecao", rotulo: "Seleção", icone: "fa-filter", como: "numero" },
+  {
+    view: "pre-classificacao",
+    rotulo: "Triagem",
+    icone: "fa-list-check",
+    como: "id",
+  },
+  {
+    view: "avaliacao-documental",
+    rotulo: "Avaliação documental",
+    icone: "fa-file-circle-check",
+    como: "id",
+  },
+  {
+    view: "conduzir-entrevistas",
+    rotulo: "Entrevistas",
+    icone: "fa-comments",
+    como: "id",
+  },
+  {
+    view: "classificacao",
+    rotulo: "Classificação",
+    icone: "fa-ranking-star",
+    como: "id",
+  },
+  {
+    view: "approved",
+    rotulo: "Lista de aprovados",
+    icone: "fa-user-check",
+    como: "numero",
+  },
+]);
+
+/** As telas que o perfil abre (`permitida(view)`), na ordem do processo. */
+export function telasDoEdital(
+  permitida: (view: string) => boolean,
+): TelaDoEdital[] {
+  return TELAS_DO_EDITAL.filter((tela) => permitida(tela.view));
+}
+
+// ── Fontes ───────────────────────────────────────────────────────────────
+
+const ORIGENS_DO_CRONOGRAMA: Readonly<Record<string, string>> = Object.freeze({
+  MANUAL: "digitado em Editais",
+  PDF: "importado do PDF de anexos",
+  PLANILHA: "da planilha",
+  TREINAMENTO: "edital de treinamento",
+});
+
+/** "Importado do PDF de anexos" / "digitado em Editais" (ou o código, se for outro). */
+export function origemDoCronograma(origem: unknown): string {
+  const codigo = txt(origem).toUpperCase();
+  if (!codigo) return "";
+  return ORIGENS_DO_CRONOGRAMA[codigo] || codigo.toLowerCase();
+}
+
+export interface RegistroDoHistorico {
+  chave: string;
+  tipo: "retificacao" | "alteracao";
+  titulo: string;
+  quando: string;
+  motivo: string;
+  quem: string;
+  alteracoes: number;
+}
+
+/** O histórico inteiro do cronograma (alterações e retificações), do mais recente ao mais antigo. */
+export function historicoDoCronograma(
+  historico: readonly RegistroDoHistoricoDoCronograma[] | null | undefined,
+): RegistroDoHistorico[] {
+  return (Array.isArray(historico) ? historico : [])
+    .map((item, indice) => {
+      const errata = txt(item.acao) === "errata";
+      return {
+        chave: `${txt(item.created_at)}:${indice}`,
+        tipo: errata ? ("retificacao" as const) : ("alteracao" as const),
+        titulo:
+          txt(item.numero_errata) || (errata ? "Retificação" : "Alteração"),
+        quando: txt(item.created_at),
+        motivo: txt(item.motivo),
+        quem: txt(item.created_by_email),
+        alteracoes: num(item.total_alteracoes),
+      };
+    })
+    .sort((a, b) => (a.quando < b.quando ? 1 : a.quando > b.quando ? -1 : 0));
+}
+
+// ── Quadro de vagas ──────────────────────────────────────────────────────
+
+export interface LinhaDoQuadroDaPagina {
+  id: string;
+  cargo: string;
+  lotacao: string;
+  imediatas: number;
+  cadastroReserva: boolean;
+  /** Vagas por modalidade (Ampla, PcD, Negros, Indígenas…), como o PDF trouxe. */
+  modalidades: { nome: string; valor: string }[];
+}
+
+export interface QuadroDaPagina {
+  linhas: LinhaDoQuadroDaPagina[];
+  origem: { tipo: string; arquivo: string; gravadoEm: string } | null;
+  fila: FilaDoQuadro;
+}
+
+const registro = (valor: unknown): Record<string, unknown> =>
+  valor && typeof valor === "object" && !Array.isArray(valor)
+    ? (valor as Record<string, unknown>)
+    : {};
+
+/** A resposta de `obter_quadro_de_vagas`, sem confiar no formato. */
+export function quadroDaPagina(dados: unknown): QuadroDaPagina {
+  const bruto = registro(dados);
+  const linhas = (Array.isArray(bruto.linhas) ? bruto.linhas : []).flatMap(
+    (item, indice) => {
+      const linha = registro(item);
+      const cargo = txt(linha.cargo);
+      if (!cargo) return [];
+      const modalidades = Object.entries(registro(linha.modalidades))
+        .filter(([, valor]) => valor !== null && valor !== "")
+        .map(([nome, valor]) => ({ nome, valor: txt(valor) }));
+      return [
+        {
+          id: txt(linha.id) || String(indice),
+          cargo,
+          lotacao: txt(linha.lotacao),
+          imediatas: num(linha.vagas_imediatas),
+          cadastroReserva: linha.cadastro_reserva === true,
+          modalidades,
+        },
+      ];
+    },
+  );
+  const origem = registro(bruto.origem);
+  return {
+    linhas,
+    origem:
+      bruto.origem && (txt(origem.tipo) || txt(origem.arquivo))
+        ? {
+            tipo: txt(origem.tipo),
+            arquivo: txt(origem.arquivo),
+            gravadoEm: txt(origem.gravado_em),
+          }
+        : null,
+    fila: filaDoQuadro(dados),
   };
 }

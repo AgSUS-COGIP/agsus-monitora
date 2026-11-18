@@ -192,3 +192,96 @@
     justify-self: start;
   }
 }
+
+.pagina-do-edital-painel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.pagina-do-edital-mais {
+  align-self: flex-start;
+}
+
+/* Quadro de vagas: poucas colunas, sem a largura mínima das tabelas grandes. */
+.pagina-do-edital-tabela table {
+  width: 100%;
+  min-width: 640px;
+}
+
+.pagina-do-edital-vinculos summary {
+  cursor: pointer;
+  font-weight: var(--font-weight-medium);
+}
+
+.pagina-do-edital-vinculos ul,
+.pagina-do-edital-avisos,
+.pagina-do-edital-telas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pagina-do-edital-vinculos li,
+.pagina-do-edital-avisos li {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-0-5);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.pagina-do-edital-vinculos li span,
+.pagina-do-edital-avisos li span {
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-sm);
+}
+
+.pagina-do-edital-avisos li > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.pagina-do-edital-avisos li {
+  padding: var(--space-2) var(--space-3);
+  border-left: 3px solid var(--color-status-info-solid);
+  background: var(--color-bg-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.pagina-do-edital-avisos li[data-tom="perigo"] {
+  border-left-color: var(--color-status-danger-solid);
+}
+
+.pagina-do-edital-avisos li[data-tom="aviso"] {
+  border-left-color: var(--color-status-warning-solid);
+}
+
+.pagina-do-edital-telas {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.pagina-do-edital-fontes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.pagina-do-edital-fontes dt {
+  color: var(--color-text-secondary);
+  font-size: var(--text-caption);
+}
+
+.pagina-do-edital-fontes dd {
+  margin: var(--space-0-5) 0 0;
+  overflow-wrap: anywhere;
+}

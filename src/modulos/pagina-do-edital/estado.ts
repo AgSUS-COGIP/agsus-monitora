@@ -5,6 +5,11 @@
   listas de aprovados, desistentes, vagas reabertas). As linhas do
   monitoramento não moram aqui: são de src/componentes/dados-do-monitoramento.ts.
 
+  Na aba "Vagas e cargos", o quadro de vagas com o vínculo de cada vaga
+  (`obter_quadro_de_vagas`, lido quando a aba abre). Os avisos de conferência
+  são os da central (src/modulos/conferencias/estado.ts), lidos pela área e
+  recortados pelo edital na tela.
+
   Cada abertura da página (`renovar`) relê o cronograma: quem salvou em
   Editais vê a mudança ao voltar. O acompanhamento usa a leitura com versão
   da Visão geral: sem mudança, o banco responde só "inalterado".
@@ -13,6 +18,7 @@
 import { exigirSessao } from "../../lib/sessao/sessao";
 import { acompanhamentoDaResposta } from "../../lib/visao-geral/visao-geral.ts";
 import type { CronogramaLido } from "../editais/estado.ts";
+import type { EstadoDosAvisos } from "../conferencias/tipos.ts";
 import type {
   Acompanhamento,
   BuscaDoAcompanhamento,
@@ -24,6 +30,10 @@ export interface ClienteDaPaginaDoEdital {
     nome: "get_monitoramento_cronograma",
     parametros: { p_monitoramento_id: string },
   ): PromiseLike<{ data: unknown; error: unknown }>;
+  rpc(
+    nome: "obter_quadro_de_vagas",
+    parametros: { p_edital: string },
+  ): PromiseLike<{ data: unknown; error: unknown }>;
   auth?: unknown;
 }
 
@@ -31,7 +41,7 @@ export interface ClienteDaPaginaDoEdital {
 export type Carga<T> =
   | { status: "carregando" }
   | { status: "pronto"; dados: T }
-  | { status: "erro"; mensagem: string };
+  | { status: "erro"; mensagem: string; semPermissao?: boolean };
 
 export interface AcompanhamentoDaPagina {
   area: string;
@@ -43,25 +53,34 @@ export interface AcompanhamentoDaPagina {
 export interface SnapshotDaPaginaDoEdital {
   /** id do monitoramento → o cronograma lido. */
   cronogramas: Readonly<Record<string, Carga<CronogramaLido>>>;
+  /** id do monitoramento → o quadro de vagas com os vínculos (resposta da RPC). */
+  quadros: Readonly<Record<string, Carga<unknown>>>;
   acompanhamento: AcompanhamentoDaPagina | null;
 }
 
 export interface OpcoesDoEstadoDaPagina {
   supabase: ClienteDaPaginaDoEdital | null;
   buscarAcompanhamento?: BuscaDoAcompanhamento | null;
+  /** Os avisos de conferência (o estado da central); sem ele, o bloco some. */
+  avisos?: EstadoDosAvisos | null;
 }
 
 const ESTADO_INICIAL: SnapshotDaPaginaDoEdital = Object.freeze({
   cronogramas: Object.freeze({}),
+  quadros: Object.freeze({}),
   acompanhamento: null,
 });
 
 const mensagemDe = (erro: unknown) =>
   (erro as { message?: string } | null)?.message || String(erro);
+/* 42501: o perfil não tem o recurso que a RPC pede (o quadro é de Editais, Cronograma ou Entrevistas). */
+const semPermissao = (erro: unknown) =>
+  (erro as { code?: string } | null)?.code === "42501";
 
 export function criarEstadoDaPaginaDoEdital({
   supabase,
   buscarAcompanhamento = null,
+  avisos = null,
 }: OpcoesDoEstadoDaPagina) {
   let estado = ESTADO_INICIAL;
   /* Muda a cada `renovar`/`esquecer`: resposta de antes não entra. */
@@ -100,6 +119,33 @@ export function criarEstadoDaPaginaDoEdital({
     } catch (erro) {
       if (minha !== geracao) return;
       guardarCronograma(id, { status: "erro", mensagem: mensagemDe(erro) });
+    }
+  }
+
+  /** Lê o quadro de vagas do edital com os vínculos (uma vez por abertura). */
+  async function carregarQuadro(id: string, { forcar = false } = {}) {
+    if (!id) return;
+    if (!forcar && estado.quadros[id]) return;
+    const minha = geracao;
+    const guardar = (carga: Carga<unknown>) =>
+      publicar({ quadros: { ...estado.quadros, [id]: carga } });
+    guardar({ status: "carregando" });
+    try {
+      if (!supabase) throw new Error("Sem conexão com o banco.");
+      await exigirSessao(supabase as Parameters<typeof exigirSessao>[0]);
+      const { data, error } = await supabase.rpc("obter_quadro_de_vagas", {
+        p_edital: id,
+      });
+      if (error) throw error;
+      if (minha !== geracao) return;
+      guardar({ status: "pronto", dados: data ?? {} });
+    } catch (erro) {
+      if (minha !== geracao) return;
+      guardar({
+        status: "erro",
+        mensagem: mensagemDe(erro),
+        semPermissao: semPermissao(erro),
+      });
     }
   }
 
@@ -161,7 +207,9 @@ export function criarEstadoDaPaginaDoEdital({
       };
     },
     carregarCronograma,
+    carregarQuadro,
     carregarAcompanhamento,
+    avisos,
     /** Nova abertura da página: o cronograma e o acompanhamento são relidos. */
     renovar() {
       geracao += 1;

@@ -1,7 +1,7 @@
 import {
   enderecoDoEdital,
   type LinhaDoEdital,
-} from "../../lib/pagina-do-edital/pagina-do-edital.ts";
+} from "../../lib/pagina-do-edital/endereco-do-edital.ts";
 
 /*
   "Abrir página do edital" (gaveta da Visão geral, Editais, Cronograma, busca
