@@ -1,10 +1,11 @@
 /*
-  Banco de teste do estado do cronograma (migration 20261117190000), num
-  Postgres de verdade (PGlite).
+  Banco de teste do estado do cronograma (migration 20261117190000, aplicada em
+  18/11/2026), num Postgres de verdade (PGlite).
 
-  O que é de verdade: os corpos de hoje de private."FC_ESTADO_DO_CRONOGRAMA" e
-  public.get_nucleo_cronograma_resumo, lidos do rollback (copiados do banco com
-  pg_get_functiondef; a guarda md5 da migration confere que são esses), e
+  O que é de verdade: os corpos de antes de private."FC_ESTADO_DO_CRONOGRAMA" e
+  public.get_nucleo_cronograma_resumo (tests/fixtures/banco-antes-do-cronograma-manual.sql,
+  copiados do banco; a guarda md5 da migration confere que são esses), a
+  migration aplicada (tests/fixtures/sql-do-banco/, sem mudança) e
   public.get_monitoramento_cronograma_estado do retrato (supabase/esquema-atual.sql).
 
   O que é imitação: as permissões (private.pode_recurso e o recorte de área e de
@@ -20,19 +21,12 @@ export const NOME_DA_MIGRATION =
 
 const ler = (caminho: string) =>
   readFileSync(caminho, "utf8").replace(/\r\n/g, "\n");
-export const MIGRATION = ler(`supabase/migrations/${NOME_DA_MIGRATION}`);
-export const ROLLBACK = ler(`supabase/rollback/${NOME_DA_MIGRATION}`);
+/* A migration aplicada, guardada em tests/fixtures/sql-do-banco/ só para montar o banco. */
+export const MIGRATION = ler(
+  `tests/fixtures/sql-do-banco/${NOME_DA_MIGRATION}`,
+);
+const ANTES = ler("tests/fixtures/banco-antes-do-cronograma-manual.sql");
 const RETRATO = ler("supabase/esquema-atual.sql");
-
-/** Os dois corpos de hoje, como o rollback os restaura (cada um com o seu comentário). */
-function corposDeHoje(): string {
-  const inicio = ROLLBACK.indexOf(
-    'CREATE OR REPLACE FUNCTION private."FC_ESTADO_DO_CRONOGRAMA"',
-  );
-  const fim = ROLLBACK.lastIndexOf("commit;");
-  if (inicio < 0 || fim < 0) throw new Error("Rollback sem os corpos de hoje");
-  return ROLLBACK.slice(inicio, fim);
-}
 
 /** Uma função do retrato, do CREATE até o "$$;" (executável). */
 function funcaoDoRetrato(cabecalho: string): string {
@@ -132,7 +126,7 @@ async function etapas(
 async function montarBancoDeHoje(): Promise<Banco> {
   const db = await PGlite.create();
   await db.exec(INFRAESTRUTURA);
-  await db.exec(corposDeHoje());
+  await db.exec(ANTES);
   await db.exec(funcaoDoRetrato("public.get_monitoramento_cronograma_estado"));
   await db.query(
     `insert into public."TB_MONITORAMENTO_INDIGENA"

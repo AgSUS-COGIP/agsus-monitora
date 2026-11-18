@@ -6,7 +6,6 @@ import {
   DIVERGENTE,
   MANUAL,
   MIGRATION,
-  ROLLBACK,
   SEM_ETAPAS,
   bancoDeHoje,
   datasDoCadastro,
@@ -16,8 +15,8 @@ import {
 } from "./apoio/banco-do-cronograma.ts";
 
 /*
-  Migration 20261117190000 (pendente) num Postgres de verdade (PGlite), hoje ×
-  migrada × migrada + rollback. Conferência de 17/11/2026:
+  Migration 20261117190000 (aplicada em 18/11/2026; o SQL em
+  tests/fixtures/sql-do-banco/) num Postgres de verdade (PGlite), antes × depois. Conferência de 17/11/2026:
   1. O edital com cálculo manual e etapas (caso do 120/2026: 13 etapas, status
      "Suspenso" digitado) não é "sem cronograma": o estado traz percentual,
      próxima etapa e datas; o status e a etapa digitados continuam valendo.
@@ -43,7 +42,7 @@ const semChavesNovas = (e: Record<string, unknown>) => {
   return resto;
 };
 
-describe("hoje (o defeito da conferência)", () => {
+describe("antes (o defeito da conferência)", () => {
   it("o edital manual com 13 etapas sai como sem cronograma", async () => {
     const e = await estado(db, MANUAL, DIA);
     expect(e.tem_cronograma).toBe(false);
@@ -51,7 +50,7 @@ describe("hoje (o defeito da conferência)", () => {
     expect(e.proxima_atividade).toBeNull();
   });
 
-  it("a guarda da migration reconhece os corpos de hoje", async () => {
+  it("a guarda da migration reconhece os corpos de antes", async () => {
     expect(await md5DoCorpo(db, ESTADO)).toBe(
       "f1a2b05143c74861b1a4971f937ac9cf",
     );
@@ -61,7 +60,7 @@ describe("hoje (o defeito da conferência)", () => {
   });
 });
 
-describe("migrada", () => {
+describe("depois", () => {
   beforeEach(() => migrar(), LONGO);
 
   it("120/2026: etapas cadastradas, cálculo manual, suspenso", async () => {
@@ -209,36 +208,5 @@ describe("migrada", () => {
 
   it("a guarda recusa aplicar de novo", async () => {
     await expect(migrar()).rejects.toThrow(/md5/);
-  });
-});
-
-describe("rollback", () => {
-  it("volta os corpos de hoje e tira o gatilho; as datas acertadas ficam", async () => {
-    await migrar();
-    await db.exec(ROLLBACK);
-    expect(await md5DoCorpo(db, ESTADO)).toBe(
-      "f1a2b05143c74861b1a4971f937ac9cf",
-    );
-    expect(await md5DoCorpo(db, RESUMO)).toBe(
-      "436e0e97170a4d8ee43e01705ff574fb",
-    );
-    expect(
-      await valor(db, `to_regprocedure('private."FC_TG_DATAS_DO_CADASTRO"()')`),
-    ).toBeNull();
-    expect(
-      await valor<number>(
-        db,
-        `(select count(*)::int from pg_trigger where tgname = 'TG_DATAS_DO_CADASTRO')`,
-      ),
-    ).toBe(0);
-    const hoje = await bancoDeHoje();
-    expect(await estado(db, MANUAL, DIA)).toEqual(
-      await estado(hoje, MANUAL, DIA),
-    );
-    expect((await datasDoCadastro(db, DIVERGENTE))?.inicio).toBe("2026-09-08");
-  });
-
-  it("recusa rodar sem a migration aplicada", async () => {
-    await expect(db.exec(ROLLBACK)).rejects.toThrow(/não está aplicada/);
   });
 });

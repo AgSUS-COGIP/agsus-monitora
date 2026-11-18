@@ -1,29 +1,11 @@
 /*
-  ROLLBACK DE 20261117190000_cronograma_manual_e_datas_do_cadastro
-
-  Volta private."FC_ESTADO_DO_CRONOGRAMA" e public.get_nucleo_cronograma_resumo aos corpos e
-  comentários de produção em 17/11/2026 (pg_get_functiondef e obj_description, copiados do banco)
-  e remove o gatilho TG_DATAS_DO_CADASTRO e a função private."FC_TG_DATAS_DO_CADASTRO".
-
-  O QUE FICA: as datas do cadastro já acertadas pelas etapas (o acerto pontual e o que o gatilho
-  gravou). Dado não se desfaz, e as datas antigas eram as erradas.
-
-  GUARDA: a migration está aplicada (a função do gatilho existe).
+  O banco ANTES de 20261117190000 (cronograma com cálculo manual e datas do
+  cadastro pelas etapas), no que tests/apoio/banco-do-cronograma.ts usa:
+  private."FC_ESTADO_DO_CRONOGRAMA" e public.get_nucleo_cronograma_resumo com os
+  comentários, copiados letra por letra do banco de produção (pg_get_functiondef
+  e obj_description) em 17/11/2026, antes da aplicação. A guarda md5 da
+  migration confere que são estes corpos. Não é migration: não aplicar.
 */
-begin;
-
-set local lock_timeout = '5s';
-
-do $guarda$
-begin
-  if to_regprocedure('private."FC_TG_DATAS_DO_CADASTRO"()') is null then
-    raise exception 'FC_TG_DATAS_DO_CADASTRO não existe: a migration 20261117190000 não está aplicada.';
-  end if;
-end;
-$guarda$;
-
-drop trigger if exists "TG_DATAS_DO_CADASTRO" on public."TB_CRONOGRAMA_MONIT_INDIG";
-drop function private."FC_TG_DATAS_DO_CADASTRO"();
 
 CREATE OR REPLACE FUNCTION private."FC_ESTADO_DO_CRONOGRAMA"(p_monitoramento_id uuid, p_data date)
  RETURNS jsonb
@@ -195,5 +177,3 @@ end;
 $function$;
 
 comment on function public.get_nucleo_cronograma_resumo() is null;
-
-commit;
