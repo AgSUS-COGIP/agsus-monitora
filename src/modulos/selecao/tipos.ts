@@ -78,7 +78,7 @@ export type ArmazenamentoDaSelecao = {
 export type OpcoesDoEstadoDaSelecao = {
   supabase?: ClienteDaSelecao | null;
   toast?: (mensagem: string, tom?: "warn" | "error") => void;
-  baixar?: (conteudo: string, nome: string) => void;
+  baixar?: (conteudo: Uint8Array, nome: string, tipo: string) => void;
   armazenamento?: ArmazenamentoDaSelecao;
   agora?: () => number;
   tempoLimiteMs?: number;
@@ -88,7 +88,10 @@ export type EstadoDaSelecao = {
   obter: () => SnapshotDaSelecao;
   assinar: (ouvinte: () => void) => () => void;
   carregar: (area?: string) => Promise<boolean>;
-  exportarCsv: (vagas: readonly VagaDaSelecao[]) => void;
+  exportar: (
+    formato: "excel" | "pdf",
+    vagas: readonly VagaDaSelecao[],
+  ) => Promise<void>;
   reiniciar: () => void;
 };
 

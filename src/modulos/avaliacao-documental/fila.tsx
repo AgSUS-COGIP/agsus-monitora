@@ -19,6 +19,15 @@ import { ordinal } from "../../lib/classificacao/numeros.ts";
 import { copiarTexto } from "../../lib/acessos/convite-de-acesso.ts";
 import { formatNumberBR } from "../../lib/base/formatters";
 import {
+  alcanceAvulso,
+  alcanceDaSelecao,
+  marcarPagina,
+  mesmaPagina,
+  paginaMarcada,
+  textoDaConfirmacao,
+  type AlcanceDaSelecao,
+} from "../../lib/base/alcance-da-selecao.ts";
+import {
   aptasDaFila,
   concluidasHoje,
   ritmoDaFila,
@@ -86,6 +95,7 @@ import {
   porcentagemDe,
   Selo,
   TabelaDaLista,
+  BarraDeSelecao,
   usarListaNoServidor,
 } from "../../ui/index.ts";
 import type {
@@ -278,7 +288,15 @@ type TipoDaAcao = "distribuir" | "liberar" | "revisao" | "reabrir";
 interface AcaoPedida {
   tipo: TipoDaAcao;
   fichas: InscritoComFicha[];
+  /** Da seleção em lote: o alcance (esta página ou todos os resultados). */
+  alcance?: AlcanceDaSelecao;
 }
+
+const NOME_DAS_FICHAS = Object.freeze({
+  singular: "ficha",
+  plural: "fichas",
+  feminino: true,
+});
 
 const TITULOS_DA_ACAO: Record<TipoDaAcao, string> = {
   distribuir: "Distribuir fichas",
@@ -367,7 +385,13 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }: AcaoEmLoteProps) {
     <Gaveta
       tituloId="avdAcaoTitulo"
       titulo={TITULOS_DA_ACAO[acao.tipo]}
-      resumo={`${acao.fichas.length} ficha(s)`}
+      resumo={textoDaConfirmacao(
+        acao.alcance ?? alcanceAvulso(acao.fichas.length),
+        acao.tipo === "distribuir"
+          ? plano!.atribuicoes.length
+          : acao.fichas.length,
+        NOME_DAS_FICHAS,
+      )}
       aoFechar={() => aoFechar(false)}
       fecharAoClicarFora={false}
       tour="avd-fila-confirmar"
@@ -989,6 +1013,10 @@ interface TabelaDaFilaProps {
   coordena: boolean;
   selecao: Set<string>;
   marcar: (id: string, sim: boolean) => void;
+  /** A caixa do cabeçalho: marca ou desmarca as fichas à vista (esta página). */
+  paginaMarcada: boolean;
+  aoMarcarPagina: (sim: boolean) => void;
+  aoMostrar: (visiveis: readonly Inscrito[]) => void;
   grupo: GrupoDaTabela | null;
   aoAcao: (acao: AcaoDaLinhaDaFila, c: Inscrito) => void;
   /** O recorte da lista (filtros e ordem): mudou, volta às primeiras 50. */
@@ -1015,6 +1043,9 @@ const TabelaDaFila = memo(function TabelaDaFila({
   coordena,
   selecao,
   marcar,
+  paginaMarcada: todasMarcadas,
+  aoMarcarPagina,
+  aoMostrar,
   grupo,
   aoAcao,
   recorte,
@@ -1026,8 +1057,6 @@ const TabelaDaFila = memo(function TabelaDaFila({
   const comFicha = useMemo(() => linhas.filter((c) => c.ficha), [linhas]);
   const comCaixa = coordena && comFicha.length > 0;
   const comAcoes = comFicha.length > 0;
-  const todasMarcadas =
-    comFicha.length > 0 && comFicha.every((c) => selecao.has(c.id));
   const rotuloDaEtapa =
     ETAPAS_DA_FILA.find((e) => e.valor === etapa)?.rotulo || "Inscritos";
 
@@ -1039,14 +1068,13 @@ const TabelaDaFila = memo(function TabelaDaFila({
               chave: "selecionar",
               rotulo: "Selecionar",
               largura: "2.75rem",
+              // Marca só as fichas à vista; "todos os resultados" fica na barra da seleção.
               cabecalho: (
                 <input
                   type="checkbox"
-                  aria-label="Selecionar as fichas da lista"
+                  aria-label="Selecionar esta página"
                   checked={todasMarcadas}
-                  onChange={(ev) => {
-                    for (const c of comFicha) marcar(c.id, ev.target.checked);
-                  }}
+                  onChange={(ev) => aoMarcarPagina(ev.target.checked)}
                 />
               ),
             },
@@ -1078,8 +1106,7 @@ const TabelaDaFila = memo(function TabelaDaFila({
       comCaixa,
       comAcoes,
       todasMarcadas,
-      comFicha,
-      marcar,
+      aoMarcarPagina,
       chaves,
       ordem,
       setOrdem,
@@ -1152,6 +1179,7 @@ const TabelaDaFila = memo(function TabelaDaFila({
         aoExportar ? aoExportar() : fila.exportarCsv(ordenadas, etapa)
       }
       exportarDesativado={!servidor && !ordenadas.length}
+      aoMostrar={aoMostrar}
       linha={linha}
     />
   );
@@ -1197,8 +1225,9 @@ interface FilaProps {
 
 /*
   A faixa de situação da Fila (FaixaDeSituacao, src/ui/): No lote, Pendentes,
-  Em análise, Em revisão e Concluídas, cada um o filtro da etapa (a mesma
-  conta das abas de antes: contadoresComForaDoLote). Embaixo, a barra da
+  Em análise, Em revisão, Concluídas e Saiu do lote (só quando há), cada um
+  o filtro da etapa (a mesma conta das abas de antes: contadoresComForaDoLote;
+  as partes somam o lote, como no bloco por vaga). Embaixo, a barra da
   distribuição do lote, o selo do ritmo de hoje (uma vez só), o feito hoje
   com a meta do dia (quando o cronograma a dá) e "N fora do lote" (a etapa
   dos que não estão no lote). Inscritos e Eliminados (de um filtro salvo)
@@ -1221,6 +1250,7 @@ const ETAPAS_DA_FAIXA: ReadonlyArray<{ valor: EtapaDaFila; tom: string }> = [
   { valor: "em_analise", tom: "info" },
   { valor: "revisao", tom: "destaque" },
   { valor: "concluidas", tom: "sucesso" },
+  { valor: "saiu", tom: "neutro" },
 ];
 const rotuloDaEtapa = (valor: string) =>
   ETAPAS_DA_FILA.find((e) => e.valor === valor)?.rotulo ?? valor;
@@ -1252,7 +1282,10 @@ function FaixaDaFila({
       return `${pct} · ${formatNumberBR(aptas)} ${aptas === 1 ? "apta" : "aptas"}`;
     return pct;
   };
-  const itens: ItemDaFaixa[] = ETAPAS_DA_FAIXA.map(({ valor, tom }) => ({
+  // "Saiu do lote" só aparece quando há alguém (ou é a etapa escolhida).
+  const itens: ItemDaFaixa[] = ETAPAS_DA_FAIXA.filter(
+    ({ valor }) => valor !== "saiu" || n("saiu") > 0 || etapa === "saiu",
+  ).map(({ valor, tom }) => ({
     chave: valor,
     rotulo: rotuloDaEtapa(valor),
     valor: n(valor),
@@ -1296,6 +1329,12 @@ function FaixaDaFila({
           rotulo: "Pendentes",
           valor: n("pendentes"),
           tom: "alerta",
+        },
+        {
+          chave: "saiu",
+          rotulo: "Saiu do lote",
+          valor: n("saiu"),
+          tom: "neutro",
         },
       ]}
       rodape={rodape}
@@ -1536,6 +1575,30 @@ export function Fila({ e, fila }: FilaProps) {
     () => new Map(todos.map((c, i) => [c.id, i])),
     [todos],
   );
+  /*
+    A seleção em lote vale para o recorte de agora (revisão de 17/11/2026):
+    "esta página" são as fichas à vista na tabela (aoMostrar), "todos os
+    resultados" as fichas do filtro inteiro; trocar de filtro limpa a
+    seleção, para nenhuma ação pegar ficha que não está na tela.
+  */
+  const [pagina, setPagina] = useState<readonly string[]>([]);
+  const aoMostrar = useCallback((visiveis: readonly Inscrito[]) => {
+    const ids = visiveis.filter((c) => c.ficha?.id).map((c) => c.id);
+    setPagina((atual) => (mesmaPagina(atual, ids) ? atual : ids));
+  }, []);
+  const recorteDaSelecao = useMemo(
+    () => linhas.filter((c) => c.ficha?.id).map((c) => c.id),
+    [linhas],
+  );
+  const alcance = useMemo(
+    () => alcanceDaSelecao(selecao, pagina, recorteDaSelecao),
+    [selecao, pagina, recorteDaSelecao],
+  );
+  const chaveDoFiltro = JSON.stringify([e.editalId, st.filtro]);
+  useEffect(
+    () => setSelecao((atual) => (atual.size ? new Set() : atual)),
+    [chaveDoFiltro],
+  );
   // Os selecionados na ordem da fila, olhando só a seleção (não a lista toda).
   const selecionados = useMemo(
     () =>
@@ -1576,6 +1639,10 @@ export function Fila({ e, fila }: FilaProps) {
     [],
   );
   const limparSelecao = useCallback(() => setSelecao(new Set()), []);
+  const aoMarcarPagina = useCallback(
+    (sim: boolean) => setSelecao((atual) => marcarPagina(atual, pagina, sim)),
+    [pagina],
+  );
   // O "⋯" de uma linha: a mesma gaveta das ações em lote, com uma ficha; ou copiar.
   const aoAcaoDaLinha = useCallback(
     (tipo: AcaoDaLinhaDaFila, c: Inscrito) => {
@@ -1869,24 +1936,27 @@ export function Fila({ e, fila }: FilaProps) {
           </select>
         </BarraDaLista>
 
-        {coordena && selecionados.length ? (
-          <div
-            className="ui-lista-selecao"
-            data-tour="avd-fila-acoes-lote"
-            role="toolbar"
-            aria-label="Ações nas fichas selecionadas"
+        {coordena && recorteDaSelecao.length ? (
+          <BarraDeSelecao
+            tour="avd-fila-acoes-lote"
+            rotulo="Seleção de fichas"
+            alcance={alcance}
+            nome={NOME_DAS_FICHAS}
+            aoMarcarPagina={aoMarcarPagina}
+            aoMarcarTodos={() => setSelecao(new Set(recorteDaSelecao))}
+            aoLimpar={limparSelecao}
           >
-            <strong>
-              {formatNumberBR(selecionados.length)}{" "}
-              {selecionados.length === 1 ? "selecionada" : "selecionadas"}
-            </strong>
             <button
               type="button"
               className="btn contorno small"
               data-acao="distribuir-selecionadas"
               disabled={!acoes.distribuir.length}
               onClick={() =>
-                setAcao({ tipo: "distribuir", fichas: acoes.distribuir })
+                setAcao({
+                  tipo: "distribuir",
+                  fichas: acoes.distribuir,
+                  alcance,
+                })
               }
             >
               Atribuir a…
@@ -1897,7 +1967,7 @@ export function Fila({ e, fila }: FilaProps) {
               data-acao="liberar-reservas"
               disabled={!acoes.liberar.length}
               onClick={() =>
-                setAcao({ tipo: "liberar", fichas: acoes.liberar })
+                setAcao({ tipo: "liberar", fichas: acoes.liberar, alcance })
               }
             >
               Liberar
@@ -1908,7 +1978,7 @@ export function Fila({ e, fila }: FilaProps) {
               data-acao="mandar-para-revisao"
               disabled={!acoes.revisao.length}
               onClick={() =>
-                setAcao({ tipo: "revisao", fichas: acoes.revisao })
+                setAcao({ tipo: "revisao", fichas: acoes.revisao, alcance })
               }
             >
               Mandar para revisão
@@ -1919,20 +1989,12 @@ export function Fila({ e, fila }: FilaProps) {
               data-acao="reabrir-selecionadas"
               disabled={!acoes.reabrir.length}
               onClick={() =>
-                setAcao({ tipo: "reabrir", fichas: acoes.reabrir })
+                setAcao({ tipo: "reabrir", fichas: acoes.reabrir, alcance })
               }
             >
               Reabrir
             </button>
-            <button
-              type="button"
-              className="btn ghost small"
-              data-acao="limpar-selecao"
-              onClick={limparSelecao}
-            >
-              Limpar seleção
-            </button>
-          </div>
+          </BarraDeSelecao>
         ) : null}
 
         <TabelaDaFila
@@ -1956,6 +2018,9 @@ export function Fila({ e, fila }: FilaProps) {
           coordena={coordena}
           selecao={selecao}
           marcar={marcar}
+          paginaMarcada={paginaMarcada(alcance)}
+          aoMarcarPagina={aoMarcarPagina}
+          aoMostrar={aoMostrar}
           recorte={recorte}
           // A tabela trata null como sem grupo (o padrão dela).
           grupo={grupo as GrupoDaTabela}

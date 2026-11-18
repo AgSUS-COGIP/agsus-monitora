@@ -1,5 +1,17 @@
 import { desmontarRaizesAbertas } from "./raizes-abertas.ts";
-import { afterAll, beforeAll, describe, vi } from "vitest";
+import {
+  comecarTeste,
+  fecharBancosDoBloco,
+  fecharBancosDoTeste,
+} from "./bancos-abertos.ts";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  vi,
+} from "vitest";
 
 /*
   Um bloco é o que antes era um arquivo de teste. Os arquivos de teste são poucos
@@ -16,7 +28,12 @@ export function bloco(nome: string, corpo: () => void | Promise<void>): void {
       globaisDeAntes = lerGlobais();
     });
 
-    afterAll(() => {
+    // Os bancos PGlite do teste e, no fim, os do bloco (bancos-abertos.ts).
+    beforeEach(comecarTeste);
+    afterEach(fecharBancosDoTeste);
+
+    afterAll(async () => {
+      await fecharBancosDoBloco();
       desmontarRaizesAbertas();
       vi.useRealTimers();
       vi.unstubAllGlobals();

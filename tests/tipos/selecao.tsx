@@ -29,7 +29,7 @@ const cancelar: () => void = estado.assinar(() => {});
 cancelar();
 const snapshot = estado.obter();
 if (snapshot.dados) {
-  estado.exportarCsv(snapshot.dados.vagas);
+  estado.exportar("excel", snapshot.dados.vagas);
   const inscritos: number | null | undefined =
     snapshot.dados.vagas[0]?.inscritos;
   // @ts-expect-error — contagens normalizadas não são texto.
@@ -43,7 +43,7 @@ estado.carregar(7);
 // @ts-expect-error — snapshots são somente leitura; alterações passam pelo store.
 snapshot.area = "sede";
 // @ts-expect-error — dados ainda podem estar ausentes na primeira carga.
-estado.exportarCsv(snapshot.dados.vagas);
+estado.exportar("excel", snapshot.dados.vagas);
 // @ts-expect-error — a Seleção usa apenas sua RPC de leitura.
 cliente.rpc("publicar_classificacao", { p_area: "sede" });
 // @ts-expect-error — a RPC exige o argumento p_area como string.

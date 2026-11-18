@@ -1,6 +1,23 @@
 // @vitest-environment node
 import { bloco } from "./apoio/bloco.ts";
-import { describe, expect, it, afterEach, beforeEach, vi } from "vitest";
+import * as alcanceDaSelecaoNs from "../src/lib/base/alcance-da-selecao.ts";
+import {
+  arquivoDaTabela,
+  nomeDoArquivoExportado,
+  pdfDaTabela,
+  textoDaCelula,
+  xlsxDaTabela,
+} from "../src/lib/base/exportacao-da-tabela.ts";
+import { lembrarBanco } from "./apoio/bancos-abertos.ts";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { calcularKpis } from "../src/lib/analises/analises-curriculares.ts";
 import {
   aptosEEliminados,
@@ -224,6 +241,18 @@ import {
   situacaoDoPrazo,
   textoDosDiasRestantes,
 } from "../src/lib/base/prazos.ts";
+import { origemDoNumero } from "../src/lib/visao-geral/origem-dos-numeros.ts";
+import {
+  composicaoDaLinha,
+  composicaoDoIndicador,
+} from "../src/lib/visao-geral/composicao-dos-numeros.ts";
+import { avisosDoEdital } from "../src/lib/visao-geral/avisos-do-edital.ts";
+import {
+  colunasDoPreset,
+  PRESETS_DE_COLUNAS,
+  presetDasColunas,
+} from "../src/lib/visao-geral/presets-de-colunas.ts";
+import { COLUNAS_PADRAO } from "../src/lib/visao-geral/visao-geral.ts";
 
 bloco("arredondamento-dos-percentuais", () => {
   /*
@@ -2289,7 +2318,7 @@ bloco("app/pagina-aberta", () => {
   describe("as páginas que usam as linhas", () => {
     it("Visão geral, Editais, Cronograma e Lista de aprovados; não a Avaliação documental", () => {
       expect([...TELAS_COM_LINHAS].sort()).toEqual(
-        ["approved", "calendario", "dashboard", "nucleo"].sort(),
+        ["approved", "calendario", "dashboard", "edital", "nucleo"].sort(),
       );
       for (const view of [
         "avaliacao-documental",
@@ -4444,9 +4473,13 @@ bloco("lib/relatorio-da-diretoria", () => {
         contratadas: 0,
         emSelecao: 0,
         ociosas: 0,
-        cadastroReserva: 0,
+        alemDasVagas: 0,
         criticos: 0,
         inscritos: 0,
+        editais: 0,
+        inscritosInformados: 0,
+        editaisComResultado: 0,
+        editaisSemResultado: 0,
       },
       agora: new Date("2026-11-16T12:00:00Z"),
     } satisfies Omit<Parameters<typeof conteudoDoRelatorio>[0], "escolha">;
@@ -4611,9 +4644,13 @@ bloco("lib/relatorio-da-visao-geral", () => {
     contratadas: 63,
     emSelecao: 0,
     ociosas: 6,
-    cadastroReserva: 51,
+    alemDasVagas: 51,
     criticos: 1,
     inscritos: 3256,
+    editais: 2,
+    inscritosInformados: 2,
+    editaisComResultado: 2,
+    editaisSemResultado: 0,
   };
 
   const conteudo = (escolha = MODELOS_DO_RELATORIO[1]!.escolha) =>
@@ -4695,7 +4732,7 @@ bloco("lib/relatorio-da-visao-geral", () => {
       expect(textoDaColuna("primeira_admissao", LINHAS[0]!)).toBe("12/05/2099");
       expect(textoDaColuna("inscritos", LINHAS[1]!)).toBe("—");
       expect(textoDaColuna("ciclo", LINHAS[1]!)).toBe("—");
-      expect(textoDaColuna("contratados", LINHAS[0]!)).toBe("59 +51 CR");
+      expect(textoDaColuna("contratados", LINHAS[0]!)).toBe("59 +51 além");
       expect(textoDaColuna("vagas_ociosas", LINHAS[1]!)).toBe("6 (60%)");
       expect(textoDaColuna("duracao", LINHAS[0]!)).toBe("116");
     });
@@ -5718,6 +5755,514 @@ bloco("lib/base/prazos", () => {
         "ate-180": 0,
         depois: 1,
       });
+    });
+  });
+});
+
+bloco("lib/alcance-da-selecao", () => {
+  const {
+    alcanceDaSelecao,
+    conviteParaTodos,
+    marcarPagina,
+    rotuloDaPagina,
+    textoDaConfirmacao,
+    textoDoAlcance,
+  } = alcanceDaSelecaoNs;
+  /*
+    Revisão de 17/11/2026: a Lista de aprovados oferecia "Selecionar os 13.184
+    da tabela" numa caixa só. Agora "esta página" (as linhas desenhadas) e
+    "todos os N resultados" são escolhas separadas, e a confirmação diz quantos
+    serão afetados.
+  */
+  const ids = (de: number, ate: number) =>
+    Array.from({ length: ate - de }, (_, i) => `c${de + i}`);
+  const RECORTE = ids(0, 13184);
+  const PAGINA = RECORTE.slice(0, 50);
+  const CANDIDATOS = { singular: "candidato", plural: "candidatos" };
+  const FICHAS = { singular: "ficha", plural: "fichas", feminino: true };
+
+  describe("alcance da seleção", () => {
+    it("nada marcado: a caixa da página e nenhum convite", () => {
+      const a = alcanceDaSelecao(new Set(), PAGINA, RECORTE);
+      expect(a).toEqual({
+        tipo: "nenhum",
+        quantos: 0,
+        naPagina: 50,
+        marcadosNaPagina: 0,
+        total: 13184,
+      });
+      expect(rotuloDaPagina(a)).toBe("Selecionar esta página (50)");
+      expect(conviteParaTodos(a)).toBe("");
+    });
+
+    it("esta página: só as 50 desenhadas, com o convite para os 13.184", () => {
+      const a = alcanceDaSelecao(
+        marcarPagina(new Set(), PAGINA, true),
+        PAGINA,
+        RECORTE,
+      );
+      expect(a.tipo).toBe("pagina");
+      expect(a.quantos).toBe(50);
+      expect(textoDoAlcance(a, CANDIDATOS)).toBe(
+        "50 candidatos desta página selecionados (de 13.184 no resultado)",
+      );
+      expect(conviteParaTodos(a)).toBe("Selecionar todos os 13.184 resultados");
+      expect(textoDaConfirmacao(a, 50, CANDIDATOS)).toBe(
+        "50 candidatos serão afetados · só esta página",
+      );
+    });
+
+    it("todos os resultados: diz que vai além da página", () => {
+      const a = alcanceDaSelecao(new Set(RECORTE), PAGINA, RECORTE);
+      expect(a.tipo).toBe("todos");
+      expect(textoDoAlcance(a, CANDIDATOS)).toBe(
+        "Todos os 13.184 candidatos do resultado selecionados",
+      );
+      expect(conviteParaTodos(a)).toBe("");
+      expect(textoDaConfirmacao(a, 13000, CANDIDATOS)).toBe(
+        "13.000 candidatos serão afetados · todos os resultados do filtro, não só os 50 desta página · 184 dos marcados não se aplicam",
+      );
+    });
+
+    it("marcados à mão: a parte, com o total do resultado", () => {
+      const a = alcanceDaSelecao(new Set(["c1", "c70"]), PAGINA, RECORTE);
+      expect(a).toMatchObject({
+        tipo: "parte",
+        quantos: 2,
+        marcadosNaPagina: 1,
+      });
+      expect(textoDoAlcance(a, CANDIDATOS)).toBe(
+        "2 candidatos selecionados (de 13.184 no resultado)",
+      );
+      expect(textoDaConfirmacao(a, 1, CANDIDATOS)).toBe(
+        "1 candidato será afetado · 1 dos marcados não se aplicam",
+      );
+    });
+
+    it("marcado que saiu do recorte não conta", () => {
+      const a = alcanceDaSelecao(new Set(["fora"]), PAGINA, RECORTE);
+      expect(a.tipo).toBe("nenhum");
+    });
+
+    it("recorte que cabe na página: marcar a página é marcar todos", () => {
+      const pequeno = ids(0, 12);
+      const a = alcanceDaSelecao(new Set(pequeno), pequeno, pequeno);
+      expect(a.tipo).toBe("todos");
+      expect(textoDaConfirmacao(a, 12, CANDIDATOS)).toBe(
+        "12 candidatos serão afetados",
+      );
+    });
+
+    it("concorda no feminino (fichas)", () => {
+      const a = alcanceDaSelecao(new Set(["c1"]), PAGINA, RECORTE);
+      expect(textoDoAlcance(a, FICHAS)).toBe(
+        "1 ficha selecionada (de 13.184 no resultado)",
+      );
+      expect(textoDaConfirmacao(a, 1, FICHAS)).toBe("1 ficha será afetada");
+      const todas = alcanceDaSelecao(new Set(RECORTE), PAGINA, RECORTE);
+      expect(textoDoAlcance(todas, FICHAS)).toBe(
+        "Todas as 13.184 fichas do resultado selecionadas",
+      );
+    });
+
+    it("desmarcar a página tira só as dela", () => {
+      const marcados = marcarPagina(new Set(["c70"]), PAGINA, true);
+      expect(marcarPagina(marcados, PAGINA, false)).toEqual(new Set(["c70"]));
+    });
+  });
+});
+
+bloco("lib/origem-dos-numeros", () => {
+  /*
+    Revisão de 17/11/2026: cada número da linha leva aos dados que o compõem.
+    A linha é do edital (o destino nunca é um código de vaga); só o total, sem
+    os registros, é "agregada" (a tela diz "Origem agregada; detalhe
+    individual não disponível", nunca abre uma lista vazia).
+  */
+
+  const COM_LISTA = {
+    id: "uuid-1",
+    edital: "80/2025",
+    aprovados: 12,
+    contratados: 9,
+    cadastro_reserva: 3,
+    inscritos: 300,
+    TP_FONTE_FUNIL: "SELECAO",
+  };
+
+  describe("de onde vem cada número da linha", () => {
+    it("Aprovados, Contratados e Aguardando chamada → Lista de aprovados no edital", () => {
+      expect(
+        origemDoNumero(COM_LISTA, "contratados", { comListas: true }),
+      ).toEqual({
+        tipo: "tela",
+        view: "approved",
+        rotulo: "Abrir na Lista de aprovados",
+        pedido: {
+          edital: "80/2025",
+          editalId: "uuid-1",
+          metrica: "contratados",
+        },
+      });
+      const aguardando = origemDoNumero(COM_LISTA, "cadastro_reserva");
+      expect(aguardando.tipo === "tela" && aguardando.pedido.metrica).toBe(
+        "aguardandoChamada",
+      );
+      const aprovados = origemDoNumero(COM_LISTA, "aprovados");
+      expect(aprovados.tipo === "tela" && aprovados.pedido.metrica).toBe(
+        "aprovados",
+      );
+    });
+
+    it("Inscritos → a tela da fonte do funil", () => {
+      expect(origemDoNumero(COM_LISTA, "inscritos")).toMatchObject({
+        tipo: "tela",
+        view: "selecao",
+        pedido: { edital: "80/2025" },
+      });
+      expect(
+        origemDoNumero(
+          { ...COM_LISTA, TP_FONTE_FUNIL: "ANALISES" },
+          "inscritos",
+        ),
+      ).toMatchObject({ view: "analises" });
+    });
+
+    it("só o total, sem os registros: origem agregada", () => {
+      // Contratados sem lista vigente (o acompanhamento já disse que não há).
+      expect(
+        origemDoNumero(
+          { ...COM_LISTA, aprovados: null, cadastro_reserva: null },
+          "contratados",
+          { comListas: true },
+        ),
+      ).toEqual({ tipo: "agregada" });
+      // Inscritos de outra fonte (ou sem fonte gravada).
+      expect(
+        origemDoNumero(
+          { ...COM_LISTA, TP_FONTE_FUNIL: "AVALIACAO_DOCUMENTAL" },
+          "inscritos",
+        ),
+      ).toEqual({ tipo: "agregada" });
+      expect(
+        origemDoNumero({ ...COM_LISTA, TP_FONTE_FUNIL: null }, "inscritos"),
+      ).toEqual({ tipo: "agregada" });
+    });
+
+    it("sem número, zero ou antes do acompanhamento: nenhuma", () => {
+      expect(
+        origemDoNumero({ ...COM_LISTA, contratados: 0 }, "contratados"),
+      ).toEqual({ tipo: "nenhuma" });
+      expect(
+        origemDoNumero({ ...COM_LISTA, aprovados: null }, "aprovados"),
+      ).toEqual({ tipo: "nenhuma" });
+      expect(
+        origemDoNumero({ ...COM_LISTA, inscritos: "" }, "inscritos"),
+      ).toEqual({ tipo: "nenhuma" });
+      // Sem os resumos das listas, não se sabe se há lista: não promete nada.
+      expect(
+        origemDoNumero({ ...COM_LISTA, aprovados: null }, "contratados", {
+          comListas: false,
+        }),
+      ).toEqual({ tipo: "nenhuma" });
+      expect(origemDoNumero(null, "contratados")).toEqual({ tipo: "nenhuma" });
+    });
+  });
+});
+
+bloco("lib/composicao-dos-numeros", () => {
+  /*
+    Revisão de 17/11/2026: clicar no número mostra as parcelas que o formam
+    (o "Ver a composição" do SIGEPSI). As contas fecham com as da faixa.
+  */
+
+  const linha = (campos: Record<string, unknown>) =>
+    ({ id: "x", status: "Em andamento", ...campos }) as LinhaDoMonitoramento;
+
+  const ultimo = (passos: ReturnType<typeof composicaoDaLinha>) =>
+    passos?.[passos.length - 1];
+
+  describe("composição de um número da linha", () => {
+    it("Contratados = dentro + além das vagas imediatas", () => {
+      const passos = composicaoDaLinha(
+        linha({ vagas_total: 51, contratados: 56 }),
+        "contratados",
+      );
+      expect(passos).toEqual([
+        { operacao: "", rotulo: "Dentro das vagas imediatas", valor: 51 },
+        { operacao: "+", rotulo: "Além das vagas imediatas", valor: 5 },
+        { operacao: "=", rotulo: "Contratados no total", valor: 56 },
+      ]);
+      // Sem nada além das vagas, um número só: sem composição.
+      expect(
+        composicaoDaLinha(
+          linha({ vagas_total: 10, contratados: 4 }),
+          "contratados",
+        ),
+      ).toBeNull();
+    });
+
+    it("Vagas = publicadas − reabertas; Sem contratação desconta as duas", () => {
+      const reaberta = linha({
+        vagas_total: 10,
+        vagas_reabertas: 6,
+        contratados: 4,
+        status: "Concluído",
+      });
+      expect(ultimo(composicaoDaLinha(reaberta, "vagas_total"))).toEqual({
+        operacao: "=",
+        rotulo: "Vagas que contam",
+        valor: 4,
+      });
+      expect(composicaoDaLinha(reaberta, "vagas_ociosas")).toEqual([
+        { operacao: "", rotulo: "Vagas publicadas", valor: 10 },
+        { operacao: "−", rotulo: "Reabertas em edital mais novo", valor: 6 },
+        { operacao: "−", rotulo: "Contratadas dentro das vagas", valor: 4 },
+        { operacao: "=", rotulo: "Sem contratação", valor: 0 },
+      ]);
+      expect(
+        composicaoDaLinha(linha({ vagas_total: 3 }), "vagas_total"),
+      ).toBeNull();
+    });
+
+    it("Aprovados = já chamados + aguardando chamada", () => {
+      expect(
+        composicaoDaLinha(
+          linha({ aprovados: 12, cadastro_reserva: 5 }),
+          "aprovados",
+        ),
+      ).toEqual([
+        { operacao: "", rotulo: "Já chamados (com status)", valor: 7 },
+        { operacao: "+", rotulo: "Aguardando chamada (sem status)", valor: 5 },
+        { operacao: "=", rotulo: "Aprovados na lista vigente", valor: 12 },
+      ]);
+      // Sem lista vigente ("—"), nada a compor.
+      expect(
+        composicaoDaLinha(linha({ aprovados: null }), "aprovados"),
+      ).toBeNull();
+    });
+  });
+
+  describe("composição dos indicadores fecha com a faixa", () => {
+    const LINHAS = [
+      linha({
+        id: "a",
+        vagas_total: 130,
+        contratados: 567,
+        status: "Concluído",
+      }),
+      linha({ id: "b", vagas_total: 83, contratados: 1, status: "Concluído" }),
+      linha({ id: "c", vagas_total: 27, contratados: 0 }),
+      linha({
+        id: "d",
+        vagas_total: 10,
+        vagas_reabertas: 6,
+        contratados: 4,
+        status: "Concluído",
+      }),
+      linha({ id: "e", vagas_total: 9, contratados: 9, status: "Cancelado" }),
+    ];
+    const k = indicadoresDoMonitoramento(LINHAS);
+
+    it("Vagas imediatas = Contratadas + Em seleção + Ociosas, e publicadas − reabertas", () => {
+      const passos = composicaoDoIndicador(LINHAS, "vagas")!;
+      const valor = (rotulo: string) =>
+        passos.find((p) => p.rotulo === rotulo)?.valor;
+      expect(valor("Contratadas")).toBe(k.contratadas);
+      expect(valor("Em seleção")).toBe(k.emSelecao);
+      expect(valor("Ociosas")).toBe(k.ociosas);
+      expect(
+        passos.filter((p) => p.operacao === "=").map((p) => p.valor),
+      ).toEqual([k.vagas, k.vagas]);
+      expect(valor("Reabertas em edital mais novo")).toBe(k.reabertas);
+    });
+
+    it("Contratadas e além das vagas: dentro + além = contratados", () => {
+      const passos = composicaoDoIndicador(LINHAS, "alemDasVagas")!;
+      expect(passos.map((p) => p.valor)).toEqual([
+        k.contratadas,
+        k.alemDasVagas,
+        k.contratadas + k.alemDasVagas,
+      ]);
+    });
+
+    it("Ociosas e Em seleção: vagas do grupo − contratadas nele", () => {
+      expect(ultimo(composicaoDoIndicador(LINHAS, "ociosas"))?.valor).toBe(
+        k.ociosas,
+      );
+      expect(ultimo(composicaoDoIndicador(LINHAS, "emSelecao"))?.valor).toBe(
+        k.emSelecao,
+      );
+      // Sem edital sem resultado, Em seleção não tem o que compor.
+      expect(composicaoDoIndicador([LINHAS[0]!], "emSelecao")).toBeNull();
+      expect(composicaoDoIndicador([], "vagas")).toBeNull();
+    });
+  });
+});
+
+bloco("lib/avisos-do-edital", () => {
+  /* A gaveta da Visão geral mostra só os avisos do edital da linha. */
+  describe("avisos do edital", () => {
+    const lista = {
+      geradoEm: null,
+      abertos: [
+        { id: "1", editalId: "e1" },
+        { id: "2", editalId: "e2" },
+        { id: "3", editalId: null },
+      ],
+      dispensados: [{ id: "4", editalId: "e1" }],
+      resolvidos: [{ id: "5", editalId: "e1" }],
+    };
+
+    it("abertos e dispensados do edital; os resolvidos ficam na central", () => {
+      expect(avisosDoEdital(lista, "e1")).toEqual({
+        geradoEm: null,
+        abertos: [{ id: "1", editalId: "e1" }],
+        dispensados: [{ id: "4", editalId: "e1" }],
+        resolvidos: [],
+      });
+    });
+
+    it("sem lista ou sem edital, nada", () => {
+      expect(avisosDoEdital(null, "e1")).toBeNull();
+      expect(avisosDoEdital(lista, "")).toBeNull();
+      expect(avisosDoEdital(lista, 7)?.abertos).toEqual([]);
+    });
+  });
+});
+
+bloco("lib/presets-de-colunas", () => {
+  /*
+    Revisão de 17/11/2026: "Gestão", "Prazos" e "Contratação" trocam as
+    colunas de uma vez; Unidade e Edital (as presas) ficam em todos, na ordem
+    da tabela, e o menu sabe qual conjunto está à vista.
+  */
+  it("cada conjunto tem as fixas e segue a ordem da tabela", () => {
+    expect(colunasDoPreset("prazos")).toEqual([
+      "unidade",
+      "edital",
+      "ciclo",
+      "data_inicio",
+      "data_fim",
+      "duracao",
+      "status",
+      "fase",
+    ]);
+    for (const { id } of PRESETS_DE_COLUNAS) {
+      const colunas = colunasDoPreset(id)!;
+      expect(colunas.slice(0, 2)).toEqual(["unidade", "edital"]);
+      expect(colunas).toEqual(
+        COLUNAS_PADRAO.filter((c) => colunas.includes(c)),
+      );
+    }
+    expect(colunasDoPreset("inventado")).toBeNull();
+  });
+
+  it("reconhece o conjunto à vista; escolha própria não é nenhum", () => {
+    expect(presetDasColunas(colunasDoPreset("contratacao"))).toBe(
+      "contratacao",
+    );
+    expect(presetDasColunas([...colunasDoPreset("gestao")!].reverse())).toBe(
+      "gestao",
+    );
+    expect(presetDasColunas(["unidade", "edital", "status"])).toBe("");
+    expect(presetDasColunas(null)).toBe("");
+  });
+});
+
+bloco("lib/base/exportacao-da-tabela", () => {
+  const TABELA = {
+    titulo: "Seleção — Saúde Indígena",
+    colunas: ["Unidade", "Cargo", "Inscritos"],
+    linhas: [
+      ["DSEI Xingu", "=HYPERLINK(1)", 1200],
+      ["DSEI Yanomami", "Médico & cia", null],
+    ],
+  };
+  const texto = (bytes: Uint8Array) => new TextDecoder().decode(bytes);
+  const QUANDO = new Date("2026-11-18T13:00:00Z");
+
+  it("nome do arquivo sem acento, espaço nem barra, com a extensão", () => {
+    expect(
+      nomeDoArquivoExportado(
+        ["Seleção", "saude-indigena", "2026-11-18"],
+        "xlsx",
+      ),
+    ).toBe("selecao-saude-indigena-2026-11-18.xlsx");
+    expect(nomeDoArquivoExportado(["A/B C", null, ""], "pdf")).toBe(
+      "a-b-c.pdf",
+    );
+    expect(nomeDoArquivoExportado([], "pdf")).toBe("exportacao.pdf");
+  });
+
+  it("Excel: texto como texto (nunca fórmula), número como número, cabeçalho com filtro", () => {
+    const xml = texto(xlsxDaTabela(TABELA, QUANDO));
+    expect(xml).toContain("Seleção — Saúde Indígena");
+    expect(xml).toContain('t="inlineStr"');
+    expect(xml).toContain("=HYPERLINK(1)");
+    expect(xml).not.toContain("<f>");
+    expect(xml).toContain("<v>1200</v>");
+    expect(xml).toContain("Médico &amp; cia");
+    expect(xml).toContain('<autoFilter ref="A1:C3"/>');
+    expect(xml.match(/<row /g)).toHaveLength(3);
+  });
+
+  it("PDF: título, emissão em Brasília, total e números à brasileira", async () => {
+    const pdf = texto(
+      await pdfDaTabela(TABELA, { quando: QUANDO, comprimir: false }),
+    );
+    expect(pdf.startsWith("%PDF")).toBe(true);
+    expect(pdf).toContain("Emitido em 18/11/2026, 10:00");
+    expect(pdf).toContain("2 registros");
+    expect(pdf).toContain("1.200");
+    expect(pdf).toContain("DSEI Yanomami");
+    expect(pdf).toContain("gina 1 de 1"); // "Página", com o á da fonte padrão
+    expect(textoDaCelula(1.5)).toBe("1,5");
+    expect(textoDaCelula(null)).toBe("");
+  });
+
+  it("os dois formatos pelo mesmo retrato", async () => {
+    const excel = await arquivoDaTabela("excel", TABELA, QUANDO);
+    expect(excel.extensao).toBe("xlsx");
+    expect(excel.tipo).toContain("spreadsheetml");
+    const pdf = await arquivoDaTabela("pdf", TABELA, QUANDO);
+    expect(pdf.extensao).toBe("pdf");
+    expect(pdf.tipo).toBe("application/pdf");
+  });
+});
+
+/*
+  Desde o #887 os blocos de um assunto rodam no mesmo processo: os bancos PGlite
+  que ninguém fechava se somavam (8,5 GB num arquivo) e derrubavam a máquina do
+  GitHub. O bloco fecha o banco criado num teste ao fim dele e o do beforeAll ao
+  fim do bloco (tests/apoio/bancos-abertos.ts).
+*/
+bloco("apoio/bancos-abertos", () => {
+  const falso = () => {
+    const banco = {
+      closed: false,
+      async close() {
+        banco.closed = true;
+      },
+    };
+    return banco;
+  };
+  const doBloco = falso();
+  let doPrimeiroTeste = falso();
+
+  describe("os bancos de teste são fechados", () => {
+    beforeAll(() => {
+      lembrarBanco(doBloco);
+    });
+
+    it("o banco criado no teste fica aberto enquanto o teste dura", () => {
+      doPrimeiroTeste = lembrarBanco(falso());
+      expect(doPrimeiroTeste.closed).toBe(false);
+    });
+
+    it("no teste seguinte, o do teste anterior já foi fechado e o do beforeAll continua aberto", () => {
+      expect(doPrimeiroTeste.closed).toBe(true);
+      expect(doBloco.closed).toBe(false);
     });
   });
 });

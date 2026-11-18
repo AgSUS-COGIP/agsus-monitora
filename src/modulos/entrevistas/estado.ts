@@ -30,6 +30,13 @@ import type { ItemDaAgenda } from "../../lib/entrevistas/painel-de-entrevistas.t
 */
 import { hojeEmBrasilia } from "../../lib/cronograma/cronograma-do-edital.ts";
 import {
+  arquivoDaTabela,
+  nomeDoArquivoExportado,
+} from "../../lib/base/exportacao-da-tabela.ts";
+import type { FormatoDaExportacao } from "../../lib/base/exportacao-da-tabela.ts";
+import { nomeDaArea } from "../../lib/navegacao/menu-lateral.ts";
+import { baixarArquivo } from "../../ui/botoes-de-exportacao.tsx";
+import {
   criarCacheDePayload,
   ehErroDeAcesso,
   respostaInalterada,
@@ -42,7 +49,7 @@ import {
   mensagemDeFalha,
 } from "../../lib/carga/falha-de-rede";
 import {
-  csvDasEntrevistas,
+  tabelaDasEntrevistas,
   normalizarPayload,
   normalizarAgendaDoPainel,
   PAINEL_DE_ENTREVISTAS,
@@ -102,20 +109,10 @@ function mensagemDaCarga(erro: unknown) {
   return mensagemDeFalha(erro);
 }
 
-function baixarNoNavegador(conteudo: string, nome: string) {
-  const arquivo = new Blob([conteudo], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(arquivo);
-  const ancora = document.createElement("a");
-  ancora.href = url;
-  ancora.download = nome;
-  ancora.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
 export function criarEstadoDasEntrevistas({
   supabase = null,
   toast = (mensagem) => console.info(mensagem),
-  baixar = baixarNoNavegador,
+  baixar = baixarArquivo,
   armazenamento = armazenamentoDePayload,
   agora = () => Date.now(),
   tempoLimiteMs = TEMPO_LIMITE_MS,
@@ -382,12 +379,37 @@ export function criarEstadoDasEntrevistas({
     }
   }
 
-  function exportarCsv(entrevistas: readonly EntrevistaDoPainel[]) {
-    const dia = hojeEmBrasilia(new Date(agora()));
-    baixar(
-      csvDasEntrevistas(entrevistas),
-      `entrevistas-${estado.area}-${dia}.csv`,
-    );
+  /* "Exportar em Excel" e "Salvar em PDF": o recorte na tela. */
+  async function exportar(
+    formato: FormatoDaExportacao,
+    itens: readonly EntrevistaDoPainel[],
+  ) {
+    const quando = new Date(agora());
+    try {
+      const arquivo = await arquivoDaTabela(
+        formato,
+        {
+          titulo: ["Entrevistas", nomeDaArea(estado.area)]
+            .filter(Boolean)
+            .join(" — "),
+          ...tabelaDasEntrevistas(itens),
+        },
+        quando,
+      );
+      baixar(
+        arquivo.bytes,
+        nomeDoArquivoExportado(
+          ["entrevistas", estado.area, hojeEmBrasilia(quando)],
+          arquivo.extensao,
+        ),
+        arquivo.tipo,
+      );
+    } catch (erro) {
+      toast(
+        `Não foi possível gerar o arquivo: ${erro instanceof Error ? erro.message : String(erro)}`,
+        "error",
+      );
+    }
   }
 
   return {
@@ -401,7 +423,7 @@ export function criarEstadoDasEntrevistas({
     fecharGaveta,
     abrirSemEntrevista,
     fecharSemEntrevista,
-    exportarCsv,
+    exportar,
     carregarAgenda,
     reiniciar,
     definirComemoracoes: (ligadas: boolean) =>

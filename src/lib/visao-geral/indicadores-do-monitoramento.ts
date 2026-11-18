@@ -8,8 +8,9 @@
 
   - Contratadas (imediatas): por edital, contratados limitados às vagas
     imediatas — min(contratados, vagas_total).
-  - Cadastro reserva: o que passa das vagas imediatas —
-    max(0, contratados − vagas_total). Fica à parte.
+  - Contratações além das vagas imediatas (antes "Cadastro reserva"): o que
+    passa das vagas imediatas — max(0, contratados − vagas_total). Fica à
+    parte.
   - Em seleção: vagas − contratadas dos editais ainda sem resultado.
   - Ociosas: vagas − contratadas dos editais com resultado (concluídos ou na
     fase Contratação).
@@ -23,6 +24,10 @@
 
   `contratados` vem da lista de aprovados vigente (Contratado/Migração) e
   `vagas_total` do cadastro do edital.
+
+  Cada número diz de quantos editais ele vem (`editais`, `inscritosInformados`,
+  `editaisComResultado`, `editaisSemResultado`), para a tela separar o zero
+  confirmado do dado ausente e do que não se aplica (`situacaoDoIndicador`).
 */
 
 import { faseDoEdital } from "./fases-do-processo.ts";
@@ -64,6 +69,12 @@ export function temResultado(linha: Linha): boolean {
   return (linha?.fase || faseDoEdital(linha)) === "Contratação";
 }
 
+/** O campo tem número (nulo, vazio e texto são dado ausente, não zero). */
+export function temNumero(valor: unknown): boolean {
+  if (valor === null || valor === undefined || valor === "") return false;
+  return Number.isFinite(Number(valor));
+}
+
 /** Soma de um campo numérico das linhas; vazio e texto contam zero. */
 export function somarCampo(
   linhas: readonly Linha[] | null | undefined,
@@ -81,8 +92,8 @@ export const vagasEfetivas = (linha: Linha): number =>
 /** Contratações do edital dentro das vagas imediatas. */
 export const contratadasImediatas = (linha: Linha): number =>
   Math.min(num(linha?.contratados), num(linha?.vagas_total));
-/** Contratações acima das vagas imediatas (cadastro reserva). */
-export const contratacoesDoCadastroReserva = (linha: Linha): number =>
+/** Contratações acima das vagas imediatas do edital. */
+export const contratacoesAlemDasVagas = (linha: Linha): number =>
   Math.max(0, num(linha?.contratados) - num(linha?.vagas_total));
 /** Vagas imediatas ainda sem contratação (as reabertas depois saem). */
 export const vagasSemContratacao = (linha: Linha): number =>
@@ -106,16 +117,21 @@ export function indicadoresDoMonitoramento(
   let contratadas = 0;
   let emSelecao = 0;
   let ociosas = 0;
-  let cadastroReserva = 0;
+  let alemDasVagas = 0;
   let vagas = 0;
   let reabertas = 0;
+  let editaisComResultado = 0;
+  let inscritosInformados = 0;
   for (const linha of validas) {
     vagas += vagasEfetivas(linha);
     reabertas += num(linha?.vagas_total) - vagasEfetivas(linha);
     contratadas += contratadasImediatas(linha);
-    cadastroReserva += contratacoesDoCadastroReserva(linha);
-    if (temResultado(linha)) ociosas += vagasSemContratacao(linha);
-    else emSelecao += vagasSemContratacao(linha);
+    alemDasVagas += contratacoesAlemDasVagas(linha);
+    if (temNumero(linha?.inscritos)) inscritosInformados += 1;
+    if (temResultado(linha)) {
+      editaisComResultado += 1;
+      ociosas += vagasSemContratacao(linha);
+    } else emSelecao += vagasSemContratacao(linha);
   }
   return {
     processos: lista.length,
@@ -124,8 +140,58 @@ export function indicadoresDoMonitoramento(
     contratadas,
     emSelecao,
     ociosas,
-    cadastroReserva,
+    alemDasVagas,
     criticos: lista.filter(critica).length,
     inscritos: somarCampo(validas, "inscritos"),
+    editais: validas.length,
+    inscritosInformados,
+    editaisComResultado,
+    editaisSemResultado: validas.length - editaisComResultado,
   };
+}
+
+/*
+  Como a tela mostra um indicador (revisão de 17/11/2026): o zero confirmado
+  é "0"; o dado ausente (nenhum edital informou) e o que não se aplica
+  (nenhum edital daquele tipo no recorte) são "—" com o porquê; e, quando só
+  parte dos editais informou, a cobertura: "informado em X de Y editais".
+  A carga pendente é da tela (o esqueleto), não daqui.
+*/
+export type SituacaoDoIndicador =
+  | { tipo: "valor"; valor: number; cobertura: string }
+  | { tipo: "ausente"; motivo: string }
+  | { tipo: "nao_se_aplica"; motivo: string };
+
+const editais = (n: number) => (n === 1 ? "edital" : "editais");
+
+/** "informado em X de Y editais", só quando falta algum. */
+export function textoDaCobertura(informados: number, total: number): string {
+  if (!(total > 0) || informados >= total) return "";
+  return `informado em ${informados.toLocaleString("pt-BR")} de ${total.toLocaleString("pt-BR")} ${editais(total)}`;
+}
+
+export function situacaoDoIndicador(
+  k: Indicadores,
+  chave: "inscritos" | "emSelecao" | "ociosas",
+): SituacaoDoIndicador {
+  if (chave === "inscritos") {
+    if (k.editais > 0 && k.inscritosInformados === 0)
+      return { tipo: "ausente", motivo: "sem dado nos editais" };
+    return {
+      tipo: "valor",
+      valor: k.inscritos,
+      cobertura: textoDaCobertura(k.inscritosInformados, k.editais),
+    };
+  }
+  const daquele =
+    chave === "ociosas" ? k.editaisComResultado : k.editaisSemResultado;
+  if (k.editais > 0 && daquele === 0)
+    return {
+      tipo: "nao_se_aplica",
+      motivo:
+        chave === "ociosas"
+          ? "nenhum edital com resultado"
+          : "nenhum edital sem resultado",
+    };
+  return { tipo: "valor", valor: k[chave], cobertura: "" };
 }

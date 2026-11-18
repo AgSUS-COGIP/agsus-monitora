@@ -6392,8 +6392,12 @@ bloco("modulos/avaliacao-documental-rascunho", () => {
           .querySelector("[data-cartao='bloco:CURSOS']")
           .querySelector("input[type='checkbox']"),
       );
-      await esperar();
-      await esperar();
+      // A gravação do rascunho pode levar mais que dois ciclos numa máquina lenta (CI).
+      await vi.waitFor(() =>
+        expect(
+          chamadas(supabase, "salvar_rascunho_regra").length,
+        ).toBeGreaterThan(0),
+      );
       const [, args] = chamadas(supabase, "salvar_rascunho_regra").at(-1);
       expect(args).toMatchObject({
         p_tipo: "ANALISE",
@@ -6408,10 +6412,10 @@ bloco("modulos/avaliacao-documental-rascunho", () => {
         "Tirei os cursos do edital 114",
       );
       await clicar(secao.querySelector("[data-acao='salvar-assistente']"));
-      await esperar();
-      await esperar();
-      expect(chamadas(supabase, "salvar_regra_analise")).toHaveLength(1);
-      expect(supabase.rascunho()).toBeNull();
+      await vi.waitFor(() => {
+        expect(chamadas(supabase, "salvar_regra_analise")).toHaveLength(1);
+        expect(supabase.rascunho()).toBeNull();
+      });
       expect(aviso()).toBeNull();
       expect(sair()).toBe(false);
     });
@@ -6931,7 +6935,7 @@ bloco("modulos/configuracoes-inicio-acesso-aparencia", () => {
         kpi_contratadas_label: "Rótulo do KPI contratadas",
         kpi_em_selecao_label: "Rótulo do KPI em seleção",
         kpi_ociosas_label: "Rótulo do KPI vagas ociosas",
-        kpi_cadastro_reserva_label: "Rótulo do KPI cadastro reserva",
+        kpi_alem_das_vagas_label: "Rótulo do KPI contratações além das vagas",
         kpi_criticos_label: "Rótulo do KPI críticos",
         kpi_inscritos_label: "Rótulo do KPI inscritos",
         broadcast_type: "Tipo do aviso global",

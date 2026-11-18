@@ -38,6 +38,7 @@ const estado: EstadoDaAbaDeAprovados = {
   abrirStatus: () => {},
   abrirCarta: () => {},
   abrirAlteracaoJudicial: () => {},
+  irParaClassificacao: () => {},
   removerSubJudice: async () => true,
   alterarStatusEmLote: async () => null,
   carta: { hoje: () => "2026-11-11" },

@@ -35,6 +35,7 @@ import {
 } from "../../lib/navegacao/busca-global.ts";
 import { usarLinhasDoMonitoramento } from "../usar-linhas-do-monitoramento.ts";
 import { Modal } from "../../ui/modal.tsx";
+import { abrirPaginaDoEditalNaArea } from "../../modulos/pagina-do-edital/abrir.ts";
 
 function Realce({ valor, termo }: { valor: string; termo: string }) {
   return partesRealcadas(valor, termo).map((parte, i) =>
@@ -165,6 +166,22 @@ function PainelDaBusca({
           );
         })}
       </ul>
+      {indice >= 0 && resultados[indice] ? (
+        <div className="search-modal-acoes">
+          <button
+            type="button"
+            className="btn contorno small"
+            onClick={() => {
+              const marcado = resultados[indice]!;
+              aoFechar();
+              abrirPaginaDoEditalNaArea(marcado, linhas);
+            }}
+          >
+            <i className="fa-solid fa-file-lines" aria-hidden="true" /> Abrir
+            página do edital
+          </button>
+        </div>
+      ) : null}
       {procurando && !resultados.length ? (
         <p className="search-results-vazio" role="status">
           {/* As linhas ainda não chegaram: "nenhum" seria falso. */}

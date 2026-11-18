@@ -42,6 +42,7 @@ import type {
   Guardado no navegador, como antes: os filtros (`agsus_monitora_filters_v1`)
   e as colunas visíveis da tabela (`agsus_visible_cols_v2`).
 */
+import { colunasDoPreset } from "../../lib/visao-geral/presets-de-colunas.ts";
 import {
   assinarDadosDoMonitoramento,
   linhasDaArea,
@@ -283,6 +284,8 @@ export function criarEstadoDaVisaoGeral({
     null;
 
   const hoje = () => hojeEmBrasilia(new Date(agora()));
+  /* A linha de onde a pessoa saiu por um número (`sairPelaLinha`). */
+  let linhaDeSaida = "";
 
   /*
     O acompanhamento vale para a área de que ele foi pedido; numa recarga, o
@@ -339,6 +342,21 @@ export function criarEstadoDaVisaoGeral({
     );
   }
 
+  /*
+    Sem o desconto: o pedido desta carga falhou ou passou do tempo, ou a
+    resposta veio sem os cargos (o módulo das reabertas não montou a conta).
+    A tela diz "sem desconto das reabertas" em vez de um número que parece
+    final.
+  */
+  function semDescontoDasReabertas(linhas: readonly unknown[], area: string) {
+    if (!buscarAcompanhamento || !proprio.aberta) return false;
+    const atual = acompanhamentoAtual(area);
+    if (atual) return typeof atual.reaberturas !== "function";
+    return (
+      semAcompanhamento?.linhas === linhas && semAcompanhamento?.area === area
+    );
+  }
+
   function calcular() {
     const { linhas, areaAtual, carregado, erro = "" } = dados.obter();
     const { daArea, acompanhamento, dia } = linhasEnriquecidas();
@@ -373,6 +391,8 @@ export function criarEstadoDaVisaoGeral({
       criticosAtivo: proprio.atalho === "criticos",
       indicadores: indicadoresDaVisaoGeral(filtradas),
       aguardandoVagas: carregado && aguardandoVagas(linhas, areaAtual),
+      semDescontoDasReabertas:
+        carregado && semDescontoDasReabertas(linhas, areaAtual),
     };
   }
 
@@ -620,8 +640,23 @@ export function criarEstadoDaVisaoGeral({
     definirAberta(valor) {
       const nova = Boolean(valor);
       if (nova === proprio.aberta) return;
-      publicar({ aberta: nova, visitada: proprio.visitada || nova });
+      // Voltou de uma tela aberta por um número: a linha de onde saiu se destaca.
+      const volta = nova && linhaDeSaida ? linhaDeSaida : "";
+      if (nova) linhaDeSaida = "";
+      publicar({
+        aberta: nova,
+        visitada: proprio.visitada || nova,
+        ...(volta ? { destaque: { id: volta, vez: agora() } } : {}),
+      });
       pedirAcompanhamento();
+    },
+    /*
+      Um número da linha levou a outra tela (Lista de aprovados, Seleção):
+      a página guarda a linha, e ao voltar (Voltar do navegador ou menu) ela
+      rola até a linha e a destaca, com área, filtros e busca como estavam.
+    */
+    sairPelaLinha(id) {
+      linhaDeSaida = txt(id);
     },
     definirFiltro,
     alternarFiltroUnico,
@@ -641,6 +676,13 @@ export function criarEstadoDaVisaoGeral({
     definirDadosDoMapa: ({ lmap = null } = {}) => publicar({ mapa: { lmap } }),
     ordenarPor: (campo) =>
       publicar({ ordenacao: proximaOrdenacao(proprio.ordenacao, campo) }),
+    /* Um conjunto pronto de colunas (Gestão, Prazos, Contratação). */
+    aplicarPresetDeColunas(id) {
+      const colunas = colunasDoPreset(id);
+      if (!colunas) return;
+      guardar(armazenamento, CHAVE_DAS_COLUNAS, colunas);
+      publicar({ colunas });
+    },
     alternarColuna(campo, visivel) {
       const colunas = alternarColuna(proprio.colunas, campo, visivel);
       if (colunas === proprio.colunas) return;

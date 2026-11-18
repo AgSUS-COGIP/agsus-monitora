@@ -157,6 +157,7 @@ bloco("app/pecas-da-casca", async () => {
     esquecerEditalEVisao: () => {},
     abrirRegrasDoEdital: () => false,
     fecharRegrasDoEdital: () => {},
+    voltarDaPaginaDoEdital: () => false,
     irParaInicio: () => {},
   };
 

@@ -48,6 +48,7 @@ import {
   buildSimulado,
   SUPABASE,
 } from "./apoio/sessao-simulada.js";
+import { subirVercelSimulada } from "./apoio/vercel-simulada.js";
 
 const titulo = (page) => page.locator("#pageTitle");
 
@@ -214,3 +215,154 @@ test.describe("PWA sem rede", () => {
     expect([...erros, ...errosSemRede]).toEqual([]);
   });
 });
+
+/*
+  Aba aberta durante a publicação: a Vercel publica a versão nova e os pedaços
+  da anterior somem (404). A aba que ficou aberta ainda roda o código antigo e
+  pede, ao abrir uma tela pela primeira vez, um pedaço que já não existe. Antes
+  disto a tela ficava preta até um Ctrl+Shift+R. O servidor imita a Vercel
+  (`apoio/vercel-simulada.js`) e a publicação troca o hash de todos os pedaços.
+*/
+test.describe("aba aberta durante a publicação", () => {
+  /** @type {Awaited<ReturnType<typeof subirVercelSimulada>>} */
+  let vercel;
+
+  test.beforeEach(async ({ request }) => {
+    test.skip(
+      !(await buildSimulado(request)),
+      `Compile com VITE_SUPABASE_URL=${SUPABASE} para rodar estes testes.`,
+    );
+    // Copiar o build e publicar a versão nova leva alguns segundos.
+    test.setTimeout(90_000);
+    vercel = await subirVercelSimulada();
+  });
+  test.afterEach(async () => {
+    await vercel?.fechar();
+  });
+
+  const abrirCronograma = (page) =>
+    page.locator(".sidebar").getByText("Cronograma", { exact: true }).click();
+  const cronogramaAberto = async (page) => {
+    await expect(page).toHaveURL(/\/saude-indigena\/cronograma$/);
+    await expect(titulo(page)).toHaveText("Cronograma");
+    await expect(page.locator("#calMesTitulo")).toBeVisible();
+  };
+
+  test("sem service worker, a aba antiga recarrega uma vez e abre a tela", async ({
+    browser,
+  }) => {
+    const context = await browser.newContext({ serviceWorkers: "block" });
+    const page = await context.newPage();
+    const erros = await abrirComSessao(page);
+    await page.goto(`${vercel.endereco}/saude-indigena/visao-geral`, {
+      waitUntil: "domcontentloaded",
+    });
+    await expect(page.locator(".sidebar")).toBeVisible();
+
+    await vercel.publicar();
+    const recargas = contarRecargas(page);
+    await abrirCronograma(page);
+    await cronogramaAberto(page);
+    // O CSS da tela sumiu primeiro ("Unable to preload CSS"): recarregou uma vez.
+    expect(recargas()).toBe(1);
+    expect(erros).toEqual([]);
+    await context.close();
+  });
+
+  test("com o service worker, a tela nunca aberta abre com o pedaço guardado", async ({
+    page,
+  }) => {
+    const erros = await abrirComSessao(page);
+    await page.goto(`${vercel.endereco}/saude-indigena/visao-geral`, {
+      waitUntil: "domcontentloaded",
+    });
+    await expect(page.locator(".sidebar")).toBeVisible();
+    await instalado(page);
+
+    await vercel.publicar();
+    const recargas = contarRecargas(page);
+    await abrirCronograma(page);
+    await cronogramaAberto(page);
+    // O pedaço da versão anterior veio do cache: nem precisou recarregar.
+    expect(recargas()).toBe(0);
+    expect(erros).toEqual([]);
+  });
+
+  test("com o service worker novo já no comando, a aba antiga ainda acha os seus pedaços", async ({
+    page,
+  }) => {
+    const erros = await abrirComSessao(page);
+    await page.goto(`${vercel.endereco}/saude-indigena/visao-geral`, {
+      waitUntil: "domcontentloaded",
+    });
+    await expect(page.locator(".sidebar")).toBeVisible();
+    const guardados = await instalado(page);
+    const pedacoAntigo = guardados.find((url) =>
+      /\/assets\/calendario-editais-[\w-]+\.js$/.test(url),
+    );
+    expect(pedacoAntigo).toBeTruthy();
+
+    await vercel.publicar();
+    // O navegador acha o sw.js novo; a página pede para ele assumir já.
+    await page.evaluate(async () => {
+      const registro = await navigator.serviceWorker.ready;
+      const trocou = new Promise((pronto) =>
+        navigator.serviceWorker.addEventListener("controllerchange", pronto, {
+          once: true,
+        }),
+      );
+      await registro.update();
+      await trocou;
+      const novo = navigator.serviceWorker.controller;
+      if (novo.state !== "activated")
+        await new Promise((pronto) =>
+          novo.addEventListener("statechange", () => {
+            if (novo.state === "activated") pronto();
+          }),
+        );
+    });
+    // O cache da versão anterior saiu: o pedaço vem da herança no cache novo.
+    const nomes = await page.evaluate(() => caches.keys());
+    expect(nomes.filter((nome) => nome.endsWith("-static"))).toEqual([
+      expect.stringMatching(/-p1-static$/),
+    ]);
+
+    // O código antigo pede o pedaço antigo, que a Vercel já não tem.
+    const carregou = await page.evaluate(
+      (url) =>
+        import(url).then(
+          () => "ok",
+          (erro) => String(erro),
+        ),
+      pedacoAntigo,
+    );
+    expect(carregou).toBe("ok");
+    expect(erros).toEqual([]);
+  });
+});
+
+/* O service worker terminou de guardar e controla a página; devolve o que guardou. */
+async function instalado(page) {
+  return page.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+    if (!navigator.serviceWorker.controller) {
+      await new Promise((pronto) =>
+        navigator.serviceWorker.addEventListener("controllerchange", pronto, {
+          once: true,
+        }),
+      );
+    }
+    const nomes = await caches.keys();
+    const cache = await caches.open(nomes.find((n) => n.endsWith("-static")));
+    return (await cache.keys()).map((pedido) => pedido.url);
+  });
+}
+
+/* Quantas vezes a página recarregou desde agora. */
+function contarRecargas(page) {
+  let recargas = 0;
+  page.on("load", () => {
+    recargas += 1;
+  });
+  return () => recargas;
+}

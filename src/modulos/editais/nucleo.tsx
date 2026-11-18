@@ -38,6 +38,7 @@ import {
 } from "../../lib/editais/editais-do-nucleo.ts";
 import { formatNumberBR } from "../../lib/base/formatters";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
+import { abrirPaginaDoEdital } from "../pagina-do-edital/abrir.ts";
 import { Selo, TabelaInfinita, TopoDoPainel } from "../../ui/index.ts";
 import { avisoDaListaDoEdital } from "../../lib/editais/aprovados-por-edital.ts";
 import {
@@ -204,7 +205,13 @@ function LinhaDoEdital({
   item,
   perfil,
   estado,
-}: ItemDaTabela & { perfil: unknown; estado: EstadoDaPaginaDoNucleo }) {
+  linhasDaArea,
+}: ItemDaTabela & {
+  perfil: unknown;
+  estado: EstadoDaPaginaDoNucleo;
+  /** As linhas da área: o endereço da página usa o número só se ele não se repete. */
+  linhasDaArea: readonly ItemDaTabela["linha"][];
+}) {
   const url = safeHttpUrl(linha.link_edital);
   const nome = linha.edital || linha.unidade;
   const podeEditar = canManageEditais(perfil);
@@ -276,6 +283,15 @@ function LinhaDoEdital({
       </td>
       <td>
         <div className="nucleo-row-actions" data-tour="editais-acoes-da-linha">
+          <button
+            className="btn icon outline nucleo-pagina-do-edital"
+            type="button"
+            title="Abrir página do edital"
+            aria-label={`Abrir página do edital ${nome || ""}`}
+            onClick={() => abrirPaginaDoEdital(linha, linhasDaArea)}
+          >
+            <i className="fa-solid fa-file-lines" aria-hidden="true" />
+          </button>
           {podeEditar ? (
             <button
               className="btn icon outline"
@@ -575,6 +591,7 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
             item={item}
             perfil={nucleo.perfil}
             estado={estado}
+            linhasDaArea={linhas}
           />
         )}
         total={noFiltro.length}

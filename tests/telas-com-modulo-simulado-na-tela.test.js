@@ -43,6 +43,12 @@ import { criarEstadoDaFila } from "../src/modulos/avaliacao-documental/estado-da
 import { Fila } from "../src/modulos/avaliacao-documental/fila.tsx";
 import * as telaDaPre from "../src/lib/avaliacao-documental/tela-da-pre-classificacao.ts";
 import * as libDaFila from "../src/lib/avaliacao-documental/fila.ts";
+import { CardDeGrafico, Grafico } from "../src/ui/index.ts";
+import { proximoDestaque } from "../src/ui/grafico.tsx";
+import {
+  dadosDaTabelaDoGrafico,
+  textoDoPonto,
+} from "../src/ui/tabela-do-grafico.tsx";
 
 /*
   Os módulos simulados valem para o arquivo inteiro (o Vitest sobe todo
@@ -60,7 +66,13 @@ vi.mock("../src/lib/base/chartjs-global.ts", () => {
       this.options = configuracao.options;
       this.plugins = configuracao.plugins;
       this.atualizacoes = 0;
+      // O destaque pedido pelo teclado (src/ui/grafico.tsx).
+      this.ativos = [];
+      this.tooltip = { setActiveElements: () => undefined };
       graficos.push(this);
+    }
+    setActiveElements(ativos) {
+      this.ativos = ativos;
     }
     update() {
       this.atualizacoes += 1;
@@ -437,7 +449,7 @@ bloco("modulos/analises", async () => {
       );
       expect(
         [...topo.querySelectorAll("button")].map((b) => b.textContent.trim()),
-      ).toEqual(["Atualizar", "Exportar"]);
+      ).toEqual(["Atualizar", "Exportar em Excel"]);
       expect(document.querySelectorAll(".status-discreto")).toHaveLength(1);
       for (const texto of [
         "Somente consulta",
@@ -1073,7 +1085,7 @@ bloco("modulos/analises", async () => {
       expect(recorte()).toBe("Recorte ativo: Situação do processo: Ativo");
     });
 
-    it("AC-1.6 — vale junto com os outros filtros; Limpar tudo tira a data; o CSV leva a data", async () => {
+    it("AC-1.6 — vale junto com os outros filtros; Limpar tudo tira a data; a planilha leva a data", async () => {
       await montar(supabaseFalso());
       await marcarNoFiltro("responsavel", "Diego");
       expect(candidatos()).toEqual(["Bruno Lima", "Clara Souza"]);
@@ -1081,9 +1093,9 @@ bloco("modulos/analises", async () => {
       await clicarNoDia(1);
       expect(candidatos()).toEqual(["Clara Souza"]);
 
-      await clicar(secao.querySelector('[data-acao="exportar"]'));
+      await clicar(secao.querySelector('[data-acao="exportar-excel"]'));
       await esperar();
-      const [csv] = baixar.mock.calls.at(-1);
+      const csv = new TextDecoder().decode(baixar.mock.calls.at(-1)[0]);
       expect(csv).toContain("Clara Souza");
       expect(csv).not.toContain("Bruno Lima");
 
@@ -1317,21 +1329,22 @@ bloco("modulos/analises", async () => {
   });
 
   describe("exportar, atualizar e a cópia do navegador", () => {
-    it("Exportar traz os pareceres antes e baixa o CSV do recorte", async () => {
+    it("Exportar em Excel traz os pareceres antes e baixa o recorte", async () => {
       const supabase = supabaseFalso();
       await montar(supabase);
       await clicar(kpi("analisado").querySelector("button"));
-      await clicar(secao.querySelector('[data-acao="exportar"]'));
+      await clicar(secao.querySelector('[data-acao="exportar-excel"]'));
       await esperar();
       expect(chamadas(supabase, "get_analises_texto_do_painel")).toHaveLength(
         1,
       );
       expect(baixar).toHaveBeenCalledTimes(1);
-      const [conteudo, nome] = baixar.mock.calls[0];
-      expect(nome).toBe("agsus_analises_curriculares_v3.csv");
-      const linhas = conteudo.split("\n");
-      expect(linhas).toHaveLength(4);
-      expect(linhas[1]).toContain("Parecer de Ana");
+      const [bytes, nome] = baixar.mock.calls[0];
+      const conteudo = new TextDecoder().decode(bytes);
+      expect(nome).toBe("agsus_analises_curriculares_v3.xlsx");
+      // A planilha: o cabeçalho e as 3 linhas do recorte, com o parecer.
+      expect(conteudo.match(/<row /g)).toHaveLength(4);
+      expect(conteudo).toContain("Parecer de Ana");
       expect(toast).toHaveBeenCalledWith(
         "Exportados 3 registros do recorte atual.",
         "info",
@@ -1491,7 +1504,7 @@ bloco("modulos/analises", async () => {
       );
     });
 
-    it("CSV com os pareceres já a caminho (busca geral): espera a mesma leitura", async () => {
+    it("Planilha com os pareceres já a caminho (busca geral): espera a mesma leitura", async () => {
       let soltar;
       const supabase = supabaseFalso({
         respostas: {
@@ -1506,7 +1519,7 @@ bloco("modulos/analises", async () => {
       let csv;
       await act(async () => {
         busca = painel.estado.garantirTextos();
-        csv = painel.estado.exportarCsv((linhas) => linhas);
+        csv = painel.estado.exportarExcel((linhas) => linhas);
       });
       await act(async () => soltar());
       expect(await busca).toBe(true);
@@ -1516,7 +1529,7 @@ bloco("modulos/analises", async () => {
       );
       expect(baixar).toHaveBeenCalledTimes(1);
       expect(toast).not.toHaveBeenCalledWith(
-        "Não foi possível trazer os pareceres para o CSV. Tente novamente.",
+        "Não foi possível trazer os pareceres para a planilha. Tente novamente.",
         "error",
       );
     });
@@ -2294,7 +2307,7 @@ bloco("modulos/entrevistas", async () => {
         [...topo.querySelectorAll(".ui-topo-acoes button")].map((b) =>
           b.textContent.trim(),
         ),
-      ).toEqual(["Atualizar", "Exportar"]);
+      ).toEqual(["Atualizar", "Exportar em Excel", "Salvar em PDF"]);
       expect(topo.querySelector('[aria-label*="tema"]')).toBeNull();
       expect(topo.querySelector('[aria-label*="tela cheia"]')).toBeNull();
       expect(document.querySelectorAll(".status-discreto")).toHaveLength(1);
@@ -2370,11 +2383,12 @@ bloco("modulos/entrevistas", async () => {
     it("Exportar baixa o CSV do recorte, com a área no nome", async () => {
       await montar(supabaseFalso({ data: PAYLOAD, error: null }));
       await escolher(document.getElementById("filtro-parecer"), "INAPTO");
-      await clicar(secao.querySelector('[data-acao="exportar"]'));
+      await clicar(secao.querySelector('[data-acao="exportar-excel"]'));
       expect(baixar).toHaveBeenCalledTimes(1);
-      const [conteudo, nome] = baixar.mock.calls[0];
+      const [bytes, nome] = baixar.mock.calls[0];
+      const conteudo = new TextDecoder().decode(bytes);
       expect(nome).toMatch(
-        /^entrevistas-saude-indigena-\d{4}-\d{2}-\d{2}\.csv$/,
+        /^entrevistas-saude-indigena-\d{4}-\d{2}-\d{2}\.xlsx$/,
       );
       expect(conteudo).toContain("Bruno");
       expect(conteudo).not.toContain("onerror");
@@ -2870,7 +2884,12 @@ bloco("modulos/recursos", async () => {
       expect(status().textContent).toMatch(/^Atualizado em 20\/09\/2026/);
       expect(
         [...topo.querySelectorAll("button")].map((b) => b.textContent.trim()),
-      ).toEqual(["Atualizar", "Exportar", "Analisar"]);
+      ).toEqual([
+        "Atualizar",
+        "Exportar em Excel",
+        "Salvar em PDF",
+        "Analisar",
+      ]);
       expect(topo.querySelector('[aria-label*="tema"]')).toBeNull();
       expect(topo.querySelector('[aria-label*="tela cheia"]')).toBeNull();
       // Uma data de carga só, e sem selo "Somente consulta".
@@ -3290,11 +3309,12 @@ bloco("modulos/recursos", async () => {
 
     it("Exportar baixa o CSV do recorte, com a área no nome", async () => {
       await montar(supabaseFalso());
-      await clicar(document.querySelector('[data-acao="exportar"]'));
+      await clicar(document.querySelector('[data-acao="exportar-excel"]'));
       expect(baixar).toHaveBeenCalledTimes(1);
-      const [conteudo, nome] = baixar.mock.calls[0];
+      const [bytes, nome] = baixar.mock.calls[0];
+      const conteudo = new TextDecoder().decode(bytes);
       expect(conteudo).toContain("Ana Ribeiro");
-      expect(nome).toMatch(/^recursos-saude-indigena-\d{4}-\d{2}-\d{2}\.csv$/);
+      expect(nome).toMatch(/^recursos-saude-indigena-\d{4}-\d{2}-\d{2}\.xlsx$/);
     });
   });
 
@@ -5522,7 +5542,7 @@ bloco("modulos/selecao", async () => {
         [...topo.querySelectorAll(".ui-topo-acoes button")].map((b) =>
           b.textContent.trim(),
         ),
-      ).toEqual(["Atualizar", "Exportar"]);
+      ).toEqual(["Atualizar", "Exportar em Excel", "Salvar em PDF"]);
       expect(topo.querySelector('[aria-label*="tema"]')).toBeNull();
       expect(topo.querySelector('[aria-label*="tela cheia"]')).toBeNull();
       // "Conferido …": a última carga, discreta e uma vez só.
@@ -5869,10 +5889,11 @@ bloco("modulos/selecao", async () => {
     it("baixa o CSV do recorte, com a área no nome e as células protegidas", async () => {
       await montar(supabaseFalso({ data: PAYLOAD, error: null }));
       await clicar(opcaoDoFiltro("filtro-unidades", "DSEI Xingu"));
-      await clicar(secao.querySelector('[data-acao="exportar"]'));
+      await clicar(secao.querySelector('[data-acao="exportar-excel"]'));
       expect(baixar).toHaveBeenCalledTimes(1);
-      const [conteudo, nome] = baixar.mock.calls[0];
-      expect(nome).toMatch(/^selecao-saude-indigena-\d{4}-\d{2}-\d{2}\.csv$/);
+      const [bytes, nome] = baixar.mock.calls[0];
+      const conteudo = new TextDecoder().decode(bytes);
+      expect(nome).toMatch(/^selecao-saude-indigena-\d{4}-\d{2}-\d{2}\.xlsx$/);
       expect(conteudo).toContain("DSEI Xingu");
       expect(conteudo).not.toContain("Caminhoneiros");
       expect(conteudo).toContain("Entrevistas do Yeendé");
@@ -5882,7 +5903,9 @@ bloco("modulos/selecao", async () => {
       await montar(
         supabaseFalso({ data: { ...PAYLOAD, vagas: [] }, error: null }),
       );
-      expect(secao.querySelector('[data-acao="exportar"]').disabled).toBe(true);
+      expect(secao.querySelector('[data-acao="exportar-excel"]').disabled).toBe(
+        true,
+      );
     });
   });
 
@@ -6332,6 +6355,7 @@ bloco("modulos/visao-geral", async () => {
     carregar = true,
     carregadorDeMunicipios,
     aberta = true,
+    perfilDaTela = null,
   } = {}) {
     armazenamento ||= memoria();
     estado = criarEstadoDaVisaoGeral({
@@ -6350,7 +6374,7 @@ bloco("modulos/visao-geral", async () => {
         estado,
         configuracoes: configuracoesFalsas(valores),
         toast,
-        obterPerfil: () => (comPerfil ? perfil : null),
+        obterPerfil: () => perfilDaTela || (comPerfil ? perfil : null),
         supabase,
         comemoracoesLigadas: () => comemoracoes,
         agora: () => new Date(2026, 9, 1, 9, 30),
@@ -6421,14 +6445,14 @@ bloco("modulos/visao-geral", async () => {
         "contratadas",
         "emSelecao",
         "ociosas",
-        "cadastroReserva",
+        "alemDasVagas",
         "inscritos",
       ]);
       expect(valorDoKpi("vagas")).toBe("23");
       expect(valorDoKpi("contratadas")).toBe("17");
       expect(valorDoKpi("emSelecao")).toBe("6");
       expect(valorDoKpi("ociosas")).toBe("0");
-      expect(valorDoKpi("cadastroReserva")).toBe("0");
+      expect(valorDoKpi("alemDasVagas")).toBe("0");
       expect(criticos().textContent).toContain("1 edital");
       expect(valorDoKpi("inscritos")).toBe("140");
       expect(kpi("vagas").textContent).toContain("Vagas Imediatas Previstas");
@@ -6572,6 +6596,209 @@ bloco("modulos/visao-geral", async () => {
       expect(pedidos()).toHaveLength(2);
     });
 
+    /*
+      Revisão de 17/11/2026: o número da linha leva aos dados que o compõem.
+      A Lista de aprovados abre no edital, com o status do número; a volta
+      destaca a linha; sem os registros, "Origem agregada"; sem acesso à
+      tela, o número é texto.
+    */
+    describe("os números da linha levam aos dados", () => {
+      const comLista = () => ({
+        rpc: vi.fn(async (nome) => ({
+          data:
+            nome === "listar_acompanhamento_da_visao_geral_se_mudou"
+              ? {
+                  listas: [
+                    {
+                      monitoramento_id: 3,
+                      aprovados: 8,
+                      com_status: 8,
+                      contratados: 8,
+                      desistentes: 0,
+                    },
+                  ],
+                }
+              : null,
+          error: null,
+        })),
+      });
+      const leitor = {
+        id: "p2",
+        nome: "LEITOR",
+        permissoes: { dashboard: "leitor", aprovados: "leitor" },
+      };
+      const celulaDe = (id, campo) =>
+        secao.querySelector(`tr[data-linha="${id}"] td[data-campo="${campo}"]`);
+
+      it("Contratados abre a Lista de aprovados no edital e a volta destaca a linha", async () => {
+        const { consumirPedidoDeFiltro } =
+          await import("../src/app/pedido-de-filtro.ts");
+        const navegar = vi.fn();
+        window.navigate = navegar;
+        await montar({ supabase: comLista(), perfilDaTela: leitor });
+        await esperar();
+        const gatilho = celulaDe(3, "contratados").querySelector(
+          ".visao-geral-numero-botao",
+        );
+        expect(gatilho.textContent).toBe("8");
+        await clicar(gatilho);
+        // O painel do número não abre a gaveta da linha.
+        expect(document.querySelector("#visaoGeralGaveta")).toBeNull();
+        await clicar(botao("Abrir na Lista de aprovados", secao));
+        expect(navegar).toHaveBeenCalledWith("approved");
+        expect(consumirPedidoDeFiltro("approved")).toEqual({
+          edital: "01/2026",
+          editalId: "3",
+          metrica: "contratados",
+        });
+        // Saiu e voltou: a linha de onde saiu se destaca.
+        await act(async () => estado.definirAberta(false));
+        await act(async () => estado.definirAberta(true));
+        expect(estado.obter().destaque?.id).toBe("3");
+        delete window.navigate;
+      });
+
+      it("só o total, sem a lista: Origem agregada, nunca uma lista vazia", async () => {
+        await montar({ supabase: comLista(), perfilDaTela: leitor });
+        await esperar();
+        // O 03/2026 tem 4 contratados e nenhuma lista vigente.
+        await clicar(
+          celulaDe(1, "contratados").querySelector(".visao-geral-numero-botao"),
+        );
+        const painel = celulaDe(1, "contratados").querySelector(
+          ".ui-popover-painel",
+        );
+        expect(painel.textContent).toContain(
+          "Origem agregada; detalhe individual não disponível",
+        );
+        expect(botao("Abrir na Lista de aprovados", painel)).toBeUndefined();
+      });
+
+      it("o número mostra a composição: na faixa e na linha", async () => {
+        await montar();
+        await esperar();
+        // Faixa: Vagas imediatas = Contratadas + Em seleção + Ociosas.
+        await clicar(kpi("vagas").querySelector(".visao-geral-numero-botao"));
+        const faixa = kpi("vagas").querySelector(".visao-geral-composicao");
+        expect(faixa.textContent).toContain("Contratadas17");
+        expect(faixa.textContent).toContain("Em seleção+ 6");
+        expect(faixa.textContent).toContain("Vagas imediatas= 23");
+        // Linha: 10 vagas − 4 contratadas = 6 sem contratação.
+        await clicar(
+          celulaDe(1, "vagas_ociosas").querySelector(
+            ".visao-geral-numero-botao",
+          ),
+        );
+        expect(
+          celulaDe(1, "vagas_ociosas").querySelector(".visao-geral-composicao")
+            .textContent,
+        ).toContain("Sem contratação= 6");
+        expect(document.querySelector("#visaoGeralGaveta")).toBeNull();
+      });
+
+      it("a gaveta traz o Resultado e os avisos abertos do edital; o selo de Atenção leva a eles", async () => {
+        const rpc = comLista().rpc;
+        const supabase = {
+          rpc: vi.fn(async (nome, args) =>
+            nome === "listar_avisos_conferencia_se_mudou"
+              ? {
+                  data: {
+                    avisos: [
+                      {
+                        id: "a1",
+                        conferencia: "aprovados_sem_status",
+                        gravidade: "ATENCAO",
+                        modulo: "aprovados",
+                        edital_id: "1",
+                        edital: "03/2026",
+                        quantidade: 2,
+                        situacao: "ABERTO",
+                      },
+                      {
+                        id: "a2",
+                        conferencia: "aprovados_sem_status",
+                        gravidade: "ATENCAO",
+                        modulo: "aprovados",
+                        edital_id: "2",
+                        edital: "11/2025",
+                        quantidade: 1,
+                        situacao: "ABERTO",
+                      },
+                    ],
+                  },
+                  error: null,
+                }
+              : nome === "listar_editais_criticos_manuais"
+                ? {
+                    data: [
+                      {
+                        monitoramento_id: 1,
+                        motivo: "Cronograma suspenso pela diretoria",
+                      },
+                    ],
+                    error: null,
+                  }
+                : rpc(nome, args),
+          ),
+        };
+        await montar({ supabase });
+        await esperar();
+        // O selo de Atenção do 03/2026 abre os detalhes nos avisos dele.
+        await clicar(
+          secao.querySelector(
+            'tr[data-linha="1"] [data-acao="avisos-do-edital"]',
+          ),
+        );
+        await esperar();
+        const gaveta = document.querySelector("#visaoGeralGaveta");
+        expect(gaveta).not.toBeNull();
+        const resultado = gaveta.querySelector('[data-section="resultado"]');
+        expect(resultado.textContent).toContain("Aprovados—");
+        expect(resultado.textContent).toContain(
+          "Sem lista de aprovados vigente.",
+        );
+        // Os avisos chegam por import() (fora do pacote de entrada).
+        await vi.waitFor(
+          async () => {
+            await esperar();
+            expect(
+              gaveta.querySelector("[data-avisos-do-edital]"),
+            ).not.toBeNull();
+            expect(
+              gaveta.querySelector("[data-avisos-do-edital]").textContent,
+            ).toContain("1 aviso");
+          },
+          { timeout: 8000 },
+        );
+        const avisos = gaveta.querySelector("[data-avisos-do-edital]");
+        expect(
+          supabase.rpc.mock.calls.some(
+            ([nome, args]) =>
+              nome === "listar_avisos_conferencia_se_mudou" &&
+              args.p_area === "saude-indigena",
+          ),
+        ).toBe(true);
+        // Só o aviso do edital da linha (o do 11/2025 não entra).
+        expect(avisos.textContent).toContain("1 aviso");
+        expect(avisos.textContent).not.toContain("2 avisos");
+        // Sem ser administrador global, sem o atalho para a central.
+        expect(
+          avisos.querySelector('[data-acao="abrir-central-de-avisos"]'),
+        ).toBeNull();
+      });
+
+      it("sem acesso à Lista de aprovados, o número é texto", async () => {
+        await montar({
+          supabase: comLista(),
+          perfilDaTela: { ...leitor, permissoes: { dashboard: "leitor" } },
+        });
+        await esperar();
+        const celula = celulaDe(3, "contratados");
+        expect(celula.textContent).toBe("8");
+        expect(celula.querySelector("button")).toBeNull();
+      });
+    });
+
     it("sem o acompanhamento (erro ou banco sem a função), a página segue só com as linhas", async () => {
       const aviso = vi.spyOn(console, "warn").mockImplementation(() => {});
       const supabase = {
@@ -6584,6 +6811,9 @@ bloco("modulos/visao-geral", async () => {
       await esperar();
       expect(criticos()).toBeNull();
       expect(aviso).toHaveBeenCalled();
+      // As vagas saem como cada edital publicou, e a tela diz isso.
+      expect(kpi("vagas").getAttribute("aria-busy")).toBeNull();
+      expect(kpi("vagas").textContent).toContain("sem desconto das reabertas");
       aviso.mockRestore();
     });
 
@@ -6898,6 +7128,55 @@ bloco("modulos/visao-geral", async () => {
       );
     });
 
+    it("o ⓘ de cada indicador pergunta à Aya sobre aquele número", async () => {
+      const { consumirPerguntaParaAAya } =
+        await import("../src/app/pergunta-para-a-aya.ts");
+      await montar();
+      await esperar();
+      const info = secao.querySelector('[data-acao="significado-ociosas"]');
+      expect(info.getAttribute("aria-label")).toBe("O que significa Ociosas");
+      await clicar(info);
+      expect(consumirPerguntaParaAAya()).toBe(
+        "o que significa ociosas na visao geral",
+      );
+      // Todos os números da faixa têm o ⓘ; o texto explicativo não está na tela.
+      expect(
+        secao.querySelectorAll(".visao-geral-kpis .visao-geral-numero-info"),
+      ).toHaveLength(6);
+    });
+
+    it("conjuntos de colunas: Prazos troca de uma vez, guarda e fica marcado", async () => {
+      // Revisão de 17/11/2026: Gestão, Prazos e Contratação, com o seletor e as fixas.
+      await montar();
+      await clicar(botao("Colunas", secao));
+      const prazos = secao.querySelector('[data-preset="prazos"]');
+      expect(prazos.getAttribute("aria-pressed")).toBe("false");
+      await clicar(prazos);
+      expect(cabecalhos()).toEqual([
+        "Unidade",
+        "Edital",
+        "Ciclo",
+        "Início",
+        "Encerramento",
+        "Duração (dias)",
+        "Status",
+        "Fase",
+      ]);
+      expect(prazos.getAttribute("aria-pressed")).toBe("true");
+      expect(JSON.parse(armazenamento.getItem(CHAVE_DAS_COLUNAS))).toContain(
+        "data_fim",
+      );
+      // Uma coluna a mais pelo seletor: escolha própria, nenhum conjunto marcado.
+      const vagas = [
+        ...secao.querySelectorAll(".visao-geral-colunas-menu label"),
+      ]
+        .find((l) => l.textContent.trim() === "Vagas")
+        .querySelector("input");
+      await clicar(vagas);
+      expect(cabecalhos()).toContain("Vagas");
+      expect(prazos.getAttribute("aria-pressed")).toBe("false");
+    });
+
     it("colunas padrão para todos: a escolha da v2 não vale; só Observações fica fora", async () => {
       // Pedidos de 13/11/2026: quem guardou colunas antes também passa a ver as
       // do resultado (v2) e Ciclo, 1ª e Última admissão (v3).
@@ -7021,8 +7300,15 @@ bloco("modulos/visao-geral", async () => {
       await montar();
       await act(async () => estado.definirFiltro("uf", ["RR"]));
       await clicar(secao.querySelector('[data-acao="exportar"]'));
+      // O montador chega por import(), fora do pacote de entrada.
+      await vi.waitFor(
+        async () => {
+          await esperar();
+          expect(document.getElementById("visaoGeralRelatorio")).not.toBeNull();
+        },
+        { timeout: 8000 },
+      );
       const montador = document.getElementById("visaoGeralRelatorio");
-      expect(montador).not.toBeNull();
       const csv = [...montador.querySelectorAll('[role="radio"]')].find(
         (b) => b.textContent.trim() === "CSV",
       );
@@ -7940,5 +8226,131 @@ bloco("frontend-performance-carona", () => {
       });
       expect(rpc).not.toHaveBeenCalled();
     });
+  });
+});
+
+bloco("ui/grafico-acessivel", () => {
+  const DADOS = {
+    labels: ["Cancelados", "Questionário", "Nota"],
+    datasets: [{ label: "Eliminados", data: [1200, 35, 0] }],
+  };
+  let raiz = null;
+  afterEach(() => {
+    act(() => raiz?.unmount());
+    raiz = null;
+    document.body.innerHTML = "";
+  });
+
+  async function montarCard() {
+    const caixa = document.createElement("div");
+    document.body.append(caixa);
+    raiz = createRoot(caixa);
+    await act(async () =>
+      raiz.render(
+        createElement(
+          CardDeGrafico,
+          { titulo: "Eliminados" },
+          createElement(Grafico, {
+            tipo: "bar",
+            rotulo: "Eliminados antes da análise",
+            dependencias: [],
+            montar: () => ({ data: DADOS }),
+          }),
+        ),
+      ),
+    );
+    return caixa;
+  }
+
+  it("tabela dos valores: linhas são os rótulos e colunas as séries, em número brasileiro", () => {
+    expect(dadosDaTabelaDoGrafico(DADOS)).toEqual({
+      colunas: ["Eliminados"],
+      linhas: [
+        { rotulo: "Cancelados", valores: ["1.200"] },
+        { rotulo: "Questionário", valores: ["35"] },
+        { rotulo: "Nota", valores: ["0"] },
+      ],
+    });
+    const duas = dadosDaTabelaDoGrafico({
+      labels: [["Jan", "2026"], "Fev"],
+      datasets: [{ data: [1.5, null] }, { label: "Aptos", data: [2] }],
+    });
+    expect(duas?.colunas).toEqual(["Série 1", "Aptos"]);
+    expect(duas?.linhas).toEqual([
+      { rotulo: "Jan 2026", valores: ["1,5", "2"] },
+      { rotulo: "Fev", valores: ["—", "—"] },
+    ]);
+    expect(dadosDaTabelaDoGrafico({ labels: [], datasets: [] })).toBeNull();
+  });
+
+  it("o anúncio do item: rótulo e valor (com a série quando há nome)", () => {
+    const uma = dadosDaTabelaDoGrafico({
+      labels: ["Sim", "Não"],
+      datasets: [{ data: [3, 4] }],
+    });
+    expect(textoDoPonto(uma, 1)).toBe("Não: 4");
+    expect(textoDoPonto(dadosDaTabelaDoGrafico(DADOS), 0)).toBe(
+      "Cancelados: Eliminados 1.200",
+    );
+  });
+
+  it("as setas dão a volta; Home e End vão às pontas", () => {
+    expect(proximoDestaque(null, "+1", 3)).toBe(0);
+    expect(proximoDestaque(null, "-1", 3)).toBe(2);
+    expect(proximoDestaque(2, "+1", 3)).toBe(0);
+    expect(proximoDestaque(0, "-1", 3)).toBe(2);
+    expect(proximoDestaque(1, "inicio", 3)).toBe(0);
+    expect(proximoDestaque(1, "fim", 3)).toBe(2);
+  });
+
+  it("tabela escondida para o leitor de tela; o botão Tabela a mostra no lugar do gráfico", async () => {
+    const caixa = await montarCard();
+    const tabela = caixa.querySelector("[data-tabela-do-grafico]");
+    expect(tabela.className).toBe("sr-only");
+    expect(tabela.querySelector("caption").textContent).toBe(
+      "Eliminados antes da análise",
+    );
+    expect(
+      [...tabela.querySelectorAll("tbody tr")].map((tr) => tr.textContent),
+    ).toEqual(["Cancelados1.200", "Questionário35", "Nota0"]);
+    const botao = caixa.querySelector(".ui-grafico-alternar");
+    expect(botao.textContent).toBe("Tabela");
+    expect(botao.getAttribute("aria-pressed")).toBe("false");
+    await clicar(botao);
+    expect(botao.getAttribute("aria-pressed")).toBe("true");
+    expect(caixa.querySelector("[data-tabela-do-grafico]").className).toBe(
+      "ui-grafico-tabela",
+    );
+    expect(caixa.querySelector("canvas").hidden).toBe(true);
+    expect(caixa.querySelector(".ui-grafico.is-em-tabela")).not.toBeNull();
+  });
+
+  it("o canvas entra no Tab; as setas destacam e anunciam o item", async () => {
+    const caixa = await montarCard();
+    const canvas = caixa.querySelector("canvas");
+    expect(canvas.tabIndex).toBe(0);
+    expect(canvas.getAttribute("role")).toBe("img");
+    const vivo = caixa.querySelector('[aria-live="polite"]');
+    const grafico = graficos.at(-1);
+    await teclar(canvas, "ArrowRight");
+    expect(vivo.textContent).toBe("Cancelados: Eliminados 1.200");
+    expect(grafico.ativos).toEqual([{ datasetIndex: 0, index: 0 }]);
+    await teclar(canvas, "End");
+    expect(vivo.textContent).toBe("Nota: Eliminados 0");
+    await teclar(canvas, "Escape");
+    expect(vivo.textContent).toBe("");
+    expect(grafico.ativos).toEqual([]);
+  });
+
+  it("card sem Grafico dentro não ganha o botão", async () => {
+    const caixa = document.createElement("div");
+    document.body.append(caixa);
+    raiz = createRoot(caixa);
+    await act(async () =>
+      raiz.render(
+        createElement(CardDeGrafico, { titulo: "T" }, createElement("canvas")),
+      ),
+    );
+    expect(caixa.querySelector(".ui-grafico-alternar")).toBeNull();
   });
 });

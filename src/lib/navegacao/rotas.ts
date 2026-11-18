@@ -5,6 +5,7 @@
   mesmas permissões de sempre (src/lib/navegacao/navegacao.ts).
 
     /<area>/<tela>[/<edital>][?visao=<visão>][&<filtros>]  telas das áreas (Saúde Indígena, SEDE, Projetos)
+    /<area>/edital/<edital>                     a página do edital (número "105-2026" ou id)
     /<area>/editais/<edital>/regras/<etapa>     Regras do edital (Editais), na etapa
     /administracao/configuracoes[/<seção>]      Configurações
     /paineis/<código>                           painel externo
@@ -44,6 +45,11 @@ export interface TelaDaRota {
   /** Subtítulo depois da área; recebe o texto de TB_CONFIGURACAO. */
   subtitulo?: (configuracao: (chave: string) => string) => string;
   comEdital?: boolean;
+  /**
+   * O edital é a própria página (a página do edital): sem ele não é rota, e
+   * ele fica no endereço depois de aberto (as outras telas o esquecem).
+   */
+  editalObrigatorio?: boolean;
   /** A tela abre as Regras do edital de um edital (Editais). */
   comRegras?: boolean;
   /**
@@ -120,6 +126,14 @@ const TELAS: TelaDaRota[] = [
   },
   { view: "selecao", caminho: "selecao", titulo: "Painel da Seleção" },
   { view: "paineis-de-dados", caminho: "paineis-de-dados", titulo: "Painéis" },
+  {
+    view: "edital",
+    caminho: "edital",
+    titulo: "Edital",
+    comEdital: true,
+    editalObrigatorio: true,
+    tituloNaTela: true,
+  },
 ];
 export const TELAS_DAS_AREAS: readonly TelaDaRota[] = Object.freeze(
   TELAS.map((tela) => Object.freeze(tela)),
@@ -189,6 +203,7 @@ export function caminhoDoDestino(destino: DestinoDaRota): string {
   if (daRegra && destino.regras)
     return `/${area}/${tela.caminho}/${daRegra}/${CAMINHO_DAS_REGRAS}/${etapaDasRegras(destino.regras)}`;
   const edital = tela.comEdital ? pedaco(destino.edital) : "";
+  if (tela.editalObrigatorio && !edital) return "/";
   const visao = pedaco(destino.visao);
   const parametros = new URLSearchParams(destino.filtros || "");
   parametros.delete("visao");
@@ -240,6 +255,7 @@ export function destinoDoCaminho(
       : null;
   const tela = segunda ? POR_CAMINHO.get(segunda) : undefined;
   if (!tela || (terceira && !tela.comEdital)) return null;
+  if (tela.editalObrigatorio && !terceira) return null;
   const parametros = new URLSearchParams(busca || "");
   const visao = pedaco(parametros.get("visao"));
   parametros.delete("visao");
@@ -269,6 +285,11 @@ function regrasDoCaminho(
   const pedida = resto[1];
   if (pedida && etapaDasRegras(pedida) !== pedida) return null;
   return { view: tela.view, edital, regras: etapaDasRegras(pedida) };
+}
+
+/** A tela leva o edital como a própria página (não o esquece depois de abrir)? */
+export function editalEhAPagina(view: string | null | undefined): boolean {
+  return Boolean(POR_VIEW.get(String(view ?? ""))?.editalObrigatorio);
 }
 
 /** O caminho é a raiz do app (abre a tela de entrada)? */

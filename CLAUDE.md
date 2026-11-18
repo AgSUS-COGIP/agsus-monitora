@@ -67,8 +67,8 @@ npm run test:e2e                         # Playwright (muito lento, só se pedid
 - Robôs e dados: [[python-e-jobs]] · [[robos-e-agenda]] · [[planilhas]]
 
 **Telas comuns às três áreas** (a área é dado, não estrutura: [[arquitetura-do-front]])
-- Acompanhar: [[modulo-visao-geral]] · [[modulo-cronograma]] · [[modulo-conferencias]] ·
-  [[modulo-paineis-de-dados]] · [[modulo-paineis-externos]]
+- Acompanhar: [[modulo-visao-geral]] · [[modulo-pagina-do-edital]] · [[modulo-cronograma]] ·
+  [[modulo-conferencias]] · [[modulo-paineis-de-dados]] · [[modulo-paineis-externos]]
 - Processo seletivo, na ordem: [[modulo-editais]] · [[modulo-selecao]] · [[modulo-triagem]] ·
   [[modulo-analises]] · [[modulo-avaliacao-documental]] ([[avaliacao-documental-regra]]) ·
   [[modulo-recursos]] · [[modulo-entrevistas]] · [[modulo-classificacao]]

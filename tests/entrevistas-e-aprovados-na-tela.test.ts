@@ -453,6 +453,14 @@ bloco("componentes/convocado-e-carta", () => {
       (linha) =>
         linha.querySelector(".approved-name strong")?.textContent === nome,
     );
+  /* Uma ação do "⋯ Mais ações" da linha da aba Aprovados (abre o menu). */
+  async function doMenuDaLinha(nome: string, acao: string) {
+    const linha = linhaDe("approvedPanelAprovados", nome);
+    await clicar(linha?.querySelector("[data-acao='abrir-menu']"));
+    return linha?.querySelector<HTMLButtonElement>(
+      `[role='menuitem'][data-approved-action="${acao}"]`,
+    );
+  }
   const chamadas = (supabase: ReturnType<typeof supabaseFalso>, nome: string) =>
     supabase.rpc.mock.calls.filter(([n]) => n === nome).map(([, a]) => a);
   const irParaConvocacao = () => clicar($("approvedTabConvocacao"));
@@ -505,13 +513,15 @@ bloco("componentes/convocado-e-carta", () => {
       expect(campo("approvedStatusDataConvocacao")?.value).toBe("2026-10-01");
     });
 
-    it("contratado continua com cadeado para quem não é admin", async () => {
+    it("contratado continua bloqueado para quem não é admin", async () => {
       await montar();
       const diego = linhaDe("approvedPanelAprovados", "Diego Alves");
       expect(
-        diego?.querySelector('[data-approved-action="status"]'),
-      ).toBeNull();
-      expect(diego?.querySelector(".fa-lock")).not.toBeNull();
+        diego?.querySelector(".ui-acoes-da-linha > button")?.textContent,
+      ).toBe("Abrir");
+      const status = await doMenuDaLinha("Diego Alves", "status");
+      expect(status?.disabled).toBe(true);
+      expect(status?.textContent).toContain("só o admin altera");
     });
   });
 
@@ -644,11 +654,7 @@ bloco("componentes/convocado-e-carta", () => {
 
     it("data limite que já passou bloqueia as saídas", async () => {
       await montar();
-      await clicar(
-        linhaDe("approvedPanelAprovados", "Bruno Lima")?.querySelector(
-          '[data-approved-action="carta"]',
-        ),
-      );
+      await clicar(await doMenuDaLinha("Bruno Lima", "carta"));
       await esperar(() => Promise.resolve());
       await digitar($("carta-dataLimite"), "2026-10-01");
       expect(
@@ -663,11 +669,7 @@ bloco("componentes/convocado-e-carta", () => {
           modelos: { pode_editar: true, modelos: [] },
         }),
       });
-      await clicar(
-        linhaDe("approvedPanelAprovados", "Bruno Lima")?.querySelector(
-          '[data-approved-action="carta"]',
-        ),
-      );
+      await clicar(await doMenuDaLinha("Bruno Lima", "carta"));
       await esperar(() => Promise.resolve());
       expect($("cartaSemModelo")?.textContent).toContain("Nenhum modelo ativo");
       await clicar($("cartaCriarModelo"));
@@ -1114,6 +1116,37 @@ bloco("componentes/lista-aprovados", () => {
       (linha) =>
         linha.querySelector(".approved-name strong")?.textContent === nome,
     );
+  /*
+    As ações da linha (revisão de 17/11/2026): a principal fica à vista e as
+    outras no "⋯ Mais ações de <nome>". Devolve a ação pedida, abrindo o menu
+    quando ela está nele (null quando a linha não a tem).
+  */
+  async function acaoDaLinha(nome: string, acao: string) {
+    const linha = definido(linhaDe(nome));
+    const seletor = `[data-approved-action="${acao}"]`;
+    const direta = linha.querySelector<HTMLButtonElement>(
+      `.ui-acoes-da-linha > button${seletor}`,
+    );
+    if (direta) return direta;
+    const menu = linha.querySelector<HTMLButtonElement>(
+      "[data-acao='abrir-menu']",
+    );
+    if (!menu) return null;
+    if (menu.getAttribute("aria-expanded") !== "true") await clicar(menu);
+    return linha.querySelector<HTMLButtonElement>(
+      `[role='menuitem']${seletor}`,
+    );
+  }
+  /* Os rótulos do "⋯" da linha (abre o menu). */
+  async function maisAcoesDe(nome: string) {
+    const linha = definido(linhaDe(nome));
+    const menu = linha.querySelector<HTMLButtonElement>(
+      "[data-acao='abrir-menu']",
+    );
+    if (!menu) return [];
+    if (menu.getAttribute("aria-expanded") !== "true") await clicar(menu);
+    return acharTodos("[role='menuitem']", linha).map((b) => b.textContent);
+  }
   const opcaoDoFiltro = (filtro: string, rotulo: string) =>
     acharTodos(
       ".multi-select-option",
@@ -1244,7 +1277,7 @@ bloco("componentes/lista-aprovados", () => {
         "Sem status",
       );
       expect(
-        achar("td.num:nth-of-type(5)", linhaDe("Ana Ribeiro")).textContent,
+        achar("td.num:nth-of-type(8)", linhaDe("Ana Ribeiro")).textContent,
       ).toBe("90,5");
     });
 
@@ -1497,7 +1530,10 @@ bloco("componentes/lista-aprovados", () => {
       );
       expect(cabecalhos).toEqual([
         "Nome",
+        "Vaga",
         "Cargo",
+        "Lotação",
+        "Edital",
         "Modalidade",
         "Classificação",
         "Nota",
@@ -1526,15 +1562,36 @@ bloco("componentes/lista-aprovados", () => {
   });
 
   describe("ações por perfil", () => {
-    it("lista inativa mostra o cadeado, e não o lápis", async () => {
+    it("lista inativa: a principal é Abrir e o status aparece bloqueado, com o motivo", async () => {
       await montar();
-      const diego = definido(linhaDe("Diego Alves"));
-      expect(diego.querySelector('[data-approved-action="status"]')).toBeNull();
+      const status = await acaoDaLinha("Diego Alves", "status");
+      expect(status?.getAttribute("role")).toBe("menuitem");
+      expect(status?.disabled).toBe(true);
+      expect(status?.textContent).toBe("Mudar status (lista inativa)");
       expect(
-        achar('button[disabled]:not([data-approved-action="anexos"])', diego)
-          .title,
-      ).toBe("Lista inativa");
-      expect(diego.textContent).toContain("Lista inativa");
+        achar(".ui-acoes-da-linha > button", linhaDe("Diego Alves"))
+          .textContent,
+      ).toBe("Abrir");
+    });
+
+    it("a principal tem nome e o resto fica em Mais ações, com nome acessível", async () => {
+      await montar();
+      const bruno = definido(linhaDe("Bruno Lima"));
+      expect(achar(".ui-acoes-da-linha > button", bruno).textContent).toBe(
+        "Mudar status",
+      );
+      expect(
+        achar("[data-acao='abrir-menu']", bruno).getAttribute("aria-label"),
+      ).toBe("Mais ações de Bruno Lima");
+      expect(await maisAcoesDe("Bruno Lima")).toEqual(
+        expect.arrayContaining([
+          "Ver detalhes",
+          "Carta de convocação",
+          "Ver na Classificação",
+        ]),
+      );
+      // Nenhum ícone solto na célula de ações.
+      expect(bruno.querySelector(".approved-icone-acao")).toBeNull();
     });
 
     it("quem só consulta vê um traço, e não o botão de sub judice", async () => {
@@ -1543,8 +1600,9 @@ bloco("componentes/lista-aprovados", () => {
         document.querySelector('[data-approved-action="status"]'),
       ).toBeNull();
       expect(
-        definido(linhaDe("Ana Ribeiro")).querySelector(".approved-no-action"),
-      ).not.toBeNull();
+        achar(".ui-acoes-da-linha > button", linhaDe("Ana Ribeiro"))
+          .textContent,
+      ).toBe("Abrir");
       expect(talvez("approvedAddSubJudiceBtn")).toBeNull();
     });
 
@@ -1678,11 +1736,8 @@ bloco("componentes/lista-aprovados", () => {
         campo.dispatchEvent(new Event("change", { bubbles: true }));
       });
     }
-    const botaoDeAnexos = (nome: string) =>
-      achar<HTMLButtonElement>(
-        '[data-approved-action="anexos"]',
-        linhaDe(nome),
-      );
+    const botaoDeAnexos = async (nome: string) =>
+      definido(await acaoDaLinha(nome, "anexos"));
     // A releitura depois de salvar não volta: o que aparecer veio da confirmação.
     function segurarRecarga(supabase: BancoFalso) {
       const responder = definido(supabase.rpc.getMockImplementation());
@@ -1695,17 +1750,12 @@ bloco("componentes/lista-aprovados", () => {
     const abrirStatusDe = (nome: string) =>
       clicar(achar('[data-approved-action="status"]', linhaDe(nome)));
 
-    it("o ícone de PDF fica vermelho com anexo e desligado sem anexo", async () => {
+    it("com anexo, Mais ações tem Ver anexos (N); sem anexo, não tem", async () => {
       await montar({ supabase: supabaseFalso({ anexos: ANEXOS() }) });
-      expect(botaoDeAnexos("Bruno Lima").disabled).toBe(false);
-      expect(botaoDeAnexos("Bruno Lima").hasAttribute("data-tem-anexo")).toBe(
-        true,
+      expect((await botaoDeAnexos("Bruno Lima")).textContent).toBe(
+        "Ver anexos (1)",
       );
-      expect(botaoDeAnexos("Bruno Lima").title).toBe("Ver anexos (1)");
-      expect(botaoDeAnexos("Ana Ribeiro").hasAttribute("data-tem-anexo")).toBe(
-        false,
-      );
-      expect(botaoDeAnexos("Ana Ribeiro").disabled).toBe(true);
+      expect(await acaoDaLinha("Ana Ribeiro", "anexos")).toBeNull();
     });
 
     it("abre o PDF que vem do banco numa aba nova", async () => {
@@ -1719,7 +1769,7 @@ bloco("componentes/lista-aprovados", () => {
       URL.revokeObjectURL = vi.fn();
       const supabase = supabaseFalso({ anexos: ANEXOS() });
       await montar({ supabase, novaAba: () => aba, perfil: ADMIN });
-      await clicar(botaoDeAnexos("Bruno Lima"));
+      await clicar(await botaoDeAnexos("Bruno Lima"));
       expect($("approvedAnexosLista").textContent).toContain("termo.pdf");
       await clicar(
         achar('[data-approved-action="abrir-anexo"]', $("approvedAnexosModal")),
@@ -1744,7 +1794,7 @@ bloco("componentes/lista-aprovados", () => {
         novaAba: () => aba,
         perfil: ADMIN,
       });
-      await clicar(botaoDeAnexos("Bruno Lima"));
+      await clicar(await botaoDeAnexos("Bruno Lima"));
       await clicar(
         achar('[data-approved-action="abrir-anexo"]', $("approvedAnexosModal")),
       );
@@ -1779,7 +1829,7 @@ bloco("componentes/lista-aprovados", () => {
         novaAba: () => aba,
         perfil: ADMIN,
       });
-      await clicar(botaoDeAnexos("Bruno Lima"));
+      await clicar(await botaoDeAnexos("Bruno Lima"));
       await clicar(
         achar('[data-approved-action="abrir-anexo"]', $("approvedAnexosModal")),
       );
@@ -1808,7 +1858,7 @@ bloco("componentes/lista-aprovados", () => {
         },
         perfil: ADMIN,
       });
-      await clicar(botaoDeAnexos("Bruno Lima"));
+      await clicar(await botaoDeAnexos("Bruno Lima"));
       const abrir = achar(
         '[data-approved-action="abrir-anexo"]',
         $("approvedAnexosModal"),
@@ -1828,7 +1878,7 @@ bloco("componentes/lista-aprovados", () => {
     it("remove o anexo pela RPC, com o arquivo junto", async () => {
       const supabase = supabaseFalso({ anexos: ANEXOS() });
       await montar({ supabase, perfil: ADMIN });
-      await clicar(botaoDeAnexos("Bruno Lima"));
+      await clicar(await botaoDeAnexos("Bruno Lima"));
       await clicar(
         achar(
           '[data-approved-action="remover-anexo"]',
@@ -1920,13 +1970,11 @@ bloco("componentes/lista-aprovados", () => {
       expect(achar(".approved-status", linhaDe("Bruno Lima")).textContent).toBe(
         "Desistente",
       );
-      expect(botaoDeAnexos("Bruno Lima").hasAttribute("data-tem-anexo")).toBe(
-        true,
+      expect((await botaoDeAnexos("Bruno Lima")).textContent).toBe(
+        "Ver anexos (2)",
       );
-      expect(botaoDeAnexos("Bruno Lima").title).toBe("Ver anexos (2)");
       // Os botões não esperam a releitura.
-      expect(botaoDeAnexos("Bruno Lima").disabled).toBe(false);
-      await clicar(botaoDeAnexos("Bruno Lima"));
+      await clicar(await botaoDeAnexos("Bruno Lima"));
       expect($("approvedAnexosLista").textContent).toContain("rg.pdf");
     });
 
@@ -1934,7 +1982,7 @@ bloco("componentes/lista-aprovados", () => {
       const supabase = supabaseFalso({ anexos: ANEXOS() });
       await montar({ supabase, perfil: ADMIN });
       segurarRecarga(supabase);
-      await clicar(botaoDeAnexos("Bruno Lima"));
+      await clicar(await botaoDeAnexos("Bruno Lima"));
       await clicar(
         achar(
           '[data-approved-action="remover-anexo"]',
@@ -1944,7 +1992,7 @@ bloco("componentes/lista-aprovados", () => {
       expect($("approvedAnexosModal").textContent).toContain(
         "Nenhum anexo para este candidato.",
       );
-      expect(botaoDeAnexos("Bruno Lima").disabled).toBe(true);
+      expect(await acaoDaLinha("Bruno Lima", "anexos")).toBeNull();
     });
 
     it("o contratador altera o status, mas não vê o campo de anexar", async () => {
@@ -1959,7 +2007,7 @@ bloco("componentes/lista-aprovados", () => {
 
     it("o contratador vê os anexos, mas não remove", async () => {
       await montar({ supabase: supabaseFalso({ anexos: ANEXOS() }) });
-      await clicar(botaoDeAnexos("Bruno Lima"));
+      await clicar(await botaoDeAnexos("Bruno Lima"));
       expect($("approvedAnexosLista").textContent).toContain("termo.pdf");
       expect(
         $("approvedAnexosModal").querySelector(
@@ -1973,18 +2021,13 @@ bloco("componentes/lista-aprovados", () => {
       ).toBeNull();
     });
 
-    it("status já definido: o contratador vê o cadeado e o modal não abre", async () => {
+    it("status já definido: o contratador vê o status bloqueado e o modal não abre", async () => {
       const { toast } = await montar();
-      const cadeado = achar<HTMLButtonElement>(
-        'button[title="Status já definido: só o admin altera"]',
-        linhaDe("Ana Ribeiro"),
+      const bloqueado = definido(await acaoDaLinha("Ana Ribeiro", "status"));
+      expect(bloqueado.disabled).toBe(true);
+      expect(bloqueado.textContent).toBe(
+        "Mudar status (status já definido: só o admin altera)",
       );
-      expect(cadeado.disabled).toBe(true);
-      expect(
-        definido(linhaDe("Ana Ribeiro")).querySelector(
-          '[data-approved-action="status"]',
-        ),
-      ).toBeNull();
       // Mesmo chamado por fora (o legado), o estado recusa e diz porquê.
       await act(async () => definido(controlador).estado.abrirStatus("ana"));
       expect(talvez("approvedStatusModal")).toBeNull();
@@ -2024,7 +2067,7 @@ bloco("componentes/lista-aprovados", () => {
       await abrirStatusDe("Bruno Lima");
       await escolherArquivos([pdf("a.pdf")]);
       await clicar($("approvedStatusSave"));
-      expect(botaoDeAnexos("Bruno Lima").disabled).toBe(true);
+      expect(await acaoDaLinha("Bruno Lima", "anexos")).toBeNull();
       expect(toast).toHaveBeenCalledWith(
         "Status atualizado, mas 1 anexo(s) não foram enviados. a.pdf: limite",
         "error",
@@ -2045,11 +2088,8 @@ bloco("componentes/lista-aprovados", () => {
       });
       return { supabase, concluir: () => concluir() };
     }
-    const removerDaCarla = () =>
-      achar<HTMLButtonElement>(
-        '[data-approved-action="remove-subjudice"]',
-        linhaDe("Carla Souza"),
-      );
+    const removerDaCarla = async () =>
+      definido(await acaoDaLinha("Carla Souza", "remove-subjudice"));
     const terminar = (concluir: () => void) =>
       esperar(async () => {
         concluir();
@@ -2071,32 +2111,28 @@ bloco("componentes/lista-aprovados", () => {
       expect(salvar.disabled).toBe(true);
       expect(salvar.getAttribute("aria-busy")).toBe("true");
       expect(salvar.textContent).toContain("Salvando…");
-      expect(removerDaCarla().disabled).toBe(true);
+      expect((await removerDaCarla()).disabled).toBe(true);
 
       await terminar(concluir);
       expect(talvez("approvedStatusModal")).toBeNull();
-      expect(removerDaCarla().disabled).toBe(false);
-      expect(removerDaCarla().hasAttribute("aria-busy")).toBe(false);
+      expect((await removerDaCarla()).disabled).toBe(false);
     });
 
-    it("na tabela, só o botão daquela linha gira", async () => {
+    it("no menu da linha, Remover sub judice diz Removendo… enquanto grava", async () => {
       const { supabase, concluir } = supabaseQueEspera("remover_sub_judice");
       await montar({ supabase });
-      await clicar(removerDaCarla());
-      expect(removerDaCarla().getAttribute("aria-busy")).toBe("true");
-      expect(removerDaCarla().querySelector(".botao-girando")).not.toBeNull();
-      // Botão só de ícone: o rótulo fica para o leitor de tela.
-      expect(achar(".sr-only", removerDaCarla()).textContent).toBe(
-        "Removendo…",
-      );
+      await clicar(await removerDaCarla());
+      const item = await removerDaCarla();
+      expect(item.textContent).toBe("Removendo…");
+      expect(item.disabled).toBe(true);
       await terminar(concluir);
-      expect(removerDaCarla().querySelector(".botao-girando")).toBeNull();
+      expect((await removerDaCarla()).textContent).toBe("Remover sub judice");
     });
 
     it("com uma ação em curso, a segunda não sai para a rede", async () => {
       const { supabase, concluir } = supabaseQueEspera("remover_sub_judice");
       await montar({ supabase });
-      await clicar(removerDaCarla());
+      await clicar(await removerDaCarla());
       await esperar(() =>
         definido(controlador).estado.removerSubJudice("carla"),
       );
@@ -2159,12 +2195,7 @@ bloco("componentes/lista-aprovados", () => {
     it("remover pede confirmação citando a pessoa", async () => {
       const confirmar = vi.fn((_mensagem: string) => true);
       const { supabase } = await montar({ confirmar });
-      await clicar(
-        achar(
-          '[data-approved-action="remove-subjudice"]',
-          linhaDe("Carla Souza"),
-        ),
-      );
+      await clicar(await acaoDaLinha("Carla Souza", "remove-subjudice"));
       expect(definido(confirmar.mock.calls[0])[0]).toContain("Carla Souza");
       expect(supabase.rpc).toHaveBeenCalledWith("remover_sub_judice", {
         p_candidato_id: "carla",
@@ -2174,22 +2205,14 @@ bloco("componentes/lista-aprovados", () => {
     it("sem confirmação, nada acontece", async () => {
       const { supabase } = await montar({ confirmar: () => false });
       supabase.rpc.mockClear();
-      await clicar(
-        achar(
-          '[data-approved-action="remove-subjudice"]',
-          linhaDe("Carla Souza"),
-        ),
-      );
+      await clicar(await acaoDaLinha("Carla Souza", "remove-subjudice"));
       expect(supabase.rpc).not.toHaveBeenCalled();
     });
   });
 
   describe("sub judice: candidato já aprovado (decisão judicial)", () => {
     const ADMIN = { perfil: "admin" };
-    const martelo = (nome: string) =>
-      linhaDe(nome)?.querySelector(
-        '[data-approved-action="alteracao-judicial"]',
-      );
+    const martelo = (nome: string) => acaoDaLinha(nome, "alteracao-judicial");
     /* Tirou 33, a Justiça deu 40: o banco já guardou o resultado publicado. */
     const ALTERADA = () =>
       candidato({
@@ -2205,7 +2228,7 @@ bloco("componentes/lista-aprovados", () => {
 
     it("o editor só vê a aba de novo candidato e nenhum martelo", async () => {
       await montar();
-      expect(martelo("Ana Ribeiro")).toBeNull();
+      expect(await martelo("Ana Ribeiro")).toBeNull();
       await clicar($("approvedAddSubJudiceBtn"));
       expect(talvez("subJudiceTabAprovado")).toBeNull();
       expect(talvez("subJudicePainelAprovado")).toBeNull();
@@ -2254,7 +2277,7 @@ bloco("componentes/lista-aprovados", () => {
 
     it("muda só a modalidade, sem mandar a nota", async () => {
       const { supabase } = await montar({ perfil: ADMIN });
-      await clicar(martelo("Ana Ribeiro"));
+      await clicar(await martelo("Ana Ribeiro"));
       await escolher($("alteracaoJudicialModalidade"), "Pessoa negra");
       supabase.rpc.mockClear();
       await clicar($("alteracaoJudicialSalvar"));
@@ -2270,7 +2293,7 @@ bloco("componentes/lista-aprovados", () => {
 
     it("o martelo da linha abre na aba do candidato já aprovado, com ele escolhido", async () => {
       await montar({ perfil: ADMIN });
-      await clicar(martelo("Ana Ribeiro"));
+      await clicar(await martelo("Ana Ribeiro"));
       expect($("subJudiceTabAprovado").getAttribute("aria-selected")).toBe(
         "true",
       );
@@ -2282,7 +2305,7 @@ bloco("componentes/lista-aprovados", () => {
 
     it("sem mudar nota nem modalidade, não sai para o banco", async () => {
       const { supabase, toast } = await montar({ perfil: ADMIN });
-      await clicar(martelo("Ana Ribeiro"));
+      await clicar(await martelo("Ana Ribeiro"));
       supabase.rpc.mockClear();
       await clicar($("alteracaoJudicialSalvar"));
       expect(supabase.rpc).not.toHaveBeenCalled();
@@ -2313,7 +2336,7 @@ bloco("componentes/lista-aprovados", () => {
         confirmar,
         supabase: supabaseFalso({ candidatos: [...CANDIDATOS(), ALTERADA()] }),
       });
-      await clicar(martelo("Elza Martins"));
+      await clicar(await martelo("Elza Martins"));
       expect(achar(".approved-decisao-original").textContent).toContain("33");
       supabase.rpc.mockClear();
       await clicar($("alteracaoJudicialDesfazer"));
@@ -3462,10 +3485,14 @@ bloco("componentes/lista-aprovados", () => {
       expect(
         acharTodos("[data-selecao-do-candidato]").length,
       ).toBeGreaterThanOrEqual(3);
-      await clicar(achar("[data-status-em-lote] input"));
-      expect(achar("[data-status-em-lote]").textContent).toContain(
-        "selecionados",
+      // Poucos candidatos: a página é o resultado inteiro.
+      await clicar(achar('[data-acao="selecionar-pagina"]'));
+      expect(achar("[data-alcance-da-selecao]").textContent).toMatch(
+        /^Todos os \d+ candidatos do resultado selecionados$/,
       );
+      expect(
+        document.querySelector('[data-acao="selecionar-todos-os-resultados"]'),
+      ).toBeNull();
       await clicar(achar("[data-abrir-status-em-lote]"));
       const opcoes = [
         ...$<HTMLSelectElement>("approvedStatusEmLoteSelect").options,
@@ -3479,6 +3506,9 @@ bloco("componentes/lista-aprovados", () => {
       // Ana já é Contratado: quem edita não muda status definido.
       expect(achar("[data-fora-do-lote]").textContent).toContain(
         "Status já definido (Contratado): só o admin muda",
+      );
+      expect(achar("[data-alcance-da-acao]").textContent).toMatch(
+        /^2 candidatos serão afetados · \d+ dos marcados não se aplicam$/,
       );
       const confirmar = achar<HTMLButtonElement>("[data-confirmar-lote]");
       expect(confirmar.textContent).toBe("Mudar 2 candidatos para Desistente");
@@ -3524,7 +3554,9 @@ bloco("componentes/lista-aprovados", () => {
     it("quem só lê não vê seleção", async () => {
       await montar({ perfil: { permissoes: { aprovados: "leitor" } } });
       expect(document.querySelector("[data-selecao-do-candidato]")).toBeNull();
-      expect(document.querySelector("[data-status-em-lote]")).toBeNull();
+      expect(
+        document.querySelector('[data-acao="selecionar-pagina"]'),
+      ).toBeNull();
     });
   });
 

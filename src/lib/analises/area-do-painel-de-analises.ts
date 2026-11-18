@@ -83,7 +83,7 @@ export function experienciaProfissionalDaLinha(
   Colunas a mais do CSV fora da Saúde Indígena: o tempo de experiência
   profissional e o município/UF da UBS móvel (lido do nome da vaga).
 */
-export const COLUNAS_EXTRAS_DO_CSV = Object.freeze([
+export const COLUNAS_EXTRAS_DA_EXPORTACAO = Object.freeze([
   "experiencia_profissional_anos",
   "experiencia_profissional_meses",
   "experiencia_profissional_dias",
@@ -91,20 +91,22 @@ export const COLUNAS_EXTRAS_DO_CSV = Object.freeze([
   "municipio_uf",
 ]);
 
-export function colunasDoCsvDeAnalises(
+export function colunasDaExportacaoDeAnalises(
   colunasBase: readonly string[] | null | undefined,
   area: unknown,
 ): string[] {
   const base = Array.isArray(colunasBase) ? [...colunasBase] : [];
-  return ehAreaSaudeIndigena(area) ? base : [...base, ...COLUNAS_EXTRAS_DO_CSV];
+  return ehAreaSaudeIndigena(area)
+    ? base
+    : [...base, ...COLUNAS_EXTRAS_DA_EXPORTACAO];
 }
 
-/* Nome do arquivo do CSV: o da Saúde Indígena fica como sempre foi. */
-export function nomeDoCsvDeAnalises(area: unknown): string {
+/* Nome da planilha exportada: o da Saúde Indígena mantém o nome de sempre. */
+export function nomeDaPlanilhaDeAnalises(area: unknown): string {
   const codigo = normalizarAreaDoPainel(area);
   return ehAreaSaudeIndigena(codigo)
-    ? "agsus_analises_curriculares_v3.csv"
-    : `agsus_analises_curriculares_${codigo}.csv`;
+    ? "agsus_analises_curriculares_v3.xlsx"
+    : `agsus_analises_curriculares_${codigo}.xlsx`;
 }
 
 /*

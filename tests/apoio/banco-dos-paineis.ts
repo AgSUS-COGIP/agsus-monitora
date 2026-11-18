@@ -18,6 +18,7 @@
 import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 import { moldeDeBanco } from "./molde-de-banco.ts";
+import { lembrarBanco } from "./bancos-abertos.ts";
 
 export type Banco = PGlite;
 
@@ -82,7 +83,7 @@ $$;
 
 /** O banco com a migration das fontes já aplicada (e dois usuários com nome). */
 async function montarBancoDosPaineis(): Promise<Banco> {
-  const db = await PGlite.create();
+  const db = lembrarBanco(await PGlite.create());
   await db.exec(INFRAESTRUTURA);
   await db.exec(guardaDosPaineis());
   await db.query(

@@ -80,6 +80,8 @@ export interface PropriedadesDaTabelaDaLista<T> {
   rodape?: ReactNode;
   classeDaTabela?: string;
   idDoCorpo?: string;
+  /** Os itens à vista agora (a "página" da seleção em lote); função estável. */
+  aoMostrar?: (visiveis: readonly T[]) => void;
 }
 
 /*
@@ -159,6 +161,7 @@ export function TabelaDaLista<T>({
   rodape = null,
   classeDaTabela,
   idDoCorpo,
+  aoMostrar,
 }: PropriedadesDaTabelaDaLista<T>) {
   const recolhidos = grupo?.recolhidos;
   const abertos = useMemo(
@@ -182,6 +185,13 @@ export function TabelaDaLista<T>({
       : POR_VEZ_NA_LISTA;
   const total = servidor ? servidor.total : abertos.length;
   const visiveis = Math.min(limite, abertos.length);
+  const aVista = useMemo(
+    () => (carregado ? abertos.slice(0, visiveis) : []),
+    [carregado, abertos, visiveis],
+  );
+  useEffect(() => {
+    aoMostrar?.(aVista);
+  }, [aoMostrar, aVista]);
   const faltam = servidor
     ? servidor.temMais
       ? Math.max(1, servidor.total - abertos.length)

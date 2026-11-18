@@ -19,6 +19,7 @@ import type {
   OpcoesDosFiltros as OpcoesDaSelecao,
 } from "../../modulos/selecao/tipos.ts";
 import { mesmoEdital } from "./intencoes-da-aya.ts";
+import { SEM_STATUS } from "../aprovados/lista-aprovados-rules.ts";
 import type {
   CampoDoFiltroDosRecursos,
   FiltrosDosRecursos,
@@ -109,6 +110,39 @@ export function filtrosDeEntrevistas(
   const metrica = METRICA_DE_ENTREVISTAS[pedido?.metrica as string];
   if (metrica) proximos[metrica[0]] = metrica[1];
   return proximos;
+}
+
+/*
+  Lista de aprovados: o número da Visão geral ("Ver os 12 contratados do
+  80/2025"). O edital vai pelo id (o mesmo número pode estar em mais de uma
+  unidade) e, sem ele, pelo número; a métrica vira o status: Contratados =
+  Contratado e Migração (a conta do banco), Aguardando chamada = sem status.
+*/
+const STATUS_DA_METRICA: Readonly<Record<string, readonly string[]>> =
+  Object.freeze({
+    aprovados: [],
+    contratados: ["Contratado", "Migração"],
+    aguardandoChamada: [SEM_STATUS],
+  });
+
+export interface PedidoDosAprovados extends PedidoDaAya {
+  editalId?: unknown;
+}
+
+/** `{ editalId, status }` do pedido, ou `null` se o edital não está nas opções. */
+export function filtrosDosAprovados(
+  pedido: PedidoDosAprovados | null | undefined,
+  opcoes: readonly OpcaoDoFiltro[] | null | undefined,
+): { editalId: string[]; status: string[] } | null {
+  const id = String(pedido?.editalId ?? "").trim();
+  const valores = (opcoes || []).map(valorDe);
+  const editalId =
+    id && valores.includes(id)
+      ? [id]
+      : opcoesDoEdital(opcoes, pedido?.edital).slice(0, 1);
+  if (!editalId.length) return null;
+  const status = STATUS_DA_METRICA[String(pedido?.metrica ?? "")] || [];
+  return { editalId, status: [...status] };
 }
 
 /** Seleção: os editais (escolha múltipla) com o número pedido. */

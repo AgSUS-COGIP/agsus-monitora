@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-17
+atualizado: 2026-11-18
 ---
 
 # Módulo: Visão geral
@@ -35,9 +35,18 @@ trabalho). De cima para baixo:
 - **Filtros** (`Filtros`): os campos abrem pelo botão; os chips do recorte e "Limpar tudo" ficam à
   vista com o painel fechado.
 - **Vagas** (`Vagas`, `.visao-geral-kpis`): as imediatas e as três parcelas, com a porcentagem e a
-  barra da divisão; cadastro reserva e inscritos embaixo. Esperam o acompanhamento
-  (`aguardandoVagas` no estado, até `ESPERA_MAXIMA_DO_ACOMPANHAMENTO_MS`): antes, a tela mostrava
-  as vagas sem o desconto das reabertas e trocava segundos depois.
+  barra da divisão; "Contratações além das vagas imediatas" (`alemDasVagas`, antes "Cadastro
+  reserva", que confundia com o cadastro reserva do edital) e inscritos embaixo. Esperam o
+  acompanhamento (`aguardandoVagas` no estado, até `ESPERA_MAXIMA_DO_ACOMPANHAMENTO_MS`): antes, a
+  tela mostrava as vagas sem o desconto das reabertas e trocava segundos depois. Se ele falha, passa
+  do tempo ou vem sem os cargos, `semDescontoDasReabertas` e o KPI diz "sem desconto das
+  reabertas".
+- **Estado de cada número** (revisão de 17/11/2026, `situacaoDoIndicador` em
+  `src/lib/visao-geral/indicadores-do-monitoramento.ts`): carregando (esqueleto), zero confirmado
+  ("0"), dado ausente ("—" e "sem dado nos editais": Inscritos sem número em nenhum edital) e não se
+  aplica ("—" e "nenhum edital com/sem resultado" em Ociosas/Em seleção). Inscritos mostra a
+  cobertura ("informado em X de Y editais") quando parte dos editais não informou; antes o "—" da
+  linha somava zero no total. `data-situacao` no `.visao-geral-numero`.
 - **Pede ação** (`PedeAcao`) ao lado de **Em andamento, por fase** (`EmAndamento`,
   `andamentoPorFase` em `src/lib/visao-geral/visao-geral.ts`): críticos e pós-resultado (sem lista e
   lista sem status; contratação abaixo de 50% e desistências saíram em 18/11/2026) numa lista; só as fases
@@ -47,6 +56,40 @@ trabalho). De cima para baixo:
   reservada enquanto o módulo baixa (`.visao-geral-mapa-reserva`).
 - **Tabela**: a contagem não repete o total; no celular, o cartão mostra só unidade, edital,
   vagas, inscritos, contratados, sem contratação, status e atenção (`data-campo` nas células).
+- **Os números levam aos dados** (revisão de 17/11/2026; `NumeroDaLinha` em `tabela.tsx`, regra
+  em `src/lib/visao-geral/origem-dos-numeros.ts`): Aprovados, Contratados, Aguardando chamada e
+  Inscritos abrem um `Popover` com o destino. A linha é do edital (nunca um código de vaga): a
+  Lista de aprovados (`approved`) no edital pelo id, com o status do número (`filtrosDosAprovados`,
+  `src/lib/aya/filtro-da-aya.ts`: Contratados = Contratado e Migração, Aguardando chamada = sem
+  status); Inscritos, a tela da fonte do funil (Seleção ou Análises). Vai pelo pedido de filtro
+  (`src/app/pedido-de-filtro.ts`, `editalId` novo) e `irParaTela`. Só com acesso à tela
+  (`telaPermitida`); sem os registros (contratados sem lista vigente, inscritos de outra fonte),
+  "Origem agregada; detalhe individual não disponível". `sairPelaLinha` guarda a linha, e ao voltar
+  (`definirAberta(true)`) ela se destaca; área, filtros e busca ficam no estado.
+- **Composição ao clicar no número** (revisão de 17/11/2026; `composicao-dos-numeros.ts` em
+  `src/lib/visao-geral/`, desenho em `composicao.tsx`): o mesmo `Popover` mostra as parcelas, como
+  uma conta armada (base, +, −, =). Na faixa (`composicaoDoIndicador`, das linhas do recorte):
+  Vagas imediatas = Contratadas + Em seleção + Ociosas e publicadas − reabertas; Contratadas e além
+  das vagas = dentro + além; Em seleção/Ociosas = vagas do grupo − contratadas nele. Na linha
+  (`composicaoDaLinha`): Contratados, Vagas, Sem contratação e Aprovados. Sem parcela que explique,
+  nada; as contas são as dos indicadores, para fechar.
+- **Gaveta do edital: Resultado e avisos** (revisão de 17/11/2026): o bloco "Resultado" (aprovados,
+  aguardando chamada, desistentes, admissões do RH: 1ª, última e conciliadas, do acompanhamento) e
+  os avisos de conferência abertos do edital (`avisos-do-edital.tsx`, por `lazy()`: ele e a central
+  de [[modulo-conferencias]] ficam fora do pacote de entrada). A lista é a da área
+  (`listar_avisos_conferencia_se_mudou`), recortada pelo edital (`avisosDoEdital`,
+  `src/lib/visao-geral/avisos-do-edital.ts`); o administrador global tem "Abrir na central de
+  avisos" (`config`, seção `cargas`). O selo de Atenção da tabela abre a gaveta na seção dos avisos
+  (`secaoInicial`).
+- **Conjuntos de colunas** (revisão de 17/11/2026; `src/lib/visao-geral/presets-de-colunas.ts`):
+  "Gestão", "Prazos" e "Contratação" no topo do menu "Colunas" (`aplicarPresetDeColunas` no
+  estado, guarda como a escolha uma a uma). Unidade e Edital estão em todos; a ordem é a da tabela;
+  o conjunto à vista fica `aria-pressed` (`presetDasColunas`), e mexer numa coluna o desmarca.
+- **"O que significa"** (revisão de 17/11/2026): cada indicador da faixa tem um ⓘ
+  (`.visao-geral-numero-info`) que abre a Aya com a pergunta do verbete daquele número
+  (`PERGUNTA_DO_INDICADOR`, `src/lib/visao-geral/o-que-significa.ts`, por
+  `src/app/pergunta-para-a-aya.ts`; ver [[modulo-aya]]). A explicação mora nos verbetes
+  "(indicador)" de `docs/aya/regras-da-visao-geral.md`; a tela não tem texto explicativo.
 - **Selo do cronograma** (`urgenciaDoCronograma`, `seloDoCronograma`, `descricaoDoCronograma` em
   `src/lib/visao-geral/visao-geral.ts`; conferência de 17/11/2026). "Sem cronograma" só quando o edital não
   tem etapa (`temCronogramaCadastrado`: automático, ou percentual, próxima etapa ou etapa atual
@@ -97,9 +140,11 @@ trabalho). De cima para baixo:
   (`classe` da coluna na `TabelaInfinita`). No celular, em cartões, rótulo e valor ficam na
   mesma linha e só a página rola.
 - O CSV mantém a proteção contra fórmulas e o nome do arquivo usa a data de Brasília.
-- **Montador de relatório** (13/11/2026; `montador-de-relatorio.tsx`, lógica em
+- **Montador de relatório** (13/11/2026; `montador-de-relatorio.tsx`, por `lazy()` desde 18/11/2026:
+  ele e as regras do relatório saíram do pacote de entrada, que estava a 0,4 KB do orçamento; lógica em
   `src/lib/visao-geral/relatorio-da-visao-geral.ts`, PDF em `src/lib/visao-geral/relatorio-da-visao-geral-em-pdf.ts`): o
-  botão Exportar abre a janela (e, desde 16/11/2026, o "Montar relatório" dos Painéis, com a área
+  botão Exportar abre a janela, que baixa só nessa hora (18/11/2026: fora do pacote de entrada, com o
+  relatório da diretoria e a exportação em Excel) (e, desde 16/11/2026, o "Montar relatório" dos Painéis, com a área
   inteira — [[modulo-paineis-de-dados]]; saiu do menu da conta). Modelo pronto (Resumo
   rápido, Completo, Diretoria) ou escolha das seções (números, tabela dos editais, atenção), das
   colunas e do formato (PDF desenhado com o timbrado de Configurações › Marca, Excel com uma aba por

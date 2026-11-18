@@ -15,6 +15,7 @@
 import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 import { moldeDeBanco } from "./molde-de-banco.ts";
+import { lembrarBanco } from "./bancos-abertos.ts";
 
 export const NOME_DA_MIGRATION =
   "20261117190000_cronograma_manual_e_datas_do_cadastro.sql";
@@ -124,7 +125,7 @@ async function etapas(
 
 /** O banco de hoje (antes da migration), com quatro editais fictícios. */
 async function montarBancoDeHoje(): Promise<Banco> {
-  const db = await PGlite.create();
+  const db = lembrarBanco(await PGlite.create());
   await db.exec(INFRAESTRUTURA);
   await db.exec(ANTES);
   await db.exec(funcaoDoRetrato("public.get_monitoramento_cronograma_estado"));

@@ -1,5 +1,10 @@
 // @vitest-environment jsdom
 import { bloco } from "./apoio/bloco.ts";
+import * as reactDaBarraNs from "react";
+import * as alcanceDaBarraNs from "../src/lib/base/alcance-da-selecao.ts";
+import { BarraDeSelecao } from "../src/ui/barra-de-selecao.tsx";
+import { TabelaInfinita as TabelaInfinitaDaBarra } from "../src/ui/tabela-infinita.tsx";
+import { BotoesDeExportacao } from "../src/ui/botoes-de-exportacao.tsx";
 import {
   act,
   createElement,
@@ -2771,5 +2776,169 @@ bloco("ui/selo-de-prazo", () => {
     it("sem data, nada", () => {
       expect(selo(null)).toBeNull();
     });
+  });
+});
+
+bloco("componentes/barra-de-selecao", () => {
+  const { act, createElement, useCallback, useMemo, useState } = reactDaBarraNs;
+  const { alcanceDaSelecao, marcarPagina } = alcanceDaBarraNs;
+  const TabelaInfinita = TabelaInfinitaDaBarra;
+  /*
+    A barra da seleção com a TabelaInfinita de verdade: a "página" são as 50
+    linhas desenhadas (aoMostrar), e "todos os N resultados" é outro botão.
+  */
+  type Item = { id: string };
+  const ITENS: Item[] = Array.from({ length: 120 }, (_, i) => ({
+    id: `i${i}`,
+  }));
+  const semBusca = (itens: readonly Item[]) => itens;
+
+  function Tela() {
+    const [marcados, setMarcados] = useState<ReadonlySet<string>>(new Set());
+    const [pagina, setPagina] = useState<readonly string[]>([]);
+    const aoMostrar = useCallback(
+      (visiveis: readonly Item[]) => setPagina(visiveis.map((i) => i.id)),
+      [],
+    );
+    const recorte = useMemo(() => ITENS.map((i) => i.id), []);
+    const alcance = alcanceDaSelecao(marcados, pagina, recorte);
+    return createElement(
+      "div",
+      null,
+      createElement(BarraDeSelecao, {
+        alcance,
+        nome: { singular: "item", plural: "itens" },
+        rotulo: "Seleção de itens",
+        aoMarcarPagina: (sim: boolean) =>
+          setMarcados((m) => marcarPagina(m, pagina, sim)),
+        aoMarcarTodos: () => setMarcados(new Set(recorte)),
+        aoLimpar: () => setMarcados(new Set()),
+        children: createElement(
+          "button",
+          { type: "button", "data-acao": "agir" },
+          "Agir",
+        ),
+      }),
+      createElement(TabelaInfinita<Item>, {
+        idDoTitulo: "t",
+        titulo: "Itens",
+        colunas: [{ rotulo: "Id" }],
+        informacao: () => "",
+        vazio: "Nada",
+        carregado: true,
+        itens: ITENS,
+        filtrarPelaBusca: semBusca,
+        total: ITENS.length,
+        aoMostrar,
+        linha: (item: Item) =>
+          createElement(
+            "tr",
+            { key: item.id },
+            createElement("td", null, item.id),
+          ),
+      }),
+    );
+  }
+
+  let desmontar = () => {};
+  afterEach(() => {
+    act(() => desmontar());
+    document.body.innerHTML = "";
+  });
+
+  const achar = (seletor: string) => document.querySelector(seletor);
+  const alcance = () => achar("[data-alcance-da-selecao]")?.textContent;
+
+  describe("BarraDeSelecao com a TabelaInfinita", () => {
+    it("separa esta página (50 desenhadas) de todos os 120 resultados", async () => {
+      const raiz = document.createElement("div");
+      document.body.append(raiz);
+      act(() => {
+        desmontar = desenharNoTeste(raiz, createElement(Tela)).desmontar;
+      });
+      const pagina = achar(
+        '[data-acao="selecionar-pagina"]',
+      ) as HTMLInputElement;
+      expect(pagina.parentElement?.textContent).toBe(
+        "Selecionar esta página (50)",
+      );
+      // Sem nada marcado, nenhuma ação.
+      expect(achar('[data-acao="agir"]')).toBeNull();
+
+      await clicar(pagina);
+      expect(alcance()).toBe(
+        "50 itens desta página selecionados (de 120 no resultado)",
+      );
+      const todos = achar(
+        '[data-acao="selecionar-todos-os-resultados"]',
+      ) as HTMLButtonElement;
+      expect(todos.textContent).toBe("Selecionar todos os 120 resultados");
+      expect(achar('[data-acao="agir"]')).not.toBeNull();
+
+      await clicar(todos);
+      expect(alcance()).toBe("Todos os 120 itens do resultado selecionados");
+      expect(achar('[data-acao="selecionar-todos-os-resultados"]')).toBeNull();
+      expect(achar("[data-alcance]")?.getAttribute("data-alcance")).toBe(
+        "todos",
+      );
+
+      await clicar(achar('[data-acao="limpar-selecao"]') as HTMLButtonElement);
+      expect(alcance()).toBe("");
+      expect(pagina.checked).toBe(false);
+    });
+  });
+});
+
+bloco("ui/botoes-de-exportacao", () => {
+  let raiz: Root | null = null;
+  afterEach(() => {
+    act(() => raiz?.unmount());
+    raiz = null;
+    document.body.innerHTML = "";
+  });
+  function montarBotoes(
+    propriedades: ComponentProps<typeof BotoesDeExportacao>,
+  ) {
+    const caixa = document.createElement("div");
+    document.body.append(caixa);
+    raiz = createRoot(caixa);
+    act(() => raiz!.render(h(BotoesDeExportacao, propriedades)));
+    return caixa;
+  }
+
+  it("sempre os mesmos nomes, na mesma ordem; só aparece o que a tela passa", () => {
+    const ambos = montarBotoes({ excel: vi.fn(), pdf: vi.fn() });
+    expect(
+      [...ambos.querySelectorAll("button")].map((b) => b.textContent?.trim()),
+    ).toEqual(["Exportar em Excel", "Salvar em PDF"]);
+    act(() => raiz!.render(h(BotoesDeExportacao, { excel: vi.fn() })));
+    expect(
+      [...ambos.querySelectorAll("button")].map((b) => b.dataset.acao),
+    ).toEqual(["exportar-excel"]);
+    act(() => raiz!.render(h(BotoesDeExportacao, {})));
+    expect(ambos.querySelector(".ui-exportacao")).toBeNull();
+  });
+
+  it("enquanto gera: Gerando…, ocupado e os dois desativados", async () => {
+    let terminar: () => void = () => {};
+    const pdf = vi.fn(
+      () => new Promise<void>((pronto) => (terminar = () => pronto())),
+    );
+    const caixa = montarBotoes({ excel: vi.fn(), pdf });
+    const [excelBtn, pdfBtn] = [...caixa.querySelectorAll("button")];
+    await clicar(definido(pdfBtn));
+    expect(pdfBtn?.textContent?.trim()).toBe("Gerando…");
+    expect(pdfBtn?.getAttribute("aria-busy")).toBe("true");
+    expect(excelBtn?.disabled).toBe(true);
+    await act(async () => terminar());
+    expect(pdfBtn?.textContent?.trim()).toBe("Salvar em PDF");
+    expect(excelBtn?.disabled).toBe(false);
+    expect(pdf).toHaveBeenCalledTimes(1);
+  });
+
+  it("desativado: nenhum dos dois responde", () => {
+    const excel = vi.fn();
+    const caixa = montarBotoes({ excel, desativado: true });
+    expect(caixa.querySelector("button")?.disabled).toBe(true);
   });
 });
