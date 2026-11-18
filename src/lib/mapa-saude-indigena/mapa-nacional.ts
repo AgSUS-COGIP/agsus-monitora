@@ -174,6 +174,10 @@ export function territoriosPorVagas(
   CASAIs nacionais (Brasília, São Paulo): as localizações 131 e 132 do
   SIGEPSI (`casaisNacionaisDoSigepsi`). O clique filtra a página pela busca
   "CASAI <cidade>", como antes.
+
+  Os editais contam pelo nome do SIGEPSI ou, sem edital com esse nome, pela
+  cidade: o SIGEPSI chama a de Brasília de "CASAI DF", e o edital está
+  cadastrado como "CASAI Brasília" (17/11/2026: o mapa dizia 0 processos).
 */
 
 export function casaisNacionais({
@@ -199,7 +203,11 @@ export function casaisNacionais({
         lon: Number(a[3]),
         cidade,
         uf: siglaDaUf(a[5]) || texto(a[5]),
-        editais: (contagens.get(chaveDoDsei(nome)) || VAZIO).editais,
+        editais: (
+          contagens.get(chaveDoDsei(nome)) ||
+          contagens.get(chaveDoDsei(cidade)) ||
+          VAZIO
+        ).editais,
         termoDeBusca: `CASAI ${cidade}`.trim(),
       };
     })

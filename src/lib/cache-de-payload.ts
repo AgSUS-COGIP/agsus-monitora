@@ -19,12 +19,14 @@
     quem veio antes (de todos os tipos: o registro do dono é um só);
   - por chave (`tipo.chave(contexto)`: área e escopo — nunca se misturam);
   - só para a mesma versão publicada do front (`versao`), um esquema aceito
-    (`tipo.esquemas`) e por `VALIDADE_DO_CACHE_MS`;
+    (`tipo.esquemas`) e por `VALIDADE_DO_CACHE_MS` (48 h: as cópias levam
+    nomes e notas de candidatos; a vencida é apagada, não só ignorada —
+    `registroVencido`, na leitura e na varredura da abertura do app);
   - a permissão é conferida pelo servidor a cada revalidação: acesso revogado
     (42501) ou área inválida (22023) apaga as cópias.
 
   O armazenamento (IndexedDB) é de `src/modules/cache-de-payload-indexeddb.ts`
-  e chega aqui como `{ ler(chave), guardar(chave, valor), apagarTudo() }`.
+  e chega aqui como `{ ler(chave), guardar(chave, valor), apagarTudo(), apagar?(chave) }`.
   Nenhuma função daqui lança erro por causa dele: falhou, é "não há cópia".
 
   Um tipo é `{ nome, chave(contexto), esquema(payload), esquemas, valido(payload) }`
@@ -32,11 +34,15 @@
   `LISTA_DE_APROVADOS` (candidatos-aprovados-compactos.ts).
 */
 
+import { VALIDADE_DO_CACHE_MS, registroVencido } from "./validade-das-copias";
+
 /** O armazenamento (IndexedDB): pode lançar erro; aqui ele vira "não há cópia". */
 export interface ArmazenamentoDoCache {
   ler(chave: string): unknown;
   guardar(chave: string, valor: unknown): unknown;
   apagarTudo(): unknown;
+  /** Apaga uma cópia (a vencida, na leitura). */
+  apagar?(chave: string): unknown;
 }
 
 /** Um tipo de payload guardado; `C` é o contexto que dá a chave da cópia. */
@@ -60,24 +66,9 @@ export interface RegistroDoCache {
   texto: string;
 }
 
-export const VALIDADE_DO_CACHE_MS = 7 * 24 * 60 * 60 * 1000;
+export { VALIDADE_DO_CACHE_MS, registroVencido };
 
-/*
-  As RPCs `*_se_mudou` (migration 20261013160000) recebem a `versao` da cópia
-  e, se ela ainda vale, devolvem só `{ inalterado: true, versao }` em vez do
-  payload inteiro: a revalidação deixa de baixar megabytes para nada.
-*/
-
-/** A versão dos dados que o banco mandou junto do payload, ou `null`. */
-export function versaoDoPacote(payload: unknown): string | null {
-  const versao = (payload as { versao?: unknown } | null | undefined)?.versao;
-  return typeof versao === "string" && versao ? versao : null;
-}
-
-/** O banco disse que a versão enviada ainda vale? */
-export const respostaInalterada = (resposta: unknown): boolean =>
-  Boolean(resposta) &&
-  (resposta as { inalterado?: unknown }).inalterado === true;
+export { respostaInalterada, versaoDoPacote } from "./versao-do-pacote";
 
 /* Registro que diz de quem são as cópias guardadas. */
 export const CHAVE_DO_DONO = "__dono__";
@@ -143,9 +134,18 @@ export function payloadDoRegistro<C>(
   }
 }
 
+/** Uma cópia lida, com a hora em que foi guardada (para "dados de 17/11, 10:14"). */
+export interface CopiaLida {
+  payload: unknown;
+  guardadoEm: number;
+}
+
 /** As cópias de um tipo de payload: ler, guardar e apagar tudo. */
 export interface CacheDePayload<C> {
   ler(contexto: ContextoDoCache<C> | null | undefined): Promise<unknown>;
+  lerComData(
+    contexto: ContextoDoCache<C> | null | undefined,
+  ): Promise<CopiaLida | null>;
   guardar(
     contexto: ContextoDoCache<C> | null | undefined,
     payload: unknown,
@@ -193,21 +193,38 @@ export function criarCacheDePayload<C>({
     return false;
   }
 
+  async function lerComData(
+    contexto: ContextoDoCache<C> | null | undefined,
+  ): Promise<CopiaLida | null> {
+    const usuarioId = contexto?.usuarioId;
+    if (!usuarioId || !(await confirmarDono(usuarioId))) return null;
+    const chave = tipo.chave(contexto as C);
+    const registro = await seguro(() => armazenamento.ler(chave), null);
+    const agora = relogio();
+    if (registroVencido(registro, agora)) {
+      await seguro(() => armazenamento.apagar?.(chave));
+      return null;
+    }
+    const payload = payloadDoRegistro(registro, {
+      usuarioId,
+      versao,
+      agora,
+      tipo,
+    });
+    return payload === null
+      ? null
+      : {
+          payload,
+          guardadoEm: Number((registro as RegistroDoCache).guardadoEm),
+        };
+  }
+
   return {
     async ler(contexto) {
-      const usuarioId = contexto?.usuarioId;
-      if (!usuarioId || !(await confirmarDono(usuarioId))) return null;
-      const registro = await seguro(
-        () => armazenamento.ler(tipo.chave(contexto as C)),
-        null,
-      );
-      return payloadDoRegistro(registro, {
-        usuarioId,
-        versao,
-        agora: relogio(),
-        tipo,
-      });
+      return (await lerComData(contexto))?.payload ?? null;
     },
+
+    lerComData,
 
     async guardar(contexto, payload) {
       const usuarioId = contexto?.usuarioId;

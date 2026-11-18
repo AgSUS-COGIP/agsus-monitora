@@ -30,6 +30,12 @@ duas entradas, em `src/modulos/entrevistas/conduzir.tsx`, `src/lib/fila-de-condu
 **fonte:** src/modulos/entrevistas/conduzir.tsx; src/modulos/entrevistas/fila-do-dia.tsx; src/lib/fila-de-conducao.ts
 **abrir:** conduzir-entrevistas
 
+## Levar para o campo
+
+**perguntas:** levar para o campo | entrevista sem internet | conduzir sem internet | ficha sem internet | fila sem internet | baixar as entrevistas | entrevista offline | trabalho de campo
+**resposta:** Em Conduzir entrevistas, com o edital aberto e com internet, o botão "Levar para o campo" (no alto, ao lado do Atualizar) guarda neste aparelho a fila do dia, a agenda e as fichas: quem avalia numa banca leva só a sua banca; a coordenação, sem banca no edital, leva o edital inteiro. Ao terminar, aparece "Pronto para o campo", com a data até quando a cópia fica no aparelho (48 horas). Sem internet, a fila e as fichas abrem dessa cópia, só para consulta, com a data dos dados ao lado do edital, como "Dados de 17/11, 10:14". Lançar notas, concluir e convocar precisam de internet. O edital aberto com internet também fica guardado sozinho, do mesmo jeito; o botão confirma que a cópia está atualizada. A cópia não leva CPF nem contatos e sai ao Sair, ao perder o acesso ou quando outra pessoa entra no navegador.
+**fonte:** src/modulos/entrevistas/conduzir.tsx; src/modulos/entrevistas/estado-da-conducao.ts (levarParaOCampo); src/lib/conducao-para-o-campo.ts; src/app/copias-da-conducao.ts
+
 ## Preparar o edital
 
 **perguntas:** preparar | preparar edital | onde configuro a entrevista | onde convoco | configuracao da entrevista | onde ficou o passo 1 | onde ficou a convocacao | passos do preparar | o que falta para preparar a entrevista | 3 de 4 prontos | agenda no preparar

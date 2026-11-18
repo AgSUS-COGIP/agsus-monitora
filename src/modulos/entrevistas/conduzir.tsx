@@ -1,4 +1,7 @@
-import type { ClienteDaConducao } from "./tipos-do-estado-da-conducao.ts";
+import type {
+  ClienteDaConducao,
+  CopiasDaConducao,
+} from "./tipos-do-estado-da-conducao.ts";
 import type { EstadoDaConducao, EstadoDaConducaoComAcoes } from "./tipos.ts";
 import {
   lazy,
@@ -51,6 +54,7 @@ import {
 } from "../../ui/index.ts";
 import type { AcaoDoMenu } from "../../ui/index.ts";
 import { criarEstadoDaConducao } from "./estado-da-conducao.ts";
+import { criarCopiasDaConducao } from "../../app/copias-da-conducao.ts";
 import { FichaDoCandidato } from "./ficha.tsx";
 import { FilaDoDia, MINHA_BANCA } from "./fila-do-dia.tsx";
 import type { FiltrosDaFila } from "./fila-do-dia.tsx";
@@ -410,7 +414,21 @@ function TelaDeConducao({
           if (visao === "preparar") void conducao.carregarRoteiros(e.area);
         }}
         atualizarDesativado={!e.area || e.carregandoEdital}
-      />
+      >
+        {e.editalId ? (
+          <button
+            type="button"
+            className="btn contorno"
+            data-acao="levar-para-o-campo"
+            data-tour="conduzir-levar-para-o-campo"
+            disabled={e.carregandoEdital || Boolean(e.acao)}
+            onClick={() => void conducao.levarParaOCampo()}
+          >
+            <i className="fa-solid fa-download" aria-hidden="true" /> Levar para
+            o campo
+          </button>
+        ) : null}
+      </CabecalhoDaTela>
       {seletor.avisos}
 
       {visao === "fila" &&
@@ -506,6 +524,7 @@ export function criarConducaoDeEntrevistas({
   hojeDe = () => hojeEmBrasilia(),
   horaDe = () => horaEmBrasilia(),
   armazenamento = () => globalThis.localStorage,
+  copias,
 }: {
   supabase?: ClienteDaConducao | null;
   toast?: (mensagem: string, tom?: string) => void;
@@ -517,9 +536,12 @@ export function criarConducaoDeEntrevistas({
   hojeDe?: () => string;
   horaDe?: () => string;
   armazenamento?: () => Pick<Storage, "getItem" | "setItem"> | undefined;
+  /** As cópias no aparelho (sem rede); o padrão é o IndexedDB, `null` desliga. */
+  copias?: CopiasDaConducao | null;
 } = {}) {
   const conducao = criarEstadoDaConducao({
     supabase,
+    copias: copias === undefined ? criarCopiasDaConducao(supabase) : copias,
     toast,
     aoMudarResultados,
   });

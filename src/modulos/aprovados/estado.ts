@@ -103,6 +103,7 @@ import {
   statusTravado,
 } from "../../lib/lista-aprovados-rules.ts";
 import { hojeEmBrasilia } from "../../lib/carta-de-convocacao.ts";
+import { ehFalhaDeConexao, mensagemDeFalha } from "../../lib/falha-de-rede";
 import type {
   FormatoDaExportacao,
   PedidoDaExportacao,
@@ -156,6 +157,22 @@ const text = (value: unknown) => String(value ?? "").trim();
 const mensagemDe = (erro: unknown): string =>
   String(registroDosAprovados(erro).message || erro || "");
 
+/*
+  A cópia dos aprovados guarda, junto do pacote dos candidatos, as listas da
+  área (`listas_da_area`: poucas linhas, edital, nome, ativa), para a tela
+  abrir inteira sem rede. O `listas` do pacote é outra coisa (o compacto).
+*/
+function comListas(pacote: unknown, listas: unknown): unknown {
+  return pacote && typeof pacote === "object"
+    ? { ...pacote, listas_da_area: Array.isArray(listas) ? listas : [] }
+    : pacote;
+}
+
+function listasDaCopia(pacote: unknown): unknown[] {
+  const listas = registroDosAprovados(pacote).listas_da_area;
+  return Array.isArray(listas) ? listas : [];
+}
+
 /* Nota digitada ("87,5" ou "87.5"): número maior ou igual a zero, ou nulo. */
 function lerNota(valor: unknown) {
   const bruto = text(valor).replace(",", ".");
@@ -177,6 +194,7 @@ const ESTADO_INICIAL: Readonly<SnapshotDosAprovados> = Object.freeze({
   carregado: false,
   /** Quando a última carga chegou (ISO), para a data discreta do topo. */
   carregadoEm: "",
+  copiaDe: null,
   /** A primeira carga falhou: a página mostra o erro e "Tentar de novo". */
   erroAoCarregar: "",
   /** A ação em curso, `{ tipo, rotulo }`, ou `null`. Uma por vez. */
@@ -610,8 +628,9 @@ export function criarEstadoDaListaDeAprovados({
     if (!supabase) return null;
     const comCandidatos = canViewCore(perfil());
     const contexto = contextoDaCopia(area);
-    const guardado: unknown =
-      comCandidatos && usarCopia ? await copias.ler(contexto) : null;
+    const copia =
+      comCandidatos && usarCopia ? await copias.lerComData(contexto) : null;
+    const guardado: unknown = copia?.payload ?? null;
     const versao = guardado
       ? versaoDoPacote(guardado)
       : !usarCopia && area === areaCarregada
@@ -623,6 +642,20 @@ export function criarEstadoDaListaDeAprovados({
       p_com_candidatos: comCandidatos,
     });
     if (registroDosAprovados(error).code === "PGRST202") return null;
+    // Sem rede: a cópia guardada (candidatos e listas da área) no lugar do erro.
+    if (error && copia && ehFalhaDeConexao(error))
+      return [
+        { data: listasDaCopia(guardado), error: null },
+        {
+          data: candidatosDoPacote(guardado),
+          error: null,
+          versao: versaoDoPacote(guardado),
+          copiaDe: copia.guardadoEm,
+        },
+        null,
+        null,
+        null,
+      ];
     if (error)
       return [{ data: null, error }, { error: null }, null, null, null];
     const aberto = registroDosAprovados(data);
@@ -634,7 +667,10 @@ export function criarEstadoDaListaDeAprovados({
       // Sem acesso à área (42501/22023): as cópias guardadas não valem mais.
       if (ehErroDeAcesso(erros.pacote)) void copias.apagarTudo();
       candidatos = { data: null, error: erros.pacote };
-    } else if (pacoteInalterado(aberto.pacote))
+    } else if (pacoteInalterado(aberto.pacote)) {
+      // Confirmada pelo banco agora: a cópia (com as listas de agora) renova a hora.
+      if (guardado)
+        void copias.guardar(contexto, comListas(guardado, aberto.listas));
       candidatos = guardado
         ? {
             data: candidatosDoPacote(guardado),
@@ -642,8 +678,8 @@ export function criarEstadoDaListaDeAprovados({
             versao: versaoDoPacote(guardado),
           }
         : { inalterado: true, error: null };
-    else {
-      void copias.guardar(contexto, aberto.pacote);
+    } else {
+      void copias.guardar(contexto, comListas(aberto.pacote, aberto.listas));
       candidatos = {
         data: candidatosDoPacote(aberto.pacote),
         error: null,
@@ -781,13 +817,13 @@ export function criarEstadoDaListaDeAprovados({
     if (text(areaAtual()) !== area) return false;
     const error = listas.error || candidatos.error;
     if (error) {
-      toast(
-        `Erro ao carregar lista de aprovados: ${mensagemDe(error)}`,
-        "error",
-      );
+      // Sem rede, a mensagem de conexão em vez de "TypeError: Failed to fetch".
+      const mensagem = ehFalhaDeConexao(error)
+        ? mensagemDeFalha(error)
+        : mensagemDe(error);
+      toast(`Erro ao carregar lista de aprovados: ${mensagem}`, "error");
       // Recarga depois de uma ação: os dados de antes continuam na tela.
-      if (!estado.carregado)
-        publicar({ erroAoCarregar: String(mensagemDe(error)) });
+      if (!estado.carregado) publicar({ erroAoCarregar: mensagem });
       return false;
     }
     areaCarregada = area;
@@ -802,6 +838,7 @@ export function criarEstadoDaListaDeAprovados({
           }),
       carregado: true,
       carregadoEm: new Date().toISOString(),
+      copiaDe: candidatos.copiaDe ?? null,
       perfil: perfil(),
       ...(configuracao || {}),
       ...(anexos ? { anexos } : {}),

@@ -7,6 +7,7 @@ import {
   sufixoDeTreinamento,
 } from "../../lib/edital-de-treinamento.ts";
 import { Aviso } from "../../ui/index.ts";
+import { rotuloDaCopia } from "../../lib/rotulo-da-copia.ts";
 import { LiberacaoDoEdital } from "./conducao.tsx";
 import type {
   EditalDaLista,
@@ -143,6 +144,11 @@ export function usarSeletorDoEdital({
         >
           Classificar etapa
         </button>
+      ) : null}
+      {e.copiaDe && !e.carregandoEdital ? (
+        <span className="entrevistas-seletor-marca" role="status">
+          {rotuloDaCopia(e.copiaDe)}
+        </span>
       ) : null}
       {editais.admin && editais.todos ? (
         <span className="entrevistas-seletor-marca">

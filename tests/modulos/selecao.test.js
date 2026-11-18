@@ -790,6 +790,36 @@ describe("cópia guardada (stale-while-revalidate)", () => {
     expect(segundo.obter().dados.vagas).toHaveLength(0);
   });
 
+  it("sem rede, fica a cópia com a data dela, sem toast nem erro", async () => {
+    const armazenamento = memoria();
+    await criarEstadoDaSelecao({
+      supabase: supabaseFalso({ data: PAYLOAD, error: null }),
+      armazenamento,
+    }).carregar("saude-indigena");
+    await vi.waitFor(() =>
+      expect(armazenamento.mapa.has("selecao:saude-indigena")).toBe(true),
+    );
+    const { guardadoEm } = armazenamento.mapa.get("selecao:saude-indigena");
+    toast.mockClear();
+
+    const semRede = criarEstadoDaSelecao({
+      supabase: supabaseFalso({
+        data: null,
+        error: { message: "TypeError: Failed to fetch", code: "" },
+      }),
+      armazenamento,
+      toast,
+    });
+    expect(await semRede.carregar("saude-indigena")).toBe(false);
+    expect(semRede.obter()).toMatchObject({
+      carregado: true,
+      erroAoCarregar: "",
+      copiaDe: guardadoEm,
+    });
+    expect(semRede.obter().dados.vagas).toHaveLength(2);
+    expect(toast).not.toHaveBeenCalled();
+  });
+
   it("acesso revogado apaga a cópia e mostra sem acesso", async () => {
     const armazenamento = memoria();
     await criarEstadoDaSelecao({

@@ -1,6 +1,7 @@
 /*
   IndexedDB mínimo para os testes (o jsdom não tem um): vários bancos, uma loja
-  por banco, get/put/clear e deleteDatabase, tudo assíncrono como no navegador.
+  por banco, get/put/delete/clear, cursor, databases e deleteDatabase, tudo
+  assíncrono como no navegador.
 */
 export function indexedDBFalso() {
   const bancos = new Map();
@@ -30,7 +31,32 @@ export function indexedDBFalso() {
               get: (chave) => operar(() => structuredClone(mapa.get(chave))),
               put: (valor, chave) =>
                 operar(() => mapa.set(chave, structuredClone(valor)) && chave),
+              delete: (chave) => operar(() => mapa.delete(chave)),
               clear: () => operar(() => mapa.clear()),
+              openCursor() {
+                const pedido = {};
+                const chaves = [...mapa.keys()];
+                let i = 0;
+                const avancar = () =>
+                  depois(() => {
+                    if (i >= chaves.length) {
+                      pedido.result = null;
+                      pedido.onsuccess?.();
+                      depois(() => transacao.oncomplete?.());
+                      return;
+                    }
+                    const chave = chaves[i++];
+                    pedido.result = {
+                      key: chave,
+                      value: structuredClone(mapa.get(chave)),
+                      delete: () => mapa.delete(chave),
+                      continue: avancar,
+                    };
+                    pedido.onsuccess?.();
+                  });
+                avancar();
+                return pedido;
+              },
             });
             return transacao;
           },
@@ -41,6 +67,7 @@ export function indexedDBFalso() {
       });
       return pedido;
     },
+    databases: async () => [...bancos.keys()].map((name) => ({ name })),
     deleteDatabase(nome) {
       const pedido = {};
       depois(() => {

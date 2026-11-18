@@ -81,7 +81,10 @@ export interface LeituraDasAnalises {
 }
 export interface ResultadoDasAnalises extends LeituraDasAnalises {
   daCopia: boolean;
-  revalidacao: Promise<unknown>;
+  /** Hora da cópia (a mais antiga, no escopo "todos"); 0 sem cópia. */
+  guardadoEm: number;
+  /** Resolve `true` se a versão nova chegou (ou não havia cópia). */
+  revalidacao: Promise<boolean>;
 }
 export interface OpcoesDeCarga {
   area: string;
@@ -139,6 +142,8 @@ export interface SnapshotDasAnalises {
   readonly semSessao: boolean;
   readonly semAcesso: boolean;
   readonly daCopia: boolean;
+  /** Hora da cópia na tela quando a versão nova não pôde ser buscada; senão `null`. */
+  readonly copiaDe: number | null;
   readonly carregadoEm: number;
   readonly conferidoEm: string | null;
   /** Card "Ritmo da análise": os editais da área; null = não veio (ou ainda não). */

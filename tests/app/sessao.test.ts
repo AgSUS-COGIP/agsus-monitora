@@ -15,6 +15,10 @@ import {
   reiniciarEstadoDeSaidaParaTestes,
 } from "../../src/lib/estado-de-saida";
 import { definido } from "../definido.ts";
+import {
+  criarPerfilGuardado,
+  type PerfilGuardado,
+} from "../../src/app/perfil-guardado.ts";
 import { sessaoFalsa } from "../supabase-falso.ts";
 
 /*
@@ -199,6 +203,7 @@ interface OpcoesDaMontagem {
   celular?: boolean;
   temAmbiente?: boolean;
   armazenamento?: { clearAuthState: () => void };
+  perfilGuardado?: PerfilGuardado | null;
 }
 
 function montar({
@@ -208,8 +213,10 @@ function montar({
   celular = false,
   temAmbiente = true,
   armazenamento = { clearAuthState: vi.fn() },
+  perfilGuardado = null,
 }: OpcoesDaMontagem = {}) {
   const sessao = criarSessao({
+    perfilGuardado: () => perfilGuardado,
     cliente: () => comoSupabase(cliente),
     armazenamento: () => armazenamento,
     janela: comoJanela(janela),
@@ -867,5 +874,131 @@ describe("login Google", () => {
     definido(janela.ouvintes.pageshow)({ persisted: true });
     await proximoCiclo();
     expect(sessao.obter().entrando).toBe(false);
+  });
+});
+
+describe("entrar sem rede (até 48 h, com o perfil guardado)", () => {
+  const SEM_REDE = { message: "TypeError: Failed to fetch" };
+
+  function perfilEmMemoria() {
+    const dados = new Map<string, unknown>();
+    return criarPerfilGuardado({
+      ler: async (chave) => structuredClone(dados.get(chave) ?? null),
+      guardar: async (chave, valor) =>
+        void dados.set(chave, structuredClone(valor)),
+      apagarTudo: async () => dados.clear(),
+      apagar: async (chave) => void dados.delete(chave),
+    });
+  }
+
+  async function entrarComRede(perfilGuardado: PerfilGuardado) {
+    const { sessao } = montar({
+      cliente: clienteFalso({ guardada: sessaoDe("u1") }),
+      perfilGuardado,
+    });
+    await sessao.iniciar();
+    await proximoCiclo();
+    expect(sessao.obter().semRede).toBe(false);
+  }
+
+  it("abre com o perfil guardado e, com a rede de volta, confere no banco", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const perfilGuardado = perfilEmMemoria();
+    await entrarComRede(perfilGuardado);
+
+    const cliente = clienteFalso({
+      guardada: sessaoDe("u1"),
+      erroNoContexto: SEM_REDE,
+    });
+    const { sessao, sistema, janela } = montar({ cliente, perfilGuardado });
+    await sessao.iniciar();
+    expect(sessao.obter()).toMatchObject({
+      fase: FASES.CONECTADO,
+      semRede: true,
+    });
+    expect(sistema.abrir).toHaveBeenCalledWith(
+      expect.objectContaining({
+        perfil: expect.objectContaining({ id: "perfil-1" }),
+        painelIds: ["painel-1"],
+      }),
+    );
+
+    // A rede voltou e o acesso foi revogado: o app fecha (e as cópias saem).
+    cliente.rpc.mockImplementation(async () => ({ data: null, error: null }));
+    await definido(janela.ouvintes.online)({});
+    await vi.waitFor(() => expect(sistema.aoFicarSemAcesso).toHaveBeenCalled());
+    vi.mocked(console.warn).mockRestore();
+  });
+
+  it("com a rede de volta e o acesso mantido, sai do modo sem rede", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const perfilGuardado = perfilEmMemoria();
+    await entrarComRede(perfilGuardado);
+    const cliente = clienteFalso({
+      guardada: sessaoDe("u1"),
+      erroNoContexto: SEM_REDE,
+    });
+    const { sessao, sistema, janela } = montar({ cliente, perfilGuardado });
+    await sessao.iniciar();
+    expect(sessao.obter().semRede).toBe(true);
+
+    cliente.rpc.mockImplementation(async (nome) =>
+      nome === "obter_contexto_monitora"
+        ? { data: CONTEXTO, error: null }
+        : { data: null, error: null },
+    );
+    await definido(janela.ouvintes.online)({});
+    await vi.waitFor(() => expect(sessao.obter().semRede).toBe(false));
+    expect(sistema.aoFicarSemAcesso).not.toHaveBeenCalled();
+    expect(sessao.obter().fase).toBe(FASES.CONECTADO);
+    vi.mocked(console.warn).mockRestore();
+  });
+
+  it("sem rede e sem perfil guardado: a falha na entrada de sempre", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { sessao, sistema } = montar({
+      cliente: clienteFalso({
+        guardada: sessaoDe("u1"),
+        erroNoContexto: SEM_REDE,
+      }),
+      perfilGuardado: perfilEmMemoria(),
+    });
+    await sessao.iniciar();
+    expect(sessao.obter().fase).toBe(FASES.FALHA_NA_ENTRADA);
+    expect(sistema.abrir).not.toHaveBeenCalled();
+    vi.mocked(console.warn).mockRestore();
+  });
+
+  it("erro do banco (não de rede) não usa o perfil guardado", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const perfilGuardado = perfilEmMemoria();
+    await entrarComRede(perfilGuardado);
+    const { sessao, sistema } = montar({
+      cliente: clienteFalso({
+        guardada: sessaoDe("u1"),
+        erroNoContexto: { message: "permission denied" },
+      }),
+      perfilGuardado,
+    });
+    await sessao.iniciar();
+    expect(sessao.obter().fase).toBe(FASES.FALHA_NA_ENTRADA);
+    expect(sistema.abrir).not.toHaveBeenCalled();
+    vi.mocked(console.warn).mockRestore();
+  });
+
+  it("o perfil guardado é de um usuário só", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const perfilGuardado = perfilEmMemoria();
+    await entrarComRede(perfilGuardado);
+    const { sessao } = montar({
+      cliente: clienteFalso({
+        guardada: sessaoDe("u2"),
+        erroNoContexto: SEM_REDE,
+      }),
+      perfilGuardado,
+    });
+    await sessao.iniciar();
+    expect(sessao.obter().fase).toBe(FASES.FALHA_NA_ENTRADA);
+    vi.mocked(console.warn).mockRestore();
   });
 });

@@ -41,7 +41,7 @@ export const NOVIDADES: readonly Novidade[] = [
   {
     id: "2026-11-17-responsivo-pente-fino",
     data: "2026-11-17",
-    texto: "busca pela lupa do topo e telas sem rolagem lateral no celular",
+    texto: "telas sem rolagem lateral no celular e botões maiores no toque",
     visivel: true,
   },
   {

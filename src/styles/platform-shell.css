@@ -734,22 +734,6 @@ html[data-theme="dark"] .sidebar {
 .top-user-button:hover {
   background: var(--surface-hover);
 }
-/* A lupa da busca global (topo.tsx): mesmo quadro do menu da conta. */
-.botao-da-busca {
-  display: inline-grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border: 1px solid var(--platform-border);
-  border-radius: var(--radius-md);
-  background: var(--surface-card);
-  color: var(--text-primary);
-  font: inherit;
-  cursor: pointer;
-}
-.botao-da-busca:hover {
-  background: var(--surface-hover);
-}
 .top-user-avatar {
   width: 32px;
   height: 32px;

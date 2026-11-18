@@ -73,6 +73,7 @@ const ESTADO_INICIAL: SnapshotDasAnalises = Object.freeze({
   semAcesso: false,
   /** As linhas na tela vieram da cópia do navegador (revalidando). */
   daCopia: false,
+  copiaDe: null,
   carregadoEm: 0,
   conferidoEm: null,
   ritmo: null,
@@ -187,6 +188,7 @@ export function criarEstadoDasAnalises({
       semAcesso: false,
       atualizando: false,
       daCopia: false,
+      copiaDe: null,
       carregadoEm: agora(),
       textos: "",
       ...extra,
@@ -317,9 +319,14 @@ export function criarEstadoDasAnalises({
         resultado.daCopia ? { atualizando: true, daCopia: true } : {},
       );
       if (resultado.daCopia) {
-        await resultado.revalidacao;
+        const chegou = await resultado.revalidacao;
+        // Sem a versão nova (rede, servidor), a cópia fica com a data dela no topo.
         if (meu === pedido && estado.daCopia)
-          publicar({ atualizando: false, daCopia: false });
+          publicar({
+            atualizando: false,
+            daCopia: false,
+            copiaDe: chegou ? null : resultado.guardadoEm,
+          });
       }
       return true;
     } catch (erro) {

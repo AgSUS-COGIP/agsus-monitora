@@ -116,7 +116,7 @@ describe("a lista por escopo e a cópia do navegador", () => {
         escopo: "ativo",
         aoMudar: semMudanca,
       });
-      expect(await mesma.revalidacao).toMatchObject({ total: 1 });
+      expect(await mesma.revalidacao).toBe(true);
       expect(semMudanca).not.toHaveBeenCalled();
 
       versao = pacote("ativo", ["a1", "a2", "a3"]);
@@ -135,6 +135,44 @@ describe("a lista por escopo e a cópia do navegador", () => {
         "a3",
       ]);
       expect(aviso).not.toHaveBeenCalled();
+    } finally {
+      aviso.mockRestore();
+    }
+  });
+
+  it("sem rede, a revalidação não chega: a cópia fica, com a hora em que foi guardada", async () => {
+    const aviso = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const armazenamento = memoria();
+      let semRede = false;
+      const supabase = supabaseCom(() =>
+        semRede
+          ? {
+              data: null,
+              error: { message: "TypeError: Failed to fetch", code: "" },
+            }
+          : { data: pacote("ativo", ["a1"]), error: null },
+      );
+      const consultas = criarConsultasDasAnalises({
+        supabase,
+        armazenamento,
+        versao: "t",
+      });
+      await consultas.carregarEscopo({ ...opcoes, escopo: "ativo" });
+      await new Promise((ok) => setTimeout(ok, 0));
+      const { guardadoEm } = [...armazenamento.mapa.values()].find(
+        (valor) => typeof valor === "object",
+      );
+
+      semRede = true;
+      const comCopia = await consultas.carregarEscopo({
+        ...opcoes,
+        escopo: "ativo",
+      });
+      expect(comCopia).toMatchObject({ daCopia: true, guardadoEm });
+      expect(comCopia.linhas).toHaveLength(1);
+      expect(await comCopia.revalidacao).toBe(false);
+      expect(armazenamento.mapa.size).toBe(2);
     } finally {
       aviso.mockRestore();
     }
