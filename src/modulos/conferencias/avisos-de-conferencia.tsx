@@ -9,6 +9,10 @@ import type {
   ClienteDosAvisos,
   AbrirCaso,
   OpcoesDeAbrirCaso,
+  EvidenciaDoAviso,
+  HistoricoDoAviso,
+  PessoaResponsavel,
+  Tratamento,
 } from "./tipos.ts";
 import {
   useCallback,
@@ -23,26 +27,34 @@ import { pedirFiltro } from "../../app/pedido-de-filtro.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { Icone } from "../../componentes/icone.tsx";
 import {
+  agruparPorEdital,
   casosRestantes,
+  chaveDoCaso,
   contagemPorModulo,
   destinoDoCaso,
   diaDoAviso,
-  erroDoMotivo,
+  diaDoCaso,
+  erroDaEvidencia,
+  erroDoMotivoDoTratamento,
   filtrarPorModulo,
+  hojeEmBrasilia,
   juntarPaginasDeCasos,
   LIMITES_DO_MOTIVO,
   linhaDoVinculo,
   MODULOS_DOS_AVISOS,
   ondeDoCaso,
+  opcoesDeTratamento,
+  prazoVencido,
   quemDoCaso,
   termoDeBusca,
   tomDoSelo,
+  TRATAMENTOS,
   VIEW_DO_MODULO,
 } from "../../lib/avisos-de-conferencia.ts";
 import { mensagemDeFalha } from "../../lib/falha-de-rede";
 import { getSupabaseClient } from "../../lib/supabaseClient";
 import { formatNumberBR } from "../../lib/formatters";
-import { Gaveta, Segmentado } from "../../ui/index.ts";
+import { Campo, Gaveta, Segmentado, Selo } from "../../ui/index.ts";
 import { criarEstadoDosAvisos } from "./estado.ts";
 
 declare global {
@@ -91,8 +103,13 @@ const erroDaConsulta = (falha: unknown): string => {
   nome), onde (edital, vaga, situação, responsável), o motivo (datas, notas)
   e, no aprovado, as vagas da pessoa; clicar leva à tela do módulo já no caso
   (análise, aprovado, entrevista; src/lib destinoDoCaso). No topo da lista, a
-  busca em todos os avisos. Quem administra o módulo (ou o administrador
-  global) ignora com motivo; o ignorado volta sozinho se a quantidade crescer.
+  busca em todos os avisos. A central de avisos (20261118120000): os abertos
+  agrupados por edital; cada aviso com a situação da equipe (em análise,
+  aguardando documento, corrigido, dispensado com justificativa; "rechecado sem
+  problema" é da conferência), responsável e prazo (vencido em destaque), a
+  última rechecagem, evidências (do aviso ou de um caso) e o histórico, que não
+  se apaga. Quem administra o módulo (ou o administrador global) dispensa e
+  atribui; o responsável também trata e junta evidência.
   As regras puras: src/lib/avisos-de-conferencia.ts.
 */
 
@@ -205,10 +222,12 @@ function ItemDoCaso({
   caso,
   mostrarAviso,
   aoAbrir,
+  aoJuntarEvidencia,
 }: {
   caso: Caso;
   mostrarAviso?: boolean;
   aoAbrir?: AbrirCaso;
+  aoJuntarEvidencia?: ((caso: Caso) => void) | undefined;
 }) {
   const destino = aoAbrir ? destinoDoCaso(caso) : null;
   const onde = ondeDoCaso(caso);
@@ -267,6 +286,15 @@ function ItemDoCaso({
       ) : (
         <div className="conf-caso">{conteudo}</div>
       )}
+      {aoJuntarEvidencia && chaveDoCaso(caso) ? (
+        <button
+          type="button"
+          className="btn secondary conf-botao conf-caso__evidencia"
+          onClick={() => aoJuntarEvidencia(caso)}
+        >
+          Evidência
+        </button>
+      ) : null}
     </li>
   );
 }
@@ -278,9 +306,14 @@ function ListaDeCasos({
   busca,
   mostrarAviso,
   aoAbrirCaso,
+  aoJuntarEvidencia,
   exemplos = [],
 }: PropsDoEstado &
-  ConsultaDeCasos & { mostrarAviso?: boolean; exemplos?: readonly string[] }) {
+  ConsultaDeCasos & {
+    mostrarAviso?: boolean;
+    exemplos?: readonly string[];
+    aoJuntarEvidencia?: ((caso: Caso) => void) | undefined;
+  }) {
   const casos = usarCasos(estado, { avisoId, busca });
   if (casos.status === "carregando")
     return (
@@ -325,11 +358,12 @@ function ListaDeCasos({
             caso={caso}
             mostrarAviso={mostrarAviso}
             aoAbrir={aoAbrirCaso}
+            aoJuntarEvidencia={aoJuntarEvidencia}
           />
         ))}
       </ul>
       {casos.erro ? (
-        <small className="conf-ignorar__erro" role="alert">
+        <small className="conf-erro" role="alert">
           {casos.erro}
         </small>
       ) : null}
@@ -379,7 +413,7 @@ function BotaoDeCsv({
         {exportando ? "Exportando…" : "Exportar CSV"}
       </button>
       {erro ? (
-        <small className="conf-ignorar__erro" role="alert">
+        <small className="conf-erro" role="alert">
           {erro}
         </small>
       ) : null}
@@ -387,7 +421,12 @@ function BotaoDeCsv({
   );
 }
 
-function CasosDoAviso({ aviso, estado, aoAbrirCaso }: PropsDoAviso) {
+function CasosDoAviso({
+  aviso,
+  estado,
+  aoAbrirCaso,
+  aoJuntarEvidencia,
+}: PropsDoAviso & { aoJuntarEvidencia?: ((caso: Caso) => void) | undefined }) {
   const [digitado, setDigitado] = useState("");
   const busca = usarComEspera(digitado, ESPERA_DA_BUSCA_MS);
   const id = useId();
@@ -413,124 +452,616 @@ function CasosDoAviso({ aviso, estado, aoAbrirCaso }: PropsDoAviso) {
         avisoId={aviso.id}
         busca={busca}
         aoAbrirCaso={aoAbrirCaso}
+        aoJuntarEvidencia={aoJuntarEvidencia}
         exemplos={aviso.exemplos}
       />
     </div>
   );
 }
 
-function FormularioDeIgnorar({
+function SeloDoTratamento({ aviso }: { aviso: Aviso }) {
+  const t = TRATAMENTOS[aviso.tratamento];
+  return (
+    <Selo
+      tom={t.tom}
+      className="conf-tratamento"
+      dados={{ tratamento: aviso.tratamento }}
+    >
+      {t.rotulo}
+    </Selo>
+  );
+}
+
+/** Responsável, prazo (vencido em destaque), evidências e a última rechecagem. */
+function DetalhesDoAviso({ aviso }: { aviso: Aviso }) {
+  const vencido = prazoVencido(aviso.prazo, hojeEmBrasilia());
+  const partes = [
+    aviso.situacao === "RESOLVIDO"
+      ? `Resolvido em ${diaDoAviso(aviso.resolvidoEm)}`
+      : `Desde ${diaDoAviso(aviso.primeiraVez)} · rechecado em ${diaDoAviso(aviso.ultimaVez)}`,
+    aviso.responsavel ? `Resp. ${aviso.responsavel}` : "",
+    aviso.evidencias
+      ? `${aviso.evidencias} ${aviso.evidencias === 1 ? "evidência" : "evidências"}`
+      : "",
+  ].filter(Boolean);
+  return (
+    <small className="conf-aviso__detalhes">
+      {partes.join(" · ")}
+      {aviso.prazo ? (
+        <span
+          className={vencido ? "conf-prazo conf-prazo--vencido" : "conf-prazo"}
+        >
+          {" · "}até {diaDoCaso(aviso.prazo)}
+          {vencido ? " (vencido)" : ""}
+        </span>
+      ) : null}
+    </small>
+  );
+}
+
+/** Mudar a situação do aviso; o gestor também atribui responsável e prazo. */
+function PainelDoTratamento({
   aviso,
   estado,
-  ignorando,
-  erro,
-  aoCancelar,
-}: PropsDoAviso & {
-  ignorando: string | null;
-  erro: string;
-  aoCancelar: () => void;
-}) {
+  atual,
+  aoFechar,
+}: PropsDoAviso & { atual: SnapshotDosAvisos; aoFechar: () => void }) {
+  const opcoes = opcoesDeTratamento(aviso);
+  const [tratamento, setTratamento] = useState<Tratamento>(
+    opcoes.includes(aviso.tratamento)
+      ? aviso.tratamento
+      : (opcoes[0] ?? "EM_ANALISE"),
+  );
   const [motivo, setMotivo] = useState("");
   const [tocado, setTocado] = useState(false);
-  const id = useId();
-  const problema = erroDoMotivo(motivo);
-  async function confirmar(evento: FormEvent<HTMLFormElement>) {
+  const [responsavel, setResponsavel] = useState(aviso.responsavelId || "");
+  const [prazo, setPrazo] = useState(aviso.prazo || "");
+  const [pessoas, setPessoas] = useState<PessoaResponsavel[] | null>(null);
+  const [erroDasPessoas, setErroDasPessoas] = useState("");
+  const problema = erroDoMotivoDoTratamento(tratamento, motivo);
+  const agindo = atual.agindo === aviso.id;
+
+  useEffect(() => {
+    if (!aviso.podeGerir) return;
+    let vivo = true;
+    estado
+      .responsaveis(aviso.id)
+      .then((lista) => {
+        if (vivo) setPessoas(lista);
+      })
+      .catch((falha: unknown) => {
+        if (vivo) setErroDasPessoas(erroDaConsulta(falha));
+      });
+    return () => {
+      vivo = false;
+    };
+  }, [estado, aviso.id, aviso.podeGerir]);
+
+  async function salvarSituacao(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault();
     setTocado(true);
     if (problema) return;
-    if (await estado.ignorar(aviso.id, motivo)) aoCancelar();
+    if (await estado.tratar(aviso.id, tratamento, motivo)) aoFechar();
   }
+  async function salvarResponsavel(evento: FormEvent<HTMLFormElement>) {
+    evento.preventDefault();
+    if (await estado.atribuir(aviso.id, responsavel || null, prazo || null))
+      aoFechar();
+  }
+  const rotuloDoMotivo =
+    tratamento === "DISPENSADO"
+      ? "Justificativa"
+      : tratamento === "EM_ANALISE"
+        ? "Observação"
+        : "Motivo";
+  const atualFora =
+    aviso.responsavelId &&
+    pessoas &&
+    !pessoas.some((p) => p.id === aviso.responsavelId);
   return (
-    <form className="conf-ignorar" onSubmit={confirmar}>
-      <label htmlFor={id}>Motivo para ignorar</label>
-      <textarea
-        id={id}
-        rows={2}
-        maxLength={LIMITES_DO_MOTIVO.maximo}
-        value={motivo}
-        onChange={(e) => setMotivo(e.target.value)}
-        onBlur={() => setTocado(true)}
-        aria-invalid={tocado && Boolean(problema)}
-      />
-      {(tocado && problema) || erro ? (
-        <small className="conf-ignorar__erro" role="alert">
-          {(tocado && problema) || erro}
+    <div className="conf-painel">
+      <form className="conf-form" onSubmit={salvarSituacao}>
+        <Campo rotulo="Situação">
+          <select
+            value={tratamento}
+            onChange={(e) => {
+              const escolhido = opcoes.find((t) => t === e.target.value);
+              if (escolhido) setTratamento(escolhido);
+            }}
+          >
+            {opcoes.map((t) => (
+              <option key={t} value={t}>
+                {TRATAMENTOS[t].rotulo}
+              </option>
+            ))}
+          </select>
+        </Campo>
+        <Campo
+          rotulo={rotuloDoMotivo}
+          obrigatorio={tratamento !== "EM_ANALISE"}
+          erro={tocado && problema ? problema : undefined}
+        >
+          <textarea
+            rows={2}
+            maxLength={LIMITES_DO_MOTIVO.maximo}
+            value={motivo}
+            onChange={(e) => setMotivo(e.target.value)}
+            onBlur={() => setTocado(true)}
+          />
+        </Campo>
+        <div className="conf-form__acoes">
+          <button type="submit" className="btn" disabled={agindo}>
+            {agindo ? "Salvando…" : "Salvar situação"}
+          </button>
+        </div>
+      </form>
+      {aviso.podeGerir ? (
+        <form className="conf-form" onSubmit={salvarResponsavel}>
+          <Campo rotulo="Responsável" erro={erroDasPessoas || undefined}>
+            <select
+              value={responsavel}
+              disabled={!pessoas}
+              onChange={(e) => {
+                setResponsavel(e.target.value);
+                if (!e.target.value) setPrazo("");
+              }}
+            >
+              <option value="">
+                {pessoas ? "Sem responsável" : "Carregando…"}
+              </option>
+              {(pessoas || []).map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nome}
+                </option>
+              ))}
+              {atualFora && aviso.responsavelId ? (
+                <option value={aviso.responsavelId}>
+                  {aviso.responsavel || "Responsável atual"}
+                </option>
+              ) : null}
+            </select>
+          </Campo>
+          <Campo rotulo="Prazo">
+            <input
+              type="date"
+              value={prazo}
+              min={hojeEmBrasilia()}
+              disabled={!responsavel}
+              onChange={(e) => setPrazo(e.target.value)}
+            />
+          </Campo>
+          <div className="conf-form__acoes">
+            <button
+              type="submit"
+              className="btn secondary"
+              disabled={agindo || !pessoas}
+            >
+              {agindo ? "Salvando…" : "Salvar responsável"}
+            </button>
+          </div>
+        </form>
+      ) : null}
+      {atual.erroDaAcao && !atual.agindo ? (
+        <small className="conf-erro" role="alert">
+          {atual.erroDaAcao}
         </small>
       ) : null}
-      <div className="conf-ignorar__acoes">
-        <button type="button" className="btn secondary" onClick={aoCancelar}>
-          Cancelar
+      <div className="conf-form__acoes">
+        <button type="button" className="btn secondary" onClick={aoFechar}>
+          Fechar
         </button>
-        <button type="submit" className="btn" disabled={ignorando === aviso.id}>
-          {ignorando === aviso.id ? "Ignorando…" : "Ignorar aviso"}
+      </div>
+    </div>
+  );
+}
+
+const ROTULOS_DA_EVIDENCIA: Readonly<Record<EvidenciaDoAviso["tipo"], string>> =
+  Object.freeze({
+    SEI: "Processo SEI",
+    LINK: "Link",
+    NOTA: "Nota",
+  });
+const TIPOS_DA_EVIDENCIA: readonly EvidenciaDoAviso["tipo"][] = [
+  "SEI",
+  "LINK",
+  "NOTA",
+];
+
+/** Juntar evidência ao aviso ou a um caso dele. */
+function FormularioDeEvidencia({
+  aviso,
+  estado,
+  atual,
+  caso,
+  aoLimparCaso,
+}: PropsDoAviso & {
+  atual: SnapshotDosAvisos;
+  caso: { chave: string; rotulo: string } | null;
+  aoLimparCaso: () => void;
+}) {
+  const [tipo, setTipo] = useState<EvidenciaDoAviso["tipo"]>("SEI");
+  const [descricao, setDescricao] = useState("");
+  const [url, setUrl] = useState("");
+  const [tocado, setTocado] = useState(false);
+  const problema = erroDaEvidencia({ tipo, descricao, url });
+  const agindo = atual.agindo === aviso.id;
+  async function juntar(evento: FormEvent<HTMLFormElement>) {
+    evento.preventDefault();
+    setTocado(true);
+    if (problema) return;
+    const ok = await estado.incluirEvidencia(aviso.id, {
+      tipo,
+      descricao,
+      url,
+      chaveDoCaso: caso?.chave ?? null,
+    });
+    if (ok) {
+      setDescricao("");
+      setUrl("");
+      setTocado(false);
+      aoLimparCaso();
+    }
+  }
+  return (
+    <form className="conf-form" onSubmit={juntar}>
+      {caso ? (
+        <p className="conf-form__caso">
+          Do caso {caso.rotulo}{" "}
+          <button
+            type="button"
+            className="btn secondary conf-botao"
+            onClick={aoLimparCaso}
+          >
+            Do aviso todo
+          </button>
+        </p>
+      ) : null}
+      <Campo rotulo="Tipo">
+        <select
+          value={tipo}
+          onChange={(e) => {
+            const escolhido = TIPOS_DA_EVIDENCIA.find(
+              (t) => t === e.target.value,
+            );
+            if (escolhido) setTipo(escolhido);
+          }}
+        >
+          {TIPOS_DA_EVIDENCIA.map((t) => (
+            <option key={t} value={t}>
+              {ROTULOS_DA_EVIDENCIA[t]}
+            </option>
+          ))}
+        </select>
+      </Campo>
+      <Campo
+        rotulo={tipo === "SEI" ? "Número do processo" : "Descrição"}
+        obrigatorio
+        erro={tocado && problema ? problema : undefined}
+      >
+        <input
+          type="text"
+          maxLength={500}
+          value={descricao}
+          onChange={(e) => setDescricao(e.target.value)}
+          onBlur={() => setTocado(true)}
+        />
+      </Campo>
+      <Campo rotulo="Link" obrigatorio={tipo === "LINK"}>
+        <input
+          type="url"
+          maxLength={500}
+          placeholder="https://"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+        />
+      </Campo>
+      <div className="conf-form__acoes">
+        <button type="submit" className="btn" disabled={agindo}>
+          {agindo ? "Juntando…" : "Juntar evidência"}
         </button>
       </div>
     </form>
   );
 }
 
+function ItemDaEvidencia({
+  aviso,
+  estado,
+  atual,
+  evidencia,
+}: PropsDoAviso & {
+  atual: SnapshotDosAvisos;
+  evidencia: EvidenciaDoAviso;
+}) {
+  const [retirando, setRetirando] = useState(false);
+  const [motivo, setMotivo] = useState("");
+  const agindo = atual.agindo === aviso.id;
+  const curto = motivo.trim().length < 3;
+  async function retirar(evento: FormEvent<HTMLFormElement>) {
+    evento.preventDefault();
+    if (curto) return;
+    if (await estado.retirarEvidencia(aviso.id, evidencia.id, motivo))
+      setRetirando(false);
+  }
+  return (
+    <li
+      className={
+        evidencia.ativa
+          ? "conf-evidencia"
+          : "conf-evidencia conf-evidencia--retirada"
+      }
+    >
+      <span className="conf-evidencia__tipo">
+        {ROTULOS_DA_EVIDENCIA[evidencia.tipo]}
+      </span>
+      {evidencia.url ? (
+        <a href={evidencia.url} target="_blank" rel="noopener noreferrer">
+          {evidencia.descricao}
+        </a>
+      ) : (
+        <span>{evidencia.descricao}</span>
+      )}
+      <small>
+        {[
+          evidencia.caso
+            ? `caso ${evidencia.caso.split(":").slice(1).join(":")}`
+            : "",
+          evidencia.por,
+          diaDoAviso(evidencia.em),
+          evidencia.ativa
+            ? ""
+            : `retirada em ${diaDoAviso(evidencia.retiradaEm)}`,
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+      </small>
+      {evidencia.ativa && aviso.podeTratar && !retirando ? (
+        <button
+          type="button"
+          className="btn secondary conf-botao"
+          onClick={() => setRetirando(true)}
+        >
+          Retirar
+        </button>
+      ) : null}
+      {retirando ? (
+        <form className="conf-form" onSubmit={retirar}>
+          <Campo rotulo="Motivo da retirada" obrigatorio>
+            <input
+              type="text"
+              maxLength={500}
+              value={motivo}
+              onChange={(e) => setMotivo(e.target.value)}
+            />
+          </Campo>
+          <div className="conf-form__acoes">
+            <button
+              type="button"
+              className="btn secondary"
+              onClick={() => setRetirando(false)}
+            >
+              Cancelar
+            </button>
+            <button type="submit" className="btn" disabled={agindo || curto}>
+              Retirar evidência
+            </button>
+          </div>
+        </form>
+      ) : null}
+    </li>
+  );
+}
+
+/** O histórico do aviso (o que a conferência e a equipe fizeram) e as evidências. */
+function PainelDoHistorico({
+  aviso,
+  estado,
+  atual,
+  caso,
+  aoLimparCaso,
+}: PropsDoAviso & {
+  atual: SnapshotDosAvisos;
+  caso: { chave: string; rotulo: string } | null;
+  aoLimparCaso: () => void;
+}) {
+  const [historico, setHistorico] = useState<HistoricoDoAviso | null>(null);
+  const [erro, setErro] = useState("");
+  // O aviso relido (outra situação, evidência nova) traz o histórico de novo.
+  const marca = [
+    aviso.id,
+    aviso.tratamento,
+    aviso.evidencias,
+    aviso.responsavelId,
+    aviso.prazo,
+    aviso.tratadoEm?.getTime(),
+  ].join("|");
+  useEffect(() => {
+    let vivo = true;
+    setErro("");
+    estado
+      .historico(aviso.id)
+      .then((h) => {
+        if (vivo) setHistorico(h);
+      })
+      .catch((falha: unknown) => {
+        if (vivo) setErro(erroDaConsulta(falha));
+      });
+    return () => {
+      vivo = false;
+    };
+  }, [estado, aviso.id, marca]);
+  return (
+    <div className="conf-painel">
+      {aviso.podeTratar ? (
+        <FormularioDeEvidencia
+          aviso={aviso}
+          estado={estado}
+          atual={atual}
+          caso={caso}
+          aoLimparCaso={aoLimparCaso}
+        />
+      ) : null}
+      {atual.erroDaAcao && !atual.agindo ? (
+        <small className="conf-erro" role="alert">
+          {atual.erroDaAcao}
+        </small>
+      ) : null}
+      {erro ? (
+        <p className="conf-vazio" role="alert">
+          {erro}
+        </p>
+      ) : !historico ? (
+        <p className="conf-vazio" role="status">
+          Consultando o histórico…
+        </p>
+      ) : (
+        <>
+          {historico.evidencias.length ? (
+            <ul className="conf-evidencias" aria-label="Evidências">
+              {historico.evidencias.map((e) => (
+                <ItemDaEvidencia
+                  key={e.id}
+                  aviso={aviso}
+                  estado={estado}
+                  atual={atual}
+                  evidencia={e}
+                />
+              ))}
+            </ul>
+          ) : null}
+          <ol className="conf-historico" aria-label="Histórico">
+            {historico.eventos.map((e) => (
+              <li key={e.id}>
+                <span className="conf-historico__quando">
+                  {diaDoAviso(e.em)}
+                </span>
+                <span>
+                  <strong>{e.texto}</strong>
+                  {e.por ? ` · ${e.por}` : ""}
+                  {e.motivo ? (
+                    <span className="conf-historico__motivo">{e.motivo}</span>
+                  ) : null}
+                </span>
+              </li>
+            ))}
+          </ol>
+        </>
+      )}
+    </div>
+  );
+}
+
+type Painel = "casos" | "tratar" | "historico" | null;
+
 function ItemDoAviso({
   aviso,
   estado,
   atual,
   mostrarModulo,
+  mostrarOnde = true,
   aoAbrirCaso,
-}: PropsDoAviso & { atual: SnapshotDosAvisos; mostrarModulo?: boolean }) {
-  const [casos, setCasos] = useState(false);
-  const [ignorar, setIgnorar] = useState(false);
+}: PropsDoAviso & {
+  atual: SnapshotDosAvisos;
+  mostrarModulo?: boolean;
+  mostrarOnde?: boolean;
+}) {
+  const [painel, setPainel] = useState<Painel>(null);
+  const [casoDaEvidencia, setCasoDaEvidencia] = useState<{
+    chave: string;
+    rotulo: string;
+  } | null>(null);
   const modulo = MODULOS_DOS_AVISOS.find((m) => m.valor === aviso.modulo);
+  const alternar = (qual: Painel) =>
+    setPainel((aberto) => (aberto === qual ? null : qual));
+  const onde = [
+    mostrarModulo && modulo ? modulo.rotulo : "",
+    mostrarOnde ? aviso.onde : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const juntarEvidencia = aviso.podeTratar
+    ? (caso: Caso) => {
+        const chave = chaveDoCaso(caso);
+        if (!chave) return;
+        setCasoDaEvidencia({ chave, rotulo: quemDoCaso(caso) });
+        setPainel("historico");
+      }
+    : undefined;
   return (
     <li
       className={`conf-aviso conf-aviso--${aviso.tom}`}
       data-conferencia={aviso.conferencia}
+      data-tratamento={aviso.tratamento}
     >
       <div className="conf-aviso__topo">
         <span className={`conf-selo conf-selo--${aviso.tom}`}>
           {aviso.rotuloDaGravidade}
         </span>
         <strong>{aviso.titulo}</strong>
-        <span className="conf-aviso__onde">
-          {mostrarModulo && modulo ? `${modulo.rotulo} · ` : ""}
-          {aviso.onde}
-        </span>
+        {onde ? <span className="conf-aviso__onde">{onde}</span> : null}
+        <SeloDoTratamento aviso={aviso} />
       </div>
       <p className="conf-aviso__resumo">{aviso.resumo}</p>
+      {aviso.motivo && aviso.tratamento !== "PENDENTE" ? (
+        <p className="conf-aviso__motivo">{aviso.motivo}</p>
+      ) : null}
       <div className="conf-aviso__rodape">
-        <small>
-          {aviso.situacao === "IGNORADO"
-            ? `Ignorado em ${diaDoAviso(aviso.ignoradoEm)}: ${aviso.motivo}`
-            : `Desde ${diaDoAviso(aviso.primeiraVez)}`}
-        </small>
+        <DetalhesDoAviso aviso={aviso} />
         <button
           type="button"
           className="btn secondary conf-botao"
-          aria-expanded={casos}
-          onClick={() => setCasos((v) => !v)}
+          aria-expanded={painel === "casos"}
+          onClick={() => alternar("casos")}
         >
-          <Icone nome={casos ? "chevron-up" : "chevron-down"} tamanho={14} />
+          <Icone
+            nome={painel === "casos" ? "chevron-up" : "chevron-down"}
+            tamanho={14}
+          />
           {formatNumberBR(aviso.quantidade)}{" "}
           {aviso.quantidade === 1 ? "caso" : "casos"}
         </button>
-        {aviso.podeIgnorar && !ignorar ? (
+        {aviso.podeTratar ? (
           <button
             type="button"
             className="btn secondary conf-botao"
-            onClick={() => setIgnorar(true)}
+            aria-expanded={painel === "tratar"}
+            onClick={() => alternar("tratar")}
           >
-            Ignorar
+            Tratar
           </button>
         ) : null}
+        <button
+          type="button"
+          className="btn secondary conf-botao"
+          aria-expanded={painel === "historico"}
+          onClick={() => alternar("historico")}
+        >
+          Histórico
+        </button>
       </div>
-      {casos ? (
-        <CasosDoAviso aviso={aviso} estado={estado} aoAbrirCaso={aoAbrirCaso} />
-      ) : null}
-      {ignorar ? (
-        <FormularioDeIgnorar
+      {painel === "casos" ? (
+        <CasosDoAviso
           aviso={aviso}
           estado={estado}
-          ignorando={atual.ignorando}
-          erro={atual.erroAoIgnorar}
-          aoCancelar={() => setIgnorar(false)}
+          aoAbrirCaso={aoAbrirCaso}
+          aoJuntarEvidencia={juntarEvidencia}
+        />
+      ) : null}
+      {painel === "tratar" ? (
+        <PainelDoTratamento
+          aviso={aviso}
+          estado={estado}
+          atual={atual}
+          aoFechar={() => setPainel(null)}
+        />
+      ) : null}
+      {painel === "historico" ? (
+        <PainelDoHistorico
+          aviso={aviso}
+          estado={estado}
+          atual={atual}
+          caso={casoDaEvidencia}
+          aoLimparCaso={() => setCasoDaEvidencia(null)}
         />
       ) : null}
     </li>
@@ -564,7 +1095,46 @@ function BuscaNosAvisos({
   );
 }
 
-/** A lista de avisos (abertos e, recolhidos, os ignorados), com a busca em todos. */
+type PropsDosItens = PropsDoEstado & {
+  atual: SnapshotDosAvisos;
+  mostrarModulo?: boolean;
+};
+
+/** Uma lista recolhida (dispensados, resolvidos), com o número no botão. */
+function Recolhidos({
+  rotulo,
+  avisos,
+  ...props
+}: PropsDosItens & { rotulo: string; avisos: readonly Aviso[] }) {
+  const [aberto, setAberto] = useState(false);
+  if (!avisos.length) return null;
+  return (
+    <div className="conf-recolhidos">
+      <button
+        type="button"
+        className="btn secondary conf-botao"
+        aria-expanded={aberto}
+        onClick={() => setAberto((v) => !v)}
+      >
+        <Icone nome={aberto ? "chevron-up" : "chevron-down"} tamanho={14} />
+        {rotulo} ({avisos.length})
+      </button>
+      {aberto ? (
+        <ul className="conf-lista">
+          {avisos.map((aviso) => (
+            <ItemDoAviso key={aviso.id} aviso={aviso} {...props} />
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * A lista de avisos: os abertos agrupados por edital (e, em cada um, por
+ * gravidade); recolhidos, os dispensados e os resolvidos dos últimos 30 dias;
+ * no topo, a busca em todos.
+ */
 export function ListaDeAvisos({
   estado,
   lista,
@@ -575,7 +1145,6 @@ export function ListaDeAvisos({
   mostrarModulo?: boolean;
 }) {
   const atual = usarEstado(estado);
-  const [verIgnorados, setVerIgnorados] = useState(false);
   const [digitado, setDigitado] = useState("");
   const busca = termoDeBusca(usarComEspera(digitado, ESPERA_DA_BUSCA_MS));
   if (atual.status === "error")
@@ -592,7 +1161,10 @@ export function ListaDeAvisos({
         Consultando os avisos…
       </p>
     );
-  const temAvisos = lista.abertos.length + lista.ignorados.length > 0;
+  const temAvisos =
+    lista.abertos.length + lista.dispensados.length + lista.resolvidos.length >
+    0;
+  const comuns: PropsDosItens = { estado, atual, mostrarModulo, aoAbrirCaso };
   return (
     <>
       {temAvisos ? (
@@ -614,53 +1186,46 @@ export function ListaDeAvisos({
       ) : (
         <>
           {lista.abertos.length ? (
-            <ul className="conf-lista">
-              {lista.abertos.map((aviso) => (
-                <ItemDoAviso
-                  key={aviso.id}
-                  aviso={aviso}
-                  estado={estado}
-                  atual={atual}
-                  mostrarModulo={mostrarModulo}
-                  aoAbrirCaso={aoAbrirCaso}
-                />
-              ))}
-            </ul>
+            agruparPorEdital(lista.abertos).map((grupo) => (
+              <section
+                className="conf-grupo"
+                key={grupo.chave}
+                aria-label={grupo.titulo}
+              >
+                <h4 className="conf-grupo__titulo">
+                  {grupo.titulo}
+                  <small>
+                    {grupo.avisos.length}{" "}
+                    {grupo.avisos.length === 1 ? "aviso" : "avisos"}
+                  </small>
+                </h4>
+                <ul className="conf-lista">
+                  {grupo.avisos.map((aviso) => (
+                    <ItemDoAviso
+                      key={aviso.id}
+                      aviso={aviso}
+                      mostrarOnde={false}
+                      {...comuns}
+                    />
+                  ))}
+                </ul>
+              </section>
+            ))
           ) : (
             <p className="conf-vazio" role="status">
               <Icone nome="circle-check" tamanho={16} /> Nenhum aviso aberto.
             </p>
           )}
-          {lista.ignorados.length ? (
-            <div className="conf-ignorados">
-              <button
-                type="button"
-                className="btn secondary conf-botao"
-                aria-expanded={verIgnorados}
-                onClick={() => setVerIgnorados((v) => !v)}
-              >
-                <Icone
-                  nome={verIgnorados ? "chevron-up" : "chevron-down"}
-                  tamanho={14}
-                />
-                Ignorados ({lista.ignorados.length})
-              </button>
-              {verIgnorados ? (
-                <ul className="conf-lista">
-                  {lista.ignorados.map((aviso) => (
-                    <ItemDoAviso
-                      key={aviso.id}
-                      aviso={aviso}
-                      estado={estado}
-                      atual={atual}
-                      mostrarModulo={mostrarModulo}
-                      aoAbrirCaso={aoAbrirCaso}
-                    />
-                  ))}
-                </ul>
-              ) : null}
-            </div>
-          ) : null}
+          <Recolhidos
+            rotulo="Dispensados"
+            avisos={lista.dispensados}
+            {...comuns}
+          />
+          <Recolhidos
+            rotulo="Resolvidos nos últimos 30 dias"
+            avisos={lista.resolvidos}
+            {...comuns}
+          />
         </>
       )}
     </>

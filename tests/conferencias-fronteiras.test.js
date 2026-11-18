@@ -19,7 +19,8 @@ describe("fronteiras das conferências", () => {
         geradoEm: null,
         ultimaExecucao: null,
         abertos: [],
-        ignorados: [],
+        dispensados: [],
+        resolvidos: [],
       });
       expect(normalizarCasos(entrada)).toEqual({ total: 0, casos: [] });
     },
@@ -40,7 +41,11 @@ describe("fronteiras das conferências", () => {
           quantidade: Infinity,
           exemplos: [null, {}, "123"],
           primeira_vez: {},
-          pode_ignorar: "true",
+          pode_gerir: "true",
+          pode_tratar: 1,
+          tratamento: "constructor",
+          prazo: {},
+          evidencias: Infinity,
         },
       ],
     });
@@ -53,7 +58,11 @@ describe("fronteiras das conferências", () => {
       onde: "Sem área",
       exemplos: ["123"],
       primeiraVez: null,
-      podeIgnorar: false,
+      podeGerir: false,
+      podeTratar: false,
+      tratamento: "PENDENTE",
+      prazo: null,
+      evidencias: 0,
     });
     expect(contagemPorModulo(lista)).toEqual({
       analises: 0,

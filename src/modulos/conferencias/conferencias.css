@@ -120,13 +120,95 @@
   color: var(--text-secondary);
   font-size: var(--text-body-sm);
 }
-.conf-ignorados {
+.conf-recolhidos {
   display: grid;
   gap: var(--space-2);
   justify-items: start;
 }
-.conf-ignorados .conf-lista {
+.conf-recolhidos .conf-lista {
   justify-self: stretch;
+}
+
+/* ── Central de avisos: grupos por edital, situação, prazo ──────────── */
+.conf-grupo {
+  display: grid;
+  gap: var(--space-2);
+}
+.conf-grupo__titulo {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-semibold);
+}
+.conf-grupo__titulo small {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: normal;
+}
+.conf-aviso__motivo {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  overflow-wrap: anywhere;
+}
+.conf-prazo--vencido {
+  color: var(--state-danger);
+  font-weight: var(--font-weight-semibold);
+}
+.conf-painel {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+}
+.conf-historico,
+.conf-evidencias {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-caption);
+}
+.conf-historico li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-2);
+}
+.conf-historico__quando {
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.conf-historico__motivo {
+  display: block;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+.conf-evidencia {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  overflow-wrap: anywhere;
+}
+.conf-evidencia small {
+  color: var(--text-secondary);
+}
+.conf-evidencia--retirada {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+.conf-evidencia__tipo {
+  font-weight: var(--font-weight-semibold);
+}
+.conf-caso__evidencia {
+  justify-self: start;
+  margin-top: var(--space-1);
 }
 
 /* ── Casos de um aviso e busca em todos ─────────────────────────────── */
@@ -256,25 +338,30 @@
   color: var(--state-info);
 }
 
-/* ── Ignorar com motivo ──────────────────────────────────────────────── */
-.conf-ignorar {
+/* ── Formulários da central (situação, responsável, evidência) ───────── */
+.conf-form {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--space-2);
 }
-.conf-ignorar label {
-  font-size: var(--text-caption);
-  font-weight: 600;
-}
-.conf-ignorar textarea {
+.conf-form textarea {
   width: 100%;
   resize: vertical;
 }
-.conf-ignorar__erro {
+.conf-form__caso {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--text-caption);
+}
+.conf-erro {
   color: var(--state-danger);
   font-size: var(--text-caption);
 }
-.conf-ignorar__acoes {
+.conf-form__acoes {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--space-2);
 }

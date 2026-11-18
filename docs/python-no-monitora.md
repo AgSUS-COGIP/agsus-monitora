@@ -164,7 +164,7 @@ Limites conhecidos (a acertar com os dados reais, depois do ensaio):
   `documental.teto_experiencia` da versão vigente da regra e só confere os editais que o tiverem.
 - Nota final × soma: confere `nota_final_ajustada` contra formação + cursos + experiência +
   critério étnico (tolerância 0,01), só quando as quatro parciais existem. Se algum edital somar de
-  outro jeito, o aviso pode ser ignorado com motivo — e a regra, ajustada.
+  outro jeito, o aviso pode ser dispensado com justificativa — e a regra, ajustada.
 - Mesmo candidato em duas vagas da lista de aprovados: as listas não têm CPF; a pessoa é achada
   pelo código do candidato da análise ou, nas listas por planilha, pelo nome normalizado (em hash).
   O vínculo é a matrícula (em hash, 20261024090000): é crítico só com duas matrículas Contratado

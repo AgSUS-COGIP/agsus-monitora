@@ -15,13 +15,35 @@ export interface Aviso {
   quantidade: number;
   exemplos: readonly string[];
   resumo: string;
-  situacao: "ABERTO" | "IGNORADO";
+  /** O que a conferência acha: ABERTO (achado na última execução) ou RESOLVIDO. */
+  situacao: "ABERTO" | "RESOLVIDO";
   primeiraVez: Date | null;
+  /** A última execução que achou o aviso (a "rechecagem"). */
   ultimaVez: Date | null;
-  ignoradoEm: Date | null;
+  resolvidoEm: Date | null;
+  /** O que a equipe fez (TB_AVISO_CONFERENCIA.TP_TRATAMENTO, 20261118120000). */
+  tratamento: Tratamento;
+  tratadoEm: Date | null;
+  tratadoPor: string;
+  /** O último motivo do histórico (tratamento, reabertura ou rechecagem). */
   motivo: string | null;
-  podeIgnorar: boolean;
+  responsavelId: string | null;
+  responsavel: string;
+  /** "aaaa-mm-dd" ou null. */
+  prazo: string | null;
+  evidencias: number;
+  /** Dispensar e atribuir (gestor do módulo ou administrador global). */
+  podeGerir: boolean;
+  /** Mudar o tratamento e juntar evidência (o gestor ou o responsável). */
+  podeTratar: boolean;
 }
+export type Tratamento =
+  | "PENDENTE"
+  | "EM_ANALISE"
+  | "AGUARDANDO_DOCUMENTO"
+  | "CORRIGIDO"
+  | "RECHECADO_SEM_PROBLEMA"
+  | "DISPENSADO";
 export interface ListaDeAvisosNormalizada {
   geradoEm: Date | null;
   ultimaExecucao: {
@@ -29,8 +51,48 @@ export interface ListaDeAvisosNormalizada {
     fim: Date | null;
     situacao: string;
   } | null;
+  /** Abertos que contam no selo (todos menos os dispensados). */
   abertos: readonly Aviso[];
-  ignorados: readonly Aviso[];
+  dispensados: readonly Aviso[];
+  /** Resolvidos pela conferência nos últimos 30 dias. */
+  resolvidos: readonly Aviso[];
+}
+export interface GrupoDeAvisos {
+  chave: string;
+  titulo: string;
+  avisos: readonly Aviso[];
+}
+export interface EventoDoHistorico {
+  id: string;
+  texto: string;
+  motivo: string;
+  por: string;
+  em: Date | null;
+}
+export interface EvidenciaDoAviso {
+  id: string;
+  tipo: "SEI" | "LINK" | "NOTA";
+  descricao: string;
+  url: string | null;
+  caso: string | null;
+  ativa: boolean;
+  por: string;
+  em: Date | null;
+  retiradaEm: Date | null;
+}
+export interface HistoricoDoAviso {
+  eventos: readonly EventoDoHistorico[];
+  evidencias: readonly EvidenciaDoAviso[];
+}
+export interface NovaEvidencia {
+  tipo: string;
+  descricao: string;
+  url?: string;
+  chaveDoCaso?: string | null;
+}
+export interface PessoaResponsavel {
+  id: string;
+  nome: string;
 }
 export interface AnaliseDoCaso {
   id: string | null;
@@ -133,14 +195,15 @@ export interface SnapshotDosAvisos {
   readonly lista: ListaDeAvisosNormalizada | null;
   readonly erro: string;
   readonly erroCodigo: string;
-  readonly ignorando: string | null;
-  readonly erroAoIgnorar: string;
+  /** O aviso com uma ação em andamento (tratar, atribuir, evidência). */
+  readonly agindo: string | null;
+  readonly erroDaAcao: string;
 }
 type RespostaDosAvisos = {
   data: unknown;
   error: { message?: string; code?: string } | null;
 };
-/** Usa apenas as três RPCs dos avisos e o cliente compartilhado do app. */
+/** Usa apenas as RPCs dos avisos e o cliente compartilhado do app. */
 export interface ClienteDosAvisos {
   rpc(
     nome: "listar_avisos_conferencia_se_mudou",
@@ -151,8 +214,38 @@ export interface ClienteDosAvisos {
     },
   ): PromiseLike<RespostaDosAvisos>;
   rpc(
-    nome: "ignorar_aviso_conferencia",
-    parametros: { p_id: string; p_motivo: string },
+    nome: "tratar_aviso_conferencia",
+    parametros: { p_id: string; p_tratamento: string; p_motivo: string | null },
+  ): PromiseLike<RespostaDosAvisos>;
+  rpc(
+    nome: "atribuir_aviso_conferencia",
+    parametros: {
+      p_id: string;
+      p_responsavel: string | null;
+      p_prazo: string | null;
+    },
+  ): PromiseLike<RespostaDosAvisos>;
+  rpc(
+    nome: "listar_responsaveis_aviso_conferencia",
+    parametros: { p_id: string },
+  ): PromiseLike<RespostaDosAvisos>;
+  rpc(
+    nome: "incluir_evidencia_aviso_conferencia",
+    parametros: {
+      p_id: string;
+      p_tipo: string;
+      p_descricao: string;
+      p_url: string | null;
+      p_chave_caso: string | null;
+    },
+  ): PromiseLike<RespostaDosAvisos>;
+  rpc(
+    nome: "retirar_evidencia_aviso_conferencia",
+    parametros: { p_evidencia: string; p_motivo: string },
+  ): PromiseLike<RespostaDosAvisos>;
+  rpc(
+    nome: "listar_historico_aviso_conferencia",
+    parametros: { p_id: string },
   ): PromiseLike<RespostaDosAvisos>;
   rpc(
     nome: "listar_casos_aviso_conferencia",
@@ -170,7 +263,20 @@ export interface EstadoDosAvisos {
   assinar(ouvinte: () => void): () => void;
   obter(): SnapshotDosAvisos;
   carregar(filtro?: FiltroDosAvisos): Promise<void>;
-  ignorar(id: string, motivo: string): Promise<boolean>;
+  tratar(id: string, tratamento: Tratamento, motivo: string): Promise<boolean>;
+  atribuir(
+    id: string,
+    responsavel: string | null,
+    prazo: string | null,
+  ): Promise<boolean>;
+  responsaveis(id: string): Promise<PessoaResponsavel[]>;
+  incluirEvidencia(id: string, evidencia: NovaEvidencia): Promise<boolean>;
+  retirarEvidencia(
+    avisoId: string,
+    evidenciaId: string,
+    motivo: string,
+  ): Promise<boolean>;
+  historico(id: string): Promise<HistoricoDoAviso>;
   listarCasos(
     consulta?: ConsultaDeCasos,
   ): Promise<{ total: number; casos: Caso[] }>;

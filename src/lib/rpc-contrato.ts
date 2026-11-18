@@ -910,7 +910,7 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     argumentos: ["p_area", "p_modulo", "p_versao"],
     critica: false,
     resumo:
-      "listar_avisos_conferencia com versão (20261015000000): avisos abertos e ignorados das conferências que a pessoa pode ver (módulo, área e recorte do edital; cargas e avisos sem área, só o administrador global), sem campos nulos e sem `exemplos` quando o aviso tem casos; p_versao igual à atual devolve só `inalterado`. Cartão do Status das atualizações e selo de cada tela.",
+      "listar_avisos_conferencia com versão (20261015000000): avisos abertos e os resolvidos nos últimos 30 dias que a pessoa pode ver (módulo, área e recorte do edital; cargas e avisos sem área, só o administrador global), com o tratamento da equipe, último motivo, responsável, prazo, nº de evidências, pode_gerir e pode_tratar (20261118120000), sem campos nulos e sem `exemplos` quando o aviso tem casos; p_versao igual à atual devolve só `inalterado`. Cartão do Status das atualizações e selo de cada tela.",
   },
   listar_casos_aviso_conferencia: {
     argumentos: [
@@ -925,11 +925,42 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     resumo:
       "Casos de um aviso de conferência, ou de todos os avisos que a pessoa vê (com busca), em páginas de até 1000 (20261007120000; 20261007240000 resolve todos os módulos): tipo e resolução (ok, removido, sem_acesso), código, nome, edital, vaga, situação e datas da análise ou do registro do módulo (aprovado, entrevista, lista, ajuste, vaga), com a permissão daquele módulo; o motivo; as análises do candidato em dois editais e as vagas da pessoa na lista de aprovados. Busca por código, nome ou vaga, sem acento. Referência só quando não é UUID. Sem CPF. Gaveta dos avisos e CSV.",
   },
-  ignorar_aviso_conferencia: {
-    argumentos: ["p_id", "p_motivo"],
+  // ── Central de avisos (20261118120000_central_de_avisos_das_conferencias.sql) ──
+  tratar_aviso_conferencia: {
+    argumentos: ["p_id", "p_tratamento", "p_motivo"],
     critica: false,
     resumo:
-      "Ignora um aviso de conferência aberto com motivo (10 a 500 caracteres): administrador global ou quem administra o módulo (classificação: editor). Volta a aberto se a quantidade crescer.",
+      "Muda o tratamento de um aviso aberto: EM_ANALISE, AGUARDANDO_DOCUMENTO, CORRIGIDO (o gestor do módulo ou o responsável; os dois últimos com motivo de 3 a 500) ou DISPENSADO (só o gestor ou o administrador global, justificativa de 10 a 500; volta a pendente se a quantidade crescer). Sem CPF nem e-mail no motivo. Grava o histórico.",
+  },
+  atribuir_aviso_conferencia: {
+    argumentos: ["p_id", "p_responsavel", "p_prazo"],
+    critica: false,
+    resumo:
+      "Põe ou tira o responsável (perfil ativo com acesso ao módulo) e o prazo (de hoje a um ano, só com responsável) de um aviso aberto. Só o gestor do módulo ou o administrador global. Grava o histórico.",
+  },
+  listar_responsaveis_aviso_conferencia: {
+    argumentos: ["p_id"],
+    critica: false,
+    resumo:
+      "Quem pode ser responsável por um aviso: perfis ativos com acesso ao módulo (id do usuário e nome). Só o gestor do módulo ou o administrador global.",
+  },
+  incluir_evidencia_aviso_conferencia: {
+    argumentos: ["p_id", "p_tipo", "p_descricao", "p_url", "p_chave_caso"],
+    critica: false,
+    resumo:
+      "Junta uma evidência a um aviso aberto: SEI, LINK (https) ou NOTA, de 3 a 500 sem CPF nem e-mail, do aviso ou de um caso dele (analise:, codigo: ou referencia:). O gestor do módulo ou o responsável. Grava o histórico.",
+  },
+  retirar_evidencia_aviso_conferencia: {
+    argumentos: ["p_evidencia", "p_motivo"],
+    critica: false,
+    resumo:
+      "Retira (exclusão lógica) uma evidência de um aviso aberto, com motivo de 3 a 500. O gestor do módulo ou o responsável. Grava o histórico.",
+  },
+  listar_historico_aviso_conferencia: {
+    argumentos: ["p_id"],
+    critica: false,
+    resumo:
+      "O histórico de um aviso (achado, reaberto, tratamento, responsável e prazo, evidência, rechecagem), do mais novo ao mais velho, com motivo, quem (ou a conferência) e quando, e as evidências ativas e retiradas. Quem vê o aviso.",
   },
   // ── Entrevistas no sistema (20260930220000_entrevistas_roteiros_e_notas.sql)
   listar_roteiros_entrevista: {
