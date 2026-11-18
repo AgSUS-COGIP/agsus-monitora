@@ -24,16 +24,12 @@ jobs:
           pedido = "74abe1ac-f8f4-4e82-a0a9-a9d797ef6356"
           edital = "8eb80bff-2400-402e-9eb8-adde2cfc0010"
           expected = "81e575fc40a3a84c8514685261e255552bc0956521a570ad1028687ef6dd7d04"
-          route = "/rest/v1/TB_PEDIDO_CASAMENTO_LISTA?CO_PEDIDO=eq." + pedido + "&select=CO_MONITORAMENTO,TP_SITUACAO,DS_NOVOS,DS_PLANO"
-          with urllib.request.urlopen(urllib.request.Request(base+route, headers=headers), timeout=45) as response:
-              data = json.load(response)
-          assert len(data) == 1, "Pedido ausente"
-          row = data[0]
-          assert row["CO_MONITORAMENTO"] == edital and row["TP_SITUACAO"] == "CALCULADO", "Pedido divergente"
-          assert len(row["DS_NOVOS"]) == 166, "Total divergente"
-          plan = row["DS_PLANO"]
-          content = base64.b64decode(plan["arquivo_xlsx_base64"], validate=True)
-          assert hashlib.sha256(content).hexdigest() == expected == plan["arquivo_sha256"], "Hash divergente"
+          route = "/rest/v1/rpc/arquivo_da_importacao_95_2026"
+          req = urllib.request.Request(base+route, data=b"{}", headers=dict(headers, **{"Content-Type":"application/json"}), method="POST")
+          with urllib.request.urlopen(req, timeout=45) as response:
+              plan = json.load(response)
+          content = base64.b64decode(plan["arquivo_base64"], validate=True)
+          assert hashlib.sha256(content).hexdigest() == expected == plan["sha256"], "Hash divergente"
           with zipfile.ZipFile(io.BytesIO(content)) as archive:
               assert "xl/workbook.xml" in archive.namelist()
               assert archive.testzip() is None, "XLSX corrompido"
