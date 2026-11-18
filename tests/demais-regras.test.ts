@@ -229,6 +229,7 @@ import {
   composicaoDaLinha,
   composicaoDoIndicador,
 } from "../src/lib/visao-geral/composicao-dos-numeros.ts";
+import { avisosDoEdital } from "../src/lib/visao-geral/avisos-do-edital.ts";
 
 bloco("arredondamento-dos-percentuais", () => {
   /*
@@ -5959,6 +5960,37 @@ bloco("lib/composicao-dos-numeros", () => {
       // Sem edital sem resultado, Em seleção não tem o que compor.
       expect(composicaoDoIndicador([LINHAS[0]!], "emSelecao")).toBeNull();
       expect(composicaoDoIndicador([], "vagas")).toBeNull();
+    });
+  });
+});
+
+bloco("lib/avisos-do-edital", () => {
+  /* A gaveta da Visão geral mostra só os avisos do edital da linha. */
+  describe("avisos do edital", () => {
+    const lista = {
+      geradoEm: null,
+      abertos: [
+        { id: "1", editalId: "e1" },
+        { id: "2", editalId: "e2" },
+        { id: "3", editalId: null },
+      ],
+      dispensados: [{ id: "4", editalId: "e1" }],
+      resolvidos: [{ id: "5", editalId: "e1" }],
+    };
+
+    it("abertos e dispensados do edital; os resolvidos ficam na central", () => {
+      expect(avisosDoEdital(lista, "e1")).toEqual({
+        geradoEm: null,
+        abertos: [{ id: "1", editalId: "e1" }],
+        dispensados: [{ id: "4", editalId: "e1" }],
+        resolvidos: [],
+      });
+    });
+
+    it("sem lista ou sem edital, nada", () => {
+      expect(avisosDoEdital(null, "e1")).toBeNull();
+      expect(avisosDoEdital(lista, "")).toBeNull();
+      expect(avisosDoEdital(lista, 7)?.abertos).toEqual([]);
     });
   });
 });

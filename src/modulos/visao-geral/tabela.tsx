@@ -235,6 +235,8 @@ type Origens = {
     linha: LinhaDaVisaoGeral,
     origem: Extract<OrigemDoNumero, { tipo: "tela" }>,
   ) => void;
+  /** O selo de Atenção: os detalhes, nos avisos do edital. */
+  aoAbrirAvisos: (linha: LinhaDaVisaoGeral) => void;
 };
 
 const ROTULO_DO_NUMERO: Readonly<
@@ -490,13 +492,20 @@ function celula(
       return (
         <td key={campo} className="visao-geral-motivos">
           {(linha.atencao || []).map((motivo) => (
-            <Selo
+            // O selo abre os detalhes nos avisos de conferência do edital.
+            <button
               key={motivo.codigo}
-              tom={seloDoMotivo(motivo)}
-              titulo={motivo.rotulo}
+              type="button"
+              className="visao-geral-selo-botao"
+              data-acao="avisos-do-edital"
+              onClick={() => origens.aoAbrirAvisos(linha)}
             >
-              <span className="visao-geral-motivo-texto">{motivo.rotulo}</span>
-            </Selo>
+              <Selo tom={seloDoMotivo(motivo)} titulo={motivo.rotulo}>
+                <span className="visao-geral-motivo-texto">
+                  {motivo.rotulo}
+                </span>
+              </Selo>
+            </button>
           ))}
         </td>
       );
@@ -528,7 +537,7 @@ export function TabelaDeProcessos({
   podeAbrirTela = () => false,
   aoAbrirOrigem = () => {},
 }: PropsComTextos & {
-  aoAbrir: (linha: LinhaDaVisaoGeral) => void;
+  aoAbrir: (linha: LinhaDaVisaoGeral, secao?: string) => void;
   agora: () => Date;
   /** A pessoa pode abrir a tela de destino de um número (permissão da página). */
   podeAbrirTela?: Origens["podeAbrir"];
@@ -571,6 +580,7 @@ export function TabelaDeProcessos({
     comListas: e.comListas,
     podeAbrir: podeAbrirTela,
     aoAbrir: aoAbrirOrigem,
+    aoAbrirAvisos: (linha) => aoAbrir(linha, "avisos"),
   };
   const colunas = COLUNAS_DA_TABELA.filter((c) =>
     e.colunas.includes(c.campo),

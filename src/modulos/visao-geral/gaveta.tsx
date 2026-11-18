@@ -5,8 +5,12 @@ import { formatNumberBR } from "../../lib/base/formatters";
 import {
   contratacoesAlemDasVagas,
   contratadasImediatas,
+  temNumero,
   vagasSemContratacao,
 } from "../../lib/visao-geral/indicadores-do-monitoramento.ts";
+import type { ClienteDosAvisos } from "../conferencias/tipos.ts";
+import { lazy, Suspense, useEffect, useRef } from "react";
+import { importarComRecarga } from "../../lib/carga/importar-com-recarga.ts";
 import {
   numeroDoFunil,
   textoDaFonteDoFunil,
@@ -22,22 +26,47 @@ import { Gaveta, GradeDeKv, Kv, Secao } from "../../ui/index.ts";
 
 /*
   Os detalhes de um processo seletivo (clique na linha da tabela ou num item
-  de "Atenção"): status e prazo do cronograma, provimento, o andamento do
-  cronograma e as informações do edital. Ações: abrir o edital (link), a
+  de "Atenção"): status e prazo do cronograma, provimento, o resultado (lista
+  vigente e admissões conciliadas com o RH), os avisos de conferência abertos
+  do edital (sob demanda), o andamento do cronograma e as informações do
+  edital. Ações: abrir o edital (link), a
   linha do tempo do cronograma (a do Núcleo, só leitura) e voltar à linha.
 */
 
 const fmt = (valor: unknown) => formatNumberBR(valor);
+const numeroOuTraco = (valor: unknown) => (temNumero(valor) ? fmt(valor) : "—");
+// Os avisos (e a central que os desenha) chegam só quando a gaveta abre.
+const AvisosDoEdital = lazy(
+  importarComRecarga(() => import("./avisos-do-edital.tsx")),
+);
 
 export function GavetaDoProcesso({
   linha,
   aoFechar,
   aoVoltarALinha,
+  area = "",
+  supabase = null,
+  aoAbrirCentral = null,
+  secaoInicial = "",
 }: {
   linha: LinhaDaVisaoGeral;
   aoFechar: () => void;
   aoVoltarALinha: () => void;
+  /** A área da página: os avisos são lidos dela e recortados pelo edital. */
+  area?: string;
+  supabase?: ClienteDosAvisos | null;
+  /** Leva à central de avisos (Status das atualizações); null sem acesso. */
+  aoAbrirCentral?: (() => void) | null;
+  /** A seção que abre à vista: "avisos" quando veio do selo de Atenção. */
+  secaoInicial?: string;
 }) {
+  const corpo = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!secaoInicial) return;
+    corpo.current
+      ?.querySelector(`[data-section="${secaoInicial}"]`)
+      ?.scrollIntoView?.({ block: "start" });
+  }, [secaoInicial, linha.id]);
   // O dia de Brasília, como a tabela (não o relógio do computador).
   const urgencia = urgenciaDoCronograma(linha, hojeEmBrasilia(new Date()));
   const percentual = Math.max(
@@ -47,6 +76,9 @@ export function GavetaDoProcesso({
   // Há etapas · cálculo automático ou manual · suspenso/paralisado/cancelado.
   const cronograma = descricaoDoCronograma(linha);
   const link = linkSeguro(linha.link_edital);
+  // A lista vigente (do acompanhamento): sem ela, Aprovados e afins são "—".
+  const comLista = temNumero(linha.aprovados);
+  const conciliadas = Number(linha.admissoes) || 0;
   // A linha do tempo é de Editais (a tela fica montada: src/app/telas.tsx).
   const linhaDoTempo = telaPronta("nucleo")?.estado.abrirLinhaDoTempo;
   return (
@@ -60,7 +92,7 @@ export function GavetaDoProcesso({
       resumo={linha.unidade || null}
       rotuloDoFechar="Fechar detalhes"
     >
-      <div className="ui-gaveta-corpo">
+      <div className="ui-gaveta-corpo" ref={corpo}>
         <div
           className="visao-geral-gaveta-situacao"
           data-urgencia={urgencia.tom}
@@ -103,6 +135,54 @@ export function GavetaDoProcesso({
               <span>{texto}</span>
             </p>
           ))}
+        </Secao>
+
+        <Secao icone="fa-trophy" titulo="Resultado" secao="resultado">
+          <GradeDeKv>
+            <Kv rotulo="Aprovados">{numeroOuTraco(linha.aprovados)}</Kv>
+            <Kv rotulo="Aguardando chamada">
+              {numeroOuTraco(linha.cadastro_reserva)}
+            </Kv>
+            <Kv rotulo="Desistentes">
+              {comLista ? fmt(linha.desistentes) : "—"}
+            </Kv>
+            <Kv rotulo="1ª admissão (RH)">
+              {dataCurta(linha.primeira_admissao) || "—"}
+            </Kv>
+            <Kv rotulo="Última admissão (RH)">
+              {dataCurta(linha.ultima_admissao) || "—"}
+            </Kv>
+            <Kv rotulo="Admissões conciliadas">
+              {conciliadas ? fmt(conciliadas) : "—"}
+            </Kv>
+          </GradeDeKv>
+          {!comLista ? (
+            <p className="visao-geral-progresso-texto">
+              <span>Sem lista de aprovados vigente.</span>
+            </p>
+          ) : null}
+        </Secao>
+
+        <Secao
+          icone="fa-triangle-exclamation"
+          titulo="Avisos de conferência"
+          secao="avisos"
+        >
+          <Suspense
+            fallback={
+              <div
+                className="ui-esqueleto ui-esqueleto-linha"
+                aria-hidden="true"
+              />
+            }
+          >
+            <AvisosDoEdital
+              editalId={String(linha.id)}
+              area={area}
+              supabase={supabase}
+              aoAbrirCentral={aoAbrirCentral}
+            />
+          </Suspense>
         </Secao>
 
         <Secao icone="fa-route" titulo="Cronograma" secao="cronograma">

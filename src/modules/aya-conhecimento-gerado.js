@@ -3877,6 +3877,24 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-visao-geral.md",
+    titulo: "Detalhes do edital na Visão geral",
+    perguntas: [
+      "detalhes do processo",
+      "gaveta do edital",
+      "resultado do edital na visao geral",
+      "admissoes conciliadas na gaveta",
+      "avisos do edital",
+      "avisos de conferencia do edital",
+      "selo de atencao",
+      "clicar no selo de atencao",
+    ],
+    resposta:
+      'Clicar numa linha da tabela da Visão geral abre os detalhes do edital. Além da situação, do provimento e do cronograma, há o bloco Resultado: Aprovados e Aguardando chamada (da lista de aprovados vigente; sem lista, "—" e "Sem lista de aprovados vigente."), Desistentes e as admissões conciliadas com o RH (a 1ª e a última admissão e quantas foram conciliadas). Embaixo, os avisos de conferência abertos daquele edital (os mesmos da central de avisos, com os casos, o tratamento e o histórico); quem é administrador global tem também "Abrir na central de avisos" (Configurações › Status das atualizações). Clicar no selo da coluna Atenção abre os detalhes já nos avisos do edital.',
+    fato: "Os detalhes do edital na Visão geral mostram o Resultado (aprovados, aguardando chamada, desistentes e admissões conciliadas com o RH: 1ª, última e quantas) e os avisos de conferência abertos do edital; o selo de Atenção abre direto nos avisos.",
+    fonte: "src/modulos/visao-geral/gaveta.tsx",
+  },
+  {
+    arquivo: "regras-da-visao-geral.md",
     titulo: "Resultado de cada processo seletivo",
     perguntas: [
       "quanto tempo levou o processo seletivo",

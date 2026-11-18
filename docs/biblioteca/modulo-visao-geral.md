@@ -73,6 +73,14 @@ trabalho). De cima para baixo:
   das vagas = dentro + além; Em seleção/Ociosas = vagas do grupo − contratadas nele. Na linha
   (`composicaoDaLinha`): Contratados, Vagas, Sem contratação e Aprovados. Sem parcela que explique,
   nada; as contas são as dos indicadores, para fechar.
+- **Gaveta do edital: Resultado e avisos** (revisão de 17/11/2026): o bloco "Resultado" (aprovados,
+  aguardando chamada, desistentes, admissões do RH: 1ª, última e conciliadas, do acompanhamento) e
+  os avisos de conferência abertos do edital (`avisos-do-edital.tsx`, por `lazy()`: ele e a central
+  de [[modulo-conferencias]] ficam fora do pacote de entrada). A lista é a da área
+  (`listar_avisos_conferencia_se_mudou`), recortada pelo edital (`avisosDoEdital`,
+  `src/lib/visao-geral/avisos-do-edital.ts`); o administrador global tem "Abrir na central de
+  avisos" (`config`, seção `cargas`). O selo de Atenção da tabela abre a gaveta na seção dos avisos
+  (`secaoInicial`).
 - **Selo do cronograma** (`urgenciaDoCronograma`, `seloDoCronograma`, `descricaoDoCronograma` em
   `src/lib/visao-geral/visao-geral.ts`; conferência de 17/11/2026). "Sem cronograma" só quando o edital não
   tem etapa (`temCronogramaCadastrado`: automático, ou percentual, próxima etapa ou etapa atual

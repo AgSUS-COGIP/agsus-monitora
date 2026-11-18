@@ -6673,6 +6673,97 @@ bloco("modulos/visao-geral", async () => {
         expect(document.querySelector("#visaoGeralGaveta")).toBeNull();
       });
 
+      it("a gaveta traz o Resultado e os avisos abertos do edital; o selo de Atenção leva a eles", async () => {
+        const rpc = comLista().rpc;
+        const supabase = {
+          rpc: vi.fn(async (nome, args) =>
+            nome === "listar_avisos_conferencia_se_mudou"
+              ? {
+                  data: {
+                    avisos: [
+                      {
+                        id: "a1",
+                        conferencia: "aprovados_sem_status",
+                        gravidade: "ATENCAO",
+                        modulo: "aprovados",
+                        edital_id: "1",
+                        edital: "03/2026",
+                        quantidade: 2,
+                        situacao: "ABERTO",
+                      },
+                      {
+                        id: "a2",
+                        conferencia: "aprovados_sem_status",
+                        gravidade: "ATENCAO",
+                        modulo: "aprovados",
+                        edital_id: "2",
+                        edital: "11/2025",
+                        quantidade: 1,
+                        situacao: "ABERTO",
+                      },
+                    ],
+                  },
+                  error: null,
+                }
+              : nome === "listar_editais_criticos_manuais"
+                ? {
+                    data: [
+                      {
+                        monitoramento_id: 1,
+                        motivo: "Cronograma suspenso pela diretoria",
+                      },
+                    ],
+                    error: null,
+                  }
+                : rpc(nome, args),
+          ),
+        };
+        await montar({ supabase });
+        await esperar();
+        // O selo de Atenção do 03/2026 abre os detalhes nos avisos dele.
+        await clicar(
+          secao.querySelector(
+            'tr[data-linha="1"] [data-acao="avisos-do-edital"]',
+          ),
+        );
+        await esperar();
+        const gaveta = document.querySelector("#visaoGeralGaveta");
+        expect(gaveta).not.toBeNull();
+        const resultado = gaveta.querySelector('[data-section="resultado"]');
+        expect(resultado.textContent).toContain("Aprovados—");
+        expect(resultado.textContent).toContain(
+          "Sem lista de aprovados vigente.",
+        );
+        // Os avisos chegam por import() (fora do pacote de entrada).
+        await vi.waitFor(
+          async () => {
+            await esperar();
+            expect(
+              gaveta.querySelector("[data-avisos-do-edital]"),
+            ).not.toBeNull();
+            expect(
+              gaveta.querySelector("[data-avisos-do-edital]").textContent,
+            ).toContain("1 aviso");
+          },
+          { timeout: 8000 },
+        );
+        const avisos = gaveta.querySelector("[data-avisos-do-edital]");
+        expect(
+          supabase.rpc.mock.calls.some(
+            ([nome, args]) =>
+              nome === "listar_avisos_conferencia_se_mudou" &&
+              args.p_area === "saude-indigena",
+          ),
+        ).toBe(true);
+        // Só o aviso do edital da linha (o do 11/2025 não entra).
+        expect(avisos.textContent).toContain("1 aviso");
+        expect(avisos.textContent).not.toContain("2 avisos");
+        // Sem ser administrador global, sem o atalho para a central.
+        expect(
+          avisos.querySelector('[data-acao="abrir-central-de-avisos"]'),
+        ).toBeNull();
+      });
+
       it("sem acesso à Lista de aprovados, o número é texto", async () => {
         await montar({
           supabase: comLista(),

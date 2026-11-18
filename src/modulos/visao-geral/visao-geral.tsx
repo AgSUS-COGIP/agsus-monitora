@@ -37,10 +37,14 @@ import {
   Vagas,
 } from "./paineis.tsx";
 import { TabelaDeProcessos } from "./tabela.tsx";
-import { podeBaixarAprovados } from "../../lib/acessos/access-roles.ts";
+import {
+  podeBaixarAprovados,
+  secaoDeConfiguracaoPermitida,
+} from "../../lib/acessos/access-roles.ts";
+import type { ClienteDosAvisos } from "../conferencias/tipos.ts";
 import { telaPermitida } from "../../lib/navegacao/navegacao.ts";
 import { pedirFiltro } from "../../app/pedido-de-filtro.ts";
-import { irParaTela } from "../../app/ir-para-tela.ts";
+import { irParaTela, type JanelaDoApp } from "../../app/ir-para-tela.ts";
 
 type PerfilDaNavegacao = Parameters<typeof telaPermitida>[1];
 
@@ -145,9 +149,22 @@ export function TelaDaVisaoGeral({
   const textos = usarTextos(configuracoes);
   const mapa = mapaDaVisaoGeral(e.area);
   const [aberta, setAberta] = useState<string | null>(null);
+  // A seção da gaveta à vista: "avisos" quando veio do selo de Atenção.
+  const [secaoDaGaveta, setSecaoDaGaveta] = useState("");
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
   // A linha aberta segue os dados: recarga atualiza a gaveta; se sumir, fecha.
-  const abrir = (linha: LinhaDaVisaoGeral) => setAberta(String(linha.id));
+  const abrir = (linha: LinhaDaVisaoGeral, secao = "") => {
+    setSecaoDaGaveta(secao);
+    setAberta(String(linha.id));
+  };
+  // A central de avisos (Configurações › Status das atualizações) é do administrador global.
+  const perfilAtual = obterPerfil?.() || null;
+  const abrirCentral = secaoDeConfiguracaoPermitida(perfilAtual, "cargas")
+    ? () => {
+        setAberta(null);
+        (window as JanelaDoApp).navigate?.("config", { secao: "cargas" });
+      }
+    : null;
   const linhaAberta = aberta
     ? e.linhasDaArea.find((linha) => String(linha.id) === aberta) || null
     : null;
@@ -231,6 +248,10 @@ export function TelaDaVisaoGeral({
       {linhaAberta ? (
         <GavetaDoProcesso
           linha={linhaAberta}
+          area={e.area}
+          supabase={supabase as ClienteDosAvisos | null}
+          aoAbrirCentral={abrirCentral}
+          secaoInicial={secaoDaGaveta}
           aoFechar={() => setAberta(null)}
           aoVoltarALinha={() => {
             setAberta(null);

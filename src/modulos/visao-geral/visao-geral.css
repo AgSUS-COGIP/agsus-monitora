@@ -819,3 +819,27 @@
   + .visao-geral-composicao-passo {
   margin-top: var(--space-2);
 }
+
+/* O selo de Atenção abre os avisos do edital na gaveta (tabela.tsx). */
+.visao-geral-selo-botao {
+  display: inline-flex;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+.visao-geral-selo-botao:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+.visao-geral-avisos-do-edital {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+.visao-geral-avisos-do-edital > :not(button) {
+  justify-self: stretch;
+}
