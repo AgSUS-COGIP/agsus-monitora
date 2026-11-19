@@ -23,8 +23,8 @@
   gap: 12px;
   padding: 16px;
   margin-bottom: 12px;
-  background: var(--ui-surface, var(--surface, #fff));
-  border: 1px solid var(--ui-border, #dce5ea);
+  background: var(--ui-surface, var(--surface));
+  border: 1px solid var(--ui-border);
   border-radius: 14px;
 }
 .mapa-tela .mapa-si-resumo__introducao {
@@ -41,7 +41,7 @@
 .mapa-tela .mapa-si-resumo p {
   margin: 0;
   font-size: 0.82rem;
-  color: var(--ui-text-secondary, #61717c);
+  color: var(--ui-text-secondary);
 }
 .mapa-tela .mapa-si-resumo__seletor {
   display: grid;
@@ -55,9 +55,9 @@
   min-height: 40px;
   padding: 8px 12px;
   border-radius: 9px;
-  border: 1px solid var(--ui-border, #cbd5df);
-  background: var(--ui-surface, #fff);
-  color: var(--ui-text, #172d38);
+  border: 1px solid var(--ui-border);
+  background: var(--ui-surface);
+  color: var(--ui-text);
 }
 .mapa-tela .mapa-si-resumo__indicadores {
   display: grid;
@@ -67,7 +67,7 @@
 .mapa-tela .mapa-si-resumo__indicadores > div {
   min-width: 0;
   padding: 12px;
-  border: 1px solid var(--ui-border, #dce5ea);
+  border: 1px solid var(--ui-border);
   border-radius: 10px;
   display: grid;
   gap: 3px;
