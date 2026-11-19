@@ -17,6 +17,7 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { achar, acharTodos } from "./dom.ts";
 import { definido } from "./definido.ts";
+import { RevogarDecisao } from "../src/modulos/avaliacao-documental/decisao-do-lote.tsx";
 import { EditaisDaPendencia } from "../src/modulos/visao-geral/editais-da-pendencia.tsx";
 import type { LinhaDaVisaoGeral } from "../src/modulos/visao-geral/tipos.ts";
 import { InscricoesDoEdital } from "../src/modulos/avaliacao-documental/inscricoes-do-edital.tsx";
@@ -3244,5 +3245,53 @@ bloco("modulos/visao-geral-pede-acao", () => {
     await montar({ podeAgir: false });
     expect(editais()).toEqual(["e1", "e2"]);
     expect(document.querySelector('[data-acao="importar-lista"]')).toBeNull();
+  });
+});
+
+bloco("modulos/avaliacao-documental-revogar-decisao-de-lote", () => {
+  /*
+    "Revogar decisão de lote" (src/modulos/avaliacao-documental/decisao-do-lote.tsx):
+    na ficha que saiu do lote, o mesmo Revogar decisão, com o nome da ação e
+    o motivo obrigatório. Dados fictícios.
+  */
+  let raiz: Root | null = null;
+  afterEach(async () => {
+    const montada = raiz;
+    if (montada) await act(async () => montada.unmount());
+    raiz = null;
+    document.body.innerHTML = "";
+  });
+
+  it("com o nome da ação e o motivo obrigatório, chama a revogação", async () => {
+    const aoRevogar = vi.fn(async () => ({ ok: true }));
+    const caixa = document.createElement("div");
+    document.body.append(caixa);
+    const nova = createRoot(caixa);
+    raiz = nova;
+    await act(async () =>
+      nova.render(
+        h(RevogarDecisao, {
+          c: { codigo: "7003", entrada: "DECISAO", decisao: "Critério CORES" },
+          aoRevogar,
+          rotulo: "Revogar decisão de lote",
+        }),
+      ),
+    );
+    const abrir = caixa.querySelector("[data-acao='abrir-revogar-decisao']");
+    expect(abrir?.textContent).toBe("Revogar decisão de lote");
+    await clicar(abrir);
+    const confirmar = caixa.querySelector<HTMLButtonElement>(
+      "[data-acao='revogar-decisao']",
+    );
+    expect(confirmar?.disabled).toBe(true);
+    await digitar(
+      caixa.querySelector("[data-revogar='7003'] input"),
+      "Não avaliado na planilha do edital",
+    );
+    expect(confirmar?.disabled).toBe(false);
+    await clicar(confirmar);
+    expect(aoRevogar).toHaveBeenCalledWith(
+      "Não avaliado na planilha do edital",
+    );
   });
 });
