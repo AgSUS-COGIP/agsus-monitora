@@ -1793,6 +1793,32 @@ bloco("modulos/classificacao", () => {
       expect(cardsDosEditais().map((c) => c.dataset.edital)).toEqual(["e100"]);
     });
 
+    it("Ativos e Histórico: o edital concluído sai da lista de trabalho e fica a um clique", async () => {
+      publicarLinhasDoMonitoramento([
+        { id: "e83", CO_AREA: "saude-indigena", status: "Em andamento" },
+        { id: "e100", CO_AREA: "saude-indigena", status: "Concluído" },
+      ]);
+      await montar(supabaseFalso());
+      const controle = secao.querySelector(
+        "[data-tour='classificacao-ativos-e-historico']",
+      );
+      const opcao = (valor) =>
+        controle.querySelector(`[data-valor='${valor}']`);
+      expect(opcao("ativos").textContent).toBe("Ativos1");
+      expect(opcao("historico").textContent).toBe("Histórico1");
+      expect(cardsDosEditais().map((c) => c.dataset.edital)).toEqual(["e83"]);
+      expect(
+        [...controle.querySelectorAll(".ui-ativos-situacoes li")].map(
+          (li) => li.textContent,
+        ),
+      ).toEqual(["Em andamento 1"]);
+      await clicar(opcao("historico"));
+      expect(cardsDosEditais().map((c) => c.dataset.edital)).toEqual(["e100"]);
+      expect(
+        controle.querySelector(".ui-ativos-situacoes").textContent,
+      ).toContain("Concluído 1");
+    });
+
     it("área sem edital analisado: o seletor diz isso (o banco só manda os editais com análises)", async () => {
       const supabase = supabaseFalso({
         listar_editais_classificacao: () => ({
@@ -5491,6 +5517,55 @@ bloco("modulos/conduzir-entrevistas", async () => {
         p_ate: "2026-11-15",
         p_motivo: "Cronograma em revisão",
       });
+    });
+
+    it("com concluídos na lista, o seletor separa Ativos e Histórico, com a contagem por situação", async () => {
+      publicarLinhasDoMonitoramento([
+        { id: "m1", CO_AREA: "saude-indigena", status: "Em andamento" },
+        { id: "m9", CO_AREA: "saude-indigena", status: "Concluído" },
+      ]);
+      const editais = (todos) => ({
+        data: {
+          admin_global: true,
+          editais: [
+            { id: "m1", edital: "100/2026", unidade: "CASAI Brasília" },
+            ...(todos
+              ? [
+                  {
+                    id: "m9",
+                    edital: "120/2026",
+                    unidade: "DSEI X",
+                    na_janela: false,
+                  },
+                ]
+              : []),
+          ],
+        },
+        error: null,
+      });
+      await montar(
+        supabaseDaConducao({
+          respostas: {
+            listar_editais_entrevista: (args) => editais(args.p_todos),
+          },
+        }),
+      );
+      const seletor = document.getElementById("entrevistasEdital");
+      // Só os ativos: sem grupos.
+      expect(
+        seletor.querySelectorAll("optgroup[label^='Ativos']"),
+      ).toHaveLength(0);
+      await escolher(seletor, "__mostrar-todos__");
+      await esperar();
+      const grupos = [...seletor.querySelectorAll("optgroup")];
+      expect(grupos.map((g) => g.label)).toEqual([
+        "Ativos · Em andamento 1",
+        "Histórico · Concluído 1",
+        "Mais editais",
+      ]);
+      expect(
+        [...grupos[1].querySelectorAll("option")].map((o) => o.value),
+      ).toEqual(["m9"]);
     });
 
     it("sem nível de editor, tudo aparece só para consulta", async () => {

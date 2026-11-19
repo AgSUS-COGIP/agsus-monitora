@@ -9,7 +9,8 @@ atualizado: 2026-11-17
 A tela `#page-classificacao` (view `classificacao`, rota `/<área>/classificacao[/<edital>]`), em
 `src/modulos/classificacao/`: `criarClassificacao()` devolve o conteúdo e o controlador; a rota
 (`src/app/telas.tsx`) chama `render()` a cada abertura e `abrirEdital()` com o edital do endereço.
-Área = a atual do app; sem edital, a entrada mostra a busca e os cards dos editais
+Área = a atual do app; sem edital, a entrada mostra a busca e os cards dos editais, Ativos e
+Histórico separados (`AtivosEHistorico`; o status vem das linhas do monitoramento)
 (`entrada-da-classificacao.tsx`); escolhido, o nome fica no cabeçalho com "Trocar". Os cards trazem
 só os editais da área com análise curricular ativa (qualquer origem) ou com lista gerada, ativos e
 em andamento primeiro (`listar_editais_classificacao`,

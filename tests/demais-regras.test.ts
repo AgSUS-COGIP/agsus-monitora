@@ -2,6 +2,18 @@
 import { bloco } from "./apoio/bloco.ts";
 import * as alcanceDaSelecaoNs from "../src/lib/base/alcance-da-selecao.ts";
 import {
+  contarPorSituacao,
+  separarAtivosEHistorico,
+  textoDasSituacoes,
+  vistaDaLista,
+} from "../src/lib/base/ativos-e-historico.ts";
+import {
+  comSituacaoDoMonitoramento,
+  editalDoHistorico,
+  situacaoDoEdital,
+  tomDaSituacaoDoEdital,
+} from "../src/lib/editais/editais-ativos.ts";
+import {
   arquivoDaTabela,
   nomeDoArquivoExportado,
   pdfDaTabela,
@@ -6975,6 +6987,75 @@ bloco("lib/presets-de-colunas", () => {
     );
     expect(presetDasColunas(["unidade", "edital", "status"])).toBe("");
     expect(presetDasColunas(null)).toBe("");
+  });
+});
+
+bloco("lib/base/ativos-e-historico", () => {
+  const EDITAIS = [
+    { id: "a", status: "Em andamento" },
+    { id: "b", status: "Concluído" },
+    { id: "c", status: "Suspenso" },
+    { id: "d", status: "em Andamento" },
+    { id: "e", status: "Cancelado" },
+    { id: "f", status: "Em andamento", ativo: false },
+    { id: "g", status: "Cronograma encerrado" },
+    { id: "h", status: "" },
+  ];
+
+  it("separa ativos e histórico na ordem em que vieram", () => {
+    const { ativos, historico } = separarAtivosEHistorico(
+      EDITAIS,
+      editalDoHistorico,
+    );
+    expect(ativos.map((e) => e.id)).toEqual(["a", "c", "d", "h"]);
+    expect(historico.map((e) => e.id)).toEqual(["b", "e", "f", "g"]);
+    expect(separarAtivosEHistorico(null, () => true)).toEqual({
+      ativos: [],
+      historico: [],
+    });
+  });
+
+  it("conta por situação: grafias juntas, mais numerosa primeiro", () => {
+    const ativos = EDITAIS.filter((e) => !editalDoHistorico(e));
+    const contagem = contarPorSituacao(ativos, situacaoDoEdital);
+    expect(contagem).toEqual([
+      { rotulo: "Em andamento", quantos: 2 },
+      { rotulo: "Sem situação", quantos: 1 },
+      { rotulo: "Suspenso", quantos: 1 },
+    ]);
+    expect(textoDasSituacoes(contagem)).toBe(
+      "Em andamento 2 · Sem situação 1 · Suspenso 1",
+    );
+    expect(textoDasSituacoes([{ rotulo: "Concluído", quantos: 1234 }])).toBe(
+      "Concluído 1.234",
+    );
+  });
+
+  it("o desativado aparece como Desativado; a cor segue o status", () => {
+    expect(situacaoDoEdital({ status: "Em andamento", ativo: false })).toBe(
+      "Desativado",
+    );
+    expect(tomDaSituacaoDoEdital("Concluído")).toBe("aprovado");
+    expect(tomDaSituacaoDoEdital("Cancelado")).toBe("reprovado");
+    expect(tomDaSituacaoDoEdital("Em andamento")).toBe("revisar");
+    expect(tomDaSituacaoDoEdital("Suspenso")).toBe("neutro");
+  });
+
+  it("a vista guardada: só historico muda o padrão", () => {
+    expect(vistaDaLista("historico")).toBe("historico");
+    expect(vistaDaLista("ativos")).toBe("ativos");
+    expect(vistaDaLista({})).toBe("ativos");
+  });
+
+  it("junta o status do monitoramento pelo id", () => {
+    const juntos = comSituacaoDoMonitoramento(
+      [{ id: "x", edital: "1/2026" }, { id: "y" }],
+      [{ id: "x", status: "Concluído", ativo: true }, null, { id: 7 }],
+    );
+    expect(juntos).toEqual([
+      { id: "x", edital: "1/2026", status: "Concluído", ativo: true },
+      { id: "y" },
+    ]);
   });
 });
 

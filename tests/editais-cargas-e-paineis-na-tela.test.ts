@@ -3149,6 +3149,7 @@ bloco("componentes/nucleo", () => {
   beforeEach(() => {
     vi.spyOn(console, "error").mockImplementation(() => {});
     window.localStorage.clear();
+    window.sessionStorage.clear();
   });
 
   afterEach(async () => {
@@ -3195,6 +3196,13 @@ bloco("componentes/nucleo", () => {
     );
   const abrirEdital = async (id: string) =>
     clicar(linha(id)?.querySelector<HTMLElement>('[aria-label^="Editar"]'));
+  /* A vista da tabela: Ativos (o padrão) ou Histórico (concluídos e cancelados). */
+  const vista = (valor: "ativos" | "historico") =>
+    document.querySelector<HTMLElement>(
+      `[data-tour="editais-ativos-e-historico"] [data-valor="${valor}"]`,
+    );
+  const verHistorico = () => clicar(vista("historico"));
+  const verAtivos = () => clicar(vista("ativos"));
 
   describe("tabela de editais", () => {
     it("antes de o legado publicar as linhas, a tabela e os KPIs são skeleton", async () => {
@@ -3230,7 +3238,7 @@ bloco("componentes/nucleo", () => {
           data_inicio: ["2026-05-01", "2026-03-01", "2026-07-01"][i],
         })),
       });
-      expect(linhasDaTabela()).toEqual(["3", "1", "2"]);
+      expect(linhasDaTabela()).toEqual(["3", "1"]);
       const edital = document.querySelector<HTMLElement>(
         '#page-nucleo th[aria-sort="descending"]',
       );
@@ -3245,14 +3253,14 @@ bloco("componentes/nucleo", () => {
             `#page-nucleo .ui-ordenar[title^="Ordenar por ${rotulo}"]`,
           ),
         );
-      // Vagas: 10 (1), 5 (2), 3 (3).
+      // Vagas: 10 (1), 3 (3); o 2 (Concluído) está no Histórico.
       await ordenar("Vagas");
-      expect(linhasDaTabela()).toEqual(["3", "2", "1"]);
+      expect(linhasDaTabela()).toEqual(["3", "1"]);
       await ordenar("Vagas");
-      expect(linhasDaTabela()).toEqual(["1", "2", "3"]);
-      // Unidade: alfabética.
-      await ordenar("Unidade");
-      expect(linhasDaTabela()?.[0]).toBe("2");
+      expect(linhasDaTabela()).toEqual(["1", "3"]);
+      // No Histórico, a mesma ordem vale.
+      await verHistorico();
+      expect(linhasDaTabela()).toEqual(["2"]);
     });
 
     it("colore status e risco, e só faz link de endereço http(s)", async () => {
@@ -3261,21 +3269,24 @@ bloco("componentes/nucleo", () => {
         linha(id)?.querySelector<HTMLElement>(`.ui-selo[data-tom="${tom}"]`)
           ?.textContent;
       expect(selo("1", "info")).toBe("Em andamento");
-      expect(selo("2", "sucesso")).toBe("Concluído");
-      expect(selo("2", "perigo")).toBe("Alto");
       expect(
         linha("1")?.querySelector<HTMLElement>("a.link")?.getAttribute("href"),
       ).toBe("https://exemplo.gov.br/edital-10");
-      expect(linha("2")?.querySelector<HTMLElement>("a")).toBeNull();
       expect(
         linha("1")?.querySelectorAll<HTMLElement>("td.num")[2]?.textContent,
       ).toBe("6");
+      await verHistorico();
+      expect(selo("2", "sucesso")).toBe("Concluído");
+      expect(selo("2", "perigo")).toBe("Alto");
+      expect(linha("2")?.querySelector<HTMLElement>("a")).toBeNull();
     });
 
     it("busca por edital, unidade, status, etapa, risco e processo", async () => {
       await montar();
+      await verHistorico();
       await digitar($("nucleoSearch"), "casai");
       expect(linhasDaTabela()).toEqual(["2"]);
+      await verAtivos();
       await digitar($("nucleoSearch"), "00700.000001");
       expect(linhasDaTabela()).toEqual(["1"]);
       await digitar($("nucleoSearch"), "nada disso");
@@ -3358,6 +3369,7 @@ bloco("componentes/nucleo", () => {
           );
           expect(botao(id)?.getAttribute("title")).toBe("Lista de aprovados");
         }
+        await verHistorico();
         expect(botao("2")?.classList.contains("nucleo-listas-aviso")).toBe(
           true,
         );
@@ -3389,6 +3401,7 @@ bloco("componentes/nucleo", () => {
       await clicar(botao);
       // 10/2026 está em duas linhas da área (1 e 3): o endereço leva o id.
       expect(navigate).toHaveBeenCalledWith("edital", { edital: "1" });
+      await verHistorico();
       await clicar(
         linha("2")?.querySelector<HTMLElement>(".nucleo-pagina-do-edital"),
       );
@@ -3521,9 +3534,11 @@ bloco("componentes/nucleo", () => {
         linha("3")?.querySelector<HTMLElement>(".nucleo-row-alert")
           ?.textContent,
       ).toContain("Sem cronograma");
+      await verHistorico();
       expect(
         linha("2")?.querySelector<HTMLElement>(".nucleo-row-alert"),
       ).toBeNull();
+      await verAtivos();
       expect(linha("1")?.dataset.monitoramentoId).toBe("1");
     });
 
@@ -3544,7 +3559,7 @@ bloco("componentes/nucleo", () => {
       expect(tarja.textContent).toContain("Sem cronograma");
 
       await clicar(tarja.querySelector<HTMLElement>(".ui-chip"));
-      expect(linhasDaTabela()).toEqual(["2", "3", "1"]);
+      expect(linhasDaTabela()).toEqual(["3", "1"]);
       expect($("nucleoActiveAlertFilter")).toBeNull();
     });
 
@@ -3571,24 +3586,28 @@ bloco("componentes/nucleo", () => {
       await montar();
       await clicar(cartao("inativos"));
       expect(linhasDaTabela()).toEqual(["2"]);
+      // O cartão leva à vista dele: o Histórico.
+      expect(vista("historico")?.getAttribute("aria-checked")).toBe("true");
       expect(cartao("inativos")?.getAttribute("aria-pressed")).toBe("true");
       expect($("nucleoActiveAlertFilter")?.textContent).toContain("Situação");
       expect($("nucleoActiveAlertFilter")?.textContent).toContain(
         "Editais inativos",
       );
 
-      // ED-2.2: o mesmo cartão de novo tira o filtro.
+      // ED-2.2: o mesmo cartão de novo tira o filtro (a vista fica).
       await clicar(cartao("inativos"));
-      expect(linhasDaTabela()).toEqual(["2", "3", "1"]);
+      expect(linhasDaTabela()).toEqual(["2"]);
       expect($("nucleoActiveAlertFilter")).toBeNull();
 
       // ED-2.3: o "x" do chip tira.
       await clicar(cartao("ativos"));
       expect(linhasDaTabela()).toEqual(["3", "1"]);
+      expect(vista("ativos")?.getAttribute("aria-checked")).toBe("true");
       await clicar(
         $("nucleoActiveAlertFilter")?.querySelector<HTMLElement>(".ui-chip"),
       );
-      expect(linhasDaTabela()).toEqual(["2", "3", "1"]);
+      expect(linhasDaTabela()).toEqual(["3", "1"]);
+      expect($("nucleoActiveAlertFilter")).toBeNull();
 
       // ED-2.4: outro indicador troca o filtro.
       await clicar(cartao("ativos"));
@@ -3596,6 +3615,36 @@ bloco("componentes/nucleo", () => {
       expect(linhasDaTabela()).toEqual(["3"]);
       expect(cartao("ativos")?.getAttribute("aria-pressed")).toBe("false");
       expect($("nucleoActiveAlertFilter")?.textContent).toContain("Alerta");
+    });
+
+    it("Ativos e Histórico: a tabela abre nos vigentes, o histórico a um clique, com a contagem por situação", async () => {
+      await montar();
+      const controle = definido(
+        document.querySelector<HTMLElement>(
+          '[data-tour="editais-ativos-e-historico"]',
+        ),
+      );
+      const situacoes = () =>
+        [...controle.querySelectorAll(".ui-ativos-situacoes li")].map(
+          (li) => li.textContent,
+        );
+      expect(vista("ativos")?.textContent).toBe("Ativos2");
+      expect(vista("historico")?.textContent).toBe("Histórico1");
+      expect(vista("ativos")?.getAttribute("aria-checked")).toBe("true");
+      expect(linhasDaTabela()).toEqual(["3", "1"]);
+      expect(situacoes()).toEqual(["Em andamento 1", "Planejado 1"]);
+
+      await verHistorico();
+      expect(linhasDaTabela()).toEqual(["2"]);
+      expect(situacoes()).toEqual(["Concluído 1"]);
+
+      // Com o filtro "Editais ativos", ir ao Histórico tira o filtro contrário.
+      await verAtivos();
+      await clicar(cartao("ativos"));
+      expect($("nucleoActiveAlertFilter")).not.toBeNull();
+      await verHistorico();
+      expect($("nucleoActiveAlertFilter")).toBeNull();
+      expect(linhasDaTabela()).toEqual(["2"]);
     });
 
     it("reabrir a página com cache não chama a RPC nem recria os cartões", async () => {
@@ -4178,7 +4227,9 @@ bloco("componentes/nucleo", () => {
       await digitar($("mObs"), "Nota do edital 1");
       await act(async () => definido(controlador).estado.fecharModal());
 
-      await abrirEdital("2");
+      // Outro edital: o 3 (o 2, concluído, está no Histórico).
+      await abrirEdital("3");
+      expect($("editModal")).not.toBeNull();
       expect($("editalRascunho")).toBeNull();
       await act(async () => definido(controlador).estado.fecharModal());
       await abrirEdital("1");
