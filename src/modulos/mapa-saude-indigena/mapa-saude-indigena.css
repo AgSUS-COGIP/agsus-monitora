@@ -430,7 +430,8 @@
   position: absolute;
   z-index: 900;
   right: var(--space-3);
-  bottom: var(--space-6);
+  /* Acima da escala e da atribuição do Leaflet. */
+  bottom: 56px;
   padding: var(--space-1);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
