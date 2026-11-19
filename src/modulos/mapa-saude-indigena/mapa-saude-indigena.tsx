@@ -150,9 +150,7 @@ export function MapaSaudeIndigena({
           <div className="mapa-si-resumo__introducao">
             <div>
               <h2>Consulta territorial</h2>
-              <p>
-                Selecione um DSEI para ver suas unidades.
-              </p>
+              <p>Selecione um DSEI para ver suas unidades.</p>
             </div>
             <label className="mapa-si-resumo__seletor">
               <span>DSEI</span>
