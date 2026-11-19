@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-16
+atualizado: 2026-11-19
 ---
 
 # Módulo: Lista de aprovados
@@ -22,6 +22,15 @@ todas ordenáveis. As ações da linha são uma principal com nome ("Mudar statu
 "⋯ Mais ações de <nome>" (`src/lib/aprovados/acoes-da-linha-dos-aprovados.ts`, `AcoesDaLinha`), com
 "Ver na Classificação" do edital. A gaveta do candidato tem a seção Origem (edital, unidade, a
 lista importada e a data, e "Ver nota e classificação na Classificação").
+
+**Ativos e Histórico** (19/11/2026, abas Aprovados e Resumo por cargo): a lista de trabalho
+(**Ativos**, o padrão) tem só os candidatos de edital vigente e lista ativa; o edital concluído,
+cancelado ou desativado (`src/lib/editais/editais-ativos.ts`, pelo status das linhas do
+monitoramento) e a lista inativa ficam no **Histórico**, a um clique (`AtivosEHistorico`, com a
+contagem de editais por situação; a vista volta no F5). O filtro de Edital, os indicadores, a
+contagem e a exportação partem da vista; trocar de vista recomeça os filtros. Um pedido de filtro
+(faixa das etapas, Visão geral) de um edital do Histórico abre o Histórico nele. A Convocação, o
+sub judice e os modais seguem com a área inteira. Regra: `src/lib/aprovados/ativos-e-historico-dos-aprovados.ts`.
 
 **Filtros** (os mesmos nas abas Aprovados e Resumo por cargo): Edital, Localidade, Cargo, Modalidade
 e Situação. A **Localidade** (16/11/2026) sai do texto do cargo (`src/lib/aprovados/localidade-da-vaga.ts`: o
@@ -136,7 +145,8 @@ o detalhe e o arquivo); arquivo em `src/lib/aprovados/exportacao/exportacao-do-r
 - **Desenho aos poucos:** 50 linhas de vaga por vez, em grupos inteiros (`resumoAteOLimite`), e mais
   50 ao rolar perto do fim ou em "Carregar mais"; o total geral e a exportação são do recorte todo.
   Desenhar tudo de uma vez travava a tela (13 mil vínculos na Saúde Indígena).
-- **Lista inativa** fica fora e é contada à parte. O filtro Situação restringe a base (aviso na aba).
+- **Lista inativa** fica no Histórico (Ativos e Histórico, acima); na vista Histórico, fica fora do
+  resumo e é contada à parte. O filtro Situação restringe a base (aviso na aba).
 - **Exportar** (XLSX, CSV, PDF): o mesmo registro no banco, com `p_conteudo = 'RESUMO'` (migration
   `20261111210000`, para revisão). Sem dado de candidato no arquivo.
 

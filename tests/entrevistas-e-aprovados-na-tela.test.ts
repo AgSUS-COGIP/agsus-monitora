@@ -803,11 +803,13 @@ bloco("componentes/lista-aprovados", () => {
   editais das fixtures precisam estar nas linhas do monitoramento. Registrado
   antes dos outros ganchos, o afterEach roda depois de desmontar.
 */
-  beforeEach(() =>
+  beforeEach(() => {
     publicarLinhasDoMonitoramento(
       ["10", "20"].map((id) => ({ id, CO_AREA: "saude-indigena" })),
-    ),
-  );
+    );
+    // A vista (Ativos ou Histórico) fica na sessão: cada teste começa nos Ativos.
+    sessionStorage.clear();
+  });
   afterEach(() => redefinirDadosDoMonitoramento());
 
   /*
@@ -1057,6 +1059,11 @@ bloco("componentes/lista-aprovados", () => {
     esperar: esperarOJob = async () => {},
     baixar,
   }: OpcoesDaMontagem = {}) {
+    /*
+      Montar de novo no mesmo teste desmonta a tela anterior: viva fora da
+      página, ela continuava a consumir os pedidos de filtro ("approved").
+    */
+    await act(async () => controlador?.raiz?.unmount());
     document.body.innerHTML = `<section id="page-approved" class="page${secaoAtiva ? " active" : ""}"></section>`;
     perfilAtual = perfil;
     await act(async () => {
@@ -1117,6 +1124,10 @@ bloco("componentes/lista-aprovados", () => {
       (linha) =>
         linha.querySelector(".approved-name strong")?.textContent === nome,
     );
+  // Ativos e Histórico: o controle acima dos filtros.
+  const vistaDosAprovados = (valor: "ativos" | "historico") =>
+    achar(`[data-tour="aprovados-ativos-e-historico"] [data-valor="${valor}"]`);
+  const verHistorico = () => clicar(vistaDosAprovados("historico"));
   /*
     As ações da linha (revisão de 17/11/2026): a principal fica à vista e as
     outras no "⋯ Mais ações de <nome>". Devolve a ação pedida, abrindo o menu
@@ -1255,21 +1266,17 @@ bloco("componentes/lista-aprovados", () => {
       await clicar(achar('[data-acao="tentar-novamente"]', $("approvedErro")));
       await esperar(() => new Promise((resolver) => setTimeout(resolver, 0)));
       expect(nomes()).toContain("Ana Ribeiro");
-      expect($("approvedCount").textContent).toBe("4 candidatos");
+      expect($("approvedCount").textContent).toBe("3 candidatos");
     });
 
     it("desenha as linhas e os indicadores", async () => {
       await montar();
-      expect(nomes()).toEqual([
-        "Ana Ribeiro",
-        "Bruno Lima",
-        "Carla Souza",
-        "Diego Alves",
-      ]);
-      expect($("approvedKpiTotal").textContent).toBe("4");
+      // A lista de trabalho (Ativos): a lista inativa do Diego fica no Histórico.
+      expect(nomes()).toEqual(["Ana Ribeiro", "Bruno Lima", "Carla Souza"]);
+      expect($("approvedKpiTotal").textContent).toBe("3");
       expect($("approvedKpiContratado").textContent).toBe("1");
-      expect($("approvedKpiDesistente").textContent).toBe("1");
-      expect($("approvedCount").textContent).toBe("4 candidatos");
+      expect($("approvedKpiDesistente").textContent).toBe("0");
+      expect($("approvedCount").textContent).toBe("3 candidatos");
       expect(
         achar('.approved-status[data-tom="sucesso"]', linhaDe("Ana Ribeiro"))
           .textContent,
@@ -1315,8 +1322,9 @@ bloco("componentes/lista-aprovados", () => {
         undefined,
       ]);
       expect(supabase.rpc).toHaveBeenCalledWith("listar_listas_aprovados");
-      // A tela recorta pela área, como sempre: os 4 são de editais da área.
-      expect($("approvedKpiTotal").textContent).toBe("4");
+      // A tela recorta pela área, como sempre: os 4 são de editais da área
+      // (3 na lista de trabalho; o da lista inativa, no Histórico).
+      expect($("approvedKpiTotal").textContent).toBe("3");
     });
 
     it("avisa o erro de carregamento", async () => {
@@ -1356,7 +1364,7 @@ bloco("componentes/lista-aprovados", () => {
       await clicar(opcaoDoFiltro("approvedFilterCargo", "Médico"));
       expect(nomes()).toEqual(["Bruno Lima"]);
       await clicar(achar('[data-acao="limpar-filtros"]', painel));
-      expect(nomes()).toHaveLength(4);
+      expect(nomes()).toHaveLength(3);
     });
     it("filtra pela localidade do cargo e o Cargo passa a oferecer só os dela", async () => {
       // Sem localidade no texto do cargo, o filtro não aparece.
@@ -1401,7 +1409,13 @@ bloco("componentes/lista-aprovados", () => {
       ]);
     });
     it("escolher um edital encolhe os cargos e descarta o cargo que sumiu", async () => {
-      await montar();
+      // Os dois editais com lista ativa (os dois na lista de trabalho).
+      await montar({
+        supabase: supabaseFalso({
+          candidatos: CANDIDATOS().map((c) => ({ ...c, lista_ativa: true })),
+          listas: [LISTA_ATIVA, { ...LISTA_INATIVA, ativo: true }],
+        }),
+      });
       expect(opcoesDoFiltro("approvedFilterCargo")).toEqual([
         "Dentista",
         "Enfermeiro",
@@ -1426,7 +1440,7 @@ bloco("componentes/lista-aprovados", () => {
       await montar();
       await clicar(opcaoDoFiltro("approvedFilterStatus", "Contratado"));
       expect(nomes()).toEqual(["Ana Ribeiro"]);
-      expect($("approvedKpiTotal").textContent).toBe("4");
+      expect($("approvedKpiTotal").textContent).toBe("3");
     });
 
     it("rolagem contínua da TabelaInfinita: 50 por vez, sem paginação", async () => {
@@ -1487,7 +1501,7 @@ bloco("componentes/lista-aprovados", () => {
       await digitar($("approvedBusca"), "bruno");
       expect(nomes()).toEqual(["Bruno Lima"]);
       // A busca é só da tabela: o contador do topo segue os filtros.
-      expect($("approvedCount").textContent).toBe("4 candidatos");
+      expect($("approvedCount").textContent).toBe("3 candidatos");
       await digitar($("approvedBusca"), "ninguém com esse nome");
       expect($("approvedRows").textContent).toBe(
         "Nenhum resultado para os filtros aplicados.",
@@ -1499,7 +1513,7 @@ bloco("componentes/lista-aprovados", () => {
         ),
       );
       expect($<HTMLInputElement>("approvedBusca").value).toBe("");
-      expect(nomes()).toHaveLength(4);
+      expect(nomes()).toHaveLength(3);
     });
 
     it("ordena pelo cabeçalho (asc → desc → ordem da lista), com aria-sort", async () => {
@@ -1565,6 +1579,7 @@ bloco("componentes/lista-aprovados", () => {
   describe("ações por perfil", () => {
     it("lista inativa: a principal é Abrir e o status aparece bloqueado, com o motivo", async () => {
       await montar();
+      await verHistorico();
       const status = await acaoDaLinha("Diego Alves", "status");
       expect(status?.getAttribute("role")).toBe("menuitem");
       expect(status?.disabled).toBe(true);
@@ -2970,7 +2985,10 @@ bloco("componentes/lista-aprovados", () => {
 
     it("a aba de aprovados diz a origem das listas", async () => {
       await montar({
-        supabase: supabaseFalso({ listas: [DA_CLASSIFICACAO, LISTA_INATIVA] }),
+        supabase: supabaseFalso({
+          listas: [DA_CLASSIFICACAO, { ...LISTA_INATIVA, ativo: true }],
+          candidatos: CANDIDATOS().map((c) => ({ ...c, lista_ativa: true })),
+        }),
       });
       expect(achar("[data-origem-das-listas]").textContent).toBe(
         "Listas: 1 publicada da Classificação · 1 manual (planilha)",
@@ -2982,6 +3000,70 @@ bloco("componentes/lista-aprovados", () => {
   Só as listas e os candidatos dos editais da área escolhida no menu: o
   recorte é pelo conjunto de ids das linhas do monitoramento daquela área.
 */
+  describe("Ativos e Histórico", () => {
+    it("Ativos é a lista de trabalho; o Histórico tem a lista inativa, a um clique", async () => {
+      await montar();
+      expect(vistaDosAprovados("ativos").textContent).toBe("Ativos1");
+      expect(vistaDosAprovados("historico").textContent).toBe("Histórico1");
+      expect(vistaDosAprovados("ativos").getAttribute("aria-checked")).toBe(
+        "true",
+      );
+      expect(opcoesDoFiltro("approvedFilterEdital")).toEqual([
+        "03/2025 · DSEI Manaus",
+      ]);
+      expect($("approvedKpiTotal").textContent).toBe("3");
+      expect(acharTodos("#approvedRows tr").length).toBe(3);
+
+      await verHistorico();
+      expect(nomes()).toEqual(["Diego Alves"]);
+      expect(opcoesDoFiltro("approvedFilterEdital")).toEqual([
+        "04/2025 · CASAI São Paulo",
+      ]);
+      expect($("approvedKpiTotal").textContent).toBe("1");
+      expect($("approvedKpiDesistente").textContent).toBe("1");
+      expect($("approvedCount").textContent).toBe("1 candidato");
+    });
+
+    it("edital concluído vai para o Histórico mesmo com a lista ativa, com a contagem por situação", async () => {
+      publicarLinhasDoMonitoramento([
+        { id: "10", CO_AREA: "saude-indigena", status: "Concluído" },
+        { id: "20", CO_AREA: "saude-indigena", status: "Em andamento" },
+      ]);
+      await montar({
+        supabase: supabaseFalso({
+          listas: [LISTA_ATIVA, { ...LISTA_INATIVA, ativo: true }],
+          candidatos: CANDIDATOS().map((c) => ({ ...c, lista_ativa: true })),
+        }),
+      });
+      expect(nomes()).toEqual(["Diego Alves"]);
+      expect(
+        achar('[data-tour="aprovados-ativos-e-historico"] .ui-ativos-situacoes')
+          .textContent,
+      ).toContain("Em andamento");
+      await verHistorico();
+      expect(nomes()).toEqual(["Ana Ribeiro", "Bruno Lima", "Carla Souza"]);
+      expect(
+        achar('[data-tour="aprovados-ativos-e-historico"] .ui-ativos-situacoes')
+          .textContent,
+      ).toContain("Concluído");
+    });
+
+    it("o pedido de um edital do Histórico (faixa das etapas, Visão geral) abre o Histórico nele", async () => {
+      // Como na navegação: o pedido sai antes, a tela abre e o aplica.
+      pedirFiltro("approved", { edital: "04/2025", editalId: "20" });
+      await montar();
+      await vi.waitFor(() =>
+        expect(
+          vistaDosAprovados("historico").getAttribute("aria-checked"),
+        ).toBe("true"),
+      );
+      expect(nomes()).toEqual(["Diego Alves"]);
+      // E voltar aos Ativos recomeça os filtros.
+      await clicar(vistaDosAprovados("ativos"));
+      expect(nomes()).toEqual(["Ana Ribeiro", "Bruno Lima", "Carla Souza"]);
+    });
+  });
+
   describe("área atual", () => {
     it("candidatos, contador e seletor de edital seguem a área", async () => {
       publicarLinhasDoMonitoramento([
@@ -2993,6 +3075,9 @@ bloco("componentes/lista-aprovados", () => {
       expect($("approvedCount").textContent).toBe("3 candidatos");
 
       await act(async () => definirAreaAtual("sede"));
+      // A sede só tem a lista inativa do Diego: a lista de trabalho fica vazia.
+      expect(nomes()).toEqual([]);
+      await verHistorico();
       expect(nomes()).toEqual(["Diego Alves"]);
       expect($("approvedCount").textContent).toBe("1 candidato");
       expect(opcoesDoFiltro("approvedFilterEdital")).toEqual([
@@ -3372,7 +3457,7 @@ bloco("componentes/lista-aprovados", () => {
       const { toast } = await montar({ supabase, baixar });
 
       await clicar($("approvedExportBtn"));
-      expect($("approvedExportResumo").textContent).toContain("4 registros");
+      expect($("approvedExportResumo").textContent).toContain("3 registros");
       await clicar(
         acharTodos("#approvedExportModal [role=radio]").find(
           (b) => b.textContent === "CSV",
@@ -3385,13 +3470,13 @@ bloco("componentes/lista-aprovados", () => {
         {
           p_area: "saude-indigena",
           p_formato: "CSV",
-          p_editais: ["10", "20"],
+          p_editais: ["10"],
           p_cargos: [],
           p_modalidades: [],
           p_situacoes: [],
           p_recorte_do_aviso: false,
-          p_total_na_tela: 4,
-          p_registros: 4,
+          p_total_na_tela: 3,
+          p_registros: 3,
         },
       ]);
       expect(baixar).toHaveBeenCalledTimes(1);
@@ -3411,7 +3496,7 @@ bloco("componentes/lista-aprovados", () => {
       expect(csv).toContain("Emitida em;10/11/2026, 14:30");
       expect(talvez("approvedExportModal")).toBeNull();
       expect(toast).toHaveBeenCalledWith(
-        "Lista exportada em CSV: 4 registros.",
+        "Lista exportada em CSV: 3 registros.",
         "success",
       );
     });
@@ -3425,7 +3510,7 @@ bloco("componentes/lista-aprovados", () => {
 
       await clicar($("approvedExportBtn"));
       expect($("approvedExportResumo").textContent).toContain(
-        "1 registro de 4 na lista vigente",
+        "1 registro de 3 na lista vigente",
       );
       await clicar($("approvedExportConfirmar"));
       await esperar(() => new Promise((pronto) => setTimeout(pronto, 0)));
@@ -3433,7 +3518,7 @@ bloco("componentes/lista-aprovados", () => {
       expect(chamadasDoRegistro(supabase)[0]?.[1]).toMatchObject({
         p_formato: "XLSX",
         p_situacoes: ["Contratado"],
-        p_total_na_tela: 4,
+        p_total_na_tela: 3,
         p_registros: 1,
       });
       // O arquivo é gerado sem bloquear a tela: espera o download de fato (no CI,
@@ -3592,7 +3677,8 @@ bloco("componentes/lista-aprovados", () => {
       const avisos = definido(
         achar("#approvedPanelResumo .approved-resumo-avisos"),
       ).textContent;
-      expect(avisos).toMatch(/lista inativa ficou fora/);
+      // A lista inativa nem chega ao resumo dos Ativos (está no Histórico).
+      expect(avisos).not.toMatch(/lista inativa ficou fora/);
       expect(avisos).toMatch(/Não informado no cargo/);
       expect($("approvedPanelResumo").textContent).not.toMatch(/Diego Alves/);
     });

@@ -34,11 +34,22 @@ import { formatarDataHora } from "../../lib/cronograma/cronograma-do-edital.ts";
 import { soDosEditais } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import {
+  AtivosEHistorico,
   classes,
   ContagemDaAba,
   ErroAoCarregar,
   TopoDoPainel,
+  usarEstadoDaSessao,
 } from "../../ui/index.ts";
+import {
+  separarAprovados,
+  vistaDoPedido,
+} from "../../lib/aprovados/ativos-e-historico-dos-aprovados.ts";
+import {
+  vistaDaLista,
+  type VistaDaLista,
+} from "../../lib/base/ativos-e-historico.ts";
+import { tomDaSituacaoDoEdital } from "../../lib/editais/editais-ativos.ts";
 import { FluxoDasEtapas } from "../../componentes/fluxo-das-etapas.tsx";
 import { AbaAprovados } from "./aba-aprovados.tsx";
 import { AbaConvocacao } from "./aba-convocacao.tsx";
@@ -329,7 +340,7 @@ export function ListaAprovados({
     Núcleo é de um edital certo e vê tudo o que foi carregado — a área atual,
     a mesma do Núcleo.
   */
-  const { ids, area, nome } = usarAreaAtual();
+  const { ids, area, nome, linhas } = usarAreaAtual();
   // O modal do "Exportar" da aba Aprovados (o pedido sai dos filtros da tela).
   const [exportar, setExportar] = useState(false);
   // O resumo a exportar (aba Resumo por cargo): o mesmo objeto que a tabela desenha.
@@ -343,6 +354,23 @@ export function ListaAprovados({
     () => soDosEditais(dados.candidatos, ids),
     [dados.candidatos, ids],
   );
+  /*
+    Ativos (o padrão) e Histórico: a lista de trabalho tem só os candidatos
+    de edital vigente e lista ativa; o filtro de Edital, os indicadores e a
+    contagem partem da vista (src/lib/aprovados/ativos-e-historico-dos-aprovados.ts).
+    A Convocação, o sub judice e os modais seguem com a área inteira.
+  */
+  const [vista, setVista] = usarEstadoDaSessao<VistaDaLista>(
+    `yeende:aprovados:vista:${area}`,
+    "ativos",
+    vistaDaLista,
+  );
+  const separados = useMemo(
+    () => separarAprovados(listas, candidatos, linhas),
+    [listas, candidatos, linhas],
+  );
+  const listasDaVista = separados[vista].listas;
+  const candidatosDaVista = separados[vista].candidatos;
   const [aba, setAba] = useState<AbaDosAprovados>("aprovados");
   const [filtros, setFiltros] = useState(FILTROS_INICIAIS);
   // A busca só da tabela; "Limpar filtros" e o pedido de filtro a limpam.
@@ -353,13 +381,18 @@ export function ListaAprovados({
     deixou de ser opção deixa de filtrar — estaria a esconder linhas sem
     aparecer na tela.
   */
-  const opcoesEditais = useMemo(() => opcoesDeEdital(listas), [listas]);
+  const opcoesEditais = useMemo(
+    () => opcoesDeEdital(listasDaVista),
+    [listasDaVista],
+  );
+  // Os editais das duas vistas: o pedido de filtro e a faixa das etapas.
+  const opcoesDeTodos = useMemo(() => opcoesDeEdital(listas), [listas]);
   const editais = manterSoAsOpcoes(filtros.editalId, opcoesEditais);
   const chaveDosEditais = editais.join("\u0000");
   const localidades = useMemo(
-    () => opcoesDeLocalidade(candidatos, editais),
+    () => opcoesDeLocalidade(candidatosDaVista, editais),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [candidatos, chaveDosEditais],
+    [candidatosDaVista, chaveDosEditais],
   );
   const localidadesEscolhidas = manterSoAsOpcoes(
     filtros.localidade,
@@ -374,14 +407,14 @@ export function ListaAprovados({
     () => ({
       editais: opcoesEditais,
       localidades,
-      cargos: candidateCargosForEdital(candidatos, editais).filter((cargo) =>
-        naLocalidade(cargo, localidadesEscolhidas),
+      cargos: candidateCargosForEdital(candidatosDaVista, editais).filter(
+        (cargo) => naLocalidade(cargo, localidadesEscolhidas),
       ),
-      modalidades: candidateModalidadesForEdital(candidatos, editais),
+      modalidades: candidateModalidadesForEdital(candidatosDaVista, editais),
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
-      candidatos,
+      candidatosDaVista,
       opcoesEditais,
       chaveDosEditais,
       localidades,
@@ -409,8 +442,8 @@ export function ListaAprovados({
   };
   const chaveDosFiltros = JSON.stringify(efetivos);
   const filtrados = useMemo(
-    () => filterApprovedCandidates(candidatos, efetivos),
-    [candidatos, chaveDosFiltros],
+    () => filterApprovedCandidates(candidatosDaVista, efetivos),
+    [candidatosDaVista, chaveDosFiltros],
   );
 
   function mudarFiltro(
@@ -422,15 +455,15 @@ export function ListaAprovados({
       if (campo === "editalId") {
         proximos.localidade = manterSoAsOpcoes(
           atuais.localidade,
-          opcoesDeLocalidade(candidatos, valores),
+          opcoesDeLocalidade(candidatosDaVista, valores),
         );
         proximos.cargo = manterSoAsOpcoes(
           atuais.cargo,
-          candidateCargosForEdital(candidatos, valores),
+          candidateCargosForEdital(candidatosDaVista, valores),
         );
         proximos.modalidade = manterSoAsOpcoes(
           atuais.modalidade,
-          candidateModalidadesForEdital(candidatos, valores),
+          candidateModalidadesForEdital(candidatosDaVista, valores),
         );
       }
       return proximos;
@@ -444,6 +477,13 @@ export function ListaAprovados({
   function limparFiltros() {
     setFiltros(FILTROS_INICIAIS);
     setBusca("");
+  }
+
+  // Trocar de vista recomeça os filtros (os editais de uma não são da outra).
+  function mudarVista(nova: VistaDaLista) {
+    if (nova === vista) return;
+    setVista(nova);
+    limparFiltros();
   }
 
   /*
@@ -462,9 +502,18 @@ export function ListaAprovados({
       ? null
       : filtrosDosAprovados(
           pedido,
-          opcoesEditais.map((o) => ({ valor: o.value, rotulo: o.label })),
+          opcoesDeTodos.map((o) => ({ valor: o.value, rotulo: o.label })),
         );
     if (!ids.length && !doEdital) return;
+    // O edital (ou a pessoa) pedido pode estar no Histórico: abre a vista dele.
+    setVista(
+      vistaDoPedido(
+        separados,
+        vista,
+        { editalIds: doEdital?.editalId, candidatoIds: ids },
+        (c) => String(c.candidato_id),
+      ),
+    );
     setAba("aprovados");
     setFiltros({ ...FILTROS_INICIAIS, ...(doEdital || { candidatos: ids }) });
     setBusca("");
@@ -542,8 +591,21 @@ export function ListaAprovados({
           view="approved"
           edital={{
             id: editais[0],
-            numero: opcoesEditais.find((o) => o.value === editais[0])?.label,
+            numero: opcoesDeTodos.find((o) => o.value === editais[0])?.label,
           }}
+        />
+      ) : null}
+      {carregado && (aba === "aprovados" || aba === "resumo") ? (
+        <AtivosEHistorico
+          vista={vista}
+          aoMudar={mudarVista}
+          ativos={separados.ativos.editais}
+          historico={separados.historico.editais}
+          situacoes={separados[vista].situacoes}
+          rotulo="Editais da lista de aprovados"
+          tomDaSituacao={tomDaSituacaoDoEdital}
+          className="aprovados-ativos-e-historico"
+          tour="aprovados-ativos-e-historico"
         />
       ) : null}
 
@@ -560,8 +622,8 @@ export function ListaAprovados({
         ativa={aba === "aprovados"}
         estado={estado}
         perfil={perfil}
-        candidatos={candidatos}
-        listas={listas}
+        candidatos={candidatosDaVista}
+        listas={listasDaVista}
         anexos={dados.anexos}
         convocacoes={dados.convocacoes}
         carregado={carregado}
@@ -576,7 +638,7 @@ export function ListaAprovados({
       />
       <AbaResumo
         ativa={aba === "resumo"}
-        candidatos={candidatos}
+        candidatos={candidatosDaVista}
         filtrados={filtrados}
         configs={dados.configs}
         modelos={dados.modelos}
@@ -619,7 +681,7 @@ export function ListaAprovados({
           pedido={montarPedidoDaExportacao({
             area: String(area || ""),
             rotuloDaArea: nome || String(area || ""),
-            candidatosDaArea: candidatos,
+            candidatosDaArea: candidatosDaVista,
             filtrados,
             filtros: filtrosParaExportar,
             opcoesDeEdital: opcoesEditais,
@@ -639,7 +701,7 @@ export function ListaAprovados({
           pedido={montarPedidoDaExportacao({
             area: String(area || ""),
             rotuloDaArea: nome || String(area || ""),
-            candidatosDaArea: candidatos,
+            candidatosDaArea: candidatosDaVista,
             filtrados,
             filtros: filtrosParaExportar,
             opcoesDeEdital: opcoesEditais,
