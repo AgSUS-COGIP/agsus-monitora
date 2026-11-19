@@ -141,7 +141,7 @@ export function EncerradosDoCronograma({
         data-tour="editais-cronograma-encerrado"
         onClick={() => setAberta(true)}
       >
-        <i className="fa-solid fa-flag-checkered" aria-hidden="true" />
+        <i className="fa-solid fa-calendar-check" aria-hidden="true" />
         {rotuloDaEntrada(daArea.length)}
       </button>
       {aberta ? (

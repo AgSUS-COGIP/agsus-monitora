@@ -204,7 +204,7 @@ function Conteudo({
             historico.map((item, indice) => (
               <article key={`${item.created_at}:${indice}`}>
                 <i
-                  className={`fa-solid ${item.acao === "errata" ? "fa-file-pen" : ehStatusNoHistorico(item) ? "fa-flag-checkered" : "fa-clock-rotate-left"}`}
+                  className={`fa-solid ${item.acao === "errata" ? "fa-file-pen" : ehStatusNoHistorico(item) ? "fa-calendar-check" : "fa-clock-rotate-left"}`}
                   aria-hidden="true"
                 />
                 <div>
