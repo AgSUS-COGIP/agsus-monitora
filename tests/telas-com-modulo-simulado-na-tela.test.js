@@ -50,6 +50,7 @@ import {
   dadosDaTabelaDoGrafico,
   textoDoPonto,
 } from "../src/ui/tabela-do-grafico.tsx";
+import { tabelasDaTelaEmCartoes } from "../src/app/casca/tabelas-em-cartoes.ts";
 
 /*
   Os módulos simulados valem para o arquivo inteiro (o Vitest sobe todo
@@ -8357,6 +8358,52 @@ bloco("ui/grafico-acessivel", () => {
     );
     expect(caixa.querySelector("canvas").hidden).toBe(true);
     expect(caixa.querySelector(".ui-grafico.is-em-tabela")).not.toBeNull();
+  });
+
+  it("a tabela à vista cabe no cartão: desfaz o `table` e o `th` globais de app.css", async () => {
+    // As regras globais (1180px de largura mínima, todo th grudado no topo)
+    // cortavam a tabela do gráfico; o ui.css vem depois, como no app.
+    const app = readFileSync("src/styles/app.css", "utf8");
+    const globais = ["table", "th"].map(
+      (seletor) => app.match(new RegExp(`^${seletor} \\{[^}]*\\}`, "m"))?.[0],
+    );
+    expect(globais[0]).toMatch(/min-width: 1180px/);
+    expect(globais[1]).toMatch(/position: sticky/);
+    const estilo = document.createElement("style");
+    estilo.textContent = [
+      ...globais,
+      readFileSync("src/ui/ui.css", "utf8"),
+    ].join("\n");
+    document.head.append(estilo);
+    try {
+      const caixa = await montarCard();
+      await clicar(caixa.querySelector(".ui-grafico-alternar"));
+      const tabela = caixa.querySelector(".ui-grafico-tabela table");
+      expect(getComputedStyle(tabela).minWidth).toBe("0px");
+      // O cabeçalho gruda no topo; o rótulo da linha, não.
+      expect(getComputedStyle(tabela.querySelector("thead th")).top).toBe(
+        "0px",
+      );
+      expect(getComputedStyle(tabela.querySelector("tbody th")).top).toBe(
+        "auto",
+      );
+    } finally {
+      estilo.remove();
+    }
+  });
+
+  it("no celular a tabela do gráfico continua tabela (rola de lado), sem virar cartões", async () => {
+    const caixa = await montarCard();
+    await clicar(caixa.querySelector(".ui-grafico-alternar"));
+    const largura = vi.spyOn(window, "innerWidth", "get").mockReturnValue(375);
+    try {
+      expect(tabelasDaTelaEmCartoes(caixa)).toBe(0);
+    } finally {
+      largura.mockRestore();
+    }
+    const tabela = caixa.querySelector(".ui-grafico-tabela table");
+    expect(tabela.classList.contains("mobile-card-table")).toBe(false);
+    expect(tabela.querySelector("[data-mobile-label]")).toBeNull();
   });
 
   it("o canvas entra no Tab; as setas destacam e anunciam o item", async () => {

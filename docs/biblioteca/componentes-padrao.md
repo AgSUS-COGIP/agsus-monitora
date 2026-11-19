@@ -58,7 +58,9 @@ o tom da faixa (vencido, menos de 30, 90 ou 180 dias); a lógica é `src/lib/bas
 
 Gráficos: o `Grafico` dentro do `CardDeGrafico` traz a tabela dos valores (leitor de tela e botão
 "Tabela" do título) e percorre os itens pelas setas; nada a fazer em quem usa
-(`src/ui/tabela-do-grafico.tsx`, DS 13.5). Gráfico que filtra a página: `aoEscolher` no `Grafico`
+(`src/ui/tabela-do-grafico.tsx`, DS 13.5). À vista, a tabela cabe no cartão e rola dentro dele
+(o `ui.css` desfaz o `table`/`th` globais de `app.css`) e, no celular, continua tabela
+(`data-mobile-table="scroll"`), sem virar cartões. Gráfico que filtra a página: `aoEscolher` no `Grafico`
 (Enter no item em destaque e o rótulo da tabela à vista; o clique fica no `onClick` das opções) e
 o `SeloDoFiltroDoGrafico` ("Filtro de gráfico ativo: … — clique para remover") nas `acoes` do
 `CardDeGrafico`. Hoje, o ranking de unidades da Seleção.

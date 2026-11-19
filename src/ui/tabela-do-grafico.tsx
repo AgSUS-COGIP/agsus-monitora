@@ -100,7 +100,9 @@ export function TabelaDoGrafico({
       className={visivel ? "ui-grafico-tabela" : "sr-only"}
       data-tabela-do-grafico=""
     >
-      <table>
+      {/* No celular continua tabela (poucas colunas) e rola de lado no corpo
+          do cartão, em vez de virar um cartão por linha. */}
+      <table data-mobile-table="scroll">
         <caption className="sr-only">{titulo}</caption>
         <thead>
           <tr>
