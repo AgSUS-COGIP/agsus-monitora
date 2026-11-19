@@ -8753,6 +8753,41 @@ bloco("modulos/mapa-saude-indigena", () => {
       return mapaVivo("detailMap");
     }
 
+    it("mostra os processos seletivos do DSEI e abre a Visão geral nas unidades dele", async () => {
+      const aoAbrirNaVisaoGeral = vi.fn();
+      await abrirAlse({ aoAbrirNaVisaoGeral });
+      const cartao = host.querySelector(".mapa-si-processos");
+      expect(cartao).not.toBeNull();
+      const numeros = Object.fromEntries(
+        [...cartao.querySelectorAll("dl > div")].map((d) => [
+          d.querySelector("dt").textContent,
+          d.querySelector("dd").textContent,
+        ]),
+      );
+      expect(numeros).toEqual({
+        "Editais abertos": "0",
+        Vagas: "10",
+        Contratadas: "9",
+        // Nenhum edital sem resultado: não se aplica, não zero.
+        "Em seleção": "—",
+        Ociosas: "1",
+        "Aguardando chamada": "—",
+      });
+      await act(async () =>
+        [...cartao.querySelectorAll("button")]
+          .find((b) => b.textContent === "Abrir na Visão geral")
+          .click(),
+      );
+      expect(aoAbrirNaVisaoGeral).toHaveBeenCalledWith([
+        "DSEI Alagoas e Sergipe",
+      ]);
+    });
+
+    it("sem DSEI aberto não há cartão de processos", async () => {
+      await montar();
+      expect(host.querySelector(".mapa-si-processos")).toBeNull();
+    });
+
     it("com DSEI escolhido, o nacional some e o #detailMap mostra o território", async () => {
       const mapa = await abrirAlse();
       expect(mapa).not.toBeNull();

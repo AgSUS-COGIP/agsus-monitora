@@ -25,7 +25,7 @@
   margin-bottom: 12px;
   background: var(--color-bg-raised);
   border: 1px solid var(--color-border-subtle);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
 }
 .mapa-tela .mapa-si-resumo__introducao {
   display: flex;
@@ -54,7 +54,7 @@
   width: 100%;
   min-height: 40px;
   padding: 8px 12px;
-  border-radius: 9px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--color-border-subtle);
   background: var(--color-bg-raised);
   color: var(--color-text-primary);
@@ -68,7 +68,7 @@
   min-width: 0;
   padding: 12px;
   border: 1px solid var(--color-border-subtle);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   display: grid;
   gap: 3px;
 }
@@ -83,4 +83,20 @@
   .mapa-tela .mapa-si-resumo__indicadores {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+/* "Processos seletivos" do DSEI aberto (processos-do-dsei.tsx). */
+.mapa-tela .mapa-si-processos__numeros {
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+  margin: 0;
+}
+.mapa-tela .mapa-si-processos__numeros dt {
+  font-size: 0.76rem;
+}
+.mapa-tela .mapa-si-processos__numeros dd {
+  order: -1;
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }

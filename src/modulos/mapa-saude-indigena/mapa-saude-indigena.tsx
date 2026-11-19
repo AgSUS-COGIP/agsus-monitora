@@ -25,6 +25,7 @@ import { classes } from "../../ui/index.ts";
 import { obterLeaflet } from "./leaflet.ts";
 import { MapaDoDsei } from "./mapa-do-dsei.tsx";
 import { MapaNacional } from "./mapa-nacional.tsx";
+import { ProcessosDoDsei } from "./processos-do-dsei.tsx";
 import { usarTelaCheia } from "./tela-cheia.tsx";
 import { usarEscParaVoltar, usarVoltaDoDsei } from "./volta-ao-brasil.ts";
 
@@ -55,6 +56,7 @@ export function MapaSaudeIndigena({
   aoSairDoDsei,
   aoFiltrarPorBusca,
   aoEscolherUnidade,
+  aoAbrirNaVisaoGeral,
 }: PropsDoMapaSaudeIndigena) {
   const escuroDoApp = usarTemaEscuro();
   const escuro = tema ? tema === "escuro" : escuroDoApp;
@@ -201,6 +203,13 @@ export function MapaSaudeIndigena({
             Unidades: SIGEPSI. Editais e vagas: Monitora.
           </p>
         </section>
+      ) : null}
+      {dsei && !telaCheia ? (
+        <ProcessosDoDsei
+          dsei={dsei}
+          linhas={linhas}
+          aoAbrirNaVisaoGeral={aoAbrirNaVisaoGeral}
+        />
       ) : null}
       <MapaNacional
         L={L}
