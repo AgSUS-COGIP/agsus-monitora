@@ -2658,6 +2658,19 @@ bloco("app/navegacao", () => {
       expect(sessionStorage.getItem(CHAVE_DA_ROTA_PEDIDA)).toBeNull();
     });
 
+    it("link interno aberto sem sessão volta à mesma página depois do login", () => {
+      history.replaceState(null, "", "/saude-indigena/edital/37-2026");
+      // A tela de acesso: a navegação existe, mas o sistema não abriu.
+      criarNavegacao({ obterPerfil: () => null }).desligar();
+      // A volta do Google cai na raiz.
+      history.replaceState(null, "", "/?auth=google");
+      const { navegacao } = criar();
+      entrar(navegacao);
+      expect(ativas()).toEqual(["page-edital"]);
+      expect(endereco()).toBe("/saude-indigena/edital/37-2026");
+      expect(sessionStorage.getItem(CHAVE_DA_ROTA_PEDIDA)).toBeNull();
+    });
+
     it("link para tela proibida: avisa e abre a tela de entrada no lugar (sem empilhar)", () => {
       history.replaceState(null, "", "/administracao/configuracoes/acessos");
       const tamanho = history.length;
@@ -5046,17 +5059,23 @@ bloco("app/sessao", () => {
 
   function janelaFalsa({
     search = "",
+    caminho = "/",
     largura = 1280,
     popup = null,
-  }: { search?: string; largura?: number; popup?: PopupFalso | null } = {}) {
+  }: {
+    search?: string;
+    caminho?: string;
+    largura?: number;
+    popup?: PopupFalso | null;
+  } = {}) {
     const ouvintes: Record<string, OuvinteDaJanela> = {};
     return {
       location: {
         search,
         hash: "",
-        pathname: "/",
+        pathname: caminho,
         origin: "https://monitora.test",
-        href: `https://monitora.test/${search}`,
+        href: `https://monitora.test${caminho}${search}`,
       },
       history: { replaceState: vi.fn() },
       document: { title: "MONITORA" },
@@ -5218,6 +5237,30 @@ bloco("app/sessao", () => {
       expect(sessao.obter().fase).toBe(FASES.DESLOGADO);
       expect(cliente.rpc).not.toHaveBeenCalled();
       expect(sistema.encerrarEspera).toHaveBeenCalled();
+    });
+
+    it("link interno com rede e sem sessão: tela de acesso, sem abrir o sistema nem mexer no endereço; entrar abre", async () => {
+      const cliente = clienteFalso();
+      const { sessao, sistema, janela } = montar({
+        cliente,
+        janela: janelaFalsa({ caminho: "/saude-indigena/mapa" }),
+      });
+      await sessao.iniciar();
+      expect(sessao.obter()).toMatchObject({
+        fase: FASES.DESLOGADO,
+        usuario: null,
+        perfil: null,
+      });
+      expect(sistema.aoVerificar).not.toHaveBeenCalled();
+      expect(sistema.abrir).not.toHaveBeenCalled();
+      expect(cliente.rpc).not.toHaveBeenCalled();
+      // O endereço pedido fica: a navegação o abre depois de entrar.
+      expect(janela.history.replaceState).not.toHaveBeenCalled();
+
+      cliente.definirSessao(sessaoDe("u1"));
+      cliente.emitir("SIGNED_IN", sessaoDe("u1"));
+      await vi.waitFor(() => expect(sessao.obter().fase).toBe(FASES.CONECTADO));
+      expect(sistema.abrir).toHaveBeenCalledTimes(1);
     });
 
     it("sem as variáveis do Supabase: aviso de configuração", async () => {
@@ -5891,6 +5934,32 @@ bloco("app/sessao", () => {
       await sessao.iniciar();
       expect(sessao.obter().fase).toBe(FASES.FALHA_NA_ENTRADA);
       expect(sistema.abrir).not.toHaveBeenCalled();
+      vi.mocked(console.warn).mockRestore();
+    });
+
+    it("link interno sem rede, com o perfil guardado: continua entrando, no mesmo endereço", async () => {
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+      const perfilGuardado = perfilEmMemoria();
+      await entrarComRede(perfilGuardado);
+      const { sessao, sistema, janela } = montar({
+        cliente: clienteFalso({
+          guardada: sessaoDe("u1"),
+          erroNoContexto: SEM_REDE,
+        }),
+        janela: janelaFalsa({ caminho: "/saude-indigena/mapa" }),
+        perfilGuardado,
+      });
+      await sessao.iniciar();
+      expect(sessao.obter()).toMatchObject({
+        fase: FASES.CONECTADO,
+        semRede: true,
+      });
+      expect(sistema.abrir).toHaveBeenCalledWith(
+        expect.objectContaining({
+          perfil: expect.objectContaining({ id: "perfil-1" }),
+        }),
+      );
+      expect(janela.history.replaceState).not.toHaveBeenCalled();
       vi.mocked(console.warn).mockRestore();
     });
 

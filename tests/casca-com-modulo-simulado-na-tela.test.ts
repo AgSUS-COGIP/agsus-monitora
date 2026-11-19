@@ -44,6 +44,7 @@ import {
 import { htmlDaPagina } from "./pagina-montada.ts";
 import { type ArvoreDoMenu } from "../src/componentes/barra-lateral/tipos.ts";
 import { registrarTelas } from "../src/app/registro-das-telas.ts";
+import { registrarTelasFalsas } from "./app/telas-no-teste.ts";
 import {
   CentralDeConvocacoes,
   usarConducaoLigada,
@@ -196,7 +197,10 @@ bloco("app/pecas-da-casca", async () => {
     document.body.innerHTML = "";
   });
 
-  async function montar(pecas: PecasDoApp | null) {
+  async function montar(
+    pecas: PecasDoApp | null,
+    navegacao: LeituraDaNavegacao = NAVEGACAO,
+  ) {
     document.body.innerHTML =
       '<section id="appScreen" class="app hidden"></section><div id="raiz"></div>';
     const novaRaiz = createRoot(achar("#raiz"));
@@ -209,7 +213,7 @@ bloco("app/pecas-da-casca", async () => {
     await act(async () =>
       novaRaiz.render(
         createElement(Raiz, {
-          navegacao: NAVEGACAO,
+          navegacao,
           ...SEM_ENTRADA,
           pecas,
           lugares,
@@ -259,6 +263,63 @@ bloco("app/pecas-da-casca", async () => {
       expect(
         document.querySelector('[role="dialog"].search-modal'),
       ).not.toBeNull();
+    });
+
+    describe("sem sessão (link interno aberto na tela de acesso)", () => {
+      const TEXTO_SEM_MODULO = "ainda não tem módulos liberados";
+      const textoDaCasca = () =>
+        document.getElementById("appScreen")?.textContent ?? "";
+
+      beforeEach(() =>
+        registrarTelasFalsas({
+          dashboard: {
+            conteudo: createElement(
+              "div",
+              { id: "telaDeTeste" },
+              "Carregando dados…",
+            ),
+          },
+        }),
+      );
+      afterEach(() => registrarTelas({}));
+
+      it("a casca escondida não monta a tela da rota; monta ao abrir e desmonta ao sair", async () => {
+        const pecas = criarPecas({ aberto: false });
+        await montar(pecas);
+        expect(document.getElementById("page-dashboard")).not.toBeNull();
+        expect(document.getElementById("telaDeTeste")).toBeNull();
+        expect(textoDaCasca()).not.toContain("Carregando dados");
+
+        await act(async () => pecas.appAberto.mudar(true));
+        expect(
+          document.querySelector("#page-dashboard #telaDeTeste"),
+        ).not.toBeNull();
+
+        await act(async () => pecas.appAberto.mudar(false));
+        expect(document.getElementById("telaDeTeste")).toBeNull();
+      });
+
+      it("o aviso de quem não tem módulo liberado só existe com o app aberto e o aviso ativo", async () => {
+        await montar(criarPecas({ aberto: false }));
+        expect(textoDaCasca()).not.toContain(TEXTO_SEM_MODULO);
+        await act(async () => definido(raiz).unmount());
+
+        await montar(criarPecas({ aberto: true }));
+        expect(textoDaCasca()).not.toContain(TEXTO_SEM_MODULO);
+        await act(async () => definido(raiz).unmount());
+
+        const semAcesso = {
+          ...ESTADO_DA_NAVEGACAO,
+          aviso: "sem-acesso" as const,
+        };
+        await montar(criarPecas({ aberto: true }), {
+          ...NAVEGACAO,
+          obter: () => semAcesso,
+        });
+        expect(
+          document.querySelector("#page-sem-acesso.active")?.textContent,
+        ).toContain(TEXTO_SEM_MODULO);
+      });
     });
 
     it("sem as peças (a casca num teste), nada disso aparece", async () => {
