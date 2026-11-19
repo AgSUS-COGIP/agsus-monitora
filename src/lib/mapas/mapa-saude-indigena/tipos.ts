@@ -83,6 +83,10 @@ export interface CasaiNacionalDoMapa {
 export interface RegistroDoDsei {
   id: string;
   name: string;
+  /** O código da localização no SIGEPSI. */
+  cod?: string | null;
+  /** Meio de acesso, acessibilidade, urbano/rural e floresta (da `/todas`). */
+  acesso?: import("./territorio-do-sigepsi.ts").AcessoDaUnidade | null;
   cnes: string | number | null;
   lat: number;
   lon: number;
@@ -139,6 +143,11 @@ export interface PropsDoMapaSaudeIndigena {
   /** A CASAI nacional aberta (chave de `chaveDoDsei` do nome), sem DSEI. */
   casaiSelecionada?: string | null;
   aoEscolherCasai?(casai: CasaiNacionalDoMapa): void;
+  /** Território, acesso e CNES do SIGEPSI (`/api/territorio-dos-dseis`). */
+  territorio?: {
+    estado: "carregando" | "pronto" | "indisponivel";
+    resposta: import("./territorio-na-tela.ts").RespostaDoTerritorio | null;
+  };
 }
 export interface PropsDaVisaoNacional extends Pick<
   PropsDoMapaSaudeIndigena,
@@ -171,4 +180,6 @@ export interface PropsDoMapaDoDsei extends Pick<
   telaCheia: boolean;
   acoes?: ReactNode;
   aoVoltarAoBrasil(): void;
+  /** Meio de acesso e CNES de cada unidade, pela chave `nome|lat|lon`. */
+  detalhesDasUnidades?: ReadonlyMap<string, string>;
 }

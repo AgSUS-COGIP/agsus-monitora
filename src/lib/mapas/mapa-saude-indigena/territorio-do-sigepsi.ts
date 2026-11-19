@@ -161,6 +161,19 @@ export interface AcessoDaUnidade {
   floresta: "Sim" | "Não" | typeof NAO_INFORMADO;
 }
 
+/** O acesso que veio no ponto do mapa (`localizacoesPorDsei`), se veio. */
+export function acessoDoPonto(ponto: {
+  [campo: string]: unknown;
+}): AcessoDaUnidade | null {
+  if (!Array.isArray(ponto.meios)) return null;
+  return {
+    meios: ponto.meios.map(String),
+    acessibilidade: acessibilidade(ponto.acessibilidade),
+    localidade: localidade(ponto.localidade),
+    floresta: floresta(ponto.floresta),
+  };
+}
+
 const primeiraMaiuscula = (valor: string) =>
   valor ? valor[0]!.toUpperCase() + valor.slice(1) : valor;
 
@@ -298,13 +311,17 @@ export function casarChaveDoDsei(
   chave: string,
   doMapa: readonly string[],
 ): string | null {
-  if (!chave) return null;
-  if (doMapa.includes(chave)) return chave;
+  // As duas pela mesma régua (`chaveDoDsei`); devolve a do mapa como veio.
+  const alvo = chaveDoDsei(chave);
+  if (!alvo) return null;
+  const normais = doMapa.map((k) => [k, chaveDoDsei(k)] as const);
+  const exata = normais.find(([, k]) => k === alvo);
+  if (exata) return exata[0];
   const semY = (k: string) => k.replace(/Y/g, "I");
-  const igual = doMapa.find((k) => semY(k) === semY(chave));
-  if (igual) return igual;
-  const contidas = doMapa
-    .filter((k) => k.includes(chave) || chave.includes(k))
-    .sort((a, b) => b.length - a.length);
-  return contidas[0] ?? null;
+  const igual = normais.find(([, k]) => semY(k) === semY(alvo));
+  if (igual) return igual[0];
+  const contidas = normais
+    .filter(([, k]) => k && (k.includes(alvo) || alvo.includes(k)))
+    .sort((a, b) => b[1].length - a[1].length);
+  return contidas[0]?.[0] ?? null;
 }
