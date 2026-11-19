@@ -23,3 +23,22 @@ export function numeroComoEscrito(valor: unknown): string {
   const m = texto.match(/(\d{1,4})\s*\/\s*(\d{4})/);
   return m ? `${m[1]}/${m[2]}` : "";
 }
+
+/**
+ * Ordem dos editais pelo número, a das listas e filtros: do mais recente para
+ * o mais antigo, pelo ano e depois pelo número ("12/2026", "3/2026",
+ * "95/2025", "94/2025"); sem número, no fim. Não compara o texto: como texto,
+ * "94/2025" vinha antes de "94/2026" e de "95/2025".
+ */
+export function compararNumeroDoEdital(a: unknown, b: unknown): number {
+  const partes = (valor: unknown): [number, number] | null => {
+    const n = numeroDoEdital(valor);
+    if (!n) return null;
+    const [numero = "0", ano = "0"] = n.split("/");
+    return [Number(ano), Number(numero)];
+  };
+  const pa = partes(a);
+  const pb = partes(b);
+  if (!pa || !pb) return pa ? -1 : pb ? 1 : 0;
+  return pb[0] - pa[0] || pb[1] - pa[1];
+}

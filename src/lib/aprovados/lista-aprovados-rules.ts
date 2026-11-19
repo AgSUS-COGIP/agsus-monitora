@@ -1,3 +1,4 @@
+import { compararNumeroDoEdital } from "../editais/numero-do-edital.ts";
 import { naLocalidade } from "./localidade-da-vaga.ts";
 import type {
   CandidatoDasRegrasDeAprovados,
@@ -484,8 +485,9 @@ export function nomeDeArquivoSeguro(name: unknown) {
 }
 
 /**
- * Opções do filtro de edital: um por edital com lista, ordenados por número
- * e unidade, no formato "03/2025 · CASAI Manaus".
+ * Opções do filtro de edital: um por edital com lista, no formato "03/2025 ·
+ * CASAI Manaus", do mais recente para o mais antigo (ano, depois número;
+ * `compararNumeroDoEdital`) e, no mesmo número, pela unidade.
  */
 export function opcoesDeEdital(
   lists: readonly ListaParaFiltroDeAprovados[] | null | undefined,
@@ -497,7 +499,7 @@ export function opcoesDeEdital(
   ]
     .sort(
       (a, b) =>
-        text(a.edital).localeCompare(text(b.edital), "pt-BR") ||
+        compararNumeroDoEdital(a.edital, b.edital) ||
         text(a.unidade).localeCompare(text(b.unidade), "pt-BR"),
     )
     .map((row) => ({

@@ -8464,6 +8464,56 @@ bloco("componentes/multi-select-busca", () => {
         expect(menu().hidden).toBe(true);
       });
 
+      it("o clique fora numa linha clicável só fecha (não abre o candidato); num botão, vale", async () => {
+        const aoClicarNaLinha = vi.fn();
+        const aoAplicar = vi.fn();
+        document.body.innerHTML = `<div id="raiz"></div>`;
+        await act(async () => {
+          const novaRaiz = createRoot(
+            definido(document.getElementById("raiz")),
+          );
+          raiz = novaRaiz;
+          novaRaiz.render(
+            createElement(
+              "div",
+              null,
+              createElement(Tela, { opcoes: ["A"] }),
+              createElement(
+                "table",
+                null,
+                createElement(
+                  "tbody",
+                  null,
+                  createElement(
+                    "tr",
+                    { onClick: aoClicarNaLinha },
+                    createElement("td", { id: "celula" }, "Fulana"),
+                  ),
+                ),
+              ),
+              createElement(
+                "button",
+                { type: "button", id: "aplicar", onClick: aoAplicar },
+                "Aplicar",
+              ),
+            ),
+          );
+        });
+        const celula = definido(document.getElementById("celula"));
+        await clicar(gatilho());
+        await clicar(celula);
+        expect(menu().hidden).toBe(true);
+        expect(aoClicarNaLinha).not.toHaveBeenCalled();
+        // Com o menu fechado, a linha abre no primeiro clique.
+        await clicar(celula);
+        expect(aoClicarNaLinha).toHaveBeenCalledTimes(1);
+        // Escolher e já clicar num botão: fecha e o botão vale.
+        await clicar(gatilho());
+        await clicar(definido(document.getElementById("aplicar")));
+        expect(menu().hidden).toBe(true);
+        expect(aoAplicar).toHaveBeenCalledTimes(1);
+      });
+
       it("abrir um fecha o outro", async () => {
         document.body.innerHTML = `<div id="raiz"></div>`;
         await act(async () => {

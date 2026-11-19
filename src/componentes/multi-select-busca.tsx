@@ -27,6 +27,10 @@ const norm = (value: unknown) =>
 const compara = (a: unknown, b: unknown) =>
   String(a ?? "").localeCompare(String(b ?? ""), "pt-BR", { numeric: true });
 
+/* O que é controle: o clique fora que cai aqui vale (veja `aoClicar`). */
+const CONTROLE =
+  'button, a[href], input, select, textarea, label, summary, [contenteditable="true"], [role="button"], [role="link"], [role="tab"], [role="checkbox"], [role="option"], [role="menuitem"]';
+
 const classes = (...lista: ReadonlyArray<string | number | false>) =>
   lista.filter(Boolean).join(" ");
 
@@ -114,10 +118,20 @@ export function MultiSelectBusca({
       Fecha com clique fora e com `Esc`. Só o menu aberto escuta, então o custo
       não cresce com o número de filtros na tela — e abrir outro fecha este,
       porque o clique no outro é um clique fora.
+
+      O clique fora que não cai num controle (botão, link, campo) só fecha:
+      não chega à área clicável embaixo (escutado na captura, antes do React).
+      Antes, fechar o filtro de edital da Lista de aprovados clicando numa
+      linha da tabela abria o "Alterar status" do candidato (19/11/2026). O
+      clique num controle vale (escolher e já clicar em "Aplicar").
     */
     function aoClicar(evento: MouseEvent) {
-      if (!raiz.current?.contains(evento.target as Node | null))
-        setAberto(false);
+      const alvo = evento.target as Element | null;
+      if (raiz.current?.contains(alvo)) return;
+      setAberto(false);
+      if (alvo?.closest?.(CONTROLE)) return;
+      evento.preventDefault();
+      evento.stopPropagation();
     }
     function aoTeclar(evento: KeyboardEvent) {
       if (evento.key !== "Escape") return;
@@ -141,7 +155,7 @@ export function MultiSelectBusca({
       elemento.style.top = `${Math.round(caixa.bottom + 6)}px`;
     }
     posicionar();
-    document.addEventListener("click", aoClicar);
+    document.addEventListener("click", aoClicar, true);
     document.addEventListener("keydown", aoTeclar);
     globalThis.addEventListener?.("scroll", posicionar, {
       capture: true,
@@ -149,7 +163,7 @@ export function MultiSelectBusca({
     });
     globalThis.addEventListener?.("resize", posicionar);
     return () => {
-      document.removeEventListener("click", aoClicar);
+      document.removeEventListener("click", aoClicar, true);
       document.removeEventListener("keydown", aoTeclar);
       globalThis.removeEventListener?.("scroll", posicionar, { capture: true });
       globalThis.removeEventListener?.("resize", posicionar);
