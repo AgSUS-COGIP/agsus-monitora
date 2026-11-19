@@ -82,6 +82,10 @@ Indígena, ordem 2, recurso `dashboard` (a permissão da Visão geral): `ABAS_DO
   pontos, editais, vagas, contratadas) ou CASAI (editais, vagas, contratadas, ociosas). Embaixo, a barra "das vagas preenchidas"
   (contratadas ÷ vagas, cor de `situacaoDoPreenchimento`). A aba Mapa espera o desconto das
   reabertas (`aguardandoVagas`) antes de desenhar.
+- **Rede por tipo e busca de ponto** (também do SIGEPSI). No Brasil e no DSEI, o resumo mostra a
+  "Rede de saúde indígena" por tipo (`redePorTipo`, os mesmos pontos que o mapa desenha) e o total.
+  No mapa do DSEI, "Buscar ponto pelo nome ou município" (`buscarNaLista`, sem acento nem caixa)
+  recorta só a lista; trocar de DSEI começa sem termo.
 - **CASAI nacional.** O losango (`aoFiltrarPorBusca`) põe "CASAI <cidade>" na busca da Visão geral e
   abre a Visão geral. No seletor "DSEI / CASAI" elas ficam no grupo "CASAIs nacionais": escolher
   uma (`aoEscolherCasai`) põe `casai-<chave>` no mesmo pedaço do endereço

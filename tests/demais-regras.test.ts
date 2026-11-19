@@ -24,6 +24,7 @@ import { chaveDosEditaisDaCasai } from "../src/lib/mapas/mapa-saude-indigena/map
 import {
   indicadoresDoRecorte,
   municipiosDoDsei,
+  redePorTipo,
 } from "../src/lib/mapas/mapa-saude-indigena/indicadores-do-recorte.ts";
 import { contarPorDsei } from "../src/lib/mapas/mapa-saude-indigena/contagem-por-dsei.ts";
 import {
@@ -215,6 +216,7 @@ import {
   ufDoCep,
 } from "../src/lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts";
 import {
+  buscarNaLista,
   registrosDoDsei,
   resumoDaRede,
   classificarRegistros,
@@ -7533,6 +7535,43 @@ bloco("lib/indicadores-do-recorte", () => {
     const daCasai = indicadoresDoRecorte({ contagens, casai });
     expect(daCasai.titulo).toBe("CASAI DF");
     expect(daCasai.ociosas).toBe(3);
+  });
+
+  it("a rede por tipo conta os pontos que o mapa desenha", () => {
+    const comPontos = {
+      k: "XINGU",
+      n: "Xingu",
+      polos: [
+        { n: "Polo A", lat: -12, lon: -52, tipo: "polo" as const },
+        { n: "Polo B", lat: -12.5, lon: -52.5, tipo: "polo" as const },
+        { n: "CASAI X", lat: -13, lon: -53, tipo: "casai" as const },
+        // Sem coordenada não se desenha nem se conta.
+        { n: "Polo sem ponto", tipo: "polo" as const },
+      ],
+    };
+    const rede = redePorTipo([comPontos]);
+    expect(rede.total).toBe(3);
+    expect(rede.tipos.map((t) => [t.tipo.key, t.quantidade])).toEqual([
+      ["polo", 2],
+      ["casai", 1],
+    ]);
+    expect(redePorTipo([]).total).toBe(0);
+  });
+
+  it("buscar ponto pelo nome ou município, sem acento nem caixa", () => {
+    const registros = registrosDoDsei({
+      k: "YANOMAMI",
+      n: "Yanomami",
+      polos: [
+        { n: "PB XITEI", lat: 3, lon: -63, municipio: "Alto Alegre" },
+        { n: "CASAI BOA VISTA", lat: 2.8, lon: -60.7, municipio: "Boa Vista" },
+      ],
+    });
+    expect(buscarNaLista(registros, "xitéi").map((r) => r.name)).toEqual([
+      "PB XITEI",
+    ]);
+    expect(buscarNaLista(registros, "boa vista")).toHaveLength(1);
+    expect(buscarNaLista(registros, "  ")).toHaveLength(2);
   });
 
   it("sem vagas, a barra não se aplica (0%)", () => {

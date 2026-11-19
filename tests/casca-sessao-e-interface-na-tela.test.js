@@ -8850,6 +8850,44 @@ bloco("modulos/mapa-saude-indigena", () => {
       });
     });
 
+    it("a rede de saúde indígena por tipo segue o recorte; a CASAI não tem", async () => {
+      const rede = () => host.querySelector(".mapa-si-resumo__rede");
+      await montar();
+      expect(rede().textContent).toContain("4 no total");
+      expect(
+        [...rede().querySelectorAll("li[data-tipo]")].map(
+          (li) => li.dataset.tipo,
+        ),
+      ).toContain("casai");
+      await rerender({ dseiSelecionado: "YANOMAMI" });
+      // Sem pontos no DSEI, a faixa não aparece.
+      expect(rede()).toBeNull();
+      await rerender({ casaiSelecionada: "DF" });
+      expect(rede()).toBeNull();
+    });
+
+    it("a lista do DSEI busca ponto pelo nome ou município, sem acento", async () => {
+      await montar({ dseiSelecionado: "ALAGOAS E SERGIPE" });
+      const campo = host.querySelector(".mapa-si-lista__busca");
+      expect(campo).not.toBeNull();
+      const nomes = () =>
+        [...host.querySelectorAll(".mapa-si-unidade strong")].map(
+          (n) => n.textContent,
+        );
+      const total = nomes().length;
+      await digitar(campo, "xitei");
+      expect(nomes()).toEqual(["XITEI"]);
+      await digitar(campo, "Maceió");
+      expect(nomes()).toEqual(["CASAI AL/SE"]);
+      await digitar(campo, "nada assim");
+      expect(nomes()).toEqual([]);
+      expect(
+        host.querySelector(".mapa-si-painel--dsei .mapa-si-lista").textContent,
+      ).toContain("Nenhum ponto com esse nome.");
+      await digitar(campo, "");
+      expect(nomes()).toHaveLength(total);
+    });
+
     it("o seletor tem as CASAIs nacionais num grupo próprio", async () => {
       const aoEscolherCasai = vi.fn();
       await montar({ aoEscolherCasai });

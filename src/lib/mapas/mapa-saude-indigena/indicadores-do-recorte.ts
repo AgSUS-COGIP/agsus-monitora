@@ -22,6 +22,7 @@ import type {
 } from "./tipos.ts";
 import { chaveDoDsei, numero, texto } from "./chaves.ts";
 import { chaveDosEditaisDaCasai } from "./mapa-nacional.ts";
+import { registrosDoDsei, tiposDoTerritorio } from "./mapa-do-dsei.ts";
 
 export interface IndicadorDoRecorte {
   chave: string;
@@ -160,4 +161,14 @@ export function indicadoresDoRecorte({
     ],
     c,
   );
+}
+
+/**
+ * "Rede de saúde indígena por tipo" (como no SIGEPSI): os pontos do recorte
+ * (sede, polo base, CASAI, UBSI, unidade), do mais frequente ao menos, e o
+ * total. Conta o mesmo que o mapa desenha (`registrosDoDsei`).
+ */
+export function redePorTipo(dseis: readonly DseiDoMapa[]) {
+  const registros = (dseis || []).flatMap((d) => registrosDoDsei(d));
+  return { tipos: tiposDoTerritorio(registros), total: registros.length };
 }
