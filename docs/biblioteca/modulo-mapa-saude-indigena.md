@@ -97,6 +97,11 @@ Indígena, ordem 2, recurso `dashboard` (a permissão da Visão geral): `ABAS_DO
   só do SIGEPSI aparece (nome de `NO_DSEI`, UF da sede); do `lmap` vêm só nome, população e UFs.
   Do SIGEPSI vêm a sede (`lat`/`lon`, onde fica a bolha nacional), os polos base, a ROTA, as CASAIs
   e as unidades de lotação.
+- **Território, acesso e CNES do SIGEPSI.** `/api/territorio-dos-dseis` ([[deploy-e-vercel]])
+  lê `/territorio`, `/localizacoes` e `/rede` do SIGEPSI, cada fonte com o próprio `ok`; o
+  formato nosso (e o casamento por nome do CNES com a unidade, `cnesDaUnidade`, e da chave do
+  DSEI, `casarChaveDoDsei`) fica em `src/lib/mapas/mapa-saude-indigena/territorio-do-sigepsi.ts`.
+  Fonte negada é "Dado do SIGEPSI indisponível", nunca zero.
 - `TP_UNIDADE`: POLO BASE e ROTA → `polo`; CASAI → `casai`; SEDE → a sede; UNIDADE DE LOTAÇÃO →
   `unidade` (ou polo/CASAI, se o nome disser), desenhada pelo nome (UBSI ou Unidade). UF dos pontos
   pelo CEP; sem CEP (39 de 568 em 17/11/2026, 22 no Yanomami), o ponto não herda a UF da sede: o
@@ -168,7 +173,7 @@ Terceiro botão do seletor do fundo, só no `#map` (`map-base-layer-switcher.ts`
 ## Testes
 
 `tests/mapas-e-visao-geral.test.js` (bloco `mapa-saude-indigena`) (fixture real das Lotações),
-`tests/mapas-e-visao-geral.test.js` (bloco `coordenadas-so-do-sigepsi`), `tests/demais-regras.test.ts` (bloco `lib/localizacoes-do-sigepsi`),
+`tests/mapas-e-visao-geral.test.js` (bloco `coordenadas-so-do-sigepsi`), `tests/demais-regras.test.ts` (blocos `lib/localizacoes-do-sigepsi` e `lib/territorio-do-sigepsi`),
 `tests/casca-sessao-e-interface-na-tela.test.js` (bloco `modulos/mapa-saude-indigena`) (Leaflet falso em `tests/modulos/leaflet-falso.js`),
 `tests/casca-com-modulo-simulado-na-tela.test.ts` (bloco `modulos/mapa`: a aba e o DSEI no endereço), `tests/demais-telas-na-tela.test.ts` (bloco `modulos/cartao-do-mapa`), `tests/demais-regras.test.ts` (blocos `lib/aba-do-mapa` e `lib/processos-do-dsei`), `tests/repositorio-e-banco.test.ts` (bloco `aba-mapa-no-banco`: migration, ensaio e rollback), `tests/casca-sessao-e-interface.test.js` (bloco `rotas`), `tests/mapas-e-visao-geral-na-tela.test.js` (bloco `dica-dentro-do-mapa`),
 `tests/mapas-e-visao-geral-na-tela.test.js` (bloco `modulos/modo-de-edicao`) (hoje só Projetos) e, do Mapa DSEIs,

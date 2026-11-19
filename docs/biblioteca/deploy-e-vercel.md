@@ -101,6 +101,18 @@ Aya responde no navegador; o endpoint de IA e o bridge local foram retirados.
 casaisNacionais, lidoEm }` (a lista de DSEIs do mapa e as CASAIs nacionais, localizações 131 e 132) já agrupado por `chaveDoDsei`
   (`src/lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts`), guarda 10 min na instância e só em
   cache privado. Sem a variável: 500 com `faltam`; SIGEPSI recusando: 502 com `status_do_sigepsi`.
+- `territorio-dos-dseis.ts` — **território, acesso e CNES dos DSEIs, do SIGEPSI**, para o
+  [[modulo-mapa-saude-indigena]]. O mesmo molde de `dseis.ts` (só GET, sessão conferida em
+  `/auth/v1/user`, `SIGEPSI_API_TOKEN` só no servidor). Lê três rotas, cada uma por si:
+  `territorio` (`/api/mapa-dseis/territorio`: população indígena, aldeias e terras de cada DSEI),
+  `acesso` (`/api/mapa-dseis/localizacoes`: meio de acesso, acessibilidade, urbano/rural e
+  floresta de cada unidade) e `cnes` (`/api/mapa-dseis/rede`). Responde 200 com
+  `{ territorio, acesso, cnes, lidoEm }`, e cada fonte é `{ ok: true, dados, linhas, campos }`
+  (`campos`: só os nomes dos campos que a rota trouxe, para o diagnóstico) ou
+  `{ ok: false, status, motivo }` (401/403: "a chave do Yeendé não lê esta rota"). Uma rota
+  negada não derruba as outras. Nunca lê `/api/mapa-dseis` (força de trabalho, dado pessoal) e só
+  repassa os campos que `src/lib/mapas/mapa-saude-indigena/territorio-do-sigepsi.ts` copia.
+  Fonte lida fica 10 min na instância; negada, 1 min.
 
 ### Regras das funções
 
