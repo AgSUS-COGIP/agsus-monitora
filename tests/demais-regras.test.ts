@@ -7288,7 +7288,10 @@ bloco("lib/fluxo-das-etapas", () => {
 
   it("o título diz a etapa e o edital", () => {
     expect(tituloDoFluxo("avaliacao-documental", "Edital nº 093/2026")).toBe(
-      "Documental do 93/2026",
+      "Documental do 093/2026",
+    );
+    expect(tituloDoFluxo("classificacao", "03/2025 · DSEI Fictício")).toBe(
+      "Classificação do 03/2025",
     );
     expect(tituloDoFluxo("approved", "93/2026 · DSEI Fictício")).toBe(
       "Aprovados do 93/2026",

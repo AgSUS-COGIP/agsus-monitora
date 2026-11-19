@@ -8,7 +8,10 @@
   As etapas são as telas da página do edital (TELAS_DO_EDITAL, aba
   "Candidatos"), sem o Painel da Seleção: o destino é um só.
 */
-import { numeroDoEdital } from "../editais/numero-do-edital.ts";
+import {
+  numeroComoEscrito,
+  numeroDoEdital,
+} from "../editais/numero-do-edital.ts";
 import { TELAS_DO_EDITAL } from "../pagina-do-edital/pagina-do-edital.ts";
 import type { TelaDoEdital } from "../pagina-do-edital/pagina-do-edital.ts";
 
@@ -37,11 +40,14 @@ export function etapasDoFluxo(
   return ETAPAS_DO_FLUXO.filter((etapa) => permitida(etapa.view));
 }
 
-/** "Documental do 93/2026"; sem número, só o nome curto da etapa. */
+/**
+ * "Documental do 93/2026", com o número como o edital o escreve ("03/2025",
+ * não "3/2025"); sem número, só o nome curto da etapa.
+ */
 export function tituloDoFluxo(view: string, numero: unknown): string {
   const etapa = etapaDoFluxo(view);
   if (!etapa) return "";
-  const n = numeroDoEdital(numero);
+  const n = numeroComoEscrito(numero);
   return n ? `${etapa.curto} do ${n}` : etapa.curto;
 }
 
