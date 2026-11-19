@@ -76,6 +76,12 @@ Indígena, ordem 2, recurso `dashboard` (a permissão da Visão geral): `ABAS_DO
   endereço; o voltar do navegador volta ao Brasil. A loja do DSEI é da tela; `render()` (a cada
   abertura) relê o endereço, e é assim que o cartão da Visão geral abre o Mapa num DSEI
   (`guardarFiltrosDaTela("mapa", "dsei=…")` e `navigate("mapa")`).
+- **Indicadores do topo pelo recorte** (como no Mapa dos DSEIs do SIGEPSI). `indicadoresDoRecorte`
+  (`src/lib/mapas/mapa-saude-indigena/indicadores-do-recorte.ts`) segue o seletor: Brasil (DSEIs,
+  CASAIs nacionais, pontos, editais, vagas), DSEI (população, pontos, municípios dos pontos, editais,
+  vagas) ou CASAI (editais, vagas, contratadas, ociosas). Embaixo, a barra "das vagas preenchidas"
+  (contratadas ÷ vagas, cor de `situacaoDoPreenchimento`). A aba Mapa espera o desconto das
+  reabertas (`aguardandoVagas`) antes de desenhar.
 - **CASAI nacional.** O losango (`aoFiltrarPorBusca`) põe "CASAI <cidade>" na busca da Visão geral e
   abre a Visão geral. No seletor "DSEI / CASAI" elas ficam no grupo "CASAIs nacionais": escolher
   uma (`aoEscolherCasai`) põe `casai-<chave>` no mesmo pedaço do endereço
