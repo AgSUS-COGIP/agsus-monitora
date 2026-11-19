@@ -542,6 +542,7 @@
 /* O título e o botão "Tabela" (gráfico ↔ tabela dos valores). */
 .ui-card-de-grafico-topo {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
@@ -575,6 +576,42 @@
 .ui-grafico canvas:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
+}
+/* O selo do filtro que veio do gráfico (SeloDoFiltroDoGrafico): um botão. */
+.ui-selo-do-filtro-do-grafico {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  min-height: 32px;
+  margin-left: auto;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--state-info);
+  border-radius: var(--radius-pill);
+  background: var(--state-info-soft);
+  color: var(--state-info);
+  font: inherit;
+  font-size: var(--text-caption);
+  text-align: left;
+  cursor: pointer;
+}
+.ui-selo-do-filtro-do-grafico:hover {
+  color: var(--text-primary);
+}
+.ui-selo-do-filtro-do-grafico:focus-visible,
+.ui-grafico-tabela-escolher:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+/* O rótulo da linha da tabela do gráfico que filtra a página. */
+.ui-grafico-tabela-escolher {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--state-info);
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
 }
 /* A tabela no lugar do gráfico: rola dentro da mesma altura. */
 .ui-grafico.is-em-tabela {
@@ -2282,6 +2319,7 @@ button.ui-faixa-item:hover {
       .ui-lista-selecao .btn,
       .ui-chip,
       .ui-grafico-alternar,
+      .ui-selo-do-filtro-do-grafico,
       .ui-tabela-busca,
       select
     ) {

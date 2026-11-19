@@ -101,6 +101,11 @@ export function paletaDosGraficos(
   valor é anunciado; Esc ou sair do foco limpa.
   `plugins` (opcional) são plugins do Chart.js só deste gráfico, fixos desde
   a criação (ex.: rótulo de valor nas barras).
+
+  `aoEscolher` (opcional): o item escolhido filtra a página. O clique no
+  gráfico fica no `onClick` das opções de quem monta; aqui, o teclado (Enter
+  ou Espaço no item em destaque) e, com a tabela à vista, o botão do rótulo
+  de cada linha.
 */
 const PASSO_DO_TECLADO: Partial<
   Record<string, "+1" | "-1" | "inicio" | "fim">
@@ -137,6 +142,7 @@ export interface PropriedadesDoGrafico<T extends ChartType> {
   rotulo: string;
   id?: string;
   plugins?: Plugin<NoInfer<T>>[];
+  aoEscolher?: (indice: number) => void;
 }
 
 export function Grafico<T extends ChartType>({
@@ -146,6 +152,7 @@ export function Grafico<T extends ChartType>({
   rotulo,
   id,
   plugins,
+  aoEscolher,
 }: PropriedadesDoGrafico<T>) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const grafico = useRef<ChartJs<T, number[], string> | null>(null);
@@ -246,6 +253,15 @@ export function Grafico<T extends ChartType>({
       if (destaque.current !== null) destacar(null);
       return;
     }
+    if (
+      aoEscolher &&
+      destaque.current !== null &&
+      (evento.key === "Enter" || evento.key === " ")
+    ) {
+      evento.preventDefault();
+      aoEscolher(destaque.current);
+      return;
+    }
     const passo = PASSO_DO_TECLADO[evento.key];
     if (!passo) return;
     evento.preventDefault();
@@ -270,12 +286,19 @@ export function Grafico<T extends ChartType>({
       {dados ? (
         <>
           <span id={idDaDica} className="sr-only">
-            Setas percorrem os valores.
+            {aoEscolher
+              ? "Setas percorrem os valores; Enter filtra pelo valor."
+              : "Setas percorrem os valores."}
           </span>
           <span className="sr-only" aria-live="polite">
             {anuncio}
           </span>
-          <TabelaDoGrafico dados={dados} titulo={rotulo} visivel={emTabela} />
+          <TabelaDoGrafico
+            dados={dados}
+            titulo={rotulo}
+            visivel={emTabela}
+            aoEscolher={aoEscolher}
+          />
         </>
       ) : null}
     </>

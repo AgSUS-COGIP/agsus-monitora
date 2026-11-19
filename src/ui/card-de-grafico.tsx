@@ -13,8 +13,12 @@ import { ContextoDoGrafico } from "./tabela-do-grafico.tsx";
   ligado, a tabela dos valores ocupa o lugar do gráfico (TabelaDoGrafico; o
   Chart.js continua montado, escondido). A escolha é de cada card.
 
+  `acoes` entra no topo, entre o título e o "Tabela" (o selo do filtro que
+  veio do gráfico, SeloDoFiltroDoGrafico).
+
   Marcação: `.ui-card.ui-card-de-grafico` > `.ui-card-de-grafico-topo` (o
-  título e o botão `.ui-grafico-alternar`) + `.ui-grafico[data-altura]`.
+  título, as `acoes` e o botão `.ui-grafico-alternar`) +
+  `.ui-grafico[data-altura]`.
 */
 export interface PropriedadesDoCardDeGrafico {
   titulo: string;
@@ -23,6 +27,7 @@ export interface PropriedadesDoCardDeGrafico {
   carregando?: boolean;
   elemento?: "article" | "section";
   tour?: string;
+  acoes?: ReactNode;
   children?: ReactNode;
 }
 
@@ -33,6 +38,7 @@ export function CardDeGrafico({
   carregando = false,
   elemento: Elemento = "article",
   tour,
+  acoes,
   children,
 }: PropriedadesDoCardDeGrafico) {
   const [emTabela, definirEmTabela] = useState(false);
@@ -53,6 +59,7 @@ export function CardDeGrafico({
     >
       <div className="ui-card-de-grafico-topo">
         <h2 className="ui-titulo">{titulo}</h2>
+        {acoes}
         {graficos > 0 ? (
           <button
             type="button"

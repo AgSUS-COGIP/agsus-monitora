@@ -53,7 +53,10 @@ o tom da faixa (vencido, menos de 30, 90 ou 180 dias); a lógica é `src/lib/bas
 
 Gráficos: o `Grafico` dentro do `CardDeGrafico` traz a tabela dos valores (leitor de tela e botão
 "Tabela" do título) e percorre os itens pelas setas; nada a fazer em quem usa
-(`src/ui/tabela-do-grafico.tsx`, DS 13.5).
+(`src/ui/tabela-do-grafico.tsx`, DS 13.5). Gráfico que filtra a página: `aoEscolher` no `Grafico`
+(Enter no item em destaque e o rótulo da tabela à vista; o clique fica no `onClick` das opções) e
+o `SeloDoFiltroDoGrafico` ("Filtro de gráfico ativo: … — clique para remover") nas `acoes` do
+`CardDeGrafico`. Hoje, o ranking de unidades da Seleção.
 
 Exportação: toda tabela exporta por `BotoesDeExportacao` — "Exportar em Excel" (.xlsx) e "Salvar
 em PDF", sempre com esse nome e nessa ordem — no topo da tela (`TopoDoPainel` `exportacao`), no
