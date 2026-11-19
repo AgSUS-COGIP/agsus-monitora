@@ -74,7 +74,9 @@ function Pessoa({ pessoa }: { pessoa: PessoaOnline }) {
       <Avatar pessoa={pessoa} />
       <span className="online-presence-texto">
         <strong title={pessoa.fullName}>{pessoa.fullName}</strong>
-        <small>
+        <small
+          title={`${pessoa.profileLabel}${pessoa.currentView ? ` · ${pessoa.currentView}` : ""}`}
+        >
           {pessoa.profileLabel}
           {pessoa.currentView ? ` · ${pessoa.currentView}` : ""}
         </small>
