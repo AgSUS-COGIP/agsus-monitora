@@ -93,7 +93,9 @@ ou sem as RPCs no banco, vale a regra; outra falha (rede, banco) vira `erroDaCon
 ## Agenda das entrevistas
 
 - Visão "Agenda" (`agenda.tsx`): regra da agenda (versões), gerar pela regra, avisos (não cabe,
-  sobra), ajuste manual com conflito, XLSX; o botão "Agenda das entrevistas" da convocação abre esta
+  sobra), ajuste manual com conflito, XLSX; agenda de mais de um mês mostra um mês por vez com o
+  `NavegadorDeMes` (abre no mês de hoje ou no mais perto; os sem horário aparecem em todos;
+  `src/lib/entrevistas/meses-da-agenda.ts`); o botão "Agenda das entrevistas" da convocação abre esta
   visão. Store em `estado-da-agenda.ts` (`obter_agenda_entrevista`, `salvar_regra_agenda_entrevista`,
   `salvar_agenda_entrevista`); a agenda salva preenche DATA e HORA do documento da convocação
   (`agendaDoDocumento`) e faz Conduzir entrevistas abrir a fila em Hoje.

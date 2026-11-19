@@ -2,6 +2,15 @@
 import { bloco } from "./apoio/bloco.ts";
 import * as alcanceDaSelecaoNs from "../src/lib/base/alcance-da-selecao.ts";
 import {
+  itensDoMes,
+  limitarMes,
+  mesDaData,
+  mesesDaAgenda,
+  mesInicialDaAgenda,
+  rotuloDoMesDaChave,
+  somarMesesNaChave,
+} from "../src/lib/entrevistas/meses-da-agenda.ts";
+import {
   contarPorSituacao,
   separarAtivosEHistorico,
   textoDasSituacoes,
@@ -7051,6 +7060,45 @@ bloco("lib/presets-de-colunas", () => {
     );
     expect(presetDasColunas(["unidade", "edital", "status"])).toBe("");
     expect(presetDasColunas(null)).toBe("");
+  });
+});
+
+bloco("lib/entrevistas/meses-da-agenda", () => {
+  it("chave do mês, passos e rótulo", () => {
+    expect(mesDaData("2026-11-19")).toBe("2026-11");
+    expect(mesDaData(null)).toBe("");
+    expect(mesDaData("19/11/2026")).toBe("");
+    expect(somarMesesNaChave("2026-12", 1)).toBe("2027-01");
+    expect(somarMesesNaChave("2026-01", -1)).toBe("2025-12");
+    expect(somarMesesNaChave("2026-11", -13)).toBe("2025-10");
+    expect(somarMesesNaChave("x", 1)).toBe("");
+    expect(rotuloDoMesDaChave("2026-03")).toBe("Março 2026");
+  });
+
+  it("os meses da agenda e o mês em que ela abre", () => {
+    const itens = [
+      { data: "2026-12-02" },
+      { data: null },
+      { data: "2026-10-06" },
+      { data: "2026-10-07" },
+    ];
+    const meses = mesesDaAgenda(itens);
+    expect(meses).toEqual(["2026-10", "2026-12"]);
+    expect(mesInicialDaAgenda(meses, "2026-11-19")).toBe("2026-11");
+    expect(mesInicialDaAgenda(meses, "2026-09-30")).toBe("2026-10");
+    expect(mesInicialDaAgenda(meses, "2027-02-01")).toBe("2026-12");
+    expect(mesInicialDaAgenda([], "2026-11-19")).toBe("");
+    expect(limitarMes("", meses)).toBe("2026-10");
+  });
+
+  it("o mês mostra os dele e os sem horário", () => {
+    const itens = [
+      { id: 1, data: "2026-10-06" },
+      { id: 2, data: "" },
+      { id: 3, data: "2026-12-02" },
+    ];
+    expect(itensDoMes(itens, "2026-10").map((i) => i.id)).toEqual([1, 2]);
+    expect(itensDoMes(itens, "2026-11").map((i) => i.id)).toEqual([2]);
   });
 });
 

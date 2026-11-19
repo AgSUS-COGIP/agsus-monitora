@@ -137,6 +137,8 @@ export type {
   PropriedadesDaSecao,
   PropriedadesDoKv,
 } from "./secao.tsx";
+export { NavegadorDeMes } from "./navegador-de-mes.tsx";
+export type { PropriedadesDoNavegadorDeMes } from "./navegador-de-mes.tsx";
 export {
   AtivosEHistorico,
   usarAtivosEHistorico,

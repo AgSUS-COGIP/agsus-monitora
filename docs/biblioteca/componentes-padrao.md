@@ -40,6 +40,11 @@ API completa (uma linha por componente) está em [docs/arquitetura-react.md](../
 | Telas da seleção | `CabecalhoDaTela`, `BarraDaLista`, `FaixaDeSituacao`, `CardDaLista`                                                                                                                                               |
 | Utilitários      | `usarEstadoDaSessao` (filtros voltam no F5), `classes(...)`                                                                                                                                                       |
 
+Navegador de mês: `NavegadorDeMes` — ‹ anterior, › próximo (só ícone, com `aria-label` e
+`title`), o mês à vista (`aria-live`) e o botão do atual; quem usa guarda o mês. No Cronograma
+(mês e semana, com "Hoje") e na agenda dos convocados da Classificação, quando ela passa de um mês
+(`src/lib/entrevistas/meses-da-agenda.ts`).
+
 Ativos e Histórico: `AtivosEHistorico` + `usarAtivosEHistorico(itens, { chave, ehHistorico,
 situacao })` deixam a lista de trabalho só com o que está em curso e o resto a um clique, com a
 contagem no rótulo ("Ativos 12", "Histórico 30") e por situação ("Em andamento 12 · Suspenso 1",

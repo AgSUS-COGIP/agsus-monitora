@@ -45,10 +45,6 @@
 .cal-barra .ui-titulo {
   min-width: 165px;
 }
-.cal-nav {
-  display: inline-flex;
-  gap: var(--space-1);
-}
 .cal-contador {
   display: inline-flex;
   align-items: center;

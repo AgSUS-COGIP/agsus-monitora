@@ -27,7 +27,8 @@ responsável (o sininho do topo), que leva a esta tela.
 
 Alternância Mês · Semana · Lista (`Segmentado`, `radiogroup`), guardada em `localStorage`
 (`agsus:cronograma:visao`); sem escolha, Mês no computador e Lista no celular. As três usam as
-mesmas etapas filtradas e o mesmo popup do dia.
+mesmas etapas filtradas e o mesmo popup do dia. O passo (‹ Mês anterior, › Próximo mês, ou a
+semana na Semana) e "Hoje" são o `NavegadorDeMes` de `src/ui/` ([[componentes-padrao]]).
 
 - **Uma cor só: a do tipo de etapa** (a da legenda). A unidade é texto; o rótulo do tipo vai
   escrito ao lado ("● Entrevistas") — a cor nunca é o único sinal.

@@ -52,6 +52,7 @@ import {
   dataComDia,
   diasDaRegra,
   gerarAgenda,
+  hojeEmBrasilia,
   horariosLivres,
   itensDoBanco,
   itensParaSalvar,
@@ -70,6 +71,14 @@ import {
   validarRegraDaAgenda,
 } from "../../lib/entrevistas/agenda-das-entrevistas.ts";
 import {
+  itensDoMes,
+  limitarMes,
+  mesesDaAgenda,
+  mesInicialDaAgenda,
+  rotuloDoMesDaChave,
+  somarMesesNaChave,
+} from "../../lib/entrevistas/meses-da-agenda.ts";
+import {
   Aviso,
   Campo,
   ErroAoCarregar,
@@ -78,6 +87,7 @@ import {
   Kpi,
   MaisDaCarga,
   Modal,
+  NavegadorDeMes,
   Segmentado,
   Selo,
   usarCargaContinua,
@@ -898,20 +908,39 @@ function AgendaDosConvocados({
   }
 
   /*
-    50 convocados por vez, mais 50 ao rolar (o edital grande tem milhares).
-    A leva continua ao mudar um horário: só volta às 50 com outra lista.
+    A agenda que passa de um mês mostra um por vez, com o navegador de mês
+    (src/lib/entrevistas/meses-da-agenda.ts); abre no mês de hoje (ou no
+    mais perto dele). Os sem horário aparecem em todos.
   */
-  const carga = usarCargaContinua(idDaLista || "calculada", ordenados.length);
+  const meses = useMemo(() => mesesDaAgenda(ordenados), [ordenados]);
+  const mesDeHoje = mesInicialDaAgenda(meses, hojeEmBrasilia());
+  const [mesEscolhido, setMesEscolhido] = useState("");
+  const mes =
+    meses.length > 1 ? limitarMes(mesEscolhido || mesDeHoje, meses) : "";
+  const doMes = useMemo(
+    () => (mes ? itensDoMes(ordenados, mes) : ordenados),
+    [ordenados, mes],
+  );
+
+  /*
+    50 convocados por vez, mais 50 ao rolar (o edital grande tem milhares).
+    A leva continua ao mudar um horário: só volta às 50 com outra lista
+    (ou outro mês).
+  */
+  const carga = usarCargaContinua(
+    `${idDaLista || "calculada"}:${mes}`,
+    doMes.length,
+  );
   const porDia = useMemo(() => {
     const dias: { chave: string; itens: ItemDaAgenda[] }[] = [];
-    for (const i of ordenados.slice(0, carga.limite)) {
+    for (const i of doMes.slice(0, carga.limite)) {
       const chave = i.data || "";
       const ultimo = dias.at(-1);
       if (ultimo && ultimo.chave === chave) ultimo.itens.push(i);
       else dias.push({ chave, itens: [i] });
     }
     return dias;
-  }, [ordenados, carga.limite]);
+  }, [doMes, carga.limite]);
 
   return (
     <section
@@ -1074,6 +1103,20 @@ function AgendaDosConvocados({
         <p className="status-discreto">Salve a regra da agenda para gerar.</p>
       ) : null}
 
+      {mes ? (
+        <NavegadorDeMes
+          className="agenda-meses"
+          nivel="h4"
+          titulo={rotuloDoMesDaChave(mes)}
+          aoAnterior={() => setMesEscolhido(somarMesesNaChave(mes, -1))}
+          aoSeguinte={() => setMesEscolhido(somarMesesNaChave(mes, 1))}
+          aoAtual={() => setMesEscolhido(mesDeHoje)}
+          anteriorDesativado={mes <= meses[0]!}
+          seguinteDesativado={mes >= meses[meses.length - 1]!}
+          atualDesativado={mes === mesDeHoje}
+          tours={{ grupo: "classificacao-agenda-meses" }}
+        />
+      ) : null}
       {itens.length ? (
         <div className="ui-tabela-rolagem">
           <table

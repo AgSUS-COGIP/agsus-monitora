@@ -93,6 +93,7 @@ import {
   AtivosEHistorico,
   ContagemDaAba,
   formatarContagem,
+  NavegadorDeMes,
   usarAtivosEHistorico,
   Segmentado,
   SeloDePrazo,
@@ -2834,6 +2835,68 @@ bloco("ui/contagem-da-aba", () => {
       ).toBe("alerta");
       expect(opcoes[2]!.querySelector(".ui-aba-contagem")).toBeNull();
     });
+  });
+});
+
+bloco("ui/navegador-de-mes", () => {
+  (
+    globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+  ).IS_REACT_ACT_ENVIRONMENT = true;
+
+  let raiz: Root | null = null;
+  afterEach(() => {
+    act(() => raiz?.unmount());
+    raiz = null;
+    document.body.innerHTML = "";
+  });
+
+  it("anterior, atual e próximo, com o mês anunciado", () => {
+    const aoAnterior = vi.fn();
+    const aoSeguinte = vi.fn();
+    const aoAtual = vi.fn();
+    const caixa = document.createElement("div");
+    document.body.append(caixa);
+    raiz = createRoot(caixa);
+    act(() =>
+      raiz!.render(
+        h(NavegadorDeMes, {
+          titulo: "Novembro 2026",
+          aoAnterior,
+          aoSeguinte,
+          aoAtual,
+          seguinteDesativado: true,
+          atualDesativado: true,
+          nivel: "h3",
+          ids: { titulo: "mesTitulo" },
+          tours: { grupo: "meses", anterior: "mes-antes" },
+        }),
+      ),
+    );
+    const grupo = caixa.querySelector<HTMLElement>("[data-tour='meses']")!;
+    const titulo = grupo.querySelector("h3")!;
+    expect(titulo.textContent).toBe("Novembro 2026");
+    expect(titulo.id).toBe("mesTitulo");
+    expect(titulo.getAttribute("aria-live")).toBe("polite");
+    const anterior = grupo.querySelector<HTMLButtonElement>(
+      "[data-acao='mes-anterior']",
+    )!;
+    expect(anterior.getAttribute("aria-label")).toBe("Mês anterior");
+    expect(anterior.title).toBe("Mês anterior");
+    expect(anterior.dataset.tour).toBe("mes-antes");
+    const seguinte = grupo.querySelector<HTMLButtonElement>(
+      "[data-acao='mes-seguinte']",
+    )!;
+    expect(seguinte.getAttribute("aria-label")).toBe("Próximo mês");
+    expect(seguinte.disabled).toBe(true);
+    const atual = grupo.querySelector<HTMLButtonElement>(
+      "[data-acao='mes-atual']",
+    )!;
+    expect(atual.textContent).toBe("Mês atual");
+    expect(atual.disabled).toBe(true);
+    act(() => anterior.click());
+    expect(aoAnterior).toHaveBeenCalledTimes(1);
+    expect(aoSeguinte).not.toHaveBeenCalled();
+    expect(aoAtual).not.toHaveBeenCalled();
   });
 });
 
