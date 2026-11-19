@@ -6,7 +6,7 @@ import type { ResultadoDaBusca, OpcoesDaBusca } from "./tipos.ts";
 
   O que o legado fazia e continua aqui:
   - Ctrl+K / Cmd+K em qualquer tela abre (só com usuário conectado) e, aberta, fecha.
-  - Esc, clique no fundo e o botão "Esc" fecham; a rolagem da página trava enquanto está aberta.
+  - Esc e o botão "Esc" fecham (o clique no fundo não, como em todo modal); a rolagem da página trava enquanto está aberta.
   - Ao abrir: campo vazio e com foco, nada listado. Cada letra filtra de novo e
     desmarca a escolha.
   - Aberta, pede as linhas do monitoramento (usarLinhasDoMonitoramento): a

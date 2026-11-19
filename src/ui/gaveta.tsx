@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
-import { Modal } from "./modal.tsx";
+import { Modal, usarFecharModal } from "./modal.tsx";
 import { classes } from "./classes.ts";
 
 /*
   A gaveta lateral: um <Modal> (portal, Esc, foco preso) com o topo —
-  sobretítulo, título, resumo e fechar — e o corpo como filhos.
+  sobretítulo, título, resumo e fechar — e o corpo como filhos. Como no
+  Modal, clicar fora não fecha, e `alterado` faz o fechar perguntar antes.
 
   Marcação: `.ui-gaveta-fundo` > `.ui-gaveta` (`.ui-gaveta-topo`…).
   `usarClassesDaGaveta()` dá as duas classes, para quem monta a gaveta direto
@@ -20,19 +21,21 @@ export interface PropriedadesDoTopoDaGaveta {
   titulo: ReactNode;
   tituloId?: string;
   resumo?: ReactNode;
-  aoFechar: () => void;
   rotuloDoFechar?: string;
 }
 
-/* O topo da gaveta (e do formulário): sobretítulo, título, resumo e fechar. */
+/*
+  O topo da gaveta (e do formulário): sobretítulo, título, resumo e fechar.
+  O fechar é o do <Modal> em volta (com a pergunta de descarte).
+*/
 export function TopoDaGaveta({
   sobretitulo,
   titulo,
   tituloId,
   resumo,
-  aoFechar,
   rotuloDoFechar = "Fechar",
 }: PropriedadesDoTopoDaGaveta) {
+  const fechar = usarFecharModal();
   return (
     <div className="ui-gaveta-topo">
       <div>
@@ -47,7 +50,7 @@ export function TopoDaGaveta({
         className="ui-gaveta-fechar"
         aria-label={rotuloDoFechar}
         title="Fechar"
-        onClick={aoFechar}
+        onClick={() => fechar?.()}
       >
         <i className="fa-solid fa-xmark" aria-hidden="true" />
       </button>
@@ -63,7 +66,9 @@ export interface PropriedadesDaGaveta {
   id?: string;
   tituloId?: string;
   aoFechar: () => void;
-  fecharAoClicarFora?: boolean;
+  /** Há alterações não salvas: fechar pergunta antes (ver <Modal>). */
+  alterado?: boolean;
+  aoDescartar?: () => void;
   className?: string;
   cartaoClassName?: string;
   sobretitulo?: ReactNode;
@@ -78,7 +83,8 @@ export function Gaveta({
   id,
   tituloId,
   aoFechar,
-  fecharAoClicarFora = true,
+  alterado,
+  aoDescartar,
   className,
   cartaoClassName,
   sobretitulo,
@@ -94,7 +100,8 @@ export function Gaveta({
       id={id}
       rotuloId={tituloId}
       aoFechar={aoFechar}
-      fecharAoClicarFora={fecharAoClicarFora}
+      alterado={alterado}
+      aoDescartar={aoDescartar}
       tour={tour}
       className={classes(fundo, className)}
       cartaoClassName={classes(cartao, cartaoClassName)}
@@ -105,7 +112,6 @@ export function Gaveta({
         tituloId={tituloId}
         resumo={resumo}
         rotuloDoFechar={rotuloDoFechar}
-        aoFechar={aoFechar}
       />
       {children}
     </Modal>

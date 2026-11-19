@@ -14,6 +14,7 @@ import {
   Campo,
   classes,
   ErroAoCarregar,
+  FecharModal,
   LinhasEsqueleto,
   Modal,
   Selo,
@@ -60,6 +61,7 @@ function ModalReativarConta({
   const [valores, setValores] = useState(() =>
     valoresIniciaisDaReativacao(conta, grupos),
   );
+  const [inicial] = useState(valores);
   const [tentou, setTentou] = useState(false);
   const [recusa, setRecusa] = useState("");
   const nome = conta.nome || conta.email;
@@ -91,12 +93,11 @@ function ModalReativarConta({
       className="acessos-modal"
       cartaoClassName="acessos-modal-cartao"
       aoFechar={aoFechar}
-      fecharAoClicarFora={false}
+      alterado={JSON.stringify(valores) !== JSON.stringify(inicial)}
     >
       <CabecalhoDaGaveta
         tituloId="acessosReativarTitulo"
         titulo={`Reativar ${nome}`}
-        aoFechar={aoFechar}
       />
       <form className="acessos-modal-corpo" onSubmit={salvar} noValidate>
         <div className="acessos-grade-campos">
@@ -172,9 +173,7 @@ function ModalReativarConta({
           </Aviso>
         ) : null}
         <div className="ui-acoes acessos-modal-rodape">
-          <button type="button" className="btn ghost" onClick={aoFechar}>
-            Cancelar
-          </button>
+          <FecharModal className="btn ghost">Cancelar</FecharModal>
           <BotaoDeAcao
             estado={estado}
             acao={`reativar:${conta.id}`}

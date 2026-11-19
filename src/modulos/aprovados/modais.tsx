@@ -38,7 +38,14 @@ import {
   statusNeedsMatricula,
   uniqueCandidateCargos,
 } from "../../lib/aprovados/lista-aprovados-rules.ts";
-import { Abas, BotaoDeAcao, classes, Modal } from "../../ui/index.ts";
+import {
+  Abas,
+  BotaoDeAcao,
+  classes,
+  FecharModal,
+  Modal,
+  usarAlteradoNoModal,
+} from "../../ui/index.ts";
 import { IconeDePdf } from "./partes.tsx";
 
 /*
@@ -55,7 +62,6 @@ function Cabecalho({
   titulo,
   subtitulo,
   subtituloId,
-  aoFechar,
 }: PropsDoCabecalhoDoModal) {
   return (
     <div className="modal-head">
@@ -67,9 +73,7 @@ function Cabecalho({
           </p>
         ) : null}
       </div>
-      <button className="btn secondary" type="button" onClick={aoFechar}>
-        Fechar
-      </button>
+      <FecharModal className="btn secondary">Fechar</FecharModal>
     </div>
   );
 }
@@ -195,6 +199,8 @@ export function ModalDeStatus({
   const [processo, setProcesso] = useState(candidato.processo_sei || "");
   const [matricula, setMatricula] = useState(candidato.matricula || "");
   const [observacao, setObservacao] = useState("");
+  /* A observação gravada, que chega depois: a base para saber se mudou. */
+  const [observacaoLida, setObservacaoLida] = useState("");
   const [observacaoCarregada, setObservacaoCarregada] = useState(false);
   const [erroObservacao, setErroObservacao] = useState("");
   useEffect(() => {
@@ -204,6 +210,7 @@ export function ModalDeStatus({
       .then((texto) => {
         if (!ativo) return;
         setObservacao(texto);
+        setObservacaoLida(texto);
         setObservacaoCarregada(true);
       })
       .catch(() => {
@@ -237,6 +244,14 @@ export function ModalDeStatus({
   const semStatusBarrado = !podeTirarOStatus(perfil, candidato);
   const anexosInvalidos = Boolean(problemaDosAnexos(anexos, jaAnexados));
   const fechar = estado.fecharModal;
+  const alterado =
+    status !== (candidato.status || "") ||
+    processo !== (candidato.processo_sei || "") ||
+    matricula !== (candidato.matricula || "") ||
+    observacao !== observacaoLida ||
+    data !== (dataConvocacao || hoje) ||
+    anexos.length > 0 ||
+    marcarOutras;
 
   return (
     <Modal
@@ -245,13 +260,13 @@ export function ModalDeStatus({
       cartaoClassName="approved-modal-card"
       rotuloId="approvedStatusTitle"
       aoFechar={fechar}
+      alterado={alterado}
     >
       <Cabecalho
         tituloId="approvedStatusTitle"
         titulo="Alterar status do candidato"
         subtituloId="approvedStatusCandidate"
         subtitulo={`${candidato.nome} · ${candidato.cargo}`}
-        aoFechar={fechar}
       />
       <div className="modal-body">
         <div className="form-grid">
@@ -412,9 +427,7 @@ export function ModalDeStatus({
           ) : null}
         </div>
         <div className="approved-modal-actions">
-          <button className="btn secondary" type="button" onClick={fechar}>
-            Cancelar
-          </button>
+          <FecharModal className="btn secondary">Cancelar</FecharModal>
           <BotaoDeAcao
             estado={estado}
             acao="status"
@@ -472,7 +485,6 @@ export function ModalDeAnexos({
         tituloId="approvedAnexosTitle"
         titulo="Anexos do candidato"
         subtitulo={`${candidato.nome} · ${candidato.cargo}`}
-        aoFechar={fechar}
       />
       <div className="modal-body">
         {anexos.length ? (
@@ -525,9 +537,7 @@ export function ModalDeAnexos({
           <p className="approved-empty">Nenhum anexo para este candidato.</p>
         )}
         <div className="approved-modal-actions">
-          <button className="btn secondary" type="button" onClick={fechar}>
-            Fechar
-          </button>
+          <FecharModal className="btn secondary">Fechar</FecharModal>
         </div>
       </div>
     </Modal>
@@ -696,11 +706,7 @@ export function ModalSubJudice({
       rotuloId="subJudiceTitle"
       aoFechar={fechar}
     >
-      <Cabecalho
-        tituloId="subJudiceTitle"
-        titulo="Sub judice"
-        aoFechar={fechar}
-      />
+      <Cabecalho tituloId="subJudiceTitle" titulo="Sub judice" />
       <div className="modal-body">
         {abas.length > 1 ? (
           <Abas
@@ -762,6 +768,15 @@ function PainelDoNovoCandidato({
     : "";
   const [processo, setProcesso] = useState("");
   const [observacao, setObservacao] = useState("");
+  usarAlteradoNoModal(
+    Boolean(
+      nome.trim() ||
+      nota.trim() ||
+      modalidadeEscolhida ||
+      processo.trim() ||
+      observacao.trim(),
+    ),
+  );
 
   return (
     <div
@@ -822,13 +837,7 @@ function PainelDoNovoCandidato({
         />
       </div>
       <div className="approved-modal-actions">
-        <button
-          className="btn secondary"
-          type="button"
-          onClick={estado.fecharModal}
-        >
-          Cancelar
-        </button>
+        <FecharModal className="btn secondary">Cancelar</FecharModal>
         <BotaoDeAcao
           estado={estado}
           acao="sub-judice"
@@ -932,13 +941,7 @@ function PainelDoCandidatoAprovado({
         />
       ) : (
         <div className="approved-modal-actions">
-          <button
-            className="btn secondary"
-            type="button"
-            onClick={estado.fecharModal}
-          >
-            Cancelar
-          </button>
+          <FecharModal className="btn secondary">Cancelar</FecharModal>
         </div>
       )}
     </div>
@@ -969,6 +972,11 @@ function FormularioDaDecisao({
   );
   const [processo, setProcesso] = useState("");
   const [observacao, setObservacao] = useState("");
+  const [inicial] = useState(() => [nota, modalidade].join("|"));
+  usarAlteradoNoModal(
+    [nota, modalidade].join("|") !== inicial ||
+      Boolean(processo.trim() || observacao.trim()),
+  );
   const alteracao = alteracaoJudicial(candidato);
 
   return (
@@ -1046,13 +1054,7 @@ function FormularioDaDecisao({
             Desfazer alteração
           </BotaoDeAcao>
         ) : null}
-        <button
-          className="btn secondary"
-          type="button"
-          onClick={estado.fecharModal}
-        >
-          Cancelar
-        </button>
+        <FecharModal className="btn secondary">Cancelar</FecharModal>
         <BotaoDeAcao
           estado={estado}
           acao="alteracao-judicial"

@@ -10,7 +10,13 @@ import {
   type QuadroDosFundamentos,
 } from "../../lib/avaliacao-documental/fundamento-da-eliminacao.ts";
 import { funcaoAusente } from "../../lib/avaliacao-documental/leitura-por-versao.ts";
-import { Aviso, Campo, CardDaLista, Selo } from "../../ui/index.ts";
+import {
+  Aviso,
+  Campo,
+  CardDaLista,
+  FecharModal,
+  Selo,
+} from "../../ui/index.ts";
 import { ModalInstitucional } from "../../ui/modal-institucional.tsx";
 import { mensagemDoBanco } from "./estado.ts";
 import type { EstadoDaPreClassificacao } from "./tipos-da-pre-classificacao.ts";
@@ -297,18 +303,18 @@ function ConferirFundamento({
       descricao={`Regra da Triagem, versão ${versaoDaRegra}.`}
       icone="fa-scale-balanced"
       aoFechar={() => aoFechar(false)}
+      alterado={
+        item.trim() !== "" ||
+        fonte !== (anterior?.fonte ?? "") ||
+        justificativa.trim() !== ""
+      }
       fecharDesabilitado={gravando}
       infoRodape="A conferência fica registrada com seu nome, a data e a versão da regra."
       acoes={
         <>
-          <button
-            type="button"
-            className="btn secondary"
-            onClick={() => aoFechar(false)}
-            disabled={gravando}
-          >
+          <FecharModal className="btn secondary" disabled={gravando}>
             Cancelar
-          </button>
+          </FecharModal>
           <button
             type="button"
             className="btn primary"

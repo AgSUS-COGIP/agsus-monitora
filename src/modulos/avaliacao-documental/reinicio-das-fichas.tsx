@@ -16,7 +16,7 @@ import {
   textoDoImpacto,
   type ReinicioDasFichas as Reinicio,
 } from "../../lib/avaliacao-documental/reinicio-das-fichas.ts";
-import { Aviso, Campo, Gaveta } from "../../ui/index.ts";
+import { Aviso, Campo, FecharModal, Gaveta } from "../../ui/index.ts";
 
 /*
   Reinício das fichas do edital com dois administradores globais (migration
@@ -290,7 +290,9 @@ function GavetaDoReinicio({
       titulo="Reiniciar as fichas do edital"
       resumo={reinicio?.numero || undefined}
       aoFechar={aoFechar}
-      fecharAoClicarFora={false}
+      alterado={Boolean(
+        motivo.trim() || numero.trim() || motivoDaRecusa.trim(),
+      )}
       tour="avd-fila-reinicio"
     >
       <div className="avd-gaveta-corpo" data-modo={modo || "carregando"}>
@@ -396,14 +398,9 @@ function GavetaDoReinicio({
         ) : null}
 
         <div className="ui-acoes">
-          <button
-            type="button"
-            className="btn secondary"
-            onClick={aoFechar}
-            disabled={enviando}
-          >
+          <FecharModal className="btn secondary" disabled={enviando}>
             Fechar
-          </button>
+          </FecharModal>
           {modo === "pedir" ? (
             <button
               type="button"

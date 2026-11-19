@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { coordenacoesPorArea } from "../../lib/acessos/grupos-e-coordenacoes.ts";
 import { Icone } from "../../componentes/icone.tsx";
-import { Aviso, Campo, classes } from "../../ui/index.ts";
+import { Aviso, Campo, classes, FecharModal } from "../../ui/index.ts";
 import type {
   AreaDeAcesso,
   CoordenacaoDeAcesso,
@@ -116,18 +116,17 @@ export function iniciais(nome: string | null | undefined): string {
   return (primeira + ultima).toLocaleUpperCase("pt-BR");
 }
 
+/* O topo dos modais de Acessos; o fechar é o do <Modal> em volta (pergunta se há alteração). */
 export function CabecalhoDaGaveta({
   tituloId,
   titulo,
   subtitulo,
   avatar,
-  aoFechar,
 }: {
   tituloId: string;
   titulo: string;
   subtitulo?: string | null;
   avatar?: string | null;
-  aoFechar: () => void;
 }) {
   return (
     <div className="acessos-gaveta-cabecalho">
@@ -143,15 +142,13 @@ export function CabecalhoDaGaveta({
         <h3 id={tituloId}>{titulo}</h3>
         {subtitulo ? <p>{subtitulo}</p> : null}
       </div>
-      <button
-        type="button"
+      <FecharModal
         className="btn icon outline"
         aria-label="Fechar"
         title="Fechar"
-        onClick={aoFechar}
       >
         <Icone nome="x" tamanho={16} />
-      </button>
+      </FecharModal>
     </div>
   );
 }

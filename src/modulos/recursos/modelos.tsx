@@ -26,7 +26,13 @@ import {
   SITUACOES,
   situacaoDecidida,
 } from "../../lib/recursos/recursos-dos-candidatos.ts";
-import { Aviso, Carregando, Gaveta, Secao } from "../../ui/index.ts";
+import {
+  Aviso,
+  Carregando,
+  Gaveta,
+  Secao,
+  usarAlteradoNoModal,
+} from "../../ui/index.ts";
 import { dataHora } from "./partes.ts";
 
 /*
@@ -50,7 +56,9 @@ function FormularioDoModelo({
   modelo: Partial<RascunhoDoModelo> | null;
   aoFechar: () => void;
 }) {
-  const [rascunho, setRascunho] = useState(() => rascunhoDoModelo(modelo));
+  const [inicial] = useState(() => rascunhoDoModelo(modelo));
+  const [rascunho, setRascunho] = useState(inicial);
+  usarAlteradoNoModal(JSON.stringify(rascunho) !== JSON.stringify(inicial));
   const [tentou, setTentou] = useState(false);
   const texto = useRef<HTMLTextAreaElement | null>(null);
   const erros = errosDoModelo(rascunho);
@@ -213,6 +221,7 @@ function CartaoDoModelo({
 }: PropsDoModelo & { modelo: ModeloDaResposta; aoEditar: () => void }) {
   const [arquivando, setArquivando] = useState(false);
   const [motivo, setMotivo] = useState("");
+  usarAlteradoNoModal(arquivando && motivo.trim() !== "");
   const area =
     (dados.areas || []).find((a) => a.id === modelo.area)?.rotulo ||
     modelo.area;

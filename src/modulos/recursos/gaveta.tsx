@@ -156,6 +156,7 @@ export function GavetaDoRecurso({
       id="recursosGaveta"
       tituloId="recursosGavetaTitulo"
       aoFechar={estado.fecharGaveta}
+      alterado={podeExcluir && excluindo && motivo.trim() !== ""}
       className="recursos-gaveta"
       sobretitulo={`Recurso nº ${r.nu} · ${rotuloDaOrigem(r.origem, origens)}`}
       titulo={r.candidato}

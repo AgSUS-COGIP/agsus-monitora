@@ -264,7 +264,7 @@ import {
   MultiSelectBusca,
   type PropriedadesDoMultiSelectBusca,
 } from "../src/componentes/multi-select-busca.tsx";
-import { Modal } from "../src/ui/modal.tsx";
+import { FecharModal, Modal, usarAlteradoNoModal } from "../src/ui/modal.tsx";
 import {
   situacaoDaPresenca,
   normalizeOnlinePresenceList,
@@ -7300,7 +7300,7 @@ bloco("componentes/busca-global", async () => {
       expect(dialogo()).toBeNull();
     });
 
-    it("Esc, o botão Esc e o clique no fundo fecham", async () => {
+    it("Esc e o botão Esc fecham; o clique no fundo não", async () => {
       await ctrlK();
       await teclar(definido(campo()), "Escape");
       expect(dialogo()).toBeNull();
@@ -7311,7 +7311,7 @@ bloco("componentes/busca-global", async () => {
 
       await ctrlK();
       await clicar(dialogo());
-      expect(dialogo()).toBeNull();
+      expect(dialogo()).not.toBeNull();
     });
 
     it("digitar filtra, mostra título, subtítulo e risco e realça o termo", async () => {
@@ -7728,16 +7728,15 @@ bloco("componentes/confirmacao-de-saida", () => {
       expect(document.activeElement?.id).toBe("quemAbriu");
     });
 
-    it("Esc e o fundo também cancelam", async () => {
+    it("Esc cancela; clicar no fundo não fecha", async () => {
       const primeiro = await pedirSaida();
+      await clicar(document.querySelector(".shell-confirm-backdrop"));
+      expect(dialogo()?.hidden).toBe(false);
+      expect(primeiro.encerrar).not.toHaveBeenCalled();
+
       await teclar(document, "Escape");
       await expect(primeiro.resultado).resolves.toBe(false);
       expect(dialogo()?.hidden).toBe(true);
-
-      const segundo = await pedirSaida();
-      await clicar(document.querySelector(".shell-confirm-backdrop"));
-      await expect(segundo.resultado).resolves.toBe(false);
-      expect(segundo.encerrar).not.toHaveBeenCalled();
     });
 
     it("confirmar fecha o menu do perfil, mostra 'Saindo do sistema…' e encerra a sessão", async () => {
@@ -7973,7 +7972,7 @@ bloco("componentes/esc-no-menu-dentro-do-modal", () => {
     const [selecionados, setSelecionados] = useState<string[]>([]);
     return createElement(
       Modal,
-      { rotulo: "Adicionar pessoa", aoFechar, fecharAoClicarFora: false },
+      { rotulo: "Adicionar pessoa", aoFechar },
       createElement(MultiSelectBusca, {
         id: "areas",
         opcoes: ["Sede", "Projetos"],
@@ -8009,6 +8008,176 @@ bloco("componentes/esc-no-menu-dentro-do-modal", () => {
       expect(document.activeElement).toBe(gatilho);
 
       await teclar(definido(document.activeElement), "Escape");
+      expect(aoFechar).toHaveBeenCalledTimes(1);
+    });
+  });
+});
+
+bloco("ui/modal-padrao", () => {
+  /*
+    Todo modal do sistema (src/ui/modal.tsx): clicar no fundo não fecha; Esc
+    e os botões de fechar fecham. Com `alterado`, fechar pergunta "Descartar
+    as alterações?": "Continuar editando" mantém, "Descartar alterações" fecha.
+  */
+  let raiz: Root | null = null;
+
+  function Formulario({
+    aoFechar,
+    aoDescartar,
+    gaveta = false,
+  }: {
+    aoFechar: () => void;
+    aoDescartar?: () => void;
+    gaveta?: boolean;
+  }) {
+    const [nome, setNome] = useState("");
+    const conteudo = [
+      h("input", {
+        key: "nome",
+        id: "nome",
+        value: nome,
+        onChange: (evento: ChangeEvent<HTMLInputElement>) =>
+          setNome(evento.target.value),
+      }),
+      h(FecharModal, { key: "cancelar", className: "btn" }, "Cancelar"),
+    ];
+    return gaveta
+      ? h(
+          Gaveta,
+          {
+            id: "janela",
+            titulo: "Detalhe",
+            aoFechar,
+            aoDescartar,
+            alterado: nome !== "",
+          },
+          conteudo,
+        )
+      : h(
+          Modal,
+          {
+            id: "janela",
+            rotulo: "Formulário",
+            aoFechar,
+            aoDescartar,
+            alterado: nome !== "",
+          },
+          conteudo,
+        );
+  }
+
+  async function desenhar(elemento: ReactElement) {
+    document.body.innerHTML = `<div id="raiz"></div>`;
+    await act(async () => {
+      raiz = createRoot(definido(document.getElementById("raiz")));
+      raiz.render(elemento);
+    });
+  }
+  const janela = () => document.getElementById("janela");
+  const pergunta = () => document.querySelector(".ui-modal-descarte");
+  const botao = (texto: string) =>
+    [...document.querySelectorAll<HTMLElement>("#janela button")].find(
+      (b) => b.textContent?.trim() === texto,
+    ) ?? null;
+
+  afterEach(async () => {
+    await act(async () => raiz?.unmount());
+    raiz = null;
+    document.body.innerHTML = "";
+  });
+
+  describe("fechar o modal", () => {
+    it("clicar no fundo escuro não fecha, nem com o modal intocado", async () => {
+      const aoFechar = vi.fn();
+      await desenhar(h(Formulario, { aoFechar }));
+      await clicar(janela());
+      expect(aoFechar).not.toHaveBeenCalled();
+      expect(pergunta()).toBeNull();
+    });
+
+    it("sem alteração, Esc e Cancelar fecham direto", async () => {
+      const aoFechar = vi.fn();
+      await desenhar(h(Formulario, { aoFechar }));
+      await teclar(document, "Escape");
+      expect(aoFechar).toHaveBeenCalledTimes(1);
+      await clicar(botao("Cancelar"));
+      expect(aoFechar).toHaveBeenCalledTimes(2);
+      expect(pergunta()).toBeNull();
+    });
+
+    it("com alteração, Esc pergunta; Continuar editando mantém o que foi digitado", async () => {
+      const aoFechar = vi.fn();
+      await desenhar(h(Formulario, { aoFechar }));
+      await digitar(document.getElementById("nome"), "Maria");
+      await teclar(document, "Escape");
+      expect(aoFechar).not.toHaveBeenCalled();
+      const faixa = definido(pergunta());
+      expect(faixa.getAttribute("role")).toBe("alertdialog");
+      expect(faixa.textContent).toContain("Descartar as alterações?");
+      expect(document.activeElement).toBe(botao("Continuar editando"));
+
+      await clicar(botao("Continuar editando"));
+      expect(pergunta()).toBeNull();
+      expect(aoFechar).not.toHaveBeenCalled();
+      expect((document.getElementById("nome") as HTMLInputElement).value).toBe(
+        "Maria",
+      );
+
+      // Esc com a pergunta na tela também volta à edição.
+      await clicar(botao("Cancelar"));
+      expect(pergunta()).not.toBeNull();
+      await teclar(document, "Escape");
+      expect(pergunta()).toBeNull();
+      expect(aoFechar).not.toHaveBeenCalled();
+    });
+
+    it("com alteração, Descartar alterações fecha (por aoDescartar, se houver)", async () => {
+      const aoFechar = vi.fn();
+      const aoDescartar = vi.fn();
+      await desenhar(h(Formulario, { aoFechar, aoDescartar }));
+      await digitar(document.getElementById("nome"), "Maria");
+      await clicar(botao("Cancelar"));
+      await clicar(botao("Descartar alterações"));
+      expect(aoDescartar).toHaveBeenCalledTimes(1);
+      expect(aoFechar).not.toHaveBeenCalled();
+    });
+
+    it("um filho com formulário próprio avisa com usarAlteradoNoModal", async () => {
+      function Anotacao() {
+        const [texto, setTexto] = useState("");
+        usarAlteradoNoModal(texto !== "");
+        return h("textarea", {
+          id: "anotacao",
+          value: texto,
+          onChange: (evento: ChangeEvent<HTMLTextAreaElement>) =>
+            setTexto(evento.target.value),
+        });
+      }
+      const aoFechar = vi.fn();
+      await desenhar(
+        h(Modal, { id: "janela", rotulo: "Detalhe", aoFechar }, h(Anotacao)),
+      );
+      await digitar(document.getElementById("anotacao"), "nota");
+      await teclar(document, "Escape");
+      expect(aoFechar).not.toHaveBeenCalled();
+      expect(pergunta()).not.toBeNull();
+
+      // Apagar o que digitou desfaz o aviso: fecha direto.
+      await clicar(botao("Continuar editando"));
+      await digitar(document.getElementById("anotacao"), "");
+      await teclar(document, "Escape");
+      expect(aoFechar).toHaveBeenCalledTimes(1);
+    });
+
+    it("na gaveta, o ✕ do topo passa pela mesma pergunta", async () => {
+      const aoFechar = vi.fn();
+      await desenhar(h(Formulario, { aoFechar, gaveta: true }));
+      await clicar(janela());
+      expect(aoFechar).not.toHaveBeenCalled();
+      await digitar(document.getElementById("nome"), "Maria");
+      await clicar(document.querySelector<HTMLElement>(".ui-gaveta-fechar"));
+      expect(pergunta()).not.toBeNull();
+      await clicar(botao("Descartar alterações"));
       expect(aoFechar).toHaveBeenCalledTimes(1);
     });
   });
@@ -10470,9 +10639,7 @@ bloco("ui/estados-e-botao-pressionado", () => {
     });
 
     it("o botão de fechar da gaveta tem nome acessível mesmo sem rótulo", async () => {
-      const no = await montar(
-        h(TopoDaGaveta, { titulo: "Detalhe", aoFechar: () => undefined }),
-      );
+      const no = await montar(h(TopoDaGaveta, { titulo: "Detalhe" }));
       expect(
         no.querySelector(".ui-gaveta-fechar")?.getAttribute("aria-label"),
       ).toBe("Fechar");

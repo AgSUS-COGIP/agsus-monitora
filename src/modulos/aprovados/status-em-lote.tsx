@@ -20,7 +20,7 @@ import {
   textoDoAlcance,
   type AlcanceDaSelecao,
 } from "../../lib/base/alcance-da-selecao.ts";
-import { BotaoDeAcao, Modal } from "../../ui/index.ts";
+import { BotaoDeAcao, FecharModal, Modal } from "../../ui/index.ts";
 import { NOME_DOS_CANDIDATOS, plural } from "./partes.tsx";
 
 /*
@@ -78,6 +78,7 @@ export function ModalDoStatusEmLote({
       cartaoClassName="approved-modal-card"
       rotuloId="approvedStatusEmLoteTitulo"
       aoFechar={aoFechar}
+      alterado={status !== (opcoes[0] ?? "") || data !== hoje}
     >
       <div className="modal-head">
         <div>
@@ -88,9 +89,7 @@ export function ModalDoStatusEmLote({
               .join(" · ")}
           </p>
         </div>
-        <button className="btn secondary" type="button" onClick={aoFechar}>
-          Fechar
-        </button>
+        <FecharModal className="btn secondary">Fechar</FecharModal>
       </div>
       <div className="modal-body">
         <div className="form-grid">
@@ -166,9 +165,7 @@ export function ModalDoStatusEmLote({
           ) : null}
         </div>
         <div className="approved-modal-actions">
-          <button className="btn secondary" type="button" onClick={aoFechar}>
-            Cancelar
-          </button>
+          <FecharModal className="btn secondary">Cancelar</FecharModal>
           <BotaoDeAcao
             estado={estado}
             acao="status-em-lote"

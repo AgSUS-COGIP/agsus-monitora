@@ -35,6 +35,7 @@ import {
   ErroAoCarregar,
   GradeDeKpis,
   Kpi,
+  FecharModal,
   MaisDaCarga,
   Modal,
   Segmentado,
@@ -414,7 +415,7 @@ function ModalDaDecisao({
       cartaoClassName="approved-modal-card pendencia-modal"
       rotuloId="pendenciaModalTitulo"
       aoFechar={estado.fechar}
-      fecharAoClicarFora={false}
+      alterado={Object.values(rascunho).some((valor) => Boolean(valor))}
     >
       <div className="modal-head">
         <div>
@@ -423,9 +424,7 @@ function ModalDaDecisao({
             Edital {pendencia.edital} · {textoDoDetalhe(pendencia)}
           </p>
         </div>
-        <button className="btn secondary" type="button" onClick={estado.fechar}>
-          Fechar
-        </button>
+        <FecharModal className="btn secondary">Fechar</FecharModal>
       </div>
       <div className="modal-body">
         <div className="pendencia-campos">
@@ -454,14 +453,9 @@ function ModalDaDecisao({
           </p>
         ) : null}
         <div className="approved-modal-actions">
-          <button
-            className="btn secondary"
-            type="button"
-            onClick={estado.fechar}
-            disabled={dados.decidindo}
-          >
+          <FecharModal className="btn secondary" disabled={dados.decidindo}>
             Cancelar
-          </button>
+          </FecharModal>
           <button
             className="btn green"
             type="button"

@@ -44,6 +44,7 @@ import {
   Aviso,
   Campo,
   classes,
+  FecharModal,
   Kv,
   Modal,
   TopoDaGaveta,
@@ -249,6 +250,9 @@ export function FormularioDoRecurso({
   const [rascunho, setRascunho] = useState<RascunhoDoFormulario>(() =>
     recurso ? rascunhoDoRecurso(recurso, detalhe || {}) : RASCUNHO_VAZIO,
   );
+  /* O formulário como abriu (com o detalhe, quando chega): fechar com algo diferente pergunta. */
+  const [base, setBase] = useState(rascunho);
+  const alterado = JSON.stringify(rascunho) !== JSON.stringify(base);
   const [tentou, setTentou] = useState(false);
   const [confirmaDuplicado, setConfirmaDuplicado] = useState(false);
   const [duplicadoDoBanco, setDuplicadoDoBanco] = useState<
@@ -273,14 +277,16 @@ export function FormularioDoRecurso({
   useEffect(() => {
     if (!edicao || !detalheChegou || !detalhe || preenchido.current) return;
     preenchido.current = true;
-    setRascunho((atual) => ({
+    const comDetalhe = (atual: RascunhoDoFormulario) => ({
       ...atual,
       observacao: atual.observacao || detalhe.observacao || "",
       nome_informado: detalhe.nome_informado ?? atual.nome_informado,
       codigo_informado: detalhe.codigo_informado ?? atual.codigo_informado,
       cargo_informado: detalhe.cargo_informado ?? atual.cargo_informado,
       vaga_informada: detalhe.vaga_informada ?? atual.vaga_informada,
-    }));
+    });
+    setRascunho(comDetalhe);
+    setBase(comDetalhe);
   }, [edicao, detalheChegou, detalhe]);
 
   const editaisOrdenados = useMemo(
@@ -376,7 +382,7 @@ export function FormularioDoRecurso({
       id="recursosFormulario"
       rotuloId="recursosFormularioTitulo"
       aoFechar={estado.fecharFormulario}
-      fecharAoClicarFora={false}
+      alterado={alterado}
       className={classes(gaveta.fundo, "recursos-formulario-gaveta")}
       cartaoClassName={classes(gaveta.cartao, "recursos-formulario-cartao")}
     >
@@ -387,7 +393,6 @@ export function FormularioDoRecurso({
           tituloId="recursosFormularioTitulo"
           resumo={null}
           rotuloDoFechar="Fechar formulário"
-          aoFechar={estado.fecharFormulario}
         />
         {recurso ? (
           <div className="ui-gaveta-contexto">
@@ -663,13 +668,7 @@ export function FormularioDoRecurso({
           </div>
         </div>
         <div className="ui-gaveta-rodape">
-          <button
-            type="button"
-            className="btn secondary"
-            onClick={estado.fecharFormulario}
-          >
-            Cancelar
-          </button>
+          <FecharModal className="btn secondary">Cancelar</FecharModal>
           <button
             type="submit"
             className="btn"

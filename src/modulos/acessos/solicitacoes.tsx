@@ -17,6 +17,7 @@ import {
   BotaoDeAcao,
   Campo,
   ErroAoCarregar,
+  FecharModal,
   LinhasEsqueleto,
   Modal,
   Selo,
@@ -121,12 +122,11 @@ function ModalDeRecusa({
       className="acessos-modal"
       cartaoClassName="acessos-modal-cartao"
       aoFechar={aoFechar}
-      fecharAoClicarFora={false}
+      alterado={Boolean(motivo || complemento.trim())}
     >
       <CabecalhoDaGaveta
         tituloId="acessosRecusarPedidoTitulo"
         titulo={`Recusar o pedido de ${nome}`}
-        aoFechar={aoFechar}
       />
       <form className="acessos-modal-corpo" onSubmit={confirmar} noValidate>
         <Campo
@@ -182,9 +182,7 @@ function ModalDeRecusa({
           </Aviso>
         ) : null}
         <div className="ui-acoes acessos-modal-rodape">
-          <button type="button" className="btn ghost" onClick={aoFechar}>
-            Cancelar
-          </button>
+          <FecharModal className="btn ghost">Cancelar</FecharModal>
           <BotaoDeAcao
             estado={estado}
             acao={`recusar:${solicitacao.id}`}

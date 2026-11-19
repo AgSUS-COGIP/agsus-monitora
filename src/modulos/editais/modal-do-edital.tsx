@@ -1,11 +1,5 @@
 import { comSequencia } from "../../lib/cronograma/sequencia-do-cronograma.ts";
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import type { ChangeEvent } from "react";
 import { RESPONSAVEIS_DE_EDITAL } from "../../lib/editais/responsavel-do-edital.ts";
 import {
@@ -69,7 +63,7 @@ import {
   assinarDadosDoMonitoramento,
   obterDadosDoMonitoramento,
 } from "../../componentes/dados-do-monitoramento.ts";
-import { Aviso, Campo, Modal } from "../../ui/index.ts";
+import { Aviso, Campo, FecharModal, Modal } from "../../ui/index.ts";
 import { EditorDeCronograma } from "./editor-de-cronograma.tsx";
 import { ResponsaveisDoEdital } from "./responsaveis-do-edital.tsx";
 import { CriticoDoEdital } from "./critico-do-edital.tsx";
@@ -123,10 +117,10 @@ export interface PropriedadesDoModalDoEdital {
   (`get_monitoramento_cronograma`); até lá a tabela de etapas diz que está a
   carregar.
 
-  O que foi digitado não se perde à toa: clicar fora do cartão não fecha;
-  Esc, Fechar e Cancelar perguntam "Descartar as alterações?" quando algo
-  mudou desde a abertura (a pergunta aparece no próprio cabeçalho — não se abre
-  modal a partir de modal). E o formulário mexido vai para um rascunho no
+  O que foi digitado não se perde à toa: é o <Modal alterado> padrão (clicar
+  fora não fecha; Esc, Fechar e Cancelar perguntam "Descartar as
+  alterações?" quando algo mudou desde a abertura; sem mudança, fecham direto
+  e o rascunho à espera continua guardado). E o formulário mexido vai para um rascunho no
   navegador (`rascunho-do-edital.ts`): reabrir o mesmo edital (ou "Novo" na
   mesma área) oferece Retomar ou Descartar. Salvar ou descartar apaga o
   rascunho.
@@ -248,8 +242,6 @@ export function ModalDoEdital({
   const [rascunho, setRascunho] = useState(() =>
     lerRascunho(chaveDoRascunhoAtual, undefined, agora()),
   );
-  const [confirmandoDescarte, setConfirmandoDescarte] = useState(false);
-  const continuarEditando = useRef<HTMLButtonElement>(null);
   /*
     O motivo só é cobrado depois de mexer no cronograma ou ao salvar: o
     formulário abria já com "Corrija antes de salvar", antes de qualquer edição.
@@ -319,10 +311,6 @@ export function ModalDoEdital({
       );
     else apagarRascunho(chaveDoRascunhoAtual);
   }, [rascunho, mexido, formulario, cronograma, chaveDoRascunhoAtual, agora]);
-
-  useEffect(() => {
-    if (confirmandoDescarte) continuarEditando.current?.focus();
-  }, [confirmandoDescarte]);
 
   const mapaDeAreas = useMemo(
     () =>
@@ -423,20 +411,6 @@ export function ModalDoEdital({
     setCronograma(transformar);
   }
 
-  /*
-    Esc, Fechar e Cancelar passam por aqui. Com a pergunta na tela, Esc volta
-    à edição; sem mudança, fecha direto (e o rascunho à espera continua
-    guardado para a próxima vez).
-  */
-  function pedirParaFechar() {
-    if (confirmandoDescarte) {
-      setConfirmandoDescarte(false);
-      return;
-    }
-    if (mexido) setConfirmandoDescarte(true);
-    else estado.fecharModal();
-  }
-
   function descartarEFechar() {
     apagarRascunho(chaveDoRascunhoAtual);
     estado.fecharModal();
@@ -522,8 +496,9 @@ export function ModalDoEdital({
     <Modal
       id="editModal"
       rotuloId="editModalTitle"
-      aoFechar={pedirParaFechar}
-      fecharAoClicarFora={false}
+      aoFechar={() => estado.fecharModal()}
+      alterado={mexido}
+      aoDescartar={descartarEFechar}
     >
       <div
         className="modal-head edital-cabecalho"
@@ -546,15 +521,9 @@ export function ModalDoEdital({
               Mover para outra área
             </button>
           )}
-          <button
-            className="btn secondary"
-            type="button"
-            onClick={pedirParaFechar}
-          >
-            Fechar
-          </button>
+          <FecharModal className="btn secondary">Fechar</FecharModal>
         </div>
-        {rascunho && !confirmandoDescarte && (
+        {rascunho && (
           <div id="editalRascunho" className="edital-aviso" role="status">
             <span>
               Há um rascunho de {horaDoRascunho(rascunho.salvoEm, agora())}.
@@ -576,43 +545,6 @@ export function ModalDoEdital({
                 onClick={descartarRascunho}
               >
                 Descartar
-              </button>
-            </div>
-          </div>
-        )}
-        {confirmandoDescarte && (
-          <div
-            id="editalDescartar"
-            className="edital-aviso edital-aviso--perigo"
-            role="alertdialog"
-            aria-labelledby="editalDescartarTitulo"
-            aria-describedby="editalDescartarTexto"
-          >
-            <div>
-              <strong id="editalDescartarTitulo">
-                Descartar as alterações?
-              </strong>
-              <p id="editalDescartarTexto">
-                O que foi preenchido neste edital e não foi salvo será perdido.
-              </p>
-            </div>
-            <div className="edital-aviso-acoes">
-              <button
-                ref={continuarEditando}
-                id="editalContinuar"
-                className="btn secondary"
-                type="button"
-                onClick={() => setConfirmandoDescarte(false)}
-              >
-                Continuar editando
-              </button>
-              <button
-                id="editalDescartarConfirmar"
-                className="btn danger"
-                type="button"
-                onClick={descartarEFechar}
-              >
-                Descartar alterações
               </button>
             </div>
           </div>
@@ -1032,13 +964,7 @@ export function ModalDoEdital({
           </Campo>
         </div>
         <div className="ui-acoes editais-formulario-rodape">
-          <button
-            className="btn secondary"
-            type="button"
-            onClick={pedirParaFechar}
-          >
-            Cancelar
-          </button>
+          <FecharModal className="btn secondary">Cancelar</FecharModal>
           <button
             id="saveEditalBtn"
             data-tour="editais-salvar"

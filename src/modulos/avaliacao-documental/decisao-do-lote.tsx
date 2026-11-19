@@ -7,7 +7,7 @@ import {
   nota,
   seloDaDecisao,
 } from "../../lib/avaliacao-documental/tela-da-pre-classificacao.ts";
-import { Aviso, Campo, Gaveta, Selo } from "../../ui/index.ts";
+import { Aviso, Campo, FecharModal, Gaveta, Selo } from "../../ui/index.ts";
 import type {
   CandidatoForaDoLote,
   InscritoComDecisao,
@@ -106,9 +106,10 @@ export function IncluirPorDecisao<C extends CandidatoForaDoLote>({
   aoFechar,
   marcadosDeInicio,
 }: IncluirPorDecisaoProps<C>) {
-  const [marcados, setMarcados] = useState(
+  const [inicio] = useState(
     () => new Set<CandidatoForaDoLote["id"]>(marcadosDeInicio ?? []),
   );
+  const [marcados, setMarcados] = useState(inicio);
   const [motivo, setMotivo] = useState(MOTIVO_SUGERIDO_DA_DECISAO);
   const [busca, setBusca] = useState("");
   const [erro, setErro] = useState("");
@@ -126,6 +127,10 @@ export function IncluirPorDecisao<C extends CandidatoForaDoLote>({
       : candidatos;
   }, [candidatos, busca]);
   const erroDoTexto = erroDoMotivo(motivo, MOTIVO_DA_DECISAO);
+  const alterado =
+    motivo !== MOTIVO_SUGERIDO_DA_DECISAO ||
+    marcados.size !== inicio.size ||
+    [...marcados].some((id) => !inicio.has(id));
   const marcar = (id: CandidatoForaDoLote["id"], sim: boolean) =>
     setMarcados((atual) => {
       const novo = new Set(atual);
@@ -152,7 +157,7 @@ export function IncluirPorDecisao<C extends CandidatoForaDoLote>({
       titulo="Incluir por decisão da coordenação"
       resumo={`${marcados.size} selecionado(s)`}
       aoFechar={() => aoFechar(false)}
-      fecharAoClicarFora={false}
+      alterado={alterado}
       tour="avd-incluir-por-decisao"
     >
       <div className="avd-gaveta-corpo">
@@ -233,13 +238,7 @@ export function IncluirPorDecisao<C extends CandidatoForaDoLote>({
           </Aviso>
         ) : null}
         <div className="ui-acoes">
-          <button
-            type="button"
-            className="btn secondary"
-            onClick={() => aoFechar(false)}
-          >
-            Cancelar
-          </button>
+          <FecharModal className="btn secondary">Cancelar</FecharModal>
           <button
             type="button"
             className="btn"
@@ -292,7 +291,7 @@ export function RevogarDecisaoNaGaveta({
       titulo="Revogar decisão"
       resumo={[c.codigo, c.nome].filter(Boolean).join(" · ")}
       aoFechar={() => aoFechar(false)}
-      fecharAoClicarFora={false}
+      alterado={motivo.trim() !== ""}
     >
       <div className="avd-gaveta-corpo" data-revogar={c.codigo}>
         <SeloDaDecisao c={c} />
@@ -314,13 +313,7 @@ export function RevogarDecisaoNaGaveta({
           </Aviso>
         ) : null}
         <div className="ui-acoes">
-          <button
-            type="button"
-            className="btn secondary"
-            onClick={() => aoFechar(false)}
-          >
-            Cancelar
-          </button>
+          <FecharModal className="btn secondary">Cancelar</FecharModal>
           <button
             type="button"
             className="btn"

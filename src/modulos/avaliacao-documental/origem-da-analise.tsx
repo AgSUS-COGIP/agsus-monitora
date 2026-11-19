@@ -4,7 +4,12 @@ import {
   type PreviaDaImportacao,
   type ResumoDaImportacao,
 } from "../../lib/avaliacao-documental/importacao-da-planilha.ts";
-import { Aviso, Campo, CarregandoConteudo } from "../../ui/index.ts";
+import {
+  Aviso,
+  Campo,
+  CarregandoConteudo,
+  FecharModal,
+} from "../../ui/index.ts";
 import { ModalInstitucional } from "../../ui/modal-institucional.tsx";
 
 /*
@@ -143,18 +148,14 @@ export function OrigemDaAnalise({
           descricao="Confirme a alteração da origem da análise e registre sua justificativa."
           icone="fa-shield-halved"
           aoFechar={fechar}
+          alterado={motivo.trim() !== ""}
           fecharDesabilitado={gravando}
           infoRodape="A alteração é registrada no histórico do edital."
           acoes={
             <>
-              <button
-                type="button"
-                className="btn secondary"
-                onClick={fechar}
-                disabled={gravando}
-              >
+              <FecharModal className="btn secondary" disabled={gravando}>
                 Cancelar
-              </button>
+              </FecharModal>
               <button
                 type="button"
                 className="btn primary"

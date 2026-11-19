@@ -39,7 +39,7 @@ import {
   ehOPadrao,
 } from "../../lib/classificacao/colunas-do-documento.ts";
 import { documentoDaRegra } from "../../lib/classificacao/regra.ts";
-import { Abas, Campo, classes, Modal } from "../../ui/index.ts";
+import { Abas, Campo, classes, FecharModal, Modal } from "../../ui/index.ts";
 import {
   ColunasDoDocumento,
   type ColunaDisponivel,
@@ -388,7 +388,7 @@ export function DocumentoDoSei({
       id="classificacaoDocumento"
       rotuloId="classificacaoDocumentoTitulo"
       aoFechar={aoFechar}
-      fecharAoClicarFora={false}
+      alterado={mudou}
       className="classificacao-documento-fundo"
       cartaoClassName={classes(
         "classificacao-documento",
@@ -428,16 +428,14 @@ export function DocumentoDoSei({
               aria-hidden="true"
             />
           </button>
-          <button
-            type="button"
+          <FecharModal
             className="btn secondary small"
             data-acao="fechar"
             aria-label="Fechar"
             title="Fechar (Esc)"
-            onClick={aoFechar}
           >
             <i className="fa-solid fa-xmark" aria-hidden="true" />
-          </button>
+          </FecharModal>
         </div>
       </header>
 

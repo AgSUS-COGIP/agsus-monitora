@@ -6,7 +6,7 @@ import type {
 } from "../../lib/visao-geral/relatorio-da-visao-geral.ts";
 import type { ClienteDoRelatorio } from "./dados-da-diretoria.ts";
 import { useEffect, useRef, useState } from "react";
-import { Modal, Segmentado } from "../../ui/index.ts";
+import { FecharModal, Modal, Segmentado } from "../../ui/index.ts";
 import { CHAVE_DO_CABECALHO } from "../../lib/base/cabecalho-dos-documentos.ts";
 import { erroDeVersaoNova } from "../../lib/carga/importar-com-recarga.ts";
 import { nomeDaArea } from "../../lib/navegacao/menu-lateral.ts";
@@ -174,6 +174,7 @@ export function MontadorDeRelatorio({
   podeAprovados?: boolean;
 }) {
   const [escolha, setEscolha] = useState<EscolhaDoRelatorio>(lerEscolha);
+  const [escolhaAoAbrir] = useState(escolha);
   const [gerando, setGerando] = useState(false);
   const [erro, setErro] = useState("");
   const aberto = useRef(true);
@@ -281,6 +282,7 @@ export function MontadorDeRelatorio({
       className="visao-geral-relatorio"
       rotuloId="visaoGeralRelatorioTitulo"
       aoFechar={aoFechar}
+      alterado={JSON.stringify(escolha) !== JSON.stringify(escolhaAoAbrir)}
       tamanho="medio"
     >
       <div className="modal-head">
@@ -292,9 +294,7 @@ export function MontadorDeRelatorio({
             {nomeDaArea(e.area) || e.area}
           </p>
         </div>
-        <button className="btn secondary" type="button" onClick={aoFechar}>
-          Fechar
-        </button>
+        <FecharModal className="btn secondary">Fechar</FecharModal>
       </div>
       <div className="modal-body visao-geral-relatorio-corpo">
         <label className="visao-geral-relatorio-modelo">
@@ -359,9 +359,7 @@ export function MontadorDeRelatorio({
           </p>
         ) : null}
         <div className="visao-geral-relatorio-acoes">
-          <button className="btn secondary" type="button" onClick={aoFechar}>
-            Cancelar
-          </button>
+          <FecharModal className="btn secondary">Cancelar</FecharModal>
           <button
             id="visaoGeralRelatorioGerar"
             className="btn green"
