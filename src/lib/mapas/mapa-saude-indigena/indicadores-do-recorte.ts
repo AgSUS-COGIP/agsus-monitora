@@ -5,9 +5,10 @@
   dos DSEIs do SIGEPSI: o Brasil inteiro, um DSEI ou uma CASAI nacional. Antes
   eram sempre os do Brasil, e escolher um DSEI não mudava nada no topo.
 
-  - Brasil: DSEIs, CASAIs nacionais, pontos de unidades, editais e vagas.
+  - Brasil: DSEIs, CASAIs nacionais, pontos de unidades, editais, vagas e
+    contratadas.
   - DSEI: população indígena, pontos de unidades, municípios (dos pontos do
-    SIGEPSI), editais e vagas do DSEI.
+    SIGEPSI), editais, vagas e contratadas do DSEI.
   - CASAI nacional: editais, vagas, contratadas e ociosas dela.
 
   Editais, vagas, contratadas e ociosas vêm da mesma contagem das bolhas
@@ -124,6 +125,7 @@ export function indicadoresDoRecorte({
         },
         { chave: "editais", valor: c.editais, rotulo: "Editais" },
         { chave: "vagas", valor: c.vagas, rotulo: "Vagas" },
+        { chave: "contratadas", valor: c.contratadas, rotulo: "Contratadas" },
       ],
       c,
     );
@@ -154,6 +156,7 @@ export function indicadoresDoRecorte({
       },
       { chave: "editais", valor: c.editais, rotulo: "Editais acompanhados" },
       { chave: "vagas", valor: c.vagas, rotulo: "Vagas acompanhadas" },
+      { chave: "contratadas", valor: c.contratadas, rotulo: "Contratadas" },
     ],
     c,
   );

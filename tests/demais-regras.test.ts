@@ -7495,6 +7495,11 @@ bloco("lib/indicadores-do-recorte", () => {
     const brasil = indicadoresDoRecorte({ dseis: [dsei], contagens });
     expect(brasil.titulo).toBe("Brasil");
     expect(brasil.vagas).toBe(24);
+    expect(brasil.indicadores.at(-1)).toEqual({
+      chave: "contratadas",
+      valor: 16,
+      rotulo: "Contratadas",
+    });
     expect(brasil.preenchidas).toBe(67);
 
     const doDsei = indicadoresDoRecorte({ dseis: [dsei], contagens, dsei });
@@ -7507,6 +7512,7 @@ bloco("lib/indicadores-do-recorte", () => {
       municipios: 2,
       editais: 2,
       vagas: 20,
+      contratadas: 15,
     });
     expect(doDsei.preenchidas).toBe(75);
 
