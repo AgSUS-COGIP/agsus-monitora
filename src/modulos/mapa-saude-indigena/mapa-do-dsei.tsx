@@ -37,6 +37,7 @@ import {
   tiposDoTerritorio,
   visiveis,
 } from "../../lib/mapas/mapa-saude-indigena/mapa-do-dsei.ts";
+import { chaveDaUnidade } from "../../lib/mapas/mapa-saude-indigena/territorio-na-tela.ts";
 import { EstadoVazio, classes } from "../../ui/index.ts";
 import { Forma, LegendaDoDsei } from "./legenda.tsx";
 import {
@@ -70,6 +71,7 @@ export function MapaDoDsei({
   acoes,
   aoVoltarAoBrasil,
   aoEscolherUnidade,
+  detalhesDasUnidades,
 }: PropsDoMapaDoDsei) {
   const refDoMapa = useRef<HTMLDivElement | null>(null);
   const [mapa, definirMapa] = useState<MapaDoPainel | null>(null);
@@ -429,6 +431,11 @@ export function MapaDoDsei({
                             </b>
                           ) : null}
                         </small>
+                        {detalhesDasUnidades?.get(chaveDaUnidade(r)) ? (
+                          <small className="mapa-si-unidade__acesso">
+                            {detalhesDasUnidades.get(chaveDaUnidade(r))}
+                          </small>
+                        ) : null}
                       </span>
                       <span className="mapa-si-unidade__tipo">
                         {r.type.label}

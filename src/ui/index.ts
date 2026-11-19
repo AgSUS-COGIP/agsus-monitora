@@ -146,6 +146,8 @@ export type {
   PropriedadesDeAtivosEHistorico,
   ResultadoDeAtivosEHistorico,
 } from "./ativos-e-historico.tsx";
+export { SeloDoFiltroDoGrafico } from "./selo-do-filtro-do-grafico.tsx";
+export type { PropriedadesDoSeloDoFiltroDoGrafico } from "./selo-do-filtro-do-grafico.tsx";
 export { Segmentado } from "./segmentado.tsx";
 export type {
   OpcaoDoSegmentado,

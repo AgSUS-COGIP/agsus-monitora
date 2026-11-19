@@ -1,3 +1,4 @@
+import { acessoDoPonto } from "./territorio-do-sigepsi.ts";
 import type { CoordenadasDoMapa } from "../tipos-do-mapa.ts";
 import type {
   DseiDoMapa,
@@ -59,6 +60,8 @@ export function registrosDoDsei(dsei: DseiDoMapa): RegistroDoDsei[] {
       return [
         {
           name: p.n,
+          cod: p.cod === null || p.cod === undefined ? null : String(p.cod),
+          acesso: acessoDoPonto(p),
           cnes: "",
           lat,
           lon,

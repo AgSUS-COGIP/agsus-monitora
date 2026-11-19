@@ -4,6 +4,7 @@ import type { PropsDoMapaSaudeIndigena } from "../../lib/mapas/mapa-saude-indige
 import { aplicarLocalizacoes } from "../../lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts";
 import { ErroAoCarregar } from "../../ui/index.ts";
 import { usarLocalizacoesDoSigepsi } from "./localizacoes.ts";
+import { usarTerritorioDoSigepsi } from "./territorio.ts";
 import { MapaSaudeIndigena } from "./mapa-saude-indigena.tsx";
 
 /*
@@ -18,7 +19,7 @@ import { MapaSaudeIndigena } from "./mapa-saude-indigena.tsx";
 */
 export type PropsDoMapaComSigepsi = Omit<
   PropsDoMapaSaudeIndigena,
-  "casaisNacionais" | "carregando"
+  "casaisNacionais" | "carregando" | "territorio"
 > & { supabase?: SupabaseClient | null };
 
 export function MapaSaudeIndigenaComSigepsi({
@@ -27,6 +28,8 @@ export function MapaSaudeIndigenaComSigepsi({
   ...resto
 }: PropsDoMapaComSigepsi) {
   const localizacoes = usarLocalizacoesDoSigepsi(supabase);
+  // Território, acesso e CNES: acréscimo; o mapa não espera por eles.
+  const territorio = usarTerritorioDoSigepsi(supabase);
   const dados = localizacoes.dados;
   const lmap = useMemo(
     () => (dados ? aplicarLocalizacoes(lmapDoBanco, dados.dseis) : null),
@@ -45,6 +48,7 @@ export function MapaSaudeIndigenaComSigepsi({
       lmap={lmap}
       casaisNacionais={dados?.casaisNacionais ?? []}
       carregando={!lmap}
+      territorio={territorio}
     />
   );
 }

@@ -38,6 +38,15 @@ Tipos e fronteiras dos dados (e o que saiu do legado): [[mapa-saude-indigena-con
   (`processosDoDsei`, `src/lib/mapas/mapa-saude-indigena/processos-do-dsei.ts`). "Abrir na Visão
   geral" chama `aoAbrirNaVisaoGeral` com as unidades do DSEI; a aba põe o filtro Unidade e abre a
   Visão geral. Não depende do SIGEPSI.
+- `territorio-do-dsei.tsx` + `territorio.ts` — acesso (dos pontos, da `/todas`), território e
+  CNES do SIGEPSI (`/api/territorio-dos-dseis`, pedido uma vez a cada 10 min; o mapa não espera
+  por ele). Com o
+  DSEI aberto: o cartão "Território" (população, aldeias, terras) ao lado do de processos
+  (`.mapa-si-dsei-cartoes`), o meio de acesso e o CNES em cada unidade da lista lateral e a tabela
+  "Unidades" (filtros Meio de acesso e Área de floresta, exportável pelo padrão do #904). No
+  Brasil: "Acesso e vagas ociosas", os DSEIs com unidade no filtro e as ociosas deles. As contas
+  ficam em `src/lib/mapas/mapa-saude-indigena/territorio-na-tela.ts`; fonte negada é "Dado do
+  SIGEPSI indisponível", nunca zero. Sem a prop `territorio`, nada disso aparece.
 - `ordem-da-lista.tsx` — "Ordenar" (Vagas, A–Z, Nº do DSEI, % preenchidas, Ociosas), escolha
   guardada no navegador; regras em `src/lib/mapas/mapa-saude-indigena/ordem-dos-territorios.ts`.
 - Regras puras em `src/lib/mapas/mapa-saude-indigena/` (`chaves`, `formas`, `contagem-por-dsei`
@@ -176,7 +185,7 @@ Terceiro botão do seletor do fundo, só no `#map` (`map-base-layer-switcher.ts`
 ## Testes
 
 `tests/mapas-e-visao-geral.test.js` (bloco `mapa-saude-indigena`) (fixture real das Lotações),
-`tests/mapas-e-visao-geral.test.js` (bloco `coordenadas-so-do-sigepsi`), `tests/demais-regras.test.ts` (blocos `lib/localizacoes-do-sigepsi` e `lib/territorio-do-sigepsi`),
+`tests/mapas-e-visao-geral.test.js` (bloco `coordenadas-so-do-sigepsi`), `tests/demais-regras.test.ts` (blocos `lib/localizacoes-do-sigepsi`, `lib/territorio-do-sigepsi` e `lib/territorio-na-tela`),
 `tests/casca-sessao-e-interface-na-tela.test.js` (bloco `modulos/mapa-saude-indigena`) (Leaflet falso em `tests/modulos/leaflet-falso.js`),
 `tests/casca-com-modulo-simulado-na-tela.test.ts` (bloco `modulos/mapa`: a aba e o DSEI no endereço), `tests/demais-telas-na-tela.test.ts` (bloco `modulos/cartao-do-mapa`), `tests/demais-regras.test.ts` (blocos `lib/aba-do-mapa` e `lib/processos-do-dsei`), `tests/repositorio-e-banco.test.ts` (bloco `aba-mapa-no-banco`: migration, ensaio e rollback), `tests/casca-sessao-e-interface.test.js` (bloco `rotas`), `tests/mapas-e-visao-geral-na-tela.test.js` (bloco `dica-dentro-do-mapa`),
 `tests/mapas-e-visao-geral-na-tela.test.js` (bloco `modulos/modo-de-edicao`) (hoje só Projetos) e, do Mapa DSEIs,

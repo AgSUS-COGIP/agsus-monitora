@@ -24,6 +24,11 @@ tabela.tsx      base operacional consolidada (TabelaInfinita)
 selecao.css     só o que é desta tela (tokens); o resto vem de src/ui/
 ```
 
+Clicar numa barra do ranking de unidades (ou Enter na barra em destaque, ou o rótulo na tabela do
+gráfico) filtra a unidade; clicar de novo tira. O filtro que veio do gráfico mostra, no card, o
+selo "Filtro de gráfico ativo: … — clique para remover" (`SeloDoFiltroDoGrafico`), que some quando
+o filtro de unidade muda por outro caminho. Os outros gráficos contam o recorte e não filtram.
+
 Regras puras em `src/lib/selecao/selecao-do-painel.ts`. A carga: `src/lib/selecao/selecao-da-planilha.ts` e
 `scripts/sincronizar-selecao.mjs` (`npm run sync:selecao`, diária pelo GitHub Actions; banco em
 `supabase/migrations/20261001090000_selecao.sql`; operação em

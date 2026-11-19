@@ -433,6 +433,34 @@ export const PENDENCIAS_POS_RESULTADO: readonly {
   Object.freeze({ codigo: "sem_status", rotulo: "Lista sem status" }),
 ] as const);
 
+/*
+  "Pede ação" (paineis.tsx): o clique numa pendência abre os editais dela, do
+  mesmo recorte da página, cada um com a ação que a resolve. "Sem lista de
+  aprovados" importa a lista (o modal "Listas do edital", aberto em Editais);
+  "Lista sem status" atualiza os status na Lista de aprovados, já no edital.
+*/
+export const ACAO_DA_PENDENCIA: Readonly<
+  Record<Pendencia, { rotulo: string; view: "nucleo" | "approved" }>
+> = Object.freeze({
+  sem_lista: Object.freeze({ rotulo: "Importar lista", view: "nucleo" }),
+  sem_status: Object.freeze({ rotulo: "Atualizar status", view: "approved" }),
+});
+
+/** Os editais da pendência entre as linhas (as do recorte), pelo número do edital. */
+export function editaisDaPendencia<T extends LinhaDoMonitoramento>(
+  linhas: readonly T[] | null | undefined,
+  codigo: Pendencia,
+): T[] {
+  return (Array.isArray(linhas) ? linhas : [])
+    .filter((linha) => (linha?.pos_resultado || []).includes(codigo))
+    .sort(
+      (a, b) =>
+        txt(a.edital).localeCompare(txt(b.edital), "pt-BR", {
+          numeric: true,
+        }) || txt(a.unidade).localeCompare(txt(b.unidade), "pt-BR"),
+    );
+}
+
 /** O rótulo do atalho no chip do recorte. */
 export function rotuloDoAtalho(atalho: string) {
   if (atalho === "criticos") return "Críticos";

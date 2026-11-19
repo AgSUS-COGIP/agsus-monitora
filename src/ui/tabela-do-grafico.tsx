@@ -87,10 +87,13 @@ export function TabelaDoGrafico({
   dados,
   titulo,
   visivel,
+  aoEscolher,
 }: {
   dados: DadosDaTabelaDoGrafico;
   titulo: string;
   visivel: boolean;
+  /** Com a tabela à vista, o rótulo de cada linha filtra (como o clique no gráfico). */
+  aoEscolher?: (indice: number) => void;
 }) {
   return (
     <div
@@ -114,7 +117,21 @@ export function TabelaDoGrafico({
         <tbody>
           {dados.linhas.map((linha, i) => (
             <tr key={i}>
-              <th scope="row">{linha.rotulo}</th>
+              <th scope="row">
+                {aoEscolher && visivel ? (
+                  <button
+                    type="button"
+                    className="ui-grafico-tabela-escolher"
+                    data-acao="filtrar-pelo-grafico"
+                    title={`Filtrar: ${linha.rotulo}`}
+                    onClick={() => aoEscolher(i)}
+                  >
+                    {linha.rotulo}
+                  </button>
+                ) : (
+                  linha.rotulo
+                )}
+              </th>
               {linha.valores.map((valor, j) => (
                 <td key={j}>{valor}</td>
               ))}

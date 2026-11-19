@@ -105,6 +105,27 @@ modo Calor saiu em 02/10/2026.
 **resposta:** No mapa da Saúde Indígena os pontos (sede, polos base, CASAIs e unidades) vêm do SIGEPSI, e o mapa não tem editor de coordenadas nem botão "Coordenadas", fila de pendências ou "Conferido". Para corrigir um ponto, peça a correção no próprio SIGEPSI; o mapa passa a mostrar a posição nova na abertura seguinte. O editor de coordenadas existe só no mapa de Projetos (veja as regras do mapa de Projetos).
 **fonte:** src/lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts; src/modulos/mapa-saude-indigena/localizacoes.ts
 
+## Processos seletivos do DSEI no mapa
+
+**perguntas:** processos seletivos do dsei | cartao processos seletivos | editais abertos do dsei | vagas do dsei no mapa | aguardando chamada no mapa | abrir na visao geral pelo mapa
+**resposta:** No Yeendé, com um DSEI aberto na página Mapa, o cartão "Processos seletivos" mostra os editais abertos (nem concluídos nem cancelados), as vagas, as contratadas, as em seleção, as ociosas e as pessoas aguardando chamada daquele DSEI, pelas mesmas contas da Visão geral. Em seleção e Ociosas aparecem como "—" quando nenhum edital do DSEI está naquela situação; Aguardando chamada fica "—" quando nenhum edital tem lista de aprovados. "Abrir na Visão geral" abre a Visão geral com o filtro Unidade nas unidades do DSEI. O cartão vem dos editais do Yeendé e não depende do SIGEPSI.
+**fonte:** src/lib/mapas/mapa-saude-indigena/processos-do-dsei.ts; src/modulos/mapa-saude-indigena/processos-do-dsei.tsx
+**abrir:** mapa
+
+## Território do DSEI no mapa
+
+**perguntas:** territorio do dsei | populacao indigena do dsei | aldeias no cartao territorio | terras indigenas do dsei | quantas aldeias | quantas terras indigenas
+**resposta:** No Yeendé, com um DSEI aberto na página Mapa, o cartão "Território" mostra a população indígena, as aldeias e as terras indígenas do distrito, lidas do SIGEPSI (dados do SIASI). As terras contam uma vez cada, pelo código: a terra que atravessa dois DSEIs aparece nos dois, mas não conta em dobro num total. Enquanto o SIGEPSI não libera esse dado para o Yeendé (em novembro de 2026 ainda não liberava), o cartão diz "Dado do SIGEPSI indisponível", nunca zero.
+**fonte:** src/lib/mapas/mapa-saude-indigena/territorio-do-sigepsi.ts; api/territorio-dos-dseis.ts
+**abrir:** mapa
+
+## Meio de acesso, floresta e CNES das unidades
+
+**perguntas:** meio de acesso | acesso fluvial | acesso aereo | acesso terrestre | area de floresta | unidade em floresta | cnes da unidade | tabela de unidades do dsei | exportar unidades do dsei | acesso e vagas ociosas | dado do sigepsi indisponivel
+**resposta:** No Yeendé, as unidades do DSEI aberto na página Mapa trazem do SIGEPSI o meio de acesso (Terrestre, Fluvial, Aéreo; uma unidade pode ter mais de um), a acessibilidade geográfica (de Muito acessível a Muito remoto), se é urbana ou rural, se fica em área de floresta e o CNES. O CNES casa com a unidade pelo nome, porque o SIGEPSI não liga os dois por código; sem casamento seguro, fica "—". A tabela "Unidades" tem os filtros Meio de acesso e Área de floresta e sai em "Exportar em Excel" e "Salvar em PDF". No Brasil, "Acesso e vagas ociosas" lista os DSEIs com alguma unidade no filtro, com as vagas e as vagas ociosas de cada um; o nome abre o DSEI. O meio de acesso, a acessibilidade, urbano/rural e floresta vêm do mesmo cadastro de localizações que desenha os pontos. O CNES depende de o SIGEPSI liberar a rota da rede para o Yeendé; enquanto não libera, a coluna dá lugar a "CNES: Dado do SIGEPSI indisponível" e o resto continua.
+**fonte:** src/lib/mapas/mapa-saude-indigena/territorio-na-tela.ts; src/modulos/mapa-saude-indigena/territorio-do-dsei.tsx
+**abrir:** mapa
+
 ## Quando o SIGEPSI não responde
 
 **perguntas:** nao foi possivel carregar o mapa da saude indigena | o sigepsi nao respondeu | tentar novamente no mapa | mapa em branco | erro no mapa dos dseis | mapa carregando

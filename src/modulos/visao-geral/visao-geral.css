@@ -879,3 +879,26 @@
   outline-offset: 2px;
   border-radius: var(--radius-full, 999px);
 }
+
+/* "Pede ação" › os editais da pendência, cada um com a ação (editais-da-pendencia.tsx). */
+.visao-geral-pendencia-editais {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  list-style: none;
+}
+.visao-geral-pendencia-editais > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.visao-geral-pendencia-edital {
+  display: grid;
+  gap: var(--space-0-5);
+  min-width: 0;
+}
