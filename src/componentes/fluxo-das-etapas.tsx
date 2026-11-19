@@ -1,12 +1,18 @@
 import { useSyncExternalStore } from "react";
 import { abrirTelaDoEdital } from "../app/abrir-tela-do-edital.ts";
-import { numeroDoEdital } from "../lib/editais/numero-do-edital.ts";
+import { situacaoDoSistema } from "../app/situacao-do-sistema.ts";
+import {
+  numeroComoEscrito,
+  numeroDoEdital,
+} from "../lib/editais/numero-do-edital.ts";
 import {
   etapasDoFluxo,
   tituloDoFluxo,
   type EditalDoFluxo,
 } from "../lib/navegacao/fluxo-das-etapas.ts";
 import { telaPermitida } from "../lib/navegacao/navegacao";
+import { paginaDesligada } from "../lib/navegacao/pagina-desligada.ts";
+import { abasDoMenu, catalogoDoBanco } from "../modules/catalogo-de-abas.ts";
 import {
   assinarDadosDoMonitoramento,
   linhasDaArea,
@@ -24,7 +30,11 @@ import "./fluxo-das-etapas.css";
   src/lib/navegacao/fluxo-das-etapas.ts.
 
   A tela passa o que tem (o id do monitoramento, o número ou os dois); o que
-  falta sai das linhas do monitoramento, se já carregadas.
+  falta sai das linhas do monitoramento, se já carregadas. O título mostra o
+  número como o edital o escreve ("03/2025"); a navegação usa o normalizado.
+
+  Só entram as etapas que o perfil abre e que a coordenação não desligou na
+  área (Configurações › Módulos e abas): atalho para "Página desativada" não.
 */
 
 export interface PropriedadesDoFluxoDasEtapas {
@@ -37,10 +47,12 @@ export interface PropriedadesDoFluxoDasEtapas {
 
 const texto = (valor: unknown) => String(valor ?? "").trim();
 
-/* O id e o número, completando um pelo outro nas linhas da área. */
+/* O id e o número, completando um pelo outro nas linhas da área (e a área). */
 function usarEditalCompleto(edital: EditalDoFluxo): {
   id: string;
   numero: string;
+  escrito: string;
+  area: string;
 } {
   const dados = useSyncExternalStore(
     assinarDadosDoMonitoramento,
@@ -49,7 +61,9 @@ function usarEditalCompleto(edital: EditalDoFluxo): {
   );
   const id = texto(edital.id);
   const numero = numeroDoEdital(edital.numero);
-  if (id && numero) return { id, numero };
+  const escrito = numeroComoEscrito(edital.numero);
+  const area = texto(dados.areaAtual);
+  if (id && numero) return { id, numero, escrito, area };
   const linhas = linhasDaArea(dados.linhas, dados.areaAtual);
   const linha = id
     ? linhas.find((l) => texto(l.id) === id)
@@ -59,6 +73,8 @@ function usarEditalCompleto(edital: EditalDoFluxo): {
   return {
     id: id || texto(linha?.id),
     numero: numero || numeroDoEdital(linha?.edital),
+    escrito: escrito || numeroComoEscrito(linha?.edital),
+    area,
   };
 }
 
@@ -67,17 +83,26 @@ export function FluxoDasEtapas({
   edital,
   vaga = "",
 }: PropriedadesDoFluxoDasEtapas) {
-  const { id, numero } = usarEditalCompleto(edital);
+  const { id, numero, escrito, area } = usarEditalCompleto(edital);
   if (!id && !numero) return null;
   const perfil = window.getMonitoraProfile?.() ?? null;
+  const ligada = (destino: string) =>
+    !paginaDesligada({
+      abas: abasDoMenu(),
+      doBanco: catalogoDoBanco(),
+      situacao: situacaoDoSistema(),
+      view: destino,
+      area,
+    });
   const etapas = etapasDoFluxo(
-    (destino) => destino === view || telaPermitida(destino, perfil),
+    (destino) =>
+      destino === view || (telaPermitida(destino, perfil) && ligada(destino)),
   );
   const codigo = texto(vaga);
   return (
     <nav className="fluxo-das-etapas" aria-label="Etapas do edital">
       <p className="fluxo-das-etapas-titulo">
-        <strong>{tituloDoFluxo(view, numero)}</strong>
+        <strong>{tituloDoFluxo(view, escrito || numero)}</strong>
         {codigo ? (
           <span className="fluxo-das-etapas-vaga">vaga {codigo}</span>
         ) : null}
@@ -98,7 +123,7 @@ export function FluxoDasEtapas({
                 type="button"
                 className="fluxo-das-etapas-etapa"
                 data-etapa={etapa.view}
-                title={`${etapa.rotulo} do ${numero || "edital"}`}
+                title={`${etapa.rotulo} do ${escrito || numero || "edital"}`}
                 disabled={etapa.como === "numero" ? !numero : !id}
                 onClick={() => abrirTelaDoEdital(etapa, { id, numero }, codigo)}
               >

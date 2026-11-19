@@ -89,7 +89,10 @@ As telas do processo seletivo (Triagem, Avaliação documental, Recursos, Entrev
 Lista de aprovados) mostram no cabeçalho a faixa das etapas (`src/componentes/fluxo-das-etapas.tsx`,
 no `etapas` do `CabecalhoDaTela`): "Documental do 93/2026" e os atalhos para as outras etapas do mesmo
 edital, a atual com `aria-current="step"`. A lista é `TELAS_DO_EDITAL` sem a Seleção
-(`src/lib/navegacao/fluxo-das-etapas.ts`). O edital vai como na aba Candidatos; a vaga (código)
+(`src/lib/navegacao/fluxo-das-etapas.ts`), só com as etapas que o perfil abre e que a coordenação
+não desligou na área (`paginaDesligada`; a Triagem desligada na Saúde Indígena não vira atalho para
+"Página desativada"). O título mostra o número como o edital o escreve ("03/2025",
+`numeroComoEscrito`); a navegação leva o normalizado (`numeroDoEdital`). O edital vai como na aba Candidatos; a vaga (código)
 segue num pedido de filtro (`vaga` + `editalId`) para Triagem (abre em Por vaga), Fila da
 Documental, Fila das Entrevistas e listas da Classificação (a chave do motor é o código), que só o
 aplicam quando estão no edital do pedido (`aceita` em `usarPedidoDeFiltro`). Recursos e Aprovados

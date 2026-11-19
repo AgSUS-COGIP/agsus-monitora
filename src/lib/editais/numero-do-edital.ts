@@ -12,3 +12,14 @@ export function numeroDoEdital(valor: unknown): string {
   const m = texto.match(/(\d{1,4})\s*\/\s*(\d{4})/);
   return m ? `${Number(m[1])}/${m[2]}` : "";
 }
+
+/**
+ * O mesmo número, como está escrito (para mostrar, não para comparar):
+ * "Edital nº 03/2025 - DSEI" → "03/2025"; "" sem número.
+ */
+export function numeroComoEscrito(valor: unknown): string {
+  const texto =
+    typeof valor === "string" || typeof valor === "number" ? String(valor) : "";
+  const m = texto.match(/(\d{1,4})\s*\/\s*(\d{4})/);
+  return m ? `${m[1]}/${m[2]}` : "";
+}

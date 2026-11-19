@@ -8175,6 +8175,68 @@ bloco("componentes/fluxo-das-etapas", async () => {
     expect(etapas(lugar)).toEqual(["avaliacao-documental", "classificacao"]);
   });
 
+  it("o título mostra o número como o edital o escreve (03/2025, não 3/2025)", async () => {
+    definirAreaAtual("saude-indigena");
+    publicarLinhasDoMonitoramento([
+      { id: ID, edital: "03/2025", CO_AREA: "saude-indigena" },
+    ]);
+    const lugar = await montar({ view: "classificacao", edital: { id: ID } });
+    expect(lugar.querySelector(".fluxo-das-etapas-titulo")?.textContent).toBe(
+      "Classificação do 03/2025",
+    );
+    // A navegação continua com o número normalizado (o que as telas comparam).
+    await clicar(lugar.querySelector('[data-etapa="approved"]'));
+    expect(consumirPedidoDeFiltro("approved")).toEqual({
+      edital: "3/2025",
+      editalId: ID,
+    });
+  });
+
+  it("a etapa desligada pela coordenação na área não aparece (sem atalho para Página desativada)", async () => {
+    definirAreaAtual("saude-indigena");
+    const triagem = ABAS_DO_MENU.find((aba) =>
+      aba.areas.some((item) => (item.view || aba.view) === "pre-classificacao"),
+    );
+    expect(triagem).toBeDefined();
+    await carregarCatalogoDeAbas({
+      consulta: Promise.resolve({
+        data: ABAS_DO_MENU.map((aba) => ({
+          co_aba: aba.id,
+          no_aba: aba.rotulo,
+          ds_icone: aba.icone,
+          nu_ordem: aba.ordem,
+          co_view: aba.view,
+          co_recurso: aba.recurso,
+          tp_aba: aba.tipo,
+          areas: aba.areas
+            .filter(
+              ({ area }) =>
+                !(aba.id === triagem?.id && area === "saude-indigena"),
+            )
+            .map(({ area }) => ({ co_area: area, nu_ordem: aba.ordem })),
+        })),
+        error: null,
+      }),
+    });
+    try {
+      const lugar = await montar({
+        view: "classificacao",
+        edital: { id: ID, numero: "03/2025" },
+      });
+      expect(etapas(lugar)).not.toContain("pre-classificacao");
+      expect(etapas(lugar)).toContain("avaliacao-documental");
+      // Em outra área, onde a Triagem está ligada, ela volta.
+      definirAreaAtual("projetos");
+      const outra = await montar({
+        view: "classificacao",
+        edital: { id: ID, numero: "03/2025" },
+      });
+      expect(etapas(outra)).toContain("pre-classificacao");
+    } finally {
+      await carregarCatalogoDeAbas({ consulta: null });
+    }
+  });
+
   it("sem edital, não há faixa", async () => {
     const lugar = await montar({ view: "classificacao", edital: {} });
     expect(lugar.querySelector(".fluxo-das-etapas")).toBeNull();
