@@ -2216,6 +2216,13 @@ bloco("modulos/mapa", () => {
       expect(irPara).toHaveBeenCalledWith("dashboard");
     });
 
+    it("o cartão de processos do DSEI abre a Visão geral filtrada pelas unidades", async () => {
+      const { estado, irPara } = await abrir();
+      await act(async () => props().aoAbrirNaVisaoGeral?.(["DSEI Yanomami"]));
+      expect(estado.obter().filtros.unidade).toEqual(["DSEI Yanomami"]);
+      expect(irPara).toHaveBeenCalledWith("dashboard");
+    });
+
     it("fora da Saúde Indígena não há mapa", async () => {
       const { caixa } = await abrir({ area: "sede" });
       expect(visto.props).toBeNull();
