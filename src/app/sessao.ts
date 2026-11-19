@@ -397,6 +397,16 @@ export function criarSessao({
     );
   }
 
+  /*
+    O Sair confirmado volta ao endereço inicial: quem sai terminou, e quem
+    entrar depois no mesmo navegador não começa na última página da pessoa
+    anterior. A sessão expirada e o link aberto sem login guardam o endereço
+    (a navegação o abre depois de entrar).
+  */
+  function voltarAoInicio() {
+    janela?.history?.replaceState?.({}, janela.document?.title || "", "/");
+  }
+
   function limparEnderecoDoOAuth() {
     const qs = parametros();
     const hash = parametrosDoHash();
@@ -1070,6 +1080,7 @@ export function criarSessao({
     declararSaida(SAIDA_MANUAL);
     await encerrarNoSupabase();
     aplicarSaida();
+    voltarAoInicio();
   }
 
   /*
