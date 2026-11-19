@@ -8,6 +8,8 @@ import {
   textoDaCelula,
   xlsxDaTabela,
 } from "../src/lib/base/exportacao-da-tabela.ts";
+import { chaveDosEditaisDaCasai } from "../src/lib/mapas/mapa-saude-indigena/mapa-nacional.ts";
+import { contarPorDsei } from "../src/lib/mapas/mapa-saude-indigena/contagem-por-dsei.ts";
 import { lembrarBanco } from "./apoio/bancos-abertos.ts";
 import {
   afterEach,
@@ -242,6 +244,8 @@ import {
   textoDosDiasRestantes,
 } from "../src/lib/base/prazos.ts";
 import {
+  chaveDaCasaiNoEndereco,
+  casaiNoEndereco,
   chaveDoDseiNoEndereco,
   dseiNoEndereco,
   resumoDoMapa,
@@ -348,6 +352,33 @@ bloco("lib/aba-do-mapa", () => {
     contratados: number,
     status = "Concluído",
   ): LinhaDoMonitoramento => ({ unidade, vagas_total, contratados, status });
+
+  describe("a CASAI nacional no endereço", () => {
+    it("tem o prefixo casai- e não vira DSEI", () => {
+      expect(casaiNoEndereco("CASAI DF")).toBe("casai-df");
+      expect(casaiNoEndereco("CASAI São Paulo")).toBe("casai-sao-paulo");
+      expect(chaveDaCasaiNoEndereco("casai-sao-paulo")).toBe("SAO PAULO");
+      expect(chaveDaCasaiNoEndereco("yanomami")).toBe("");
+      expect(chaveDoDseiNoEndereco("casai-df")).toBe("");
+      expect(chaveDoDseiNoEndereco("yanomami")).toBe("YANOMAMI");
+    });
+
+    it("os editais da CASAI contam pelo nome ou, sem edital com ele, pela cidade", () => {
+      const contagens = contarPorDsei([edital("CASAI Brasília", 4, 1)]);
+      expect(
+        chaveDosEditaisDaCasai(
+          { nome: "CASAI DF", cidade: "BRASILIA" },
+          contagens,
+        ),
+      ).toBe("BRASILIA");
+      expect(
+        chaveDosEditaisDaCasai(
+          { nome: "CASAI Brasília", cidade: "BRASILIA" },
+          contagens,
+        ),
+      ).toBe("BRASILIA");
+    });
+  });
 
   describe("o DSEI no endereço", () => {
     it("vira um pedaço de endereço legível", () => {

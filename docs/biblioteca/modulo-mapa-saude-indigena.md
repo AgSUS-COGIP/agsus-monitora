@@ -67,8 +67,13 @@ Indígena, ordem 2, recurso `dashboard` (a permissão da Visão geral): `ABAS_DO
   endereço; o voltar do navegador volta ao Brasil. A loja do DSEI é da tela; `render()` (a cada
   abertura) relê o endereço, e é assim que o cartão da Visão geral abre o Mapa num DSEI
   (`guardarFiltrosDaTela("mapa", "dsei=…")` e `navigate("mapa")`).
-- **CASAI nacional.** `aoFiltrarPorBusca` põe "CASAI <cidade>" na busca da Visão geral e abre a
-  Visão geral.
+- **CASAI nacional.** O losango (`aoFiltrarPorBusca`) põe "CASAI <cidade>" na busca da Visão geral e
+  abre a Visão geral. No seletor "DSEI / CASAI" elas ficam no grupo "CASAIs nacionais": escolher
+  uma (`aoEscolherCasai`) põe `casai-<chave>` no mesmo pedaço do endereço
+  (`/saude-indigena/mapa/casai-df`; `casaiNoEndereco`, `chaveDaCasaiNoEndereco`, e
+  `chaveDoDseiNoEndereco` ignora esse prefixo). Com a CASAI aberta (`casaiSelecionada`), o mapa
+  nacional enquadra nela e aparecem o painel (município, UF, "Voltar ao Brasil") e o cartão de
+  processos, pela chave dos editais da CASAI (`chaveDosEditaisDaCasai`: o nome ou a cidade).
 - **Na Visão geral** fica o cartão (`src/modulos/visao-geral/cartao-do-mapa.tsx`): DSEIs com edital
   (de 34), o de mais ociosas e o menos preenchido (`resumoDoMapa`), e "Abrir no mapa". O recorte
   por DSEI da Visão geral (`definirDsei`, chip "DSEI") saiu com o mapa: um DSEI ali é o filtro

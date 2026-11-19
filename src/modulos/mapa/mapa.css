@@ -59,10 +59,16 @@
   background: var(--color-bg-raised);
   color: var(--color-text-primary);
 }
+/* Os cinco indicadores numa linha; no meio, 3 + 2; no celular, 2 + 2 + 1 (o último na linha toda). */
 .mapa-tela .mapa-si-resumo__indicadores {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
+}
+@media (max-width: 1100px) {
+  .mapa-tela .mapa-si-resumo__indicadores {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 .mapa-tela .mapa-si-resumo__indicadores > div {
   min-width: 0;
@@ -82,6 +88,9 @@
 @media (max-width: 700px) {
   .mapa-tela .mapa-si-resumo__indicadores {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .mapa-tela .mapa-si-resumo__indicadores > div:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
   }
 }
 

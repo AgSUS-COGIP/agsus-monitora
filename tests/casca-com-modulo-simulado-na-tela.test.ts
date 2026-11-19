@@ -2223,6 +2223,29 @@ bloco("modulos/mapa", () => {
       expect(irPara).toHaveBeenCalledWith("dashboard");
     });
 
+    it("a CASAI nacional mora no endereço, sem abrir DSEI", async () => {
+      await abrir();
+      await act(async () =>
+        props().aoEscolherCasai?.({
+          chave: "CASAI DF|-15.8|-47.9",
+          nome: "CASAI DF",
+          cnes: "131",
+          lat: -15.8,
+          lon: -47.9,
+          cidade: "BRASILIA",
+          uf: "DF",
+          editais: 0,
+          termoDeBusca: "CASAI BRASILIA",
+        }),
+      );
+      expect(url()).toBe("/saude-indigena/mapa/casai-df");
+      expect(props().casaiSelecionada).toBe("DF");
+      expect(props().dseiSelecionado).toBeNull();
+      await act(async () => props().aoSairDoDsei?.());
+      expect(url()).toBe("/saude-indigena/mapa");
+      expect(props().casaiSelecionada).toBeNull();
+    });
+
     it("fora da Saúde Indígena não há mapa", async () => {
       const { caixa } = await abrir({ area: "sede" });
       expect(visto.props).toBeNull();

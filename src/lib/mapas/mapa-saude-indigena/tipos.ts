@@ -136,6 +136,9 @@ export interface PropsDoMapaSaudeIndigena {
   aoEscolherUnidade?(unidade: RegistroDoDsei): void;
   /** "Abrir na Visão geral" do cartão de processos: as unidades do DSEI. */
   aoAbrirNaVisaoGeral?(unidades: string[]): void;
+  /** A CASAI nacional aberta (chave de `chaveDoDsei` do nome), sem DSEI. */
+  casaiSelecionada?: string | null;
+  aoEscolherCasai?(casai: CasaiNacionalDoMapa): void;
 }
 export interface PropsDaVisaoNacional extends Pick<
   PropsDoMapaSaudeIndigena,
