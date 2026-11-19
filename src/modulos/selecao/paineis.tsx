@@ -49,6 +49,7 @@ import {
   ChipDeFiltro,
   ChipsDeFiltro,
   Grafico,
+  SeloDoFiltroDoGrafico,
   GradeDeKpis,
   Kpi,
   LinhaDoRecorte,
@@ -370,6 +371,14 @@ function opcoesDeBarras(
           if (primeiro) aoClicar(primeiro.index);
         }
       : undefined,
+    // A barra que filtra mostra a mãozinha.
+    onHover: aoClicar
+      ? (evento, elementos) => {
+          const alvo = evento.native?.target;
+          if (alvo instanceof HTMLElement)
+            alvo.style.cursor = elementos.length ? "pointer" : "";
+        }
+      : undefined,
   };
 }
 
@@ -408,6 +417,8 @@ export function Graficos({
   carregado,
   escuro,
   aoFiltrarUnidade,
+  filtroDoGrafico = "",
+  aoRemoverFiltroDoGrafico,
 }: {
   vagas: readonly VagaDaSelecao[];
   indicadores: IndicadoresDaSelecao;
@@ -415,6 +426,9 @@ export function Graficos({
   carregado: boolean;
   escuro: boolean;
   aoFiltrarUnidade: (unidade: string) => void;
+  /** A unidade filtrada pelo clique no ranking ("" sem filtro de gráfico). */
+  filtroDoGrafico?: string;
+  aoRemoverFiltroDoGrafico?: () => void;
 }) {
   const eliminados = useMemo(() => eliminadosAntesDaAnalise(vagas), [vagas]);
   const aptos = useMemo(() => aptosEEliminados(vagas), [vagas]);
@@ -430,6 +444,12 @@ export function Graficos({
   useEffect(() => {
     filtrar.current = aoFiltrarUnidade;
   });
+  // A barra escolhida (clique, Enter ou o rótulo da tabela) filtra a unidade.
+  const escolherUnidade = (indice: number) => {
+    const escolhida = unidades[indice];
+    if (escolhida && escolhida.rotulo !== "Sem unidade")
+      filtrar.current(escolhida.rotulo);
+  };
 
   return (
     <>
@@ -595,6 +615,14 @@ export function Graficos({
         altura="alto"
         titulo={`Top ${unidade} por inscritos`}
         carregando={carregando}
+        acoes={
+          filtroDoGrafico && aoRemoverFiltroDoGrafico ? (
+            <SeloDoFiltroDoGrafico
+              valor={filtroDoGrafico}
+              aoRemover={aoRemoverFiltroDoGrafico}
+            />
+          ) : null
+        }
       >
         <Grafico
           id="chartDsei"
@@ -602,6 +630,7 @@ export function Graficos({
           rotulo={`Top ${unidade} por inscritos`}
           plugins={[rotuloDeValor]}
           dependencias={[unidades, tema]}
+          aoEscolher={escolherUnidade}
           montar={() => {
             const p = paleta(escuro);
             return {
@@ -626,11 +655,7 @@ export function Graficos({
                       : "";
                   },
                 },
-                aoClicar: (indice) => {
-                  const escolhida = unidades[indice];
-                  if (escolhida && escolhida.rotulo !== "Sem unidade")
-                    filtrar.current(escolhida.rotulo);
-                },
+                aoClicar: escolherUnidade,
               }),
             };
           }}
