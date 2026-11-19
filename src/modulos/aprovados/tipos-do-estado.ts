@@ -120,6 +120,7 @@ export interface OpcoesDoEstadoDosAprovados extends Pick<
 export interface CamposDoStatus {
   status?: unknown;
   processo?: unknown;
+  observacao?: unknown;
   matricula?: unknown;
   dataConvocacao?: unknown;
   anexos?: ArrayLike<File> | Iterable<File>;

@@ -487,8 +487,9 @@ bloco("componentes/convocado-e-carta", () => {
       supabase.rpc.mockClear();
       await clicar($("approvedStatusSave"));
       expect(supabase.rpc).toHaveBeenCalledWith(
-        "alterar_status_candidato_aprovado",
+        "alterar_status_aprovado_com_observacao",
         {
+          p_observacao: null,
           p_candidato_id: "bruno",
           p_status: "Convocado",
           p_processo_sei: null,
@@ -1667,8 +1668,9 @@ bloco("componentes/lista-aprovados", () => {
       supabase.rpc.mockClear();
       await clicar($("approvedStatusSave"));
       expect(supabase.rpc).toHaveBeenCalledWith(
-        "alterar_status_candidato_aprovado",
+        "alterar_status_aprovado_com_observacao",
         {
+          p_observacao: null,
           p_candidato_id: "bruno",
           p_status: "Contratado",
           p_processo_sei: "00700.000001/2026-00",
@@ -2098,7 +2100,7 @@ bloco("componentes/lista-aprovados", () => {
 
     it("o botão mostra o andamento e as outras ações esperam", async () => {
       const { supabase, concluir } = supabaseQueEspera(
-        "alterar_status_candidato_aprovado",
+        "alterar_status_aprovado_com_observacao",
       );
       await montar({ supabase });
       await clicar(
@@ -3280,8 +3282,9 @@ bloco("componentes/lista-aprovados", () => {
       supabase.rpc.mockClear();
       await clicar($("approvedStatusSave"));
       expect(supabase.rpc).toHaveBeenCalledWith(
-        "alterar_status_candidato_aprovado",
+        "alterar_status_aprovado_com_observacao",
         {
+          p_observacao: null,
           p_candidato_id: "amb",
           p_status: "Contratado em outra lista",
           p_processo_sei: null,
@@ -3327,7 +3330,9 @@ bloco("componentes/lista-aprovados", () => {
       await clicar($("approvedOutraListaMarcar"));
       await clicar($("approvedStatusSave"));
       const chamadas = supabase.rpc.mock.calls.filter(
-        ([nome]) => nome === "alterar_status_candidato_aprovado",
+        ([nome]) =>
+          nome === "alterar_status_aprovado_com_observacao" ||
+          nome === "alterar_status_candidato_aprovado",
       );
       expect(chamadas.map(([, a]) => [a?.p_candidato_id, a?.p_status])).toEqual(
         [
