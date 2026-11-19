@@ -13,6 +13,7 @@ import { chaveDoDsei } from "../../lib/mapas/mapa-saude-indigena/chaves.ts";
 import {
   bolhasDosDsei,
   casaisNacionais,
+  chaveDosEditaisDaCasai,
   enquadramentoNacional,
   territoriosPorVagas,
 } from "../../lib/mapas/mapa-saude-indigena/mapa-nacional.ts";
@@ -52,6 +53,9 @@ import {
 import { usarTelaCheia } from "./tela-cheia.tsx";
 import { usarEscParaVoltar, usarVoltaDoDsei } from "./volta-ao-brasil.ts";
 
+/* O valor da CASAI nacional no seletor (o do DSEI é a chave dele). */
+const PREFIXO_DA_OPCAO_CASAI = "casai:";
+
 /*
   MAPA DA SAÚDE INDÍGENA (React)
 
@@ -80,6 +84,8 @@ export function MapaSaudeIndigena({
   aoFiltrarPorBusca,
   aoEscolherUnidade,
   aoAbrirNaVisaoGeral,
+  casaiSelecionada = null,
+  aoEscolherCasai,
   territorio,
 }: PropsDoMapaSaudeIndigena) {
   const escuroDoApp = usarTemaEscuro();
@@ -141,6 +147,16 @@ export function MapaSaudeIndigena({
     [nac, contagens, filtroAtivo],
   );
   const territorios = useMemo(() => territoriosPorVagas(bolhas), [bolhas]);
+  /*
+    A CASAI nacional escolhida (no seletor ou no endereço): o mapa nacional
+    enquadra nela e o painel dela mostra município, UF e os processos.
+  */
+  const casai = useMemo(() => {
+    const chave = chaveDoDsei(casaiSelecionada);
+    return !dsei && chave
+      ? casais.find((c) => chaveDoDsei(c.nome) === chave) || null
+      : null;
+  }, [casais, casaiSelecionada, dsei]);
 
   /*
     Acesso, território e CNES do SIGEPSI. O acesso das unidades vem nos
@@ -222,8 +238,11 @@ export function MapaSaudeIndigena({
     [unidadesDoDsei],
   );
   const enquadramento = useMemo(
-    () => enquadramentoNacional({ bolhas, casais, filtroAtivo }),
-    [bolhas, casais, filtroAtivo],
+    () =>
+      casai
+        ? enquadramentoNacional({ casais: [casai], filtroAtivo: true })
+        : enquadramentoNacional({ bolhas, casais, filtroAtivo }),
+    [bolhas, casais, filtroAtivo, casai],
   );
 
   /*
@@ -260,26 +279,50 @@ export function MapaSaudeIndigena({
               <p>Selecione um DSEI para ver suas unidades.</p>
             </div>
             <label className="mapa-si-resumo__seletor">
-              <span>DSEI</span>
+              <span>DSEI / CASAI</span>
               <select
-                aria-label="Selecionar DSEI no mapa"
-                value={dsei?.k ?? ""}
+                aria-label="Selecionar DSEI ou CASAI no mapa"
+                value={
+                  dsei
+                    ? dsei.k
+                    : casai
+                      ? `${PREFIXO_DA_OPCAO_CASAI}${casai.chave}`
+                      : ""
+                }
                 onChange={(evento) => {
-                  const escolhido = dseis.find(
-                    (item) => item.k === evento.target.value,
+                  const valor = evento.target.value;
+                  const escolhido = dseis.find((item) => item.k === valor);
+                  const daCasai = casais.find(
+                    (c) => `${PREFIXO_DA_OPCAO_CASAI}${c.chave}` === valor,
                   );
                   if (escolhido) aoEscolherDsei?.(escolhido);
+                  else if (daCasai) aoEscolherCasai?.(daCasai);
                   else if (dsei) voltarAoBrasil();
+                  else aoSairDoDsei?.();
                 }}
               >
                 <option value="">Todos os DSEIs</option>
-                {[...dseis]
-                  .sort((a, b) => a.n.localeCompare(b.n, "pt-BR"))
-                  .map((item) => (
-                    <option key={item.k} value={item.k}>
-                      {item.n}
-                    </option>
-                  ))}
+                <optgroup label="DSEIs">
+                  {[...dseis]
+                    .sort((a, b) => a.n.localeCompare(b.n, "pt-BR"))
+                    .map((item) => (
+                      <option key={item.k} value={item.k}>
+                        {item.n}
+                      </option>
+                    ))}
+                </optgroup>
+                {casais.length ? (
+                  <optgroup label="CASAIs nacionais">
+                    {casais.map((c) => (
+                      <option
+                        key={c.chave}
+                        value={`${PREFIXO_DA_OPCAO_CASAI}${c.chave}`}
+                      >
+                        {c.nome}
+                      </option>
+                    ))}
+                  </optgroup>
+                ) : null}
               </select>
             </label>
           </div>
@@ -323,6 +366,39 @@ export function MapaSaudeIndigena({
           ) : null}
           <ProcessosDoDsei
             dsei={dsei}
+            linhas={linhas}
+            aoAbrirNaVisaoGeral={aoAbrirNaVisaoGeral}
+          />
+        </div>
+      ) : null}
+      {casai && !telaCheia ? (
+        <div className="mapa-si-dsei-cartoes">
+          <section
+            className="mapa-si-resumo mapa-si-casai"
+            aria-labelledby="mapa-si-casai-titulo"
+          >
+            <div className="mapa-si-resumo__introducao">
+              <div>
+                <h2 id="mapa-si-casai-titulo">{casai.nome}</h2>
+                <p>
+                  {[casai.cidade, casai.uf].filter(Boolean).join(" · ") ||
+                    "Município não informado"}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn secondary small"
+                onClick={() => aoSairDoDsei?.()}
+              >
+                <span aria-hidden="true">←</span> Voltar ao Brasil
+              </button>
+            </div>
+          </section>
+          <ProcessosDoDsei
+            dsei={{
+              k: chaveDosEditaisDaCasai(casai, contagens),
+              n: casai.nome,
+            }}
             linhas={linhas}
             aoAbrirNaVisaoGeral={aoAbrirNaVisaoGeral}
           />

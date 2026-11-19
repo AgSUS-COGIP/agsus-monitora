@@ -12,6 +12,8 @@ import type { JanelaDoApp } from "../../app/ir-para-tela.ts";
 import { usarLojaNaUrl } from "../../app/usar-filtros-na-url.ts";
 import { erroParaATela } from "../../lib/base/erro-na-tela.ts";
 import {
+  casaiNoEndereco,
+  chaveDaCasaiNoEndereco,
   chaveDoDseiNoEndereco,
   dseiNoEndereco,
 } from "../../lib/mapas/mapa-saude-indigena/aba-do-mapa.ts";
@@ -41,6 +43,8 @@ import type { EstadoDaVisaoGeral } from "../visao-geral/tipos.ts";
     área). Com o Mapa aberto, o estado calcula e pede o acompanhamento sem
     montar a Visão geral (`definirLidaPeloMapa`, src/app/pagina-aberta.ts).
     Os filtros da Visão geral não valem aqui: o mapa mostra a área inteira.
+  - A CASAI nacional também (`/saude-indigena/mapa/casai-df`), no mesmo
+    pedaço, com o prefixo `casai-`.
   - O DSEI aberto mora no endereço (`/saude-indigena/mapa/yanomami`): é um
     filtro da tela que fica no caminho (`campoNoCaminho`,
     src/lib/navegacao/rotas.ts). Abrir um DSEI empilha no histórico; o
@@ -159,7 +163,11 @@ export function TelaDoMapa({
         lmap={e.mapa?.lmap}
         linhas={e.linhasDaArea}
         filtroAtivo={false}
-        dseiSelecionado={dsei ? chaveDoDseiNoEndereco(dsei) : null}
+        dseiSelecionado={chaveDoDseiNoEndereco(dsei) || null}
+        casaiSelecionada={chaveDaCasaiNoEndereco(dsei) || null}
+        aoEscolherCasai={(casai) =>
+          mudar({ dsei: casaiNoEndereco(casai.nome) })
+        }
         aoEscolherDsei={(escolhido) =>
           mudar({ dsei: dseiNoEndereco(escolhido.k) })
         }

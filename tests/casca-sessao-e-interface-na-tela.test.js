@@ -8783,6 +8783,68 @@ bloco("modulos/mapa-saude-indigena", () => {
       ]);
     });
 
+    it("o seletor tem as CASAIs nacionais num grupo próprio", async () => {
+      const aoEscolherCasai = vi.fn();
+      await montar({ aoEscolherCasai });
+      const seletor = host.querySelector(".mapa-si-resumo__seletor select");
+      expect(
+        host.querySelector(".mapa-si-resumo__seletor span").textContent,
+      ).toBe("DSEI / CASAI");
+      const grupo = seletor.querySelector('optgroup[label="CASAIs nacionais"]');
+      expect(
+        [...grupo.querySelectorAll("option")].map((o) => o.textContent),
+      ).toEqual(["CASAI DF"]);
+      await escolher(seletor, grupo.querySelector("option").value);
+      expect(aoEscolherCasai).toHaveBeenCalledWith(
+        expect.objectContaining({ nome: "CASAI DF", cidade: "BRASILIA" }),
+      );
+    });
+
+    it("a CASAI aberta enquadra nela e mostra município, UF e os processos dela", async () => {
+      const aoSairDoDsei = vi.fn();
+      await montar({
+        casaiSelecionada: "DF",
+        aoSairDoDsei,
+        linhas: [
+          ...LINHAS,
+          {
+            unidade: "CASAI Brasília",
+            vagas_total: 4,
+            contratados: 1,
+            status: "Concluído",
+          },
+        ],
+      });
+      const painel = host.querySelector(".mapa-si-casai");
+      expect(painel.querySelector("h2").textContent).toBe("CASAI DF");
+      expect(painel.textContent).toContain("BRASILIA · DF");
+      const processos = host.querySelector(".mapa-si-processos");
+      const numeros = Object.fromEntries(
+        [...processos.querySelectorAll("dl > div")].map((d) => [
+          d.querySelector("dt").textContent,
+          d.querySelector("dd").textContent,
+        ]),
+      );
+      expect(numeros).toMatchObject({
+        Vagas: "4",
+        Contratadas: "1",
+        Ociosas: "3",
+      });
+      expect(
+        host.querySelector(".mapa-si-resumo__seletor select").value,
+      ).toMatch(/^casai:/);
+      const mapa = mapaVivo("map");
+      expect(
+        mapa.chamadas.some(([nome, , z]) => nome === "setView" && z === 7),
+      ).toBe(true);
+      await act(async () =>
+        [...painel.querySelectorAll("button")]
+          .find((b) => b.textContent.includes("Voltar ao Brasil"))
+          .click(),
+      );
+      expect(aoSairDoDsei).toHaveBeenCalled();
+    });
+
     describe("território, acesso e CNES do SIGEPSI", () => {
       const fonte = (dados) => ({ ok: true, dados, linhas: 1, campos: [] });
       /* O acesso vem nos pontos (a /todas): XITEI e LONGE com acesso. */

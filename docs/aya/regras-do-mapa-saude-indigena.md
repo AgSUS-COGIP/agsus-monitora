@@ -53,8 +53,8 @@ modo Calor saiu em 02/10/2026.
 
 ## CASAI Nacional no mapa
 
-**perguntas:** casai nacional no mapa | losango roxo | clicar na casai nacional
-**resposta:** No Yeendé, o losango roxo marca as CASAIs de referência nacional (Brasília e São Paulo), desenhadas a partir do SIGEPSI. Clicar nele abre a Visão geral filtrada pela busca "CASAI" mais o nome da cidade.
+**perguntas:** casai nacional no mapa | losango roxo | clicar na casai nacional | casai no seletor | escolher casai df | casai sao paulo no mapa | dsei / casai
+**resposta:** No Yeendé, o losango roxo marca as CASAIs de referência nacional (CASAI DF, em Brasília, e CASAI São Paulo), desenhadas a partir do SIGEPSI. Clicar nele abre a Visão geral filtrada pela busca "CASAI" mais o nome da cidade. No seletor "DSEI / CASAI" da página Mapa as duas ficam no grupo "CASAIs nacionais": escolher uma enquadra o mapa nela e mostra o município, a UF e os processos seletivos dela (os editais "CASAI Brasília" e "CASAI São Paulo", contados pelo nome ou pela cidade), com "Abrir na Visão geral". O endereço passa a ser o da CASAI (por exemplo, /saude-indigena/mapa/casai-df). As CASAIs nacionais não têm unidades próprias no mapa.
 **fonte:** interface do Yeendé
 
 ## Formas dos marcadores no mapa do DSEI
