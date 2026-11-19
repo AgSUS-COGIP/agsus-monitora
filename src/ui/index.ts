@@ -133,6 +133,15 @@ export type {
   PropriedadesDaSecao,
   PropriedadesDoKv,
 } from "./secao.tsx";
+export {
+  AtivosEHistorico,
+  usarAtivosEHistorico,
+} from "./ativos-e-historico.tsx";
+export type {
+  OpcoesDeAtivosEHistorico,
+  PropriedadesDeAtivosEHistorico,
+  ResultadoDeAtivosEHistorico,
+} from "./ativos-e-historico.tsx";
 export { Segmentado } from "./segmentado.tsx";
 export type {
   OpcaoDoSegmentado,

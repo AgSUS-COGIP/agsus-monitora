@@ -1,5 +1,4 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
-import { editaisDaEscolha } from "../../lib/avaliacao-documental/editais.ts";
+import { useEffect, useSyncExternalStore } from "react";
 import { irParaTela } from "../../app/ir-para-tela.ts";
 import {
   TelaNaUrl,
@@ -153,12 +152,6 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
   useEffect(() => {
     if (lerEquipe) void estado.carregarEquipe(e.editalId);
   }, [estado, lerEquipe, e.editalId]);
-  // A mesma escolha do seletor vale para os cartões da entrada.
-  const [todos, setTodos] = useState(false);
-  const { lista: editais } = editaisDaEscolha(e.editais, {
-    todos,
-    escolhido: e.editalId,
-  });
   const recarregar = () => void estado.carregar(e.area);
   const papel = e.dados?.papel;
   const escolhido = editalEscolhido(e.editais, e.editalId);
@@ -193,8 +186,6 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
                 escolhido={e.editalId}
                 carregado={e.carregado}
                 soVigentes
-                todos={todos}
-                aoMudarTodos={setTodos}
                 aoEscolher={escolherEdital}
               >
                 {/* Quem coordena vê a origem (e a troca) só em Configurações. */}
@@ -377,7 +368,11 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
               />
             )
           ) : e.carregado && !e.erroAoCarregar ? (
-            <EntradaDaAvaliacao editais={editais} aoAbrir={escolherEdital} />
+            <EntradaDaAvaliacao
+              editais={e.editais}
+              area={e.area}
+              aoAbrir={escolherEdital}
+            />
           ) : null}
         </>
       )}

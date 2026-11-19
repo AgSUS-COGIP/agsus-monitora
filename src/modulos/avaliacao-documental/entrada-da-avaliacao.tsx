@@ -4,13 +4,23 @@ import {
 } from "../../lib/editais/edital-de-treinamento.ts";
 import { rotuloDaVersao } from "../../lib/base/nome-da-versao.ts";
 import { formatNumberBR } from "../../lib/base/formatters";
-import { Selo } from "../../ui/index.ts";
+import {
+  editalDoHistorico,
+  situacaoDoEdital,
+  tomDaSituacaoDoEdital,
+} from "../../lib/editais/editais-ativos.ts";
+import {
+  AtivosEHistorico,
+  Selo,
+  usarAtivosEHistorico,
+} from "../../ui/index.ts";
 import type { EditalDaLista } from "./abas-e-entrada.ts";
 
 /*
   A entrada da Avaliação documental: sem edital escolhido (vários editais
   vigentes na área e nenhum lembrado), em vez da página em branco, um cartão
-  compacto por edital — número e unidade, a versão da regra e a situação, o
+  compacto por edital, os ativos (vigentes) separados do Histórico
+  (concluídos, cancelados e desativados), com a contagem por situação — número e unidade, a versão da regra e a situação, o
   papel de quem está na tela e, quando o banco manda as contagens, o
   andamento das fichas (e, para quem analisa, as fichas dela em análise).
   Clicar abre o edital. Só os dados da lista (listar_editais_avaliacao).
@@ -54,13 +64,20 @@ function Andamento({ edital }: { edital: EditalDaLista }) {
 }
 
 export function EntradaDaAvaliacao({
-  editais,
+  editais: todos,
+  area,
   aoAbrir,
 }: {
   editais: ReadonlyArray<EditalDaLista>;
+  area: string;
   aoAbrir: (editalId: string) => void;
 }) {
-  if (!editais.length) return null;
+  const { visiveis: editais, controle } = usarAtivosEHistorico(todos, {
+    chave: `yeende:avaliacao-documental:vista:${area}`,
+    ehHistorico: editalDoHistorico,
+    situacao: situacaoDoEdital,
+  });
+  if (!todos.length) return null;
   return (
     <section
       className="avd-entrada"
@@ -68,8 +85,21 @@ export function EntradaDaAvaliacao({
       data-tour="avd-entrada"
     >
       <h2 id="avdEntradaTitulo" className="avd-entrada-titulo">
-        Editais vigentes da área
+        Editais da área
       </h2>
+      <AtivosEHistorico
+        {...controle}
+        rotulo="Editais da área"
+        tomDaSituacao={tomDaSituacaoDoEdital}
+        tour="avd-ativos-e-historico"
+      />
+      {editais.length ? null : (
+        <p className="ui-texto-secundario" role="status">
+          {controle.vista === "historico"
+            ? "Nenhum edital no histórico."
+            : "Nenhum edital ativo."}
+        </p>
+      )}
       <ul className="avd-entrada-lista">
         {editais.map((ed) => {
           const papel = ed.papel ? PAPEIS[ed.papel] : "";

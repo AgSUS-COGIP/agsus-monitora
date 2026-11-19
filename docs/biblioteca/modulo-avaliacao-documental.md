@@ -23,7 +23,8 @@ Regra, Equipe e Triagem são só de quem coordena o edital (`pode_coordenar`, ou
 `COORDENADOR` da lista de editais antes de o edital carregar); os demais veem só a Fila, sem o
 seletor de abas, e a equipe nem é lida (`abas-e-entrada.ts`). Sem edital escolhido não há abas: a
 tela abre sozinha a ficha que estava aberta, o último edital aberto (localStorage, por pessoa e
-área) ou o único vigente; senão, mostra os cartões dos editais vigentes (`entrada-da-avaliacao.tsx`).
+área) ou o único vigente; senão, mostra os cartões dos editais, Ativos e Histórico separados, com a contagem por situação
+(`entrada-da-avaliacao.tsx`, `AtivosEHistorico`).
 O seletor mostra só os editais vigentes (`src/lib/avaliacao-documental/editais.ts`), com "Mostrar
 todos os editais da área".
 
@@ -193,11 +194,11 @@ Projetos, senão a carga inteira de Projetos é recusada. A conferência automá
 Do desenho de 05/10/2026 (F1 a F4 estão no código; F8 feita em 16/11/2026). Conferido no código em
 11/11/2026.
 
-| Fase                        | Entrega                                                                                                                                                                                    | Situação                                                                                                                                         |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| F5 — Revisão personalizável | amostra (X%, todas, só inaptos, divergentes, sinais, os que entraram pela linha, duplo-cego), sorteio com semente, validar ou devolver com motivo (quem analisou não valida), aba "Para revisar" (AM-13) | não feita: só a configuração "Revisão" da regra; não há `FC_SORTEAR_REVISAO`, `validar_ficha` nem `devolver_ficha`                              |
-| F6 — Listas com o parecer   | título "…ETAPA DE AVALIAÇÃO DOCUMENTAL E DE TÍTULOS", coluna "Classificação na Modalidade", parecer como justificativa dos inaptos, "Ver ficha da avaliação" na gaveta do recurso (AM-17, AM-20.1) | parcial: o título já sai em `src/lib/classificacao/documento-sei.ts`; falta o "Ver ficha" no recurso                                             |
-| F7 — Endereços da Empregare | o robô grava a cada execução `DS_URL_CANDIDATURAS` (vaga) e `DS_URL_CURRICULO` (candidato), sobrescrevendo (os tokens mudam); "Abrir na Empregare" abre direto o currículo (AM-7.2, AM-18b) | não feita (o robô já baixa os anexos, modo "Só anexos"). Links são dado restrito: só a RPC da ficha os devolve; nenhum token no log do Actions |
+| Fase                        | Entrega                                                                                                                                                                                                  | Situação                                                                                                                                       |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| F5 — Revisão personalizável | amostra (X%, todas, só inaptos, divergentes, sinais, os que entraram pela linha, duplo-cego), sorteio com semente, validar ou devolver com motivo (quem analisou não valida), aba "Para revisar" (AM-13) | não feita: só a configuração "Revisão" da regra; não há `FC_SORTEAR_REVISAO`, `validar_ficha` nem `devolver_ficha`                             |
+| F6 — Listas com o parecer   | título "…ETAPA DE AVALIAÇÃO DOCUMENTAL E DE TÍTULOS", coluna "Classificação na Modalidade", parecer como justificativa dos inaptos, "Ver ficha da avaliação" na gaveta do recurso (AM-17, AM-20.1)       | parcial: o título já sai em `src/lib/classificacao/documento-sei.ts`; falta o "Ver ficha" no recurso                                           |
+| F7 — Endereços da Empregare | o robô grava a cada execução `DS_URL_CANDIDATURAS` (vaga) e `DS_URL_CURRICULO` (candidato), sobrescrevendo (os tokens mudam); "Abrir na Empregare" abre direto o currículo (AM-7.2, AM-18b)              | não feita (o robô já baixa os anexos, modo "Só anexos"). Links são dado restrito: só a RPC da ficha os devolve; nenhum token no log do Actions |
 
 Depois da F8, editais novos nascem `MONITORA` (regra copiada de um modelo); os em andamento viram
 edital a edital, entre etapas, nunca durante prazo de recurso. No fim saem o simulador e o web app

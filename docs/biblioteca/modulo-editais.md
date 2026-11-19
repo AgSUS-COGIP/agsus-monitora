@@ -20,6 +20,8 @@ regras de cada etapa e a tela de encerramento quando o lote termina.
 Tabela, alertas, formulário e linha do tempo. A tela é `nucleo.tsx`; o estado fica fora do React em
 `estado.ts` (trocar de usuário na mesma aba apaga o que era da sessão anterior).
 
+- A tabela abre nos **Ativos**; concluídos, cancelados e desativados ficam no **Histórico**, a um
+  clique ao lado da busca, com a contagem por situação (`AtivosEHistorico`, [[componentes-padrao]]).
 - Cadastro do edital e do cronograma; importa cronograma e quadro de vagas do PDF de anexos.
 - **Vagas ligadas ao quadro** (`vinculos-do-quadro.tsx`, `src/lib/editais/vinculos-do-quadro.ts`,
   migration `20261118120000`): no quadro salvo, a fila do vínculo de cada vaga com código com a
