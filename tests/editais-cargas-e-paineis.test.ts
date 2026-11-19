@@ -271,16 +271,13 @@ import {
 } from "../src/lib/pagina-do-edital/pagina-do-edital.ts";
 import {
   E as ENCERRADOS,
-  NOME_DA_MIGRATION as MIGRATION_DOS_ENCERRADOS,
   USUARIO as USUARIO_DOS_ENCERRADOS,
-  bancoDeHoje as bancoDosEncerradosDeHoje,
   bancoMigrado as bancoDosEncerradosMigrado,
   concluir as concluirEncerrados,
   entrar as entrarNosEncerrados,
   erroDe as erroDosEncerrados,
   listar as listarEncerrados,
   migration as migrationDosEncerrados,
-  rollback as rollbackDosEncerrados,
 } from "./apoio/banco-dos-encerrados.ts";
 import {
   dataDoFim,
@@ -1998,7 +1995,7 @@ bloco("concluir-encerrados-no-banco", () => {
   const MOTIVO = "Conferido com a equipe em 19/11";
   const ids = (lista: { id: string }[]) => lista.map((e) => e.id).sort();
 
-  it("a migration troca a CHECK da ação pela de nome MAD e roda de novo sem erro", async () => {
+  it("a migration (aplicada) deixa a CHECK da ação com nome MAD e roda de novo sem erro", async () => {
     const db = await bancoDosEncerradosMigrado();
     await db.exec(migrationDosEncerrados());
     const r = await db.query<{ conname: string; def: string }>(
@@ -2011,18 +2008,6 @@ bloco("concluir-encerrados-no-banco", () => {
         def: "CHECK ((acao = ANY (ARRAY['salvar'::text, 'errata'::text, 'status'::text])))",
       },
     ]);
-  });
-
-  it("a guarda recusa uma CHECK da ação diferente da do retrato", async () => {
-    const db = await bancoDosEncerradosDeHoje();
-    await db.exec(`
-      alter table public."TH_CRONOGRAMA_MONIT_INDIG" drop constraint monitoramento_indigena_cronograma_versoes_acao_check;
-      alter table public."TH_CRONOGRAMA_MONIT_INDIG" add constraint monitoramento_indigena_cronograma_versoes_acao_check
-        check (acao in ('salvar', 'errata', 'outra'));`);
-    const erro = await erroDosEncerrados(db.exec(migrationDosEncerrados()));
-    expect(erro.message).toMatch(
-      /CHECK da ação do histórico do cronograma mudou/,
-    );
   });
 
   it("a lista tem só o recorte da conferência, com o aviso e as outras pendências abertas", async () => {
@@ -2195,53 +2180,6 @@ bloco("concluir-encerrados-no-banco", () => {
       [C.encerrado],
     );
     expect(status.rows[0]?.status).toBe("Em andamento");
-  });
-
-  it("o rollback devolve a CHECK de antes e remove as funções; com registro 'status', para", async () => {
-    const db = await bancoDosEncerradosMigrado();
-    await db.exec(rollbackDosEncerrados());
-    const r = await db.query<{ conname: string; def: string }>(
-      `select conname, pg_get_constraintdef(oid) as def from pg_constraint
-        where conrelid = 'public."TH_CRONOGRAMA_MONIT_INDIG"'::regclass and contype = 'c'`,
-    );
-    expect(r.rows).toEqual([
-      {
-        conname: "monitoramento_indigena_cronograma_versoes_acao_check",
-        def: "CHECK ((acao = ANY (ARRAY['salvar'::text, 'errata'::text])))",
-      },
-    ]);
-    const funcoes = await db.query<{ n: number }>(
-      `select count(*)::int as n from pg_proc
-        where proname in ('listar_editais_com_cronograma_encerrado',
-                          'concluir_editais_com_cronograma_encerrado', 'FC_RECUSA_CONCLUIR_EDITAL')`,
-    );
-    expect(funcoes.rows[0]?.n).toBe(0);
-    expect(
-      (await erroDosEncerrados(db.exec(rollbackDosEncerrados()))).message,
-    ).toMatch(/não está aplicada/);
-
-    const usado = await bancoDosEncerradosMigrado();
-    await entrarNosEncerrados(usado);
-    await concluirEncerrados(usado, [C.encerrado], MOTIVO);
-    expect(
-      (await erroDosEncerrados(usado.exec(rollbackDosEncerrados()))).message,
-    ).toMatch(/ação status/);
-  });
-
-  it("o ensaio leva a migration e o rollback sem mudança", () => {
-    const ler = (caminho: string) =>
-      readFileSync(caminho, "utf8").replace(/\r\n/g, "\n");
-    const corpo = (texto: string) =>
-      texto
-        .replace(/^\/\*[\s\S]*?\*\/\n/, "")
-        .split("\n")
-        .filter((l) => !/^(begin|commit);$/.test(l.trim()))
-        .join("\n")
-        .trim();
-    const ensaio = ler(`supabase/ensaios/${MIGRATION_DOS_ENCERRADOS}`);
-    expect(ensaio).toContain(corpo(migrationDosEncerrados()));
-    expect(ensaio).toContain(corpo(rollbackDosEncerrados()));
-    expect(ensaio.trimEnd().endsWith("rollback;")).toBe(true);
   });
 });
 

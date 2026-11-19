@@ -2,11 +2,12 @@
   Banco de teste da confirmação em lote dos editais com cronograma encerrado (migration
   20261119120000), num Postgres de verdade (PGlite).
 
-  O que é de verdade: a migration (supabase/migrations/, enquanto pendente; depois de aplicada,
-  tests/fixtures/sql-do-banco/), o rollback, a tabela do histórico do cronograma
-  (TH_CRONOGRAMA_MONIT_INDIG, com a CHECK de antes) e as funções de que ela depende, como estão em
-  produção (supabase/esquema-atual.sql): FC_ESTADO_DO_CRONOGRAMA, snapshot_monitoramento_cronograma,
-  FC_NUMERO_EDITAL, FC_EH_TREINAMENTO e FC_TEXTO_SEGURO_DO_AVISO.
+  O que é de verdade: a migration, aplicada e registrada em 19/11/2026 e guardada sem mudança em
+  tests/fixtures/sql-do-banco/ (o rollback e o ensaio saíram com ela, regra do #712), a tabela do
+  histórico do cronograma (TH_CRONOGRAMA_MONIT_INDIG, já com a CHECK nova) e as funções de que
+  ela depende, como estão em produção (supabase/esquema-atual.sql): FC_ESTADO_DO_CRONOGRAMA,
+  snapshot_monitoramento_cronograma, FC_NUMERO_EDITAL, FC_EH_TREINAMENTO e
+  FC_TEXTO_SEGURO_DO_AVISO.
 
   O que é imitação: os papéis; a sessão (auth.uid() lê teste.uid, auth.jwt() devolve o e-mail de
   teste.email); o nível em nucleo (private.pode_recurso lê teste.nivel: 0 sem acesso, 1 leitor, 2
@@ -14,7 +15,7 @@
   dispensa o aviso (FC_PODE_VER_AVISO sempre; FC_PODE_IGNORAR_AVISO lê teste.gestor); as tabelas
   do edital, das etapas e dos avisos, só com as colunas lidas. Dados fictícios.
 */
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 import { moldeDeBanco } from "./molde-de-banco.ts";
 import { lembrarBanco } from "./bancos-abertos.ts";
@@ -26,13 +27,9 @@ export const NOME_DA_MIGRATION =
 
 const ler = (caminho: string) =>
   readFileSync(caminho, "utf8").replace(/\r\n/g, "\n");
-/* Pendente: em supabase/migrations/; aplicada, guardada sem mudança em tests/fixtures/sql-do-banco/. */
-const CAMINHO_DA_MIGRATION = [
-  `supabase/migrations/${NOME_DA_MIGRATION}`,
-  `tests/fixtures/sql-do-banco/${NOME_DA_MIGRATION}`,
-].find((caminho) => existsSync(caminho));
-export const migration = () => ler(String(CAMINHO_DA_MIGRATION));
-export const rollback = () => ler(`supabase/rollback/${NOME_DA_MIGRATION}`);
+/* A migration aplicada, guardada em tests/fixtures/sql-do-banco/ só para montar o banco. */
+export const migration = () =>
+  ler(`tests/fixtures/sql-do-banco/${NOME_DA_MIGRATION}`);
 
 const RETRATO = ler("supabase/esquema-atual.sql");
 
@@ -190,7 +187,7 @@ async function montar(): Promise<Banco> {
   return db;
 }
 
-/** O banco de hoje, antes da migration (clone de um molde por arquivo). */
+/** O banco de hoje, sem as funções da migration (clone de um molde por arquivo). */
 export const bancoDeHoje = moldeDeBanco(montar);
 
 /** O banco com a migration aplicada. */
