@@ -16,6 +16,7 @@ import {
 } from "../../lib/mapas/mapa-saude-indigena/chaves.ts";
 import {
   indicadoresDoRecorte,
+  redePorTipo,
   situacaoDoPreenchimento,
 } from "../../lib/mapas/mapa-saude-indigena/indicadores-do-recorte.ts";
 import {
@@ -50,6 +51,7 @@ import type {
 } from "../../lib/mapas/mapa-saude-indigena/territorio-na-tela.ts";
 import { classes } from "../../ui/index.ts";
 import { obterLeaflet } from "./leaflet.ts";
+import { Forma } from "./legenda.tsx";
 import { MapaDoDsei } from "./mapa-do-dsei.tsx";
 import { MapaNacional } from "./mapa-nacional.tsx";
 import { ProcessosDoDsei } from "./processos-do-dsei.tsx";
@@ -152,6 +154,11 @@ export function MapaSaudeIndigena({
   const recorte = useMemo(
     () => indicadoresDoRecorte({ dseis, casais, contagens, dsei, casai }),
     [dseis, casais, contagens, dsei, casai],
+  );
+  // A rede de saúde indígena por tipo do recorte (a CASAI nacional é um ponto só).
+  const rede = useMemo(
+    () => (casai ? null : redePorTipo(dsei ? [dsei] : dseis)),
+    [casai, dsei, dseis],
   );
 
   /*
@@ -334,6 +341,26 @@ export function MapaSaudeIndigena({
               </div>
             ))}
           </div>
+          {rede?.total ? (
+            <div className="mapa-si-resumo__rede">
+              <span className="mapa-si-resumo__rede-titulo">
+                Rede de saúde indígena
+              </span>
+              <ul
+                aria-label={`Rede de saúde indígena por tipo: ${recorte.titulo}`}
+              >
+                {rede.tipos.map(({ tipo, quantidade }) => (
+                  <li key={tipo.key} data-tipo={tipo.key}>
+                    <Forma tipo={tipo.key} tamanho={14} />
+                    <b>{formatarNumero(quantidade)}</b> {tipo.label}
+                  </li>
+                ))}
+                <li data-tipo="total">
+                  <b>{formatarNumero(rede.total)}</b> no total
+                </li>
+              </ul>
+            </div>
+          ) : null}
           {recorte.vagas ? (
             <div
               className="mapa-si-resumo__preenchimento"

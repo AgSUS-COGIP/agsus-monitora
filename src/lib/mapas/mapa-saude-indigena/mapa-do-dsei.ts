@@ -126,6 +126,29 @@ export const visiveis = (
   ocultos: ReadonlySet<string>,
 ) => (registros || []).filter((r) => !ocultos?.has?.(r.type.key));
 
+/* Sem acento e sem caixa, para a busca da lista. */
+const paraBusca = (valor: unknown) =>
+  texto(valor).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
+/**
+ * "Buscar ponto pelo nome" (como no Mapa dos DSEIs do SIGEPSI): os polos e
+ * unidades da lista cujo nome ou município contém o termo, sem acento nem
+ * caixa. Termo vazio devolve a lista inteira.
+ */
+export function buscarNaLista(
+  registros: readonly RegistroDoDsei[],
+  termo: unknown,
+): RegistroDoDsei[] {
+  const procurado = paraBusca(termo);
+  const lista = [...(registros || [])];
+  if (!procurado) return lista;
+  return lista.filter(
+    (r) =>
+      paraBusca(r.name).includes(procurado) ||
+      paraBusca(r.city).includes(procurado),
+  );
+}
+
 /*
   Duas perguntas, duas linhas: quantos polos base o distrito TEM (SIGEPSI) e
   quantos pontos o mapa MOSTRA (contados de `registrosDoDsei`, o mesmo que se
