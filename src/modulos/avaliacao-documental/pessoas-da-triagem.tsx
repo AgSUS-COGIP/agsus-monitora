@@ -27,6 +27,7 @@ import {
   ROTULOS_DA_SITUACAO,
 } from "../../lib/avaliacao-documental/tela-da-pre-classificacao.ts";
 import {
+  BUSCAR_NESTA_TABELA,
   AcoesDaLinha,
   Aviso,
   BarraDaLista,
@@ -445,8 +446,8 @@ export function PessoasDaTriagem({
           busca={{
             valor: filtro.busca,
             aoMudar: (valor) => mudar({ busca: valor }),
-            placeholder: "Buscar por código ou nome",
-            rotulo: "Buscar pessoa pelo código ou nome",
+            placeholder: BUSCAR_NESTA_TABELA,
+            rotulo: "Buscar nesta tabela a pessoa pelo código ou nome",
             acao: "buscar-pessoa",
           }}
           quantos={filtrosDasPessoasEmUso(filtro)}

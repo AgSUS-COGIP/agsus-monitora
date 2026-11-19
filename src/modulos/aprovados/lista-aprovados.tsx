@@ -39,6 +39,7 @@ import {
   ErroAoCarregar,
   TopoDoPainel,
 } from "../../ui/index.ts";
+import { FluxoDasEtapas } from "../../componentes/fluxo-das-etapas.tsx";
 import { AbaAprovados } from "./aba-aprovados.tsx";
 import { AbaConvocacao } from "./aba-convocacao.tsx";
 import { AbaResumo } from "./aba-resumo.tsx";
@@ -536,6 +537,15 @@ export function ListaAprovados({
           ) : null}
         </div>
       </TopoDoPainel>
+      {aba === "aprovados" && editais.length === 1 ? (
+        <FluxoDasEtapas
+          view="approved"
+          edital={{
+            id: editais[0],
+            numero: opcoesEditais.find((o) => o.value === editais[0])?.label,
+          }}
+        />
+      ) : null}
 
       {erroAoCarregar && !carregado ? (
         <ErroAoCarregar

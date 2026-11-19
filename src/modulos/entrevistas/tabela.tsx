@@ -11,7 +11,7 @@ import {
   rotuloDoComparecimento,
   rotuloDoParecer,
 } from "../../lib/entrevistas/entrevistas-do-painel.ts";
-import { Selo, TabelaInfinita } from "../../ui/index.ts";
+import { BUSCAR_NESTA_TABELA, Selo, TabelaInfinita } from "../../ui/index.ts";
 
 /*
   "Entrevistas": a tabela do Painel de entrevistas, na tabela de carregamento
@@ -147,8 +147,8 @@ export function TabelaDeEntrevistas({
       idDoTitulo="entrevistasTabelaTitulo"
       titulo="Entrevistas"
       busca={{
-        placeholder: "Buscar somente na tabela",
-        rotulo: "Buscar somente na tabela de entrevistas",
+        placeholder: BUSCAR_NESTA_TABELA,
+        rotulo: "Buscar nesta tabela de entrevistas",
       }}
       carregado={carregado}
       itens={entrevistas}

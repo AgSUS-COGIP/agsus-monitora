@@ -10,6 +10,19 @@ import {
 } from "../src/lib/base/exportacao-da-tabela.ts";
 import { lembrarBanco } from "./apoio/bancos-abertos.ts";
 import {
+  ETAPAS_DO_FLUXO,
+  etapaDoFluxo,
+  etapasDoFluxo,
+  idaParaAEtapa,
+  tituloDoFluxo,
+  vagaDaChave,
+} from "../src/lib/navegacao/fluxo-das-etapas.ts";
+import {
+  consumirPedidoDeFiltro,
+  pedirFiltro,
+} from "../src/app/pedido-de-filtro.ts";
+import { filtrosDeRecursos } from "../src/lib/aya/filtro-da-aya.ts";
+import {
   afterEach,
   beforeAll,
   beforeEach,
@@ -6386,5 +6399,134 @@ bloco("apoio/bancos-abertos", () => {
       expect(doPrimeiroTeste.closed).toBe(true);
       expect(doBloco.closed).toBe(false);
     });
+  });
+});
+
+bloco("lib/fluxo-das-etapas", () => {
+  /*
+    O fluxo entre as etapas do processo seletivo
+    (src/lib/navegacao/fluxo-das-etapas.ts): a ordem, o título da faixa e
+    como cada tela recebe o edital e a vaga (o mesmo destino da aba
+    "Candidatos" da página do edital).
+  */
+  const ID = "0b7c9a52-2d55-4c4e-9f7a-1c3d5e7f9a1b";
+  const etapa = (view: string) => {
+    const achada = etapaDoFluxo(view);
+    if (!achada) throw new Error(`sem a etapa ${view}`);
+    return achada;
+  };
+
+  it("as etapas, na ordem do processo, sem o Painel da Seleção", () => {
+    expect(ETAPAS_DO_FLUXO.map((e) => e.curto)).toEqual([
+      "Triagem",
+      "Documental",
+      "Recursos",
+      "Entrevistas",
+      "Classificação",
+      "Aprovados",
+    ]);
+    expect(
+      etapasDoFluxo((view) => view !== "analisar-recursos").map((e) => e.view),
+    ).toEqual([
+      "pre-classificacao",
+      "avaliacao-documental",
+      "conduzir-entrevistas",
+      "classificacao",
+      "approved",
+    ]);
+    expect(etapaDoFluxo("selecao")).toBeUndefined();
+  });
+
+  it("o título diz a etapa e o edital", () => {
+    expect(tituloDoFluxo("avaliacao-documental", "Edital nº 093/2026")).toBe(
+      "Documental do 93/2026",
+    );
+    expect(tituloDoFluxo("approved", "93/2026 · DSEI Fictício")).toBe(
+      "Aprovados do 93/2026",
+    );
+    expect(tituloDoFluxo("classificacao", "")).toBe("Classificação");
+    expect(tituloDoFluxo("dashboard", "93/2026")).toBe("");
+  });
+
+  it("pelo id, a navegação leva o edital; a vaga vai no pedido só para quem recorta por vaga", () => {
+    const edital = { id: ID, numero: "93/2026" };
+    expect(idaParaAEtapa(etapa("classificacao"), edital, "179698")).toEqual({
+      view: "classificacao",
+      extras: { edital: ID },
+      filtro: { editalId: ID, vaga: "179698" },
+    });
+    expect(idaParaAEtapa(etapa("pre-classificacao"), edital)).toEqual({
+      view: "pre-classificacao",
+      extras: { edital: ID },
+    });
+    // Sem id, a tela que abre pelo id não tem para onde ir.
+    expect(
+      idaParaAEtapa(etapa("conduzir-entrevistas"), { numero: "93/2026" }),
+    ).toBeNull();
+  });
+
+  it("pelo número (Recursos, Aprovados), o pedido leva o número e o id; a vaga fica", () => {
+    expect(
+      idaParaAEtapa(
+        etapa("analisar-recursos"),
+        { id: ID, numero: "93/2026" },
+        "179698",
+      ),
+    ).toEqual({
+      view: "analisar-recursos",
+      filtro: { edital: "93/2026", editalId: ID },
+    });
+    expect(
+      idaParaAEtapa(etapa("approved"), { numero: "Edital 93/2026" }),
+    ).toEqual({
+      view: "approved",
+      filtro: { edital: "93/2026" },
+    });
+    expect(idaParaAEtapa(etapa("approved"), { id: ID })).toBeNull();
+  });
+
+  it("a vaga da Classificação segue pelo código; a linha do quadro sem código, não", () => {
+    expect(vagaDaChave("179698")).toBe("179698");
+    expect(vagaDaChave("quadro:42")).toBe("");
+    expect(vagaDaChave(null)).toBe("");
+  });
+
+  it("o pedido com a vaga espera a tela chegar no edital dele", () => {
+    const agora = 1_000;
+    pedirFiltro("classificacao", { editalId: ID, vaga: "179698" }, agora);
+    const noEdital = (filtro: { editalId?: string }) => filtro.editalId === ID;
+    // Outro edital aberto: o pedido fica.
+    expect(
+      consumirPedidoDeFiltro("classificacao", agora, () => false),
+    ).toBeNull();
+    expect(consumirPedidoDeFiltro("classificacao", agora, noEdital)).toEqual({
+      editalId: ID,
+      vaga: "179698",
+    });
+    expect(consumirPedidoDeFiltro("classificacao", agora, noEdital)).toBeNull();
+  });
+
+  it("Recursos recorta pelo id do edital quando ele vem, e pelo número sem ele", () => {
+    const opcoes = {
+      editais: [
+        { valor: "e1", rotulo: "93/2026 · DSEI Fictício" },
+        { valor: ID, rotulo: "93/2026 · DSEI Outro" },
+      ],
+    };
+    const vazios = {
+      edital: "",
+      origem: "",
+      analista: "",
+      situacao: "",
+      pendencia: "",
+      busca: "",
+    };
+    expect(
+      filtrosDeRecursos(vazios, { edital: "93/2026", editalId: ID }, opcoes)
+        .edital,
+    ).toBe(ID);
+    expect(
+      filtrosDeRecursos(vazios, { edital: "93/2026" }, opcoes).edital,
+    ).toBe("e1");
   });
 });

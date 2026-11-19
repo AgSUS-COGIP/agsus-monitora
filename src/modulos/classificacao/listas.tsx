@@ -28,6 +28,8 @@ import {
 import { PRAZO_DO_CALCULO_MS } from "../../lib/classificacao/calculo-em-python.ts";
 import { useEffect, useId, useMemo, useState } from "react";
 import { usarFiltrosNaUrl } from "../../app/usar-filtros-na-url.ts";
+import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
+import { vagaDaChave } from "../../lib/navegacao/fluxo-das-etapas.ts";
 import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
 import { copiarTexto } from "../../lib/acessos/convite-de-acesso.ts";
 import { formatNumberBR } from "../../lib/base/formatters";
@@ -60,6 +62,7 @@ import { DocumentoDoSei } from "./documento.tsx";
 import { HoraDeNascimento } from "./hora-de-nascimento.tsx";
 import { ModalDePublicacaoDeAprovados } from "./publicar-aprovados.tsx";
 import {
+  BUSCAR_NESTA_TABELA,
   AcoesDaLinha,
   Aviso,
   BarraDaLista,
@@ -1292,10 +1295,12 @@ export function Listas({
   e,
   calcular,
   aoAbrirAgenda,
+  aoMudarVaga,
   confirmar = (mensagem) => globalThis.confirm?.(mensagem) ?? true,
 }: {
   estado: EstadoDaClassificacao;
   e: SnapshotDaClassificacao;
+  aoMudarVaga?: (codigo: string) => void;
   calcular: (
     dados: DadosDaClassificacao,
     tipo: TipoDeLista,
@@ -1337,6 +1342,21 @@ export function Listas({
     () => (dados && regra ? calcular(dados, tipo) : null),
     [dados, regra, tipo, calcular],
   );
+  // A vaga que veio de outra etapa do mesmo edital (a faixa das etapas): casa pelo código.
+  usarPedidoDeFiltro(
+    "classificacao",
+    Boolean(resultado),
+    (pedido) => {
+      const vaga = pedido.vaga;
+      if (vaga && resultado?.vagas.some((v) => v.chave === vaga))
+        setRecorte((atual) => ({ ...atual, vaga }));
+    },
+    (pedido) => !pedido.editalId || pedido.editalId === e.editalId,
+  );
+  // A vaga escolhida vai para a faixa das etapas (só a que tem código segue).
+  useEffect(() => {
+    aoMudarVaga?.(vagaDaChave(recorte.vaga));
+  }, [aoMudarVaga, recorte.vaga]);
   // A busca acha pelo código da inscrição também (a lista não o mostra).
   const codigos = useMemo(
     () =>
@@ -1512,8 +1532,8 @@ export function Listas({
               busca={{
                 valor: recorte.busca,
                 aoMudar: (busca) => setRecorte({ ...recorte, busca }),
-                placeholder: "Buscar por nome ou código",
-                rotulo: "Buscar candidato pelo nome ou código",
+                placeholder: BUSCAR_NESTA_TABELA,
+                rotulo: "Buscar nesta tabela o candidato pelo nome ou código",
                 acao: "buscar-candidato",
               }}
               quantos={filtrosAtivosDoRecorte(recorte)}

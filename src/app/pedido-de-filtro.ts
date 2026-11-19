@@ -27,6 +27,8 @@ export type FiltroDoPedido = {
   candidatos?: readonly (string | number)[];
   /** O caso de um aviso que virou pendência do edital: a Lista de aprovados abre a aba Pendências. */
   pendencias?: boolean;
+  /** O código da vaga que segue entre as etapas (src/lib/navegacao/fluxo-das-etapas.ts). */
+  vaga?: string;
 };
 
 interface PedidoGuardado {
@@ -55,13 +57,19 @@ export function pedirFiltro(
   for (const ouvinte of ouvintes) ouvinte();
 }
 
-/** O filtro pedido para esta tela (e o pedido some), ou `null`. */
+/**
+ * O filtro pedido para esta tela (e o pedido some), ou `null`. Com `aceita`,
+ * o pedido ainda válido que a tela não aceita agora (outro edital aberto)
+ * fica para depois.
+ */
 export function consumirPedidoDeFiltro(
   view: unknown,
   agora: number = Date.now(),
+  aceita?: (filtro: FiltroDoPedido) => boolean,
 ): FiltroDoPedido | null {
   if (!pedido || pedido.view !== String(view || "")) return null;
   const valido = agora - pedido.em <= VALIDADE_MS;
+  if (valido && aceita && !aceita(pedido.filtro)) return null;
   const filtro = pedido.filtro;
   pedido = null;
   return valido ? filtro : null;
@@ -75,18 +83,24 @@ const obterVersao = () => versao;
 
 /**
  * Na tela: quando chega um pedido para `view` e a tela está `pronta` (dados
- * carregados), chama `aplicar(filtro)` uma vez.
+ * carregados), chama `aplicar(filtro)` uma vez. `aceita` segura o pedido até
+ * a tela estar nele (a vaga espera o edital do pedido abrir).
  */
 export function usarPedidoDeFiltro(
   view: string,
   pronta: boolean,
   aplicar: (filtro: FiltroDoPedido) => void,
+  aceita?: (filtro: FiltroDoPedido) => boolean,
 ): void {
   const atual = useSyncExternalStore(assinar, obterVersao, obterVersao);
   useEffect(() => {
     if (!pronta) return;
-    const filtro = consumirPedidoDeFiltro(view);
+    const filtro = consumirPedidoDeFiltro(view, Date.now(), aceita);
     if (filtro) aplicar(filtro);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- `aplicar` muda a cada desenho; só o pedido novo e a prontidão disparam.
-  }, [atual, pronta, view]);
+    /*
+      `aplicar` muda a cada desenho; disparam o pedido novo, a prontidão e,
+      com `aceita`, cada desenho (o pedido segurado espera a tela chegar nele).
+    */
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- ver acima.
+  }, [atual, pronta, view, aceita]);
 }

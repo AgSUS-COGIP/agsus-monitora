@@ -10,6 +10,7 @@ import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
 import { abasDoMenu, catalogoDoBanco } from "../../modules/catalogo-de-abas.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { SeletorDeEdital } from "../../componentes/seletor-de-edital.tsx";
+import { FluxoDasEtapas } from "../../componentes/fluxo-das-etapas.tsx";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { editalEscolhido } from "../../lib/editais/edital-de-treinamento.ts";
 import {
@@ -218,6 +219,15 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
                 valor={visao}
                 aoMudar={escolherAba}
                 tour="avd-visoes"
+              />
+            ) : null
+          }
+          etapas={
+            e.editalId && !e.semAcesso ? (
+              <FluxoDasEtapas
+                view="avaliacao-documental"
+                edital={{ id: e.editalId, numero: escolhido?.edital }}
+                vaga={visao === "fila" ? sf.filtro.vaga : ""}
               />
             ) : null
           }
