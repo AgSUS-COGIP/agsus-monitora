@@ -2425,9 +2425,7 @@ bloco("app/navegacao", () => {
           navegacao.obter().titulo ||
             TELAS_DAS_AREAS.find((tela) => tela.view === view)?.titulo,
         );
-        expect(
-          pagina.querySelector(".ui-cabecalho-trilha")?.textContent,
-        ).toContain("Saúde Indígena / ");
+        expect(pagina.querySelector(".ui-cabecalho-trilha")).toBeNull();
       }
       navegacao.irPara("classificacao");
       expect(
