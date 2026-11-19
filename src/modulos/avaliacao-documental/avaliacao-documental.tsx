@@ -166,7 +166,6 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
   // Modo de análise: a ficha aberta ocupa a tela; só a Fila (que a desenha) fica montada.
   const sf = useSyncExternalStore(fila.assinar, fila.obter);
   const emAnalise = visao === "fila" && Boolean(sf.aberta?.ficha || sf.abrindo);
-  const { nome: nomeDaArea } = usarAreaAtual();
   return (
     <div
       className="ui-tela avd-tela ui-tela-da-selecao"
@@ -174,7 +173,7 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
     >
       {emAnalise ? null : (
         <CabecalhoDaTela
-          trilha={[nomeDaArea, "Seleção"].filter(Boolean).join(" / ")}
+          trilha=""
           titulo="Avaliação documental"
           tour="avd-cabecalho"
           edital={

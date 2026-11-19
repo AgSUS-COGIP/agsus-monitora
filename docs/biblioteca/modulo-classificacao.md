@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-17
+atualizado: 2026-11-19
 ---
 
 # Módulo: Classificação
@@ -14,7 +14,10 @@ Histórico separados (`AtivosEHistorico`; o status vem das linhas do monitoramen
 (`entrada-da-classificacao.tsx`); escolhido, o nome fica no cabeçalho com "Trocar". Os cards trazem
 só os editais da área com análise curricular ativa (qualquer origem) ou com lista gerada, ativos e
 em andamento primeiro (`listar_editais_classificacao`,
-`20261023120000_classificacao_so_editais_analisados.sql`).
+`20261023120000_classificacao_so_editais_analisados.sql`). Aberto pela navegação (a faixa das
+etapas, a página do edital) antes de a lista chegar, o cabeçalho diz "Carregando…"; fora da lista,
+"Edital fora desta lista" com "Trocar" e o aviso de que não há classificação gerada nem análise para
+classificar, nunca o id (`src/lib/editais/edital-na-lista.ts`, o mesmo do seletor de edital).
 
 Banco, contratos TypeScript, o job Python (relatório de desempate e "Gerar listas pelo Python") e
 os testes: [[classificacao-por-dentro]].

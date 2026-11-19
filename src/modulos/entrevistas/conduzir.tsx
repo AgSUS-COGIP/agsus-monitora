@@ -191,7 +191,6 @@ function TelaDeConducao({
   );
   const contador = useMemo(() => contadorDoDia(fila, hoje), [fila, hoje]);
   const editalId = dados?.edital?.id || "";
-  const { nome: nomeDaArea } = usarAreaAtual();
   const seletor = usarSeletorDoEdital({ conducao, e, doPainel: doPainel() });
   // A seção na URL; o controlador também a muda (links antigos).
   const mudarSecao = usarLojaNaUrl(
@@ -408,7 +407,7 @@ function TelaDeConducao({
       data-tour="conduzir-tela"
     >
       <CabecalhoDaTela
-        trilha={[nomeDaArea, "Seleção"].filter(Boolean).join(" / ")}
+        trilha=""
         titulo="Entrevistas"
         tour="conduzir-cabecalho"
         edital={seletor.campo}

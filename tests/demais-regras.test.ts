@@ -44,6 +44,12 @@ import {
 import type { EstabelecimentoDoCnes } from "../src/lib/mapas/mapa-saude-indigena/territorio-do-sigepsi.ts";
 import { lembrarBanco } from "./apoio/bancos-abertos.ts";
 import {
+  CARREGANDO_O_EDITAL,
+  EDITAL_FORA_DA_LISTA,
+  rotuloDoEscolhido,
+  situacaoDoEscolhido,
+} from "../src/lib/editais/edital-na-lista.ts";
+import {
   ACAO_DA_PENDENCIA,
   editaisDaPendencia,
 } from "../src/lib/visao-geral/visao-geral.ts";
@@ -7332,5 +7338,39 @@ bloco("lib/fluxo-das-etapas", () => {
     expect(
       filtrosDeRecursos(vazios, { edital: "93/2026" }, opcoes).edital,
     ).toBe("e1");
+  });
+});
+
+bloco("lib/edital-na-lista", () => {
+  /*
+    O edital aberto e a lista da tela (src/lib/editais/edital-na-lista.ts):
+    a tela nunca mostra o id; espera a lista, e fora dela diz isso.
+  */
+  const EDITAIS = [
+    { id: "e1", edital: "03/2025", unidade: "DSEI Fictício" },
+    { id: "e2", edital: "07/2026", unidade: "" },
+  ];
+
+  it("na lista: o número e a unidade", () => {
+    expect(situacaoDoEscolhido(EDITAIS, "e1", true)).toBe("na-lista");
+    expect(rotuloDoEscolhido(EDITAIS, "e1", true)).toBe(
+      "03/2025 · DSEI Fictício",
+    );
+    expect(rotuloDoEscolhido(EDITAIS, "e2", false)).toBe("07/2026");
+  });
+
+  it("a lista ainda não chegou: Carregando…, nunca o id", () => {
+    expect(situacaoDoEscolhido([], "e9", false)).toBe("carregando");
+    expect(rotuloDoEscolhido([], "e9", false)).toBe(CARREGANDO_O_EDITAL);
+  });
+
+  it("fora da lista carregada: Edital fora desta lista", () => {
+    expect(situacaoDoEscolhido(EDITAIS, "e9", true)).toBe("fora");
+    expect(rotuloDoEscolhido(EDITAIS, "e9", true)).toBe(EDITAL_FORA_DA_LISTA);
+  });
+
+  it("sem edital aberto, nada", () => {
+    expect(situacaoDoEscolhido(EDITAIS, "", true)).toBe("nenhum");
+    expect(rotuloDoEscolhido(null, null, true)).toBe("");
   });
 });

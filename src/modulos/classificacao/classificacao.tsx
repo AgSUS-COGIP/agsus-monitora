@@ -26,7 +26,16 @@ import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.tsx";
 import { FluxoDasEtapas } from "../../componentes/fluxo-das-etapas.tsx";
 import { classificarEdital } from "../../lib/classificacao/ajustes.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
-import { Aviso, CabecalhoDaTela, Segmentado } from "../../ui/index.ts";
+import {
+  Aviso,
+  CabecalhoDaTela,
+  EstadoVazio,
+  Segmentado,
+} from "../../ui/index.ts";
+import {
+  rotuloDoEscolhido,
+  situacaoDoEscolhido,
+} from "../../lib/editais/edital-na-lista.ts";
 import { EntradaDaClassificacao } from "./entrada-da-classificacao.tsx";
 import { Agenda } from "./agenda.tsx";
 import { criarEstadoDaClassificacao, MENSAGEM_SEM_ACESSO } from "./estado.ts";
@@ -146,8 +155,17 @@ function TelaDaArea({
     [],
   );
 
-  const { nome: nomeDaArea } = usarAreaAtual();
   const escolhido = e.editais.find((ed) => ed.id === e.editalId) ?? null;
+  /*
+    O edital pode chegar pela navegação (a faixa das etapas, a página do
+    edital) sem estar na lista da tela, que só tem os com análise curricular
+    ou lista gerada: o cabeçalho diz "Edital fora desta lista", nunca o id.
+  */
+  const situacaoDoEdital = situacaoDoEscolhido(
+    e.editais,
+    e.editalId,
+    e.carregado,
+  );
   // A vaga das listas (o código), para a faixa das etapas.
   const [vagaDaLista, setVagaDaLista] = useState("");
 
@@ -162,7 +180,7 @@ function TelaDaArea({
       data-tour="classificacao-tela"
     >
       <CabecalhoDaTela
-        trilha={[nomeDaArea, "Seleção"].filter(Boolean).join(" / ")}
+        trilha=""
         titulo="Classificação"
         tour="classificacao-cabecalho"
         edital={
@@ -173,12 +191,8 @@ function TelaDaArea({
             >
               <span className="ui-texto-secundario">Edital</span>
               <span className="classificacao-edital-nome">
-                <strong>
-                  {escolhido
-                    ? [escolhido.edital, escolhido.unidade]
-                        .filter(Boolean)
-                        .join(" · ")
-                    : e.editalId}
+                <strong data-situacao-do-edital={situacaoDoEdital}>
+                  {rotuloDoEscolhido(e.editais, e.editalId, e.carregado)}
                 </strong>
                 <SeloDeTreinamento edital={escolhido} />
                 <button
@@ -194,7 +208,7 @@ function TelaDaArea({
           ) : null
         }
         secoes={
-          e.editalId && !e.semAcesso ? (
+          e.editalId && !e.semAcesso && situacaoDoEdital !== "fora" ? (
             <Segmentado
               tour="classificacao-abas"
               rotulo="Seções"
@@ -258,7 +272,12 @@ function TelaDaArea({
             </Aviso>
           ) : null}
 
-          {e.editalId ? (
+          {e.editalId && situacaoDoEdital === "fora" ? (
+            <EstadoVazio>
+              Nenhuma classificação gerada para este edital, e ele não tem
+              análise curricular para classificar.
+            </EstadoVazio>
+          ) : e.editalId ? (
             visao === "listas" && (e.dados || e.carregandoEdital) ? (
               <Listas
                 key={e.editalId}
