@@ -448,7 +448,15 @@ export function MapaNacional({
         idDoMapa={idDoMapa}
         titulo="DSEIs e CASAIs do Brasil"
         contagem={
-          carregando ? "…" : plural(bolhas.length, "território", "territórios")
+          carregando
+            ? "…"
+            : // 34 DSEIs e as 2 CASAIs nacionais (DF e São Paulo), contadas à parte.
+              [
+                plural(bolhas.length, "DSEI", "DSEIs"),
+                casais.length ? plural(casais.length, "CASAI", "CASAIs") : "",
+              ]
+                .filter(Boolean)
+                .join(" · ")
         }
         acoes={acoes}
       />
