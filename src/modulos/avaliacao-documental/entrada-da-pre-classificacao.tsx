@@ -40,7 +40,7 @@ function TelaDaPreClassificacao({
   atualizar: () => Promise<unknown>;
 }) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
-  const { area: areaDoApp, nome: nomeDaArea } = usarAreaAtual();
+  const { area: areaDoApp } = usarAreaAtual();
 
   useEffect(() => {
     if (!areaDoApp || e.area === areaDoApp) return;
@@ -63,7 +63,7 @@ function TelaDaPreClassificacao({
   const comTriagem = Boolean(e.editalId && e.dados && !e.semAcesso && coordena);
   // O cabeçalho da tela: com a Triagem aberta, ela o desenha com as seções e as ações.
   const cabecalho = {
-    trilha: [nomeDaArea, "Seleção"].filter(Boolean).join(" / "),
+    trilha: "",
     edital: e.semAcesso ? null : (
       <SeletorDeEdital
         className="avd-edital"

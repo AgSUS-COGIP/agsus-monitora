@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
+import {
+  EDITAL_FORA_DA_LISTA,
+  situacaoDoEscolhido,
+} from "../../lib/editais/edital-na-lista.ts";
 import type { ReactNode } from "react";
 import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.tsx";
 import { marcaDoEdital } from "../../lib/entrevistas/conducao-de-entrevista.ts";
@@ -135,6 +139,14 @@ export function usarSeletorDoEdital({
                 ? "Nenhum edital na janela da entrevista"
                 : "Escolha o edital…"}
           </option>
+          {/* Aberto por fora da escolha (a faixa das etapas) e fora da lista: nunca o id. */}
+          {situacaoDoEscolhido(
+            editais.lista,
+            e.editalId,
+            editais.carregado && !editais.carregando,
+          ) === "fora" ? (
+            <option value={e.editalId}>{EDITAL_FORA_DA_LISTA}</option>
+          ) : null}
           {grupos ? (
             <>
               <optgroup label={rotuloDoGrupo("Ativos", grupos.ativos)}>

@@ -9864,9 +9864,8 @@ bloco("modulos/pre-classificacao-independente", () => {
       expect(
         cabecalhos[0].querySelector(".ui-cabecalho-titulo").textContent,
       ).toBe("Triagem");
-      expect(
-        cabecalhos[0].querySelector(".ui-cabecalho-trilha").textContent,
-      ).toBe("Projetos / Seleção");
+      // Sem a trilha "Área / Seleção" (o menu já diz onde se está).
+      expect(cabecalhos[0].querySelector(".ui-cabecalho-trilha")).toBeNull();
       expect(
         cabecalhos[0]
           .querySelector("[data-acao='atualizar']")

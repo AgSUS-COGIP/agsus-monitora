@@ -1901,6 +1901,66 @@ bloco("modulos/classificacao", () => {
       expect(cardsDosEditais()).toHaveLength(2);
     });
 
+    it("aberta pela navegação antes de a lista de editais chegar: o cabeçalho mostra o edital, nunca o id", async () => {
+      // O fluxo entre etapas (e a página do edital) abre com ?edital=<id>, às vezes antes da lista.
+      let soltarLista;
+      const lista = new Promise((resolver) => (soltarLista = resolver));
+      const supabase = supabaseFalso();
+      const original = supabase.rpc.getMockImplementation();
+      supabase.rpc.mockImplementation(async (nome, args, opcoes) => {
+        if (nome === "listar_editais_classificacao") await lista;
+        return original(nome, args, opcoes);
+      });
+      secao = document.createElement("section");
+      secao.id = "page-classificacao";
+      secao.className = "page active";
+      document.body.append(secao);
+      await act(async () => {
+        painel = montarTela(criarClassificacao, "page-classificacao", {
+          supabase,
+          toast,
+          baixar,
+          imprimir,
+          copiar,
+          carregarLogo,
+          cabecalho: () => "AGÊNCIA DE TESTE\nRua A, 1",
+        });
+      });
+      await act(async () => {
+        void painel.render();
+        void painel.abrirEdital("e83");
+      });
+      await esperar();
+      const nome = () =>
+        secao.querySelector(".classificacao-edital-nome strong").textContent;
+      expect(nome()).toBe("Carregando…");
+      expect(secao.textContent).not.toContain("e83");
+      await act(async () => soltarLista());
+      await esperar();
+      expect(nome()).toBe("83/2026 · DSEI Xingu");
+      // Sem a trilha "Área / Seleção", como as outras telas.
+      expect(secao.querySelector(".ui-cabecalho-trilha")).toBeNull();
+    });
+
+    it('edital fora da lista da tela: "Edital fora desta lista" com Trocar, e diz que não há classificação', async () => {
+      const supabase = supabaseFalso();
+      await montar(supabase);
+      // Um edital sem análise curricular nem lista gerada (fora da lista da Classificação).
+      await act(async () => void painel.abrirEdital("e999"));
+      await esperar();
+      expect(
+        secao.querySelector(".classificacao-edital-nome strong").textContent,
+      ).toBe("Edital fora desta lista");
+      expect(secao.textContent).not.toContain("e999");
+      expect(secao.textContent).toContain(
+        "Nenhuma classificação gerada para este edital",
+      );
+      expect(secao.querySelector("[data-acao='trocar-edital']")).not.toBeNull();
+      await clicar(secao.querySelector("[data-acao='trocar-edital']"));
+      await esperar();
+      expect(cardsDosEditais()).toHaveLength(2);
+    });
+
     it("não confirma sorteio com ordem incompleta recebida do banco", async () => {
       const supabase = supabaseFalso({
         registrar_desempate_classificacao: ({ p_dados }) => ({
