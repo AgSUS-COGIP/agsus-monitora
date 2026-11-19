@@ -355,7 +355,7 @@ export function origemDoCronograma(origem: unknown): string {
 
 export interface RegistroDoHistorico {
   chave: string;
-  tipo: "retificacao" | "alteracao";
+  tipo: "retificacao" | "alteracao" | "status";
   titulo: string;
   quando: string;
   motivo: string;
@@ -370,15 +370,26 @@ export function historicoDoCronograma(
   return (Array.isArray(historico) ? historico : [])
     .map((item, indice) => {
       const errata = txt(item.acao) === "errata";
+      // O status marcado Concluído em lote na tela de Editais (20261119120000): não mexe em etapa.
+      const status = txt(item.acao) === "status";
       return {
         chave: `${txt(item.created_at)}:${indice}`,
-        tipo: errata ? ("retificacao" as const) : ("alteracao" as const),
+        tipo: errata
+          ? ("retificacao" as const)
+          : status
+            ? ("status" as const)
+            : ("alteracao" as const),
         titulo:
-          txt(item.numero_errata) || (errata ? "Retificação" : "Alteração"),
+          txt(item.numero_errata) ||
+          (errata
+            ? "Retificação"
+            : status
+              ? "Status marcado como Concluído"
+              : "Alteração"),
         quando: txt(item.created_at),
         motivo: txt(item.motivo),
         quem: txt(item.created_by_email),
-        alteracoes: num(item.total_alteracoes),
+        alteracoes: status ? 0 : num(item.total_alteracoes),
       };
     })
     .sort((a, b) => (a.quando < b.quando ? 1 : a.quando > b.quando ? -1 : 0));

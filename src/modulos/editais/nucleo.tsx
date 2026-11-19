@@ -50,7 +50,7 @@ import type {
   ChaveDaOrdemDosEditais,
   OrdemDosEditais,
 } from "../../lib/editais/ordem-dos-editais.ts";
-import { criarEstadoDoNucleo } from "./estado.ts";
+import { criarEstadoDoNucleo, EVENTO_CRONOGRAMA_SALVO } from "./estado.ts";
 import { PainelOperacional } from "./painel-operacional.tsx";
 import { ModalLinhaDoTempo } from "./modal-linha-do-tempo.tsx";
 import type { ItemDoResumo } from "../../lib/editais/editais-do-nucleo.ts";
@@ -77,6 +77,14 @@ const SeloDeAvisos = lazy(
   importarComRecarga(() =>
     import("../conferencias/avisos-de-conferencia.tsx").then((modulo) => ({
       default: modulo.SeloDeAvisos,
+    })),
+  ),
+);
+// "Cronograma encerrado (N)": a lista e a confirmação em lote (20261119120000), sob demanda.
+const EncerradosDoCronograma = lazy(
+  importarComRecarga(() =>
+    import("./encerrados-do-cronograma.tsx").then((modulo) => ({
+      default: modulo.EncerradosDoCronograma,
     })),
   ),
 );
@@ -487,6 +495,8 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
     [ordem],
   );
   const podeEditar = canManageEditais(nucleo.perfil);
+  // Cada "Atualizar" relê a lista do cronograma encerrado.
+  const [versaoDosEncerrados, setVersaoDosEncerrados] = useState(0);
 
   /*
     Regras do edital: tomam o lugar da tabela, com o edital e a etapa no
@@ -532,18 +542,35 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
       <TopoDoPainel
         tour="editais-topo"
         status={textoDoStatus(nucleo, carregado)}
-        aoAtualizar={() =>
+        aoAtualizar={() => {
+          setVersaoDosEncerrados((n) => n + 1);
           void estado
             .carregarResumo({ force: true })
             .catch(() => {})
-            .then(() => estado.carregarAprovados())
-        }
+            .then(() => estado.carregarAprovados());
+        }}
         idDaAtualizacao="nucleoOperationalRefresh"
         atualizarDesativado={nucleo.atualizandoResumo}
       >
         <Suspense fallback={null}>
           <SeloDeAvisos modulo="editais" />
         </Suspense>
+        {podeEditar ? (
+          <Suspense fallback={null}>
+            <EncerradosDoCronograma
+              versao={versaoDosEncerrados}
+              toast={estado.toast}
+              aoConcluir={() => {
+                // O status mudou: o resumo, o Cronograma e as linhas da tabela releem.
+                document.dispatchEvent(
+                  new CustomEvent(EVENTO_CRONOGRAMA_SALVO),
+                );
+                void window.refreshData?.();
+                void estado.carregarResumo({ force: true }).catch(() => {});
+              }}
+            />
+          </Suspense>
+        ) : null}
         {podeEditar ? (
           <button
             id="newEditalBtn"

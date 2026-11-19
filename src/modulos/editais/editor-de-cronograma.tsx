@@ -2,7 +2,9 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { RefObject } from "react";
 import {
   STATUS_EXCEPCIONAIS,
+  TITULO_DO_STATUS_NO_HISTORICO,
   aplicarDatasEmLote,
+  ehStatusNoHistorico,
   etapasDoModeloPadrao,
   formatarDataHora,
   novaEtapa,
@@ -384,7 +386,7 @@ function HistoricoDoCronograma({
             >
               <div className="cronograma-history-icon">
                 <i
-                  className={`fa-solid ${item.acao === "errata" ? "fa-file-pen" : "fa-clock-rotate-left"}`}
+                  className={`fa-solid ${item.acao === "errata" ? "fa-file-pen" : ehStatusNoHistorico(item) ? "fa-calendar-check" : "fa-clock-rotate-left"}`}
                   aria-hidden="true"
                 />
               </div>
@@ -393,14 +395,18 @@ function HistoricoDoCronograma({
                   <strong>
                     {item.acao === "errata"
                       ? item.numero_errata || "Errata"
-                      : "Alteração do cronograma"}
+                      : ehStatusNoHistorico(item)
+                        ? TITULO_DO_STATUS_NO_HISTORICO
+                        : "Alteração do cronograma"}
                   </strong>
                   <span>{formatarDataHora(item.created_at)}</span>
                 </div>
                 <p>{item.motivo || "Sem motivo informado"}</p>
                 <small>
-                  {item.created_by_email || "Usuário autenticado"} ·{" "}
-                  {Number(item.total_alteracoes || 0)} alteração(ões)
+                  {item.created_by_email || "Usuário autenticado"}
+                  {ehStatusNoHistorico(item)
+                    ? null
+                    : ` · ${Number(item.total_alteracoes || 0)} alteração(ões)`}
                 </small>
               </div>
             </article>

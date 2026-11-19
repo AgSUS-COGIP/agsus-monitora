@@ -269,6 +269,27 @@ import {
   historicoDoCronograma,
   quadroDaPagina,
 } from "../src/lib/pagina-do-edital/pagina-do-edital.ts";
+import {
+  E as ENCERRADOS,
+  USUARIO as USUARIO_DOS_ENCERRADOS,
+  bancoMigrado as bancoDosEncerradosMigrado,
+  concluir as concluirEncerrados,
+  entrar as entrarNosEncerrados,
+  erroDe as erroDosEncerrados,
+  listar as listarEncerrados,
+  migration as migrationDosEncerrados,
+} from "./apoio/banco-dos-encerrados.ts";
+import {
+  dataDoFim,
+  erroDoMotivoDoLote,
+  escolhidosDaLista,
+  lerListaDosEncerrados,
+  lerResultadoDoLote,
+  rotuloDaEntrada as rotuloDaEntradaDosEncerrados,
+  rotuloDoEdital,
+  semOsQueSairam,
+  textoDoResultado,
+} from "../src/lib/editais/encerrados-do-cronograma.ts";
 
 bloco("admissao-e-ciclo-na-visao-geral", () => {
   /*
@@ -1963,6 +1984,205 @@ bloco("componentes/resumo-do-nucleo", () => {
   });
 });
 
+/*
+  Confirmação em lote dos editais com cronograma encerrado (20261119120000): a lista da tela de
+  Editais tem o recorte da conferência EDITAL_CRONOGRAMA_ENCERRADO; concluir grava "Concluído" só
+  onde o estado calculado é Concluído e o gravado é outro, recusa os demais com o motivo e registra
+  no histórico do cronograma.
+*/
+bloco("concluir-encerrados-no-banco", () => {
+  const C = ENCERRADOS;
+  const MOTIVO = "Conferido com a equipe em 19/11";
+  const ids = (lista: { id: string }[]) => lista.map((e) => e.id).sort();
+
+  it("a migration (aplicada) deixa a CHECK da ação com nome MAD e roda de novo sem erro", async () => {
+    const db = await bancoDosEncerradosMigrado();
+    await db.exec(migrationDosEncerrados());
+    const r = await db.query<{ conname: string; def: string }>(
+      `select conname, pg_get_constraintdef(oid) as def from pg_constraint
+        where conrelid = 'public."TH_CRONOGRAMA_MONIT_INDIG"'::regclass and contype = 'c'`,
+    );
+    expect(r.rows).toEqual([
+      {
+        conname: "CK_HISTCRONOGRAMA_ACAO",
+        def: "CHECK ((acao = ANY (ARRAY['salvar'::text, 'errata'::text, 'status'::text])))",
+      },
+    ]);
+  });
+
+  it("a lista tem só o recorte da conferência, com o aviso e as outras pendências abertas", async () => {
+    const db = await bancoDosEncerradosMigrado();
+    await entrarNosEncerrados(db, { gestor: true });
+    const lista = await listarEncerrados(db);
+    expect(lista.pode_concluir).toBe(true);
+    expect(ids(lista.editais)).toEqual([C.encerrado, C.comAviso].sort());
+    const comAviso = lista.editais.find((e) => e.id === C.comAviso);
+    expect(comAviso).toMatchObject({
+      numero: "42/2099",
+      status: "Em andamento",
+      etapa: "Resultado final do Processo Seletivo",
+      fim: "2020-03-31",
+      aviso: { tratamento: "PENDENTE", pode_dispensar: true },
+    });
+    // A pendência dispensada fica de fora; o próprio aviso do cronograma também.
+    expect(comAviso?.pendencias).toEqual([
+      {
+        conferencia: "APROVADOS_SEM_STATUS",
+        gravidade: "CRITICA",
+        quantidade: 3,
+        tratamento: "EM_ANALISE",
+      },
+    ]);
+    expect(lista.editais.find((e) => e.id === C.encerrado)?.aviso).toBeNull();
+  });
+
+  it("quem só lê vê a lista sem poder concluir e não conclui", async () => {
+    const db = await bancoDosEncerradosMigrado();
+    await entrarNosEncerrados(db, { nivel: 1 });
+    const lista = await listarEncerrados(db);
+    expect(lista.pode_concluir).toBe(false);
+    expect(
+      lista.editais.find((e) => e.id === C.comAviso)?.aviso?.pode_dispensar,
+    ).toBe(false);
+    const erro = await erroDosEncerrados(
+      concluirEncerrados(db, [C.encerrado], MOTIVO),
+    );
+    expect(erro.code).toBe("42501");
+    await entrarNosEncerrados(db, { nivel: 0 });
+    expect((await erroDosEncerrados(listarEncerrados(db))).code).toBe("42501");
+  });
+
+  it("o edital de fora da área some da lista e é recusado como não encontrado", async () => {
+    const db = await bancoDosEncerradosMigrado();
+    await entrarNosEncerrados(db, { esconder: C.encerrado });
+    expect(ids((await listarEncerrados(db)).editais)).toEqual([C.comAviso]);
+    const r = await concluirEncerrados(db, [C.encerrado], MOTIVO);
+    expect(r.concluidos).toEqual([]);
+    expect(r.recusados).toEqual([
+      { id: C.encerrado, edital: null, motivo: "Edital não encontrado" },
+    ]);
+  });
+
+  it("concluir marca os que passam, recusa os demais com o motivo e não para o lote", async () => {
+    const db = await bancoDosEncerradosMigrado();
+    await entrarNosEncerrados(db);
+    const desconhecido = "aaaaaaaa-0000-4000-8000-0000000000ff";
+    const r = await concluirEncerrados(
+      db,
+      [
+        C.encerrado,
+        C.comAviso,
+        C.dispensado,
+        C.emAndamento,
+        C.concluido,
+        C.cancelado,
+        C.suspenso,
+        C.manual,
+        C.semEtapas,
+        desconhecido,
+        C.encerrado,
+      ],
+      `  ${MOTIVO}  `,
+    );
+    expect(ids(r.concluidos)).toEqual(
+      [C.encerrado, C.comAviso, C.dispensado].sort(),
+    );
+    expect(
+      r.concluidos.every((c) => c.status_anterior === "Em andamento"),
+    ).toBe(true);
+    const motivos = Object.fromEntries(
+      r.recusados.map((x) => [x.id, x.motivo]),
+    );
+    expect(motivos).toEqual({
+      [C.emAndamento]:
+        'Pelo cronograma, o edital está "Em andamento", não concluído',
+      [C.concluido]: "O status já é Concluído",
+      [C.cancelado]: 'O status gravado é "Cancelado": decida no próprio edital',
+      [C.suspenso]: 'Pelo cronograma, o edital está "Suspenso", não concluído',
+      [C.manual]:
+        'Pelo cronograma, o edital está "Em andamento", não concluído',
+      [C.semEtapas]: "Edital sem cronograma",
+      [desconhecido]: "Edital não encontrado",
+    });
+
+    // O status e a etapa que o salvar do edital gravaria; quem e quando.
+    const linha = await db.query<Record<string, unknown>>(
+      `select status, etapa, updated_by from public."TB_MONITORAMENTO_INDIGENA" where id = $1`,
+      [C.encerrado],
+    );
+    expect(linha.rows[0]).toEqual({
+      status: "Concluído",
+      etapa: "Resultado final do Processo Seletivo",
+      updated_by: USUARIO_DOS_ENCERRADOS,
+    });
+
+    // O histórico do cronograma: um registro 'status' por edital, com o motivo e quem fez.
+    const historico = await db.query<Record<string, unknown>>(
+      `select monitoramento_id, motivo, created_by, created_by_email, total_alteracoes, alteracoes,
+              cronograma_antes = cronograma_depois as mesmo_cronograma
+         from public."TH_CRONOGRAMA_MONIT_INDIG" where acao = 'status' order by monitoramento_id`,
+    );
+    expect(historico.rows).toHaveLength(3);
+    expect(historico.rows[0]).toEqual({
+      monitoramento_id: C.encerrado,
+      motivo: MOTIVO,
+      created_by: USUARIO_DOS_ENCERRADOS,
+      created_by_email: "equipe@teste",
+      total_alteracoes: 1,
+      alteracoes: [
+        {
+          tipo: "status",
+          campo: "status",
+          antes: "Em andamento",
+          depois: "Concluído",
+        },
+      ],
+      mesmo_cronograma: true,
+    });
+
+    // Concluídos saem da lista; concluir de novo é recusado.
+    expect((await listarEncerrados(db)).editais).toEqual([]);
+    const outraVez = await concluirEncerrados(db, [C.encerrado], MOTIVO);
+    expect(outraVez.recusados[0]?.motivo).toBe("O status já é Concluído");
+  });
+
+  it("o motivo e a lista de editais são conferidos antes de gravar", async () => {
+    const db = await bancoDosEncerradosMigrado();
+    await entrarNosEncerrados(db);
+    for (const [lista, motivo, mensagem] of [
+      [[C.encerrado], "curto", /10 a 500/],
+      [[C.encerrado], "x".repeat(501), /10 a 500/],
+      [[C.encerrado], "Conferido com fulano@teste.gov", /CPF nem e-mail/],
+      [[C.encerrado], "Conferido no 12345678901 hoje", /CPF nem e-mail/],
+      [[], MOTIVO, /ao menos um edital/],
+      [
+        Array.from(
+          { length: 201 },
+          (_, i) => `aaaaaaaa-0000-4000-8000-${String(i).padStart(12, "0")}`,
+        ),
+        MOTIVO,
+        /Até 200/,
+      ],
+    ] as [string[], string, RegExp][]) {
+      const erro = await erroDosEncerrados(
+        concluirEncerrados(db, lista, motivo),
+      );
+      expect(erro.code).toBe("22023");
+      expect(erro.message).toMatch(mensagem);
+    }
+    await db.exec(`select set_config('teste.uid', '', false)`);
+    expect(
+      (await erroDosEncerrados(concluirEncerrados(db, [C.encerrado], MOTIVO)))
+        .code,
+    ).toBe("42501");
+    const status = await db.query<{ status: string }>(
+      `select status from public."TB_MONITORAMENTO_INDIGENA" where id = $1`,
+      [C.encerrado],
+    );
+    expect(status.rows[0]?.status).toBe("Em andamento");
+  });
+});
+
 bloco("copias-no-aparelho", () => {
   /*
   As cópias de payload no aparelho levam nomes e notas de candidatos: valem
@@ -3389,6 +3609,159 @@ bloco("lib/carga-continua", () => {
       expect(recorte.grupos).toEqual(grupos);
       expect(recorte.mostrados).toBe(recorte.total);
     });
+  });
+});
+
+bloco("lib/encerrados-do-cronograma", () => {
+  it("lê a lista sem confiar na forma e descarta o que não tem id", () => {
+    const lida = lerListaDosEncerrados({
+      pode_concluir: true,
+      editais: [
+        {
+          id: "e1",
+          edital: "06/2099 (sanitarista)",
+          numero: "6/2099",
+          unidade: "DSEI Fictício",
+          area: "saude-indigena",
+          status: "Em andamento",
+          fim: "2026-03-31",
+          aviso: { id: "a1", tratamento: "EM_ANALISE", pode_dispensar: true },
+          pendencias: [
+            {
+              conferencia: "CARGA_VARIACAO_BRUSCA",
+              gravidade: "CRITICA",
+              quantidade: 2,
+            },
+            { conferencia: "" },
+          ],
+        },
+        { id: "", edital: "sem id" },
+        null,
+        { id: "e2", edital: "7/2099", aviso: null, pendencias: "x" },
+      ],
+    });
+    expect(lida.podeConcluir).toBe(true);
+    expect(lida.editais).toEqual([
+      {
+        id: "e1",
+        edital: "06/2099 (sanitarista)",
+        numero: "6/2099",
+        unidade: "DSEI Fictício",
+        area: "saude-indigena",
+        status: "Em andamento",
+        fim: "2026-03-31",
+        aviso: { id: "a1", tratamento: "EM_ANALISE", podeDispensar: true },
+        pendencias: [
+          {
+            conferencia: "CARGA_VARIACAO_BRUSCA",
+            gravidade: "CRITICA",
+            quantidade: 2,
+          },
+        ],
+      },
+      {
+        id: "e2",
+        edital: "7/2099",
+        numero: "7/2099",
+        unidade: "",
+        area: "",
+        status: "",
+        fim: "",
+        aviso: null,
+        pendencias: [],
+      },
+    ]);
+    expect(lerListaDosEncerrados(null)).toEqual({
+      podeConcluir: false,
+      editais: [],
+    });
+  });
+
+  it("lê o resultado do lote e diz o que foi feito", () => {
+    const resultado = lerResultadoDoLote({
+      concluidos: [{ id: "e1", edital: "1/2099" }, { id: "e2" }, {}],
+      recusados: [
+        { id: "e3", edital: "3/2099", motivo: "O status já é Concluído" },
+        { id: "e4" },
+      ],
+    });
+    expect(resultado).toEqual({
+      concluidos: [
+        { id: "e1", edital: "1/2099" },
+        { id: "e2", edital: "" },
+      ],
+      recusados: [
+        { id: "e3", edital: "3/2099", motivo: "O status já é Concluído" },
+        { id: "e4", edital: "", motivo: "Recusado" },
+      ],
+    });
+    expect(textoDoResultado(resultado)).toBe(
+      "2 editais marcados como concluídos · 2 recusados",
+    );
+    expect(
+      textoDoResultado({
+        concluidos: [{ id: "e1", edital: "" }],
+        recusados: [],
+      }),
+    ).toBe("1 edital marcado como concluído");
+  });
+
+  it("o motivo segue a regra do banco: 10 a 500 caracteres, sem CPF nem e-mail", () => {
+    expect(erroDoMotivoDoLote("  curto   ")).toMatch(/pelo menos 10/);
+    expect(erroDoMotivoDoLote("x".repeat(501))).toMatch(/passa de 500/);
+    expect(erroDoMotivoDoLote("falei com pessoa@teste.gov")).toMatch(
+      /CPF nem e-mail/,
+    );
+    expect(erroDoMotivoDoLote("CPF 123.456.789-09 conferido")).toMatch(/CPF/);
+    expect(erroDoMotivoDoLote("Conferido com a equipe em 19/11")).toBe("");
+  });
+
+  it("textos da entrada e da linha", () => {
+    expect(rotuloDaEntradaDosEncerrados(1234)).toBe(
+      "Cronograma encerrado (1.234)",
+    );
+    expect(dataDoFim("2026-03-31")).toBe("31/03/2026");
+    expect(dataDoFim("")).toBe("");
+    expect(rotuloDoEdital({ numero: "6/2099", unidade: "DSEI Fictício" })).toBe(
+      "Edital 6/2099 · DSEI Fictício",
+    );
+  });
+
+  it("tira da lista e da seleção os que saíram", () => {
+    const e = (id: string) =>
+      lerListaDosEncerrados({ editais: [{ id }] }).editais[0]!;
+    const { editais, marcados } = semOsQueSairam(
+      [e("a"), e("b"), e("c")],
+      new Set(["a", "b"]),
+      ["a"],
+    );
+    expect(editais.map((x) => x.id)).toEqual(["b", "c"]);
+    expect([...marcados]).toEqual(["b"]);
+    expect(
+      escolhidosDaLista([e("a"), e("b"), e("c")], new Set(["c", "a"])).map(
+        (x) => x.id,
+      ),
+    ).toEqual(["a", "c"]);
+  });
+
+  it("o histórico do cronograma reconhece o status marcado em lote", () => {
+    const registros = historicoDoCronograma([
+      {
+        acao: "status",
+        motivo: "Conferido com a equipe",
+        created_at: "2026-11-19T12:00:00Z",
+        created_by_email: "equipe@teste",
+        total_alteracoes: 1,
+      },
+    ]);
+    expect(registros[0]).toMatchObject({
+      tipo: "status",
+      titulo: "Status marcado como Concluído",
+      alteracoes: 0,
+    });
+    expect(retificacoesDoHistorico([{ acao: "status" }]).retificacoes).toEqual(
+      [],
+    );
   });
 });
 
