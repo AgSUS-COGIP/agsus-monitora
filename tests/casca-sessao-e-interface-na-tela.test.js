@@ -5117,6 +5117,69 @@ bloco("modulos/agenda-das-entrevistas", () => {
       ).toContain("Versão 1");
     });
 
+    it("agenda de mais de um mês: um mês por vez, com o navegador de mês", async () => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date("2026-11-19T12:00:00Z"));
+      try {
+        const supabase = supabaseFalso(
+          agendaDoBanco({
+            regra: regraSalva(),
+            itens: [
+              item(1, "08:00", "08:30"),
+              { ...item(2, "08:00", "08:30"), data: "2026-12-01" },
+            ],
+          }),
+        );
+        await montar(supabase);
+        await abrirAgenda();
+        const navegador = secao.querySelector(
+          "[data-tour='classificacao-agenda-meses']",
+        );
+        const acao = (nome) => navegador.querySelector(`[data-acao='${nome}']`);
+        // Hoje (novembro) está entre outubro e dezembro: abre em novembro, vazio.
+        expect(navegador.querySelector("h4").textContent).toBe("Novembro 2026");
+        expect(acao("mes-atual").disabled).toBe(true);
+        expect(linhas().map((l) => l[2])).toEqual(["Caio Terceiro"]);
+        await clicar(acao("mes-anterior"));
+        expect(navegador.querySelector("h4").textContent).toBe("Outubro 2026");
+        expect(acao("mes-anterior").disabled).toBe(true);
+        // Quem está sem horário aparece em todos os meses.
+        expect(linhas().map((l) => l[2])).toEqual([
+          "Ana Primeira",
+          "Caio Terceiro",
+        ]);
+        await clicar(acao("mes-atual"));
+        await clicar(acao("mes-seguinte"));
+        expect(navegador.querySelector("h4").textContent).toBe("Dezembro 2026");
+        expect(acao("mes-seguinte").disabled).toBe(true);
+        expect(linhas().map((l) => l[2])).toEqual([
+          "Bia Segunda",
+          "Caio Terceiro",
+        ]);
+        // Os indicadores contam a agenda inteira.
+        expect(
+          secao.querySelector("[data-kpi='agenda-dias'] .ui-kpi-valor")
+            .textContent,
+        ).toBe("2");
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("agenda de um mês só: sem navegador de mês", async () => {
+      const supabase = supabaseFalso(
+        agendaDoBanco({
+          regra: regraSalva(),
+          itens: [item(1, "08:00", "08:30"), item(2, "08:30", "09:00")],
+        }),
+      );
+      await montar(supabase);
+      await abrirAgenda();
+      expect(
+        secao.querySelector("[data-tour='classificacao-agenda-meses']"),
+      ).toBeNull();
+    });
+
     it("regra inválida não salva e mostra o erro", async () => {
       const supabase = supabaseFalso();
       await montar(supabase);

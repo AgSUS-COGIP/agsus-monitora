@@ -56,6 +56,7 @@ import {
   Campo,
   classes,
   ErroAoCarregar,
+  NavegadorDeMes,
   PainelDeFiltros,
   Segmentado,
   TopoDoPainel,
@@ -460,42 +461,26 @@ export function CalendarioEditais({
 
       <section className="ui-card cal-card" aria-labelledby="calMesTitulo">
         <div className="cal-barra" data-tour="cronograma-barra-do-mes">
-          <span className="cal-nav">
-            <button
-              id="calMesAnterior"
-              data-tour="cronograma-mes-anterior"
-              className="btn secondary small"
-              type="button"
-              aria-label={passoAnterior}
-              title={passoAnterior}
-              onClick={() => moverMes(-1)}
-            >
-              <i className="fa-solid fa-chevron-left" aria-hidden="true" />
-            </button>
-            <button
-              id="calMesSeguinte"
-              data-tour="cronograma-mes-seguinte"
-              className="btn secondary small"
-              type="button"
-              aria-label={passoSeguinte}
-              title={passoSeguinte}
-              onClick={() => moverMes(1)}
-            >
-              <i className="fa-solid fa-chevron-right" aria-hidden="true" />
-            </button>
-          </span>
-          <h2 id="calMesTitulo" className="ui-titulo" aria-live="polite">
-            {naSemana ? rotuloDaSemana(semana) : rotuloDoMes(mes)}
-          </h2>
-          <button
-            id="calHoje"
-            data-tour="cronograma-hoje"
-            className="btn secondary small"
-            type="button"
-            onClick={irParaHoje}
-          >
-            Hoje
-          </button>
+          <NavegadorDeMes
+            titulo={naSemana ? rotuloDaSemana(semana) : rotuloDoMes(mes)}
+            aoAnterior={() => moverMes(-1)}
+            aoSeguinte={() => moverMes(1)}
+            aoAtual={irParaHoje}
+            rotuloAnterior={passoAnterior}
+            rotuloSeguinte={passoSeguinte}
+            rotuloAtual="Hoje"
+            ids={{
+              anterior: "calMesAnterior",
+              seguinte: "calMesSeguinte",
+              titulo: "calMesTitulo",
+              atual: "calHoje",
+            }}
+            tours={{
+              anterior: "cronograma-mes-anterior",
+              seguinte: "cronograma-mes-seguinte",
+              atual: "cronograma-hoje",
+            }}
+          />
           <span id="calContador" className="cal-contador">
             {/* Carregando não é zero (Design System, 12.2). */}
             {primeiraCarga ? (

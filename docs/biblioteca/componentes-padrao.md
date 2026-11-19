@@ -40,6 +40,11 @@ API completa (uma linha por componente) está em [docs/arquitetura-react.md](../
 | Telas da seleção | `CabecalhoDaTela`, `BarraDaLista`, `FaixaDeSituacao`, `CardDaLista`                                                                                                                                               |
 | Utilitários      | `usarEstadoDaSessao` (filtros voltam no F5), `classes(...)`                                                                                                                                                       |
 
+Navegador de mês: `NavegadorDeMes` — ‹ anterior, › próximo (só ícone, com `aria-label` e
+`title`), o mês à vista (`aria-live`) e o botão do atual; quem usa guarda o mês. No Cronograma
+(mês e semana, com "Hoje") e na agenda dos convocados da Classificação, quando ela passa de um mês
+(`src/lib/entrevistas/meses-da-agenda.ts`).
+
 Prazos: `SeloDePrazo` diz quanto falta para uma data ("Vence em 12 dias", "Venceu há 3 dias") com
 o tom da faixa (vencido, menos de 30, 90 ou 180 dias); a lógica é `src/lib/base/prazos.ts`.
 
