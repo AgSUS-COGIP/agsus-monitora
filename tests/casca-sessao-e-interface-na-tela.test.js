@@ -8805,6 +8805,7 @@ bloco("modulos/mapa-saude-indigena", () => {
       expect(indicadores()).toMatchObject({
         "Editais acompanhados": "2",
         "Vagas acompanhadas": "50",
+        Contratadas: "19",
       });
       // 19 de 50 contratadas: 38%.
       expect(barra()).toContain("38%");
@@ -8819,6 +8820,7 @@ bloco("modulos/mapa-saude-indigena", () => {
         "Municípios",
         "Editais",
         "Vagas",
+        "Contratadas",
       ]);
       expect(barra()).toContain("90%");
       expect(barra()).toContain("1 ociosa");
