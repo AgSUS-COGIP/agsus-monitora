@@ -5564,6 +5564,30 @@ bloco("app/sessao", () => {
       expect(sistema.aoSair).toHaveBeenCalledTimes(1);
     });
 
+    it("sair volta ao endereço inicial", async () => {
+      const { sessao, janela } = await conectado({
+        janela: janelaFalsa({ caminho: "/saude-indigena/visao-geral" }),
+      });
+      janela.history.replaceState.mockClear();
+      await sessao.sair();
+      expect(janela.history.replaceState).toHaveBeenCalledWith(
+        {},
+        "MONITORA",
+        "/",
+      );
+    });
+
+    it("sessão expirada guarda o endereço (a navegação o reabre ao entrar)", async () => {
+      const expirada = await conectado({
+        janela: janelaFalsa({ caminho: "/saude-indigena/mapa" }),
+      });
+      expirada.janela.history.replaceState.mockClear();
+      declararSaida(SAIDA_EXPIRADA);
+      expirada.cliente.emitir("SIGNED_OUT", null);
+      expect(expirada.sessao.obter().fase).toBe(FASES.DESLOGADO);
+      expect(expirada.janela.history.replaceState).not.toHaveBeenCalled();
+    });
+
     it("sair continua mesmo se a auditoria falhar", async () => {
       vi.spyOn(console, "warn").mockImplementation(() => {});
       const { sessao } = await conectado({

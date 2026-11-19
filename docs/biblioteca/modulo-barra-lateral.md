@@ -91,6 +91,9 @@ demanda: só as páginas de `src/lib/navegacao/telas-com-linhas.ts` (via `src/ap
 - A área usa `CO_AREA` e mantém a regra de Saúde Indígena para cache antigo sem a coluna. Sair limpa
   linhas e estado de carga, mantendo a área da aba; a área é corrigida quando chegam as permissões
   do próximo perfil.
+- O Sair confirmado volta o endereço para `/` (`sessao.ts`): quem entrar depois no mesmo navegador
+  não começa na última página de quem saiu. A sessão expirada e o link aberto sem login guardam o
+  endereço, que abre depois de entrar.
 
 ## Testes
 
