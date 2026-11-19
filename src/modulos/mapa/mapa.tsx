@@ -164,6 +164,11 @@ export function TelaDoMapa({
           mudar({ dsei: dseiNoEndereco(escolhido.k) })
         }
         aoSairDoDsei={() => mudar({ dsei: "" })}
+        aoAbrirNaVisaoGeral={(unidades) => {
+          // O DSEI na Visão geral é o filtro Unidade (as unidades dele).
+          estado.definirFiltro("unidade", unidades);
+          irPara("dashboard");
+        }}
         aoFiltrarPorBusca={(busca) => {
           // A CASAI nacional: os editais dela, na tabela da Visão geral.
           estado.definirBusca(busca);
