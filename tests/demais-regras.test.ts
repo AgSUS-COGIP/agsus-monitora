@@ -18,6 +18,21 @@ import {
   terrasDistintas,
   territorioPorDsei,
 } from "../src/lib/mapas/mapa-saude-indigena/territorio-do-sigepsi.ts";
+import {
+  FILTRO_DE_ACESSO_VAZIO,
+  cruzarComOciosas,
+  filtrarUnidades,
+  porDseiDoMapa,
+  respostaDoTerritorio,
+  situacaoDaFonte,
+  tabelaDasUnidades,
+  territorioPorChaveDoMapa,
+  unidadesComAcesso,
+} from "../src/lib/mapas/mapa-saude-indigena/territorio-na-tela.ts";
+import type {
+  AcessoDaUnidade,
+  EstabelecimentoDoCnes,
+} from "../src/lib/mapas/mapa-saude-indigena/territorio-do-sigepsi.ts";
 import { lembrarBanco } from "./apoio/bancos-abertos.ts";
 import {
   afterEach,
@@ -4520,6 +4535,257 @@ bloco("lib/territorio-do-sigepsi", () => {
       await chamar({ authorization: "Bearer sessao" });
       // 2 sessões + 3 rotas.
       expect(fetchFalso).toHaveBeenCalledTimes(5);
+    });
+  });
+});
+
+bloco("lib/territorio-na-tela", () => {
+  /*
+    O território, o acesso e o CNES junto do que o mapa desenha
+    (src/lib/mapas/mapa-saude-indigena/territorio-na-tela.ts) e o pedido do
+    navegador (src/modulos/mapa-saude-indigena/territorio.ts). Dados fictícios.
+  */
+  const DSEI: DseiDoMapa = {
+    k: "ALAGOAS SERGIPE",
+    n: "Alagoas e Sergipe",
+    lat: -9.6,
+    lon: -35.7,
+    ufs: ["AL", "SE"],
+    polos: [
+      { n: "POLO BASE XITEI", lat: -9.9, lon: -36, uf: "AL", cod: "5" },
+      { n: "UBSI BANANAL", lat: -10.1, lon: -36.4, uf: "AL", tipo: "unidade" },
+      { n: "UBSI SEM ACESSO", lat: -10.2, lon: -36.5, uf: "AL" },
+    ],
+  };
+  const acesso = (
+    id: string,
+    nome: string,
+    meios: string[],
+    floresta: "Sim" | "Não",
+  ): AcessoDaUnidade => ({
+    id,
+    dsei: "ALAGOAS SERGIPE",
+    nome,
+    tipo: "",
+    municipio: "",
+    lat: null,
+    lon: null,
+    meios,
+    acessibilidade: "Remoto",
+    localidade: "Rural",
+    floresta,
+  });
+  const ACESSO = [
+    acesso("5", "OUTRO NOME DO POLO", ["Terrestre", "Fluvial"], "Sim"),
+    acesso("", "UBSI BANANAL", ["Aéreo"], "Não"),
+  ];
+  const CNES: EstabelecimentoDoCnes[] = [
+    {
+      dsei: "ALAGOAS SERGIPE",
+      nome: "Polo Base Indígena Xitei",
+      cnes: "1234567",
+      uf: "AL",
+      municipio: "",
+      lat: null,
+      lon: null,
+    },
+  ];
+  const registros = classificarRegistros(registrosDoDsei(DSEI), DSEI);
+
+  it("a resposta da função: fonte que não é `{ ok }` vira indisponível", () => {
+    const r = respostaDoTerritorio({
+      territorio: {
+        ok: false,
+        status: 403,
+        motivo: "a chave do Yeendé não lê esta rota",
+      },
+      acesso: { ok: true, dados: ACESSO, linhas: 2, campos: ["id"] },
+      cnes: "lixo",
+    });
+    expect(situacaoDaFonte(r, "territorio")).toEqual({
+      tipo: "indisponivel",
+      motivo: "a chave do Yeendé não lê esta rota",
+    });
+    expect(situacaoDaFonte(r, "acesso")).toEqual({
+      tipo: "pronta",
+      dados: ACESSO,
+    });
+    expect(situacaoDaFonte(r, "cnes").tipo).toBe("indisponivel");
+    expect(situacaoDaFonte(null, "cnes")).toEqual({ tipo: "carregando" });
+    expect(situacaoDaFonte(null, "cnes", { falhou: true }).tipo).toBe(
+      "indisponivel",
+    );
+  });
+
+  it("o território casa com a chave do mapa", () => {
+    const t = territorioPorChaveDoMapa(
+      {
+        "KAYAPO PARA": {
+          nome: "DSEI KAYAPO DO PARA",
+          populacao: 5,
+          aldeias: 2,
+          terras: 1,
+          listaDeTerras: [],
+        },
+      },
+      ["KAIAPO PARA", "YANOMAMI"],
+    );
+    expect(t.get("KAIAPO PARA")?.populacao).toBe(5);
+    expect(t.has("YANOMAMI")).toBe(false);
+  });
+
+  it("cada unidade do mapa ganha acesso (pelo código ou nome) e CNES (pelo nome)", () => {
+    const [polo, bananal, sem] = unidadesComAcesso({
+      registros,
+      acesso: ACESSO,
+      cnes: CNES,
+    });
+    expect(polo).toMatchObject({
+      nome: "POLO BASE XITEI",
+      meios: ["Terrestre", "Fluvial"],
+      floresta: "Sim",
+      cnes: "1234567",
+    });
+    expect(bananal).toMatchObject({
+      meios: ["Aéreo"],
+      floresta: "Não",
+      cnes: "",
+    });
+    // Fonte pronta sem a unidade: não informado; fonte indisponível: null.
+    expect(sem).toMatchObject({ meios: [], floresta: "Não informado" });
+    const semFontes = unidadesComAcesso({
+      registros,
+      acesso: null,
+      cnes: null,
+    });
+    expect(semFontes[0]).toMatchObject({
+      meios: null,
+      floresta: null,
+      cnes: null,
+    });
+  });
+
+  it("filtra por meio de acesso e floresta e cruza com as ociosas", () => {
+    const unidades = unidadesComAcesso({
+      registros,
+      acesso: ACESSO,
+      cnes: CNES,
+    });
+    expect(
+      filtrarUnidades(unidades, { meio: "Fluvial", floresta: "" }).map(
+        (u) => u.nome,
+      ),
+    ).toEqual(["POLO BASE XITEI"]);
+    expect(
+      filtrarUnidades(unidades, { meio: "Não informado", floresta: "" }).map(
+        (u) => u.nome,
+      ),
+    ).toEqual(["UBSI SEM ACESSO"]);
+    expect(
+      filtrarUnidades(unidades, { meio: "", floresta: "Não" }),
+    ).toHaveLength(1);
+
+    const porDsei = new Map([[DSEI.k, { dsei: DSEI, unidades }]]);
+    const contagens = new Map([
+      [DSEI.k, { editais: 2, vagas: 10, contratadas: 6, ociosas: 3 }],
+    ]);
+    expect(
+      cruzarComOciosas(porDsei, contagens, { meio: "Aéreo", floresta: "" }),
+    ).toEqual([
+      {
+        k: DSEI.k,
+        nome: "Alagoas e Sergipe",
+        unidades: 1,
+        totalDeUnidades: 3,
+        vagas: 10,
+        ociosas: 3,
+      },
+    ]);
+    expect(
+      cruzarComOciosas(porDsei, contagens, { meio: "Aéreo", floresta: "Sim" }),
+    ).toEqual([]);
+  });
+
+  it("acesso e CNES de cada DSEI vão para a chave do mapa", () => {
+    const indice = porDseiDoMapa(
+      [{ ...CNES[0]!, dsei: "KAYAPO PARA" }],
+      ["KAIAPO PARA"],
+    );
+    expect(indice?.get("KAIAPO PARA")).toHaveLength(1);
+    expect(porDseiDoMapa(null, ["KAIAPO PARA"])).toBeNull();
+  });
+
+  it("a tabela exportada leva só as colunas das fontes que vieram", () => {
+    const com = tabelaDasUnidades(
+      "Alagoas e Sergipe",
+      unidadesComAcesso({ registros, acesso: ACESSO, cnes: CNES }),
+      { meio: "Fluvial", floresta: "" },
+    );
+    expect(com.titulo).toBe(
+      "Unidades do DSEI Alagoas e Sergipe — acesso Fluvial",
+    );
+    expect(com.colunas).toContain("Meio de acesso");
+    expect(com.colunas).toContain("CNES");
+    expect(com.linhas[0]).toContain("Terrestre, Fluvial");
+    const sem = tabelaDasUnidades(
+      "Alagoas e Sergipe",
+      unidadesComAcesso({ registros, acesso: null, cnes: null }),
+      FILTRO_DE_ACESSO_VAZIO,
+    );
+    expect(sem.colunas).toEqual(["Unidade", "Tipo", "Município", "UF"]);
+  });
+
+  describe("carregarTerritorio (navegador)", () => {
+    const sessao = {
+      auth: {
+        getSession: async () => ({
+          data: { session: { access_token: "token-da-sessao" } },
+          error: null,
+        }),
+      },
+    };
+    beforeEach(async () => {
+      const { esquecerTerritorio } =
+        await import("../src/modulos/mapa-saude-indigena/territorio.ts");
+      esquecerTerritorio();
+    });
+
+    it("manda o token da sessão, lê cada fonte e guarda", async () => {
+      const { carregarTerritorio } =
+        await import("../src/modulos/mapa-saude-indigena/territorio.ts");
+      const buscar = vi.fn<typeof fetch>(
+        async () =>
+          new Response(
+            JSON.stringify({
+              territorio: { ok: false, status: 401, motivo: "x" },
+              acesso: { ok: true, dados: [], linhas: 0, campos: [] },
+              cnes: { ok: true, dados: [], linhas: 0, campos: [] },
+            }),
+          ),
+      );
+      const r = await carregarTerritorio(sessao, { buscar });
+      expect(r?.territorio.ok).toBe(false);
+      expect(r?.acesso.ok).toBe(true);
+      const [rota, opcoes] = buscar.mock.calls[0] ?? [];
+      expect(rota).toBe("/api/territorio-dos-dseis");
+      expect(new Headers(opcoes?.headers).get("Authorization")).toBe(
+        "Bearer token-da-sessao",
+      );
+      await carregarTerritorio(sessao, { buscar });
+      expect(buscar).toHaveBeenCalledTimes(1);
+    });
+
+    it("falha do pedido devolve null e não fica guardada", async () => {
+      const { carregarTerritorio } =
+        await import("../src/modulos/mapa-saude-indigena/territorio.ts");
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+      const buscar = vi.fn<typeof fetch>(
+        async () => new Response("", { status: 404 }),
+      );
+      expect(await carregarTerritorio(sessao, { buscar })).toBeNull();
+      expect(await carregarTerritorio(sessao, { buscar })).toBeNull();
+      expect(buscar).toHaveBeenCalledTimes(2);
+      vi.restoreAllMocks();
     });
   });
 });

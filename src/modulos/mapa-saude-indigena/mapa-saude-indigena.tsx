@@ -7,7 +7,7 @@ import {
   configuracaoDoMapa,
 } from "../../lib/mapas/mapa-saude-indigena/dados-do-mapa.ts";
 import { leafletDoMapa } from "./tipos-do-leaflet.ts";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { usarTemaEscuro } from "../../app/tema.ts";
 import { chaveDoDsei } from "../../lib/mapas/mapa-saude-indigena/chaves.ts";
 import {
@@ -18,14 +18,35 @@ import {
 } from "../../lib/mapas/mapa-saude-indigena/mapa-nacional.ts";
 import { contarPorDsei } from "../../lib/mapas/mapa-saude-indigena/contagem-por-dsei.ts";
 import {
+  classificarRegistros,
   registrosDoDsei,
   resumoDaRede,
 } from "../../lib/mapas/mapa-saude-indigena/mapa-do-dsei.ts";
+import {
+  FILTRO_DE_ACESSO_VAZIO,
+  chaveDaUnidade,
+  cruzarComOciosas,
+  filtrarUnidades,
+  porDseiDoMapa,
+  situacaoDaFonte,
+  territorioPorChaveDoMapa,
+  textoDosMeios,
+  unidadesComAcesso,
+} from "../../lib/mapas/mapa-saude-indigena/territorio-na-tela.ts";
+import type {
+  FiltroDeAcesso,
+  UnidadeComAcesso,
+} from "../../lib/mapas/mapa-saude-indigena/territorio-na-tela.ts";
 import { classes } from "../../ui/index.ts";
 import { obterLeaflet } from "./leaflet.ts";
 import { MapaDoDsei } from "./mapa-do-dsei.tsx";
 import { MapaNacional } from "./mapa-nacional.tsx";
 import { ProcessosDoDsei } from "./processos-do-dsei.tsx";
+import {
+  AcessoNoBrasil,
+  CartaoDoTerritorio,
+  UnidadesDoDsei,
+} from "./territorio-do-dsei.tsx";
 import { usarTelaCheia } from "./tela-cheia.tsx";
 import { usarEscParaVoltar, usarVoltaDoDsei } from "./volta-ao-brasil.ts";
 
@@ -57,6 +78,7 @@ export function MapaSaudeIndigena({
   aoFiltrarPorBusca,
   aoEscolherUnidade,
   aoAbrirNaVisaoGeral,
+  territorio,
 }: PropsDoMapaSaudeIndigena) {
   const escuroDoApp = usarTemaEscuro();
   const escuro = tema ? tema === "escuro" : escuroDoApp;
@@ -117,6 +139,77 @@ export function MapaSaudeIndigena({
     [nac, contagens, filtroAtivo],
   );
   const territorios = useMemo(() => territoriosPorVagas(bolhas), [bolhas]);
+
+  /*
+    Território, acesso e CNES do SIGEPSI (`territorio`, da função
+    /api/territorio-dos-dseis): cada fonte por si. Sem a prop (nos testes do
+    mapa só), nada disso aparece.
+  */
+  const [filtroDeAcesso, definirFiltroDeAcesso] = useState<FiltroDeAcesso>(
+    FILTRO_DE_ACESSO_VAZIO,
+  );
+  const fontes = useMemo(() => {
+    if (!territorio) return null;
+    const falhou = territorio.estado === "indisponivel";
+    const r = territorio.resposta;
+    return {
+      territorio: situacaoDaFonte(r, "territorio", { falhou }),
+      acesso: situacaoDaFonte(r, "acesso", { falhou }),
+      cnes: situacaoDaFonte(r, "cnes", { falhou }),
+    };
+  }, [territorio]);
+  const doTerritorio = useMemo(() => {
+    if (!fontes) return null;
+    const chaves = dseis.map((d) => d.k);
+    const { acesso: a, cnes: c, territorio: t } = fontes;
+    const acesso = porDseiDoMapa(a.tipo === "pronta" ? a.dados : null, chaves);
+    const cnes = porDseiDoMapa(c.tipo === "pronta" ? c.dados : null, chaves);
+    const unidades = new Map<
+      string,
+      { dsei: DseiDoMapa; unidades: UnidadeComAcesso[] }
+    >();
+    for (const d of dseis)
+      unidades.set(d.k, {
+        dsei: d,
+        unidades: unidadesComAcesso({
+          registros: classificarRegistros(registrosDoDsei(d), d),
+          acesso: acesso ? (acesso.get(d.k) ?? []) : null,
+          cnes: cnes ? (cnes.get(d.k) ?? []) : null,
+        }),
+      });
+    return {
+      territorio:
+        t.tipo === "pronta" ? territorioPorChaveDoMapa(t.dados, chaves) : null,
+      unidades,
+    };
+  }, [fontes, dseis]);
+  const comAcesso = fontes?.acesso.tipo === "pronta";
+  const cruzamento = useMemo(
+    () =>
+      doTerritorio && comAcesso
+        ? cruzarComOciosas(doTerritorio.unidades, contagens, filtroDeAcesso)
+        : [],
+    [doTerritorio, comAcesso, contagens, filtroDeAcesso],
+  );
+  const unidadesDoDsei = useMemo(
+    () => (dsei ? doTerritorio?.unidades.get(dsei.k)?.unidades || [] : []),
+    [doTerritorio, dsei],
+  );
+  const detalhesDasUnidades = useMemo(
+    () =>
+      new Map(
+        unidadesDoDsei.map((u) => [
+          u.chave,
+          [
+            u.meios?.length ? textoDosMeios(u.meios) : "",
+            u.cnes ? `CNES ${u.cnes}` : "",
+          ]
+            .filter(Boolean)
+            .join(" · "),
+        ]),
+      ),
+    [unidadesDoDsei],
+  );
   const enquadramento = useMemo(
     () => enquadramentoNacional({ bolhas, casais, filtroAtivo }),
     [bolhas, casais, filtroAtivo],
@@ -210,11 +303,19 @@ export function MapaSaudeIndigena({
         </section>
       ) : null}
       {dsei && !telaCheia ? (
-        <ProcessosDoDsei
-          dsei={dsei}
-          linhas={linhas}
-          aoAbrirNaVisaoGeral={aoAbrirNaVisaoGeral}
-        />
+        <div className="mapa-si-dsei-cartoes">
+          {fontes ? (
+            <CartaoDoTerritorio
+              situacao={fontes.territorio}
+              territorio={doTerritorio?.territorio?.get(dsei.k) ?? null}
+            />
+          ) : null}
+          <ProcessosDoDsei
+            dsei={dsei}
+            linhas={linhas}
+            aoAbrirNaVisaoGeral={aoAbrirNaVisaoGeral}
+          />
+        </div>
       ) : null}
       <MapaNacional
         L={L}
@@ -242,7 +343,36 @@ export function MapaSaudeIndigena({
           aoVoltarAoBrasil={voltarAoBrasil}
           aoEscolherUnidade={aoEscolherUnidade}
           acoes={acoes}
+          detalhesDasUnidades={detalhesDasUnidades}
         />
+      ) : null}
+      {fontes && !telaCheia ? (
+        dsei ? (
+          <UnidadesDoDsei
+            dsei={dsei}
+            unidades={
+              comAcesso
+                ? filtrarUnidades(unidadesDoDsei, filtroDeAcesso)
+                : unidadesDoDsei
+            }
+            todas={unidadesDoDsei.length}
+            acesso={fontes.acesso}
+            cnes={fontes.cnes}
+            filtro={filtroDeAcesso}
+            aoMudarFiltro={definirFiltroDeAcesso}
+          />
+        ) : (
+          <AcessoNoBrasil
+            linhas={cruzamento}
+            acesso={fontes.acesso}
+            filtro={filtroDeAcesso}
+            aoMudarFiltro={definirFiltroDeAcesso}
+            aoEscolher={(k) => {
+              const escolhido = dseis.find((d) => d.k === k);
+              if (escolhido) aoEscolherDsei?.(escolhido);
+            }}
+          />
+        )
       ) : null}
     </div>
   );

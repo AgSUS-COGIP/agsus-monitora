@@ -59,6 +59,7 @@ export function registrosDoDsei(dsei: DseiDoMapa): RegistroDoDsei[] {
       return [
         {
           name: p.n,
+          cod: p.cod === null || p.cod === undefined ? null : String(p.cod),
           cnes: "",
           lat,
           lon,
