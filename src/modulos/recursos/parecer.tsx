@@ -8,7 +8,7 @@ import {
   erroDoTextoDoParecer,
   LIMITES_DO_PARECER,
 } from "../../lib/recursos/parecer-do-recurso.ts";
-import { Aviso, Kv, Secao } from "../../ui/index.ts";
+import { Aviso, Kv, Secao, usarAlteradoNoModal } from "../../ui/index.ts";
 import { dataHora } from "./partes.ts";
 import { SeloDaSituacao } from "./tabela.tsx";
 
@@ -45,6 +45,7 @@ function ConfirmarParecer({
   aoCancelar: () => void;
 }) {
   const [texto, setTexto] = useState("");
+  usarAlteradoNoModal(texto.trim() !== "");
   const erro = erroDoTextoDoParecer(escolhida.acao, texto);
   const rotulo =
     escolhida.acao === "devolver"

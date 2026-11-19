@@ -22,6 +22,7 @@ import {
   Campo,
   classes,
   ErroAoCarregar,
+  FecharModal,
   Modal,
 } from "../../ui/index.ts";
 import { SecaoAparencia } from "./aparencia.tsx";
@@ -305,11 +306,14 @@ function CampoDoMotivo({
 function Dialogo({
   estado,
   titulo,
+  alterado,
   children,
   rodape,
 }: {
   estado: EstadoDasConfiguracoes;
   titulo: string;
+  /** O motivo foi escrito: fechar pergunta antes de descartar. */
+  alterado?: boolean;
   children?: ReactNode;
   rodape: ReactNode;
 }) {
@@ -320,21 +324,19 @@ function Dialogo({
       className="config-publicacao"
       cartaoClassName="config-governance-dialog"
       aoFechar={estado.fecharModal}
-      fecharAoClicarFora={false}
+      alterado={alterado}
     >
       <header>
         <div>
           <h2 id="configGovernanceTitle">{titulo}</h2>
         </div>
-        <button
-          type="button"
+        <FecharModal
           className="btn icon outline"
           aria-label="Fechar"
           title="Fechar"
-          onClick={estado.fecharModal}
         >
           <Icone nome="x" tamanho={16} />
-        </button>
+        </FecharModal>
       </header>
       <div className="config-governance-body">{children}</div>
       <footer className="config-governance-footer">{rodape}</footer>
@@ -342,16 +344,8 @@ function Dialogo({
   );
 }
 
-const BotaoFechar = ({
-  estado,
-  children = "Fechar",
-}: {
-  estado: EstadoDasConfiguracoes;
-  children?: ReactNode;
-}) => (
-  <button type="button" className="btn secondary" onClick={estado.fecharModal}>
-    {children}
-  </button>
+const BotaoFechar = ({ children = "Fechar" }: { children?: ReactNode }) => (
+  <FecharModal className="btn secondary">{children}</FecharModal>
 );
 
 function DialogoDeRevisao({
@@ -372,9 +366,10 @@ function DialogoDeRevisao({
     <Dialogo
       estado={estado}
       titulo="Revisar publicação"
+      alterado={motivo.trim() !== ""}
       rodape={
         <>
-          <BotaoFechar estado={estado}>Cancelar</BotaoFechar>
+          <BotaoFechar>Cancelar</BotaoFechar>
           <button
             type="button"
             className="btn green"
@@ -443,9 +438,10 @@ function DialogoDeRestauracao({
     <Dialogo
       estado={estado}
       titulo="Restaurar versão"
+      alterado={motivo.trim() !== ""}
       rodape={
         <>
-          <BotaoFechar estado={estado}>Cancelar</BotaoFechar>
+          <BotaoFechar>Cancelar</BotaoFechar>
           <button
             type="button"
             className="btn danger"
@@ -504,7 +500,7 @@ function Dialogos({ estado }: ComEstado) {
       <Dialogo
         estado={estado}
         titulo="Corrigir configurações"
-        rodape={<BotaoFechar estado={estado} />}
+        rodape={<BotaoFechar />}
       >
         <Alerta titulo="Não foi possível publicar.">
           <ul>
@@ -520,7 +516,7 @@ function Dialogos({ estado }: ComEstado) {
       <Dialogo
         estado={estado}
         titulo="Nenhuma alteração"
-        rodape={<BotaoFechar estado={estado} />}
+        rodape={<BotaoFechar />}
       >
         <div className="config-governance-empty">
           <Icone nome="circle-check" tamanho={28} />
@@ -529,11 +525,7 @@ function Dialogos({ estado }: ComEstado) {
       </Dialogo>
     );
   return (
-    <Dialogo
-      estado={estado}
-      titulo={modal.titulo}
-      rodape={<BotaoFechar estado={estado} />}
-    >
+    <Dialogo estado={estado} titulo={modal.titulo} rodape={<BotaoFechar />}>
       <Alerta titulo="Nada foi publicado." detalhe={modal.detalhe} />
       <p>As alterações continuam na tela. Tente salvar de novo.</p>
     </Dialogo>

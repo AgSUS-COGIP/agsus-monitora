@@ -70,6 +70,7 @@ import {
   CardDaLista,
   ErroAoCarregar,
   FaixaDeSituacao,
+  FecharModal,
   Gaveta,
   Modal,
   Secao,
@@ -634,6 +635,11 @@ function ModalDeDesempate({
       return nova;
     });
 
+  const alterado =
+    !registro &&
+    (semente.trim() !== "" ||
+      justificativa.trim() !== "" ||
+      ordem.some((c, i) => c !== pendencia.candidatos[i]));
   const podeEnviar = sorteio
     ? origem === "SERVIDOR" || semente.trim().length >= 4
     : justificativa.trim().length >= 10;
@@ -668,6 +674,7 @@ function ModalDeDesempate({
       id="classificacaoDesempate"
       rotuloId="classificacaoDesempateTitulo"
       aoFechar={aoFechar}
+      alterado={alterado}
       cartaoClassName="classificacao-desempate"
       tamanho="medio"
     >
@@ -784,13 +791,7 @@ function ModalDeDesempate({
               </>
             )}
             <div className="ui-acoes">
-              <button
-                type="button"
-                className="btn secondary"
-                onClick={aoFechar}
-              >
-                Cancelar
-              </button>
+              <FecharModal className="btn secondary">Cancelar</FecharModal>
               <button
                 type="submit"
                 className="btn"

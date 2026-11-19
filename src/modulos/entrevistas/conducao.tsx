@@ -36,6 +36,7 @@ import {
   Aviso,
   Campo,
   classes,
+  FecharModal,
   Gaveta,
   MaisDaCarga,
   Selo,
@@ -268,6 +269,7 @@ function ModalDeDesconvocar({
       id="entrevistasDesconvocar"
       tituloId="entrevistasDesconvocarTitulo"
       aoFechar={aoFechar}
+      alterado={motivo.trim() !== ""}
       className="entrevistas-gaveta"
       cartaoClassName="entrevistas-gaveta-estreita"
       sobretitulo="Retirar da entrevista"
@@ -300,9 +302,7 @@ function ModalDeDesconvocar({
           </Campo>
         </div>
         <div className="ui-gaveta-rodape">
-          <button type="button" className="btn secondary" onClick={aoFechar}>
-            Cancelar
-          </button>
+          <FecharModal className="btn secondary">Cancelar</FecharModal>
           <button
             type="submit"
             className="btn danger"

@@ -683,7 +683,6 @@ export function RelatorioDeMotivos({
       tituloId="avdRelatorioMotivosTitulo"
       titulo="Relatório de motivos"
       aoFechar={aoFechar}
-      fecharAoClicarFora={false}
       cartaoClassName="avd-relatorio-motivos"
       tour="avd-relatorio-motivos"
     >

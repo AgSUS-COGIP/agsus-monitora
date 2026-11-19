@@ -40,6 +40,16 @@ API completa (uma linha por componente) está em [docs/arquitetura-react.md](../
 | Telas da seleção | `CabecalhoDaTela`, `BarraDaLista`, `FaixaDeSituacao`, `CardDaLista`                                                                                                                                               |
 | Utilitários      | `usarEstadoDaSessao` (filtros voltam no F5), `classes(...)`                                                                                                                                                       |
 
+Modais e gavetas (`Modal`, `Gaveta`, `ModalInstitucional`): **clicar no fundo escuro não fecha**,
+em nenhum; fecham pelo `Esc` e pelos botões de fechar. Janela com formulário diz se há alteração
+não salva: `alterado` (o estado comparado ao de quando abriu) ou, num filho com formulário próprio,
+`usarAlteradoNoModal(mudou)`. Com alteração, fechar mostra no alto do cartão "Descartar as
+alterações?" — "Continuar editando" (ou `Esc`) volta, "Descartar alterações" fecha (`aoDescartar`,
+se houver; o padrão é `aoFechar`). O Cancelar/Fechar de quem usa é um `<FecharModal>` (ou chama
+`usarFecharModal()`) para passar pela pergunta; o ✕ da gaveta e do modal institucional já passa.
+Salvar fecha direto com `aoFechar`. Janela só de leitura e confirmação sem campo não passam
+`alterado`. Não se abre modal a partir de modal para perguntar, nem `window.confirm`.
+
 Navegador de mês: `NavegadorDeMes` — ‹ anterior, › próximo (só ícone, com `aria-label` e
 `title`), o mês à vista (`aria-live`) e o botão do atual; quem usa guarda o mês. No Cronograma
 (mês e semana, com "Hoje") e na agenda dos convocados da Classificação, quando ela passa de um mês

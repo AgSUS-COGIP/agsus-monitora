@@ -6333,12 +6333,16 @@ bloco("modulos/conduzir-entrevistas", async () => {
         [...editor.querySelectorAll("button")].find(
           (b) => b.textContent.trim() === "Cancelar",
         );
-      const confirmar = vi.spyOn(window, "confirm").mockReturnValue(false);
+      const pergunta = () => document.querySelector(".ui-modal-descarte");
+      const botaoDaPergunta = (texto) =>
+        [...pergunta().querySelectorAll("button")].find(
+          (b) => b.textContent.trim() === texto,
+        );
 
       // Sem mudança: fecha direto.
       let editor = await abrirEditor();
       await clicar(cancelar(editor));
-      expect(confirmar).not.toHaveBeenCalled();
+      expect(pergunta()).toBeNull();
       expect(document.getElementById("entrevistasEditorDeRoteiro")).toBeNull();
 
       editor = await abrirEditor();
@@ -6350,14 +6354,14 @@ bloco("modulos/conduzir-entrevistas", async () => {
       );
       expect(guardaDeAlteracoes.comAlteracoes()).toBe(true);
       await clicar(cancelar(editor));
-      expect(confirmar).toHaveBeenCalledWith(
-        "Fechar o roteiro sem salvar as alterações?",
-      );
+      expect(pergunta()?.textContent).toContain("Descartar as alterações?");
+      await clicar(botaoDaPergunta("Continuar editando"));
+      expect(pergunta()).toBeNull();
       expect(
         document.getElementById("entrevistasEditorDeRoteiro"),
       ).not.toBeNull();
-      confirmar.mockReturnValue(true);
       await clicar(cancelar(editor));
+      await clicar(botaoDaPergunta("Descartar alterações"));
       expect(document.getElementById("entrevistasEditorDeRoteiro")).toBeNull();
       expect(guardaDeAlteracoes.comAlteracoes()).toBe(false);
     });

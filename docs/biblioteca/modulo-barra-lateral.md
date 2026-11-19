@@ -70,7 +70,7 @@ Busca nos editais do monitoramento, filha da raiz React. Pasta `src/componentes/
 
 - Ctrl+K ou Cmd+K abre a busca com sessão conectada (sem botão no topo: a lupa saiu a pedido em
   17/11/2026). Pesquisa os nove campos do monitoramento, em todas as áreas, sem diferenciar maiúsculas e acentos; mantém a ordem da fonte e para em 12.
-- O campo começa vazio; setas e Enter escolhem, Esc e o fundo fecham; o modal mantém e devolve o foco.
+- O campo começa vazio; setas e Enter escolhem, Esc e o botão Esc fecham (o fundo não, como em todo modal); o modal mantém e devolve o foco.
 - A escolha publica `agsus:busca-global-escolhida` com `detail.id`. A navegação em `src/app/` cuida
   das permissões, da área e dos filtros da tela. **A busca não concede acesso** a dado que a carga
   ou a RLS não entregaram.

@@ -1,14 +1,15 @@
 import type { ReactNode } from "react";
 import { classes } from "./classes.ts";
-import { Modal } from "./modal.tsx";
+import { FecharModal, Modal } from "./modal.tsx";
 import "./modal-institucional.css";
 
 /**
  * Estrutura de diálogo do Monitora alinhada à apresentação institucional
  * do AgSUS Comunica: identificação, título, orientação, conteúdo e ações.
  *
- * O Modal existente continua responsável por portal, foco, Esc e retorno
- * de foco. Nenhuma regra de negócio ou de acesso é implementada aqui.
+ * O Modal existente continua responsável por portal, foco, Esc, retorno
+ * de foco e a pergunta de descarte (`alterado`). Nenhuma regra de negócio
+ * ou de acesso é implementada aqui.
  */
 export function ModalInstitucional({
   tituloId,
@@ -17,6 +18,8 @@ export function ModalInstitucional({
   descricao,
   icone = "fa-file-lines",
   aoFechar,
+  alterado,
+  aoDescartar,
   fecharDesabilitado = false,
   amplo = false,
   tour,
@@ -33,6 +36,8 @@ export function ModalInstitucional({
   descricao: string;
   icone?: string;
   aoFechar: () => void;
+  alterado?: boolean;
+  aoDescartar?: () => void;
   fecharDesabilitado?: boolean;
   amplo?: boolean;
   tour?: string;
@@ -47,7 +52,8 @@ export function ModalInstitucional({
     <Modal
       rotuloId={tituloId}
       aoFechar={aoFechar}
-      fecharAoClicarFora={false}
+      alterado={alterado}
+      aoDescartar={aoDescartar}
       tour={tour}
       cartaoClassName={classes(
         "ui-modal-institucional",
@@ -64,16 +70,14 @@ export function ModalInstitucional({
           <h2 id={tituloId}>{titulo}</h2>
           <p>{descricao}</p>
         </div>
-        <button
-          type="button"
+        <FecharModal
           className="ui-modal-institucional-fechar"
           aria-label="Fechar janela"
           title="Fechar"
           disabled={fecharDesabilitado}
-          onClick={aoFechar}
         >
           <i className="fa-solid fa-xmark" aria-hidden="true" />
-        </button>
+        </FecharModal>
       </header>
       {complemento ? (
         <div className="ui-modal-institucional-complemento">{complemento}</div>

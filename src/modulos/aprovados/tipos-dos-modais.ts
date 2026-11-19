@@ -13,7 +13,6 @@ export interface PropsDoCabecalhoDoModal {
   titulo: ReactNode;
   subtitulo?: ReactNode;
   subtituloId?: string;
-  aoFechar: () => void;
 }
 export interface PropsDoCampoDeAnexos {
   jaAnexados: number;

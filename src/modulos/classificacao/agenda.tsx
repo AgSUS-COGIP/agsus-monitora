@@ -83,6 +83,7 @@ import {
   Campo,
   ErroAoCarregar,
   EstadoVazio,
+  FecharModal,
   GradeDeKpis,
   Kpi,
   MaisDaCarga,
@@ -641,6 +642,7 @@ function ModalDeAjuste({
       id="agendaAjuste"
       rotuloId="agendaAjusteTitulo"
       aoFechar={aoFechar}
+      alterado={Boolean(horario || outro)}
       cartaoClassName="agenda-ajuste"
       tamanho="medio"
     >
@@ -693,9 +695,7 @@ function ModalDeAjuste({
           </Campo>
         )}
         <div className="ui-acoes">
-          <button type="button" className="btn secondary" onClick={aoFechar}>
-            Cancelar
-          </button>
+          <FecharModal className="btn secondary">Cancelar</FecharModal>
           <button
             type="submit"
             className="btn"
@@ -734,9 +734,7 @@ function ConfirmarGerar({
         substituídos pela distribuição da regra.
       </p>
       <div className="ui-acoes">
-        <button type="button" className="btn secondary" onClick={aoFechar}>
-          Cancelar
-        </button>
+        <FecharModal className="btn secondary">Cancelar</FecharModal>
         <button
           type="button"
           className="btn"

@@ -93,6 +93,7 @@ import {
   CardDaLista,
   CelulaDaPessoa,
   FaixaDeSituacao,
+  FecharModal,
   Gaveta,
   MenuDeAcoes,
   porcentagemDe,
@@ -396,7 +397,7 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }: AcaoEmLoteProps) {
         NOME_DAS_FICHAS,
       )}
       aoFechar={() => aoFechar(false)}
-      fecharAoClicarFora={false}
+      alterado={Boolean(para || motivo.trim() || codigo || complemento.trim())}
       tour="avd-fila-confirmar"
     >
       <div className="avd-gaveta-corpo">
@@ -498,13 +499,7 @@ function AcaoEmLote({ fila, acao, dados, aoFechar }: AcaoEmLoteProps) {
           </Aviso>
         ) : null}
         <div className="ui-acoes">
-          <button
-            type="button"
-            className="btn secondary"
-            onClick={() => aoFechar(false)}
-          >
-            Cancelar
-          </button>
+          <FecharModal className="btn secondary">Cancelar</FecharModal>
           <button
             type="button"
             className="btn"

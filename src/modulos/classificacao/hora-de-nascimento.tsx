@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { horaBR, lerHora } from "../../lib/classificacao/numeros.ts";
-import { Campo, Secao } from "../../ui/index.ts";
+import { Campo, Secao, usarAlteradoNoModal } from "../../ui/index.ts";
 
 /*
   A hora de nascimento pela certidão, na explicação do candidato
@@ -28,10 +28,12 @@ export function HoraDeNascimento({
   const salva = horaNascimento || "";
   const [rascunho, setRascunho] = useState(salva);
   const [salvando, setSalvando] = useState(false);
+  const mudou = (lerHora(rascunho) || "") !== salva;
+  // A gaveta em volta pergunta antes de fechar com a hora não salva.
+  usarAlteradoNoModal(mudou);
   if (!horaDecide && !salva) return null;
 
   const valida = !rascunho.trim() || lerHora(rascunho) !== null;
-  const mudou = (lerHora(rascunho) || "") !== salva;
 
   async function salvar(hora: string) {
     setSalvando(true);

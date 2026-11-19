@@ -1141,12 +1141,12 @@ bloco("componentes/calendario-editais", () => {
       expect(document.activeElement).toBe(celula("2026-09-22"));
     });
 
-    it("clique no fundo escuro fecha; dentro do cartão, não", async () => {
+    it("clique no fundo escuro ou dentro do cartão não fecha", async () => {
       await clicar(celula("2026-09-22"));
       await clicar($("calDiaTitulo"));
       expect($("calDiaModal")).not.toBeNull();
       await clicar($("calDiaModal"));
-      expect($("calDiaModal")).toBeNull();
+      expect($("calDiaModal")).not.toBeNull();
     });
 
     it("escolher uma etapa foca o edital dela na linha do tempo e fecha o popup", async () => {
@@ -4130,6 +4130,14 @@ bloco("componentes/nucleo", () => {
       Object.keys(window.localStorage).filter((chave) =>
         chave.startsWith("agsus_monitora_rascunho_edital_v1:"),
       );
+    const pergunta = () =>
+      document.querySelector<HTMLElement>("#editModal .ui-modal-descarte");
+    const botaoDaPergunta = (texto: string) =>
+      [
+        ...document.querySelectorAll<HTMLElement>(
+          "#editModal .ui-modal-descarte button",
+        ),
+      ].find((botao) => botao.textContent?.trim() === texto);
     const botaoDoRodape = (texto: string) =>
       [
         ...document.querySelectorAll<HTMLElement>(
@@ -4144,7 +4152,7 @@ bloco("componentes/nucleo", () => {
       await clicar($("editModal"));
       expect($("editModal")).not.toBeNull();
       expect(campo("mEdital")?.value).toBe("20/2026");
-      expect($("editalDescartar")).toBeNull();
+      expect(pergunta()).toBeNull();
     });
 
     it("sem mudança, Cancelar fecha direto, sem perguntar", async () => {
@@ -4163,17 +4171,19 @@ bloco("componentes/nucleo", () => {
 
       await teclar(document, "Escape");
       expect($("editModal")).not.toBeNull();
-      const pergunta = definido($("editalDescartar"));
-      expect(pergunta.getAttribute("role")).toBe("alertdialog");
-      expect(pergunta.textContent).toContain("Descartar as alterações?");
-      expect(document.activeElement).toBe($("editalContinuar"));
+      const faixa = definido(pergunta());
+      expect(faixa.getAttribute("role")).toBe("alertdialog");
+      expect(faixa.textContent).toContain("Descartar as alterações?");
+      expect(document.activeElement).toBe(
+        botaoDaPergunta("Continuar editando"),
+      );
 
       await teclar(document, "Escape");
-      expect($("editalDescartar")).toBeNull();
+      expect(pergunta()).toBeNull();
       expect(areaDeTexto("mObs")?.value).toBe("Anotação que não pode sumir");
 
       await clicar(botaoDoRodape("Cancelar"));
-      await clicar($("editalContinuar"));
+      await clicar(botaoDaPergunta("Continuar editando"));
       expect($("editModal")).not.toBeNull();
 
       await clicar(
@@ -4183,7 +4193,7 @@ bloco("componentes/nucleo", () => {
           ),
         ].find((botao) => botao.textContent?.trim() === "Fechar"),
       );
-      await clicar($("editalDescartarConfirmar"));
+      await clicar(botaoDaPergunta("Descartar alterações"));
       expect($("editModal")).toBeNull();
       expect(rascunhosGuardados()).toEqual([]);
     });

@@ -139,9 +139,8 @@
 }
 
 /*
-  Cabeçalho do formulário: o rascunho à espera e a pergunta "Descartar as
-  alterações?" moram nele (sticky), para aparecerem onde quer que a pessoa
-  esteja no formulário.
+  Cabeçalho do formulário: o rascunho à espera mora nele (sticky), para
+  aparecer onde quer que a pessoa esteja no formulário.
 */
 .edital-cabecalho {
   flex-wrap: wrap;
@@ -164,22 +163,10 @@
   margin: var(--space-1) 0 0;
   font-size: var(--text-body-sm);
 }
-.edital-aviso--perigo {
-  background: var(--state-danger-soft);
-  color: var(--state-danger);
-}
 .edital-aviso-acoes {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
-}
-.edital-aviso-acoes .btn.danger {
-  border: 0;
-  background: var(--color-action-danger);
-  color: var(--text-inverse);
-}
-.edital-aviso-acoes .btn.danger:hover {
-  background: var(--color-action-danger-hover);
 }
 /* A área do edital, em destaque junto do título. */
 .edital-titulo {

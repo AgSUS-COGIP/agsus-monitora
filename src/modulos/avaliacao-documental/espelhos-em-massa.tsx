@@ -21,7 +21,13 @@ import {
   type FiltroDosEspelhos,
   type PaginaDosEspelhos,
 } from "../../lib/avaliacao-documental/espelhos-em-massa.ts";
-import { Aviso, Campo, Gaveta, Segmentado } from "../../ui/index.ts";
+import {
+  Aviso,
+  Campo,
+  FecharModal,
+  Gaveta,
+  Segmentado,
+} from "../../ui/index.ts";
 import { espelhoDaFichaGravada } from "../../lib/avaliacao-documental/espelho-da-ficha-gravada.ts";
 import {
   abrirEspelhosEmMassa,
@@ -275,7 +281,7 @@ export function EspelhosEmMassa({
       titulo="Espelhos de nota em massa"
       resumo="Um PDF por candidato num ZIP, ou um documento só para imprimir"
       aoFechar={aoFechar}
-      fecharAoClicarFora={false}
+      alterado={texto.trim() !== "" && !resultado}
       tour="avd-espelhos-em-massa"
     >
       <div className="avd-gaveta-corpo avd-espelhos-massa">
@@ -457,9 +463,7 @@ export function EspelhosEmMassa({
               Cancelar
             </button>
           ) : (
-            <button type="button" className="btn secondary" onClick={aoFechar}>
-              Fechar
-            </button>
+            <FecharModal className="btn secondary">Fechar</FecharModal>
           )}
           {resultado?.espelhos.length && !buscando ? (
             <button

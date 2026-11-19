@@ -21,7 +21,13 @@ import {
   MODO_SO_ANEXOS,
   MOTIVO_DO_CONGELADO,
 } from "../../lib/automacao/robos-de-carga.ts";
-import { Aviso, Campo, Gaveta, Segmentado } from "../../ui/index.ts";
+import {
+  Aviso,
+  Campo,
+  FecharModal,
+  Gaveta,
+  Segmentado,
+} from "../../ui/index.ts";
 import { Icone } from "../icone.tsx";
 import { MultiSelectBusca } from "../multi-select-busca.tsx";
 
@@ -268,6 +274,21 @@ export function RodarComOpcoes({
   const [seco, setSeco] = useState(false);
   const [forcarCongelado, setForcarCongelado] = useState(false);
   const [motivoDoCongelado, setMotivoDoCongelado] = useState("");
+  /* As opções como abriram: fechar com algo diferente pergunta antes. */
+  const opcoesEscolhidas = JSON.stringify([
+    area,
+    todos,
+    ids,
+    textoDasVagas,
+    modo,
+    limite,
+    anexos,
+    textoDosCandidatos,
+    seco,
+    forcarCongelado,
+    motivoDoCongelado,
+  ]);
+  const [opcoesAoAbrir] = useState(opcoesEscolhidas);
   const [enviando, setEnviando] = useState(false);
   // "Só comparar" (seco) não grava: não há o que forçar.
   const podeForcarCongelado =
@@ -368,6 +389,7 @@ export function RodarComOpcoes({
       id={`robos-opcoes-${robo.id}`}
       tituloId={tituloId}
       aoFechar={aoFechar}
+      alterado={opcoesEscolhidas !== opcoesAoAbrir}
       sobretitulo="Rodar com opções"
       titulo={robo.nome}
       rotuloDoFechar="Fechar as opções"
@@ -566,9 +588,7 @@ export function RodarComOpcoes({
           ) : null}
         </div>
         <div className="ui-gaveta-rodape">
-          <button type="button" className="btn secondary" onClick={aoFechar}>
-            Cancelar
-          </button>
+          <FecharModal className="btn secondary">Cancelar</FecharModal>
           <button
             type="submit"
             className="btn primary"
