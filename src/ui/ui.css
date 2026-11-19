@@ -619,8 +619,13 @@
   max-height: 380px;
   overflow: auto;
 }
+/* `min-width: 0` e o `tbody th` sem `top` desfazem o `table`/`th` globais de
+   app.css (1180px de largura mínima, 720px no celular, e todo th grudado no
+   topo), que cortavam a tabela no cartão. No celular o rótulo da linha segue
+   grudado à esquerda (mobile-app.css), com o fundo do cartão. */
 .ui-grafico-tabela table {
   width: 100%;
+  min-width: 0;
   border-collapse: collapse;
   font-size: var(--text-body-sm);
   font-variant-numeric: tabular-nums;
@@ -631,14 +636,20 @@
   color: var(--text-primary);
   text-align: right;
   text-transform: none;
+  vertical-align: middle;
 }
 .ui-grafico-tabela :is(thead th, tbody th) {
   font-weight: var(--font-weight-medium);
 }
 .ui-grafico-tabela thead th {
+  position: sticky;
+  top: 0;
+  background: var(--surface-card);
   color: var(--text-secondary);
 }
 .ui-grafico-tabela tbody th {
+  top: auto;
+  background: var(--surface-card);
   text-align: left;
 }
 .ui-grafico.is-carregando::after {
