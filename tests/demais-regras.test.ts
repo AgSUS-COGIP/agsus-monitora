@@ -10,6 +10,10 @@ import {
 } from "../src/lib/base/exportacao-da-tabela.ts";
 import { lembrarBanco } from "./apoio/bancos-abertos.ts";
 import {
+  ACAO_DA_PENDENCIA,
+  editaisDaPendencia,
+} from "../src/lib/visao-geral/visao-geral.ts";
+import {
   afterEach,
   beforeAll,
   beforeEach,
@@ -6461,6 +6465,39 @@ bloco("apoio/bancos-abertos", () => {
     it("no teste seguinte, o do teste anterior já foi fechado e o do beforeAll continua aberto", () => {
       expect(doPrimeiroTeste.closed).toBe(true);
       expect(doBloco.closed).toBe(false);
+    });
+  });
+});
+
+bloco("lib/pede-acao-da-visao-geral", () => {
+  /*
+    "Pede ação" da Visão geral: a pendência abre os editais dela (do recorte),
+    pelo número, e cada pendência tem a ação que a resolve e a tela dela.
+  */
+  it("os editais da pendência, pelo número do edital", () => {
+    const linhas = [
+      { id: 1, edital: "12/2026", pos_resultado: ["sem_lista" as const] },
+      { id: 2, edital: "3/2026", pos_resultado: ["sem_lista" as const] },
+      { id: 3, edital: "7/2026", pos_resultado: ["sem_status" as const] },
+      { id: 4, edital: "8/2026" },
+    ];
+    expect(editaisDaPendencia(linhas, "sem_lista").map((l) => l.id)).toEqual([
+      2, 1,
+    ]);
+    expect(editaisDaPendencia(linhas, "sem_status").map((l) => l.id)).toEqual([
+      3,
+    ]);
+    expect(editaisDaPendencia(null, "sem_lista")).toEqual([]);
+  });
+
+  it("cada pendência tem a ação e a tela que a resolvem", () => {
+    expect(ACAO_DA_PENDENCIA.sem_lista).toEqual({
+      rotulo: "Importar lista",
+      view: "nucleo",
+    });
+    expect(ACAO_DA_PENDENCIA.sem_status).toEqual({
+      rotulo: "Atualizar status",
+      view: "approved",
     });
   });
 });

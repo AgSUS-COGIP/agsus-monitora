@@ -1,6 +1,7 @@
 import type {
   Configuracoes,
   LinhaDaVisaoGeral,
+  Pendencia,
   OpcoesDaTela,
   PropsDaTela,
   PropsDoPainel,
@@ -46,6 +47,9 @@ import {
 import type { ClienteDosAvisos } from "../conferencias/tipos.ts";
 import { telaPermitida } from "../../lib/navegacao/navegacao.ts";
 import { pedirFiltro } from "../../app/pedido-de-filtro.ts";
+import { carregarTela } from "../../app/registro-das-telas.ts";
+import { canImportApprovedList } from "../../lib/acessos/access-roles.ts";
+import { ACAO_DA_PENDENCIA } from "../../lib/visao-geral/visao-geral.ts";
 import { irParaTela, type JanelaDoApp } from "../../app/ir-para-tela.ts";
 import { ErrorBoundary } from "../../app/ErrorBoundary.tsx";
 
@@ -179,7 +183,22 @@ export function TelaDaVisaoGeral({
         className="ui-linha-de-cards visao-geral-decisao"
         data-tour="visao-geral-fases-e-pos-resultado"
       >
-        <PedeAcao e={e} estado={estado} textos={textos} />
+        <PedeAcao
+          e={e}
+          estado={estado}
+          textos={textos}
+          podeAgir={(codigo) =>
+            podeResolverPendencia(
+              codigo,
+              (obterPerfil?.() || null) as PerfilDaNavegacao,
+            )
+          }
+          aoAgir={(codigo, linha) => {
+            // A volta destaca a linha; a tela de destino abre já no edital.
+            estado.sairPelaLinha(linha.id);
+            resolverPendencia(codigo, linha);
+          }}
+        />
         <EmAndamento e={e} estado={estado} />
       </div>
       {temProcessosPorProjeto(e.area) ? (
@@ -253,6 +272,37 @@ export function TelaDaVisaoGeral({
       ) : null}
     </div>
   );
+}
+
+/* Quem resolve a pendência: importar a lista (Editais + importação) ou atualizar status (Lista de aprovados). */
+function podeResolverPendencia(codigo: Pendencia, perfil: PerfilDaNavegacao) {
+  const tela = ACAO_DA_PENDENCIA[codigo].view;
+  if (!telaPermitida(tela, perfil)) return false;
+  return codigo === "sem_lista" ? canImportApprovedList(perfil) : true;
+}
+
+/*
+  "Importar lista": Editais e o modal "Listas do edital" (da Lista de
+  aprovados, aberto como o botão da linha em Editais). "Atualizar status": a
+  Lista de aprovados no edital (pedido de filtro, como os números da tabela).
+*/
+function resolverPendencia(codigo: Pendencia, linha: LinhaDaVisaoGeral) {
+  const id = String(linha.id ?? "");
+  if (codigo === "sem_lista") {
+    if (!irParaTela({ view: "nucleo" })) return;
+    const rotulo = [linha.edital, linha.unidade].filter(Boolean).join(" · ");
+    void carregarTela("approved")
+      .then((aprovados) => aprovados.openImportModal(id, rotulo))
+      .catch((erro: unknown) =>
+        console.warn("Não foi possível abrir as listas do edital:", erro),
+      );
+    return;
+  }
+  pedirFiltro("approved", {
+    edital: String(linha.edital ?? ""),
+    ...(id ? { editalId: id } : {}),
+  });
+  irParaTela({ view: "approved" });
 }
 
 /**

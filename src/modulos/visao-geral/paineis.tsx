@@ -5,7 +5,7 @@ import type {
   PropsDoBloco,
   SnapshotDaVisaoGeral,
 } from "./tipos.ts";
-import type { Perfil } from "./tipos.ts";
+import type { LinhaDaVisaoGeral, Pendencia, Perfil } from "./tipos.ts";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
 import {
   anoDaSelecao,
@@ -35,6 +35,7 @@ import {
   type Composicao,
 } from "../../lib/visao-geral/composicao-dos-numeros.ts";
 import { ComposicaoDoNumero } from "./composicao.tsx";
+import { EditaisDaPendencia } from "./editais-da-pendencia.tsx";
 import {
   PERGUNTA_DO_INDICADOR,
   type IndicadorComSignificado,
@@ -577,7 +578,19 @@ function Bloco({ id, titulo, className, children }: PropsDoBloco) {
 
 /* ── Pede ação: críticos e pós-resultado ────────────────────────────── */
 
-export function PedeAcao({ e, estado, textos }: PropsComTextos) {
+export function PedeAcao({
+  e,
+  estado,
+  textos,
+  podeAgir = () => false,
+  aoAgir = () => {},
+}: PropsComTextos & {
+  /** Quem pode resolver a pendência (importar a lista, atualizar status). */
+  podeAgir?: (codigo: Pendencia) => boolean;
+  aoAgir?: (codigo: Pendencia, linha: LinhaDaVisaoGeral) => void;
+}) {
+  // A pendência aberta: a lista dos editais dela, cada um com a ação.
+  const [aberta, setAberta] = useState<Pendencia | null>(null);
   const criticos = e.indicadores.criticos;
   const pendencias = posResultado(e.filtradas, { comListas: e.comListas })
     .filter(({ quantos, codigo }) => quantos || e.atalho === `pos:${codigo}`)
@@ -586,8 +599,7 @@ export function PedeAcao({ e, estado, textos }: PropsComTextos) {
       titulo: rotulo,
       detalhe: plural(quantos, "edital", "editais"),
       tom: codigo === "sem_lista" ? "perigo" : "alerta",
-      ativo: e.atalho === `pos:${codigo}`,
-      aoClicar: () => estado.alternarAtalho(`pos:${codigo}`),
+      aoClicar: () => setAberta(codigo),
     }));
   const itens = [
     ...(criticos || e.criticosAtivo
@@ -619,6 +631,20 @@ export function PedeAcao({ e, estado, textos }: PropsComTextos) {
           vazio="Nenhuma pendência."
         />
       )}
+      {aberta ? (
+        <EditaisDaPendencia
+          codigo={aberta}
+          linhas={e.filtradas}
+          podeAgir={podeAgir(aberta)}
+          aoAgir={(linha) => {
+            setAberta(null);
+            aoAgir(aberta, linha);
+          }}
+          filtrando={e.atalho === `pos:${aberta}`}
+          aoFiltrar={() => estado.alternarAtalho(`pos:${aberta}`)}
+          aoFechar={() => setAberta(null)}
+        />
+      ) : null}
     </Bloco>
   );
 }
