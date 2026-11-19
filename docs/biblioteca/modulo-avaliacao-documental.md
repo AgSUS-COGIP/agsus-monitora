@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-17
+atualizado: 2026-11-19
 ---
 
 # Módulo: Avaliação documental
@@ -121,6 +121,13 @@ todos os editais da área".
 - Os recálculos mantêm a decisão (job Python e prévia JS, casos dourados); banco em `20261007200000`
   (`TB_DECISAO_LOTE`, `TH_DECISAO_LOTE`; `incluir_no_lote_por_decisao` / `revogar_decisao_lote`,
   uma chamada por vaga).
+- Ficha que saiu do lote ("Saiu do lote": a importação da planilha a pôs em `FORA_LOTE`, mas a
+  pré-classificação segue no lote e a próxima abertura das fichas a devolveria): a decisão de lote
+  não é revogada sozinha. No topo da ficha, a coordenação vê "Revogar decisão de lote" (a mesma
+  `revogar_decisao_lote`, com motivo e histórico) quando a entrada foi por decisão; quando foi pela
+  regra, "Entrou pela regra do lote: não há decisão a revogar", sem botão; já analisada, nada
+  (`revogacaoNaSaida` em `src/lib/avaliacao-documental/fila.ts`). Escolha do usuário em 19/11/2026:
+  só por decisão, sem migration.
 
 ## Dono da avaliação: planilha ou MONITORA
 

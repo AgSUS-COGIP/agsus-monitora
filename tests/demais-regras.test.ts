@@ -31,6 +31,10 @@ import {
 } from "../src/lib/mapas/mapa-saude-indigena/territorio-do-sigepsi.ts";
 import { lembrarBanco } from "./apoio/bancos-abertos.ts";
 import {
+  revogacaoNaSaida,
+  type InscritoNaFila,
+} from "../src/lib/avaliacao-documental/fila.ts";
+import {
   ETAPAS_DO_FLUXO,
   etapaDoFluxo,
   etapasDoFluxo,
@@ -7009,5 +7013,57 @@ bloco("lib/fluxo-das-etapas", () => {
     expect(
       filtrosDeRecursos(vazios, { edital: "93/2026" }, opcoes).edital,
     ).toBe("e1");
+  });
+});
+
+bloco("lib/revogar-decisao-na-saida-do-lote", () => {
+  /*
+    A ficha que saiu do lote pela importação da planilha (src/lib/avaliacao-documental/fila.ts,
+    revogacaoNaSaida): quem entrou por decisão pode ter a decisão revogada;
+    quem entrou pela regra não tem o que revogar; a já analisada fica.
+  */
+  const saiu = (extra: Partial<InscritoNaFila>): InscritoNaFila => ({
+    id: "c1",
+    codigo: "7003",
+    situacao_pre: "NO_LOTE",
+    ficha: { id: "f1", situacao: "FORA_LOTE" },
+    ...extra,
+  });
+
+  it("entrou por decisão: revogar a decisão de lote", () => {
+    expect(
+      revogacaoNaSaida(saiu({ entrada: "DECISAO", decisao: "Critério CORES" })),
+    ).toBe("revogar");
+  });
+
+  it("entrou pela regra: não há decisão a revogar", () => {
+    expect(revogacaoNaSaida(saiu({ entrada: "INICIAL" }))).toBe("regra");
+    expect(revogacaoNaSaida(saiu({ entrada: "REPOSICAO" }))).toBe("regra");
+  });
+
+  it("já analisado: a decisão fica", () => {
+    expect(
+      revogacaoNaSaida(
+        saiu({
+          situacao_pre: "ANALISADO",
+          entrada: "DECISAO",
+          decisao: "Critério CORES",
+        }),
+      ),
+    ).toBe("analisado");
+  });
+
+  it("fora do Saiu do lote, nada", () => {
+    expect(
+      revogacaoNaSaida(
+        saiu({
+          ficha: { id: "f1", situacao: "PENDENTE" },
+          entrada: "DECISAO",
+          decisao: "Critério CORES",
+        }),
+      ),
+    ).toBeNull();
+    expect(revogacaoNaSaida(saiu({ situacao_pre: "RANQUEADO" }))).toBeNull();
+    expect(revogacaoNaSaida(null)).toBeNull();
   });
 });
