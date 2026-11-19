@@ -663,12 +663,21 @@ html[data-theme="dark"] .sidebar {
   flex: 1 1 auto;
   min-width: 0;
 }
-.online-presence-person strong,
-.online-presence-person small {
+.online-presence-person strong {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+/* Perfil e tela quebram em até duas linhas: cortados, "Avaliação document…" e
+   "Mapa …" não diziam onde a pessoa está (19/11/2026). */
+.online-presence-person small {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
 }
 .online-presence-person strong {
   color: var(--text-primary);
