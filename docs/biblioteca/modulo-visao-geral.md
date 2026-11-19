@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-18
+atualizado: 2026-11-19
 ---
 
 # Módulo: Visão geral
@@ -53,7 +53,12 @@ trabalho). De cima para baixo:
   linha somava zero no total. `data-situacao` no `.visao-geral-numero`.
 - **Pede ação** (`PedeAcao`) ao lado de **Em andamento, por fase** (`EmAndamento`,
   `andamentoPorFase` em `src/lib/visao-geral/visao-geral.ts`): críticos e pós-resultado (sem lista e
-  lista sem status; contratação abaixo de 50% e desistências saíram em 18/11/2026) numa lista; só as fases
+  lista sem status; contratação abaixo de 50% e desistências saíram em 18/11/2026) numa lista. Os
+  críticos filtram a página; a pendência do pós-resultado abre os editais dela, do mesmo recorte
+  (`EditaisDaPendencia`, `editaisDaPendencia`/`ACAO_DA_PENDENCIA`), cada um com a ação: "Importar
+  lista" vai a Editais e abre o modal "Listas do edital"; "Atualizar status", à Lista de aprovados
+  no edital. A volta destaca a linha (`sairPelaLinha`); "Mostrar só esses na página" é o filtro de
+  antes. Nas fases, só as
   com edital aberto, sem as vazias, e numa linha os com cronograma encerrado, os concluídos
   (digitados à mão) e os cancelados.
 - **Mapa**: na Saúde Indígena, o cartão do Mapa (o mapa grande foi para a aba Mapa em 18/11/2026);
