@@ -31,6 +31,11 @@ import {
 } from "../src/lib/base/exportacao-da-tabela.ts";
 import { chaveDosEditaisDaCasai } from "../src/lib/mapas/mapa-saude-indigena/mapa-nacional.ts";
 import {
+  caminhoDaGeometria,
+  contornoDoDsei,
+  projecaoDoBrasil,
+} from "../src/lib/mapas/mapa-saude-indigena/minimapa.ts";
+import {
   indicadoresDoRecorte,
   municipiosDoDsei,
   redePorTipo,
@@ -4782,25 +4787,44 @@ bloco("lib/territorio-na-tela", () => {
       cnes: CNES,
     });
     expect(
-      filtrarUnidades(unidades, { meio: "Fluvial", floresta: "" }).map(
-        (u) => u.nome,
-      ),
+      filtrarUnidades(unidades, {
+        meio: "Fluvial",
+        floresta: "",
+        localidade: "",
+      }).map((u) => u.nome),
     ).toEqual(["POLO BASE XITEI"]);
     expect(
-      filtrarUnidades(unidades, { meio: "Não informado", floresta: "" }).map(
-        (u) => u.nome,
-      ),
+      filtrarUnidades(unidades, {
+        meio: "Não informado",
+        floresta: "",
+        localidade: "",
+      }).map((u) => u.nome),
     ).toEqual(["UBSI SEM ACESSO"]);
     expect(
-      filtrarUnidades(unidades, { meio: "", floresta: "Não" }),
+      filtrarUnidades(unidades, { meio: "", floresta: "Não", localidade: "" }),
     ).toHaveLength(1);
+    // Categoria da localidade (como no SIGEPSI): só a de mesma categoria.
+    const categorias = new Set(unidades.map((u) => u.localidade));
+    for (const categoria of categorias) {
+      const filtradas = filtrarUnidades(unidades, {
+        meio: "",
+        floresta: "",
+        localidade: String(categoria),
+      });
+      expect(filtradas.length).toBeGreaterThan(0);
+      expect(filtradas.every((u) => u.localidade === categoria)).toBe(true);
+    }
 
     const porDsei = new Map([[DSEI.k, { dsei: DSEI, unidades }]]);
     const contagens = new Map([
       [DSEI.k, { editais: 2, vagas: 10, contratadas: 6, ociosas: 3 }],
     ]);
     expect(
-      cruzarComOciosas(porDsei, contagens, { meio: "Aéreo", floresta: "" }),
+      cruzarComOciosas(porDsei, contagens, {
+        meio: "Aéreo",
+        floresta: "",
+        localidade: "",
+      }),
     ).toEqual([
       {
         k: DSEI.k,
@@ -4812,7 +4836,11 @@ bloco("lib/territorio-na-tela", () => {
       },
     ]);
     expect(
-      cruzarComOciosas(porDsei, contagens, { meio: "Aéreo", floresta: "Sim" }),
+      cruzarComOciosas(porDsei, contagens, {
+        meio: "Aéreo",
+        floresta: "Sim",
+        localidade: "",
+      }),
     ).toEqual([]);
   });
 
@@ -4829,7 +4857,7 @@ bloco("lib/territorio-na-tela", () => {
     const com = tabelaDasUnidades(
       "Alagoas e Sergipe",
       unidadesComAcesso({ registros, comAcesso: true, cnes: CNES }),
-      { meio: "Fluvial", floresta: "" },
+      { meio: "Fluvial", floresta: "", localidade: "" },
     );
     expect(com.titulo).toBe(
       "Unidades do DSEI Alagoas e Sergipe — acesso Fluvial",
@@ -7624,5 +7652,64 @@ bloco("lib/indicadores-do-recorte", () => {
 
   it("sem vagas, a barra não se aplica (0%)", () => {
     expect(indicadoresDoRecorte({}).preenchidas).toBe(0);
+  });
+});
+
+bloco("lib/minimapa", () => {
+  /*
+    O minimapa de localização do DSEI (como no SIGEPSI): o Brasil e o DSEI
+    projetados num SVG pequeno. Dados fictícios.
+  */
+  const projecao = projecaoDoBrasil(120);
+
+  it("o Brasil cabe na caixa e não sai achatado", () => {
+    expect(projecao.largura).toBe(120);
+    expect(projecao.altura).toBeGreaterThan(100);
+    expect(projecao.altura).toBeLessThan(140);
+    const [x, y] = projecao.ponto(-47.9, -15.8); // Brasília
+    expect(x).toBeGreaterThan(0);
+    expect(x).toBeLessThan(120);
+    expect(y).toBeGreaterThan(0);
+    expect(y).toBeLessThan(projecao.altura);
+  });
+
+  it("o caminho tira os pontos que não se veem e fecha cada anel", () => {
+    const quadrado = {
+      type: "Polygon",
+      coordinates: [
+        [
+          [-60, -10],
+          [-60.001, -10.001],
+          [-50, -10],
+          [-50, -20],
+          [-60, -20],
+          [-60, -10],
+        ],
+      ],
+    };
+    const d = caminhoDaGeometria(quadrado, projecao);
+    expect(d.startsWith("M")).toBe(true);
+    expect(d.endsWith("Z")).toBe(true);
+    // O ponto a menos de meio pixel do primeiro sai.
+    expect(d.split("L")).toHaveLength(5);
+    expect(caminhoDaGeometria(null, projecao)).toBe("");
+    expect(
+      caminhoDaGeometria({ type: "Point", coordinates: [0, 0] }, projecao),
+    ).toBe("");
+  });
+
+  it("acha o contorno do DSEI pelo nome, sem acento nem prefixo", () => {
+    const contorno = {
+      type: "Feature" as const,
+      properties: {
+        numero: 34,
+        nome: "DSEI Yanomâmi",
+        rotulo: [2, -63] as [number, number],
+      },
+      geometry: { type: "Polygon" as const, coordinates: [] },
+    };
+    expect(contornoDoDsei([contorno], { k: "YANOMAMI" })).toBe(contorno);
+    expect(contornoDoDsei([contorno], { k: "XINGU" })).toBeNull();
+    expect(contornoDoDsei([contorno], null)).toBeNull();
   });
 });

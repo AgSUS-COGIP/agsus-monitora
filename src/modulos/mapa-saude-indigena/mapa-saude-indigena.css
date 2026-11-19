@@ -425,6 +425,39 @@
   height: 100%;
 }
 
+/* O minimapa de localização do DSEI (minimapa.tsx), como no SIGEPSI. */
+.mapa-si-minimapa {
+  position: absolute;
+  z-index: 900;
+  right: var(--space-3);
+  bottom: var(--space-6);
+  padding: var(--space-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-raised);
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+}
+.mapa-si-minimapa svg {
+  display: block;
+}
+.mapa-si-minimapa__brasil {
+  fill: var(--color-bg-muted);
+  stroke: var(--text-secondary);
+  stroke-width: 0.6;
+}
+.mapa-si-minimapa__dsei,
+.mapa-si-minimapa__sede {
+  fill: var(--state-info);
+  stroke: var(--state-info);
+  stroke-width: 0.8;
+}
+@media (max-width: 700px) {
+  .mapa-si-minimapa {
+    display: none;
+  }
+}
+
 /* Acima dos controles do Leaflet (z-index 1000) e da legenda (800). */
 .mapa-si-editor {
   position: absolute;
