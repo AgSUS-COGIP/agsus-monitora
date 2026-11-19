@@ -8503,7 +8503,7 @@ bloco("modulos/mapa-saude-indigena", () => {
       expect(itens[0].getAttribute("aria-label")).toBe(
         "Abrir o DSEI Yanomami: 40 vagas, 25% preenchidas",
       );
-      expect(host.textContent).toContain("3 territórios");
+      expect(host.textContent).toContain("3 DSEIs · 1 CASAI");
       await clicar(itens[1]);
       expect(aoEscolherDsei).toHaveBeenCalledWith(LMAP.dsei[0]);
     });
@@ -8555,7 +8555,7 @@ bloco("modulos/mapa-saude-indigena", () => {
       expect(
         mapa.chamadas.some(([nome, , z]) => nome === "setView" && z === 7),
       ).toBe(true);
-      expect(host.textContent).toContain("1 território");
+      expect(host.textContent).toContain("1 DSEI");
     });
 
     it("sem modo Calor: a bolha é verde com processo e azul sem, e a legenda diz isso", async () => {
