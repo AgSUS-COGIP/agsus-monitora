@@ -85,8 +85,12 @@ export type {
 export { GradeDeKpis, Kpi } from "./kpi.tsx";
 export type { PropriedadesDaGradeDeKpis, PropriedadesDoKpi } from "./kpi.tsx";
 export {
+  BUSCAR_NA_PAGINA,
+  BUSCAR_NESTA_TABELA,
   LinhaDoRecorte,
+  MarcaDaBuscaNaPagina,
   MarcasDoRecorte,
+  textoDaBuscaNaPagina,
   textoDoRecorte,
 } from "./linha-do-recorte.tsx";
 export type {

@@ -6475,7 +6475,10 @@ bloco("modulos/pagina-do-edital", () => {
       // A Seleção recorta pelo número: vai num pedido de filtro.
       await clicar(elemento.querySelector('[data-tela="selecao"]'));
       expect(navigate).toHaveBeenLastCalledWith("selecao");
-      expect(consumirPedidoDeFiltro("selecao")).toEqual({ edital: "105/2026" });
+      expect(consumirPedidoDeFiltro("selecao")).toEqual({
+        edital: "105/2026",
+        editalId: ID,
+      });
       vi.unstubAllGlobals();
     });
 

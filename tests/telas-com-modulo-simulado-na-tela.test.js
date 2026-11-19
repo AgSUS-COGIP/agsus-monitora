@@ -582,7 +582,7 @@ bloco("modulos/analises", async () => {
         "Validação da janela",
         "Data da análise: de",
         "Data da análise: até",
-        "Buscar em toda a tela",
+        "Buscar em toda a página",
       ]);
 
       await marcarNoFiltro("validacao", "SEM_DATA");
@@ -3295,7 +3295,7 @@ bloco("modulos/recursos", async () => {
       expect(contagem()).toBe("2 recursos");
     });
 
-    it("“Mais opções” mostra a busca em toda a tela, que vira filtro", async () => {
+    it("“Mais opções” mostra a busca em toda a página, que vira filtro", async () => {
       await montar(supabaseFalso());
       const adicionais = document.getElementById("recursosFiltrosAdicionais");
       expect(adicionais.hidden).toBe(true);

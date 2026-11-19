@@ -9,6 +9,9 @@ import {
 } from "react";
 import type { ReactNode, RefObject } from "react";
 import { usarFiltrosNaUrl } from "../../app/usar-filtros-na-url.ts";
+import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
+import { FluxoDasEtapas } from "../../componentes/fluxo-das-etapas.tsx";
+import { editalEscolhido } from "../../lib/editais/edital-de-treinamento.ts";
 import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
 import { formatNumberBR } from "../../lib/base/formatters";
 import type { RecorteDaPre } from "../../lib/avaliacao-documental/paginas-da-pre-classificacao.ts";
@@ -1068,6 +1071,15 @@ export function PreClassificacao({
     },
     [setAba],
   );
+  // A vaga que veio de outra etapa do mesmo edital (a faixa das etapas) abre em Por vaga.
+  usarPedidoDeFiltro(
+    "pre-classificacao",
+    true,
+    (pedido) => {
+      if (pedido.vaga) verVaga(pedido.vaga);
+    },
+    (pedido) => !pedido.editalId || pedido.editalId === e.editalId,
+  );
   // A inclusão por decisão do edital todo, no menu "Ações" (à vista em toda aba).
   const inclusaoDoEdital = usarInclusaoPorDecisao(pre, null);
   const versaoDaRegra = e.dados?.regra?.versao ?? 0;
@@ -1111,6 +1123,16 @@ export function PreClassificacao({
         tour="triagem-cabecalho"
         edital={cabecalho.edital}
         secoes={secoes}
+        etapas={
+          <FluxoDasEtapas
+            view="pre-classificacao"
+            edital={{
+              id: e.editalId,
+              numero: editalEscolhido(e.editais, e.editalId)?.edital,
+            }}
+            vaga={aba === "vagas" ? vagaPedida.codigo : ""}
+          />
+        }
         aoAtualizar={cabecalho.aoAtualizar}
         atualizarDesativado={cabecalho.atualizarDesativado}
       >

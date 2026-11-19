@@ -246,6 +246,8 @@ import {
 } from "../src/lib/base/versao-do-sistema.ts";
 import { EVENTO_ESCOLHA_DA_BUSCA } from "../src/lib/navegacao/busca-global.ts";
 import { consumirPedidoDeFiltro } from "../src/app/pedido-de-filtro.ts";
+import { abrirTelaDoEdital } from "../src/app/abrir-tela-do-edital.ts";
+import { etapaDoFluxo } from "../src/lib/navegacao/fluxo-das-etapas.ts";
 import { criarEstadoDasConfiguracoes } from "../src/modulos/configuracoes/estado.ts";
 import {
   obterSaida,
@@ -2901,6 +2903,68 @@ bloco("app/navegacao", () => {
         "warn",
       );
       expect(ativas()).toEqual(["page-classificacao"]);
+    });
+  });
+
+  describe("fluxo entre as etapas (a faixa das etapas)", () => {
+    const etapa = (view: string) => {
+      const achada = etapaDoFluxo(view);
+      if (!achada) throw new Error(`sem a etapa ${view}`);
+      return achada;
+    };
+
+    it("vai às Entrevistas e à Classificação no mesmo edital e volta pelo navegador", async () => {
+      const { navegacao, telas } = criar();
+      entrar(navegacao);
+      const janela = {
+        navigate: (view: string, extras?: { edital?: string | null }) =>
+          navegacao.irPara(view, extras),
+      };
+      const edital = { id: EDITAL, numero: "93/2026" };
+
+      expect(
+        abrirTelaDoEdital(etapa("conduzir-entrevistas"), edital, "", janela),
+      ).toBe(true);
+      await vi.waitFor(() =>
+        expect(telas["conduzir-entrevistas"].abrirEdital).toHaveBeenCalledWith(
+          EDITAL,
+        ),
+      );
+      expect(ativas()).toEqual(["page-conduzir-entrevistas"]);
+      const daEntrevista = endereco();
+
+      abrirTelaDoEdital(etapa("classificacao"), edital, "179698", janela);
+      await vi.waitFor(() =>
+        expect(telas.classificacao.abrirEdital).toHaveBeenCalledWith(EDITAL),
+      );
+      expect(ativas()).toEqual(["page-classificacao"]);
+      // A vaga espera a Classificação no edital do pedido.
+      expect(consumirPedidoDeFiltro("classificacao")).toEqual({
+        editalId: EDITAL,
+        vaga: "179698",
+      });
+
+      // Voltar: as Entrevistas, no endereço em que estavam (a tela segue montada no edital).
+      await noHistorico(-1);
+      expect(ativas()).toEqual(["page-conduzir-entrevistas"]);
+      expect(endereco()).toBe(daEntrevista);
+      expect(telas["conduzir-entrevistas"].render).toHaveBeenCalledTimes(2);
+      // E de novo para a frente: a Classificação.
+      await noHistorico(1);
+      expect(ativas()).toEqual(["page-classificacao"]);
+    });
+
+    it("sem a navegação ou sem o edital que a tela pede, não vai", () => {
+      expect(
+        abrirTelaDoEdital(etapa("classificacao"), { id: EDITAL }, "", {}),
+      ).toBe(false);
+      const navigate = vi.fn();
+      expect(
+        abrirTelaDoEdital(etapa("classificacao"), { numero: "93/2026" }, "", {
+          navigate,
+        }),
+      ).toBe(false);
+      expect(navigate).not.toHaveBeenCalled();
     });
   });
 
@@ -7923,6 +7987,192 @@ bloco("componentes/esc-no-menu-dentro-do-modal", () => {
       await teclar(definido(document.activeElement), "Escape");
       expect(aoFechar).toHaveBeenCalledTimes(1);
     });
+  });
+});
+
+bloco("componentes/fluxo-das-etapas", async () => {
+  /*
+    A faixa das etapas (src/componentes/fluxo-das-etapas.tsx): "Documental do
+    93/2026" e os atalhos às outras etapas do mesmo edital, com o edital e a
+    vaga seguindo junto (o destino da aba "Candidatos" da página do edital).
+  */
+  const { FluxoDasEtapas } =
+    await import("../src/componentes/fluxo-das-etapas.tsx");
+  const { desenharNoTeste } = await import("./montar-tela.ts");
+  const { MarcaDaBuscaNaPagina, textoDaBuscaNaPagina } =
+    await import("../src/ui/linha-do-recorte.tsx");
+
+  const ID = "0b7c9a52-2d55-4c4e-9f7a-1c3d5e7f9a1b";
+  let desenho: { desmontar: () => void } | undefined;
+  let navigate = vi.fn((_view: string, _extras?: unknown) => true);
+
+  async function montar(
+    props: Parameters<typeof FluxoDasEtapas>[0],
+  ): Promise<HTMLElement> {
+    desenho?.desmontar();
+    const lugar = document.createElement("div");
+    document.body.append(lugar);
+    await act(async () => {
+      desenho = desenharNoTeste(lugar, createElement(FluxoDasEtapas, props));
+    });
+    return lugar;
+  }
+  const etapas = (lugar: HTMLElement) =>
+    [...lugar.querySelectorAll("[data-etapa]")].map((el) =>
+      el.getAttribute("data-etapa"),
+    );
+
+  beforeEach(() => {
+    navigate = vi.fn((_view: string, _extras?: unknown) => true);
+    vi.stubGlobal("navigate", navigate);
+    vi.stubGlobal("getMonitoraProfile", () => ({
+      id: "a",
+      ativo: true,
+      perfil: "admin",
+      permissoes: {
+        avaliacao_documental: "editor",
+        recursos: "editor",
+        entrevistas: "editor",
+        classificacao: "editor",
+        aprovados: "editor",
+      },
+    }));
+  });
+  afterEach(() => {
+    desenho?.desmontar();
+    desenho = undefined;
+    for (const view of ["classificacao", "analisar-recursos", "approved"])
+      consumirPedidoDeFiltro(view);
+    redefinirDadosDoMonitoramento();
+    vi.unstubAllGlobals();
+    document.body.innerHTML = "";
+  });
+
+  it("mostra a etapa e o edital, a atual marcada, e leva o edital e a vaga à Classificação", async () => {
+    const lugar = await montar({
+      view: "avaliacao-documental",
+      edital: { id: ID, numero: "93/2026" },
+      vaga: "179698",
+    });
+    expect(lugar.querySelector(".fluxo-das-etapas-titulo")?.textContent).toBe(
+      "Documental do 93/2026vaga 179698",
+    );
+    expect(etapas(lugar)).toEqual([
+      "pre-classificacao",
+      "avaliacao-documental",
+      "analisar-recursos",
+      "conduzir-entrevistas",
+      "classificacao",
+      "approved",
+    ]);
+    const atual = lugar.querySelector('[aria-current="step"]');
+    expect(atual?.getAttribute("data-etapa")).toBe("avaliacao-documental");
+    expect(atual?.tagName).toBe("SPAN");
+
+    await clicar(lugar.querySelector('[data-etapa="classificacao"]'));
+    expect(navigate).toHaveBeenLastCalledWith("classificacao", { edital: ID });
+    expect(consumirPedidoDeFiltro("classificacao")).toEqual({
+      editalId: ID,
+      vaga: "179698",
+    });
+  });
+
+  it("Recursos e Aprovados recebem o número e o id num pedido; a vaga não vai", async () => {
+    const lugar = await montar({
+      view: "classificacao",
+      edital: { id: ID, numero: "93/2026" },
+      vaga: "179698",
+    });
+    await clicar(lugar.querySelector('[data-etapa="analisar-recursos"]'));
+    expect(navigate).toHaveBeenLastCalledWith("analisar-recursos");
+    expect(consumirPedidoDeFiltro("analisar-recursos")).toEqual({
+      edital: "93/2026",
+      editalId: ID,
+    });
+    await clicar(lugar.querySelector('[data-etapa="approved"]'));
+    expect(navigate).toHaveBeenLastCalledWith("approved");
+    expect(consumirPedidoDeFiltro("approved")).toEqual({
+      edital: "93/2026",
+      editalId: ID,
+    });
+  });
+
+  it("ida e volta: da Triagem à Documental e de volta, sempre no mesmo edital e na mesma vaga", async () => {
+    let lugar = await montar({
+      view: "pre-classificacao",
+      edital: { id: ID, numero: "93/2026" },
+      vaga: "179698",
+    });
+    await clicar(lugar.querySelector('[data-etapa="avaliacao-documental"]'));
+    expect(navigate).toHaveBeenLastCalledWith("avaliacao-documental", {
+      edital: ID,
+    });
+    expect(consumirPedidoDeFiltro("avaliacao-documental")).toEqual({
+      editalId: ID,
+      vaga: "179698",
+    });
+    // A Documental, aberta no edital e na vaga, desenha a faixa dela.
+    lugar = await montar({
+      view: "avaliacao-documental",
+      edital: { id: ID, numero: "93/2026" },
+      vaga: "179698",
+    });
+    await clicar(lugar.querySelector('[data-etapa="pre-classificacao"]'));
+    expect(navigate).toHaveBeenLastCalledWith("pre-classificacao", {
+      edital: ID,
+    });
+    expect(consumirPedidoDeFiltro("pre-classificacao")).toEqual({
+      editalId: ID,
+      vaga: "179698",
+    });
+  });
+
+  it("só com o id (Recursos, Aprovados), o número sai das linhas do monitoramento", async () => {
+    definirAreaAtual("saude-indigena");
+    publicarLinhasDoMonitoramento([
+      { id: ID, edital: "Edital 93/2026", CO_AREA: "saude-indigena" },
+    ]);
+    const lugar = await montar({ view: "approved", edital: { id: ID } });
+    expect(lugar.querySelector(".fluxo-das-etapas-titulo")?.textContent).toBe(
+      "Aprovados do 93/2026",
+    );
+  });
+
+  it("só as etapas que o perfil abre (e a atual)", async () => {
+    vi.stubGlobal("getMonitoraProfile", () => ({
+      id: "c",
+      ativo: true,
+      permissoes: { classificacao: "leitor" },
+    }));
+    const lugar = await montar({
+      view: "avaliacao-documental",
+      edital: { id: ID, numero: "93/2026" },
+    });
+    expect(etapas(lugar)).toEqual(["avaliacao-documental", "classificacao"]);
+  });
+
+  it("sem edital, não há faixa", async () => {
+    const lugar = await montar({ view: "classificacao", edital: {} });
+    expect(lugar.querySelector(".fluxo-das-etapas")).toBeNull();
+  });
+
+  it("a busca que recorta a página toda ganha a marca no recorte", async () => {
+    expect(textoDaBuscaNaPagina("  Maria ")).toBe(
+      "Busca “Maria” filtrando a página toda",
+    );
+    expect(textoDaBuscaNaPagina("")).toBe("");
+    desenho?.desmontar();
+    const lugar = document.createElement("div");
+    document.body.append(lugar);
+    await act(async () => {
+      desenho = desenharNoTeste(
+        lugar,
+        createElement(MarcaDaBuscaNaPagina, { busca: "Maria" }),
+      );
+    });
+    expect(
+      lugar.querySelector('[data-marca="busca-na-pagina"]')?.textContent,
+    ).toContain("Busca “Maria” filtrando a página toda");
   });
 });
 

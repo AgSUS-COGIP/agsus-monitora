@@ -6,7 +6,7 @@ import {
   formatarQuantidade,
   rotuloDaUnidade,
 } from "../../lib/selecao/selecao-do-painel.ts";
-import { TabelaInfinita } from "../../ui/index.ts";
+import { BUSCAR_NESTA_TABELA, TabelaInfinita } from "../../ui/index.ts";
 
 /*
   "Base operacional consolidada": a tabela do painel antigo (DSEI, edital,
@@ -83,8 +83,8 @@ export function TabelaDeVagas({
       idDoTitulo="selecaoTabelaTitulo"
       titulo="Base operacional consolidada"
       busca={{
-        placeholder: `Buscar ${daUnidade}, edital, cargo ou observação`,
-        rotulo: "Buscar somente na tabela",
+        placeholder: BUSCAR_NESTA_TABELA,
+        rotulo: `Buscar nesta tabela por ${daUnidade}, edital, cargo ou observação`,
       }}
       carregado={carregado}
       itens={vagas}

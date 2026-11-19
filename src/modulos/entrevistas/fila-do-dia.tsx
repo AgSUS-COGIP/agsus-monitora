@@ -12,6 +12,7 @@ import {
 } from "../../lib/entrevistas/fila-de-conducao.ts";
 import { formatNumberBR } from "../../lib/base/formatters";
 import {
+  BUSCAR_NESTA_TABELA,
   AcoesDaLinha,
   BarraDaLista,
   CardDaLista,
@@ -451,8 +452,8 @@ export function FilaDoDia({
           busca={{
             valor: filtros.busca,
             aoMudar: (busca) => aoMudarFiltros({ busca }),
-            placeholder: "Buscar por nome ou código",
-            rotulo: "Buscar por nome ou código",
+            placeholder: BUSCAR_NESTA_TABELA,
+            rotulo: "Buscar nesta tabela pelo nome ou código",
             acao: "fila-busca",
           }}
           quantos={

@@ -34,6 +34,7 @@ import {
   type SituacaoDoBloco,
 } from "../../lib/avaliacao-documental/relatorio-de-motivos.ts";
 import {
+  BUSCAR_NESTA_TABELA,
   Aviso,
   Campo,
   Gaveta,
@@ -531,8 +532,8 @@ const TabelaDoRelatorio = memo(function TabelaDoRelatorio({
       titulo="Fichas"
       tour="avd-relatorio-tabela"
       busca={{
-        placeholder: "Código, nome ou texto",
-        rotulo: "Buscar na tabela",
+        placeholder: BUSCAR_NESTA_TABELA,
+        rotulo: "Buscar nesta tabela por código, nome ou texto",
         valor: busca,
         aoMudar: aoBuscar,
       }}

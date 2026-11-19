@@ -1,7 +1,7 @@
 ---
 tipo: referencia
 area: front
-atualizado: 2026-11-17
+atualizado: 2026-11-19
 ---
 
 # Componentes padrão (`src/ui/`)
@@ -63,7 +63,8 @@ partir do mesmo retrato (título, colunas e linhas); `baixarArquivo` entrega.
 Nas telas com `CabecalhoDaTela` (`tituloNaTela` em `src/lib/navegacao/rotas.ts`: Conduzir entrevistas,
 Classificação, Avaliação documental e Triagem), a faixa do topo do app (`header.top`) fica compacta
 (`data-compacto`, só a partir de 901px): sem o título, que é o da tela, e com a conta menor, o perfil
-só dentro do menu (`src/app/casca/topo.tsx`).
+só dentro do menu (`src/app/casca/topo.tsx`). Embaixo do cabeçalho, numa linha, `etapas` recebe a
+faixa das etapas do edital ([[modulo-pagina-do-edital]], "Fluxo entre as etapas").
 
 Peças de layout só em CSS: `.ui-tela`, `.ui-card`, `.ui-titulo`, `.ui-linha-de-cards`,
 `.ui-pilha`, `.ui-grade-de-campos`, `.ui-acoes`, `.ui-barra-de-salvar`, `.ui-gaveta-*`,

@@ -31,6 +31,7 @@ import {
   Grafico,
   GradeDeKpis,
   Kpi,
+  BUSCAR_NA_PAGINA,
   LinhaDoRecorte,
   ListaDePendencias,
   paletaDosGraficos,
@@ -134,7 +135,7 @@ export function Filtros({
       aoLimpar={aoLimpar}
     >
       <div className="ui-grade-de-campos" data-tour="entrevistas-filtros">
-        <Campo rotulo="Buscar candidato">
+        <Campo rotulo={BUSCAR_NA_PAGINA}>
           <input
             id="filtro-busca"
             type="search"
@@ -281,7 +282,12 @@ export function Indicadores({
 
 /* Sem filtro, a linha não aparece (os KPIs já são do recorte todo). */
 export function Recorte({ ativos }: { ativos: readonly FiltroAtivo[] }) {
-  return ativos.length ? <LinhaDoRecorte ativos={ativos} /> : null;
+  return ativos.length ? (
+    <LinhaDoRecorte
+      ativos={ativos}
+      buscaNaPagina={ativos.find(([campo]) => campo === "busca")?.[2]}
+    />
+  ) : null;
 }
 
 /* ── Pendências ─────────────────────────────────────────────────────── */

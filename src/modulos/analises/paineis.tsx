@@ -35,6 +35,7 @@ import {
 import { formatNumberBR } from "../../lib/base/formatters";
 import { paletaDoPainel } from "../../lib/paineis/tema-do-painel";
 import {
+  BUSCAR_NA_PAGINA,
   Campo,
   CardDeGrafico,
   ChipDeFiltro,
@@ -208,7 +209,7 @@ export function Filtros({
             onChange={(evento) => mudarPeriodo("fim", evento.target.value)}
           />
         </Campo>
-        <Campo rotulo="Buscar em toda a tela">
+        <Campo rotulo={BUSCAR_NA_PAGINA}>
           <input
             id="analises-filtro-busca"
             data-tour="analises-busca"

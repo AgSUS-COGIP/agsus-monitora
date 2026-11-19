@@ -6963,6 +6963,7 @@ bloco("lib/pagina-do-edital", () => {
       ).toEqual([
         "pre-classificacao",
         "avaliacao-documental",
+        "analisar-recursos",
         "conduzir-entrevistas",
         "classificacao",
         "approved",
