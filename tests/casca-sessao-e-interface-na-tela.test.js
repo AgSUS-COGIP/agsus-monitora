@@ -151,6 +151,7 @@ import {
 } from "./componentes/interacoes.ts";
 import {
   definirAreaAtual,
+  publicarLinhasDoMonitoramento,
   redefinirDadosDoMonitoramento,
 } from "../src/componentes/dados-do-monitoramento.ts";
 import { criarClassificacao } from "../src/modulos/classificacao/classificacao.tsx";
@@ -5057,6 +5058,8 @@ bloco("modulos/agenda-das-entrevistas", () => {
   beforeEach(() => {
     redefinirDadosDoMonitoramento();
     definirAreaAtual("saude-indigena");
+    // No app, a casca já leu as linhas do monitoramento (o status dos editais).
+    publicarLinhasDoMonitoramento([]);
   });
   afterEach(async () => {
     await act(async () => painel?.raiz?.unmount());

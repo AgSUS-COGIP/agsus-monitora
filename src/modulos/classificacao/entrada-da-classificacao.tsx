@@ -26,6 +26,11 @@ import type { EditalDaClassificacao } from "./tipos-do-estado.ts";
   Classificação não o traz). A busca recorta os cards da vista pelo número
   ou pela unidade.
 
+  Enquanto as linhas do monitoramento não chegam, os cards esperam no
+  esqueleto: sem elas todo edital seria "Sem situação" nos Ativos e, ao
+  chegarem, metade pularia para o Histórico (as abas piscavam: "Ativos 22",
+  depois 9 e 13). Se a leitura delas falhar, a lista abre assim mesmo.
+
   Só o que a lista dos editais traz: etapa, progresso e prazos não estão
   nela (ficam dentro do edital), então o card não os mostra.
 */
@@ -42,7 +47,10 @@ export function EntradaDaClassificacao({
   carregado: boolean;
   aoAbrir: (id: string) => void;
 }) {
-  const { area, linhas } = usarAreaAtual();
+  const monitoramento = usarAreaAtual();
+  const { area, linhas } = monitoramento;
+  const pronto =
+    carregado && (monitoramento.carregado || Boolean(monitoramento.erro));
   const comSituacao = useMemo(
     () => comSituacaoDoMonitoramento(daLista, linhas),
     [daLista, linhas],
@@ -87,7 +95,7 @@ export function EntradaDaClassificacao({
           }}
         />
       </label>
-      {carregado && daLista.length ? (
+      {pronto && daLista.length ? (
         <AtivosEHistorico
           {...controle}
           rotulo="Editais da área"
@@ -95,7 +103,7 @@ export function EntradaDaClassificacao({
           tour="classificacao-ativos-e-historico"
         />
       ) : null}
-      {!carregado ? (
+      {!pronto ? (
         <div className="classificacao-editais" aria-busy="true">
           <div className="ui-card ui-esqueleto classificacao-edital-esqueleto" />
           <div className="ui-card ui-esqueleto classificacao-edital-esqueleto" />
