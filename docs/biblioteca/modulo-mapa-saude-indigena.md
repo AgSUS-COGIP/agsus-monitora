@@ -86,6 +86,11 @@ Indígena, ordem 2, recurso `dashboard` (a permissão da Visão geral): `ABAS_DO
   "Rede de saúde indígena" por tipo (`redePorTipo`, os mesmos pontos que o mapa desenha) e o total.
   No mapa do DSEI, "Buscar ponto pelo nome ou município" (`buscarNaLista`, sem acento nem caixa)
   recorta só a lista; trocar de DSEI começa sem termo.
+- **Minimapa e categoria da localidade** (também do SIGEPSI). No canto do mapa do DSEI,
+  `MinimapaDoDsei` (`minimapa.tsx`; regra em `src/lib/mapas/mapa-saude-indigena/minimapa.ts`)
+  desenha em SVG o Brasil (`BR_OUTLINE`) e a área do DSEI (`contornos-dos-dseis.json`); sem o
+  contorno, um ponto na sede; some no celular. O filtro das unidades ganhou "Categoria da localidade"
+  (Urbano, Rural, Não informado), ao lado de meio de acesso e floresta (`FiltroDeAcesso.localidade`).
 - **CASAI nacional.** O losango (`aoFiltrarPorBusca`) põe "CASAI <cidade>" na busca da Visão geral e
   abre a Visão geral. No seletor "DSEI / CASAI" elas ficam no grupo "CASAIs nacionais": escolher
   uma (`aoEscolherCasai`) põe `casai-<chave>` no mesmo pedaço do endereço
