@@ -8785,34 +8785,35 @@ bloco("modulos/mapa-saude-indigena", () => {
 
     describe("território, acesso e CNES do SIGEPSI", () => {
       const fonte = (dados) => ({ ok: true, dados, linhas: 1, campos: [] });
-      const ACESSO = [
-        {
-          id: "",
-          dsei: "ALAGOAS SERGIPE",
-          nome: "XITEI",
-          tipo: "POLO BASE",
-          municipio: "",
-          lat: null,
-          lon: null,
+      /* O acesso vem nos pontos (a /todas): XITEI e LONGE com acesso. */
+      const ACESSO = {
+        XITEI: {
           meios: ["Terrestre", "Fluvial"],
           acessibilidade: "Remoto",
           localidade: "Rural",
           floresta: "Sim",
         },
-        {
-          id: "",
-          dsei: "ALAGOAS SERGIPE",
-          nome: "LONGE",
-          tipo: "POLO BASE",
-          municipio: "",
-          lat: null,
-          lon: null,
+        LONGE: {
           meios: ["Aéreo"],
           acessibilidade: "Muito remoto",
           localidade: "Rural",
           floresta: "Não",
         },
-      ];
+      };
+      const LMAP_COM_ACESSO = {
+        dsei: LMAP.dsei.map((d) => ({
+          ...d,
+          polos: d.polos.map((p) => ({
+            ...p,
+            ...(ACESSO[p.n] || {
+              meios: ["Não informado"],
+              acessibilidade: "Não informado",
+              localidade: "Não informado",
+              floresta: "Não informado",
+            }),
+          })),
+        })),
+      };
       const PRONTO = {
         estado: "pronto",
         resposta: {
@@ -8825,7 +8826,6 @@ bloco("modulos/mapa-saude-indigena", () => {
               listaDeTerras: [],
             },
           }),
-          acesso: fonte(ACESSO),
           cnes: fonte([
             {
               dsei: "ALAGOAS SERGIPE",
@@ -8848,7 +8848,7 @@ bloco("modulos/mapa-saude-indigena", () => {
         );
 
       it("o DSEI mostra o território, o acesso e o CNES das unidades", async () => {
-        await abrirAlse({ territorio: PRONTO });
+        await abrirAlse({ territorio: PRONTO, lmap: LMAP_COM_ACESSO });
         expect(
           numerosDe(host.querySelector(".mapa-si-territorio-do-dsei")),
         ).toEqual({
@@ -8870,7 +8870,7 @@ bloco("modulos/mapa-saude-indigena", () => {
       });
 
       it("os filtros de acesso e floresta recortam a tabela", async () => {
-        await abrirAlse({ territorio: PRONTO });
+        await abrirAlse({ territorio: PRONTO, lmap: LMAP_COM_ACESSO });
         const [meio, floresta] = host.querySelectorAll(
           ".mapa-si-filtros-de-acesso select",
         );
@@ -8913,7 +8913,11 @@ bloco("modulos/mapa-saude-indigena", () => {
 
       it("no Brasil, os DSEIs com unidade no filtro ao lado das ociosas", async () => {
         const aoEscolherDsei = vi.fn();
-        await montar({ territorio: PRONTO, aoEscolherDsei });
+        await montar({
+          territorio: PRONTO,
+          lmap: LMAP_COM_ACESSO,
+          aoEscolherDsei,
+        });
         const secao = [...host.querySelectorAll(".mapa-si-unidades")].find(
           (s) => s.textContent.includes("Acesso e vagas ociosas"),
         );
@@ -8923,7 +8927,7 @@ bloco("modulos/mapa-saude-indigena", () => {
           [...linha.querySelectorAll("td")].map((td) => td.textContent),
         ).toEqual(["Alagoas e Sergipe", "4", "10", "1"]);
         await act(async () => linha.querySelector("button").click());
-        expect(aoEscolherDsei).toHaveBeenCalledWith(LMAP.dsei[0]);
+        expect(aoEscolherDsei).toHaveBeenCalledWith(LMAP_COM_ACESSO.dsei[0]);
       });
 
       it("o pedido inteiro falhando não derruba o mapa", async () => {

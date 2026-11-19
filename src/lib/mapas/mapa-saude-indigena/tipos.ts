@@ -83,8 +83,10 @@ export interface CasaiNacionalDoMapa {
 export interface RegistroDoDsei {
   id: string;
   name: string;
-  /** O código da localização no SIGEPSI (casa o acesso da unidade). */
+  /** O código da localização no SIGEPSI. */
   cod?: string | null;
+  /** Meio de acesso, acessibilidade, urbano/rural e floresta (da `/todas`). */
+  acesso?: import("./territorio-do-sigepsi.ts").AcessoDaUnidade | null;
   cnes: string | number | null;
   lat: number;
   lon: number;

@@ -38,8 +38,9 @@ Tipos e fronteiras dos dados (e o que saiu do legado): [[mapa-saude-indigena-con
   (`processosDoDsei`, `src/lib/mapas/mapa-saude-indigena/processos-do-dsei.ts`). "Abrir na Visão
   geral" chama `aoAbrirNaVisaoGeral` com as unidades do DSEI; a aba põe o filtro Unidade e abre a
   Visão geral. Não depende do SIGEPSI.
-- `territorio-do-dsei.tsx` + `territorio.ts` — território, acesso e CNES do SIGEPSI
-  (`/api/territorio-dos-dseis`, pedido uma vez a cada 10 min; o mapa não espera por ele). Com o
+- `territorio-do-dsei.tsx` + `territorio.ts` — acesso (dos pontos, da `/todas`), território e
+  CNES do SIGEPSI (`/api/territorio-dos-dseis`, pedido uma vez a cada 10 min; o mapa não espera
+  por ele). Com o
   DSEI aberto: o cartão "Território" (população, aldeias, terras) ao lado do de processos
   (`.mapa-si-dsei-cartoes`), o meio de acesso e o CNES em cada unidade da lista lateral e a tabela
   "Unidades" (filtros Meio de acesso e Área de floresta, exportável pelo padrão do #904). No

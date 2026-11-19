@@ -5,14 +5,14 @@ import { respostaDoTerritorio } from "../../lib/mapas/mapa-saude-indigena/territ
 import type { RespostaDoTerritorio } from "../../lib/mapas/mapa-saude-indigena/territorio-na-tela.ts";
 
 /*
-  TERRITÓRIO, ACESSO E CNES DO SIGEPSI, PARA O MAPA
+  TERRITÓRIO E CNES DO SIGEPSI, PARA O MAPA
 
-  `/api/territorio-dos-dseis` (função da Vercel) lê as três rotas do SIGEPSI
+  `/api/territorio-dos-dseis` (função da Vercel) lê as duas rotas do SIGEPSI
   com o token do servidor; aqui só se manda o token da sessão. Um pedido por
   CACHE_MS para a página. Cada fonte vem com o próprio `ok`: a negada mostra
   "Dado do SIGEPSI indisponível" e as outras seguem. O pedido inteiro
   falhando (sem a rota no servidor local, rede) também é indisponível, e o
-  mapa continua: território e acesso são acréscimo, não a base do mapa.
+  mapa continua: território e CNES são acréscimo, não a base do mapa.
 */
 
 export const ROTA_DO_TERRITORIO = "/api/territorio-dos-dseis";

@@ -29,12 +29,14 @@ import {
   filtrarUnidades,
   porDseiDoMapa,
   situacaoDaFonte,
+  temAcessoNosPontos,
   territorioPorChaveDoMapa,
   textoDosMeios,
   unidadesComAcesso,
 } from "../../lib/mapas/mapa-saude-indigena/territorio-na-tela.ts";
 import type {
   FiltroDeAcesso,
+  SituacaoDaFonte,
   UnidadeComAcesso,
 } from "../../lib/mapas/mapa-saude-indigena/territorio-na-tela.ts";
 import { classes } from "../../ui/index.ts";
@@ -141,28 +143,38 @@ export function MapaSaudeIndigena({
   const territorios = useMemo(() => territoriosPorVagas(bolhas), [bolhas]);
 
   /*
-    Território, acesso e CNES do SIGEPSI (`territorio`, da função
-    /api/territorio-dos-dseis): cada fonte por si. Sem a prop (nos testes do
-    mapa só), nada disso aparece.
+    Acesso, território e CNES do SIGEPSI. O acesso das unidades vem nos
+    próprios pontos (a `/todas`, `temAcessoNosPontos`); território e CNES, da
+    função /api/territorio-dos-dseis (`territorio`), cada fonte por si. Sem
+    acesso nos pontos e sem a prop (os testes antigos do mapa), nada disso
+    aparece.
   */
   const [filtroDeAcesso, definirFiltroDeAcesso] = useState<FiltroDeAcesso>(
     FILTRO_DE_ACESSO_VAZIO,
   );
+  const comAcesso = useMemo(() => temAcessoNosPontos(dseis), [dseis]);
   const fontes = useMemo(() => {
-    if (!territorio) return null;
-    const falhou = territorio.estado === "indisponivel";
-    const r = territorio.resposta;
+    if (!territorio && !comAcesso) return null;
+    const falhou = !territorio || territorio.estado === "indisponivel";
+    const r = territorio?.resposta ?? null;
+    const acesso: SituacaoDaFonte<true> = comAcesso
+      ? { tipo: "pronta", dados: true }
+      : carregando
+        ? { tipo: "carregando" }
+        : {
+            tipo: "indisponivel",
+            motivo: "o SIGEPSI não trouxe o acesso das unidades",
+          };
     return {
       territorio: situacaoDaFonte(r, "territorio", { falhou }),
-      acesso: situacaoDaFonte(r, "acesso", { falhou }),
+      acesso,
       cnes: situacaoDaFonte(r, "cnes", { falhou }),
     };
-  }, [territorio]);
+  }, [territorio, comAcesso, carregando]);
   const doTerritorio = useMemo(() => {
     if (!fontes) return null;
     const chaves = dseis.map((d) => d.k);
-    const { acesso: a, cnes: c, territorio: t } = fontes;
-    const acesso = porDseiDoMapa(a.tipo === "pronta" ? a.dados : null, chaves);
+    const { cnes: c, territorio: t } = fontes;
     const cnes = porDseiDoMapa(c.tipo === "pronta" ? c.dados : null, chaves);
     const unidades = new Map<
       string,
@@ -173,7 +185,7 @@ export function MapaSaudeIndigena({
         dsei: d,
         unidades: unidadesComAcesso({
           registros: classificarRegistros(registrosDoDsei(d), d),
-          acesso: acesso ? (acesso.get(d.k) ?? []) : null,
+          comAcesso,
           cnes: cnes ? (cnes.get(d.k) ?? []) : null,
         }),
       });
@@ -182,8 +194,7 @@ export function MapaSaudeIndigena({
         t.tipo === "pronta" ? territorioPorChaveDoMapa(t.dados, chaves) : null,
       unidades,
     };
-  }, [fontes, dseis]);
-  const comAcesso = fontes?.acesso.tipo === "pronta";
+  }, [fontes, dseis, comAcesso]);
   const cruzamento = useMemo(
     () =>
       doTerritorio && comAcesso

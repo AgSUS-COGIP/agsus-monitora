@@ -161,6 +161,19 @@ export interface AcessoDaUnidade {
   floresta: "Sim" | "Não" | typeof NAO_INFORMADO;
 }
 
+/** O acesso que veio no ponto do mapa (`localizacoesPorDsei`), se veio. */
+export function acessoDoPonto(ponto: {
+  [campo: string]: unknown;
+}): AcessoDaUnidade | null {
+  if (!Array.isArray(ponto.meios)) return null;
+  return {
+    meios: ponto.meios.map(String),
+    acessibilidade: acessibilidade(ponto.acessibilidade),
+    localidade: localidade(ponto.localidade),
+    floresta: floresta(ponto.floresta),
+  };
+}
+
 const primeiraMaiuscula = (valor: string) =>
   valor ? valor[0]!.toUpperCase() + valor.slice(1) : valor;
 

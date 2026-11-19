@@ -1,8 +1,9 @@
 /*
   O TERRITÓRIO, O ACESSO E O CNES NA TELA DO MAPA
 
-  A resposta de `/api/territorio-dos-dseis` (território-do-sigepsi.ts) junto
-  do que o mapa já desenha:
+  O acesso das unidades (que vem nos pontos do mapa, da `/todas`) e a
+  resposta de `/api/territorio-dos-dseis` (território e CNES,
+  territorio-do-sigepsi.ts), junto do que o mapa já desenha:
 
   - `respostaDoTerritorio`: confere a forma da resposta (o que não for fonte
     `{ ok }` vira fonte indisponível).
@@ -11,8 +12,8 @@
   - `territorioPorChaveDoMapa`: o território indexado pela chave do DSEI do
     mapa (`casarChaveDoDsei`: KAYAPO × KAIAPO etc.).
   - `unidadesComAcesso`: as unidades que o mapa desenha (`registrosDoDsei`),
-    cada uma com o meio de acesso, a acessibilidade, urbano/rural, floresta
-    (pelo `id` da localização, ou pelo nome) e o CNES (pelo nome).
+    cada uma com o meio de acesso, a acessibilidade, urbano/rural e floresta
+    (do próprio ponto) e o CNES (pelo nome).
   - `filtrarUnidades` e `cruzarComOciosas`: os filtros de meio de acesso e
     área de floresta, e os DSEIs com unidade no filtro ao lado das vagas
     ociosas deles (as contas de `contarPorDsei`).
@@ -25,11 +26,9 @@ import {
   MEIOS_DE_ACESSO,
   NAO_INFORMADO,
   casarChaveDoDsei,
-  chaveDoNomeDaUnidade,
   cnesDaUnidade,
 } from "./territorio-do-sigepsi.ts";
 import type {
-  AcessoDaUnidade,
   EstabelecimentoDoCnes,
   FonteDoTerritorio,
   FonteLida,
@@ -41,7 +40,6 @@ export const TEXTO_DA_FONTE_INDISPONIVEL = "Dado do SIGEPSI indisponível";
 
 export interface RespostaDoTerritorio {
   territorio: FonteLida<TerritorioPorDsei>;
-  acesso: FonteLida<AcessoDaUnidade[]>;
   cnes: FonteLida<EstabelecimentoDoCnes[]>;
 }
 
@@ -79,7 +77,6 @@ export function respostaDoTerritorio(corpo: unknown): RespostaDoTerritorio {
   const c = objeto(corpo) ? corpo : {};
   return {
     territorio: fonte(c.territorio, objeto),
-    acesso: fonte(c.acesso, Array.isArray),
     cnes: fonte(c.cnes, Array.isArray),
   };
 }
@@ -166,32 +163,28 @@ export function porDseiDoMapa<T extends { dsei: string }>(
   return indice;
 }
 
+/*
+  O acesso está nos pontos quando a `/todas` trouxe as colunas: basta um
+  ponto com `meios` (a função antiga, sem elas, não deixa nenhum).
+*/
+export const temAcessoNosPontos = (dseis: readonly DseiDoMapa[]) =>
+  dseis.some((d) => (d.polos || []).some((p) => Array.isArray(p.meios)));
+
 export function unidadesComAcesso({
   registros,
-  acesso,
+  comAcesso,
   cnes,
 }: {
   registros: readonly RegistroDoDsei[];
-  /** As do DSEI (`null`: fonte indisponível). */
-  acesso: readonly AcessoDaUnidade[] | null;
+  /** Os pontos trouxeram o acesso (`temAcessoNosPontos`). */
+  comAcesso: boolean;
+  /** Os do DSEI (`null`: fonte indisponível). */
   cnes: readonly EstabelecimentoDoCnes[] | null;
 }): UnidadeComAcesso[] {
-  const porId = new Map<string, AcessoDaUnidade>();
-  const porNome = new Map<string, AcessoDaUnidade | null>();
-  for (const a of acesso || []) {
-    if (a.id) porId.set(a.id, a);
-    const nome = chaveDoNomeDaUnidade(a.nome);
-    // Dois com o mesmo nome no DSEI: o nome não decide.
-    if (nome) porNome.set(nome, porNome.has(nome) ? null : a);
-  }
+  // A lista do CNES já é a do DSEI; a grafia do DSEI é a da rota.
+  const dsei = cnes?.[0]?.dsei ?? "";
   return registros.map((r) => {
-    const a = acesso
-      ? (r.cod ? porId.get(String(r.cod)) : undefined) ||
-        porNome.get(chaveDoNomeDaUnidade(r.name)) ||
-        null
-      : null;
-    // A lista do CNES já é a do DSEI; a grafia do DSEI é a da rota.
-    const dsei = cnes?.[0]?.dsei ?? "";
+    const a = comAcesso ? r.acesso : null;
     const doCnes = cnes ? cnesDaUnidade(r.name, dsei, cnes) : null;
     return {
       chave: chaveDaUnidade(r),
@@ -199,10 +192,10 @@ export function unidadesComAcesso({
       tipo: r.type?.label || "",
       municipio: r.city || "",
       uf: String(r.ufAdministrativa || r.uf || ""),
-      meios: acesso ? (a?.meios ?? []) : null,
-      acessibilidade: acesso ? (a?.acessibilidade ?? NAO_INFORMADO) : null,
-      localidade: acesso ? (a?.localidade ?? NAO_INFORMADO) : null,
-      floresta: acesso ? (a?.floresta ?? NAO_INFORMADO) : null,
+      meios: comAcesso ? (a?.meios ?? []) : null,
+      acessibilidade: comAcesso ? (a?.acessibilidade ?? NAO_INFORMADO) : null,
+      localidade: comAcesso ? (a?.localidade ?? NAO_INFORMADO) : null,
+      floresta: comAcesso ? (a?.floresta ?? NAO_INFORMADO) : null,
       cnes: cnes ? (doCnes?.cnes ?? "") : null,
     };
   });
