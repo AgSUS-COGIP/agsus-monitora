@@ -89,8 +89,10 @@ import { fonteDoApp } from "./fonte-do-app.ts";
 import { htmlDaPagina } from "./pagina-montada.ts";
 import {
   Abas,
+  AtivosEHistorico,
   ContagemDaAba,
   formatarContagem,
+  usarAtivosEHistorico,
   Segmentado,
   SeloDePrazo,
 } from "../src/ui/index.ts";
@@ -100,6 +102,11 @@ import {
 } from "../src/app/filtros-no-endereco.ts";
 import type { LinhaDoMonitoramento } from "../src/componentes/tipos-do-monitoramento.ts";
 import { caminhoDoDestino } from "../src/lib/navegacao/rotas.ts";
+import {
+  editalDoHistorico,
+  situacaoDoEdital,
+  tomDaSituacaoDoEdital,
+} from "../src/lib/editais/editais-ativos.ts";
 import { CartaoDoMapa } from "../src/modulos/visao-geral/cartao-do-mapa.tsx";
 
 bloco("componentes/cabecalho-da-ficha", async () => {
@@ -2826,6 +2833,114 @@ bloco("ui/contagem-da-aba", () => {
       ).toBe("alerta");
       expect(opcoes[2]!.querySelector(".ui-aba-contagem")).toBeNull();
     });
+  });
+});
+
+bloco("ui/ativos-e-historico", () => {
+  (
+    globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+  ).IS_REACT_ACT_ENVIRONMENT = true;
+
+  let raiz: Root | null = null;
+  afterEach(() => {
+    act(() => raiz?.unmount());
+    raiz = null;
+    document.body.innerHTML = "";
+    sessionStorage.clear();
+  });
+
+  const EDITAIS = [
+    { id: "a", status: "Em andamento" },
+    { id: "b", status: "Concluído" },
+    { id: "c", status: "Em andamento" },
+    { id: "d", status: "Suspenso" },
+    { id: "e", status: "Cancelado" },
+  ];
+  const CHAVE = "teste:vista";
+
+  function Lista() {
+    const { visiveis, controle } = usarAtivosEHistorico(EDITAIS, {
+      chave: CHAVE,
+      ehHistorico: editalDoHistorico,
+      situacao: situacaoDoEdital,
+    });
+    return h(
+      "div",
+      null,
+      h(AtivosEHistorico, {
+        ...controle,
+        rotulo: "Editais",
+        tomDaSituacao: tomDaSituacaoDoEdital,
+      }),
+      h(
+        "ul",
+        { className: "itens" },
+        visiveis.map((e) => h("li", { key: e.id }, e.id)),
+      ),
+    );
+  }
+
+  function montar() {
+    const caixa = document.createElement("div");
+    document.body.append(caixa);
+    raiz = createRoot(caixa);
+    act(() => raiz!.render(h(Lista)));
+    return caixa;
+  }
+
+  const itens = (caixa: HTMLElement) =>
+    [...caixa.querySelectorAll(".itens li")].map((li) => li.textContent);
+  const situacoes = (caixa: HTMLElement) =>
+    [...caixa.querySelectorAll(".ui-ativos-situacoes li")].map(
+      (li) => li.textContent,
+    );
+
+  it("abre nos ativos, com a contagem nas opções e por situação", () => {
+    const caixa = montar();
+    const grupo = caixa.querySelector('[role="radiogroup"]')!;
+    expect(grupo.getAttribute("aria-label")).toBe("Editais");
+    const opcoes = [...grupo.querySelectorAll('[role="radio"]')];
+    expect(opcoes.map((o) => o.textContent)).toEqual(["Ativos3", "Histórico2"]);
+    expect(opcoes[0]!.getAttribute("aria-checked")).toBe("true");
+    expect(itens(caixa)).toEqual(["a", "c", "d"]);
+    expect(situacoes(caixa)).toEqual(["Em andamento 2", "Suspenso 1"]);
+    const lista = caixa.querySelector(".ui-ativos-situacoes")!;
+    expect(lista.getAttribute("aria-label")).toBe("Por situação");
+    expect(lista.getAttribute("title")).toBe("Em andamento 2 · Suspenso 1");
+    // A cor complementa: o rótulo é texto, o tom vem no data-tom do selo.
+    expect(lista.querySelector(".ui-selo")!.getAttribute("data-tom")).toBe(
+      "info",
+    );
+  });
+
+  it("um clique leva ao Histórico, que volta no F5", () => {
+    const caixa = montar();
+    const historico = caixa.querySelector<HTMLButtonElement>(
+      '[data-valor="historico"]',
+    )!;
+    act(() => historico.click());
+    expect(historico.getAttribute("aria-checked")).toBe("true");
+    expect(itens(caixa)).toEqual(["b", "e"]);
+    expect(situacoes(caixa)).toEqual(["Cancelado 1", "Concluído 1"]);
+    expect(JSON.parse(sessionStorage.getItem(CHAVE)!)).toBe("historico");
+
+    act(() => raiz?.unmount());
+    document.body.innerHTML = "";
+    const denovo = montar();
+    expect(itens(denovo)).toEqual(["b", "e"]);
+  });
+
+  it("as setas trocam a vista", () => {
+    const caixa = montar();
+    const ativos = caixa.querySelector<HTMLButtonElement>(
+      '[data-valor="ativos"]',
+    )!;
+    act(() => {
+      ativos.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }),
+      );
+    });
+    expect(itens(caixa)).toEqual(["b", "e"]);
   });
 });
 

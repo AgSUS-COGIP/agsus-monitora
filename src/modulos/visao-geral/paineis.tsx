@@ -48,6 +48,7 @@ import {
   EstadoVazio,
   ListaDePendencias,
   MaisOpcoes,
+  MarcaDaBuscaNaPagina,
   PainelDeFiltros,
   Popover,
 } from "../../ui/index.ts";
@@ -345,6 +346,7 @@ export function Filtros({
               </ChipDeFiltro>
             ) : null}
           </ChipsDeFiltro>
+          <MarcaDaBuscaNaPagina busca={e.busca} />
           <button
             type="button"
             className="btn ghost small"

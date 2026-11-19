@@ -35,6 +35,8 @@ export type OpcaoDoFiltro =
  */
 export interface PedidoDaAya {
   edital?: unknown;
+  /** O id do edital, quando quem pede tem (a faixa das etapas): vale antes do número. */
+  editalId?: unknown;
   metrica?: unknown;
   busca?: unknown;
 }
@@ -86,7 +88,11 @@ export function filtrosDeRecursos(
   opcoes: OpcoesComEditais | null | undefined,
 ): FiltrosDosRecursos {
   const proximos = { ...atuais };
-  const [edital] = opcoesDoEdital(opcoes?.editais, pedido?.edital);
+  const id = String(pedido?.editalId ?? "").trim();
+  const [edital] =
+    id && (opcoes?.editais || []).some((opcao) => valorDe(opcao) === id)
+      ? [id]
+      : opcoesDoEdital(opcoes?.editais, pedido?.edital);
   if (edital) proximos.edital = edital;
   const metrica = METRICA_DE_RECURSOS[pedido?.metrica as string];
   if (metrica) proximos[metrica[0]] = metrica[1];

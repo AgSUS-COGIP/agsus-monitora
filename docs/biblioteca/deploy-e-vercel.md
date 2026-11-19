@@ -97,10 +97,25 @@ Aya responde no navegador; o endpoint de IA e o bridge local foram retirados.
 - `dseis.ts` — **sede, polos base, CASAIs e unidades de lotação de cada DSEI, do SIGEPSI**, para o
   [[modulo-mapa-saude-indigena]]. Só para quem está logado (token da sessão conferido em
   `/auth/v1/user`); a função lê `https://sigepsi.agenciasus.org.br/api/mapa-dseis/localizacoes/todas`
-  com `Bearer <SIGEPSI_API_TOKEN>`. Responde `{ dseis: { <chave>: { nome, polos, sede } },
+  com `Bearer <SIGEPSI_API_TOKEN>`. Cada polo leva também o acesso da unidade (`meios`,
+  `acessibilidade`, `localidade`, `floresta`, das colunas `TP_MEIO_ACESSO`,
+  `TP_ACESSIBILIDADE_GEOGRAFICA`, `TP_CATEGORIA_LOCALIDADE` e `ST_FLORESTA`); auditoria (`AU_*`) e
+  `DS_OBSERVACAO` não saem da função. Responde `{ dseis: { <chave>: { nome, polos, sede } },
 casaisNacionais, lidoEm }` (a lista de DSEIs do mapa e as CASAIs nacionais, localizações 131 e 132) já agrupado por `chaveDoDsei`
   (`src/lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts`), guarda 10 min na instância e só em
   cache privado. Sem a variável: 500 com `faltam`; SIGEPSI recusando: 502 com `status_do_sigepsi`.
+- `territorio-dos-dseis.ts` — **território e CNES dos DSEIs, do SIGEPSI**, para o
+  [[modulo-mapa-saude-indigena]]. O mesmo molde de `dseis.ts` (só GET, sessão conferida em
+  `/auth/v1/user`, `SIGEPSI_API_TOKEN` só no servidor). Lê duas rotas, cada uma por si:
+  `territorio` (`/api/mapa-dseis/territorio`: população indígena, aldeias e terras de cada DSEI) e
+  `cnes` (`/api/mapa-dseis/rede`). Responde 200 com `{ territorio, cnes, lidoEm }`, e cada fonte é
+  `{ ok: true, dados, linhas, campos }` (`campos`: só os nomes dos campos, para o diagnóstico) ou
+  `{ ok: false, status, motivo }` (401/403: "a chave do Yeendé não lê esta rota"). **Em
+  19/11/2026 as duas respondem 401 ao token** (só aceitam sessão de usuário do SIGEPSI): falta a
+  liberação da equipe do SIGEPSI. Nunca lê `/api/mapa-dseis` (força de trabalho, dado pessoal) e
+  só repassa os campos que `src/lib/mapas/mapa-saude-indigena/territorio-do-sigepsi.ts` copia.
+  Fonte lida fica 10 min na instância; negada, 1 min. O acesso das unidades não passa por aqui:
+  vem da `/localizacoes/todas`, em `dseis.ts`.
 
 ### Regras das funções
 

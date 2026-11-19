@@ -2,17 +2,51 @@
 import { bloco } from "./apoio/bloco.ts";
 import * as alcanceDaSelecaoNs from "../src/lib/base/alcance-da-selecao.ts";
 import {
+  contarPorSituacao,
+  separarAtivosEHistorico,
+  textoDasSituacoes,
+  vistaDaLista,
+} from "../src/lib/base/ativos-e-historico.ts";
+import {
+  comSituacaoDoMonitoramento,
+  editalDoHistorico,
+  situacaoDoEdital,
+  tomDaSituacaoDoEdital,
+} from "../src/lib/editais/editais-ativos.ts";
+import {
   arquivoDaTabela,
   nomeDoArquivoExportado,
   pdfDaTabela,
   textoDaCelula,
   xlsxDaTabela,
 } from "../src/lib/base/exportacao-da-tabela.ts";
+import {
+  camposDasLinhas,
+  casarChaveDoDsei,
+  cnesDaUnidade,
+  estabelecimentosDoCnes,
+  motivoDaFalha,
+  terrasDistintas,
+  territorioPorDsei,
+} from "../src/lib/mapas/mapa-saude-indigena/territorio-do-sigepsi.ts";
 import { lembrarBanco } from "./apoio/bancos-abertos.ts";
 import {
   ACAO_DA_PENDENCIA,
   editaisDaPendencia,
 } from "../src/lib/visao-geral/visao-geral.ts";
+import {
+  ETAPAS_DO_FLUXO,
+  etapaDoFluxo,
+  etapasDoFluxo,
+  idaParaAEtapa,
+  tituloDoFluxo,
+  vagaDaChave,
+} from "../src/lib/navegacao/fluxo-das-etapas.ts";
+import {
+  consumirPedidoDeFiltro,
+  pedirFiltro,
+} from "../src/app/pedido-de-filtro.ts";
+import { filtrosDeRecursos } from "../src/lib/aya/filtro-da-aya.ts";
 import {
   afterEach,
   beforeAll,
@@ -3864,6 +3898,11 @@ bloco("lib/localizacoes-do-sigepsi", () => {
           tipo: "casai",
           municipio: "MACEIO",
           origem: "sigepsi",
+          // Sem as colunas de acesso na linha: não informado.
+          meios: ["Não informado"],
+          acessibilidade: "Não informado",
+          localidade: "Não informado",
+          floresta: "Não informado",
         },
         expect.objectContaining({ n: "PB ACONÃ", tipo: "polo", uf: "AL" }),
         expect.objectContaining({ n: "NOVO DIA", tipo: "unidade" }),
@@ -4204,6 +4243,316 @@ bloco("lib/localizacoes-do-sigepsi", () => {
       expect(await carregarLocalizacoes(sessao, { buscar })).toBeNull();
       expect(buscar).toHaveBeenCalledTimes(2);
       aviso.mockRestore();
+    });
+  });
+});
+
+bloco("lib/territorio-do-sigepsi", () => {
+  /*
+    Território, acesso e CNES do SIGEPSI
+    (src/lib/mapas/mapa-saude-indigena/territorio-do-sigepsi.ts e
+    api/territorio-dos-dseis.ts). Linhas no formato das rotas
+    /api/mapa-dseis/territorio, /localizacoes e /rede. Dados fictícios.
+  */
+  const TERRITORIO = [
+    {
+      dsei: "DSEI ALAGOAS E SERGIPE",
+      uf: "AL",
+      populacaoIndigena: 12000,
+      qtdAldeias: 40,
+      qtdTerrasIndigenas: 3,
+      terras: [
+        { codigo: "10", nome: "TERRA B", aldeias: [{ uf: "AL" }] },
+        { codigo: "11", nome: "TERRA A", aldeias: [] },
+        { codigo: "10", nome: "TERRA B", aldeias: [{ uf: "SE" }] },
+      ],
+    },
+    {
+      dsei: "Yanomami",
+      populacaoIndigena: "",
+      qtdAldeias: null,
+      terras: 7,
+    },
+    { dsei: "", populacaoIndigena: 1 },
+  ];
+  const REDE = [
+    {
+      dsei: "DSEI ALAGOAS E SERGIPE",
+      nome: "Polo Base Indígena Xitei",
+      cnes: "1234567",
+      uf: "al",
+      municipio: "MACEIO",
+      lat: -9.9,
+      lng: -36,
+      grupo: "u",
+    },
+    { dsei: "DSEI ALAGOAS E SERGIPE", nome: "Sem código", cnes: "" },
+  ];
+
+  describe("conversão", () => {
+    it("território: população, aldeias e terras distintas por código", () => {
+      const t = territorioPorDsei(TERRITORIO);
+      expect(Object.keys(t)).toEqual(["ALAGOAS SERGIPE", "YANOMAMI"]);
+      expect(t["ALAGOAS SERGIPE"]).toEqual({
+        nome: "DSEI ALAGOAS E SERGIPE",
+        populacao: 12000,
+        aldeias: 40,
+        terras: 2,
+        listaDeTerras: [
+          { codigo: "11", nome: "TERRA A" },
+          { codigo: "10", nome: "TERRA B" },
+        ],
+      });
+      // Campo vazio é dado ausente, não zero; `terras` número vale.
+      expect(t.YANOMAMI).toMatchObject({
+        populacao: null,
+        aldeias: null,
+        terras: 7,
+      });
+    });
+
+    it("terras que atravessam dois DSEIs contam uma vez no total", () => {
+      const t = territorioPorDsei([
+        TERRITORIO[0],
+        { ...TERRITORIO[0], dsei: "Xingu" },
+      ]);
+      expect(terrasDistintas(Object.values(t))).toBe(2);
+    });
+
+    it("acesso: as colunas da /todas viram meios, acessibilidade, localidade e floresta", () => {
+      const linha = (campos: Record<string, unknown>) => ({
+        CO_SEQ_LOCALIZACAO_POLO_BASE: "5",
+        NO_DSEI: "ALAGOAS E SERGIPE",
+        TP_UNIDADE: "POLO BASE",
+        NO_LOTACAO: "POLO BASE XITEI",
+        NU_CEP: "57370000",
+        NO_MUNICIPIO: "TRAIPU",
+        CG_LATITUDE: "-9.9",
+        CG_LONGITUDE: "-36",
+        ST_REGISTRO_ATIVO: "S",
+        DS_OBSERVACAO: "texto livre",
+        AU_USUARIO_INCLUSAO: "alguém",
+        AU_DATA_INCLUSAO: "2026-01-01",
+        ...campos,
+      });
+      const { polos } = localizacoesPorDsei([
+        linha({
+          TP_MEIO_ACESSO: "terrestre/FLUVIAL e aereo",
+          TP_ACESSIBILIDADE_GEOGRAFICA: "MUITO REMOTO",
+          TP_CATEGORIA_LOCALIDADE: "rural",
+          ST_FLORESTA: "s",
+        }),
+        linha({
+          CO_SEQ_LOCALIZACAO_POLO_BASE: "6",
+          NO_LOTACAO: "UBSI BANANAL",
+          TP_UNIDADE: "UNIDADE DE LOTAÇÃO",
+          TP_MEIO_ACESSO: "",
+          TP_ACESSIBILIDADE_GEOGRAFICA: null,
+          TP_CATEGORIA_LOCALIDADE: "?",
+          ST_FLORESTA: "NÃO",
+        }),
+      ])["ALAGOAS SERGIPE"] ?? { polos: [] };
+      expect(polos[0]).toMatchObject({
+        cod: "5",
+        meios: ["Terrestre", "Fluvial", "Aéreo"],
+        acessibilidade: "Muito remoto",
+        localidade: "Rural",
+        floresta: "Sim",
+      });
+      expect(polos[1]).toMatchObject({
+        meios: ["Não informado"],
+        acessibilidade: "Não informado",
+        localidade: "Não informado",
+        floresta: "Não",
+      });
+      // Auditoria e texto livre não saem da função.
+      const campos = Object.keys(polos[0] ?? {});
+      for (const fora of [
+        "DS_OBSERVACAO",
+        "AU_USUARIO_INCLUSAO",
+        "AU_DATA_INCLUSAO",
+      ])
+        expect(campos).not.toContain(fora);
+      expect(JSON.stringify(polos)).not.toContain("texto livre");
+    });
+
+    it("CNES: só com código, e casa com a unidade pelo nome", () => {
+      const rede = estabelecimentosDoCnes(REDE);
+      expect(rede).toEqual([
+        {
+          dsei: "ALAGOAS SERGIPE",
+          nome: "Polo Base Indígena Xitei",
+          cnes: "1234567",
+          uf: "AL",
+          municipio: "MACEIO",
+          lat: -9.9,
+          lon: -36,
+        },
+      ]);
+      expect(
+        cnesDaUnidade("POLO BASE XITEI", "ALAGOAS SERGIPE", rede)?.cnes,
+      ).toBe("1234567");
+      expect(cnesDaUnidade("POLO BASE XITEI", "YANOMAMI", rede)).toBeNull();
+      expect(cnesDaUnidade("UBSI BANANAL", "ALAGOAS SERGIPE", rede)).toBeNull();
+    });
+
+    it("a chave do DSEI casa com a do mapa (KAYAPO × KAIAPO)", () => {
+      const doMapa = ["KAIAPO PARA", "LESTE RORAIMA", "YANOMAMI"];
+      expect(casarChaveDoDsei("KAYAPO PARA", doMapa)).toBe("KAIAPO PARA");
+      expect(casarChaveDoDsei("YANOMAMI", doMapa)).toBe("YANOMAMI");
+      expect(casarChaveDoDsei("XINGU", doMapa)).toBeNull();
+    });
+
+    it("o motivo diz qual liberação pedir", () => {
+      expect(motivoDaFalha(401)).toBe("a chave do Yeendé não lê esta rota");
+      expect(motivoDaFalha(403)).toBe("a chave do Yeendé não lê esta rota");
+      expect(motivoDaFalha(404)).toBe("a rota não existe no SIGEPSI");
+      expect(motivoDaFalha(null)).toBe("o SIGEPSI não respondeu");
+      expect(motivoDaFalha(500)).toBe("o SIGEPSI respondeu 500");
+    });
+
+    it("os campos do diagnóstico são só nomes", () => {
+      expect(camposDasLinhas(REDE)).toEqual([
+        "cnes",
+        "dsei",
+        "grupo",
+        "lat",
+        "lng",
+        "municipio",
+        "nome",
+        "uf",
+      ]);
+    });
+  });
+
+  describe("/api/territorio-dos-dseis", () => {
+    const ambiente = { ...process.env };
+    const original = globalThis.fetch;
+
+    beforeEach(async () => {
+      process.env.VITE_SUPABASE_URL = "https://banco.exemplo";
+      process.env.VITE_SUPABASE_PUBLISHABLE_KEY = "pub";
+      process.env.SIGEPSI_API_TOKEN = "segredo";
+      const { esquecerCache } = await import("../api/territorio-dos-dseis.ts");
+      esquecerCache();
+    });
+    afterEach(() => {
+      process.env = { ...ambiente };
+      globalThis.fetch = original;
+      vi.restoreAllMocks();
+    });
+
+    async function chamar(headers: Record<string, string> = {}) {
+      const { default: handler } =
+        await import("../api/territorio-dos-dseis.ts");
+      const gravado = {
+        codigo: 0,
+        cabecalhos: {} as Record<string, string>,
+        corpo: "",
+      };
+      const res: Pick<RespostaDaVercel, "status" | "setHeader" | "end"> = {
+        status(codigo) {
+          gravado.codigo = codigo;
+          return res as RespostaDaVercel;
+        },
+        setHeader(nome, valor) {
+          gravado.cabecalhos[nome] = String(valor);
+          return res as RespostaDaVercel;
+        },
+        end(corpo?: unknown) {
+          gravado.corpo = String(corpo ?? "");
+          return res as RespostaDaVercel;
+        },
+      };
+      const pedido: Pick<PedidoDaVercel, "method" | "headers"> = {
+        method: "GET",
+        headers,
+      };
+      await handler(pedido as PedidoDaVercel, res as RespostaDaVercel);
+      const json: unknown = gravado.corpo ? JSON.parse(gravado.corpo) : null;
+      return { ...gravado, json };
+    }
+
+    const urlDe = (entrada: Parameters<typeof fetch>[0]) =>
+      typeof entrada === "string"
+        ? entrada
+        : entrada instanceof URL
+          ? entrada.href
+          : entrada.url;
+
+    /* O SIGEPSI falso: cada rota com a sua lista; `status` nega uma rota. */
+    function sigepsi(status: Record<string, number> = {}) {
+      return vi.fn<typeof fetch>(async (entrada) => {
+        const url = urlDe(entrada);
+        if (url.endsWith("/auth/v1/user")) return new Response("{}");
+        const rota = new URL(url).pathname;
+        const negada = status[rota];
+        if (negada) return new Response("", { status: negada });
+        const corpo =
+          rota === "/api/mapa-dseis/territorio"
+            ? TERRITORIO
+            : rota === "/api/mapa-dseis/rede"
+              ? REDE
+              : { erro: "rota que a função não deveria ler" };
+        return new Response(JSON.stringify(corpo));
+      });
+    }
+
+    it("sem sessão, 401 sem chamar o SIGEPSI", async () => {
+      const fetchFalso = sigepsi();
+      globalThis.fetch = fetchFalso;
+      expect((await chamar()).codigo).toBe(401);
+      expect(fetchFalso).not.toHaveBeenCalled();
+    });
+
+    it("lê as duas rotas com o token do servidor, e nunca a da força de trabalho", async () => {
+      const fetchFalso = sigepsi();
+      globalThis.fetch = fetchFalso;
+      const r = await chamar({ authorization: "Bearer sessao" });
+      expect(r.codigo).toBe(200);
+      const rotas = fetchFalso.mock.calls
+        .map(([entrada]) => new URL(urlDe(entrada)).pathname)
+        .filter((rota) => rota.startsWith("/api/"))
+        .sort();
+      expect(rotas).toEqual([
+        "/api/mapa-dseis/rede",
+        "/api/mapa-dseis/territorio",
+      ]);
+      for (const [entrada, opcoes] of fetchFalso.mock.calls)
+        if (urlDe(entrada).includes("sigepsi"))
+          expect(new Headers(opcoes?.headers).get("Authorization")).toBe(
+            "Bearer segredo",
+          );
+      expect(r.corpo).not.toContain("segredo");
+      expect(r.cabecalhos["Cache-Control"]).toMatch(/^private/);
+      expect(r.json).toMatchObject({
+        territorio: { ok: true, linhas: 3 },
+        cnes: { ok: true, linhas: 2, campos: expect.arrayContaining(["cnes"]) },
+      });
+    });
+
+    it("rota negada não derruba as outras e diz o porquê", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      globalThis.fetch = sigepsi({ "/api/mapa-dseis/territorio": 403 });
+      const r = await chamar({ authorization: "Bearer sessao" });
+      expect(r.codigo).toBe(200);
+      expect(r.json).toMatchObject({
+        territorio: {
+          ok: false,
+          status: 403,
+          motivo: "a chave do Yeendé não lê esta rota",
+        },
+        cnes: { ok: true },
+      });
+    });
+
+    it("guarda o que leu: a segunda chamada só confere a sessão", async () => {
+      const fetchFalso = sigepsi();
+      globalThis.fetch = fetchFalso;
+      await chamar({ authorization: "Bearer sessao" });
+      await chamar({ authorization: "Bearer sessao" });
+      // 2 sessões + 2 rotas.
+      expect(fetchFalso).toHaveBeenCalledTimes(4);
     });
   });
 });
@@ -6372,6 +6721,75 @@ bloco("lib/presets-de-colunas", () => {
   });
 });
 
+bloco("lib/base/ativos-e-historico", () => {
+  const EDITAIS = [
+    { id: "a", status: "Em andamento" },
+    { id: "b", status: "Concluído" },
+    { id: "c", status: "Suspenso" },
+    { id: "d", status: "em Andamento" },
+    { id: "e", status: "Cancelado" },
+    { id: "f", status: "Em andamento", ativo: false },
+    { id: "g", status: "Cronograma encerrado" },
+    { id: "h", status: "" },
+  ];
+
+  it("separa ativos e histórico na ordem em que vieram", () => {
+    const { ativos, historico } = separarAtivosEHistorico(
+      EDITAIS,
+      editalDoHistorico,
+    );
+    expect(ativos.map((e) => e.id)).toEqual(["a", "c", "d", "h"]);
+    expect(historico.map((e) => e.id)).toEqual(["b", "e", "f", "g"]);
+    expect(separarAtivosEHistorico(null, () => true)).toEqual({
+      ativos: [],
+      historico: [],
+    });
+  });
+
+  it("conta por situação: grafias juntas, mais numerosa primeiro", () => {
+    const ativos = EDITAIS.filter((e) => !editalDoHistorico(e));
+    const contagem = contarPorSituacao(ativos, situacaoDoEdital);
+    expect(contagem).toEqual([
+      { rotulo: "Em andamento", quantos: 2 },
+      { rotulo: "Sem situação", quantos: 1 },
+      { rotulo: "Suspenso", quantos: 1 },
+    ]);
+    expect(textoDasSituacoes(contagem)).toBe(
+      "Em andamento 2 · Sem situação 1 · Suspenso 1",
+    );
+    expect(textoDasSituacoes([{ rotulo: "Concluído", quantos: 1234 }])).toBe(
+      "Concluído 1.234",
+    );
+  });
+
+  it("o desativado aparece como Desativado; a cor segue o status", () => {
+    expect(situacaoDoEdital({ status: "Em andamento", ativo: false })).toBe(
+      "Desativado",
+    );
+    expect(tomDaSituacaoDoEdital("Concluído")).toBe("aprovado");
+    expect(tomDaSituacaoDoEdital("Cancelado")).toBe("reprovado");
+    expect(tomDaSituacaoDoEdital("Em andamento")).toBe("revisar");
+    expect(tomDaSituacaoDoEdital("Suspenso")).toBe("neutro");
+  });
+
+  it("a vista guardada: só historico muda o padrão", () => {
+    expect(vistaDaLista("historico")).toBe("historico");
+    expect(vistaDaLista("ativos")).toBe("ativos");
+    expect(vistaDaLista({})).toBe("ativos");
+  });
+
+  it("junta o status do monitoramento pelo id", () => {
+    const juntos = comSituacaoDoMonitoramento(
+      [{ id: "x", edital: "1/2026" }, { id: "y" }],
+      [{ id: "x", status: "Concluído", ativo: true }, null, { id: 7 }],
+    );
+    expect(juntos).toEqual([
+      { id: "x", edital: "1/2026", status: "Concluído", ativo: true },
+      { id: "y" },
+    ]);
+  });
+});
+
 bloco("lib/base/exportacao-da-tabela", () => {
   const TABELA = {
     titulo: "Seleção — Saúde Indígena",
@@ -6499,5 +6917,134 @@ bloco("lib/pede-acao-da-visao-geral", () => {
       rotulo: "Atualizar status",
       view: "approved",
     });
+  });
+});
+
+bloco("lib/fluxo-das-etapas", () => {
+  /*
+    O fluxo entre as etapas do processo seletivo
+    (src/lib/navegacao/fluxo-das-etapas.ts): a ordem, o título da faixa e
+    como cada tela recebe o edital e a vaga (o mesmo destino da aba
+    "Candidatos" da página do edital).
+  */
+  const ID = "0b7c9a52-2d55-4c4e-9f7a-1c3d5e7f9a1b";
+  const etapa = (view: string) => {
+    const achada = etapaDoFluxo(view);
+    if (!achada) throw new Error(`sem a etapa ${view}`);
+    return achada;
+  };
+
+  it("as etapas, na ordem do processo, sem o Painel da Seleção", () => {
+    expect(ETAPAS_DO_FLUXO.map((e) => e.curto)).toEqual([
+      "Triagem",
+      "Documental",
+      "Recursos",
+      "Entrevistas",
+      "Classificação",
+      "Aprovados",
+    ]);
+    expect(
+      etapasDoFluxo((view) => view !== "analisar-recursos").map((e) => e.view),
+    ).toEqual([
+      "pre-classificacao",
+      "avaliacao-documental",
+      "conduzir-entrevistas",
+      "classificacao",
+      "approved",
+    ]);
+    expect(etapaDoFluxo("selecao")).toBeUndefined();
+  });
+
+  it("o título diz a etapa e o edital", () => {
+    expect(tituloDoFluxo("avaliacao-documental", "Edital nº 093/2026")).toBe(
+      "Documental do 93/2026",
+    );
+    expect(tituloDoFluxo("approved", "93/2026 · DSEI Fictício")).toBe(
+      "Aprovados do 93/2026",
+    );
+    expect(tituloDoFluxo("classificacao", "")).toBe("Classificação");
+    expect(tituloDoFluxo("dashboard", "93/2026")).toBe("");
+  });
+
+  it("pelo id, a navegação leva o edital; a vaga vai no pedido só para quem recorta por vaga", () => {
+    const edital = { id: ID, numero: "93/2026" };
+    expect(idaParaAEtapa(etapa("classificacao"), edital, "179698")).toEqual({
+      view: "classificacao",
+      extras: { edital: ID },
+      filtro: { editalId: ID, vaga: "179698" },
+    });
+    expect(idaParaAEtapa(etapa("pre-classificacao"), edital)).toEqual({
+      view: "pre-classificacao",
+      extras: { edital: ID },
+    });
+    // Sem id, a tela que abre pelo id não tem para onde ir.
+    expect(
+      idaParaAEtapa(etapa("conduzir-entrevistas"), { numero: "93/2026" }),
+    ).toBeNull();
+  });
+
+  it("pelo número (Recursos, Aprovados), o pedido leva o número e o id; a vaga fica", () => {
+    expect(
+      idaParaAEtapa(
+        etapa("analisar-recursos"),
+        { id: ID, numero: "93/2026" },
+        "179698",
+      ),
+    ).toEqual({
+      view: "analisar-recursos",
+      filtro: { edital: "93/2026", editalId: ID },
+    });
+    expect(
+      idaParaAEtapa(etapa("approved"), { numero: "Edital 93/2026" }),
+    ).toEqual({
+      view: "approved",
+      filtro: { edital: "93/2026" },
+    });
+    expect(idaParaAEtapa(etapa("approved"), { id: ID })).toBeNull();
+  });
+
+  it("a vaga da Classificação segue pelo código; a linha do quadro sem código, não", () => {
+    expect(vagaDaChave("179698")).toBe("179698");
+    expect(vagaDaChave("quadro:42")).toBe("");
+    expect(vagaDaChave(null)).toBe("");
+  });
+
+  it("o pedido com a vaga espera a tela chegar no edital dele", () => {
+    const agora = 1_000;
+    pedirFiltro("classificacao", { editalId: ID, vaga: "179698" }, agora);
+    const noEdital = (filtro: { editalId?: string }) => filtro.editalId === ID;
+    // Outro edital aberto: o pedido fica.
+    expect(
+      consumirPedidoDeFiltro("classificacao", agora, () => false),
+    ).toBeNull();
+    expect(consumirPedidoDeFiltro("classificacao", agora, noEdital)).toEqual({
+      editalId: ID,
+      vaga: "179698",
+    });
+    expect(consumirPedidoDeFiltro("classificacao", agora, noEdital)).toBeNull();
+  });
+
+  it("Recursos recorta pelo id do edital quando ele vem, e pelo número sem ele", () => {
+    const opcoes = {
+      editais: [
+        { valor: "e1", rotulo: "93/2026 · DSEI Fictício" },
+        { valor: ID, rotulo: "93/2026 · DSEI Outro" },
+      ],
+    };
+    const vazios = {
+      edital: "",
+      origem: "",
+      analista: "",
+      situacao: "",
+      pendencia: "",
+      busca: "",
+    };
+    expect(
+      filtrosDeRecursos(vazios, { edital: "93/2026", editalId: ID }, opcoes)
+        .edital,
+    ).toBe(ID);
+    expect(
+      filtrosDeRecursos(vazios, { edital: "93/2026" }, opcoes).edital,
+    ).toBe("e1");
   });
 });

@@ -10,6 +10,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { usarLojaNaUrl } from "../../app/usar-filtros-na-url.ts";
+import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
 import type {
   EsquemaDosFiltros,
   ValoresDosFiltros,
@@ -120,7 +121,7 @@ import { ReinicioDasFichas } from "./reinicio-das-fichas.tsx";
 import type { LojaDaFila, SnapshotDaFila } from "./estado-da-fila.ts";
 import type { FiltroSalvo } from "./tipos-do-estado.ts";
 import type { AberturaDoRelatorio } from "./relatorio-de-motivos.tsx";
-import { CarregandoConteudo } from "../../ui/index.ts";
+import { BUSCAR_NESTA_TABELA, CarregandoConteudo } from "../../ui/index.ts";
 
 /*
   Aba Fila (fase F3): o resumo do andamento (o edital e o bloco recolhível
@@ -1448,6 +1449,15 @@ export function Fila({ e, fila }: FilaProps) {
       mudarNaUrl({ etapa: outra });
     if (Object.keys(resto).length) fila.mudarFiltro(resto);
   };
+  // A vaga que veio de outra etapa do mesmo edital (a faixa das etapas).
+  usarPedidoDeFiltro(
+    "avaliacao-documental",
+    true,
+    (pedido) => {
+      if (pedido.vaga) fila.mudarFiltro({ vaga: pedido.vaga });
+    },
+    (pedido) => !pedido.editalId || pedido.editalId === e.editalId,
+  );
   const [selecao, setSelecao] = useState(() => new Set<string>());
   const [acao, setAcao] = useState<AcaoPedida | null>(null);
   const [reiniciando, setReiniciando] = useState(false);
@@ -1847,9 +1857,9 @@ export function Fila({ e, fila }: FilaProps) {
               setBusca(valor);
               mudarFiltro({ busca: valor });
             },
-            placeholder: "Buscar por código ou nome",
+            placeholder: BUSCAR_NESTA_TABELA,
             rotulo:
-              "Buscar pelo código ou nome (Enter com o código abre a ficha)",
+              "Buscar nesta tabela pelo código ou nome (Enter com o código abre a ficha)",
             tour: "avd-fila-busca",
             aoTeclar: (ev) => {
               if (ev.key !== "Enter") return;

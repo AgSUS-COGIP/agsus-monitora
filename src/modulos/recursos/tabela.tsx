@@ -18,7 +18,12 @@ import {
   rotuloDoEstado,
   tomDoEstado,
 } from "../../lib/recursos/resposta-do-recurso.ts";
-import { classes, Selo, TabelaInfinita } from "../../ui/index.ts";
+import {
+  BUSCAR_NESTA_TABELA,
+  classes,
+  Selo,
+  TabelaInfinita,
+} from "../../ui/index.ts";
 
 /*
   "Fila de recursos": a tabela do painel, na tabela de carregamento contínuo
@@ -306,8 +311,8 @@ export function TabelaDeRecursos({
       idDoTitulo={analise ? "analiseRecursosFilaTitulo" : "recursosFilaTitulo"}
       titulo="Fila de recursos"
       busca={{
-        placeholder: "Buscar somente na fila de recursos",
-        rotulo: "Buscar somente na fila de recursos",
+        placeholder: BUSCAR_NESTA_TABELA,
+        rotulo: "Buscar nesta tabela de recursos",
       }}
       carregado={carregado}
       itens={recursos}

@@ -85,8 +85,12 @@ export type {
 export { GradeDeKpis, Kpi } from "./kpi.tsx";
 export type { PropriedadesDaGradeDeKpis, PropriedadesDoKpi } from "./kpi.tsx";
 export {
+  BUSCAR_NA_PAGINA,
+  BUSCAR_NESTA_TABELA,
   LinhaDoRecorte,
+  MarcaDaBuscaNaPagina,
   MarcasDoRecorte,
+  textoDaBuscaNaPagina,
   textoDoRecorte,
 } from "./linha-do-recorte.tsx";
 export type {
@@ -133,6 +137,15 @@ export type {
   PropriedadesDaSecao,
   PropriedadesDoKv,
 } from "./secao.tsx";
+export {
+  AtivosEHistorico,
+  usarAtivosEHistorico,
+} from "./ativos-e-historico.tsx";
+export type {
+  OpcoesDeAtivosEHistorico,
+  PropriedadesDeAtivosEHistorico,
+  ResultadoDeAtivosEHistorico,
+} from "./ativos-e-historico.tsx";
 export { Segmentado } from "./segmentado.tsx";
 export type {
   OpcaoDoSegmentado,

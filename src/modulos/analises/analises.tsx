@@ -406,6 +406,7 @@ function TelaDaArea({
           responsavel,
           periodo,
         })}
+        buscaNaPagina={filtros.busca}
       >
         {comData ? (
           <ChipsDeFiltro>

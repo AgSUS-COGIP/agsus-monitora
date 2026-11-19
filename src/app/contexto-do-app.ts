@@ -69,6 +69,20 @@ export function usarPecasDoApp(): PecasDoApp | null {
   return useContext(ContextoDoApp).pecas;
 }
 
+const SEMPRE_ABERTO: Assinavel<boolean> = Object.freeze({
+  obter: () => true,
+  assinar: () => () => {},
+});
+
+/**
+ * O app abriu (a sessão está abrindo ou conectada). Sem as peças (a casca
+ * desenhada sozinha num teste), conta como aberto.
+ */
+export function usarAppAberto(): boolean {
+  const aberto = usarPecasDoApp()?.appAberto ?? SEMPRE_ABERTO;
+  return useSyncExternalStore(aberto.assinar, aberto.obter, aberto.obter);
+}
+
 /** O aviso curto do app (src/app/avisos.ts; nos testes, um falso). */
 export function usarAviso(): ContextoDoApp["avisar"] {
   return useContext(ContextoDoApp).avisar;

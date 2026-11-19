@@ -15,6 +15,7 @@ import { filtrosDeRecursos } from "../../lib/aya/filtro-da-aya.ts";
 import { usarTemaEscuro } from "../../app/tema.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
+import { FluxoDasEtapas } from "../../componentes/fluxo-das-etapas.tsx";
 import {
   calcularIndicadores,
   diaEmBrasilia,
@@ -241,6 +242,16 @@ function TelaDaArea({
               aoAnalisar: podeAnalisar ? () => irParaAnalise() : undefined,
             })}
       />
+      {analise && filtros.edital ? (
+        <FluxoDasEtapas
+          view={VIEW_DA_ANALISE}
+          edital={{
+            id: filtros.edital,
+            numero: opcoes.editais.find((o) => o.valor === filtros.edital)
+              ?.rotulo,
+          }}
+        />
+      ) : null}
 
       {e.semSessao ? (
         <Aviso tom="warning" papel="alert" className="recursos-aviso-da-tela">

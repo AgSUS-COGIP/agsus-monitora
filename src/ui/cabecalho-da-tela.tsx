@@ -6,7 +6,9 @@ import { classes } from "./classes.ts";
   quebra no celular: a trilha pequena ("Projetos / Seleção") e o título
   grande; o edital (o SeletorDeEdital em linha, com "Edital" acima); e, à
   direita, as seções (um <Segmentado>), o que a tela acrescentar (`children`)
-  e o Atualizar só com o ícone (nome acessível "Atualizar").
+  e o Atualizar só com o ícone (nome acessível "Atualizar"). Embaixo, numa
+  linha inteira, as `etapas` (a faixa do fluxo entre as etapas do edital,
+  src/componentes/fluxo-das-etapas.tsx).
 
   O título da página no cabeçalho do app fica só para o leitor de tela
   nessas telas (`tituloNaTela` em src/lib/navegacao/rotas.ts): aqui ele aparece uma
@@ -19,6 +21,7 @@ export interface PropriedadesDoCabecalhoDaTela {
   descricao?: ReactNode;
   edital?: ReactNode;
   secoes?: ReactNode;
+  etapas?: ReactNode;
   aoAtualizar?: () => void;
   atualizarDesativado?: boolean;
   className?: string;
@@ -32,6 +35,7 @@ export function CabecalhoDaTela({
   descricao = null,
   edital = null,
   secoes = null,
+  etapas = null,
   aoAtualizar,
   atualizarDesativado = false,
   className,
@@ -68,6 +72,7 @@ export function CabecalhoDaTela({
           </button>
         ) : null}
       </div>
+      {etapas}
     </header>
   );
 }

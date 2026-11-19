@@ -16,6 +16,7 @@ import type {
   RecorteDaPre,
 } from "../../lib/avaliacao-documental/paginas-da-pre-classificacao.ts";
 import {
+  BUSCAR_NESTA_TABELA,
   AcoesDaLinha,
   Aviso,
   BarraDaLista,
@@ -362,8 +363,8 @@ export function EliminadosDaTriagem({
           busca={{
             valor: buscaDigitada,
             aoMudar: setBuscaDigitada,
-            placeholder: "Buscar por código ou nome",
-            rotulo: "Buscar eliminado pelo código ou nome",
+            placeholder: BUSCAR_NESTA_TABELA,
+            rotulo: "Buscar nesta tabela o eliminado pelo código ou nome",
             acao: "buscar-espelho-eliminado",
           }}
           quantos={[busca, vaga, motivo].filter(Boolean).length}
