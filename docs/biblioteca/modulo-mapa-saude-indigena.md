@@ -97,11 +97,14 @@ Indígena, ordem 2, recurso `dashboard` (a permissão da Visão geral): `ABAS_DO
   só do SIGEPSI aparece (nome de `NO_DSEI`, UF da sede); do `lmap` vêm só nome, população e UFs.
   Do SIGEPSI vêm a sede (`lat`/`lon`, onde fica a bolha nacional), os polos base, a ROTA, as CASAIs
   e as unidades de lotação.
-- **Território, acesso e CNES do SIGEPSI.** `/api/territorio-dos-dseis` ([[deploy-e-vercel]])
-  lê `/territorio`, `/localizacoes` e `/rede` do SIGEPSI, cada fonte com o próprio `ok`; o
-  formato nosso (e o casamento por nome do CNES com a unidade, `cnesDaUnidade`, e da chave do
-  DSEI, `casarChaveDoDsei`) fica em `src/lib/mapas/mapa-saude-indigena/territorio-do-sigepsi.ts`.
-  Fonte negada é "Dado do SIGEPSI indisponível", nunca zero.
+- **Acesso das unidades.** Meio de acesso, acessibilidade, urbano/rural e floresta vêm da mesma
+  `/todas` (`localizacoesPorDsei`), nos polos; as regras de leitura ficam em
+  `src/lib/mapas/mapa-saude-indigena/territorio-do-sigepsi.ts`.
+- **Território e CNES do SIGEPSI.** `/api/territorio-dos-dseis` ([[deploy-e-vercel]]) lê
+  `/territorio` e `/rede`, cada fonte com o próprio `ok`; o casamento por nome do CNES com a
+  unidade (`cnesDaUnidade`) e da chave do DSEI (`casarChaveDoDsei`) ficam no mesmo arquivo. Em
+  19/11/2026 as duas rotas respondem 401 ao token (falta a liberação do SIGEPSI). Fonte negada é
+  "Dado do SIGEPSI indisponível", nunca zero.
 - `TP_UNIDADE`: POLO BASE e ROTA → `polo`; CASAI → `casai`; SEDE → a sede; UNIDADE DE LOTAÇÃO →
   `unidade` (ou polo/CASAI, se o nome disser), desenhada pelo nome (UBSI ou Unidade). UF dos pontos
   pelo CEP; sem CEP (39 de 568 em 17/11/2026, 22 no Yanomami), o ponto não herda a UF da sede: o

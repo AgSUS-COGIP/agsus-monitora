@@ -1,19 +1,23 @@
 /*
-  /api/territorio-dos-dseis — território, acesso e CNES dos DSEIs, lidos do
-  SIGEPSI. O mesmo molde de `api/dseis.ts`:
+  /api/territorio-dos-dseis — território e CNES dos DSEIs, lidos do SIGEPSI.
+  O mesmo molde de `api/dseis.ts`:
 
   1. só GET;
   2. só para quem está logado no Yeendé (`Authorization: Bearer <token da
      sessão do Supabase>`, conferido em `/auth/v1/user`);
   3. lê o SIGEPSI com `SIGEPSI_API_TOKEN`, que nunca sai da função;
-  4. três fontes, cada uma por si (uma rota negada não derruba as outras):
-       territorio  /api/mapa-dseis/territorio     população, aldeias, terras
-       acesso      /api/mapa-dseis/localizacoes   meio de acesso, floresta…
-       cnes        /api/mapa-dseis/rede           CNES dos estabelecimentos
+  4. duas fontes, cada uma por si (uma rota negada não derruba a outra):
+       territorio  /api/mapa-dseis/territorio   população, aldeias, terras
+       cnes        /api/mapa-dseis/rede         CNES dos estabelecimentos
      Cada uma responde `{ ok: true, dados, linhas, campos }` ou
      `{ ok: false, status, motivo }` (401/403 = "a chave do Yeendé não lê
      esta rota"). `campos` são os nomes dos campos que a rota trouxe, nunca
      valores: é o diagnóstico de formato.
+
+  Em 19/11/2026 as duas rotas respondem 401 ao token (só aceitam sessão de
+  usuário do SIGEPSI): a tela mostra "Dado do SIGEPSI indisponível" até a
+  liberação. O acesso das unidades (meio de acesso, floresta…) não passa
+  por aqui: vem da `/localizacoes/todas`, em `api/dseis.ts`.
 
   Nunca lê `/api/mapa-dseis` (a força de trabalho pessoa a pessoa, dado
   pessoal): as rotas são só as de `ROTAS_DO_TERRITORIO`, e a resposta só leva
@@ -26,7 +30,6 @@
 
 import {
   ROTAS_DO_TERRITORIO,
-  acessoDasUnidades,
   camposDasLinhas,
   estabelecimentosDoCnes,
   motivoDaFalha,
@@ -50,7 +53,6 @@ export const ESPERA_DA_FALHA = 60_000;
 
 const CONVERTER: Record<FonteDoTerritorio, (linhas: unknown[]) => unknown> = {
   territorio: territorioPorDsei,
-  acesso: acessoDasUnidades,
   cnes: estabelecimentosDoCnes,
 };
 

@@ -9,7 +9,6 @@ import {
   xlsxDaTabela,
 } from "../src/lib/base/exportacao-da-tabela.ts";
 import {
-  acessoDasUnidades,
   camposDasLinhas,
   casarChaveDoDsei,
   cnesDaUnidade,
@@ -3870,6 +3869,11 @@ bloco("lib/localizacoes-do-sigepsi", () => {
           tipo: "casai",
           municipio: "MACEIO",
           origem: "sigepsi",
+          // Sem as colunas de acesso na linha: não informado.
+          meios: ["Não informado"],
+          acessibilidade: "Não informado",
+          localidade: "Não informado",
+          floresta: "Não informado",
         },
         expect.objectContaining({ n: "PB ACONÃ", tipo: "polo", uf: "AL" }),
         expect.objectContaining({ n: "NOVO DIA", tipo: "unidade" }),
@@ -4242,31 +4246,6 @@ bloco("lib/territorio-do-sigepsi", () => {
     },
     { dsei: "", populacaoIndigena: 1 },
   ];
-  const LOCALIZACOES = [
-    {
-      id: 5,
-      dsei: "DSEI ALAGOAS E SERGIPE",
-      lotacao: "POLO BASE XITEI",
-      tipoUnidade: "polo base",
-      municipio: "MACEIO",
-      lat: "-9.9",
-      lng: "-36",
-      meioAcesso: "terrestre/FLUVIAL e aereo",
-      acessibilidadeGeografica: "muito remoto",
-      categoriaLocalidade: "rural",
-      floresta: "s",
-      cep: "57000000",
-    },
-    {
-      id: 6,
-      dsei: "DSEI ALAGOAS E SERGIPE",
-      lotacao: "UBSI BANANAL",
-      meioAcesso: "",
-      acessibilidadeGeografica: "",
-      categoriaLocalidade: "?",
-      floresta: null,
-    },
-  ];
   const REDE = [
     {
       dsei: "DSEI ALAGOAS E SERGIPE",
@@ -4311,31 +4290,61 @@ bloco("lib/territorio-do-sigepsi", () => {
       expect(terrasDistintas(Object.values(t))).toBe(2);
     });
 
-    it("acesso: meios separados, acessibilidade, localidade e floresta", () => {
-      const [polo, ubsi] = acessoDasUnidades(LOCALIZACOES);
-      expect(polo).toEqual({
-        id: "5",
-        dsei: "ALAGOAS SERGIPE",
-        nome: "POLO BASE XITEI",
-        tipo: "POLO BASE",
-        municipio: "MACEIO",
-        lat: -9.9,
-        lon: -36,
+    it("acesso: as colunas da /todas viram meios, acessibilidade, localidade e floresta", () => {
+      const linha = (campos: Record<string, unknown>) => ({
+        CO_SEQ_LOCALIZACAO_POLO_BASE: "5",
+        NO_DSEI: "ALAGOAS E SERGIPE",
+        TP_UNIDADE: "POLO BASE",
+        NO_LOTACAO: "POLO BASE XITEI",
+        NU_CEP: "57370000",
+        NO_MUNICIPIO: "TRAIPU",
+        CG_LATITUDE: "-9.9",
+        CG_LONGITUDE: "-36",
+        ST_REGISTRO_ATIVO: "S",
+        DS_OBSERVACAO: "texto livre",
+        AU_USUARIO_INCLUSAO: "alguém",
+        AU_DATA_INCLUSAO: "2026-01-01",
+        ...campos,
+      });
+      const { polos } = localizacoesPorDsei([
+        linha({
+          TP_MEIO_ACESSO: "terrestre/FLUVIAL e aereo",
+          TP_ACESSIBILIDADE_GEOGRAFICA: "MUITO REMOTO",
+          TP_CATEGORIA_LOCALIDADE: "rural",
+          ST_FLORESTA: "s",
+        }),
+        linha({
+          CO_SEQ_LOCALIZACAO_POLO_BASE: "6",
+          NO_LOTACAO: "UBSI BANANAL",
+          TP_UNIDADE: "UNIDADE DE LOTAÇÃO",
+          TP_MEIO_ACESSO: "",
+          TP_ACESSIBILIDADE_GEOGRAFICA: null,
+          TP_CATEGORIA_LOCALIDADE: "?",
+          ST_FLORESTA: "NÃO",
+        }),
+      ])["ALAGOAS SERGIPE"] ?? { polos: [] };
+      expect(polos[0]).toMatchObject({
+        cod: "5",
         meios: ["Terrestre", "Fluvial", "Aéreo"],
         acessibilidade: "Muito remoto",
         localidade: "Rural",
         floresta: "Sim",
       });
-      expect(ubsi).toMatchObject({
+      expect(polos[1]).toMatchObject({
         meios: ["Não informado"],
         acessibilidade: "Não informado",
         localidade: "Não informado",
-        floresta: "Não informado",
-        lat: null,
-        lon: null,
+        floresta: "Não",
       });
-      // Nenhum campo além dos nossos (o CEP não passa).
-      expect(Object.keys(polo ?? {})).not.toContain("cep");
+      // Auditoria e texto livre não saem da função.
+      const campos = Object.keys(polos[0] ?? {});
+      for (const fora of [
+        "DS_OBSERVACAO",
+        "AU_USUARIO_INCLUSAO",
+        "AU_DATA_INCLUSAO",
+      ])
+        expect(campos).not.toContain(fora);
+      expect(JSON.stringify(polos)).not.toContain("texto livre");
     });
 
     it("CNES: só com código, e casa com a unidade pelo nome", () => {
@@ -4453,11 +4462,9 @@ bloco("lib/territorio-do-sigepsi", () => {
         const corpo =
           rota === "/api/mapa-dseis/territorio"
             ? TERRITORIO
-            : rota === "/api/mapa-dseis/localizacoes"
-              ? LOCALIZACOES
-              : rota === "/api/mapa-dseis/rede"
-                ? REDE
-                : { erro: "rota que a função não deveria ler" };
+            : rota === "/api/mapa-dseis/rede"
+              ? REDE
+              : { erro: "rota que a função não deveria ler" };
         return new Response(JSON.stringify(corpo));
       });
     }
@@ -4469,7 +4476,7 @@ bloco("lib/territorio-do-sigepsi", () => {
       expect(fetchFalso).not.toHaveBeenCalled();
     });
 
-    it("lê as três rotas com o token do servidor, e nunca a da força de trabalho", async () => {
+    it("lê as duas rotas com o token do servidor, e nunca a da força de trabalho", async () => {
       const fetchFalso = sigepsi();
       globalThis.fetch = fetchFalso;
       const r = await chamar({ authorization: "Bearer sessao" });
@@ -4479,7 +4486,6 @@ bloco("lib/territorio-do-sigepsi", () => {
         .filter((rota) => rota.startsWith("/api/"))
         .sort();
       expect(rotas).toEqual([
-        "/api/mapa-dseis/localizacoes",
         "/api/mapa-dseis/rede",
         "/api/mapa-dseis/territorio",
       ]);
@@ -4492,7 +4498,6 @@ bloco("lib/territorio-do-sigepsi", () => {
       expect(r.cabecalhos["Cache-Control"]).toMatch(/^private/);
       expect(r.json).toMatchObject({
         territorio: { ok: true, linhas: 3 },
-        acesso: { ok: true, linhas: 2 },
         cnes: { ok: true, linhas: 2, campos: expect.arrayContaining(["cnes"]) },
       });
     });
@@ -4508,7 +4513,6 @@ bloco("lib/territorio-do-sigepsi", () => {
           status: 403,
           motivo: "a chave do Yeendé não lê esta rota",
         },
-        acesso: { ok: true },
         cnes: { ok: true },
       });
     });
@@ -4518,8 +4522,8 @@ bloco("lib/territorio-do-sigepsi", () => {
       globalThis.fetch = fetchFalso;
       await chamar({ authorization: "Bearer sessao" });
       await chamar({ authorization: "Bearer sessao" });
-      // 2 sessões + 3 rotas.
-      expect(fetchFalso).toHaveBeenCalledTimes(5);
+      // 2 sessões + 2 rotas.
+      expect(fetchFalso).toHaveBeenCalledTimes(4);
     });
   });
 });

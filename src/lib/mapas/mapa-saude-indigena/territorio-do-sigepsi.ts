@@ -1,24 +1,27 @@
 import { chaveDoDsei, temCoordenada, texto } from "./chaves.js";
 
 /*
-  TERRITÓRIO, ACESSO E CNES DO SIGEPSI (a função `api/territorio-dos-dseis.ts`)
+  TERRITÓRIO, ACESSO E CNES DO SIGEPSI
 
-  Três rotas do SIGEPSI, lidas no servidor com o token dele, viram um formato
-  nosso, só com o que o mapa usa (campos conferidos no código público da
-  página do SIGEPSI, /js/mapa-dseis.js e /js/mapa-dseis-regras.js, 19/11/2026;
-  as três respondem uma lista simples):
+  Formato nosso, só com o que o mapa usa (campos conferidos no código público
+  da página do SIGEPSI, /js/mapa-dseis.js e /js/mapa-dseis-regras.js, e no
+  teste das rotas com a chave do Yeendé, 19/11/2026):
 
-  - `/api/mapa-dseis/territorio` (SIASI) → `territorioPorDsei`: população
-    indígena, aldeias e terras indígenas de cada DSEI. Terras contam por
-    `codigo` distinto (a mesma terra atravessa dois DSEIs; somar o
-    `qtdTerrasIndigenas` contaria em dobro no total).
-  - `/api/mapa-dseis/localizacoes` → `acessoDasUnidades`: meio de acesso
-    (composto, "Terrestre/Fluvial"), acessibilidade geográfica, urbano/rural e
-    floresta de cada unidade, com o `id` da localização (o mesmo
-    `CO_SEQ_LOCALIZACAO_POLO_BASE` da `/todas`, que o mapa já desenha).
-  - `/api/mapa-dseis/rede` (CNES) → `estabelecimentosDoCnes`: nome, CNES, UF,
-    município e posição. O SIGEPSI não liga o CNES à localização por chave:
-    casa pelo nome (`chaveDoNomeDaUnidade`).
+  - Acesso de cada unidade (meio de acesso composto, "Terrestre/Fluvial";
+    acessibilidade geográfica; urbano/rural; floresta): as colunas
+    TP_MEIO_ACESSO, TP_ACESSIBILIDADE_GEOGRAFICA, TP_CATEGORIA_LOCALIDADE e
+    ST_FLORESTA da `/localizacoes/todas`, que `api/dseis.ts` já lê
+    (`localizacoesPorDsei`). As regras de leitura moram aqui.
+  - A função `api/territorio-dos-dseis.ts` lê duas rotas que hoje só aceitam
+    sessão de usuário do SIGEPSI (401 com o token, 19/11/2026); fica pronta
+    para quando a chave for liberada:
+    - `/api/mapa-dseis/territorio` (SIASI) → `territorioPorDsei`: população
+      indígena, aldeias e terras indígenas de cada DSEI. Terras contam por
+      `codigo` distinto (a mesma terra atravessa dois DSEIs; somar o
+      `qtdTerrasIndigenas` contaria em dobro no total).
+    - `/api/mapa-dseis/rede` (CNES) → `estabelecimentosDoCnes`: nome, CNES,
+      UF, município e posição. O SIGEPSI não liga o CNES à localização por
+      chave: casa pelo nome (`chaveDoNomeDaUnidade`).
 
   Nunca a `/api/mapa-dseis` (a força de trabalho pessoa a pessoa): a função
   só repassa território e unidade, e só os campos listados aqui.
@@ -26,7 +29,6 @@ import { chaveDoDsei, temCoordenada, texto } from "./chaves.js";
 
 export const ROTAS_DO_TERRITORIO = Object.freeze({
   territorio: "/api/mapa-dseis/territorio",
-  acesso: "/api/mapa-dseis/localizacoes",
   cnes: "/api/mapa-dseis/rede",
 });
 export type FonteDoTerritorio = keyof typeof ROTAS_DO_TERRITORIO;
@@ -152,15 +154,6 @@ export function terrasDistintas(
 /* ---------- acesso das unidades ---------- */
 
 export interface AcessoDaUnidade {
-  /** O id da localização (o `cod` dos pontos da `/todas`). */
-  id: string;
-  /** `chaveDoDsei` do DSEI. */
-  dsei: string;
-  nome: string;
-  tipo: string;
-  municipio: string;
-  lat: number | null;
-  lon: number | null;
   /** Os meios, separados ("Terrestre/Fluvial" → os dois); vazio vira "Não informado". */
   meios: string[];
   acessibilidade: string;
@@ -192,55 +185,42 @@ export function meiosDeAcesso(valor: unknown): string[] {
   return meios.length ? meios : [NAO_INFORMADO];
 }
 
+const semAcento = (valor: string) =>
+  valor
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
 export function acessibilidade(valor: unknown): string {
   const limpo = texto(valor);
   if (!limpo) return NAO_INFORMADO;
-  const chave = limpo.toLowerCase();
-  return ACESSIBILIDADES.find((a) => a.toLowerCase() === chave) ?? limpo;
+  const chave = semAcento(limpo);
+  return ACESSIBILIDADES.find((a) => semAcento(a) === chave) ?? limpo;
 }
 
 export function localidade(valor: unknown): AcessoDaUnidade["localidade"] {
-  const chave = texto(valor).toUpperCase();
-  return chave === "URBANO"
+  const chave = semAcento(texto(valor));
+  return chave === "urbano" || chave === "urbana"
     ? "Urbano"
-    : chave === "RURAL"
+    : chave === "rural"
       ? "Rural"
       : NAO_INFORMADO;
 }
 
+/** "S"/"Sim" e "N"/"Não" (qualquer caixa e acento). */
 export function floresta(valor: unknown): AcessoDaUnidade["floresta"] {
-  const chave = texto(valor).toUpperCase();
-  return chave === "S" ? "Sim" : chave === "N" ? "Não" : NAO_INFORMADO;
+  const chave = semAcento(texto(valor));
+  return chave === "s" || chave === "sim"
+    ? "Sim"
+    : chave === "n" || chave === "nao"
+      ? "Não"
+      : NAO_INFORMADO;
 }
 
 const coordenada = (lat: unknown, lng: unknown) =>
   temCoordenada(lat, lng)
     ? { lat: Number(lat), lon: Number(lng) }
     : { lat: null, lon: null };
-
-export function acessoDasUnidades(
-  linhas: readonly unknown[],
-): AcessoDaUnidade[] {
-  const saida: AcessoDaUnidade[] = [];
-  for (const item of linhas) {
-    const linha = objeto(item);
-    const dsei = chaveDoDsei(linha?.dsei);
-    if (!linha || !dsei) continue;
-    saida.push({
-      id: texto(linha.id),
-      dsei,
-      nome: texto(linha.lotacao),
-      tipo: texto(linha.tipoUnidade).toUpperCase(),
-      municipio: texto(linha.municipio),
-      ...coordenada(linha.lat, linha.lng),
-      meios: meiosDeAcesso(linha.meioAcesso),
-      acessibilidade: acessibilidade(linha.acessibilidadeGeografica),
-      localidade: localidade(linha.categoriaLocalidade),
-      floresta: floresta(linha.floresta),
-    });
-  }
-  return saida;
-}
 
 /* ---------- CNES ---------- */
 
