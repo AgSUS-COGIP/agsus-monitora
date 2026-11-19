@@ -151,6 +151,7 @@ import {
 } from "./componentes/interacoes.ts";
 import {
   definirAreaAtual,
+  publicarLinhasDoMonitoramento,
   redefinirDadosDoMonitoramento,
 } from "../src/componentes/dados-do-monitoramento.ts";
 import { criarClassificacao } from "../src/modulos/classificacao/classificacao.tsx";
@@ -5057,6 +5058,8 @@ bloco("modulos/agenda-das-entrevistas", () => {
   beforeEach(() => {
     redefinirDadosDoMonitoramento();
     definirAreaAtual("saude-indigena");
+    // No app, a casca já leu as linhas do monitoramento (o status dos editais).
+    publicarLinhasDoMonitoramento([]);
   });
   afterEach(async () => {
     await act(async () => painel?.raiz?.unmount());
@@ -8846,6 +8849,326 @@ bloco("modulos/mapa-saude-indigena", () => {
       ]);
     });
 
+    it("os indicadores do topo seguem o recorte: Brasil, DSEI ou CASAI", async () => {
+      const indicadores = () =>
+        Object.fromEntries(
+          [
+            ...host.querySelectorAll(
+              "[aria-label^='Indicadores do mapa'] > div",
+            ),
+          ].map((d) => [
+            d.querySelector("span").textContent,
+            d.querySelector("strong").textContent,
+          ]),
+        );
+      const recorte = () =>
+        host.querySelector(".mapa-si-resumo__recorte").textContent;
+      const barra = () =>
+        host.querySelector(".mapa-si-resumo__preenchimento")?.textContent || "";
+
+      await montar();
+      expect(recorte()).toBe("Brasil");
+      expect(indicadores()).toMatchObject({
+        "Editais acompanhados": "2",
+        "Vagas acompanhadas": "50",
+        Contratadas: "19",
+      });
+      // 19 de 50 contratadas: 38%.
+      expect(barra()).toContain("38%");
+      expect(barra()).toContain("19 de 50 vagas preenchidas");
+
+      await rerender({ dseiSelecionado: "ALAGOAS E SERGIPE" });
+      expect(recorte()).not.toBe("Brasil");
+      expect(indicadores()).toMatchObject({ Editais: "1", Vagas: "10" });
+      expect(Object.keys(indicadores())).toEqual([
+        "População indígena",
+        "Pontos de unidades",
+        "Municípios",
+        "Editais",
+        "Vagas",
+        "Contratadas",
+      ]);
+      expect(barra()).toContain("90%");
+      expect(barra()).toContain("1 ociosa");
+
+      await rerender({
+        dseiSelecionado: null,
+        casaiSelecionada: "DF",
+        linhas: [
+          ...LINHAS,
+          {
+            unidade: "CASAI Brasília",
+            vagas_total: 4,
+            contratados: 1,
+            status: "Concluído",
+          },
+        ],
+      });
+      expect(recorte()).toBe("CASAI DF");
+      expect(indicadores()).toEqual({
+        Editais: "1",
+        Vagas: "4",
+        Contratadas: "1",
+        Ociosas: "3",
+      });
+    });
+
+    it("a rede de saúde indígena por tipo segue o recorte; a CASAI não tem", async () => {
+      const rede = () => host.querySelector(".mapa-si-resumo__rede");
+      await montar();
+      expect(rede().textContent).toContain("4 no total");
+      expect(
+        [...rede().querySelectorAll("li[data-tipo]")].map(
+          (li) => li.dataset.tipo,
+        ),
+      ).toContain("casai");
+      await rerender({ dseiSelecionado: "YANOMAMI" });
+      // Sem pontos no DSEI, a faixa não aparece.
+      expect(rede()).toBeNull();
+      await rerender({ casaiSelecionada: "DF" });
+      expect(rede()).toBeNull();
+    });
+
+    it("a lista do DSEI busca ponto pelo nome ou município, sem acento", async () => {
+      await montar({ dseiSelecionado: "ALAGOAS E SERGIPE" });
+      const campo = host.querySelector(".mapa-si-lista__busca");
+      expect(campo).not.toBeNull();
+      const nomes = () =>
+        [...host.querySelectorAll(".mapa-si-unidade strong")].map(
+          (n) => n.textContent,
+        );
+      const total = nomes().length;
+      await digitar(campo, "xitei");
+      expect(nomes()).toEqual(["XITEI"]);
+      await digitar(campo, "Maceió");
+      expect(nomes()).toEqual(["CASAI AL/SE"]);
+      await digitar(campo, "nada assim");
+      expect(nomes()).toEqual([]);
+      expect(
+        host.querySelector(".mapa-si-painel--dsei .mapa-si-lista").textContent,
+      ).toContain("Nenhum ponto com esse nome.");
+      await digitar(campo, "");
+      expect(nomes()).toHaveLength(total);
+    });
+
+    it("o seletor tem as CASAIs nacionais num grupo próprio", async () => {
+      const aoEscolherCasai = vi.fn();
+      await montar({ aoEscolherCasai });
+      const seletor = host.querySelector(".mapa-si-resumo__seletor select");
+      expect(
+        host.querySelector(".mapa-si-resumo__seletor span").textContent,
+      ).toBe("DSEI / CASAI");
+      const grupo = seletor.querySelector('optgroup[label="CASAIs nacionais"]');
+      expect(
+        [...grupo.querySelectorAll("option")].map((o) => o.textContent),
+      ).toEqual(["CASAI DF"]);
+      await escolher(seletor, grupo.querySelector("option").value);
+      expect(aoEscolherCasai).toHaveBeenCalledWith(
+        expect.objectContaining({ nome: "CASAI DF", cidade: "BRASILIA" }),
+      );
+    });
+
+    it("a CASAI aberta enquadra nela e mostra município, UF e os processos dela", async () => {
+      const aoSairDoDsei = vi.fn();
+      await montar({
+        casaiSelecionada: "DF",
+        aoSairDoDsei,
+        linhas: [
+          ...LINHAS,
+          {
+            unidade: "CASAI Brasília",
+            vagas_total: 4,
+            contratados: 1,
+            status: "Concluído",
+          },
+        ],
+      });
+      const painel = host.querySelector(".mapa-si-casai");
+      expect(painel.querySelector("h2").textContent).toBe("CASAI DF");
+      expect(painel.textContent).toContain("BRASILIA · DF");
+      const processos = host.querySelector(".mapa-si-processos");
+      const numeros = Object.fromEntries(
+        [...processos.querySelectorAll("dl > div")].map((d) => [
+          d.querySelector("dt").textContent,
+          d.querySelector("dd").textContent,
+        ]),
+      );
+      expect(numeros).toMatchObject({
+        Vagas: "4",
+        Contratadas: "1",
+        Ociosas: "3",
+      });
+      expect(
+        host.querySelector(".mapa-si-resumo__seletor select").value,
+      ).toMatch(/^casai:/);
+      const mapa = mapaVivo("map");
+      expect(
+        mapa.chamadas.some(([nome, , z]) => nome === "setView" && z === 7),
+      ).toBe(true);
+      await act(async () =>
+        [...painel.querySelectorAll("button")]
+          .find((b) => b.textContent.includes("Voltar ao Brasil"))
+          .click(),
+      );
+      expect(aoSairDoDsei).toHaveBeenCalled();
+    });
+
+    describe("território, acesso e CNES do SIGEPSI", () => {
+      const fonte = (dados) => ({ ok: true, dados, linhas: 1, campos: [] });
+      /* O acesso vem nos pontos (a /todas): XITEI e LONGE com acesso. */
+      const ACESSO = {
+        XITEI: {
+          meios: ["Terrestre", "Fluvial"],
+          acessibilidade: "Remoto",
+          localidade: "Rural",
+          floresta: "Sim",
+        },
+        LONGE: {
+          meios: ["Aéreo"],
+          acessibilidade: "Muito remoto",
+          localidade: "Rural",
+          floresta: "Não",
+        },
+      };
+      const LMAP_COM_ACESSO = {
+        dsei: LMAP.dsei.map((d) => ({
+          ...d,
+          polos: d.polos.map((p) => ({
+            ...p,
+            ...(ACESSO[p.n] || {
+              meios: ["Não informado"],
+              acessibilidade: "Não informado",
+              localidade: "Não informado",
+              floresta: "Não informado",
+            }),
+          })),
+        })),
+      };
+      const PRONTO = {
+        estado: "pronto",
+        resposta: {
+          territorio: fonte({
+            "ALAGOAS SERGIPE": {
+              nome: "DSEI ALAGOAS E SERGIPE",
+              populacao: 12000,
+              aldeias: 40,
+              terras: 2,
+              listaDeTerras: [],
+            },
+          }),
+          cnes: fonte([
+            {
+              dsei: "ALAGOAS SERGIPE",
+              nome: "Polo Base Xitei",
+              cnes: "1234567",
+              uf: "AL",
+              municipio: "",
+              lat: null,
+              lon: null,
+            },
+          ]),
+        },
+      };
+      const numerosDe = (cartao) =>
+        Object.fromEntries(
+          [...cartao.querySelectorAll("dl > div")].map((d) => [
+            d.querySelector("dt").textContent,
+            d.querySelector("dd").textContent,
+          ]),
+        );
+
+      it("o DSEI mostra o território, o acesso e o CNES das unidades", async () => {
+        await abrirAlse({ territorio: PRONTO, lmap: LMAP_COM_ACESSO });
+        expect(
+          numerosDe(host.querySelector(".mapa-si-territorio-do-dsei")),
+        ).toEqual({
+          "População indígena": "12.000",
+          Aldeias: "40",
+          "Terras indígenas": "2",
+        });
+        // Na lista lateral, o meio de acesso e o CNES.
+        expect(
+          [...host.querySelectorAll(".mapa-si-unidade__acesso")].map(
+            (e) => e.textContent,
+          ),
+        ).toContain("Terrestre, Fluvial · CNES 1234567");
+        const tabela = host.querySelector(".mapa-si-unidades__tabela");
+        expect(tabela.textContent).toContain("1234567");
+        expect(
+          host.querySelector('.mapa-si-unidades [data-acao="exportar-excel"]'),
+        ).not.toBeNull();
+      });
+
+      it("os filtros de acesso e floresta recortam a tabela", async () => {
+        await abrirAlse({ territorio: PRONTO, lmap: LMAP_COM_ACESSO });
+        const [meio, floresta] = host.querySelectorAll(
+          ".mapa-si-filtros-de-acesso select",
+        );
+        await escolher(meio, "Aéreo");
+        const linhas = () =>
+          [...host.querySelectorAll(".mapa-si-unidades__tabela tbody tr")].map(
+            (tr) => tr.querySelector("td").textContent,
+          );
+        expect(linhas()).toEqual(["LONGE"]);
+        await escolher(floresta, "Sim");
+        expect(linhas()).toEqual([]);
+      });
+
+      it("fonte negada diz que o dado está indisponível, nunca zero", async () => {
+        await abrirAlse({
+          territorio: {
+            estado: "pronto",
+            resposta: {
+              ...PRONTO.resposta,
+              territorio: {
+                ok: false,
+                status: 403,
+                motivo: "a chave do Yeendé não lê esta rota",
+              },
+              cnes: {
+                ok: false,
+                status: 401,
+                motivo: "a chave do Yeendé não lê esta rota",
+              },
+            },
+          },
+        });
+        const cartao = host.querySelector(".mapa-si-territorio-do-dsei");
+        expect(cartao.textContent).toContain("Dado do SIGEPSI indisponível");
+        expect(cartao.querySelector("dl")).toBeNull();
+        expect(host.querySelector(".mapa-si-unidades").textContent).toContain(
+          "CNES: Dado do SIGEPSI indisponível",
+        );
+      });
+
+      it("no Brasil, os DSEIs com unidade no filtro ao lado das ociosas", async () => {
+        const aoEscolherDsei = vi.fn();
+        await montar({
+          territorio: PRONTO,
+          lmap: LMAP_COM_ACESSO,
+          aoEscolherDsei,
+        });
+        const secao = [...host.querySelectorAll(".mapa-si-unidades")].find(
+          (s) => s.textContent.includes("Acesso e vagas ociosas"),
+        );
+        expect(secao).toBeDefined();
+        const linha = secao.querySelector("tbody tr");
+        expect(
+          [...linha.querySelectorAll("td")].map((td) => td.textContent),
+        ).toEqual(["Alagoas e Sergipe", "4", "10", "1"]);
+        await act(async () => linha.querySelector("button").click());
+        expect(aoEscolherDsei).toHaveBeenCalledWith(LMAP_COM_ACESSO.dsei[0]);
+      });
+
+      it("o pedido inteiro falhando não derruba o mapa", async () => {
+        await montar({
+          territorio: { estado: "indisponivel", resposta: null },
+        });
+        expect(mapaVivo("map")).not.toBeNull();
+        expect(host.textContent).toContain("Dado do SIGEPSI indisponível");
+      });
+    });
+
     it("sem DSEI aberto não há cartão de processos", async () => {
       await montar();
       expect(host.querySelector(".mapa-si-processos")).toBeNull();
@@ -9771,9 +10094,8 @@ bloco("modulos/pre-classificacao-independente", () => {
       expect(
         cabecalhos[0].querySelector(".ui-cabecalho-titulo").textContent,
       ).toBe("Triagem");
-      expect(
-        cabecalhos[0].querySelector(".ui-cabecalho-trilha").textContent,
-      ).toBe("Projetos / Seleção");
+      // Sem a trilha "Área / Seleção" (o menu já diz onde se está).
+      expect(cabecalhos[0].querySelector(".ui-cabecalho-trilha")).toBeNull();
       expect(
         cabecalhos[0]
           .querySelector("[data-acao='atualizar']")

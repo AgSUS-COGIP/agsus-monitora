@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-18
+atualizado: 2026-11-19
 ---
 
 # Módulo: Página do edital
@@ -77,17 +77,36 @@ passeia pelas abas.
   Quadro ausente, incompleto ou com erro não comprova cadastro reserva.
 - **Etapas**: a linha do tempo inteira e as retificações.
 - **Candidatos**: os números e as telas da seleção já no edital, só as que o perfil abre. Triagem,
-  Avaliação documental, Entrevistas e Classificação recebem o id (`abrirEdital`); Seleção e Lista de
-  aprovados, o número num pedido de filtro (`src/app/pedido-de-filtro.ts`).
+  Avaliação documental, Entrevistas e Classificação recebem o id (`abrirEdital`); Seleção, Recursos
+  e Lista de aprovados, o número (e o id) num pedido de filtro (`src/app/pedido-de-filtro.ts`). O
+  destino é o mesmo da faixa das etapas (abaixo): `src/app/abrir-tela-do-edital.ts`.
 - **Fontes e histórico**: de onde vem cada dado (cadastro, cronograma e sua origem, quadro de vagas
   e o arquivo, funil, admissões conciliadas, edital publicado) e o histórico inteiro do cronograma.
+
+## Fluxo entre as etapas
+
+As telas do processo seletivo (Triagem, Avaliação documental, Recursos, Entrevistas, Classificação e
+Lista de aprovados) mostram no cabeçalho a faixa das etapas (`src/componentes/fluxo-das-etapas.tsx`,
+no `etapas` do `CabecalhoDaTela`): "Documental do 93/2026" e os atalhos para as outras etapas do mesmo
+edital, a atual com `aria-current="step"`. A lista é `TELAS_DO_EDITAL` sem a Seleção
+(`src/lib/navegacao/fluxo-das-etapas.ts`), só com as etapas que o perfil abre e que a coordenação
+não desligou na área (`paginaDesligada`; a Triagem desligada na Saúde Indígena não vira atalho para
+"Página desativada"). O título mostra o número como o edital o escreve ("03/2025",
+`numeroComoEscrito`); a navegação leva o normalizado (`numeroDoEdital`). O edital vai como na aba Candidatos; a vaga (código)
+segue num pedido de filtro (`vaga` + `editalId`) para Triagem (abre em Por vaga), Fila da
+Documental, Fila das Entrevistas e listas da Classificação (a chave do motor é o código), que só o
+aplicam quando estão no edital do pedido (`aceita` em `usarPedidoDeFiltro`). Recursos e Aprovados
+não recortam por vaga. A volta é o Voltar do navegador: cada tela segue montada no edital em que
+estava.
 
 ## Testes
 
 Blocos `lib/pagina-do-edital` (regras, `tests/editais-cargas-e-paineis.test.ts`) e
 `modulos/pagina-do-edital` (tela, `tests/editais-cargas-e-paineis-na-tela.test.ts`); a rota e a
 permissão em `tests/casca-sessao-e-interface.test.js`; endereço, retorno e permissão na navegação
-em `tests/casca-sessao-e-interface-na-tela.test.ts` (bloco `app/navegacao`, "a página do edital").
+em `tests/casca-sessao-e-interface-na-tela.test.ts` (bloco `app/navegacao`, "a página do edital" e
+"fluxo entre as etapas"). A faixa: bloco `componentes/fluxo-das-etapas` (mesmo arquivo); a regra:
+bloco `lib/fluxo-das-etapas` em `tests/demais-regras.test.ts`.
 
 ## Relacionadas
 

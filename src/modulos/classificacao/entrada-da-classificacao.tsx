@@ -2,7 +2,18 @@ import { useMemo, useState } from "react";
 import { formatNumberBR } from "../../lib/base/formatters";
 import { rotuloDaVersao } from "../../lib/base/nome-da-versao.ts";
 import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.tsx";
-import { Selo } from "../../ui/index.ts";
+import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
+import {
+  comSituacaoDoMonitoramento,
+  editalDoHistorico,
+  situacaoDoEdital,
+  tomDaSituacaoDoEdital,
+} from "../../lib/editais/editais-ativos.ts";
+import {
+  AtivosEHistorico,
+  Selo,
+  usarAtivosEHistorico,
+} from "../../ui/index.ts";
 import type { EditalDaClassificacao } from "./tipos-do-estado.ts";
 
 /*
@@ -10,7 +21,15 @@ import type { EditalDaClassificacao } from "./tipos-do-estado.ts";
   editais da área (os que têm análises: listar_editais_classificacao). Cada
   card mostra o número e a unidade, quantos candidatos, a versão da regra da
   Classificação (ou "Sem regra") e o selo de treinamento; clicar abre o
-  edital. A busca recorta os cards pelo número ou pela unidade.
+  edital. Os ativos (vigentes) ficam separados do Histórico, com a contagem
+  por situação; o status vem das linhas do monitoramento (a lista da
+  Classificação não o traz). A busca recorta os cards da vista pelo número
+  ou pela unidade.
+
+  Enquanto as linhas do monitoramento não chegam, os cards esperam no
+  esqueleto: sem elas todo edital seria "Sem situação" nos Ativos e, ao
+  chegarem, metade pularia para o Histórico (as abas piscavam: "Ativos 22",
+  depois 9 e 13). Se a leitura delas falhar, a lista abre assim mesmo.
 
   Só o que a lista dos editais traz: etapa, progresso e prazos não estão
   nela (ficam dentro do edital), então o card não os mostra.
@@ -20,7 +39,7 @@ const semAcento = (texto: string) =>
   texto.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 export function EntradaDaClassificacao({
-  editais,
+  editais: daLista,
   carregado,
   aoAbrir,
 }: {
@@ -28,6 +47,19 @@ export function EntradaDaClassificacao({
   carregado: boolean;
   aoAbrir: (id: string) => void;
 }) {
+  const monitoramento = usarAreaAtual();
+  const { area, linhas } = monitoramento;
+  const pronto =
+    carregado && (monitoramento.carregado || Boolean(monitoramento.erro));
+  const comSituacao = useMemo(
+    () => comSituacaoDoMonitoramento(daLista, linhas),
+    [daLista, linhas],
+  );
+  const { visiveis: editais, controle } = usarAtivosEHistorico(comSituacao, {
+    chave: `yeende:classificacao:vista:${area}`,
+    ehHistorico: editalDoHistorico,
+    situacao: situacaoDoEdital,
+  });
   const [busca, setBusca] = useState("");
   const termo = semAcento(busca.trim());
   const lista = useMemo(
@@ -63,7 +95,15 @@ export function EntradaDaClassificacao({
           }}
         />
       </label>
-      {!carregado ? (
+      {pronto && daLista.length ? (
+        <AtivosEHistorico
+          {...controle}
+          rotulo="Editais da área"
+          tomDaSituacao={tomDaSituacaoDoEdital}
+          tour="classificacao-ativos-e-historico"
+        />
+      ) : null}
+      {!pronto ? (
         <div className="classificacao-editais" aria-busy="true">
           <div className="ui-card ui-esqueleto classificacao-edital-esqueleto" />
           <div className="ui-card ui-esqueleto classificacao-edital-esqueleto" />
@@ -110,7 +150,11 @@ export function EntradaDaClassificacao({
           <span>
             {editais.length
               ? "Nenhum edital com essa busca."
-              : "Nenhum edital com análises nesta área."}
+              : daLista.length
+                ? controle.vista === "historico"
+                  ? "Nenhum edital no histórico."
+                  : "Nenhum edital ativo."
+                : "Nenhum edital com análises nesta área."}
           </span>
         </div>
       )}

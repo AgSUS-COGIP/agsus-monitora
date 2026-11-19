@@ -45,6 +45,7 @@ import { resumoDasOrigens } from "../../lib/aprovados/publicacao-de-aprovados.ts
 import { statusDoLotePara } from "../../lib/aprovados/status-em-lote-dos-aprovados.ts";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
 import {
+  BUSCAR_NESTA_TABELA,
   AcoesDaLinha,
   BarraDeSelecao,
   Campo,
@@ -615,8 +616,8 @@ export function AbaAprovados({
         classeDaTabela="approved-table"
         idDoCorpo="approvedRows"
         busca={{
-          placeholder: "Buscar somente na tabela",
-          rotulo: "Buscar somente na tabela de aprovados",
+          placeholder: BUSCAR_NESTA_TABELA,
+          rotulo: "Buscar nesta tabela de aprovados",
           id: "approvedBusca",
           valor: busca,
           aoMudar: aoBuscar,

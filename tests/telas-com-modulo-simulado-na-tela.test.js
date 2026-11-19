@@ -45,6 +45,7 @@ import * as telaDaPre from "../src/lib/avaliacao-documental/tela-da-pre-classifi
 import * as libDaFila from "../src/lib/avaliacao-documental/fila.ts";
 import { CardDeGrafico, Grafico } from "../src/ui/index.ts";
 import { proximoDestaque } from "../src/ui/grafico.tsx";
+import { SeloDoFiltroDoGrafico } from "../src/ui/selo-do-filtro-do-grafico.tsx";
 import {
   dadosDaTabelaDoGrafico,
   textoDoPonto,
@@ -582,7 +583,7 @@ bloco("modulos/analises", async () => {
         "Validação da janela",
         "Data da análise: de",
         "Data da análise: até",
-        "Buscar em toda a tela",
+        "Buscar em toda a página",
       ]);
 
       await marcarNoFiltro("validacao", "SEM_DATA");
@@ -3295,7 +3296,7 @@ bloco("modulos/recursos", async () => {
       expect(contagem()).toBe("2 recursos");
     });
 
-    it("“Mais opções” mostra a busca em toda a tela, que vira filtro", async () => {
+    it("“Mais opções” mostra a busca em toda a página, que vira filtro", async () => {
       await montar(supabaseFalso());
       const adicionais = document.getElementById("recursosFiltrosAdicionais");
       expect(adicionais.hidden).toBe(true);
@@ -5835,6 +5836,38 @@ bloco("modulos/selecao", async () => {
       expect(grafico("chartDsei").canvas.getAttribute("role")).toBe("img");
     });
 
+    it("o filtro do ranking ganha o selo Filtro de gráfico ativo, que tira o filtro; Enter também filtra", async () => {
+      await montar(supabaseFalso({ data: PAYLOAD, error: null }));
+      const selo = () =>
+        document.querySelector("[data-acao='remover-filtro-do-grafico']");
+      expect(selo()).toBeNull();
+      const ranking = grafico("chartDsei");
+      const indice = ranking.data.labels.indexOf("DSEI Xingu");
+      await act(async () => ranking.options.onClick(null, [{ index: indice }]));
+      expect(linhas()).toHaveLength(1);
+      expect(selo().textContent).toBe(
+        "Filtro de gráfico ativo: DSEI Xingu — clique para remover",
+      );
+      expect(selo().closest(".ui-card-de-grafico").textContent).toContain(
+        "por inscritos",
+      );
+      await clicar(selo());
+      expect(selo()).toBeNull();
+      expect(linhas()).toHaveLength(2);
+      expect(recorte()).toBe("Sem filtros");
+
+      // Pelo teclado: as setas destacam a barra e o Enter filtra.
+      const canvas = grafico("chartDsei").canvas;
+      for (let i = 0; i <= indice; i += 1) await teclar(canvas, "ArrowRight");
+      await teclar(canvas, "Enter");
+      expect(linhas()).toHaveLength(1);
+      expect(selo()).not.toBeNull();
+
+      // O filtro de unidade mudado por outro caminho (Limpar) tira o selo.
+      await clicar(secao.querySelector('[data-acao="limpar-filtros"]'));
+      expect(selo()).toBeNull();
+    });
+
     it("clicar na barra do ranking filtra a unidade; clicar de novo tira o filtro", async () => {
       await montar(supabaseFalso({ data: PAYLOAD, error: null }));
       const ranking = grafico("chartDsei");
@@ -8341,6 +8374,69 @@ bloco("ui/grafico-acessivel", () => {
     await teclar(canvas, "Escape");
     expect(vivo.textContent).toBe("");
     expect(grafico.ativos).toEqual([]);
+  });
+
+  it("com aoEscolher: Enter no item em destaque e o rótulo da tabela filtram; o selo tira o filtro", async () => {
+    const aoEscolher = vi.fn();
+    const aoRemover = vi.fn();
+    const caixa = document.createElement("div");
+    document.body.append(caixa);
+    raiz = createRoot(caixa);
+    await act(async () =>
+      raiz.render(
+        createElement(
+          CardDeGrafico,
+          {
+            titulo: "Eliminados",
+            acoes: createElement(SeloDoFiltroDoGrafico, {
+              valor: "Cancelados",
+              aoRemover,
+            }),
+          },
+          createElement(Grafico, {
+            tipo: "bar",
+            rotulo: "Eliminados antes da análise",
+            dependencias: [],
+            montar: () => ({ data: DADOS }),
+            aoEscolher,
+          }),
+        ),
+      ),
+    );
+    const canvas = caixa.querySelector("canvas");
+    expect(
+      document.getElementById(canvas.getAttribute("aria-describedby"))
+        .textContent,
+    ).toBe("Setas percorrem os valores; Enter filtra pelo valor.");
+    // Sem item em destaque, Enter não escolhe nada.
+    await teclar(canvas, "Enter");
+    expect(aoEscolher).not.toHaveBeenCalled();
+    await teclar(canvas, "ArrowRight");
+    await teclar(canvas, "ArrowRight");
+    await teclar(canvas, "Enter");
+    expect(aoEscolher).toHaveBeenLastCalledWith(1);
+
+    // Escondida, a tabela não tem botão; à vista, o rótulo filtra.
+    expect(caixa.querySelector(".ui-grafico-tabela-escolher")).toBeNull();
+    await clicar(caixa.querySelector(".ui-grafico-alternar"));
+    const rotulos = [...caixa.querySelectorAll(".ui-grafico-tabela-escolher")];
+    expect(rotulos.map((b) => b.textContent)).toEqual([
+      "Cancelados",
+      "Questionário",
+      "Nota",
+    ]);
+    await clicar(rotulos[2]);
+    expect(aoEscolher).toHaveBeenLastCalledWith(2);
+
+    const selo = caixa.querySelector(
+      ".ui-card-de-grafico-topo [data-acao='remover-filtro-do-grafico']",
+    );
+    expect(selo.tagName).toBe("BUTTON");
+    expect(selo.textContent).toBe(
+      "Filtro de gráfico ativo: Cancelados — clique para remover",
+    );
+    await clicar(selo);
+    expect(aoRemover).toHaveBeenCalledTimes(1);
   });
 
   it("card sem Grafico dentro não ganha o botão", async () => {

@@ -246,6 +246,8 @@ import {
 } from "../src/lib/base/versao-do-sistema.ts";
 import { EVENTO_ESCOLHA_DA_BUSCA } from "../src/lib/navegacao/busca-global.ts";
 import { consumirPedidoDeFiltro } from "../src/app/pedido-de-filtro.ts";
+import { abrirTelaDoEdital } from "../src/app/abrir-tela-do-edital.ts";
+import { etapaDoFluxo } from "../src/lib/navegacao/fluxo-das-etapas.ts";
 import { criarEstadoDasConfiguracoes } from "../src/modulos/configuracoes/estado.ts";
 import {
   obterSaida,
@@ -2658,6 +2660,19 @@ bloco("app/navegacao", () => {
       expect(sessionStorage.getItem(CHAVE_DA_ROTA_PEDIDA)).toBeNull();
     });
 
+    it("link interno aberto sem sessão volta à mesma página depois do login", () => {
+      history.replaceState(null, "", "/saude-indigena/edital/37-2026");
+      // A tela de acesso: a navegação existe, mas o sistema não abriu.
+      criarNavegacao({ obterPerfil: () => null }).desligar();
+      // A volta do Google cai na raiz.
+      history.replaceState(null, "", "/?auth=google");
+      const { navegacao } = criar();
+      entrar(navegacao);
+      expect(ativas()).toEqual(["page-edital"]);
+      expect(endereco()).toBe("/saude-indigena/edital/37-2026");
+      expect(sessionStorage.getItem(CHAVE_DA_ROTA_PEDIDA)).toBeNull();
+    });
+
     it("link para tela proibida: avisa e abre a tela de entrada no lugar (sem empilhar)", () => {
       history.replaceState(null, "", "/administracao/configuracoes/acessos");
       const tamanho = history.length;
@@ -2888,6 +2903,68 @@ bloco("app/navegacao", () => {
         "warn",
       );
       expect(ativas()).toEqual(["page-classificacao"]);
+    });
+  });
+
+  describe("fluxo entre as etapas (a faixa das etapas)", () => {
+    const etapa = (view: string) => {
+      const achada = etapaDoFluxo(view);
+      if (!achada) throw new Error(`sem a etapa ${view}`);
+      return achada;
+    };
+
+    it("vai às Entrevistas e à Classificação no mesmo edital e volta pelo navegador", async () => {
+      const { navegacao, telas } = criar();
+      entrar(navegacao);
+      const janela = {
+        navigate: (view: string, extras?: { edital?: string | null }) =>
+          navegacao.irPara(view, extras),
+      };
+      const edital = { id: EDITAL, numero: "93/2026" };
+
+      expect(
+        abrirTelaDoEdital(etapa("conduzir-entrevistas"), edital, "", janela),
+      ).toBe(true);
+      await vi.waitFor(() =>
+        expect(telas["conduzir-entrevistas"].abrirEdital).toHaveBeenCalledWith(
+          EDITAL,
+        ),
+      );
+      expect(ativas()).toEqual(["page-conduzir-entrevistas"]);
+      const daEntrevista = endereco();
+
+      abrirTelaDoEdital(etapa("classificacao"), edital, "179698", janela);
+      await vi.waitFor(() =>
+        expect(telas.classificacao.abrirEdital).toHaveBeenCalledWith(EDITAL),
+      );
+      expect(ativas()).toEqual(["page-classificacao"]);
+      // A vaga espera a Classificação no edital do pedido.
+      expect(consumirPedidoDeFiltro("classificacao")).toEqual({
+        editalId: EDITAL,
+        vaga: "179698",
+      });
+
+      // Voltar: as Entrevistas, no endereço em que estavam (a tela segue montada no edital).
+      await noHistorico(-1);
+      expect(ativas()).toEqual(["page-conduzir-entrevistas"]);
+      expect(endereco()).toBe(daEntrevista);
+      expect(telas["conduzir-entrevistas"].render).toHaveBeenCalledTimes(2);
+      // E de novo para a frente: a Classificação.
+      await noHistorico(1);
+      expect(ativas()).toEqual(["page-classificacao"]);
+    });
+
+    it("sem a navegação ou sem o edital que a tela pede, não vai", () => {
+      expect(
+        abrirTelaDoEdital(etapa("classificacao"), { id: EDITAL }, "", {}),
+      ).toBe(false);
+      const navigate = vi.fn();
+      expect(
+        abrirTelaDoEdital(etapa("classificacao"), { numero: "93/2026" }, "", {
+          navigate,
+        }),
+      ).toBe(false);
+      expect(navigate).not.toHaveBeenCalled();
     });
   });
 
@@ -5046,17 +5123,23 @@ bloco("app/sessao", () => {
 
   function janelaFalsa({
     search = "",
+    caminho = "/",
     largura = 1280,
     popup = null,
-  }: { search?: string; largura?: number; popup?: PopupFalso | null } = {}) {
+  }: {
+    search?: string;
+    caminho?: string;
+    largura?: number;
+    popup?: PopupFalso | null;
+  } = {}) {
     const ouvintes: Record<string, OuvinteDaJanela> = {};
     return {
       location: {
         search,
         hash: "",
-        pathname: "/",
+        pathname: caminho,
         origin: "https://monitora.test",
-        href: `https://monitora.test/${search}`,
+        href: `https://monitora.test${caminho}${search}`,
       },
       history: { replaceState: vi.fn() },
       document: { title: "MONITORA" },
@@ -5218,6 +5301,30 @@ bloco("app/sessao", () => {
       expect(sessao.obter().fase).toBe(FASES.DESLOGADO);
       expect(cliente.rpc).not.toHaveBeenCalled();
       expect(sistema.encerrarEspera).toHaveBeenCalled();
+    });
+
+    it("link interno com rede e sem sessão: tela de acesso, sem abrir o sistema nem mexer no endereço; entrar abre", async () => {
+      const cliente = clienteFalso();
+      const { sessao, sistema, janela } = montar({
+        cliente,
+        janela: janelaFalsa({ caminho: "/saude-indigena/mapa" }),
+      });
+      await sessao.iniciar();
+      expect(sessao.obter()).toMatchObject({
+        fase: FASES.DESLOGADO,
+        usuario: null,
+        perfil: null,
+      });
+      expect(sistema.aoVerificar).not.toHaveBeenCalled();
+      expect(sistema.abrir).not.toHaveBeenCalled();
+      expect(cliente.rpc).not.toHaveBeenCalled();
+      // O endereço pedido fica: a navegação o abre depois de entrar.
+      expect(janela.history.replaceState).not.toHaveBeenCalled();
+
+      cliente.definirSessao(sessaoDe("u1"));
+      cliente.emitir("SIGNED_IN", sessaoDe("u1"));
+      await vi.waitFor(() => expect(sessao.obter().fase).toBe(FASES.CONECTADO));
+      expect(sistema.abrir).toHaveBeenCalledTimes(1);
     });
 
     it("sem as variáveis do Supabase: aviso de configuração", async () => {
@@ -5455,6 +5562,30 @@ bloco("app/sessao", () => {
       cliente.emitir("SIGNED_OUT", null);
       expect(sessao.obter().mensagem.texto).toBe("");
       expect(sistema.aoSair).toHaveBeenCalledTimes(1);
+    });
+
+    it("sair volta ao endereço inicial", async () => {
+      const { sessao, janela } = await conectado({
+        janela: janelaFalsa({ caminho: "/saude-indigena/visao-geral" }),
+      });
+      janela.history.replaceState.mockClear();
+      await sessao.sair();
+      expect(janela.history.replaceState).toHaveBeenCalledWith(
+        {},
+        "MONITORA",
+        "/",
+      );
+    });
+
+    it("sessão expirada guarda o endereço (a navegação o reabre ao entrar)", async () => {
+      const expirada = await conectado({
+        janela: janelaFalsa({ caminho: "/saude-indigena/mapa" }),
+      });
+      expirada.janela.history.replaceState.mockClear();
+      declararSaida(SAIDA_EXPIRADA);
+      expirada.cliente.emitir("SIGNED_OUT", null);
+      expect(expirada.sessao.obter().fase).toBe(FASES.DESLOGADO);
+      expect(expirada.janela.history.replaceState).not.toHaveBeenCalled();
     });
 
     it("sair continua mesmo se a auditoria falhar", async () => {
@@ -5891,6 +6022,32 @@ bloco("app/sessao", () => {
       await sessao.iniciar();
       expect(sessao.obter().fase).toBe(FASES.FALHA_NA_ENTRADA);
       expect(sistema.abrir).not.toHaveBeenCalled();
+      vi.mocked(console.warn).mockRestore();
+    });
+
+    it("link interno sem rede, com o perfil guardado: continua entrando, no mesmo endereço", async () => {
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+      const perfilGuardado = perfilEmMemoria();
+      await entrarComRede(perfilGuardado);
+      const { sessao, sistema, janela } = montar({
+        cliente: clienteFalso({
+          guardada: sessaoDe("u1"),
+          erroNoContexto: SEM_REDE,
+        }),
+        janela: janelaFalsa({ caminho: "/saude-indigena/mapa" }),
+        perfilGuardado,
+      });
+      await sessao.iniciar();
+      expect(sessao.obter()).toMatchObject({
+        fase: FASES.CONECTADO,
+        semRede: true,
+      });
+      expect(sistema.abrir).toHaveBeenCalledWith(
+        expect.objectContaining({
+          perfil: expect.objectContaining({ id: "perfil-1" }),
+        }),
+      );
+      expect(janela.history.replaceState).not.toHaveBeenCalled();
       vi.mocked(console.warn).mockRestore();
     });
 
@@ -7854,6 +8011,254 @@ bloco("componentes/esc-no-menu-dentro-do-modal", () => {
       await teclar(definido(document.activeElement), "Escape");
       expect(aoFechar).toHaveBeenCalledTimes(1);
     });
+  });
+});
+
+bloco("componentes/fluxo-das-etapas", async () => {
+  /*
+    A faixa das etapas (src/componentes/fluxo-das-etapas.tsx): "Documental do
+    93/2026" e os atalhos às outras etapas do mesmo edital, com o edital e a
+    vaga seguindo junto (o destino da aba "Candidatos" da página do edital).
+  */
+  const { FluxoDasEtapas } =
+    await import("../src/componentes/fluxo-das-etapas.tsx");
+  const { desenharNoTeste } = await import("./montar-tela.ts");
+  const { MarcaDaBuscaNaPagina, textoDaBuscaNaPagina } =
+    await import("../src/ui/linha-do-recorte.tsx");
+
+  const ID = "0b7c9a52-2d55-4c4e-9f7a-1c3d5e7f9a1b";
+  let desenho: { desmontar: () => void } | undefined;
+  let navigate = vi.fn((_view: string, _extras?: unknown) => true);
+
+  async function montar(
+    props: Parameters<typeof FluxoDasEtapas>[0],
+  ): Promise<HTMLElement> {
+    desenho?.desmontar();
+    const lugar = document.createElement("div");
+    document.body.append(lugar);
+    await act(async () => {
+      desenho = desenharNoTeste(lugar, createElement(FluxoDasEtapas, props));
+    });
+    return lugar;
+  }
+  const etapas = (lugar: HTMLElement) =>
+    [...lugar.querySelectorAll("[data-etapa]")].map((el) =>
+      el.getAttribute("data-etapa"),
+    );
+
+  beforeEach(() => {
+    navigate = vi.fn((_view: string, _extras?: unknown) => true);
+    vi.stubGlobal("navigate", navigate);
+    vi.stubGlobal("getMonitoraProfile", () => ({
+      id: "a",
+      ativo: true,
+      perfil: "admin",
+      permissoes: {
+        avaliacao_documental: "editor",
+        recursos: "editor",
+        entrevistas: "editor",
+        classificacao: "editor",
+        aprovados: "editor",
+      },
+    }));
+  });
+  afterEach(() => {
+    desenho?.desmontar();
+    desenho = undefined;
+    for (const view of ["classificacao", "analisar-recursos", "approved"])
+      consumirPedidoDeFiltro(view);
+    redefinirDadosDoMonitoramento();
+    vi.unstubAllGlobals();
+    document.body.innerHTML = "";
+  });
+
+  it("mostra a etapa e o edital, a atual marcada, e leva o edital e a vaga à Classificação", async () => {
+    const lugar = await montar({
+      view: "avaliacao-documental",
+      edital: { id: ID, numero: "93/2026" },
+      vaga: "179698",
+    });
+    expect(lugar.querySelector(".fluxo-das-etapas-titulo")?.textContent).toBe(
+      "Documental do 93/2026vaga 179698",
+    );
+    expect(etapas(lugar)).toEqual([
+      "pre-classificacao",
+      "avaliacao-documental",
+      "analisar-recursos",
+      "conduzir-entrevistas",
+      "classificacao",
+      "approved",
+    ]);
+    const atual = lugar.querySelector('[aria-current="step"]');
+    expect(atual?.getAttribute("data-etapa")).toBe("avaliacao-documental");
+    expect(atual?.tagName).toBe("SPAN");
+
+    await clicar(lugar.querySelector('[data-etapa="classificacao"]'));
+    expect(navigate).toHaveBeenLastCalledWith("classificacao", { edital: ID });
+    expect(consumirPedidoDeFiltro("classificacao")).toEqual({
+      editalId: ID,
+      vaga: "179698",
+    });
+  });
+
+  it("Recursos e Aprovados recebem o número e o id num pedido; a vaga não vai", async () => {
+    const lugar = await montar({
+      view: "classificacao",
+      edital: { id: ID, numero: "93/2026" },
+      vaga: "179698",
+    });
+    await clicar(lugar.querySelector('[data-etapa="analisar-recursos"]'));
+    expect(navigate).toHaveBeenLastCalledWith("analisar-recursos");
+    expect(consumirPedidoDeFiltro("analisar-recursos")).toEqual({
+      edital: "93/2026",
+      editalId: ID,
+    });
+    await clicar(lugar.querySelector('[data-etapa="approved"]'));
+    expect(navigate).toHaveBeenLastCalledWith("approved");
+    expect(consumirPedidoDeFiltro("approved")).toEqual({
+      edital: "93/2026",
+      editalId: ID,
+    });
+  });
+
+  it("ida e volta: da Triagem à Documental e de volta, sempre no mesmo edital e na mesma vaga", async () => {
+    let lugar = await montar({
+      view: "pre-classificacao",
+      edital: { id: ID, numero: "93/2026" },
+      vaga: "179698",
+    });
+    await clicar(lugar.querySelector('[data-etapa="avaliacao-documental"]'));
+    expect(navigate).toHaveBeenLastCalledWith("avaliacao-documental", {
+      edital: ID,
+    });
+    expect(consumirPedidoDeFiltro("avaliacao-documental")).toEqual({
+      editalId: ID,
+      vaga: "179698",
+    });
+    // A Documental, aberta no edital e na vaga, desenha a faixa dela.
+    lugar = await montar({
+      view: "avaliacao-documental",
+      edital: { id: ID, numero: "93/2026" },
+      vaga: "179698",
+    });
+    await clicar(lugar.querySelector('[data-etapa="pre-classificacao"]'));
+    expect(navigate).toHaveBeenLastCalledWith("pre-classificacao", {
+      edital: ID,
+    });
+    expect(consumirPedidoDeFiltro("pre-classificacao")).toEqual({
+      editalId: ID,
+      vaga: "179698",
+    });
+  });
+
+  it("só com o id (Recursos, Aprovados), o número sai das linhas do monitoramento", async () => {
+    definirAreaAtual("saude-indigena");
+    publicarLinhasDoMonitoramento([
+      { id: ID, edital: "Edital 93/2026", CO_AREA: "saude-indigena" },
+    ]);
+    const lugar = await montar({ view: "approved", edital: { id: ID } });
+    expect(lugar.querySelector(".fluxo-das-etapas-titulo")?.textContent).toBe(
+      "Aprovados do 93/2026",
+    );
+  });
+
+  it("só as etapas que o perfil abre (e a atual)", async () => {
+    vi.stubGlobal("getMonitoraProfile", () => ({
+      id: "c",
+      ativo: true,
+      permissoes: { classificacao: "leitor" },
+    }));
+    const lugar = await montar({
+      view: "avaliacao-documental",
+      edital: { id: ID, numero: "93/2026" },
+    });
+    expect(etapas(lugar)).toEqual(["avaliacao-documental", "classificacao"]);
+  });
+
+  it("o título mostra o número como o edital o escreve (03/2025, não 3/2025)", async () => {
+    definirAreaAtual("saude-indigena");
+    publicarLinhasDoMonitoramento([
+      { id: ID, edital: "03/2025", CO_AREA: "saude-indigena" },
+    ]);
+    const lugar = await montar({ view: "classificacao", edital: { id: ID } });
+    expect(lugar.querySelector(".fluxo-das-etapas-titulo")?.textContent).toBe(
+      "Classificação do 03/2025",
+    );
+    // A navegação continua com o número normalizado (o que as telas comparam).
+    await clicar(lugar.querySelector('[data-etapa="approved"]'));
+    expect(consumirPedidoDeFiltro("approved")).toEqual({
+      edital: "3/2025",
+      editalId: ID,
+    });
+  });
+
+  it("a etapa desligada pela coordenação na área não aparece (sem atalho para Página desativada)", async () => {
+    definirAreaAtual("saude-indigena");
+    const triagem = ABAS_DO_MENU.find((aba) =>
+      aba.areas.some((item) => (item.view || aba.view) === "pre-classificacao"),
+    );
+    expect(triagem).toBeDefined();
+    await carregarCatalogoDeAbas({
+      consulta: Promise.resolve({
+        data: ABAS_DO_MENU.map((aba) => ({
+          co_aba: aba.id,
+          no_aba: aba.rotulo,
+          ds_icone: aba.icone,
+          nu_ordem: aba.ordem,
+          co_view: aba.view,
+          co_recurso: aba.recurso,
+          tp_aba: aba.tipo,
+          areas: aba.areas
+            .filter(
+              ({ area }) =>
+                !(aba.id === triagem?.id && area === "saude-indigena"),
+            )
+            .map(({ area }) => ({ co_area: area, nu_ordem: aba.ordem })),
+        })),
+        error: null,
+      }),
+    });
+    try {
+      const lugar = await montar({
+        view: "classificacao",
+        edital: { id: ID, numero: "03/2025" },
+      });
+      expect(etapas(lugar)).not.toContain("pre-classificacao");
+      expect(etapas(lugar)).toContain("avaliacao-documental");
+      // Em outra área, onde a Triagem está ligada, ela volta.
+      definirAreaAtual("projetos");
+      const outra = await montar({
+        view: "classificacao",
+        edital: { id: ID, numero: "03/2025" },
+      });
+      expect(etapas(outra)).toContain("pre-classificacao");
+    } finally {
+      await carregarCatalogoDeAbas({ consulta: null });
+    }
+  });
+
+  it("sem edital, não há faixa", async () => {
+    const lugar = await montar({ view: "classificacao", edital: {} });
+    expect(lugar.querySelector(".fluxo-das-etapas")).toBeNull();
+  });
+
+  it("a busca que recorta a página toda ganha a marca no recorte", async () => {
+    expect(textoDaBuscaNaPagina("  Maria ")).toBe(
+      "Busca “Maria” filtrando a página toda",
+    );
+    expect(textoDaBuscaNaPagina("")).toBe("");
+    desenho?.desmontar();
+    const lugar = document.createElement("div");
+    document.body.append(lugar);
+    await act(async () => {
+      desenho = desenharNoTeste(
+        lugar,
+        createElement(MarcaDaBuscaNaPagina, { busca: "Maria" }),
+      );
+    });
+    expect(
+      lugar.querySelector('[data-marca="busca-na-pagina"]')?.textContent,
+    ).toContain("Busca “Maria” filtrando a página toda");
   });
 });
 

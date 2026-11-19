@@ -119,15 +119,31 @@ function TelaDaArea({
       filtrosDaSelecao(atuais, pedido, opcoesDosFiltros(vagas)),
     ),
   );
-  // Barra do ranking: filtra a unidade; clicar de novo na mesma tira o filtro.
-  const alternarUnidade = (unidade: string) =>
+  /*
+    Barra do ranking: filtra a unidade; clicar de novo na mesma tira o filtro.
+    O filtro que veio do gráfico ganha o selo "Filtro de gráfico ativo" (some
+    quando o filtro de unidade muda por outro caminho).
+  */
+  const [doGrafico, setDoGrafico] = useState("");
+  const alternarUnidade = (unidade: string) => {
+    const tirar =
+      filtros.unidades.length === 1 && filtros.unidades[0] === unidade;
+    setDoGrafico(tirar ? "" : unidade);
     setFiltros((atuais) => ({
       ...atuais,
-      unidades:
-        atuais.unidades.length === 1 && atuais.unidades[0] === unidade
-          ? []
-          : [unidade],
+      unidades: tirar ? [] : [unidade],
     }));
+  };
+  const filtroDoGrafico =
+    doGrafico &&
+    filtros.unidades.length === 1 &&
+    filtros.unidades[0] === doGrafico
+      ? doGrafico
+      : "";
+  const removerFiltroDoGrafico = () => {
+    setDoGrafico("");
+    setFiltros((atuais) => ({ ...atuais, unidades: [] }));
+  };
   const recarregar = () => void estado.carregar(area);
 
   return (
@@ -195,6 +211,8 @@ function TelaDaArea({
             carregado={carregado}
             escuro={escuro}
             aoFiltrarUnidade={alternarUnidade}
+            filtroDoGrafico={filtroDoGrafico}
+            aoRemoverFiltroDoGrafico={removerFiltroDoGrafico}
           />
           <Observacoes observacoes={observacoes} />
           <TabelaDeVagas

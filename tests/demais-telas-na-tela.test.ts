@@ -17,6 +17,9 @@ import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { achar, acharTodos } from "./dom.ts";
 import { definido } from "./definido.ts";
+import { RevogarDecisao } from "../src/modulos/avaliacao-documental/decisao-do-lote.tsx";
+import { EditaisDaPendencia } from "../src/modulos/visao-geral/editais-da-pendencia.tsx";
+import type { LinhaDaVisaoGeral } from "../src/modulos/visao-geral/tipos.ts";
 import { InscricoesDoEdital } from "../src/modulos/avaliacao-documental/inscricoes-do-edital.tsx";
 import { DADOS_114 } from "./fixtures/acompanhamento-das-inscricoes.js";
 import {
@@ -87,9 +90,11 @@ import { fonteDoApp } from "./fonte-do-app.ts";
 import { htmlDaPagina } from "./pagina-montada.ts";
 import {
   Abas,
+  AtivosEHistorico,
   ContagemDaAba,
   formatarContagem,
   NavegadorDeMes,
+  usarAtivosEHistorico,
   Segmentado,
   SeloDePrazo,
 } from "../src/ui/index.ts";
@@ -99,6 +104,11 @@ import {
 } from "../src/app/filtros-no-endereco.ts";
 import type { LinhaDoMonitoramento } from "../src/componentes/tipos-do-monitoramento.ts";
 import { caminhoDoDestino } from "../src/lib/navegacao/rotas.ts";
+import {
+  editalDoHistorico,
+  situacaoDoEdital,
+  tomDaSituacaoDoEdital,
+} from "../src/lib/editais/editais-ativos.ts";
 import { CartaoDoMapa } from "../src/modulos/visao-geral/cartao-do-mapa.tsx";
 
 bloco("componentes/cabecalho-da-ficha", async () => {
@@ -2890,6 +2900,114 @@ bloco("ui/navegador-de-mes", () => {
   });
 });
 
+bloco("ui/ativos-e-historico", () => {
+  (
+    globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
+  ).IS_REACT_ACT_ENVIRONMENT = true;
+
+  let raiz: Root | null = null;
+  afterEach(() => {
+    act(() => raiz?.unmount());
+    raiz = null;
+    document.body.innerHTML = "";
+    sessionStorage.clear();
+  });
+
+  const EDITAIS = [
+    { id: "a", status: "Em andamento" },
+    { id: "b", status: "Concluído" },
+    { id: "c", status: "Em andamento" },
+    { id: "d", status: "Suspenso" },
+    { id: "e", status: "Cancelado" },
+  ];
+  const CHAVE = "teste:vista";
+
+  function Lista() {
+    const { visiveis, controle } = usarAtivosEHistorico(EDITAIS, {
+      chave: CHAVE,
+      ehHistorico: editalDoHistorico,
+      situacao: situacaoDoEdital,
+    });
+    return h(
+      "div",
+      null,
+      h(AtivosEHistorico, {
+        ...controle,
+        rotulo: "Editais",
+        tomDaSituacao: tomDaSituacaoDoEdital,
+      }),
+      h(
+        "ul",
+        { className: "itens" },
+        visiveis.map((e) => h("li", { key: e.id }, e.id)),
+      ),
+    );
+  }
+
+  function montar() {
+    const caixa = document.createElement("div");
+    document.body.append(caixa);
+    raiz = createRoot(caixa);
+    act(() => raiz!.render(h(Lista)));
+    return caixa;
+  }
+
+  const itens = (caixa: HTMLElement) =>
+    [...caixa.querySelectorAll(".itens li")].map((li) => li.textContent);
+  const situacoes = (caixa: HTMLElement) =>
+    [...caixa.querySelectorAll(".ui-ativos-situacoes li")].map(
+      (li) => li.textContent,
+    );
+
+  it("abre nos ativos, com a contagem nas opções e por situação", () => {
+    const caixa = montar();
+    const grupo = caixa.querySelector('[role="radiogroup"]')!;
+    expect(grupo.getAttribute("aria-label")).toBe("Editais");
+    const opcoes = [...grupo.querySelectorAll('[role="radio"]')];
+    expect(opcoes.map((o) => o.textContent)).toEqual(["Ativos3", "Histórico2"]);
+    expect(opcoes[0]!.getAttribute("aria-checked")).toBe("true");
+    expect(itens(caixa)).toEqual(["a", "c", "d"]);
+    expect(situacoes(caixa)).toEqual(["Em andamento 2", "Suspenso 1"]);
+    const lista = caixa.querySelector(".ui-ativos-situacoes")!;
+    expect(lista.getAttribute("aria-label")).toBe("Por situação");
+    expect(lista.getAttribute("title")).toBe("Em andamento 2 · Suspenso 1");
+    // A cor complementa: o rótulo é texto, o tom vem no data-tom do selo.
+    expect(lista.querySelector(".ui-selo")!.getAttribute("data-tom")).toBe(
+      "info",
+    );
+  });
+
+  it("um clique leva ao Histórico, que volta no F5", () => {
+    const caixa = montar();
+    const historico = caixa.querySelector<HTMLButtonElement>(
+      '[data-valor="historico"]',
+    )!;
+    act(() => historico.click());
+    expect(historico.getAttribute("aria-checked")).toBe("true");
+    expect(itens(caixa)).toEqual(["b", "e"]);
+    expect(situacoes(caixa)).toEqual(["Cancelado 1", "Concluído 1"]);
+    expect(JSON.parse(sessionStorage.getItem(CHAVE)!)).toBe("historico");
+
+    act(() => raiz?.unmount());
+    document.body.innerHTML = "";
+    const denovo = montar();
+    expect(itens(denovo)).toEqual(["b", "e"]);
+  });
+
+  it("as setas trocam a vista", () => {
+    const caixa = montar();
+    const ativos = caixa.querySelector<HTMLButtonElement>(
+      '[data-valor="ativos"]',
+    )!;
+    act(() => {
+      ativos.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }),
+      );
+    });
+    expect(itens(caixa)).toEqual(["b", "e"]);
+  });
+});
+
 bloco("ui/selo-de-prazo", () => {
   (
     globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }
@@ -3096,5 +3214,147 @@ bloco("ui/botoes-de-exportacao", () => {
     const excel = vi.fn();
     const caixa = montarBotoes({ excel, desativado: true });
     expect(caixa.querySelector("button")?.disabled).toBe(true);
+  });
+});
+
+bloco("modulos/visao-geral-pede-acao", () => {
+  /*
+    "Pede ação" da Visão geral › uma pendência do pós-resultado
+    (src/modulos/visao-geral/editais-da-pendencia.tsx): os editais dela, do
+    recorte da página, cada um com a ação ("Importar lista", "Atualizar
+    status"); quem não pode agir vê só a lista. Dados fictícios.
+  */
+  const linha = (
+    id: string,
+    edital: string,
+    pos_resultado: LinhaDaVisaoGeral["pos_resultado"],
+  ): LinhaDaVisaoGeral =>
+    ({ id, edital, unidade: `DSEI ${id}`, pos_resultado }) as LinhaDaVisaoGeral;
+  const LINHAS = [
+    linha("e2", "12/2026", ["sem_lista"]),
+    linha("e1", "3/2026", ["sem_lista"]),
+    linha("e3", "7/2026", ["sem_status"]),
+  ];
+
+  let raiz: Root | null = null;
+  async function montar(
+    props: Partial<Parameters<typeof EditaisDaPendencia>[0]> = {},
+  ) {
+    const aoAgir = vi.fn();
+    const aoFiltrar = vi.fn();
+    const aoFechar = vi.fn();
+    const caixa = document.createElement("div");
+    document.body.append(caixa);
+    const nova = createRoot(caixa);
+    raiz = nova;
+    await act(async () =>
+      nova.render(
+        h(EditaisDaPendencia, {
+          codigo: "sem_lista",
+          linhas: LINHAS,
+          podeAgir: true,
+          aoAgir,
+          filtrando: false,
+          aoFiltrar,
+          aoFechar,
+          ...props,
+        }),
+      ),
+    );
+    return { aoAgir, aoFiltrar, aoFechar };
+  }
+  const editais = () =>
+    [...document.querySelectorAll(".visao-geral-pendencia-editais > li")].map(
+      (li) => li.getAttribute("data-edital"),
+    );
+
+  afterEach(async () => {
+    const montada = raiz;
+    if (montada) await act(async () => montada.unmount());
+    raiz = null;
+    document.body.innerHTML = "";
+  });
+
+  it("Sem lista: os editais da pendência, pelo número, cada um com Importar lista", async () => {
+    const { aoAgir } = await montar();
+    expect(editais()).toEqual(["e1", "e2"]);
+    expect(document.body.textContent).toContain("2 editais");
+    const botoes = document.querySelectorAll('[data-acao="importar-lista"]');
+    expect([...botoes].map((b) => b.textContent)).toEqual([
+      "Importar lista",
+      "Importar lista",
+    ]);
+    await clicar(botoes[1]);
+    expect(aoAgir).toHaveBeenCalledWith(LINHAS[0]);
+  });
+
+  it("Lista sem status: Atualizar status; o filtro de antes fica em Mostrar só esses na página", async () => {
+    const { aoAgir, aoFiltrar } = await montar({
+      codigo: "sem_status",
+      filtrando: true,
+    });
+    expect(editais()).toEqual(["e3"]);
+    await clicar(document.querySelector('[data-acao="atualizar-status"]'));
+    expect(aoAgir).toHaveBeenCalledWith(LINHAS[2]);
+    const filtrar = [...document.querySelectorAll("button")].find(
+      (b) => b.textContent === "Mostrar só esses na página",
+    );
+    expect(filtrar?.getAttribute("aria-pressed")).toBe("true");
+    await clicar(filtrar);
+    expect(aoFiltrar).toHaveBeenCalledTimes(1);
+  });
+
+  it("quem não pode agir vê só a lista", async () => {
+    await montar({ podeAgir: false });
+    expect(editais()).toEqual(["e1", "e2"]);
+    expect(document.querySelector('[data-acao="importar-lista"]')).toBeNull();
+  });
+});
+
+bloco("modulos/avaliacao-documental-revogar-decisao-de-lote", () => {
+  /*
+    "Revogar decisão de lote" (src/modulos/avaliacao-documental/decisao-do-lote.tsx):
+    na ficha que saiu do lote, o mesmo Revogar decisão, com o nome da ação e
+    o motivo obrigatório. Dados fictícios.
+  */
+  let raiz: Root | null = null;
+  afterEach(async () => {
+    const montada = raiz;
+    if (montada) await act(async () => montada.unmount());
+    raiz = null;
+    document.body.innerHTML = "";
+  });
+
+  it("com o nome da ação e o motivo obrigatório, chama a revogação", async () => {
+    const aoRevogar = vi.fn(async () => ({ ok: true }));
+    const caixa = document.createElement("div");
+    document.body.append(caixa);
+    const nova = createRoot(caixa);
+    raiz = nova;
+    await act(async () =>
+      nova.render(
+        h(RevogarDecisao, {
+          c: { codigo: "7003", entrada: "DECISAO", decisao: "Critério CORES" },
+          aoRevogar,
+          rotulo: "Revogar decisão de lote",
+        }),
+      ),
+    );
+    const abrir = caixa.querySelector("[data-acao='abrir-revogar-decisao']");
+    expect(abrir?.textContent).toBe("Revogar decisão de lote");
+    await clicar(abrir);
+    const confirmar = caixa.querySelector<HTMLButtonElement>(
+      "[data-acao='revogar-decisao']",
+    );
+    expect(confirmar?.disabled).toBe(true);
+    await digitar(
+      caixa.querySelector("[data-revogar='7003'] input"),
+      "Não avaliado na planilha do edital",
+    );
+    expect(confirmar?.disabled).toBe(false);
+    await clicar(confirmar);
+    expect(aoRevogar).toHaveBeenCalledWith(
+      "Não avaliado na planilha do edital",
+    );
   });
 });

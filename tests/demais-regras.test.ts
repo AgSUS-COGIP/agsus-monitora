@@ -11,13 +11,81 @@ import {
   somarMesesNaChave,
 } from "../src/lib/entrevistas/meses-da-agenda.ts";
 import {
+  contarPorSituacao,
+  separarAtivosEHistorico,
+  textoDasSituacoes,
+  vistaDaLista,
+} from "../src/lib/base/ativos-e-historico.ts";
+import {
+  comSituacaoDoMonitoramento,
+  editalDoHistorico,
+  situacaoDoEdital,
+  tomDaSituacaoDoEdital,
+} from "../src/lib/editais/editais-ativos.ts";
+import {
   arquivoDaTabela,
   nomeDoArquivoExportado,
   pdfDaTabela,
   textoDaCelula,
   xlsxDaTabela,
 } from "../src/lib/base/exportacao-da-tabela.ts";
+import { chaveDosEditaisDaCasai } from "../src/lib/mapas/mapa-saude-indigena/mapa-nacional.ts";
+import {
+  indicadoresDoRecorte,
+  municipiosDoDsei,
+  redePorTipo,
+} from "../src/lib/mapas/mapa-saude-indigena/indicadores-do-recorte.ts";
+import { contarPorDsei } from "../src/lib/mapas/mapa-saude-indigena/contagem-por-dsei.ts";
+import {
+  camposDasLinhas,
+  casarChaveDoDsei,
+  cnesDaUnidade,
+  estabelecimentosDoCnes,
+  motivoDaFalha,
+  terrasDistintas,
+  territorioPorDsei,
+} from "../src/lib/mapas/mapa-saude-indigena/territorio-do-sigepsi.ts";
+import {
+  FILTRO_DE_ACESSO_VAZIO,
+  cruzarComOciosas,
+  filtrarUnidades,
+  porDseiDoMapa,
+  respostaDoTerritorio,
+  situacaoDaFonte,
+  tabelaDasUnidades,
+  temAcessoNosPontos,
+  territorioPorChaveDoMapa,
+  unidadesComAcesso,
+} from "../src/lib/mapas/mapa-saude-indigena/territorio-na-tela.ts";
+import type { EstabelecimentoDoCnes } from "../src/lib/mapas/mapa-saude-indigena/territorio-do-sigepsi.ts";
 import { lembrarBanco } from "./apoio/bancos-abertos.ts";
+import {
+  CARREGANDO_O_EDITAL,
+  EDITAL_FORA_DA_LISTA,
+  rotuloDoEscolhido,
+  situacaoDoEscolhido,
+} from "../src/lib/editais/edital-na-lista.ts";
+import {
+  revogacaoNaSaida,
+  type InscritoNaFila,
+} from "../src/lib/avaliacao-documental/fila.ts";
+import {
+  ACAO_DA_PENDENCIA,
+  editaisDaPendencia,
+} from "../src/lib/visao-geral/visao-geral.ts";
+import {
+  ETAPAS_DO_FLUXO,
+  etapaDoFluxo,
+  etapasDoFluxo,
+  idaParaAEtapa,
+  tituloDoFluxo,
+  vagaDaChave,
+} from "../src/lib/navegacao/fluxo-das-etapas.ts";
+import {
+  consumirPedidoDeFiltro,
+  pedirFiltro,
+} from "../src/app/pedido-de-filtro.ts";
+import { filtrosDeRecursos } from "../src/lib/aya/filtro-da-aya.ts";
 import {
   afterEach,
   beforeAll,
@@ -157,6 +225,7 @@ import {
   ufDoCep,
 } from "../src/lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts";
 import {
+  buscarNaLista,
   registrosDoDsei,
   resumoDaRede,
   classificarRegistros,
@@ -251,6 +320,8 @@ import {
   textoDosDiasRestantes,
 } from "../src/lib/base/prazos.ts";
 import {
+  chaveDaCasaiNoEndereco,
+  casaiNoEndereco,
   chaveDoDseiNoEndereco,
   dseiNoEndereco,
   resumoDoMapa,
@@ -357,6 +428,33 @@ bloco("lib/aba-do-mapa", () => {
     contratados: number,
     status = "Concluído",
   ): LinhaDoMonitoramento => ({ unidade, vagas_total, contratados, status });
+
+  describe("a CASAI nacional no endereço", () => {
+    it("tem o prefixo casai- e não vira DSEI", () => {
+      expect(casaiNoEndereco("CASAI DF")).toBe("casai-df");
+      expect(casaiNoEndereco("CASAI São Paulo")).toBe("casai-sao-paulo");
+      expect(chaveDaCasaiNoEndereco("casai-sao-paulo")).toBe("SAO PAULO");
+      expect(chaveDaCasaiNoEndereco("yanomami")).toBe("");
+      expect(chaveDoDseiNoEndereco("casai-df")).toBe("");
+      expect(chaveDoDseiNoEndereco("yanomami")).toBe("YANOMAMI");
+    });
+
+    it("os editais da CASAI contam pelo nome ou, sem edital com ele, pela cidade", () => {
+      const contagens = contarPorDsei([edital("CASAI Brasília", 4, 1)]);
+      expect(
+        chaveDosEditaisDaCasai(
+          { nome: "CASAI DF", cidade: "BRASILIA" },
+          contagens,
+        ),
+      ).toBe("BRASILIA");
+      expect(
+        chaveDosEditaisDaCasai(
+          { nome: "CASAI Brasília", cidade: "BRASILIA" },
+          contagens,
+        ),
+      ).toBe("BRASILIA");
+    });
+  });
 
   describe("o DSEI no endereço", () => {
     it("vira um pedaço de endereço legível", () => {
@@ -3869,6 +3967,11 @@ bloco("lib/localizacoes-do-sigepsi", () => {
           tipo: "casai",
           municipio: "MACEIO",
           origem: "sigepsi",
+          // Sem as colunas de acesso na linha: não informado.
+          meios: ["Não informado"],
+          acessibilidade: "Não informado",
+          localidade: "Não informado",
+          floresta: "Não informado",
         },
         expect.objectContaining({ n: "PB ACONÃ", tipo: "polo", uf: "AL" }),
         expect.objectContaining({ n: "NOVO DIA", tipo: "unidade" }),
@@ -4209,6 +4312,589 @@ bloco("lib/localizacoes-do-sigepsi", () => {
       expect(await carregarLocalizacoes(sessao, { buscar })).toBeNull();
       expect(buscar).toHaveBeenCalledTimes(2);
       aviso.mockRestore();
+    });
+  });
+});
+
+bloco("lib/territorio-do-sigepsi", () => {
+  /*
+    Território, acesso e CNES do SIGEPSI
+    (src/lib/mapas/mapa-saude-indigena/territorio-do-sigepsi.ts e
+    api/territorio-dos-dseis.ts). Linhas no formato das rotas
+    /api/mapa-dseis/territorio, /localizacoes e /rede. Dados fictícios.
+  */
+  const TERRITORIO = [
+    {
+      dsei: "DSEI ALAGOAS E SERGIPE",
+      uf: "AL",
+      populacaoIndigena: 12000,
+      qtdAldeias: 40,
+      qtdTerrasIndigenas: 3,
+      terras: [
+        { codigo: "10", nome: "TERRA B", aldeias: [{ uf: "AL" }] },
+        { codigo: "11", nome: "TERRA A", aldeias: [] },
+        { codigo: "10", nome: "TERRA B", aldeias: [{ uf: "SE" }] },
+      ],
+    },
+    {
+      dsei: "Yanomami",
+      populacaoIndigena: "",
+      qtdAldeias: null,
+      terras: 7,
+    },
+    { dsei: "", populacaoIndigena: 1 },
+  ];
+  const REDE = [
+    {
+      dsei: "DSEI ALAGOAS E SERGIPE",
+      nome: "Polo Base Indígena Xitei",
+      cnes: "1234567",
+      uf: "al",
+      municipio: "MACEIO",
+      lat: -9.9,
+      lng: -36,
+      grupo: "u",
+    },
+    { dsei: "DSEI ALAGOAS E SERGIPE", nome: "Sem código", cnes: "" },
+  ];
+
+  describe("conversão", () => {
+    it("território: população, aldeias e terras distintas por código", () => {
+      const t = territorioPorDsei(TERRITORIO);
+      expect(Object.keys(t)).toEqual(["ALAGOAS SERGIPE", "YANOMAMI"]);
+      expect(t["ALAGOAS SERGIPE"]).toEqual({
+        nome: "DSEI ALAGOAS E SERGIPE",
+        populacao: 12000,
+        aldeias: 40,
+        terras: 2,
+        listaDeTerras: [
+          { codigo: "11", nome: "TERRA A" },
+          { codigo: "10", nome: "TERRA B" },
+        ],
+      });
+      // Campo vazio é dado ausente, não zero; `terras` número vale.
+      expect(t.YANOMAMI).toMatchObject({
+        populacao: null,
+        aldeias: null,
+        terras: 7,
+      });
+    });
+
+    it("terras que atravessam dois DSEIs contam uma vez no total", () => {
+      const t = territorioPorDsei([
+        TERRITORIO[0],
+        { ...TERRITORIO[0], dsei: "Xingu" },
+      ]);
+      expect(terrasDistintas(Object.values(t))).toBe(2);
+    });
+
+    it("acesso: as colunas da /todas viram meios, acessibilidade, localidade e floresta", () => {
+      const linha = (campos: Record<string, unknown>) => ({
+        CO_SEQ_LOCALIZACAO_POLO_BASE: "5",
+        NO_DSEI: "ALAGOAS E SERGIPE",
+        TP_UNIDADE: "POLO BASE",
+        NO_LOTACAO: "POLO BASE XITEI",
+        NU_CEP: "57370000",
+        NO_MUNICIPIO: "TRAIPU",
+        CG_LATITUDE: "-9.9",
+        CG_LONGITUDE: "-36",
+        ST_REGISTRO_ATIVO: "S",
+        DS_OBSERVACAO: "texto livre",
+        AU_USUARIO_INCLUSAO: "alguém",
+        AU_DATA_INCLUSAO: "2026-01-01",
+        ...campos,
+      });
+      const { polos } = localizacoesPorDsei([
+        linha({
+          TP_MEIO_ACESSO: "terrestre/FLUVIAL e aereo",
+          TP_ACESSIBILIDADE_GEOGRAFICA: "MUITO REMOTO",
+          TP_CATEGORIA_LOCALIDADE: "rural",
+          ST_FLORESTA: "s",
+        }),
+        linha({
+          CO_SEQ_LOCALIZACAO_POLO_BASE: "6",
+          NO_LOTACAO: "UBSI BANANAL",
+          TP_UNIDADE: "UNIDADE DE LOTAÇÃO",
+          TP_MEIO_ACESSO: "",
+          TP_ACESSIBILIDADE_GEOGRAFICA: null,
+          TP_CATEGORIA_LOCALIDADE: "?",
+          ST_FLORESTA: "NÃO",
+        }),
+      ])["ALAGOAS SERGIPE"] ?? { polos: [] };
+      expect(polos[0]).toMatchObject({
+        cod: "5",
+        meios: ["Terrestre", "Fluvial", "Aéreo"],
+        acessibilidade: "Muito remoto",
+        localidade: "Rural",
+        floresta: "Sim",
+      });
+      expect(polos[1]).toMatchObject({
+        meios: ["Não informado"],
+        acessibilidade: "Não informado",
+        localidade: "Não informado",
+        floresta: "Não",
+      });
+      // Auditoria e texto livre não saem da função.
+      const campos = Object.keys(polos[0] ?? {});
+      for (const fora of [
+        "DS_OBSERVACAO",
+        "AU_USUARIO_INCLUSAO",
+        "AU_DATA_INCLUSAO",
+      ])
+        expect(campos).not.toContain(fora);
+      expect(JSON.stringify(polos)).not.toContain("texto livre");
+    });
+
+    it("CNES: só com código, e casa com a unidade pelo nome", () => {
+      const rede = estabelecimentosDoCnes(REDE);
+      expect(rede).toEqual([
+        {
+          dsei: "ALAGOAS SERGIPE",
+          nome: "Polo Base Indígena Xitei",
+          cnes: "1234567",
+          uf: "AL",
+          municipio: "MACEIO",
+          lat: -9.9,
+          lon: -36,
+        },
+      ]);
+      expect(
+        cnesDaUnidade("POLO BASE XITEI", "ALAGOAS SERGIPE", rede)?.cnes,
+      ).toBe("1234567");
+      expect(cnesDaUnidade("POLO BASE XITEI", "YANOMAMI", rede)).toBeNull();
+      expect(cnesDaUnidade("UBSI BANANAL", "ALAGOAS SERGIPE", rede)).toBeNull();
+    });
+
+    it("a chave do DSEI casa com a do mapa (KAYAPO × KAIAPO)", () => {
+      const doMapa = ["KAIAPO PARA", "LESTE RORAIMA", "YANOMAMI"];
+      expect(casarChaveDoDsei("KAYAPO PARA", doMapa)).toBe("KAIAPO PARA");
+      expect(casarChaveDoDsei("YANOMAMI", doMapa)).toBe("YANOMAMI");
+      expect(casarChaveDoDsei("XINGU", doMapa)).toBeNull();
+    });
+
+    it("o motivo diz qual liberação pedir", () => {
+      expect(motivoDaFalha(401)).toBe("a chave do Yeendé não lê esta rota");
+      expect(motivoDaFalha(403)).toBe("a chave do Yeendé não lê esta rota");
+      expect(motivoDaFalha(404)).toBe("a rota não existe no SIGEPSI");
+      expect(motivoDaFalha(null)).toBe("o SIGEPSI não respondeu");
+      expect(motivoDaFalha(500)).toBe("o SIGEPSI respondeu 500");
+    });
+
+    it("os campos do diagnóstico são só nomes", () => {
+      expect(camposDasLinhas(REDE)).toEqual([
+        "cnes",
+        "dsei",
+        "grupo",
+        "lat",
+        "lng",
+        "municipio",
+        "nome",
+        "uf",
+      ]);
+    });
+  });
+
+  describe("/api/territorio-dos-dseis", () => {
+    const ambiente = { ...process.env };
+    const original = globalThis.fetch;
+
+    beforeEach(async () => {
+      process.env.VITE_SUPABASE_URL = "https://banco.exemplo";
+      process.env.VITE_SUPABASE_PUBLISHABLE_KEY = "pub";
+      process.env.SIGEPSI_API_TOKEN = "segredo";
+      const { esquecerCache } = await import("../api/territorio-dos-dseis.ts");
+      esquecerCache();
+    });
+    afterEach(() => {
+      process.env = { ...ambiente };
+      globalThis.fetch = original;
+      vi.restoreAllMocks();
+    });
+
+    async function chamar(headers: Record<string, string> = {}) {
+      const { default: handler } =
+        await import("../api/territorio-dos-dseis.ts");
+      const gravado = {
+        codigo: 0,
+        cabecalhos: {} as Record<string, string>,
+        corpo: "",
+      };
+      const res: Pick<RespostaDaVercel, "status" | "setHeader" | "end"> = {
+        status(codigo) {
+          gravado.codigo = codigo;
+          return res as RespostaDaVercel;
+        },
+        setHeader(nome, valor) {
+          gravado.cabecalhos[nome] = String(valor);
+          return res as RespostaDaVercel;
+        },
+        end(corpo?: unknown) {
+          gravado.corpo = String(corpo ?? "");
+          return res as RespostaDaVercel;
+        },
+      };
+      const pedido: Pick<PedidoDaVercel, "method" | "headers"> = {
+        method: "GET",
+        headers,
+      };
+      await handler(pedido as PedidoDaVercel, res as RespostaDaVercel);
+      const json: unknown = gravado.corpo ? JSON.parse(gravado.corpo) : null;
+      return { ...gravado, json };
+    }
+
+    const urlDe = (entrada: Parameters<typeof fetch>[0]) =>
+      typeof entrada === "string"
+        ? entrada
+        : entrada instanceof URL
+          ? entrada.href
+          : entrada.url;
+
+    /* O SIGEPSI falso: cada rota com a sua lista; `status` nega uma rota. */
+    function sigepsi(status: Record<string, number> = {}) {
+      return vi.fn<typeof fetch>(async (entrada) => {
+        const url = urlDe(entrada);
+        if (url.endsWith("/auth/v1/user")) return new Response("{}");
+        const rota = new URL(url).pathname;
+        const negada = status[rota];
+        if (negada) return new Response("", { status: negada });
+        const corpo =
+          rota === "/api/mapa-dseis/territorio"
+            ? TERRITORIO
+            : rota === "/api/mapa-dseis/rede"
+              ? REDE
+              : { erro: "rota que a função não deveria ler" };
+        return new Response(JSON.stringify(corpo));
+      });
+    }
+
+    it("sem sessão, 401 sem chamar o SIGEPSI", async () => {
+      const fetchFalso = sigepsi();
+      globalThis.fetch = fetchFalso;
+      expect((await chamar()).codigo).toBe(401);
+      expect(fetchFalso).not.toHaveBeenCalled();
+    });
+
+    it("lê as duas rotas com o token do servidor, e nunca a da força de trabalho", async () => {
+      const fetchFalso = sigepsi();
+      globalThis.fetch = fetchFalso;
+      const r = await chamar({ authorization: "Bearer sessao" });
+      expect(r.codigo).toBe(200);
+      const rotas = fetchFalso.mock.calls
+        .map(([entrada]) => new URL(urlDe(entrada)).pathname)
+        .filter((rota) => rota.startsWith("/api/"))
+        .sort();
+      expect(rotas).toEqual([
+        "/api/mapa-dseis/rede",
+        "/api/mapa-dseis/territorio",
+      ]);
+      for (const [entrada, opcoes] of fetchFalso.mock.calls)
+        if (urlDe(entrada).includes("sigepsi"))
+          expect(new Headers(opcoes?.headers).get("Authorization")).toBe(
+            "Bearer segredo",
+          );
+      expect(r.corpo).not.toContain("segredo");
+      expect(r.cabecalhos["Cache-Control"]).toMatch(/^private/);
+      expect(r.json).toMatchObject({
+        territorio: { ok: true, linhas: 3 },
+        cnes: { ok: true, linhas: 2, campos: expect.arrayContaining(["cnes"]) },
+      });
+    });
+
+    it("rota negada não derruba as outras e diz o porquê", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      globalThis.fetch = sigepsi({ "/api/mapa-dseis/territorio": 403 });
+      const r = await chamar({ authorization: "Bearer sessao" });
+      expect(r.codigo).toBe(200);
+      expect(r.json).toMatchObject({
+        territorio: {
+          ok: false,
+          status: 403,
+          motivo: "a chave do Yeendé não lê esta rota",
+        },
+        cnes: { ok: true },
+      });
+    });
+
+    it("guarda o que leu: a segunda chamada só confere a sessão", async () => {
+      const fetchFalso = sigepsi();
+      globalThis.fetch = fetchFalso;
+      await chamar({ authorization: "Bearer sessao" });
+      await chamar({ authorization: "Bearer sessao" });
+      // 2 sessões + 2 rotas.
+      expect(fetchFalso).toHaveBeenCalledTimes(4);
+    });
+  });
+});
+
+bloco("lib/territorio-na-tela", () => {
+  /*
+    O acesso (nos pontos do mapa, da /todas), o território e o CNES junto do
+    que o mapa desenha (src/lib/mapas/mapa-saude-indigena/territorio-na-tela.ts)
+    e o pedido do navegador (src/modulos/mapa-saude-indigena/territorio.ts).
+    Dados fictícios.
+  */
+  const DSEI: DseiDoMapa = {
+    k: "ALAGOAS SERGIPE",
+    n: "Alagoas e Sergipe",
+    lat: -9.6,
+    lon: -35.7,
+    ufs: ["AL", "SE"],
+    polos: [
+      {
+        n: "POLO BASE XITEI",
+        lat: -9.9,
+        lon: -36,
+        uf: "AL",
+        cod: "5",
+        meios: ["Terrestre", "Fluvial"],
+        acessibilidade: "Remoto",
+        localidade: "Rural",
+        floresta: "Sim",
+      },
+      {
+        n: "UBSI BANANAL",
+        lat: -10.1,
+        lon: -36.4,
+        uf: "AL",
+        tipo: "unidade",
+        meios: ["Aéreo"],
+        acessibilidade: "Muito remoto",
+        localidade: "Rural",
+        floresta: "Não",
+      },
+      {
+        n: "UBSI SEM ACESSO",
+        lat: -10.2,
+        lon: -36.5,
+        uf: "AL",
+        meios: ["Não informado"],
+        acessibilidade: "Não informado",
+        localidade: "Não informado",
+        floresta: "Não informado",
+      },
+    ],
+  };
+  const CNES: EstabelecimentoDoCnes[] = [
+    {
+      dsei: "ALAGOAS SERGIPE",
+      nome: "Polo Base Indígena Xitei",
+      cnes: "1234567",
+      uf: "AL",
+      municipio: "",
+      lat: null,
+      lon: null,
+    },
+  ];
+  const registros = classificarRegistros(registrosDoDsei(DSEI), DSEI);
+
+  it("a resposta da função: fonte que não é `{ ok }` vira indisponível", () => {
+    const r = respostaDoTerritorio({
+      territorio: {
+        ok: false,
+        status: 401,
+        motivo: "a chave do Yeendé não lê esta rota",
+      },
+      cnes: "lixo",
+    });
+    expect(situacaoDaFonte(r, "territorio")).toEqual({
+      tipo: "indisponivel",
+      motivo: "a chave do Yeendé não lê esta rota",
+    });
+    expect(situacaoDaFonte(r, "cnes").tipo).toBe("indisponivel");
+    expect(
+      situacaoDaFonte(
+        respostaDoTerritorio({
+          cnes: { ok: true, dados: CNES, linhas: 1, campos: [] },
+        }),
+        "cnes",
+      ),
+    ).toEqual({ tipo: "pronta", dados: CNES });
+    expect(situacaoDaFonte(null, "cnes")).toEqual({ tipo: "carregando" });
+    expect(situacaoDaFonte(null, "cnes", { falhou: true }).tipo).toBe(
+      "indisponivel",
+    );
+  });
+
+  it("o território casa com a chave do mapa", () => {
+    const t = territorioPorChaveDoMapa(
+      {
+        "KAYAPO PARA": {
+          nome: "DSEI KAYAPO DO PARA",
+          populacao: 5,
+          aldeias: 2,
+          terras: 1,
+          listaDeTerras: [],
+        },
+      },
+      ["KAIAPO PARA", "YANOMAMI"],
+    );
+    expect(t.get("KAIAPO PARA")?.populacao).toBe(5);
+    expect(t.has("YANOMAMI")).toBe(false);
+  });
+
+  it("o acesso está nos pontos só quando a /todas trouxe as colunas", () => {
+    expect(temAcessoNosPontos([DSEI])).toBe(true);
+    expect(
+      temAcessoNosPontos([
+        { ...DSEI, polos: [{ n: "SEM", lat: -9, lon: -36 }] },
+      ]),
+    ).toBe(false);
+  });
+
+  it("cada unidade do mapa leva o acesso do ponto e o CNES pelo nome", () => {
+    const [polo, bananal, sem] = unidadesComAcesso({
+      registros,
+      comAcesso: true,
+      cnes: CNES,
+    });
+    expect(polo).toMatchObject({
+      nome: "POLO BASE XITEI",
+      meios: ["Terrestre", "Fluvial"],
+      floresta: "Sim",
+      cnes: "1234567",
+    });
+    expect(bananal).toMatchObject({
+      meios: ["Aéreo"],
+      floresta: "Não",
+      cnes: "",
+    });
+    expect(sem).toMatchObject({
+      meios: ["Não informado"],
+      floresta: "Não informado",
+    });
+    // Sem acesso nos pontos e sem CNES: null (indisponível), não vazio.
+    const semFontes = unidadesComAcesso({
+      registros,
+      comAcesso: false,
+      cnes: null,
+    });
+    expect(semFontes[0]).toMatchObject({
+      meios: null,
+      floresta: null,
+      cnes: null,
+    });
+  });
+
+  it("filtra por meio de acesso e floresta e cruza com as ociosas", () => {
+    const unidades = unidadesComAcesso({
+      registros,
+      comAcesso: true,
+      cnes: CNES,
+    });
+    expect(
+      filtrarUnidades(unidades, { meio: "Fluvial", floresta: "" }).map(
+        (u) => u.nome,
+      ),
+    ).toEqual(["POLO BASE XITEI"]);
+    expect(
+      filtrarUnidades(unidades, { meio: "Não informado", floresta: "" }).map(
+        (u) => u.nome,
+      ),
+    ).toEqual(["UBSI SEM ACESSO"]);
+    expect(
+      filtrarUnidades(unidades, { meio: "", floresta: "Não" }),
+    ).toHaveLength(1);
+
+    const porDsei = new Map([[DSEI.k, { dsei: DSEI, unidades }]]);
+    const contagens = new Map([
+      [DSEI.k, { editais: 2, vagas: 10, contratadas: 6, ociosas: 3 }],
+    ]);
+    expect(
+      cruzarComOciosas(porDsei, contagens, { meio: "Aéreo", floresta: "" }),
+    ).toEqual([
+      {
+        k: DSEI.k,
+        nome: "Alagoas e Sergipe",
+        unidades: 1,
+        totalDeUnidades: 3,
+        vagas: 10,
+        ociosas: 3,
+      },
+    ]);
+    expect(
+      cruzarComOciosas(porDsei, contagens, { meio: "Aéreo", floresta: "Sim" }),
+    ).toEqual([]);
+  });
+
+  it("o CNES de cada DSEI vai para a chave do mapa", () => {
+    const indice = porDseiDoMapa(
+      [{ ...CNES[0]!, dsei: "KAYAPO PARA" }],
+      ["KAIAPO PARA"],
+    );
+    expect(indice?.get("KAIAPO PARA")).toHaveLength(1);
+    expect(porDseiDoMapa(null, ["KAIAPO PARA"])).toBeNull();
+  });
+
+  it("a tabela exportada leva só as colunas das fontes que vieram", () => {
+    const com = tabelaDasUnidades(
+      "Alagoas e Sergipe",
+      unidadesComAcesso({ registros, comAcesso: true, cnes: CNES }),
+      { meio: "Fluvial", floresta: "" },
+    );
+    expect(com.titulo).toBe(
+      "Unidades do DSEI Alagoas e Sergipe — acesso Fluvial",
+    );
+    expect(com.colunas).toContain("Meio de acesso");
+    expect(com.colunas).toContain("CNES");
+    expect(com.linhas[0]).toContain("Terrestre, Fluvial");
+    const sem = tabelaDasUnidades(
+      "Alagoas e Sergipe",
+      unidadesComAcesso({ registros, comAcesso: false, cnes: null }),
+      FILTRO_DE_ACESSO_VAZIO,
+    );
+    expect(sem.colunas).toEqual(["Unidade", "Tipo", "Município", "UF"]);
+  });
+
+  describe("carregarTerritorio (navegador)", () => {
+    const sessao = {
+      auth: {
+        getSession: async () => ({
+          data: { session: { access_token: "token-da-sessao" } },
+          error: null,
+        }),
+      },
+    };
+    beforeEach(async () => {
+      const { esquecerTerritorio } =
+        await import("../src/modulos/mapa-saude-indigena/territorio.ts");
+      esquecerTerritorio();
+    });
+
+    it("manda o token da sessão, lê cada fonte e guarda", async () => {
+      const { carregarTerritorio } =
+        await import("../src/modulos/mapa-saude-indigena/territorio.ts");
+      const buscar = vi.fn<typeof fetch>(
+        async () =>
+          new Response(
+            JSON.stringify({
+              territorio: { ok: false, status: 401, motivo: "x" },
+              cnes: { ok: true, dados: [], linhas: 0, campos: [] },
+            }),
+          ),
+      );
+      const r = await carregarTerritorio(sessao, { buscar });
+      expect(r?.territorio.ok).toBe(false);
+      expect(r?.cnes.ok).toBe(true);
+      const [rota, opcoes] = buscar.mock.calls[0] ?? [];
+      expect(rota).toBe("/api/territorio-dos-dseis");
+      expect(new Headers(opcoes?.headers).get("Authorization")).toBe(
+        "Bearer token-da-sessao",
+      );
+      await carregarTerritorio(sessao, { buscar });
+      expect(buscar).toHaveBeenCalledTimes(1);
+    });
+
+    it("falha do pedido devolve null e não fica guardada", async () => {
+      const { carregarTerritorio } =
+        await import("../src/modulos/mapa-saude-indigena/territorio.ts");
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+      const buscar = vi.fn<typeof fetch>(
+        async () => new Response("", { status: 404 }),
+      );
+      expect(await carregarTerritorio(sessao, { buscar })).toBeNull();
+      expect(await carregarTerritorio(sessao, { buscar })).toBeNull();
+      expect(buscar).toHaveBeenCalledTimes(2);
+      vi.restoreAllMocks();
     });
   });
 });
@@ -6416,6 +7102,75 @@ bloco("lib/entrevistas/meses-da-agenda", () => {
   });
 });
 
+bloco("lib/base/ativos-e-historico", () => {
+  const EDITAIS = [
+    { id: "a", status: "Em andamento" },
+    { id: "b", status: "Concluído" },
+    { id: "c", status: "Suspenso" },
+    { id: "d", status: "em Andamento" },
+    { id: "e", status: "Cancelado" },
+    { id: "f", status: "Em andamento", ativo: false },
+    { id: "g", status: "Cronograma encerrado" },
+    { id: "h", status: "" },
+  ];
+
+  it("separa ativos e histórico na ordem em que vieram", () => {
+    const { ativos, historico } = separarAtivosEHistorico(
+      EDITAIS,
+      editalDoHistorico,
+    );
+    expect(ativos.map((e) => e.id)).toEqual(["a", "c", "d", "h"]);
+    expect(historico.map((e) => e.id)).toEqual(["b", "e", "f", "g"]);
+    expect(separarAtivosEHistorico(null, () => true)).toEqual({
+      ativos: [],
+      historico: [],
+    });
+  });
+
+  it("conta por situação: grafias juntas, mais numerosa primeiro", () => {
+    const ativos = EDITAIS.filter((e) => !editalDoHistorico(e));
+    const contagem = contarPorSituacao(ativos, situacaoDoEdital);
+    expect(contagem).toEqual([
+      { rotulo: "Em andamento", quantos: 2 },
+      { rotulo: "Sem situação", quantos: 1 },
+      { rotulo: "Suspenso", quantos: 1 },
+    ]);
+    expect(textoDasSituacoes(contagem)).toBe(
+      "Em andamento 2 · Sem situação 1 · Suspenso 1",
+    );
+    expect(textoDasSituacoes([{ rotulo: "Concluído", quantos: 1234 }])).toBe(
+      "Concluído 1.234",
+    );
+  });
+
+  it("o desativado aparece como Desativado; a cor segue o status", () => {
+    expect(situacaoDoEdital({ status: "Em andamento", ativo: false })).toBe(
+      "Desativado",
+    );
+    expect(tomDaSituacaoDoEdital("Concluído")).toBe("aprovado");
+    expect(tomDaSituacaoDoEdital("Cancelado")).toBe("reprovado");
+    expect(tomDaSituacaoDoEdital("Em andamento")).toBe("revisar");
+    expect(tomDaSituacaoDoEdital("Suspenso")).toBe("neutro");
+  });
+
+  it("a vista guardada: só historico muda o padrão", () => {
+    expect(vistaDaLista("historico")).toBe("historico");
+    expect(vistaDaLista("ativos")).toBe("ativos");
+    expect(vistaDaLista({})).toBe("ativos");
+  });
+
+  it("junta o status do monitoramento pelo id", () => {
+    const juntos = comSituacaoDoMonitoramento(
+      [{ id: "x", edital: "1/2026" }, { id: "y" }],
+      [{ id: "x", status: "Concluído", ativo: true }, null, { id: 7 }],
+    );
+    expect(juntos).toEqual([
+      { id: "x", edital: "1/2026", status: "Concluído", ativo: true },
+      { id: "y" },
+    ]);
+  });
+});
+
 bloco("lib/base/exportacao-da-tabela", () => {
   const TABELA = {
     titulo: "Seleção — Saúde Indígena",
@@ -6510,5 +7265,364 @@ bloco("apoio/bancos-abertos", () => {
       expect(doPrimeiroTeste.closed).toBe(true);
       expect(doBloco.closed).toBe(false);
     });
+  });
+});
+
+bloco("lib/pede-acao-da-visao-geral", () => {
+  /*
+    "Pede ação" da Visão geral: a pendência abre os editais dela (do recorte),
+    pelo número, e cada pendência tem a ação que a resolve e a tela dela.
+  */
+  it("os editais da pendência, pelo número do edital", () => {
+    const linhas = [
+      { id: 1, edital: "12/2026", pos_resultado: ["sem_lista" as const] },
+      { id: 2, edital: "3/2026", pos_resultado: ["sem_lista" as const] },
+      { id: 3, edital: "7/2026", pos_resultado: ["sem_status" as const] },
+      { id: 4, edital: "8/2026" },
+    ];
+    expect(editaisDaPendencia(linhas, "sem_lista").map((l) => l.id)).toEqual([
+      2, 1,
+    ]);
+    expect(editaisDaPendencia(linhas, "sem_status").map((l) => l.id)).toEqual([
+      3,
+    ]);
+    expect(editaisDaPendencia(null, "sem_lista")).toEqual([]);
+  });
+
+  it("cada pendência tem a ação e a tela que a resolvem", () => {
+    expect(ACAO_DA_PENDENCIA.sem_lista).toEqual({
+      rotulo: "Importar lista",
+      view: "nucleo",
+    });
+    expect(ACAO_DA_PENDENCIA.sem_status).toEqual({
+      rotulo: "Atualizar status",
+      view: "approved",
+    });
+  });
+});
+
+bloco("lib/fluxo-das-etapas", () => {
+  /*
+    O fluxo entre as etapas do processo seletivo
+    (src/lib/navegacao/fluxo-das-etapas.ts): a ordem, o título da faixa e
+    como cada tela recebe o edital e a vaga (o mesmo destino da aba
+    "Candidatos" da página do edital).
+  */
+  const ID = "0b7c9a52-2d55-4c4e-9f7a-1c3d5e7f9a1b";
+  const etapa = (view: string) => {
+    const achada = etapaDoFluxo(view);
+    if (!achada) throw new Error(`sem a etapa ${view}`);
+    return achada;
+  };
+
+  it("as etapas, na ordem do processo, sem o Painel da Seleção", () => {
+    expect(ETAPAS_DO_FLUXO.map((e) => e.curto)).toEqual([
+      "Triagem",
+      "Documental",
+      "Recursos",
+      "Entrevistas",
+      "Classificação",
+      "Aprovados",
+    ]);
+    expect(
+      etapasDoFluxo((view) => view !== "analisar-recursos").map((e) => e.view),
+    ).toEqual([
+      "pre-classificacao",
+      "avaliacao-documental",
+      "conduzir-entrevistas",
+      "classificacao",
+      "approved",
+    ]);
+    expect(etapaDoFluxo("selecao")).toBeUndefined();
+  });
+
+  it("o título diz a etapa e o edital", () => {
+    expect(tituloDoFluxo("avaliacao-documental", "Edital nº 093/2026")).toBe(
+      "Documental do 093/2026",
+    );
+    expect(tituloDoFluxo("classificacao", "03/2025 · DSEI Fictício")).toBe(
+      "Classificação do 03/2025",
+    );
+    expect(tituloDoFluxo("approved", "93/2026 · DSEI Fictício")).toBe(
+      "Aprovados do 93/2026",
+    );
+    expect(tituloDoFluxo("classificacao", "")).toBe("Classificação");
+    expect(tituloDoFluxo("dashboard", "93/2026")).toBe("");
+  });
+
+  it("pelo id, a navegação leva o edital; a vaga vai no pedido só para quem recorta por vaga", () => {
+    const edital = { id: ID, numero: "93/2026" };
+    expect(idaParaAEtapa(etapa("classificacao"), edital, "179698")).toEqual({
+      view: "classificacao",
+      extras: { edital: ID },
+      filtro: { editalId: ID, vaga: "179698" },
+    });
+    expect(idaParaAEtapa(etapa("pre-classificacao"), edital)).toEqual({
+      view: "pre-classificacao",
+      extras: { edital: ID },
+    });
+    // Sem id, a tela que abre pelo id não tem para onde ir.
+    expect(
+      idaParaAEtapa(etapa("conduzir-entrevistas"), { numero: "93/2026" }),
+    ).toBeNull();
+  });
+
+  it("pelo número (Recursos, Aprovados), o pedido leva o número e o id; a vaga fica", () => {
+    expect(
+      idaParaAEtapa(
+        etapa("analisar-recursos"),
+        { id: ID, numero: "93/2026" },
+        "179698",
+      ),
+    ).toEqual({
+      view: "analisar-recursos",
+      filtro: { edital: "93/2026", editalId: ID },
+    });
+    expect(
+      idaParaAEtapa(etapa("approved"), { numero: "Edital 93/2026" }),
+    ).toEqual({
+      view: "approved",
+      filtro: { edital: "93/2026" },
+    });
+    expect(idaParaAEtapa(etapa("approved"), { id: ID })).toBeNull();
+  });
+
+  it("a vaga da Classificação segue pelo código; a linha do quadro sem código, não", () => {
+    expect(vagaDaChave("179698")).toBe("179698");
+    expect(vagaDaChave("quadro:42")).toBe("");
+    expect(vagaDaChave(null)).toBe("");
+  });
+
+  it("o pedido com a vaga espera a tela chegar no edital dele", () => {
+    const agora = 1_000;
+    pedirFiltro("classificacao", { editalId: ID, vaga: "179698" }, agora);
+    const noEdital = (filtro: { editalId?: string }) => filtro.editalId === ID;
+    // Outro edital aberto: o pedido fica.
+    expect(
+      consumirPedidoDeFiltro("classificacao", agora, () => false),
+    ).toBeNull();
+    expect(consumirPedidoDeFiltro("classificacao", agora, noEdital)).toEqual({
+      editalId: ID,
+      vaga: "179698",
+    });
+    expect(consumirPedidoDeFiltro("classificacao", agora, noEdital)).toBeNull();
+  });
+
+  it("Recursos recorta pelo id do edital quando ele vem, e pelo número sem ele", () => {
+    const opcoes = {
+      editais: [
+        { valor: "e1", rotulo: "93/2026 · DSEI Fictício" },
+        { valor: ID, rotulo: "93/2026 · DSEI Outro" },
+      ],
+    };
+    const vazios = {
+      edital: "",
+      origem: "",
+      analista: "",
+      situacao: "",
+      pendencia: "",
+      busca: "",
+    };
+    expect(
+      filtrosDeRecursos(vazios, { edital: "93/2026", editalId: ID }, opcoes)
+        .edital,
+    ).toBe(ID);
+    expect(
+      filtrosDeRecursos(vazios, { edital: "93/2026" }, opcoes).edital,
+    ).toBe("e1");
+  });
+});
+
+bloco("lib/revogar-decisao-na-saida-do-lote", () => {
+  /*
+    A ficha que saiu do lote pela importação da planilha (src/lib/avaliacao-documental/fila.ts,
+    revogacaoNaSaida): quem entrou por decisão pode ter a decisão revogada;
+    quem entrou pela regra não tem o que revogar; a já analisada fica.
+  */
+  const saiu = (extra: Partial<InscritoNaFila>): InscritoNaFila => ({
+    id: "c1",
+    codigo: "7003",
+    situacao_pre: "NO_LOTE",
+    ficha: { id: "f1", situacao: "FORA_LOTE" },
+    ...extra,
+  });
+
+  it("entrou por decisão: revogar a decisão de lote", () => {
+    expect(
+      revogacaoNaSaida(saiu({ entrada: "DECISAO", decisao: "Critério CORES" })),
+    ).toBe("revogar");
+  });
+
+  it("entrou pela regra: não há decisão a revogar", () => {
+    expect(revogacaoNaSaida(saiu({ entrada: "INICIAL" }))).toBe("regra");
+    expect(revogacaoNaSaida(saiu({ entrada: "REPOSICAO" }))).toBe("regra");
+  });
+
+  it("já analisado: a decisão fica", () => {
+    expect(
+      revogacaoNaSaida(
+        saiu({
+          situacao_pre: "ANALISADO",
+          entrada: "DECISAO",
+          decisao: "Critério CORES",
+        }),
+      ),
+    ).toBe("analisado");
+  });
+
+  it("fora do Saiu do lote, nada", () => {
+    expect(
+      revogacaoNaSaida(
+        saiu({
+          ficha: { id: "f1", situacao: "PENDENTE" },
+          entrada: "DECISAO",
+          decisao: "Critério CORES",
+        }),
+      ),
+    ).toBeNull();
+    expect(revogacaoNaSaida(saiu({ situacao_pre: "RANQUEADO" }))).toBeNull();
+    expect(revogacaoNaSaida(null)).toBeNull();
+  });
+});
+
+bloco("lib/edital-na-lista", () => {
+  /*
+    O edital aberto e a lista da tela (src/lib/editais/edital-na-lista.ts):
+    a tela nunca mostra o id; espera a lista, e fora dela diz isso.
+  */
+  const EDITAIS = [
+    { id: "e1", edital: "03/2025", unidade: "DSEI Fictício" },
+    { id: "e2", edital: "07/2026", unidade: "" },
+  ];
+
+  it("na lista: o número e a unidade", () => {
+    expect(situacaoDoEscolhido(EDITAIS, "e1", true)).toBe("na-lista");
+    expect(rotuloDoEscolhido(EDITAIS, "e1", true)).toBe(
+      "03/2025 · DSEI Fictício",
+    );
+    expect(rotuloDoEscolhido(EDITAIS, "e2", false)).toBe("07/2026");
+  });
+
+  it("a lista ainda não chegou: Carregando…, nunca o id", () => {
+    expect(situacaoDoEscolhido([], "e9", false)).toBe("carregando");
+    expect(rotuloDoEscolhido([], "e9", false)).toBe(CARREGANDO_O_EDITAL);
+  });
+
+  it("fora da lista carregada: Edital fora desta lista", () => {
+    expect(situacaoDoEscolhido(EDITAIS, "e9", true)).toBe("fora");
+    expect(rotuloDoEscolhido(EDITAIS, "e9", true)).toBe(EDITAL_FORA_DA_LISTA);
+  });
+
+  it("sem edital aberto, nada", () => {
+    expect(situacaoDoEscolhido(EDITAIS, "", true)).toBe("nenhum");
+    expect(rotuloDoEscolhido(null, null, true)).toBe("");
+  });
+});
+
+bloco("lib/indicadores-do-recorte", () => {
+  /*
+    Os números do topo da aba Mapa seguem o seletor (Brasil, DSEI ou CASAI),
+    como no Mapa dos DSEIs do SIGEPSI. Dados fictícios.
+  */
+  const dsei = {
+    k: "XINGU",
+    n: "Xingu",
+    pop: 9000,
+    polos: [
+      { n: "Polo A", municipio: "Canarana", uf: "MT" },
+      { n: "Polo B", municipio: "CANARANA", uf: "MT" },
+      { n: "Polo C", municipio: "Querência", uf: "MT" },
+      { n: "Polo D" },
+    ],
+  };
+  const contagens = new Map([
+    ["XINGU", { editais: 2, vagas: 20, contratadas: 15, ociosas: 5 }],
+    ["DF", { editais: 1, vagas: 4, contratadas: 1, ociosas: 3 }],
+  ]);
+
+  it("municípios distintos dos pontos, sem diferença de caixa", () => {
+    expect(municipiosDoDsei(dsei)).toBe(2);
+  });
+
+  it("Brasil soma tudo; DSEI e CASAI só o deles", () => {
+    const brasil = indicadoresDoRecorte({ dseis: [dsei], contagens });
+    expect(brasil.titulo).toBe("Brasil");
+    expect(brasil.vagas).toBe(24);
+    expect(brasil.indicadores.at(-1)).toEqual({
+      chave: "contratadas",
+      valor: 16,
+      rotulo: "Contratadas",
+    });
+    expect(brasil.preenchidas).toBe(67);
+
+    const doDsei = indicadoresDoRecorte({ dseis: [dsei], contagens, dsei });
+    expect(doDsei.titulo).toBe("Xingu");
+    expect(
+      Object.fromEntries(doDsei.indicadores.map((i) => [i.chave, i.valor])),
+    ).toEqual({
+      populacao: 9000,
+      unidades: 4,
+      municipios: 2,
+      editais: 2,
+      vagas: 20,
+      contratadas: 15,
+    });
+    expect(doDsei.preenchidas).toBe(75);
+
+    const casai = {
+      chave: "CASAI DF|-15.8|-47.9",
+      nome: "CASAI DF",
+      cnes: "",
+      lat: -15.8,
+      lon: -47.9,
+      cidade: "Brasília",
+      uf: "DF",
+      editais: 1,
+      termoDeBusca: "CASAI Brasília",
+    };
+    const daCasai = indicadoresDoRecorte({ contagens, casai });
+    expect(daCasai.titulo).toBe("CASAI DF");
+    expect(daCasai.ociosas).toBe(3);
+  });
+
+  it("a rede por tipo conta os pontos que o mapa desenha", () => {
+    const comPontos = {
+      k: "XINGU",
+      n: "Xingu",
+      polos: [
+        { n: "Polo A", lat: -12, lon: -52, tipo: "polo" as const },
+        { n: "Polo B", lat: -12.5, lon: -52.5, tipo: "polo" as const },
+        { n: "CASAI X", lat: -13, lon: -53, tipo: "casai" as const },
+        // Sem coordenada não se desenha nem se conta.
+        { n: "Polo sem ponto", tipo: "polo" as const },
+      ],
+    };
+    const rede = redePorTipo([comPontos]);
+    expect(rede.total).toBe(3);
+    expect(rede.tipos.map((t) => [t.tipo.key, t.quantidade])).toEqual([
+      ["polo", 2],
+      ["casai", 1],
+    ]);
+    expect(redePorTipo([]).total).toBe(0);
+  });
+
+  it("buscar ponto pelo nome ou município, sem acento nem caixa", () => {
+    const registros = registrosDoDsei({
+      k: "YANOMAMI",
+      n: "Yanomami",
+      polos: [
+        { n: "PB XITEI", lat: 3, lon: -63, municipio: "Alto Alegre" },
+        { n: "CASAI BOA VISTA", lat: 2.8, lon: -60.7, municipio: "Boa Vista" },
+      ],
+    });
+    expect(buscarNaLista(registros, "xitéi").map((r) => r.name)).toEqual([
+      "PB XITEI",
+    ]);
+    expect(buscarNaLista(registros, "boa vista")).toHaveLength(1);
+    expect(buscarNaLista(registros, "  ")).toHaveLength(2);
+  });
+
+  it("sem vagas, a barra não se aplica (0%)", () => {
+    expect(indicadoresDoRecorte({}).preenchidas).toBe(0);
   });
 });

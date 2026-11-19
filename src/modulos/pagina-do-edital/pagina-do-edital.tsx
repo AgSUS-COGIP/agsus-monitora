@@ -10,7 +10,7 @@ import {
   usarEstadoDaNavegacao,
   usarNavegacao,
 } from "../../app/contexto-do-app.ts";
-import { pedirFiltro } from "../../app/pedido-de-filtro.ts";
+import { abrirTelaDoEdital } from "../../app/abrir-tela-do-edital.ts";
 import { TelaNaUrl, usarFiltrosNaUrl } from "../../app/usar-filtros-na-url.ts";
 import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
@@ -19,7 +19,6 @@ import {
   formatarDataHora,
   hojeEmBrasilia,
 } from "../../lib/cronograma/cronograma-do-edital.ts";
-import { numeroDoEdital } from "../../lib/editais/numero-do-edital.ts";
 import { textoDaFonteDoFunil } from "../../lib/editais/funil-do-edital.ts";
 import {
   TEXTO_DAS_VAGAS_DO_EDITAL,
@@ -50,7 +49,6 @@ import {
 import type {
   AbaDaPagina,
   EtapaNaLinhaDoTempo,
-  TelaDoEdital,
 } from "../../lib/pagina-do-edital/pagina-do-edital.ts";
 import {
   dataCurta,
@@ -139,21 +137,6 @@ const periodoDaEtapa = (etapa: EtapaNaLinhaDoTempo) =>
   `${dataCurta(etapa.inicio) || "Sem data"}${
     etapa.fim && etapa.fim !== etapa.inicio ? ` a ${dataCurta(etapa.fim)}` : ""
   }`;
-
-/* Leva à tela da seleção já no edital: pelo id (a navegação abre o edital) ou pelo número (pedido de filtro). */
-function abrirTelaDoEdital(tela: TelaDoEdital, linha: LinhaDaVisaoGeral) {
-  const janela = globalThis.window as {
-    navigate?: (view: string, extras?: { edital?: string }) => unknown;
-  };
-  if (typeof janela.navigate !== "function") return;
-  if (tela.como === "numero") {
-    const numero = numeroDoEdital(linha.edital);
-    if (numero) pedirFiltro(tela.view, { edital: numero });
-    janela.navigate(tela.view);
-    return;
-  }
-  janela.navigate(tela.view, { edital: String(linha.id ?? "") });
-}
 
 function Bloco({
   id,
@@ -719,7 +702,12 @@ function TelasDaSelecao({ linha }: { linha: LinhaDaVisaoGeral }) {
               type="button"
               className="btn contorno"
               data-tela={tela.view}
-              onClick={() => abrirTelaDoEdital(tela, linha)}
+              onClick={() =>
+                abrirTelaDoEdital(tela, {
+                  id: String(linha.id ?? ""),
+                  numero: linha.edital,
+                })
+              }
             >
               <i className={`fa-solid ${tela.icone}`} aria-hidden="true" />{" "}
               {tela.rotulo}

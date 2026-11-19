@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-17
+atualizado: 2026-11-19
 ---
 
 # Módulo: Classificação
@@ -9,11 +9,16 @@ atualizado: 2026-11-17
 A tela `#page-classificacao` (view `classificacao`, rota `/<área>/classificacao[/<edital>]`), em
 `src/modulos/classificacao/`: `criarClassificacao()` devolve o conteúdo e o controlador; a rota
 (`src/app/telas.tsx`) chama `render()` a cada abertura e `abrirEdital()` com o edital do endereço.
-Área = a atual do app; sem edital, a entrada mostra a busca e os cards dos editais
-(`entrada-da-classificacao.tsx`); escolhido, o nome fica no cabeçalho com "Trocar". Os cards trazem
+Área = a atual do app; sem edital, a entrada mostra a busca e os cards dos editais, Ativos e
+Histórico separados (`AtivosEHistorico`; o status vem das linhas do monitoramento, e os cards
+esperam no esqueleto até elas chegarem, para as abas não piscarem; se a leitura falhar, abrem assim
+mesmo) (`entrada-da-classificacao.tsx`); escolhido, o nome fica no cabeçalho com "Trocar". Os cards trazem
 só os editais da área com análise curricular ativa (qualquer origem) ou com lista gerada, ativos e
 em andamento primeiro (`listar_editais_classificacao`,
-`20261023120000_classificacao_so_editais_analisados.sql`).
+`20261023120000_classificacao_so_editais_analisados.sql`). Aberto pela navegação (a faixa das
+etapas, a página do edital) antes de a lista chegar, o cabeçalho diz "Carregando…"; fora da lista,
+"Edital fora desta lista" com "Trocar" e o aviso de que não há classificação gerada nem análise para
+classificar, nunca o id (`src/lib/editais/edital-na-lista.ts`, o mesmo do seletor de edital).
 
 Banco, contratos TypeScript, o job Python (relatório de desempate e "Gerar listas pelo Python") e
 os testes: [[classificacao-por-dentro]].

@@ -4,6 +4,8 @@
   - O DSEI aberto mora no endereço: `/saude-indigena/mapa/yanomami`. O pedaço
     é a chave do DSEI (`chaveDoDsei`) em minúsculas, com hífen no lugar do
     espaço; de volta, `chaveDoDsei` já trata o hífen como espaço.
+  - A CASAI nacional escolhida também: `/saude-indigena/mapa/casai-df`. O
+    prefixo `casai-` separa a CASAI do DSEI (a chave tira o "CASAI").
   - O cartão da Visão geral resume o mapa em três números, pelas mesmas contas
     das bolhas (`contarPorDsei`): quantos dos 34 DSEIs têm edital, o que tem
     mais vagas ociosas e o menos preenchido (contratadas ÷ vagas).
@@ -25,9 +27,27 @@ export function dseiNoEndereco(nomeOuChave: unknown): string {
     .replace(/^-+|-+$/g, "");
 }
 
-/** A chave do DSEI do pedaço do endereço ("" se não houver). */
+const PREFIXO_DA_CASAI = "casai-";
+
+/** A chave do DSEI do pedaço do endereço ("" se não houver ou for CASAI). */
 export function chaveDoDseiNoEndereco(pedaco: unknown): string {
-  return chaveDoDsei(texto(pedaco));
+  const limpo = texto(pedaco);
+  if (limpo.toLowerCase().startsWith(PREFIXO_DA_CASAI)) return "";
+  return chaveDoDsei(limpo);
+}
+
+/** O pedaço do endereço da CASAI nacional ("CASAI DF" → "casai-df"). */
+export function casaiNoEndereco(nome: unknown): string {
+  const pedaco = dseiNoEndereco(nome);
+  return pedaco ? `${PREFIXO_DA_CASAI}${pedaco}` : "";
+}
+
+/** A chave da CASAI do pedaço do endereço ("" se não for CASAI). */
+export function chaveDaCasaiNoEndereco(pedaco: unknown): string {
+  const limpo = texto(pedaco);
+  return limpo.toLowerCase().startsWith(PREFIXO_DA_CASAI)
+    ? chaveDoDsei(limpo.slice(PREFIXO_DA_CASAI.length))
+    : "";
 }
 
 export interface DestaqueDoMapa {

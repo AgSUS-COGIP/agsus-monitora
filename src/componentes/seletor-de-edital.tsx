@@ -1,4 +1,8 @@
 import { useState } from "react";
+import {
+  EDITAL_FORA_DA_LISTA,
+  situacaoDoEscolhido,
+} from "../lib/editais/edital-na-lista.ts";
 import type { ReactNode } from "react";
 import { editaisDaEscolha } from "../lib/avaliacao-documental/editais.ts";
 import {
@@ -95,6 +99,10 @@ export function SeletorDeEdital<E extends EditalDoSeletor>({
           onChange={(ev) => aoEscolher(ev.target.value)}
         >
           <option value="">{primeira}</option>
+          {/* Aberto por fora da escolha e fora da lista: nunca o id. */}
+          {situacaoDoEscolhido(editais, escolhido, carregado) === "fora" ? (
+            <option value={escolhido}>{EDITAL_FORA_DA_LISTA}</option>
+          ) : null}
           {lista.map((ed) => (
             <option key={ed.id} value={ed.id}>
               {[ed.edital, ed.unidade].filter(Boolean).join(" - ")}

@@ -16,6 +16,7 @@ import { distribuirFichas } from "./distribuicao.ts";
 import type { InscritoDaFila } from "./fila-fora-do-lote.ts";
 import {
   DICA_DA_ART,
+  motivoDaDecisao,
   ROTULO_CURTO_DA_ART,
   ROTULO_DA_ART,
 } from "./tela-da-pre-classificacao.ts";
@@ -252,6 +253,23 @@ export function parteDoLote(
 ): ParteDoLote | null {
   if (!c || !NO_LOTE.has(c.situacao_pre)) return null;
   return PARTE_DA_SITUACAO[c.ficha?.situacao as string] ?? "pendentes";
+}
+
+/**
+ * A ficha que saiu do lote (a importação da planilha a tirou) segue no lote
+ * pela pré-classificação, e a próxima abertura das fichas a devolve. A
+ * coordenação revoga a decisão de lote de quem entrou por decisão
+ * ("revogar", a RPC revogar_decisao_lote: a pré volta à situação da regra e
+ * a ficha fica fora); quem entrou pela regra não tem decisão a revogar
+ * ("regra"); a já analisada não se revoga ("analisado"). Fora do "Saiu do
+ * lote", null.
+ */
+export function revogacaoNaSaida(
+  c: InscritoNaFila | null | undefined,
+): "revogar" | "regra" | "analisado" | null {
+  if (parteDoLote(c) !== "saiu") return null;
+  if (c?.situacao_pre === "ANALISADO") return "analisado";
+  return motivoDaDecisao(c) ? "revogar" : "regra";
 }
 
 const PARTES_DO_LOTE: ReadonlySet<unknown> = new Set(

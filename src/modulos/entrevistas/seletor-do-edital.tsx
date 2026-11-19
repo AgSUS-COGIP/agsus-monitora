@@ -1,4 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  EDITAL_FORA_DA_LISTA,
+  situacaoDoEscolhido,
+} from "../../lib/editais/edital-na-lista.ts";
 import type { ReactNode } from "react";
 import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.tsx";
 import { marcaDoEdital } from "../../lib/entrevistas/conducao-de-entrevista.ts";
@@ -7,6 +11,17 @@ import {
   sufixoDeTreinamento,
 } from "../../lib/editais/edital-de-treinamento.ts";
 import { Aviso } from "../../ui/index.ts";
+import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
+import {
+  contarPorSituacao,
+  separarAtivosEHistorico,
+  textoDasSituacoes,
+} from "../../lib/base/ativos-e-historico.ts";
+import {
+  comSituacaoDoMonitoramento,
+  editalDoHistorico,
+  situacaoDoEdital,
+} from "../../lib/editais/editais-ativos.ts";
 import { rotuloDaCopia } from "../../lib/carga/rotulo-da-copia.ts";
 import { LiberacaoDoEdital } from "./conducao.tsx";
 import type {
@@ -23,6 +38,10 @@ import type {
   "Atualizar" do topo. Os erros vêm logo abaixo, com "Tentar novamente" (os dos roteiros
   ficam em Preparar, onde eles aparecem).
 
+  Com editais ativos e do Histórico na lista (o "mostrar também os
+  concluídos" do administrador), as opções vêm em dois grupos, "Ativos" e
+  "Histórico", cada um com a contagem por situação no rótulo.
+
   `usarSeletorDoEdital` devolve as duas partes: o `campo` (vai no cabeçalho)
   e os `avisos` (a classificação da etapa, a liberação e os erros, logo
   abaixo dele).
@@ -38,6 +57,15 @@ export function rotuloDoEditalParaConduzir(m: EditalDaLista): string {
     sufixoDeTreinamento(m)
   );
 }
+
+/* O rótulo do grupo: "Ativos · Em andamento 12 · Suspenso 1". */
+const rotuloDoGrupo = (
+  nome: string,
+  editais: ReadonlyArray<EditalDaLista & { status?: string | null }>,
+) =>
+  [nome, textoDasSituacoes(contarPorSituacao(editais, situacaoDoEdital))]
+    .filter(Boolean)
+    .join(" · ");
 
 const MOSTRAR_TODOS = "__mostrar-todos__";
 const SO_NA_JANELA = "__so-na-janela__";
@@ -64,6 +92,19 @@ export function usarSeletorDoEdital({
   const escolhido = editalEscolhido(editais.lista, e.editalId);
   const item = editais.lista.find((m) => m.id === e.editalId);
   const vazio = editais.carregado && !editais.lista.length;
+  const { linhas } = usarAreaAtual();
+  const grupos = useMemo(() => {
+    const { ativos, historico } = separarAtivosEHistorico(
+      comSituacaoDoMonitoramento(editais.lista, linhas),
+      editalDoHistorico,
+    );
+    return historico.length && ativos.length ? { ativos, historico } : null;
+  }, [editais.lista, linhas]);
+  const opcao = (m: EditalDaLista) => (
+    <option key={m.id} value={m.id}>
+      {rotuloDoEditalParaConduzir(m)}
+    </option>
+  );
   const recarregarEditais = (todos = editais.todos) =>
     void conducao.carregarEditais(e.area, doPainel, { todos });
 
@@ -98,11 +139,26 @@ export function usarSeletorDoEdital({
                 ? "Nenhum edital na janela da entrevista"
                 : "Escolha o edital…"}
           </option>
-          {editais.lista.map((m) => (
-            <option key={m.id} value={m.id}>
-              {rotuloDoEditalParaConduzir(m)}
-            </option>
-          ))}
+          {/* Aberto por fora da escolha (a faixa das etapas) e fora da lista: nunca o id. */}
+          {situacaoDoEscolhido(
+            editais.lista,
+            e.editalId,
+            editais.carregado && !editais.carregando,
+          ) === "fora" ? (
+            <option value={e.editalId}>{EDITAL_FORA_DA_LISTA}</option>
+          ) : null}
+          {grupos ? (
+            <>
+              <optgroup label={rotuloDoGrupo("Ativos", grupos.ativos)}>
+                {grupos.ativos.map(opcao)}
+              </optgroup>
+              <optgroup label={rotuloDoGrupo("Histórico", grupos.historico)}>
+                {grupos.historico.map(opcao)}
+              </optgroup>
+            </>
+          ) : (
+            editais.lista.map(opcao)
+          )}
           {editais.admin ? (
             <optgroup label="Mais editais">
               {editais.todos ? (

@@ -135,6 +135,18 @@ export function territoriosPorVagas(
   cadastrado como "CASAI Brasília" (17/11/2026: o mapa dizia 0 processos).
 */
 
+/*
+  A chave dos editais da CASAI nas contagens (`contarPorDsei`): a do nome do
+  SIGEPSI ou, sem edital com esse nome, a da cidade ("CASAI DF" → "BRASILIA").
+*/
+export function chaveDosEditaisDaCasai(
+  casai: { nome: string; cidade: string },
+  contagens: ReadonlyMap<string, ContagemDoDsei>,
+): string {
+  const doNome = chaveDoDsei(casai.nome);
+  return contagens.has(doNome) ? doNome : chaveDoDsei(casai.cidade) || doNome;
+}
+
 export function casaisNacionais({
   nac = [],
   contagens = new Map(),
@@ -159,8 +171,7 @@ export function casaisNacionais({
         cidade,
         uf: siglaDaUf(a[5]) || texto(a[5]),
         editais: (
-          contagens.get(chaveDoDsei(nome)) ||
-          contagens.get(chaveDoDsei(cidade)) ||
+          contagens.get(chaveDosEditaisDaCasai({ nome, cidade }, contagens)) ||
           VAZIO
         ).editais,
         termoDeBusca: `CASAI ${cidade}`.trim(),

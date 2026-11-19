@@ -36,7 +36,9 @@ import {
   textoDosVinculosExternos,
   tiposDoTerritorio,
   visiveis,
+  buscarNaLista,
 } from "../../lib/mapas/mapa-saude-indigena/mapa-do-dsei.ts";
+import { chaveDaUnidade } from "../../lib/mapas/mapa-saude-indigena/territorio-na-tela.ts";
 import { EstadoVazio, classes } from "../../ui/index.ts";
 import { Forma, LegendaDoDsei } from "./legenda.tsx";
 import {
@@ -70,6 +72,7 @@ export function MapaDoDsei({
   acoes,
   aoVoltarAoBrasil,
   aoEscolherUnidade,
+  detalhesDasUnidades,
 }: PropsDoMapaDoDsei) {
   const refDoMapa = useRef<HTMLDivElement | null>(null);
   const [mapa, definirMapa] = useState<MapaDoPainel | null>(null);
@@ -96,6 +99,16 @@ export function MapaDoDsei({
   const mostrados = useMemo(
     () => visiveis(classificados, ocultos),
     [classificados, ocultos],
+  );
+  // "Buscar ponto pelo nome" (como no SIGEPSI): recorta só a lista, não o mapa.
+  // A busca é do DSEI: trocar de DSEI começa sem termo.
+  const [buscaDoDsei, definirBuscaDoDsei] = useState({ k: dsei.k, termo: "" });
+  const busca = buscaDoDsei.k === dsei.k ? buscaDoDsei.termo : "";
+  const definirBusca = (termo: string) =>
+    definirBuscaDoDsei({ k: dsei.k, termo });
+  const naLista = useMemo(
+    () => buscarNaLista(mostrados, busca),
+    [mostrados, busca],
   );
   const limites = useMemo(
     () => limitesDoDsei(dsei, classificados),
@@ -385,7 +398,7 @@ export function MapaDoDsei({
           <>
             <div className="mapa-si-lista__topo">
               <span>Polos e unidades</span>
-              <b>{formatarNumero(mostrados.length)}</b>
+              <b>{formatarNumero(naLista.length)}</b>
             </div>
             {tipos.length > 1 ? (
               <div
@@ -406,9 +419,19 @@ export function MapaDoDsei({
                 ))}
               </div>
             ) : null}
-            {mostrados.length ? (
+            {mostrados.length > 1 ? (
+              <input
+                type="search"
+                className="mapa-si-lista__busca"
+                placeholder="Buscar ponto pelo nome ou município"
+                aria-label={`Buscar polo ou unidade do DSEI ${dsei.n}`}
+                value={busca}
+                onChange={(evento) => definirBusca(evento.target.value)}
+              />
+            ) : null}
+            {naLista.length ? (
               <ul className="mapa-si-lista__itens">
-                {mostrados.map((r) => (
+                {naLista.map((r) => (
                   <li key={r.id}>
                     <button
                       type="button"
@@ -429,6 +452,11 @@ export function MapaDoDsei({
                             </b>
                           ) : null}
                         </small>
+                        {detalhesDasUnidades?.get(chaveDaUnidade(r)) ? (
+                          <small className="mapa-si-unidade__acesso">
+                            {detalhesDasUnidades.get(chaveDaUnidade(r))}
+                          </small>
+                        ) : null}
                       </span>
                       <span className="mapa-si-unidade__tipo">
                         {r.type.label}
@@ -439,9 +467,11 @@ export function MapaDoDsei({
               </ul>
             ) : (
               <EstadoVazio>
-                {ocultos.size
-                  ? "Nada a mostrar com estes filtros."
-                  : "Nenhuma unidade georreferenciada."}
+                {busca.trim() && mostrados.length
+                  ? "Nenhum ponto com esse nome."
+                  : ocultos.size
+                    ? "Nada a mostrar com estes filtros."
+                    : "Nenhuma unidade georreferenciada."}
               </EstadoVazio>
             )}
             <div className="mapa-si-lista__topo">

@@ -6,6 +6,8 @@ import { TelaNaUrl, usarEditalNaUrl } from "../../app/usar-filtros-na-url.ts";
 import { CHAVE_DO_CABECALHO } from "../../lib/base/cabecalho-dos-documentos.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import { Aviso, CabecalhoDaTela } from "../../ui/index.ts";
+import { FluxoDasEtapas } from "../../componentes/fluxo-das-etapas.tsx";
+import { editalEscolhido } from "../../lib/editais/edital-de-treinamento.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { coordenaOEdital } from "./abas-e-entrada.ts";
 import { criarEstadoDaAvaliacao, MENSAGEM_SEM_ACESSO } from "./estado.ts";
@@ -38,7 +40,7 @@ function TelaDaPreClassificacao({
   atualizar: () => Promise<unknown>;
 }) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
-  const { area: areaDoApp, nome: nomeDaArea } = usarAreaAtual();
+  const { area: areaDoApp } = usarAreaAtual();
 
   useEffect(() => {
     if (!areaDoApp || e.area === areaDoApp) return;
@@ -61,7 +63,7 @@ function TelaDaPreClassificacao({
   const comTriagem = Boolean(e.editalId && e.dados && !e.semAcesso && coordena);
   // O cabeçalho da tela: com a Triagem aberta, ela o desenha com as seções e as ações.
   const cabecalho = {
-    trilha: [nomeDaArea, "Seleção"].filter(Boolean).join(" / "),
+    trilha: "",
     edital: e.semAcesso ? null : (
       <SeletorDeEdital
         className="avd-edital"
@@ -86,6 +88,17 @@ function TelaDaPreClassificacao({
           titulo="Triagem"
           tour="triagem-cabecalho"
           edital={cabecalho.edital}
+          etapas={
+            e.editalId && !e.semAcesso ? (
+              <FluxoDasEtapas
+                view="pre-classificacao"
+                edital={{
+                  id: e.editalId,
+                  numero: editalEscolhido(e.editais, e.editalId)?.edital,
+                }}
+              />
+            ) : null
+          }
           aoAtualizar={cabecalho.aoAtualizar}
           atualizarDesativado={cabecalho.atualizarDesativado}
         />

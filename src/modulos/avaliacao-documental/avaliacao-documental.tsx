@@ -1,5 +1,4 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
-import { editaisDaEscolha } from "../../lib/avaliacao-documental/editais.ts";
+import { useEffect, useSyncExternalStore } from "react";
 import { irParaTela } from "../../app/ir-para-tela.ts";
 import {
   TelaNaUrl,
@@ -10,6 +9,7 @@ import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
 import { abasDoMenu, catalogoDoBanco } from "../../modules/catalogo-de-abas.ts";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { SeletorDeEdital } from "../../componentes/seletor-de-edital.tsx";
+import { FluxoDasEtapas } from "../../componentes/fluxo-das-etapas.tsx";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { editalEscolhido } from "../../lib/editais/edital-de-treinamento.ts";
 import {
@@ -153,12 +153,6 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
   useEffect(() => {
     if (lerEquipe) void estado.carregarEquipe(e.editalId);
   }, [estado, lerEquipe, e.editalId]);
-  // A mesma escolha do seletor vale para os cartões da entrada.
-  const [todos, setTodos] = useState(false);
-  const { lista: editais } = editaisDaEscolha(e.editais, {
-    todos,
-    escolhido: e.editalId,
-  });
   const recarregar = () => void estado.carregar(e.area);
   const papel = e.dados?.papel;
   const escolhido = editalEscolhido(e.editais, e.editalId);
@@ -172,7 +166,6 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
   // Modo de análise: a ficha aberta ocupa a tela; só a Fila (que a desenha) fica montada.
   const sf = useSyncExternalStore(fila.assinar, fila.obter);
   const emAnalise = visao === "fila" && Boolean(sf.aberta?.ficha || sf.abrindo);
-  const { nome: nomeDaArea } = usarAreaAtual();
   return (
     <div
       className="ui-tela avd-tela ui-tela-da-selecao"
@@ -180,7 +173,7 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
     >
       {emAnalise ? null : (
         <CabecalhoDaTela
-          trilha={[nomeDaArea, "Seleção"].filter(Boolean).join(" / ")}
+          trilha=""
           titulo="Avaliação documental"
           tour="avd-cabecalho"
           edital={
@@ -193,8 +186,6 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
                 escolhido={e.editalId}
                 carregado={e.carregado}
                 soVigentes
-                todos={todos}
-                aoMudarTodos={setTodos}
                 aoEscolher={escolherEdital}
               >
                 {/* Quem coordena vê a origem (e a troca) só em Configurações. */}
@@ -218,6 +209,15 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
                 valor={visao}
                 aoMudar={escolherAba}
                 tour="avd-visoes"
+              />
+            ) : null
+          }
+          etapas={
+            e.editalId && !e.semAcesso ? (
+              <FluxoDasEtapas
+                view="avaliacao-documental"
+                edital={{ id: e.editalId, numero: escolhido?.edital }}
+                vaga={visao === "fila" ? sf.filtro.vaga : ""}
               />
             ) : null
           }
@@ -377,7 +377,11 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
               />
             )
           ) : e.carregado && !e.erroAoCarregar ? (
-            <EntradaDaAvaliacao editais={editais} aoAbrir={escolherEdital} />
+            <EntradaDaAvaliacao
+              editais={e.editais}
+              area={e.area}
+              aoAbrir={escolherEdital}
+            />
           ) : null}
         </>
       )}

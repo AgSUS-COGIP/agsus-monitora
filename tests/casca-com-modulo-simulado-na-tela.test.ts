@@ -44,6 +44,7 @@ import {
 import { htmlDaPagina } from "./pagina-montada.ts";
 import { type ArvoreDoMenu } from "../src/componentes/barra-lateral/tipos.ts";
 import { registrarTelas } from "../src/app/registro-das-telas.ts";
+import { registrarTelasFalsas } from "./app/telas-no-teste.ts";
 import {
   CentralDeConvocacoes,
   usarConducaoLigada,
@@ -196,7 +197,10 @@ bloco("app/pecas-da-casca", async () => {
     document.body.innerHTML = "";
   });
 
-  async function montar(pecas: PecasDoApp | null) {
+  async function montar(
+    pecas: PecasDoApp | null,
+    navegacao: LeituraDaNavegacao = NAVEGACAO,
+  ) {
     document.body.innerHTML =
       '<section id="appScreen" class="app hidden"></section><div id="raiz"></div>';
     const novaRaiz = createRoot(achar("#raiz"));
@@ -209,7 +213,7 @@ bloco("app/pecas-da-casca", async () => {
     await act(async () =>
       novaRaiz.render(
         createElement(Raiz, {
-          navegacao: NAVEGACAO,
+          navegacao,
           ...SEM_ENTRADA,
           pecas,
           lugares,
@@ -259,6 +263,63 @@ bloco("app/pecas-da-casca", async () => {
       expect(
         document.querySelector('[role="dialog"].search-modal'),
       ).not.toBeNull();
+    });
+
+    describe("sem sessão (link interno aberto na tela de acesso)", () => {
+      const TEXTO_SEM_MODULO = "ainda não tem módulos liberados";
+      const textoDaCasca = () =>
+        document.getElementById("appScreen")?.textContent ?? "";
+
+      beforeEach(() =>
+        registrarTelasFalsas({
+          dashboard: {
+            conteudo: createElement(
+              "div",
+              { id: "telaDeTeste" },
+              "Carregando dados…",
+            ),
+          },
+        }),
+      );
+      afterEach(() => registrarTelas({}));
+
+      it("a casca escondida não monta a tela da rota; monta ao abrir e desmonta ao sair", async () => {
+        const pecas = criarPecas({ aberto: false });
+        await montar(pecas);
+        expect(document.getElementById("page-dashboard")).not.toBeNull();
+        expect(document.getElementById("telaDeTeste")).toBeNull();
+        expect(textoDaCasca()).not.toContain("Carregando dados");
+
+        await act(async () => pecas.appAberto.mudar(true));
+        expect(
+          document.querySelector("#page-dashboard #telaDeTeste"),
+        ).not.toBeNull();
+
+        await act(async () => pecas.appAberto.mudar(false));
+        expect(document.getElementById("telaDeTeste")).toBeNull();
+      });
+
+      it("o aviso de quem não tem módulo liberado só existe com o app aberto e o aviso ativo", async () => {
+        await montar(criarPecas({ aberto: false }));
+        expect(textoDaCasca()).not.toContain(TEXTO_SEM_MODULO);
+        await act(async () => definido(raiz).unmount());
+
+        await montar(criarPecas({ aberto: true }));
+        expect(textoDaCasca()).not.toContain(TEXTO_SEM_MODULO);
+        await act(async () => definido(raiz).unmount());
+
+        const semAcesso = {
+          ...ESTADO_DA_NAVEGACAO,
+          aviso: "sem-acesso" as const,
+        };
+        await montar(criarPecas({ aberto: true }), {
+          ...NAVEGACAO,
+          obter: () => semAcesso,
+        });
+        expect(
+          document.querySelector("#page-sem-acesso.active")?.textContent,
+        ).toContain(TEXTO_SEM_MODULO);
+      });
     });
 
     it("sem as peças (a casca num teste), nada disso aparece", async () => {
@@ -2172,6 +2233,27 @@ bloco("modulos/mapa", () => {
       ]);
     });
 
+    it("espera o desconto das vagas reabertas antes de desenhar", async () => {
+      let responder: (valor: unknown) => void = () => {};
+      const { estado } = await abrir();
+      await act(async () =>
+        estado.definirBuscaDoAcompanhamento(
+          () =>
+            new Promise((resolve) => {
+              responder = resolve;
+            }),
+        ),
+      );
+      visto.props = null;
+      await act(async () => {});
+      expect(estado.obter().aguardandoVagas).toBe(true);
+      expect(visto.props).toBeNull();
+
+      await act(async () => responder({ etapas: [], listas: [] }));
+      await vi.waitFor(() => expect(visto.props).not.toBeNull());
+      expect(estado.obter().aguardandoVagas).toBe(false);
+    });
+
     it("o link com o DSEI abre o mapa já nele", async () => {
       history.replaceState(null, "", "/saude-indigena/mapa/yanomami");
       await abrir();
@@ -2221,6 +2303,29 @@ bloco("modulos/mapa", () => {
       await act(async () => props().aoAbrirNaVisaoGeral?.(["DSEI Yanomami"]));
       expect(estado.obter().filtros.unidade).toEqual(["DSEI Yanomami"]);
       expect(irPara).toHaveBeenCalledWith("dashboard");
+    });
+
+    it("a CASAI nacional mora no endereço, sem abrir DSEI", async () => {
+      await abrir();
+      await act(async () =>
+        props().aoEscolherCasai?.({
+          chave: "CASAI DF|-15.8|-47.9",
+          nome: "CASAI DF",
+          cnes: "131",
+          lat: -15.8,
+          lon: -47.9,
+          cidade: "BRASILIA",
+          uf: "DF",
+          editais: 0,
+          termoDeBusca: "CASAI BRASILIA",
+        }),
+      );
+      expect(url()).toBe("/saude-indigena/mapa/casai-df");
+      expect(props().casaiSelecionada).toBe("DF");
+      expect(props().dseiSelecionado).toBeNull();
+      await act(async () => props().aoSairDoDsei?.());
+      expect(url()).toBe("/saude-indigena/mapa");
+      expect(props().casaiSelecionada).toBeNull();
     });
 
     it("fora da Saúde Indígena não há mapa", async () => {

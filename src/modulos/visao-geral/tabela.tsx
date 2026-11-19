@@ -37,7 +37,13 @@ import {
   composicaoDaLinha,
   type CampoComComposicao,
 } from "../../lib/visao-geral/composicao-dos-numeros.ts";
-import { classes, Popover, Selo, TabelaInfinita } from "../../ui/index.ts";
+import {
+  BUSCAR_NA_PAGINA,
+  classes,
+  Popover,
+  Selo,
+  TabelaInfinita,
+} from "../../ui/index.ts";
 import { ComposicaoDoNumero } from "./composicao.tsx";
 import {
   PRESETS_DE_COLUNAS,
@@ -628,8 +634,8 @@ export function TabelaDeProcessos({
         idDoTitulo="visaoGeralTabelaTitulo"
         titulo={textos.tabela}
         busca={{
-          placeholder: textos.busca,
-          rotulo: textos.busca,
+          placeholder: BUSCAR_NA_PAGINA,
+          rotulo: `${BUSCAR_NA_PAGINA}: ${textos.busca}`,
           valor: rascunho ?? e.busca,
           aoMudar: setRascunho,
         }}

@@ -46,6 +46,7 @@ import { criarEstadoDaClassificacao } from "../src/modulos/classificacao/estado.
 import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
+  publicarErroDoMonitoramento,
   publicarLinhasDoMonitoramento,
 } from "../src/componentes/dados-do-monitoramento.ts";
 import {
@@ -1753,6 +1754,8 @@ bloco("modulos/classificacao", () => {
   beforeEach(() => {
     redefinirDadosDoMonitoramento();
     definirAreaAtual("saude-indigena");
+    // No app, a casca já leu as linhas do monitoramento (o status dos editais).
+    publicarLinhasDoMonitoramento([]);
   });
   afterEach(async () => {
     await act(async () => painel?.raiz?.unmount());
@@ -1791,6 +1794,65 @@ bloco("modulos/classificacao", () => {
         "casai",
       );
       expect(cardsDosEditais().map((c) => c.dataset.edital)).toEqual(["e100"]);
+    });
+
+    it("Ativos e Histórico não piscam: até o status chegar, só o esqueleto; depois, já separados", async () => {
+      redefinirDadosDoMonitoramento();
+      definirAreaAtual("saude-indigena");
+      await montar(supabaseFalso());
+      const abas = () =>
+        secao.querySelector("[data-tour='classificacao-ativos-e-historico']");
+      // Antes: os dois editais em "Ativos · Sem situação 2", e um pulava depois.
+      expect(abas()).toBeNull();
+      expect(cardsDosEditais()).toEqual([]);
+      expect(
+        secao.querySelector(".classificacao-editais[aria-busy='true']"),
+      ).not.toBeNull();
+      await act(async () =>
+        publicarLinhasDoMonitoramento([
+          { id: "e83", CO_AREA: "saude-indigena", status: "Em andamento" },
+          { id: "e100", CO_AREA: "saude-indigena", status: "Concluído" },
+        ]),
+      );
+      expect(abas().querySelector("[data-valor='ativos']").textContent).toBe(
+        "Ativos1",
+      );
+      expect(cardsDosEditais().map((c) => c.dataset.edital)).toEqual(["e83"]);
+    });
+
+    it("se a leitura do status falhar, a lista abre assim mesmo (sem esqueleto para sempre)", async () => {
+      redefinirDadosDoMonitoramento();
+      definirAreaAtual("saude-indigena");
+      await montar(supabaseFalso());
+      expect(cardsDosEditais()).toEqual([]);
+      await act(async () => publicarErroDoMonitoramento("Falha de rede"));
+      expect(cardsDosEditais().length).toBeGreaterThan(0);
+    });
+
+    it("Ativos e Histórico: o edital concluído sai da lista de trabalho e fica a um clique", async () => {
+      publicarLinhasDoMonitoramento([
+        { id: "e83", CO_AREA: "saude-indigena", status: "Em andamento" },
+        { id: "e100", CO_AREA: "saude-indigena", status: "Concluído" },
+      ]);
+      await montar(supabaseFalso());
+      const controle = secao.querySelector(
+        "[data-tour='classificacao-ativos-e-historico']",
+      );
+      const opcao = (valor) =>
+        controle.querySelector(`[data-valor='${valor}']`);
+      expect(opcao("ativos").textContent).toBe("Ativos1");
+      expect(opcao("historico").textContent).toBe("Histórico1");
+      expect(cardsDosEditais().map((c) => c.dataset.edital)).toEqual(["e83"]);
+      expect(
+        [...controle.querySelectorAll(".ui-ativos-situacoes li")].map(
+          (li) => li.textContent,
+        ),
+      ).toEqual(["Em andamento 1"]);
+      await clicar(opcao("historico"));
+      expect(cardsDosEditais().map((c) => c.dataset.edital)).toEqual(["e100"]);
+      expect(
+        controle.querySelector(".ui-ativos-situacoes").textContent,
+      ).toContain("Concluído 1");
     });
 
     it("área sem edital analisado: o seletor diz isso (o banco só manda os editais com análises)", async () => {
@@ -1870,6 +1932,66 @@ bloco("modulos/classificacao", () => {
         tabelaDaLista().querySelector("tbody tr[data-eliminado]").textContent,
       ).toContain("Davi <b>Reprovado</b>");
       // "Trocar" volta aos cards.
+      await clicar(secao.querySelector("[data-acao='trocar-edital']"));
+      await esperar();
+      expect(cardsDosEditais()).toHaveLength(2);
+    });
+
+    it("aberta pela navegação antes de a lista de editais chegar: o cabeçalho mostra o edital, nunca o id", async () => {
+      // O fluxo entre etapas (e a página do edital) abre com ?edital=<id>, às vezes antes da lista.
+      let soltarLista;
+      const lista = new Promise((resolver) => (soltarLista = resolver));
+      const supabase = supabaseFalso();
+      const original = supabase.rpc.getMockImplementation();
+      supabase.rpc.mockImplementation(async (nome, args, opcoes) => {
+        if (nome === "listar_editais_classificacao") await lista;
+        return original(nome, args, opcoes);
+      });
+      secao = document.createElement("section");
+      secao.id = "page-classificacao";
+      secao.className = "page active";
+      document.body.append(secao);
+      await act(async () => {
+        painel = montarTela(criarClassificacao, "page-classificacao", {
+          supabase,
+          toast,
+          baixar,
+          imprimir,
+          copiar,
+          carregarLogo,
+          cabecalho: () => "AGÊNCIA DE TESTE\nRua A, 1",
+        });
+      });
+      await act(async () => {
+        void painel.render();
+        void painel.abrirEdital("e83");
+      });
+      await esperar();
+      const nome = () =>
+        secao.querySelector(".classificacao-edital-nome strong").textContent;
+      expect(nome()).toBe("Carregando…");
+      expect(secao.textContent).not.toContain("e83");
+      await act(async () => soltarLista());
+      await esperar();
+      expect(nome()).toBe("83/2026 · DSEI Xingu");
+      // Sem a trilha "Área / Seleção", como as outras telas.
+      expect(secao.querySelector(".ui-cabecalho-trilha")).toBeNull();
+    });
+
+    it('edital fora da lista da tela: "Edital fora desta lista" com Trocar, e diz que não há classificação', async () => {
+      const supabase = supabaseFalso();
+      await montar(supabase);
+      // Um edital sem análise curricular nem lista gerada (fora da lista da Classificação).
+      await act(async () => void painel.abrirEdital("e999"));
+      await esperar();
+      expect(
+        secao.querySelector(".classificacao-edital-nome strong").textContent,
+      ).toBe("Edital fora desta lista");
+      expect(secao.textContent).not.toContain("e999");
+      expect(secao.textContent).toContain(
+        "Nenhuma classificação gerada para este edital",
+      );
+      expect(secao.querySelector("[data-acao='trocar-edital']")).not.toBeNull();
       await clicar(secao.querySelector("[data-acao='trocar-edital']"));
       await esperar();
       expect(cardsDosEditais()).toHaveLength(2);
@@ -5491,6 +5613,55 @@ bloco("modulos/conduzir-entrevistas", async () => {
         p_ate: "2026-11-15",
         p_motivo: "Cronograma em revisão",
       });
+    });
+
+    it("com concluídos na lista, o seletor separa Ativos e Histórico, com a contagem por situação", async () => {
+      publicarLinhasDoMonitoramento([
+        { id: "m1", CO_AREA: "saude-indigena", status: "Em andamento" },
+        { id: "m9", CO_AREA: "saude-indigena", status: "Concluído" },
+      ]);
+      const editais = (todos) => ({
+        data: {
+          admin_global: true,
+          editais: [
+            { id: "m1", edital: "100/2026", unidade: "CASAI Brasília" },
+            ...(todos
+              ? [
+                  {
+                    id: "m9",
+                    edital: "120/2026",
+                    unidade: "DSEI X",
+                    na_janela: false,
+                  },
+                ]
+              : []),
+          ],
+        },
+        error: null,
+      });
+      await montar(
+        supabaseDaConducao({
+          respostas: {
+            listar_editais_entrevista: (args) => editais(args.p_todos),
+          },
+        }),
+      );
+      const seletor = document.getElementById("entrevistasEdital");
+      // Só os ativos: sem grupos.
+      expect(
+        seletor.querySelectorAll("optgroup[label^='Ativos']"),
+      ).toHaveLength(0);
+      await escolher(seletor, "__mostrar-todos__");
+      await esperar();
+      const grupos = [...seletor.querySelectorAll("optgroup")];
+      expect(grupos.map((g) => g.label)).toEqual([
+        "Ativos · Em andamento 1",
+        "Histórico · Concluído 1",
+        "Mais editais",
+      ]);
+      expect(
+        [...grupos[1].querySelectorAll("option")].map((o) => o.value),
+      ).toEqual(["m9"]);
     });
 
     it("sem nível de editor, tudo aparece só para consulta", async () => {

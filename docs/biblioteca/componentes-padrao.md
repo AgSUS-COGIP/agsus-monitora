@@ -1,7 +1,7 @@
 ---
 tipo: referencia
 area: front
-atualizado: 2026-11-17
+atualizado: 2026-11-19
 ---
 
 # Componentes padrão (`src/ui/`)
@@ -45,12 +45,23 @@ Navegador de mês: `NavegadorDeMes` — ‹ anterior, › próximo (só ícone, 
 (mês e semana, com "Hoje") e na agenda dos convocados da Classificação, quando ela passa de um mês
 (`src/lib/entrevistas/meses-da-agenda.ts`).
 
+Ativos e Histórico: `AtivosEHistorico` + `usarAtivosEHistorico(itens, { chave, ehHistorico,
+situacao })` deixam a lista de trabalho só com o que está em curso e o resto a um clique, com a
+contagem no rótulo ("Ativos 12", "Histórico 30") e por situação ("Em andamento 12 · Suspenso 1",
+selos com ponto: a cor só complementa). A vista volta no F5 (sessão). Lógica em
+`src/lib/base/ativos-e-historico.ts`; a regra dos editais (concluído, cancelado ou desativado vai
+para o Histórico) em `src/lib/editais/editais-ativos.ts`. Usado em Editais, nas entradas da
+Avaliação documental e da Classificação; em Conduzir entrevistas, os grupos do `<select>`.
+
 Prazos: `SeloDePrazo` diz quanto falta para uma data ("Vence em 12 dias", "Venceu há 3 dias") com
 o tom da faixa (vencido, menos de 30, 90 ou 180 dias); a lógica é `src/lib/base/prazos.ts`.
 
 Gráficos: o `Grafico` dentro do `CardDeGrafico` traz a tabela dos valores (leitor de tela e botão
 "Tabela" do título) e percorre os itens pelas setas; nada a fazer em quem usa
-(`src/ui/tabela-do-grafico.tsx`, DS 13.5).
+(`src/ui/tabela-do-grafico.tsx`, DS 13.5). Gráfico que filtra a página: `aoEscolher` no `Grafico`
+(Enter no item em destaque e o rótulo da tabela à vista; o clique fica no `onClick` das opções) e
+o `SeloDoFiltroDoGrafico` ("Filtro de gráfico ativo: … — clique para remover") nas `acoes` do
+`CardDeGrafico`. Hoje, o ranking de unidades da Seleção.
 
 Exportação: toda tabela exporta por `BotoesDeExportacao` — "Exportar em Excel" (.xlsx) e "Salvar
 em PDF", sempre com esse nome e nessa ordem — no topo da tela (`TopoDoPainel` `exportacao`), no
@@ -60,7 +71,8 @@ partir do mesmo retrato (título, colunas e linhas); `baixarArquivo` entrega.
 Nas telas com `CabecalhoDaTela` (`tituloNaTela` em `src/lib/navegacao/rotas.ts`: Conduzir entrevistas,
 Classificação, Avaliação documental e Triagem), a faixa do topo do app (`header.top`) fica compacta
 (`data-compacto`, só a partir de 901px): sem o título, que é o da tela, e com a conta menor, o perfil
-só dentro do menu (`src/app/casca/topo.tsx`).
+só dentro do menu (`src/app/casca/topo.tsx`). Embaixo do cabeçalho, numa linha, `etapas` recebe a
+faixa das etapas do edital ([[modulo-pagina-do-edital]], "Fluxo entre as etapas").
 
 Peças de layout só em CSS: `.ui-tela`, `.ui-card`, `.ui-titulo`, `.ui-linha-de-cards`,
 `.ui-pilha`, `.ui-grade-de-campos`, `.ui-acoes`, `.ui-barra-de-salvar`, `.ui-gaveta-*`,

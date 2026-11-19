@@ -83,13 +83,13 @@ function responder(
   res.end(JSON.stringify(corpo));
 }
 
-function tokenDoPedido(req: PedidoDaVercel): string {
+export function tokenDoPedido(req: PedidoDaVercel): string {
   const cabecalho = String(req.headers?.authorization || "");
   const achado = /^Bearer\s+(\S+)$/i.exec(cabecalho);
   return achado ? (achado[1] ?? "") : "";
 }
 
-async function sessaoValida(
+export async function sessaoValida(
   base: string,
   publicavel: string,
   token: string,

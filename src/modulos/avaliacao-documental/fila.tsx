@@ -10,6 +10,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { usarLojaNaUrl } from "../../app/usar-filtros-na-url.ts";
+import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
 import type {
   EsquemaDosFiltros,
   ValoresDosFiltros,
@@ -55,6 +56,7 @@ import {
   proximaOrdem,
   reservaVigente,
   resumoDaVagaNaFila,
+  revogacaoNaSaida,
   SITUACOES_DA_FICHA,
   textoDaColuna,
   textoDaReserva,
@@ -120,7 +122,7 @@ import { ReinicioDasFichas } from "./reinicio-das-fichas.tsx";
 import type { LojaDaFila, SnapshotDaFila } from "./estado-da-fila.ts";
 import type { FiltroSalvo } from "./tipos-do-estado.ts";
 import type { AberturaDoRelatorio } from "./relatorio-de-motivos.tsx";
-import { CarregandoConteudo } from "../../ui/index.ts";
+import { BUSCAR_NESTA_TABELA, CarregandoConteudo } from "../../ui/index.ts";
 
 /*
   Aba Fila (fase F3): o resumo do andamento (o edital e o bloco recolhível
@@ -631,6 +633,8 @@ function ModoDeAnalise({
     SITUACOES_DA_FICHA[f.situacao as string] || {};
   // O inscrito da fila (entrada no lote e a decisão da coordenação).
   const inscrito = (inscritos || []).find((c) => c.ficha?.id === f.id);
+  // Saiu do lote: quem entrou por decisão pode ter a decisão revogada; pela regra, não há o que revogar.
+  const naSaida = revogacaoNaSaida(inscrito);
   const reservaDeOutro =
     reservaVigente(f.reserva) && f.reserva!.usuario !== dados.eu;
   const posicao = navegaveis.findIndex((c) => c.ficha.id === f.id);
@@ -676,9 +680,16 @@ function ModoDeAnalise({
     decisao: inscrito ? (
       <span className="avd-inline avd-analise-decisao">
         <SeloDaDecisao c={inscrito} />
-        {dados.pode_coordenar ? (
+        {dados.pode_coordenar && naSaida === "regra" ? (
+          <span className="ui-texto-secundario" data-revogacao="regra">
+            Entrou pela regra do lote: não há decisão a revogar.
+          </span>
+        ) : dados.pode_coordenar && naSaida !== "analisado" ? (
           <RevogarDecisao
             c={inscrito}
+            rotulo={
+              naSaida === "revogar" ? "Revogar decisão de lote" : undefined
+            }
             aoRevogar={async (motivo: string) => {
               const r = await fila.revogarDecisao([inscrito], motivo);
               // Reabrir a ficha desmonta o conteúdo: salva o que falta antes
@@ -1448,6 +1459,15 @@ export function Fila({ e, fila }: FilaProps) {
       mudarNaUrl({ etapa: outra });
     if (Object.keys(resto).length) fila.mudarFiltro(resto);
   };
+  // A vaga que veio de outra etapa do mesmo edital (a faixa das etapas).
+  usarPedidoDeFiltro(
+    "avaliacao-documental",
+    true,
+    (pedido) => {
+      if (pedido.vaga) fila.mudarFiltro({ vaga: pedido.vaga });
+    },
+    (pedido) => !pedido.editalId || pedido.editalId === e.editalId,
+  );
   const [selecao, setSelecao] = useState(() => new Set<string>());
   const [acao, setAcao] = useState<AcaoPedida | null>(null);
   const [reiniciando, setReiniciando] = useState(false);
@@ -1847,9 +1867,9 @@ export function Fila({ e, fila }: FilaProps) {
               setBusca(valor);
               mudarFiltro({ busca: valor });
             },
-            placeholder: "Buscar por código ou nome",
+            placeholder: BUSCAR_NESTA_TABELA,
             rotulo:
-              "Buscar pelo código ou nome (Enter com o código abre a ficha)",
+              "Buscar nesta tabela pelo código ou nome (Enter com o código abre a ficha)",
             tour: "avd-fila-busca",
             aoTeclar: (ev) => {
               if (ev.key !== "Enter") return;

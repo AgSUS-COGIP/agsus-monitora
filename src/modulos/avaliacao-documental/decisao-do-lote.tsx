@@ -39,6 +39,8 @@ export interface IncluirPorDecisaoProps<C extends CandidatoForaDoLote> {
 export interface RevogarDecisaoProps {
   c: InscritoComDecisao;
   aoRevogar: (motivo: string) => Promise<RespostaDaDecisao | null | undefined>;
+  /** O nome da ação: "Revogar decisão de lote" na ficha que saiu do lote. */
+  rotulo?: string;
 }
 
 /*
@@ -338,7 +340,11 @@ export function RevogarDecisaoNaGaveta({
  * "Revogar decisão" de um candidato, com motivo (o banco recusa com a ficha
  * concluída). aoRevogar(motivo) => Promise<{ ok, erro }>.
  */
-export function RevogarDecisao({ c, aoRevogar }: RevogarDecisaoProps) {
+export function RevogarDecisao({
+  c,
+  aoRevogar,
+  rotulo = "Revogar decisão",
+}: RevogarDecisaoProps) {
   const [aberto, setAberto] = useState(false);
   const [motivo, setMotivo] = useState("");
   const [erro, setErro] = useState("");
@@ -352,7 +358,7 @@ export function RevogarDecisao({ c, aoRevogar }: RevogarDecisaoProps) {
         data-acao="abrir-revogar-decisao"
         onClick={() => setAberto(true)}
       >
-        Revogar decisão
+        {rotulo}
       </button>
     );
   const erroDoTexto = erroDoMotivo(motivo, MOTIVO_DA_REVOGACAO);
@@ -387,7 +393,7 @@ export function RevogarDecisao({ c, aoRevogar }: RevogarDecisaoProps) {
         disabled={Boolean(erroDoTexto) || enviando}
         onClick={() => void revogar()}
       >
-        {enviando ? "Revogando…" : "Revogar decisão"}
+        {enviando ? "Revogando…" : rotulo}
       </button>
       <button
         type="button"
