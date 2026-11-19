@@ -114,7 +114,7 @@ modo Calor saiu em 02/10/2026.
 
 ## Território do DSEI no mapa
 
-**perguntas:** territorio do dsei | populacao indigena do dsei | aldeias do dsei | terras indigenas do dsei | quantas aldeias | quantas terras indigenas
+**perguntas:** territorio do dsei | populacao indigena do dsei | aldeias no cartao territorio | terras indigenas do dsei | quantas aldeias | quantas terras indigenas
 **resposta:** No Yeendé, com um DSEI aberto na página Mapa, o cartão "Território" mostra a população indígena, as aldeias e as terras indígenas do distrito, lidas do SIGEPSI (dados do SIASI). As terras contam uma vez cada, pelo código: a terra que atravessa dois DSEIs aparece nos dois, mas não conta em dobro num total. Enquanto o SIGEPSI não libera esse dado para o Yeendé (em novembro de 2026 ainda não liberava), o cartão diz "Dado do SIGEPSI indisponível", nunca zero.
 **fonte:** src/lib/mapas/mapa-saude-indigena/territorio-do-sigepsi.ts; api/territorio-dos-dseis.ts
 **abrir:** mapa
