@@ -1,4 +1,10 @@
 import { chaveDoDsei, temCoordenada, texto } from "./chaves.js";
+import {
+  acessibilidade,
+  floresta,
+  localidade,
+  meiosDeAcesso,
+} from "./territorio-do-sigepsi.js";
 
 /*
   AS LOCALIZAÇÕES DO SIGEPSI (sede, polos base, CASAIs e unidades de lotação)
@@ -52,6 +58,16 @@ export interface PoloDoSigepsi {
   tipo: TipoDoSigepsi;
   municipio: string;
   origem: typeof ORIGEM_SIGEPSI;
+  /*
+    O acesso da unidade, das colunas da própria `/todas` (TP_MEIO_ACESSO,
+    TP_ACESSIBILIDADE_GEOGRAFICA, TP_CATEGORIA_LOCALIDADE, ST_FLORESTA), pelas
+    regras de territorio-do-sigepsi.ts. Auditoria (AU_*) e observação
+    (DS_OBSERVACAO) não saem da função.
+  */
+  meios: string[];
+  acessibilidade: string;
+  localidade: string;
+  floresta: string;
 }
 
 export interface SedeDoSigepsi {
@@ -193,6 +209,10 @@ export function localizacoesPorDsei(linhas: unknown): LocalizacoesPorDsei {
       tipo,
       municipio,
       origem: ORIGEM_SIGEPSI,
+      meios: meiosDeAcesso(linha.TP_MEIO_ACESSO),
+      acessibilidade: acessibilidade(linha.TP_ACESSIBILIDADE_GEOGRAFICA),
+      localidade: localidade(linha.TP_CATEGORIA_LOCALIDADE),
+      floresta: floresta(linha.ST_FLORESTA),
     });
   }
   return porDsei;
