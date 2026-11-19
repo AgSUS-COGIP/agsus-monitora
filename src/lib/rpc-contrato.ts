@@ -364,6 +364,19 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     resumo:
       "Resumo dos cronogramas da Equipe Núcleo: status, etapa, tem_cronograma (há etapas), calculo (automatico | manual), situacao (suspenso | paralisado | cancelado), percentual, próxima etapa e alerta_tipo. O manual com etapas não é sem_cronograma (20261117190000).",
   },
+  // ── Cronograma encerrado em lote (20261119120000_concluir_editais_com_cronograma_encerrado.sql) ──
+  listar_editais_com_cronograma_encerrado: {
+    argumentos: [],
+    critica: false,
+    resumo:
+      "Editais com o cronograma terminado pelas datas (FC_ESTADO_DO_CRONOGRAMA = Concluído) e o status gravado ainda em outro valor (fora de concluído, cancelado e encerrado): o recorte da conferência EDITAL_CRONOGRAMA_ENCERRADO (ativo, sem treinamento, sem status manual, sem os dispensados na central), só os que a pessoa vê. Por edital: número, unidade, área, status gravado, etapa, fim do cronograma, o aviso da central (id, tratamento, pode_dispensar) e as outras pendências abertas; pode_concluir para quem edita editais.",
+  },
+  concluir_editais_com_cronograma_encerrado: {
+    argumentos: ["p_editais", "p_motivo"],
+    critica: false,
+    resumo:
+      'Marca "Concluído" (e a etapa calculada, como o salvar faria) nos editais escolhidos (até 200) cujo cronograma terminou e cujo status gravado é outro; recusa os demais com o motivo, sem parar o lote. Núcleo ou Calendário (editor) e a área de cada edital; motivo de 10 a 500, sem CPF nem e-mail. Histórico em TH_CRONOGRAMA_MONIT_INDIG (ação status). Devolve concluidos e recusados.',
+  },
   listar_demandas_internas: {
     argumentos: [],
     critica: false,

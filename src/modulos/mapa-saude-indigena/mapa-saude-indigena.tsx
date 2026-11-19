@@ -99,6 +99,7 @@ export function MapaSaudeIndigena({
     }
     return {
       distritos: dseis.length,
+      casais: nac.length,
       unidades: dseis.reduce(
         (total, item) => total + (item.polos?.length ?? 0),
         0,
@@ -106,7 +107,7 @@ export function MapaSaudeIndigena({
       editais,
       vagas,
     };
-  }, [dseis, contagens]);
+  }, [dseis, nac, contagens]);
   const bolhas = useMemo(
     () => bolhasDosDsei({ dseis, contagens, filtroAtivo }),
     [dseis, contagens, filtroAtivo],
@@ -185,6 +186,10 @@ export function MapaSaudeIndigena({
             <div>
               <strong>{totais.distritos.toLocaleString("pt-BR")}</strong>
               <span>DSEIs mapeados</span>
+            </div>
+            <div>
+              <strong>{totais.casais.toLocaleString("pt-BR")}</strong>
+              <span>CASAIs nacionais</span>
             </div>
             <div>
               <strong>{totais.unidades.toLocaleString("pt-BR")}</strong>

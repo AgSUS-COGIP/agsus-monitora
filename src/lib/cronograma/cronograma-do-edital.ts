@@ -124,6 +124,14 @@ export interface RegistroDoHistoricoDoCronograma {
   total_alteracoes?: number | null;
 }
 
+/*
+  A ação "status" do histórico (20261119120000): o status marcado Concluído em lote na tela de
+  Editais, com motivo, quem e quando; não mexe em etapa (as telas não contam alterações nela).
+*/
+export const TITULO_DO_STATUS_NO_HISTORICO = "Status marcado como Concluído";
+export const ehStatusNoHistorico = (item: RegistroDoHistoricoDoCronograma) =>
+  item.acao === "status";
+
 /** O que `get_monitoramento_cronograma` devolve. */
 export interface CronogramaNoBanco {
   monitoramento?: {

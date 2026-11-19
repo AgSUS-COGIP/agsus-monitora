@@ -14485,6 +14485,32 @@ $$;
 COMMENT ON FUNCTION private."FC_RECURSOS_MODULO"() IS 'Módulos da matriz de permissões (espelho de RESOURCES em src/lib/permissoes-recursos.js).';
 
 --
+-- Name: FC_RECUSA_CONCLUIR_EDITAL(text, jsonb); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_RECUSA_CONCLUIR_EDITAL"(p_status text, p_estado jsonb) RETURNS text
+    LANGUAGE sql STABLE
+    SET search_path TO ''
+    AS $$
+  select case
+    when coalesce((p_estado ->> 'tem_cronograma')::boolean, false) is not true
+      then 'Edital sem cronograma'
+    when (p_estado ->> 'status') is distinct from 'Concluído'
+      then format('Pelo cronograma, o edital está "%s", não concluído', coalesce(p_estado ->> 'status', 'sem estado'))
+    when lower(translate(btrim(coalesce(p_status, '')), 'ÁÂÃÀÉÊÍÓÔÕÚÇáâãàéêíóôõúç', 'AAAAEEIOOOUCaaaaeeiooouc')) = 'concluido'
+      then 'O status já é Concluído'
+    when lower(translate(btrim(coalesce(p_status, '')), 'ÁÂÃÀÉÊÍÓÔÕÚÇáâãàéêíóôõúç', 'AAAAEEIOOOUCaaaaeeiooouc')) in ('cancelado', 'encerrado')
+      then format('O status gravado é "%s": decida no próprio edital', btrim(p_status))
+  end;
+$$;
+
+--
+-- Name: FUNCTION "FC_RECUSA_CONCLUIR_EDITAL"(p_status text, p_estado jsonb); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_RECUSA_CONCLUIR_EDITAL"(p_status text, p_estado jsonb) IS 'Por que o edital NÃO pode ser marcado Concluído em lote (null = pode): p_status é o status gravado e p_estado o de private."FC_ESTADO_DO_CRONOGRAMA". Pode quando há cronograma, o estado calculado é "Concluído" e o gravado é outro, fora de cancelado e encerrado (20261119120000).';
+
+--
 -- Name: FC_REFERENCIA_DO_CASO(text, text, text, text, uuid, text, uuid); Type: FUNCTION; Schema: private; Owner: -
 --
 
@@ -22306,6 +22332,102 @@ $$;
 --
 
 COMMENT ON FUNCTION public.concluir_demanda_interna(p_id uuid, p_concluida boolean) IS 'Conclui (true) ou reabre (false) uma demanda interna, com quem e quando. Gestor da área ou administrador global; grava TH_DEMANDA_INTERNA. 20261104120000.';
+
+--
+-- Name: concluir_editais_com_cronograma_encerrado(uuid[], text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.concluir_editais_com_cronograma_encerrado(p_editais uuid[], p_motivo text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    SET lock_timeout TO '5s'
+    AS $$
+declare
+  v_uid uuid := (select auth.uid());
+  v_motivo text := nullif(btrim(coalesce(p_motivo, '')), '');
+  v_hoje date := (now() at time zone 'America/Sao_Paulo')::date;
+  v_ids uuid[];
+  v_id uuid;
+  v_m public."TB_MONITORAMENTO_INDIGENA"%rowtype;
+  v_estado jsonb;
+  v_recusa text;
+  v_cronograma jsonb;
+  v_concluidos jsonb := '[]'::jsonb;
+  v_recusados jsonb := '[]'::jsonb;
+begin
+  if v_uid is null then
+    raise exception 'Sessão necessária' using errcode = '42501';
+  end if;
+  -- A mesma permissão de salvar o edital (salvar_monitoramento_com_cronograma_v2) e, por edital, a área.
+  if not (private.pode_recurso('nucleo', 2) or private.pode_recurso('calendario', 2)) then
+    raise exception 'Sem permissão para este recurso' using errcode = '42501';
+  end if;
+  if v_motivo is null or length(v_motivo) not between 10 and 500 then
+    raise exception 'Escreva o motivo (10 a 500 caracteres)' using errcode = '22023';
+  end if;
+  if not private."FC_TEXTO_SEGURO_DO_AVISO"(v_motivo) then
+    raise exception 'O motivo não pode ter CPF nem e-mail' using errcode = '22023';
+  end if;
+
+  select array_agg(distinct x) into v_ids from unnest(coalesce(p_editais, '{}'::uuid[])) x where x is not null;
+  if v_ids is null then
+    raise exception 'Escolha ao menos um edital' using errcode = '22023';
+  end if;
+  if cardinality(v_ids) > 200 then
+    raise exception 'Até 200 editais por vez' using errcode = '22023';
+  end if;
+
+  foreach v_id in array v_ids loop
+    select * into v_m from public."TB_MONITORAMENTO_INDIGENA" where id = v_id for update;
+    if not found or not private."FC_PODE_VER_EDITAL"(v_id) then
+      v_recusados := v_recusados || jsonb_build_object('id', v_id, 'edital', null, 'motivo', 'Edital não encontrado');
+      continue;
+    end if;
+    -- A mesma trava do salvar do edital.
+    if not pg_try_advisory_xact_lock(hashtext('cronograma:' || v_id::text)::bigint) then
+      v_recusados := v_recusados || jsonb_build_object('id', v_id, 'edital', v_m.edital,
+                                                       'motivo', 'Outra alteração deste edital está em andamento');
+      continue;
+    end if;
+    v_estado := private."FC_ESTADO_DO_CRONOGRAMA"(v_id, v_hoje);
+    v_recusa := private."FC_RECUSA_CONCLUIR_EDITAL"(v_m.status, v_estado);
+    if v_recusa is not null then
+      v_recusados := v_recusados || jsonb_build_object('id', v_id, 'edital', v_m.edital, 'motivo', v_recusa);
+      continue;
+    end if;
+
+    -- O que o salvar do edital gravaria: o status e a etapa do estado calculado.
+    update public."TB_MONITORAMENTO_INDIGENA"
+       set status = 'Concluído',
+           etapa = coalesce(nullif(v_estado ->> 'etapa', ''), etapa),
+           updated_by = v_uid,
+           updated_at = now()
+     where id = v_id;
+
+    v_cronograma := private.snapshot_monitoramento_cronograma(v_id);
+    insert into public."TH_CRONOGRAMA_MONIT_INDIG" (
+      monitoramento_id, acao, motivo, created_by, created_by_email,
+      cronograma_antes, cronograma_depois, alteracoes, total_alteracoes)
+    values (
+      v_id, 'status', v_motivo, v_uid, nullif((select auth.jwt()) ->> 'email', ''),
+      v_cronograma, v_cronograma,
+      jsonb_build_array(jsonb_build_object('tipo', 'status', 'campo', 'status',
+                                           'antes', v_m.status, 'depois', 'Concluído')),
+      1);
+
+    v_concluidos := v_concluidos || jsonb_build_object('id', v_id, 'edital', v_m.edital, 'status_anterior', v_m.status);
+  end loop;
+
+  return jsonb_build_object('concluidos', v_concluidos, 'recusados', v_recusados,
+                            'motivo', v_motivo, 'concluido_em', now());
+end;
+$$;
+
+--
+-- Name: FUNCTION concluir_editais_com_cronograma_encerrado(p_editais uuid[], p_motivo text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.concluir_editais_com_cronograma_encerrado(p_editais uuid[], p_motivo text) IS 'Marca "Concluído" (e a etapa do estado calculado, como o salvar do edital faria) nos editais escolhidos (até 200) cujo cronograma terminou pelas datas e cujo status gravado é outro (private."FC_RECUSA_CONCLUIR_EDITAL"); recusa os demais com o motivo, sem parar o lote. Exige quem edita editais (Núcleo ou Calendário, editor) e a área de cada edital; motivo de 10 a 500 caracteres, sem CPF nem e-mail. Cada edital marcado vai ao histórico do cronograma (TH_CRONOGRAMA_MONIT_INDIG, ação status) com quem, quando e o motivo. Não muda o aviso da central: ele some na próxima conferência. Devolve {concluidos:[{id, edital, status_anterior}], recusados:[{id, edital, motivo}], motivo, concluido_em} (20261119120000).';
 
 --
 -- Name: concluir_entrevista(uuid); Type: FUNCTION; Schema: public; Owner: -
@@ -31121,6 +31243,91 @@ $$;
 --
 
 COMMENT ON FUNCTION public.listar_editais_classificacao(p_area text) IS 'Editais da área para a aba Classificação (json): só os que têm análise curricular ativa (qualquer origem) ou lista de classificação gerada; candidatos nas análises, treinamento, versão e nome da versão da regra e a última lista gerada. Ordem: ativo, fora do treinamento, em andamento antes de encerrado, número. Exige classificacao >= leitor, a área e o recorte da coordenação (20261023120000).';
+
+--
+-- Name: listar_editais_com_cronograma_encerrado(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.listar_editais_com_cronograma_encerrado() RETURNS jsonb
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+  v_hoje date := (now() at time zone 'America/Sao_Paulo')::date;
+begin
+  if not (private.pode_recurso('dashboard') or private.pode_recurso('nucleo') or private.pode_recurso('calendario')
+          or private.pode_recurso('aprovados') or private.pode_recurso('importacao')) then
+    raise exception 'Sem permissão para este recurso' using errcode = '42501';
+  end if;
+
+  return jsonb_build_object(
+    'hoje', v_hoje,
+    'pode_concluir', private.pode_recurso('nucleo', 2) or private.pode_recurso('calendario', 2),
+    'editais', coalesce((
+      select jsonb_agg(jsonb_build_object(
+          'id', x.id,
+          'edital', x.edital,
+          'numero', private."FC_NUMERO_EDITAL"(x.edital),
+          'unidade', x.unidade,
+          'area', x."CO_AREA",
+          'status', x.status,
+          'etapa', x.estado ->> 'etapa',
+          'calculo', x.estado ->> 'calculo',
+          'fim', x.estado ->> 'data_fim',
+          'aviso', case when x.aviso_id is null then null else jsonb_build_object(
+              'id', x.aviso_id,
+              'tratamento', x.aviso_tratamento,
+              'pode_dispensar', private."FC_PODE_IGNORAR_AVISO"('editais', x.aviso_area, x.id)) end,
+          'pendencias', x.pendencias)
+        order by x.estado ->> 'data_fim', x.unidade, x.edital)
+        from (
+          select m.id, m.edital, m.unidade, m."CO_AREA", m.status, e.estado,
+                 a."CO_AVISO_CONFERENCIA" as aviso_id, a."TP_TRATAMENTO" as aviso_tratamento,
+                 a."CO_AREA" as aviso_area,
+                 coalesce((
+                   select jsonb_agg(jsonb_build_object(
+                       'conferencia', p."CO_CONFERENCIA",
+                       'gravidade', p."TP_GRAVIDADE",
+                       'quantidade', p."QT_OCORRENCIA",
+                       'tratamento', p."TP_TRATAMENTO")
+                     order by case p."TP_GRAVIDADE" when 'CRITICA' then 0 when 'ATENCAO' then 1 else 2 end,
+                              p."CO_CONFERENCIA")
+                     from public."TB_AVISO_CONFERENCIA" p
+                    where p."CO_MONITORAMENTO" = m.id
+                      and p."TP_SITUACAO" = 'ABERTO'
+                      and p."TP_TRATAMENTO" <> 'DISPENSADO'
+                      and p."CO_CONFERENCIA" <> 'EDITAL_CRONOGRAMA_ENCERRADO'
+                      and private."FC_PODE_VER_AVISO"(p."CO_MODULO", p."CO_AREA", p."CO_MONITORAMENTO")
+                 ), '[]'::jsonb) as pendencias
+            from public."TB_MONITORAMENTO_INDIGENA" m
+            cross join lateral (select private."FC_ESTADO_DO_CRONOGRAMA"(m.id, v_hoje) as estado) e
+            left join lateral (
+              select av."CO_AVISO_CONFERENCIA", av."TP_TRATAMENTO", av."CO_AREA"
+                from public."TB_AVISO_CONFERENCIA" av
+               where av."CO_MONITORAMENTO" = m.id
+                 and av."CO_CONFERENCIA" = 'EDITAL_CRONOGRAMA_ENCERRADO'
+                 and av."TP_SITUACAO" = 'ABERTO'
+               order by av."DT_ULTIMA_VEZ" desc
+               limit 1
+            ) a on true
+           where m.ativo is true
+             and not private."FC_EH_TREINAMENTO"(m."ST_TREINAMENTO")
+             and nullif(btrim(coalesce(m.status_override, '')), '') is null
+             and private."FC_PODE_VER_EDITAL"(m.id)
+             and private."FC_RECUSA_CONCLUIR_EDITAL"(m.status, e.estado) is null
+             -- Dispensado na central com justificativa: a equipe já decidiu manter o status.
+             and a."TP_TRATAMENTO" is distinct from 'DISPENSADO'
+        ) x
+    ), '[]'::jsonb)
+  );
+end;
+$$;
+
+--
+-- Name: FUNCTION listar_editais_com_cronograma_encerrado(); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.listar_editais_com_cronograma_encerrado() IS 'Editais cujo cronograma já terminou pelas datas (private."FC_ESTADO_DO_CRONOGRAMA" = "Concluído") com o status gravado ainda em outro valor (fora de concluído, cancelado e encerrado): o recorte da conferência EDITAL_CRONOGRAMA_ENCERRADO (ativo, fora do treinamento, sem status manual), só os que a pessoa vê, sem os já dispensados na central. Por edital: número, unidade, área, status gravado, etapa, cálculo, fim do cronograma, o aviso da central (id, tratamento, pode_dispensar) e as outras pendências abertas do edital (conferência, gravidade, quantidade). pode_concluir: quem edita editais (Núcleo ou Calendário, editor). Leitura de quem vê os editais (20261119120000).';
 
 --
 -- Name: listar_editais_criticos_manuais(text); Type: FUNCTION; Schema: public; Owner: -
@@ -58491,8 +58698,14 @@ CREATE TABLE public."TH_CRONOGRAMA_MONIT_INDIG" (
     alteracoes jsonb DEFAULT '[]'::jsonb NOT NULL,
     total_alteracoes integer DEFAULT 0 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT monitoramento_indigena_cronograma_versoes_acao_check CHECK ((acao = ANY (ARRAY['salvar'::text, 'errata'::text])))
+    CONSTRAINT "CK_HISTCRONOGRAMA_ACAO" CHECK ((acao = ANY (ARRAY['salvar'::text, 'errata'::text, 'status'::text])))
 );
+
+--
+-- Name: CONSTRAINT "CK_HISTCRONOGRAMA_ACAO" ON "TH_CRONOGRAMA_MONIT_INDIG"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_HISTCRONOGRAMA_ACAO" ON public."TH_CRONOGRAMA_MONIT_INDIG" IS 'Ações do histórico do cronograma: salvar (o formulário do edital), errata (retificação) e status (status marcado Concluído em lote pela tela de Editais, com motivo; 20261119120000).';
 
 --
 -- Name: TH_DECISAO_LOTE; Type: TABLE; Schema: public; Owner: -
@@ -76082,6 +76295,12 @@ REVOKE ALL ON FUNCTION private."FC_RECURSOS_MODULO"() FROM PUBLIC;
 GRANT ALL ON FUNCTION private."FC_RECURSOS_MODULO"() TO authenticated;
 
 --
+-- Name: FUNCTION "FC_RECUSA_CONCLUIR_EDITAL"(p_status text, p_estado jsonb); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_RECUSA_CONCLUIR_EDITAL"(p_status text, p_estado jsonb) FROM PUBLIC;
+
+--
 -- Name: FUNCTION "FC_REFERENCIA_DO_CASO"(p_modulo text, p_conferencia text, p_tipo text, p_referencia text, p_analise uuid, p_area text, p_edital uuid); Type: ACL; Schema: private; Owner: -
 --
 
@@ -77089,6 +77308,13 @@ REVOKE ALL ON FUNCTION public.concluir_demanda_interna(p_id uuid, p_concluida bo
 GRANT ALL ON FUNCTION public.concluir_demanda_interna(p_id uuid, p_concluida boolean) TO authenticated;
 
 --
+-- Name: FUNCTION concluir_editais_com_cronograma_encerrado(p_editais uuid[], p_motivo text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.concluir_editais_com_cronograma_encerrado(p_editais uuid[], p_motivo text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.concluir_editais_com_cronograma_encerrado(p_editais uuid[], p_motivo text) TO authenticated;
+
+--
 -- Name: FUNCTION concluir_entrevista(p_entrevista uuid); Type: ACL; Schema: public; Owner: -
 --
 
@@ -77979,6 +78205,13 @@ GRANT ALL ON FUNCTION public.listar_editais_avaliacao(p_area text) TO service_ro
 REVOKE ALL ON FUNCTION public.listar_editais_classificacao(p_area text) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.listar_editais_classificacao(p_area text) TO authenticated;
 GRANT ALL ON FUNCTION public.listar_editais_classificacao(p_area text) TO service_role;
+
+--
+-- Name: FUNCTION listar_editais_com_cronograma_encerrado(); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.listar_editais_com_cronograma_encerrado() FROM PUBLIC;
+GRANT ALL ON FUNCTION public.listar_editais_com_cronograma_encerrado() TO authenticated;
 
 --
 -- Name: FUNCTION listar_editais_criticos_manuais(p_area text); Type: ACL; Schema: public; Owner: -

@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-17
+atualizado: 2026-11-19
 ---
 
 # Módulo: Editais (cadastro, regras e encerramento)
@@ -44,6 +44,19 @@ Tabela, alertas, formulário e linha do tempo. A tela é `nucleo.tsx`; o estado 
   situação excepcional (`situacao`: suspenso, paralisado ou cancelado, pelo status final). "Sem
   cronograma" é só edital sem etapa; o alerta do resumo é `excepcional` também para o suspenso
   digitado no manual.
+- **Cronograma encerrado em lote** (`encerrados-do-cronograma.tsx`,
+  `src/lib/editais/encerrados-do-cronograma.ts`, migration `20261119120000`): "Cronograma
+  encerrado (N)" no topo abre a gaveta com os editais do aviso `EDITAL_CRONOGRAMA_ENCERRADO`
+  (estado calculado "Concluído", status gravado outro, ativo, sem treinamento nem status manual,
+  sem os dispensados na central), lidos de `listar_editais_com_cronograma_encerrado`: edital,
+  unidade, fim do cronograma, status gravado e as outras pendências abertas. Quem edita editais
+  seleciona (página × todos, `BarraDeSelecao`) e marca como concluídos com motivo (10 a 500):
+  `concluir_editais_com_cronograma_encerrado` grava status "Concluído" e a etapa calculada (o
+  que o salvar gravaria; o automático continua ligado), recusa com o motivo quem não passa em
+  `private."FC_RECUSA_CONCLUIR_EDITAL"` e registra a ação `status` em `TH_CRONOGRAMA_MONIT_INDIG`
+  (o histórico mostra "Status marcado como Concluído"). O sistema não muda status sozinho; o aviso
+  some na conferência seguinte. "Dispensar" por linha usa `tratar_aviso_conferencia` (gestor do
+  módulo). Componente e CSS sob demanda (`lazy()` em `nucleo.tsx`).
 - **Datas do cadastro pelas etapas**: com o automático ligado, `data_inicio`/`data_fim` do edital
   são o início da primeira etapa e o fim da última, por qualquer caminho (tela, script de errata,
   SQL Editor): gatilho `TG_DATAS_DO_CADASTRO` em `TB_CRONOGRAMA_MONIT_INDIG`, adiado ao fim da
