@@ -39,7 +39,19 @@ import {
 import { formatNumberBR } from "../../lib/base/formatters";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { abrirPaginaDoEdital } from "../pagina-do-edital/abrir.ts";
-import { Selo, TabelaInfinita, TopoDoPainel } from "../../ui/index.ts";
+import {
+  AtivosEHistorico,
+  Selo,
+  TabelaInfinita,
+  TopoDoPainel,
+  usarAtivosEHistorico,
+} from "../../ui/index.ts";
+import {
+  editalDoHistorico,
+  situacaoDoEdital,
+  tomDaSituacaoDoEdital,
+} from "../../lib/editais/editais-ativos.ts";
+import type { VistaDaLista } from "../../lib/base/ativos-e-historico.ts";
 import { avisoDaListaDoEdital } from "../../lib/editais/aprovados-por-edital.ts";
 import {
   ORDEM_PADRAO_DOS_EDITAIS,
@@ -449,7 +461,7 @@ function ModalAberto({
 
 export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
   // Só os editais da área escolhida no menu; os indicadores contam os mesmos.
-  const { linhas, carregado, erro } = usarAreaAtual();
+  const { linhas, carregado, erro, area } = usarAreaAtual();
   const doResumo = useSyncExternalStore(estado.assinar, estado.obter);
   const resumoDaArea = useMemo(
     // O edital de treinamento aparece na tabela, mas não nos indicadores.
@@ -463,7 +475,31 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
 
   const indice = useMemo(() => indexarResumo(nucleo.resumo), [nucleo.resumo]);
   // A ordem é a da tabela (abaixo); a busca recorta depois.
-  const editais = useMemo(() => filtrarEditais(linhas, ""), [linhas]);
+  const todosOsEditais = useMemo(() => filtrarEditais(linhas, ""), [linhas]);
+  // Ativos (vigentes) na lista de trabalho; concluídos e cancelados no Histórico.
+  const { visiveis: editais, controle: ativosEHistorico } =
+    usarAtivosEHistorico(todosOsEditais, {
+      chave: `yeende:editais:vista:${area}`,
+      ehHistorico: editalDoHistorico,
+      situacao: situacaoDoEdital,
+    });
+  /*
+    Os cartões "Editais ativos" e "Editais inativos" do painel levam à vista
+    deles; trocar a vista tira o filtro de situação que a contradiz.
+  */
+  const { aoMudar: mudarVista } = ativosEHistorico;
+  useEffect(() => {
+    if (nucleo.filtro === "inativos") mudarVista("historico");
+    else if (nucleo.filtro === "ativos") mudarVista("ativos");
+  }, [nucleo.filtro, mudarVista]);
+  const aoMudarVista = (vista: VistaDaLista) => {
+    if (
+      (vista === "ativos" && nucleo.filtro === "inativos") ||
+      (vista === "historico" && nucleo.filtro === "ativos")
+    )
+      estado.filtrarPor("todos");
+    mudarVista(vista);
+  };
   /*
     A ordem da tabela: cronológica (mais recente primeiro) por padrão; o
     cabeçalho de cada coluna ordena por ela, alternando o sentido.
@@ -609,6 +645,15 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
         }
         itens={noFiltro}
         filtrarPelaBusca={pelaBusca}
+        ferramentas={
+          <AtivosEHistorico
+            {...ativosEHistorico}
+            aoMudar={aoMudarVista}
+            rotulo="Editais"
+            tomDaSituacao={tomDaSituacaoDoEdital}
+            tour="editais-ativos-e-historico"
+          />
+        }
         colunas={colunas}
         classeDaTabela="editais-tabela"
         linha={({ linha, item }) => (
@@ -624,7 +669,13 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
         total={noFiltro.length}
         // Sem edital algum, a faixa de cima já diz "Nenhum edital nesta área.": a tabela não repete.
         vazio={
-          editais.length ? "Nenhum resultado para os filtros aplicados." : null
+          editais.length
+            ? "Nenhum resultado para os filtros aplicados."
+            : todosOsEditais.length
+              ? ativosEHistorico.vista === "historico"
+                ? "Nenhum edital no histórico."
+                : "Nenhum edital ativo."
+              : null
         }
         informacao={(quantos) =>
           quantos === null

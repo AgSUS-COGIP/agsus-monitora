@@ -1,7 +1,7 @@
 ---
 tipo: regra
 area: front
-atualizado: 2026-11-10
+atualizado: 2026-11-19
 ---
 
 # Textos da interface
@@ -21,6 +21,17 @@ A tela mostra o que a pessoa precisa para agir, e mais nada. Explicação é com
 - Rótulos, erros, confirmações, estados vazios curtos e avisos que pedem ação.
 - **Data de atualização: discreta e uma vez só** (`.status-discreto`, no `TopoDoPainel`).
 - Título e área ficam no cabeçalho do app (vêm da navegação); a tela não repete.
+
+## Alcance da busca
+
+Cada busca diz o que ela filtra (`src/ui/linha-do-recorte.tsx`):
+
+- a da barra de uma tabela (`BarraDaLista`) só filtra a tabela: placeholder "Buscar nesta tabela"
+  (`BUSCAR_NESTA_TABELA`) e nome acessível "Buscar nesta tabela pelo …";
+- a do painel de filtros (Recursos, Análises, painel de Entrevistas) e a da Visão geral recortam a
+  página toda (números, gráficos e tabela): rótulo "Buscar em toda a página" (`BUSCAR_NA_PAGINA`) e,
+  enquanto vale, a marca "Busca “…” filtrando a página toda" no recorte (`buscaNaPagina` da
+  `LinhaDoRecorte`, `MarcaDaBuscaNaPagina` na Visão geral).
 
 ## Linguagem (Design System, seção 15)
 

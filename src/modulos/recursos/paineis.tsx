@@ -37,6 +37,7 @@ import {
   Grafico,
   GradeDeKpis,
   Kpi as CardDeKpi,
+  BUSCAR_NA_PAGINA,
   LinhaDoRecorte,
   ListaDePendencias,
   MaisOpcoes,
@@ -231,9 +232,9 @@ export function Filtros({
         aberto={maisOpcoes}
         aoAlternar={() => setMaisOpcoes((atual) => !atual)}
         quantos={avancados}
-        titulo="Mostrar a busca em toda a tela"
+        titulo="Mostrar a busca em toda a página"
       >
-        <Campo rotulo="Buscar em toda a tela">
+        <Campo rotulo={BUSCAR_NA_PAGINA}>
           <input
             id={id("filtro-busca")}
             data-tour="recursos-busca"
@@ -406,7 +407,10 @@ export function Recorte({
     },
   ].filter((marca) => marca !== 0);
   return (
-    <LinhaDoRecorte ativos={ativos}>
+    <LinhaDoRecorte
+      ativos={ativos}
+      buscaNaPagina={ativos.find(([campo]) => campo === "busca")?.[2]}
+    >
       {carregado ? <MarcasDoRecorte marcas={marcas} /> : null}
     </LinhaDoRecorte>
   );

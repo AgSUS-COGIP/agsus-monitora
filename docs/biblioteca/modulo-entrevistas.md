@@ -23,7 +23,9 @@ lê). O cliente declara só `get_entrevistas_da_area` e `obter_agenda_entrevista
 
 View `conduzir-entrevistas`, `#page-conduzir-entrevistas`, rota `/<área>/entrevistas[/<edital>]`,
 `criarConducaoDeEntrevistas()`: o fazer, para secretaria e avaliadores, no layout das telas da
-seleção (cabeçalho com o edital e as seções).
+seleção (cabeçalho com o edital e as seções). Com editais do Histórico na lista ("Mostrar também
+os concluídos", do administrador), o `<select>` separa os grupos "Ativos" e "Histórico", com a
+contagem por situação no rótulo.
 
 - **Fila** (`fila-do-dia.tsx`): abre em Hoje pela agenda salva na Classificação › Agenda (sem
   entrevista hoje, Próximos; sem agenda, Todos); faixa de situação (período, aguardando, em

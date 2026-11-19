@@ -291,42 +291,75 @@ export type ComoAbreOEdital = "id" | "numero";
 export interface TelaDoEdital {
   view: string;
   rotulo: string;
+  /** O nome curto, o da faixa das etapas ("Documental do 93/2026"). */
+  curto: string;
   icone: string;
   como: ComoAbreOEdital;
+  /** A tela recorta por vaga (código): a vaga escolhida segue junto. */
+  vaga: boolean;
 }
 
-/** As telas da seleção, na ordem do processo, que abrem já no edital. */
+/**
+ * As telas da seleção, na ordem do processo, que abrem já no edital: a aba
+ * "Candidatos" da página do edital e a faixa das etapas
+ * (src/lib/navegacao/fluxo-das-etapas.ts) levam ao mesmo destino.
+ */
 export const TELAS_DO_EDITAL: readonly TelaDoEdital[] = Object.freeze([
-  { view: "selecao", rotulo: "Seleção", icone: "fa-filter", como: "numero" },
+  {
+    view: "selecao",
+    rotulo: "Seleção",
+    curto: "Seleção",
+    icone: "fa-filter",
+    como: "numero",
+    vaga: false,
+  },
   {
     view: "pre-classificacao",
     rotulo: "Triagem",
+    curto: "Triagem",
     icone: "fa-list-check",
     como: "id",
+    vaga: true,
   },
   {
     view: "avaliacao-documental",
     rotulo: "Avaliação documental",
+    curto: "Documental",
     icone: "fa-file-circle-check",
     como: "id",
+    vaga: true,
+  },
+  {
+    view: "analisar-recursos",
+    rotulo: "Recursos",
+    curto: "Recursos",
+    icone: "fa-gavel",
+    como: "numero",
+    vaga: false,
   },
   {
     view: "conduzir-entrevistas",
     rotulo: "Entrevistas",
+    curto: "Entrevistas",
     icone: "fa-comments",
     como: "id",
+    vaga: true,
   },
   {
     view: "classificacao",
     rotulo: "Classificação",
+    curto: "Classificação",
     icone: "fa-ranking-star",
     como: "id",
+    vaga: true,
   },
   {
     view: "approved",
     rotulo: "Lista de aprovados",
+    curto: "Aprovados",
     icone: "fa-user-check",
     como: "numero",
+    vaga: false,
   },
 ]);
 

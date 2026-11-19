@@ -10,6 +10,32 @@ import type { ReactNode } from "react";
 */
 export type FiltroAtivo = readonly [string, string, string];
 
+/*
+  O alcance de cada busca, dito no campo: a da barra de uma tabela só filtra
+  a tabela ("Buscar nesta tabela"); a do painel de filtros (ou a da Visão
+  geral) recorta a página toda — números, gráficos e tabela — e, enquanto
+  vale, o recorte mostra a marca de `textoDaBuscaNaPagina`.
+*/
+export const BUSCAR_NESTA_TABELA = "Buscar nesta tabela";
+export const BUSCAR_NA_PAGINA = "Buscar em toda a página";
+
+/** "Busca “Maria” filtrando a página toda"; "" sem busca. */
+export function textoDaBuscaNaPagina(busca: unknown): string {
+  const termo = String(busca ?? "").trim();
+  return termo ? `Busca “${termo}” filtrando a página toda` : "";
+}
+
+/** A marca da busca que recorta a página toda (nada sem busca). */
+export function MarcaDaBuscaNaPagina({ busca }: { busca: unknown }) {
+  const texto = textoDaBuscaNaPagina(busca);
+  if (!texto) return null;
+  return (
+    <span className="ui-marca" data-tom="alerta" data-marca="busca-na-pagina">
+      <i className="fa-solid fa-magnifying-glass" aria-hidden="true" /> {texto}
+    </span>
+  );
+}
+
 export function textoDoRecorte(ativos: readonly FiltroAtivo[]): string {
   return ativos.length
     ? `Recorte ativo: ${ativos.map(([, rotulo, valor]) => `${rotulo}: ${valor}`).join(" · ")}`
@@ -19,12 +45,15 @@ export function textoDoRecorte(ativos: readonly FiltroAtivo[]): string {
 export interface PropriedadesDaLinhaDoRecorte {
   ativos?: readonly FiltroAtivo[];
   texto?: string;
+  /** A busca do painel de filtros, que recorta a página toda: ganha a marca. */
+  buscaNaPagina?: string;
   children?: ReactNode;
 }
 
 export function LinhaDoRecorte({
   ativos = [],
   texto,
+  buscaNaPagina = "",
   children,
 }: PropriedadesDaLinhaDoRecorte) {
   return (
@@ -32,6 +61,11 @@ export function LinhaDoRecorte({
       <p className="ui-recorte-texto" data-recorte="">
         {texto ?? textoDoRecorte(ativos)}
       </p>
+      {textoDaBuscaNaPagina(buscaNaPagina) ? (
+        <div className="ui-recorte-marcas">
+          <MarcaDaBuscaNaPagina busca={buscaNaPagina} />
+        </div>
+      ) : null}
       {children}
     </section>
   );

@@ -59,6 +59,8 @@ import { FichaDoCandidato } from "./ficha.tsx";
 import { FilaDoDia, MINHA_BANCA } from "./fila-do-dia.tsx";
 import type { FiltrosDaFila } from "./fila-do-dia.tsx";
 import { usarSeletorDoEdital } from "./seletor-do-edital.tsx";
+import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
+import { FluxoDasEtapas } from "../../componentes/fluxo-das-etapas.tsx";
 import "./entrevistas.css";
 import { CarregandoConteudo } from "../../ui/index.ts";
 
@@ -209,6 +211,18 @@ function TelaDeConducao({
     banca: valores.banca,
     situacao: (valores.situacao || "") as SituacaoNaTela | "",
   };
+  // A vaga que veio de outra etapa do mesmo edital (a faixa das etapas).
+  usarPedidoDeFiltro(
+    "conduzir-entrevistas",
+    Boolean(editalId),
+    (pedido) => {
+      if (pedido.vaga) mudarValores({ vaga: pedido.vaga });
+    },
+    (pedido) => !pedido.editalId || pedido.editalId === editalId,
+  );
+  const numeroDoEditalAberto =
+    e.editais.lista.find((item) => String(item.id) === String(e.editalId))
+      ?.edital ?? dados?.edital?.edital;
   const recorte = (valores.periodo || recorteInicial(fila, hoje)) as Recorte;
   // A hora de agora (a linha "Agora" e a próxima), a cada minuto.
   const [agora, setAgora] = useState(horaDe);
@@ -418,6 +432,15 @@ function TelaDeConducao({
           if (visao === "preparar") void conducao.carregarRoteiros(e.area);
         }}
         atualizarDesativado={!e.area || e.carregandoEdital}
+        etapas={
+          e.editalId ? (
+            <FluxoDasEtapas
+              view="conduzir-entrevistas"
+              edital={{ id: e.editalId, numero: numeroDoEditalAberto }}
+              vaga={visao === "fila" ? filtros.vaga : ""}
+            />
+          ) : null
+        }
       >
         {e.editalId ? (
           <button

@@ -23,6 +23,7 @@ import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitorame
 import { CHAVE_DO_CABECALHO } from "../../lib/base/cabecalho-dos-documentos.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.tsx";
+import { FluxoDasEtapas } from "../../componentes/fluxo-das-etapas.tsx";
 import { classificarEdital } from "../../lib/classificacao/ajustes.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import { Aviso, CabecalhoDaTela, Segmentado } from "../../ui/index.ts";
@@ -147,6 +148,8 @@ function TelaDaArea({
 
   const { nome: nomeDaArea } = usarAreaAtual();
   const escolhido = e.editais.find((ed) => ed.id === e.editalId) ?? null;
+  // A vaga das listas (o código), para a faixa das etapas.
+  const [vagaDaLista, setVagaDaLista] = useState("");
 
   /* A agenda das entrevistas acompanha o edital escolhido (também preenche o documento). */
   useEffect(() => {
@@ -209,6 +212,15 @@ function TelaDaArea({
         atualizarDesativado={
           !e.area || e.carregandoEditais || e.carregandoEdital
         }
+        etapas={
+          e.editalId && !e.semAcesso ? (
+            <FluxoDasEtapas
+              view="classificacao"
+              edital={{ id: e.editalId, numero: escolhido?.edital }}
+              vaga={visao === "listas" ? vagaDaLista : ""}
+            />
+          ) : null
+        }
       >
         <SeloDeAvisos modulo="classificacao" />
       </CabecalhoDaTela>
@@ -254,6 +266,7 @@ function TelaDaArea({
                 e={e}
                 calcular={calcular}
                 aoAbrirAgenda={() => setVisao("agenda")}
+                aoMudarVaga={setVagaDaLista}
                 confirmar={confirmar}
               />
             ) : visao === "agenda" && e.dados ? (

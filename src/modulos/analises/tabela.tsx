@@ -5,7 +5,7 @@ import {
   tomDoStatus,
 } from "../../lib/analises/analises-curriculares.ts";
 import { formatNumberBR } from "../../lib/base/formatters";
-import { Selo, TabelaInfinita } from "../../ui/index.ts";
+import { BUSCAR_NESTA_TABELA, Selo, TabelaInfinita } from "../../ui/index.ts";
 
 /*
   A fila de análises: TabelaInfinita de src/ui/ (50 por vez, mais ao rolar ou
@@ -51,8 +51,8 @@ export function TabelaDeAnalises({
       idDoTitulo="analisesFilaTitulo"
       titulo="Fila de análises"
       busca={{
-        placeholder: "Buscar somente na fila",
-        rotulo: "Buscar somente na fila de análises",
+        placeholder: BUSCAR_NESTA_TABELA,
+        rotulo: "Buscar nesta tabela de análises",
         valor: busca,
         aoMudar: aoBuscar,
       }}

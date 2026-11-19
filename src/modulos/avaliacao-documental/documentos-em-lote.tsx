@@ -9,6 +9,7 @@ import {
 } from "../../lib/avaliacao-documental/documentos-em-lote.ts";
 import { formatNumberBR } from "../../lib/base/formatters";
 import {
+  BUSCAR_NESTA_TABELA,
   Aviso,
   CaixaDeMarcarTodos,
   estadoDaMarcacao,
@@ -366,8 +367,8 @@ export function DocumentosEmLote({
         className="avd-docs-lote-tabela"
         classeDaTabela="avd-tabela"
         busca={{
-          placeholder: "Código da Empregare ou nome",
-          rotulo: "Buscar por código ou nome",
+          placeholder: BUSCAR_NESTA_TABELA,
+          rotulo: "Buscar nesta tabela pelo código da Empregare ou nome",
           id: `${id}-busca`,
           valor: busca,
           aoMudar: setBusca,

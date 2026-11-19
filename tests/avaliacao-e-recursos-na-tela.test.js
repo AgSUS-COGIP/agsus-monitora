@@ -1820,6 +1820,37 @@ bloco("modulos/avaliacao-documental-abas", () => {
       expect(lerEditalLembrado(EU, "projetos")).toBe("e114");
     });
 
+    it("Ativos e Histórico: o concluído fica a um clique, com a contagem por situação", async () => {
+      const supabase = supabaseFalso({
+        editais: [VARIOS[0], { ...VARIOS[1], status: "Suspenso" }, VARIOS[2]],
+        coordena: false,
+      });
+      await montar(supabase);
+      const controle = secao.querySelector(
+        "[data-tour='avd-ativos-e-historico']",
+      );
+      const opcao = (valor) =>
+        controle.querySelector(`[data-valor='${valor}']`);
+      const cartoes = () =>
+        [...secao.querySelectorAll(".avd-entrada-cartao")].map((c) =>
+          c.getAttribute("data-edital"),
+        );
+      expect(opcao("ativos").textContent).toBe("Ativos2");
+      expect(opcao("historico").textContent).toBe("Histórico1");
+      expect(cartoes()).toEqual(["e93", "e114"]);
+      await clicar(opcao("historico"));
+      expect(cartoes()).toEqual(["e23"]);
+      expect(
+        [...controle.querySelectorAll(".ui-ativos-situacoes li")].map(
+          (li) => li.textContent,
+        ),
+      ).toEqual(["Concluído 1"]);
+      await clicar(opcao("ativos"));
+      expect(controle.querySelector(".ui-ativos-situacoes").title).toMatch(
+        /Suspenso 1/,
+      );
+    });
+
     it("com um edital vigente só, abre direto nele", async () => {
       const supabase = supabaseFalso({
         editais: [edital("e93", "93/2026", "COORDENADOR"), VARIOS[2]],
