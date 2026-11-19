@@ -2233,6 +2233,27 @@ bloco("modulos/mapa", () => {
       ]);
     });
 
+    it("espera o desconto das vagas reabertas antes de desenhar", async () => {
+      let responder: (valor: unknown) => void = () => {};
+      const { estado } = await abrir();
+      await act(async () =>
+        estado.definirBuscaDoAcompanhamento(
+          () =>
+            new Promise((resolve) => {
+              responder = resolve;
+            }),
+        ),
+      );
+      visto.props = null;
+      await act(async () => {});
+      expect(estado.obter().aguardandoVagas).toBe(true);
+      expect(visto.props).toBeNull();
+
+      await act(async () => responder({ etapas: [], listas: [] }));
+      await vi.waitFor(() => expect(visto.props).not.toBeNull());
+      expect(estado.obter().aguardandoVagas).toBe(false);
+    });
+
     it("o link com o DSEI abre o mapa já nele", async () => {
       history.replaceState(null, "", "/saude-indigena/mapa/yanomami");
       await abrir();

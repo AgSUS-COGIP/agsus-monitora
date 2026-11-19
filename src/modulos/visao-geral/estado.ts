@@ -613,9 +613,15 @@ export function criarEstadoDaVisaoGeral({
       if (typeof funcao === "function") aviso = funcao;
     },
     /* A tela entrega a busca do acompanhamento (com o cliente dela). */
+    /*
+      A busca chega depois de a tela já estar em uso (o Mapa, sob demanda,
+      depois de `definirLidaPeloMapa`): recalcula, para `aguardandoVagas`
+      valer já, e não as vagas sem o desconto das reabertas até a resposta.
+    */
     definirBuscaDoAcompanhamento(funcao) {
       buscarAcompanhamento = typeof funcao === "function" ? funcao : null;
       pedido = null;
+      avisarOuvintes();
       pedirAcompanhamento();
     },
     /*
