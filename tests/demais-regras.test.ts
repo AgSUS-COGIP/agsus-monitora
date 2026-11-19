@@ -8,6 +8,16 @@ import {
   textoDaCelula,
   xlsxDaTabela,
 } from "../src/lib/base/exportacao-da-tabela.ts";
+import {
+  acessoDasUnidades,
+  camposDasLinhas,
+  casarChaveDoDsei,
+  cnesDaUnidade,
+  estabelecimentosDoCnes,
+  motivoDaFalha,
+  terrasDistintas,
+  territorioPorDsei,
+} from "../src/lib/mapas/mapa-saude-indigena/territorio-do-sigepsi.ts";
 import { lembrarBanco } from "./apoio/bancos-abertos.ts";
 import {
   afterEach,
@@ -4200,6 +4210,316 @@ bloco("lib/localizacoes-do-sigepsi", () => {
       expect(await carregarLocalizacoes(sessao, { buscar })).toBeNull();
       expect(buscar).toHaveBeenCalledTimes(2);
       aviso.mockRestore();
+    });
+  });
+});
+
+bloco("lib/territorio-do-sigepsi", () => {
+  /*
+    Território, acesso e CNES do SIGEPSI
+    (src/lib/mapas/mapa-saude-indigena/territorio-do-sigepsi.ts e
+    api/territorio-dos-dseis.ts). Linhas no formato das rotas
+    /api/mapa-dseis/territorio, /localizacoes e /rede. Dados fictícios.
+  */
+  const TERRITORIO = [
+    {
+      dsei: "DSEI ALAGOAS E SERGIPE",
+      uf: "AL",
+      populacaoIndigena: 12000,
+      qtdAldeias: 40,
+      qtdTerrasIndigenas: 3,
+      terras: [
+        { codigo: "10", nome: "TERRA B", aldeias: [{ uf: "AL" }] },
+        { codigo: "11", nome: "TERRA A", aldeias: [] },
+        { codigo: "10", nome: "TERRA B", aldeias: [{ uf: "SE" }] },
+      ],
+    },
+    {
+      dsei: "Yanomami",
+      populacaoIndigena: "",
+      qtdAldeias: null,
+      terras: 7,
+    },
+    { dsei: "", populacaoIndigena: 1 },
+  ];
+  const LOCALIZACOES = [
+    {
+      id: 5,
+      dsei: "DSEI ALAGOAS E SERGIPE",
+      lotacao: "POLO BASE XITEI",
+      tipoUnidade: "polo base",
+      municipio: "MACEIO",
+      lat: "-9.9",
+      lng: "-36",
+      meioAcesso: "terrestre/FLUVIAL e aereo",
+      acessibilidadeGeografica: "muito remoto",
+      categoriaLocalidade: "rural",
+      floresta: "s",
+      cep: "57000000",
+    },
+    {
+      id: 6,
+      dsei: "DSEI ALAGOAS E SERGIPE",
+      lotacao: "UBSI BANANAL",
+      meioAcesso: "",
+      acessibilidadeGeografica: "",
+      categoriaLocalidade: "?",
+      floresta: null,
+    },
+  ];
+  const REDE = [
+    {
+      dsei: "DSEI ALAGOAS E SERGIPE",
+      nome: "Polo Base Indígena Xitei",
+      cnes: "1234567",
+      uf: "al",
+      municipio: "MACEIO",
+      lat: -9.9,
+      lng: -36,
+      grupo: "u",
+    },
+    { dsei: "DSEI ALAGOAS E SERGIPE", nome: "Sem código", cnes: "" },
+  ];
+
+  describe("conversão", () => {
+    it("território: população, aldeias e terras distintas por código", () => {
+      const t = territorioPorDsei(TERRITORIO);
+      expect(Object.keys(t)).toEqual(["ALAGOAS SERGIPE", "YANOMAMI"]);
+      expect(t["ALAGOAS SERGIPE"]).toEqual({
+        nome: "DSEI ALAGOAS E SERGIPE",
+        populacao: 12000,
+        aldeias: 40,
+        terras: 2,
+        listaDeTerras: [
+          { codigo: "11", nome: "TERRA A" },
+          { codigo: "10", nome: "TERRA B" },
+        ],
+      });
+      // Campo vazio é dado ausente, não zero; `terras` número vale.
+      expect(t.YANOMAMI).toMatchObject({
+        populacao: null,
+        aldeias: null,
+        terras: 7,
+      });
+    });
+
+    it("terras que atravessam dois DSEIs contam uma vez no total", () => {
+      const t = territorioPorDsei([
+        TERRITORIO[0],
+        { ...TERRITORIO[0], dsei: "Xingu" },
+      ]);
+      expect(terrasDistintas(Object.values(t))).toBe(2);
+    });
+
+    it("acesso: meios separados, acessibilidade, localidade e floresta", () => {
+      const [polo, ubsi] = acessoDasUnidades(LOCALIZACOES);
+      expect(polo).toEqual({
+        id: "5",
+        dsei: "ALAGOAS SERGIPE",
+        nome: "POLO BASE XITEI",
+        tipo: "POLO BASE",
+        municipio: "MACEIO",
+        lat: -9.9,
+        lon: -36,
+        meios: ["Terrestre", "Fluvial", "Aéreo"],
+        acessibilidade: "Muito remoto",
+        localidade: "Rural",
+        floresta: "Sim",
+      });
+      expect(ubsi).toMatchObject({
+        meios: ["Não informado"],
+        acessibilidade: "Não informado",
+        localidade: "Não informado",
+        floresta: "Não informado",
+        lat: null,
+        lon: null,
+      });
+      // Nenhum campo além dos nossos (o CEP não passa).
+      expect(Object.keys(polo ?? {})).not.toContain("cep");
+    });
+
+    it("CNES: só com código, e casa com a unidade pelo nome", () => {
+      const rede = estabelecimentosDoCnes(REDE);
+      expect(rede).toEqual([
+        {
+          dsei: "ALAGOAS SERGIPE",
+          nome: "Polo Base Indígena Xitei",
+          cnes: "1234567",
+          uf: "AL",
+          municipio: "MACEIO",
+          lat: -9.9,
+          lon: -36,
+        },
+      ]);
+      expect(
+        cnesDaUnidade("POLO BASE XITEI", "ALAGOAS SERGIPE", rede)?.cnes,
+      ).toBe("1234567");
+      expect(cnesDaUnidade("POLO BASE XITEI", "YANOMAMI", rede)).toBeNull();
+      expect(cnesDaUnidade("UBSI BANANAL", "ALAGOAS SERGIPE", rede)).toBeNull();
+    });
+
+    it("a chave do DSEI casa com a do mapa (KAYAPO × KAIAPO)", () => {
+      const doMapa = ["KAIAPO PARA", "LESTE RORAIMA", "YANOMAMI"];
+      expect(casarChaveDoDsei("KAYAPO PARA", doMapa)).toBe("KAIAPO PARA");
+      expect(casarChaveDoDsei("YANOMAMI", doMapa)).toBe("YANOMAMI");
+      expect(casarChaveDoDsei("XINGU", doMapa)).toBeNull();
+    });
+
+    it("o motivo diz qual liberação pedir", () => {
+      expect(motivoDaFalha(401)).toBe("a chave do Yeendé não lê esta rota");
+      expect(motivoDaFalha(403)).toBe("a chave do Yeendé não lê esta rota");
+      expect(motivoDaFalha(404)).toBe("a rota não existe no SIGEPSI");
+      expect(motivoDaFalha(null)).toBe("o SIGEPSI não respondeu");
+      expect(motivoDaFalha(500)).toBe("o SIGEPSI respondeu 500");
+    });
+
+    it("os campos do diagnóstico são só nomes", () => {
+      expect(camposDasLinhas(REDE)).toEqual([
+        "cnes",
+        "dsei",
+        "grupo",
+        "lat",
+        "lng",
+        "municipio",
+        "nome",
+        "uf",
+      ]);
+    });
+  });
+
+  describe("/api/territorio-dos-dseis", () => {
+    const ambiente = { ...process.env };
+    const original = globalThis.fetch;
+
+    beforeEach(async () => {
+      process.env.VITE_SUPABASE_URL = "https://banco.exemplo";
+      process.env.VITE_SUPABASE_PUBLISHABLE_KEY = "pub";
+      process.env.SIGEPSI_API_TOKEN = "segredo";
+      const { esquecerCache } = await import("../api/territorio-dos-dseis.ts");
+      esquecerCache();
+    });
+    afterEach(() => {
+      process.env = { ...ambiente };
+      globalThis.fetch = original;
+      vi.restoreAllMocks();
+    });
+
+    async function chamar(headers: Record<string, string> = {}) {
+      const { default: handler } =
+        await import("../api/territorio-dos-dseis.ts");
+      const gravado = {
+        codigo: 0,
+        cabecalhos: {} as Record<string, string>,
+        corpo: "",
+      };
+      const res: Pick<RespostaDaVercel, "status" | "setHeader" | "end"> = {
+        status(codigo) {
+          gravado.codigo = codigo;
+          return res as RespostaDaVercel;
+        },
+        setHeader(nome, valor) {
+          gravado.cabecalhos[nome] = String(valor);
+          return res as RespostaDaVercel;
+        },
+        end(corpo?: unknown) {
+          gravado.corpo = String(corpo ?? "");
+          return res as RespostaDaVercel;
+        },
+      };
+      const pedido: Pick<PedidoDaVercel, "method" | "headers"> = {
+        method: "GET",
+        headers,
+      };
+      await handler(pedido as PedidoDaVercel, res as RespostaDaVercel);
+      const json: unknown = gravado.corpo ? JSON.parse(gravado.corpo) : null;
+      return { ...gravado, json };
+    }
+
+    const urlDe = (entrada: Parameters<typeof fetch>[0]) =>
+      typeof entrada === "string"
+        ? entrada
+        : entrada instanceof URL
+          ? entrada.href
+          : entrada.url;
+
+    /* O SIGEPSI falso: cada rota com a sua lista; `status` nega uma rota. */
+    function sigepsi(status: Record<string, number> = {}) {
+      return vi.fn<typeof fetch>(async (entrada) => {
+        const url = urlDe(entrada);
+        if (url.endsWith("/auth/v1/user")) return new Response("{}");
+        const rota = new URL(url).pathname;
+        const negada = status[rota];
+        if (negada) return new Response("", { status: negada });
+        const corpo =
+          rota === "/api/mapa-dseis/territorio"
+            ? TERRITORIO
+            : rota === "/api/mapa-dseis/localizacoes"
+              ? LOCALIZACOES
+              : rota === "/api/mapa-dseis/rede"
+                ? REDE
+                : { erro: "rota que a função não deveria ler" };
+        return new Response(JSON.stringify(corpo));
+      });
+    }
+
+    it("sem sessão, 401 sem chamar o SIGEPSI", async () => {
+      const fetchFalso = sigepsi();
+      globalThis.fetch = fetchFalso;
+      expect((await chamar()).codigo).toBe(401);
+      expect(fetchFalso).not.toHaveBeenCalled();
+    });
+
+    it("lê as três rotas com o token do servidor, e nunca a da força de trabalho", async () => {
+      const fetchFalso = sigepsi();
+      globalThis.fetch = fetchFalso;
+      const r = await chamar({ authorization: "Bearer sessao" });
+      expect(r.codigo).toBe(200);
+      const rotas = fetchFalso.mock.calls
+        .map(([entrada]) => new URL(urlDe(entrada)).pathname)
+        .filter((rota) => rota.startsWith("/api/"))
+        .sort();
+      expect(rotas).toEqual([
+        "/api/mapa-dseis/localizacoes",
+        "/api/mapa-dseis/rede",
+        "/api/mapa-dseis/territorio",
+      ]);
+      for (const [entrada, opcoes] of fetchFalso.mock.calls)
+        if (urlDe(entrada).includes("sigepsi"))
+          expect(new Headers(opcoes?.headers).get("Authorization")).toBe(
+            "Bearer segredo",
+          );
+      expect(r.corpo).not.toContain("segredo");
+      expect(r.cabecalhos["Cache-Control"]).toMatch(/^private/);
+      expect(r.json).toMatchObject({
+        territorio: { ok: true, linhas: 3 },
+        acesso: { ok: true, linhas: 2 },
+        cnes: { ok: true, linhas: 2, campos: expect.arrayContaining(["cnes"]) },
+      });
+    });
+
+    it("rota negada não derruba as outras e diz o porquê", async () => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      globalThis.fetch = sigepsi({ "/api/mapa-dseis/territorio": 403 });
+      const r = await chamar({ authorization: "Bearer sessao" });
+      expect(r.codigo).toBe(200);
+      expect(r.json).toMatchObject({
+        territorio: {
+          ok: false,
+          status: 403,
+          motivo: "a chave do Yeendé não lê esta rota",
+        },
+        acesso: { ok: true },
+        cnes: { ok: true },
+      });
+    });
+
+    it("guarda o que leu: a segunda chamada só confere a sessão", async () => {
+      const fetchFalso = sigepsi();
+      globalThis.fetch = fetchFalso;
+      await chamar({ authorization: "Bearer sessao" });
+      await chamar({ authorization: "Bearer sessao" });
+      // 2 sessões + 3 rotas.
+      expect(fetchFalso).toHaveBeenCalledTimes(5);
     });
   });
 });
