@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import {
+  TITULO_DO_STATUS_NO_HISTORICO,
+  ehStatusNoHistorico,
   formatarData,
   formatarDataHora,
   hojeEmBrasilia,
@@ -202,21 +204,27 @@ function Conteudo({
             historico.map((item, indice) => (
               <article key={`${item.created_at}:${indice}`}>
                 <i
-                  className={`fa-solid ${item.acao === "errata" ? "fa-file-pen" : "fa-clock-rotate-left"}`}
+                  className={`fa-solid ${item.acao === "errata" ? "fa-file-pen" : ehStatusNoHistorico(item) ? "fa-flag-checkered" : "fa-clock-rotate-left"}`}
                   aria-hidden="true"
                 />
                 <div>
                   <div>
                     <strong>
                       {item.numero_errata ||
-                        (item.acao === "errata" ? "Errata" : "Alteração")}
+                        (item.acao === "errata"
+                          ? "Errata"
+                          : ehStatusNoHistorico(item)
+                            ? TITULO_DO_STATUS_NO_HISTORICO
+                            : "Alteração")}
                     </strong>
                     <span>{formatarDataHora(item.created_at)}</span>
                   </div>
                   <p>{item.motivo || "Sem motivo informado"}</p>
                   <small>
-                    {item.created_by_email || "Usuário autenticado"} ·{" "}
-                    {Number(item.total_alteracoes || 0)} alteração(ões)
+                    {item.created_by_email || "Usuário autenticado"}
+                    {ehStatusNoHistorico(item)
+                      ? null
+                      : ` · ${Number(item.total_alteracoes || 0)} alteração(ões)`}
                   </small>
                 </div>
               </article>

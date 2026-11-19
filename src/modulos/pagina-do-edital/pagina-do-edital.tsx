@@ -851,7 +851,13 @@ function Historico({ dados }: { dados: CronogramaLido }) {
               <small>
                 {[
                   item.quem,
-                  plural(item.alteracoes, "etapa alterada", "etapas alteradas"),
+                  item.tipo === "status"
+                    ? ""
+                    : plural(
+                        item.alteracoes,
+                        "etapa alterada",
+                        "etapas alteradas",
+                      ),
                 ]
                   .filter(Boolean)
                   .join(" · ")}

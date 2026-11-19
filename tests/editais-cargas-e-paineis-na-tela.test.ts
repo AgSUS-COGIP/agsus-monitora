@@ -107,6 +107,10 @@ import {
 import { criarEstadoDaPaginaDoEdital } from "../src/modulos/pagina-do-edital/estado.ts";
 import { abrirPaginaDoEdital } from "../src/modulos/pagina-do-edital/abrir.ts";
 import type { ClienteDaPaginaDoEdital } from "../src/modulos/pagina-do-edital/estado.ts";
+import {
+  EncerradosDoCronograma,
+  type ClienteDosEncerrados,
+} from "../src/modulos/editais/encerrados-do-cronograma.tsx";
 
 bloco("componentes/avisos-de-conferencia", async () => {
   /*
@@ -1793,6 +1797,268 @@ bloco("componentes/casos-dos-avisos", async () => {
         "Data da análise no futuro ou antes da inscrição",
       );
     });
+  });
+});
+
+bloco("componentes/encerrados-do-cronograma", () => {
+  /*
+    "Cronograma encerrado (N)" em Editais (20261119120000): a lista, a seleção em lote com
+    "Selecionar esta página" separado de "Selecionar todos os N", a confirmação com quantos e quais
+    e o motivo, o resultado com os recusados e o atalho "Dispensar" da central de avisos.
+  */
+  const edital = (i: number, extra: Record<string, unknown> = {}) => ({
+    id: `e${i}`,
+    edital: `${i}/2099`,
+    numero: `${i}/2099`,
+    unidade: `DSEI Fictício ${i}`,
+    area: "saude-indigena",
+    status: "Em andamento",
+    fim: "2026-03-31",
+    aviso: { id: `a${i}`, tratamento: "PENDENTE", pode_dispensar: false },
+    pendencias: [],
+    ...extra,
+  });
+  const lista = (quantos: number, extra: Record<string, unknown> = {}) => ({
+    pode_concluir: true,
+    editais: Array.from({ length: quantos }, (_, i) => edital(i + 1)),
+    ...extra,
+  });
+
+  type Chamada = [string, Record<string, unknown> | undefined];
+  function cliente(
+    responder: (nome: string, argumentos?: Record<string, unknown>) => unknown,
+  ) {
+    const chamadas: Chamada[] = [];
+    const rpc = vi.fn(
+      async (nome: string, argumentos?: Record<string, unknown>) => {
+        chamadas.push([nome, argumentos]);
+        return { data: responder(nome, argumentos), error: null };
+      },
+    );
+    const supabase: ClienteDosEncerrados = { rpc };
+    return { supabase, chamadas };
+  }
+
+  let desmontar = () => {};
+  afterEach(() => {
+    act(() => desmontar());
+    document.body.innerHTML = "";
+  });
+
+  async function montar(
+    supabase: ClienteDosEncerrados,
+    extra: { aoConcluir?: () => void; toast?: (m: string) => void } = {},
+  ) {
+    document.body.innerHTML = `<div id="raiz"></div>`;
+    act(() => {
+      ({ desmontar } = desenharNoTeste(
+        document.getElementById("raiz")!,
+        createElement(EncerradosDoCronograma, { supabase, ...extra }),
+      ));
+    });
+    await esperar();
+  }
+
+  const texto = () => document.body.textContent ?? "";
+  const botao = (rotulo: string) =>
+    [...document.querySelectorAll("button")].find(
+      (b) => b.textContent?.trim() === rotulo,
+    );
+  const abrir = () =>
+    clicar(document.querySelector('[data-acao="abrir-cronograma-encerrado"]'));
+
+  it("sem edital na lista, a entrada não aparece", async () => {
+    await montar(cliente(() => lista(0)).supabase);
+    expect(texto()).toBe("");
+  });
+
+  it("a entrada conta os editais e a gaveta mostra 20 por vez, com o fim e o status gravado", async () => {
+    await montar(cliente(() => lista(25)).supabase);
+    expect(texto()).toBe("Cronograma encerrado (25)");
+    await abrir();
+    expect(document.querySelectorAll("[data-edital-encerrado]")).toHaveLength(
+      20,
+    );
+    expect(texto()).toContain("Edital 1/2099 · DSEI Fictício 1");
+    expect(texto()).toContain("Cronograma terminou em 31/03/2026");
+    expect(texto()).toContain("Em andamento");
+    await clicar(botao("Mostrar mais 5"));
+    expect(document.querySelectorAll("[data-edital-encerrado]")).toHaveLength(
+      25,
+    );
+  });
+
+  it("selecionar esta página é separado de selecionar todos, e a confirmação diz quantos e quais", async () => {
+    const { supabase, chamadas } = cliente((nome) =>
+      nome === "listar_editais_com_cronograma_encerrado"
+        ? lista(25)
+        : {
+            concluidos: Array.from({ length: 19 }, (_, i) => ({
+              id: `e${i + 1}`,
+              edital: `${i + 1}/2099`,
+            })),
+            recusados: [
+              {
+                id: "e20",
+                edital: "20/2099",
+                motivo:
+                  'Pelo cronograma, o edital está "Em andamento", não concluído',
+              },
+            ],
+          },
+    );
+    const aoConcluir = vi.fn();
+    const toast = vi.fn();
+    await montar(supabase, { aoConcluir, toast });
+    await abrir();
+    await clicar(document.querySelector('[data-acao="selecionar-pagina"]'));
+    expect(texto()).toContain(
+      "20 editais desta página selecionados (de 25 no resultado)",
+    );
+    expect(botao("Selecionar todos os 25 resultados")).toBeTruthy();
+    await clicar(botao("Marcar como concluídos"));
+    const modal = document.querySelector(".editais-encerrados-confirmacao")!;
+    expect(modal.textContent).toContain(
+      "20 editais serão afetados · só esta página",
+    );
+    expect(modal.querySelectorAll("li")).toHaveLength(20);
+
+    // Motivo curto: avisa e não grava.
+    await digitar(modal.querySelector("textarea"), "curto");
+    await clicar(modal.querySelector('[data-acao="confirmar-conclusao"]'));
+    expect(modal.textContent).toContain("pelo menos 10 caracteres");
+    expect(
+      chamadas.filter(
+        ([nome]) => nome !== "listar_editais_com_cronograma_encerrado",
+      ),
+    ).toEqual([]);
+
+    await digitar(
+      modal.querySelector("textarea"),
+      "  conferido com a equipe em 19/11 ",
+    );
+    await clicar(modal.querySelector('[data-acao="confirmar-conclusao"]'));
+    await esperar();
+    const [nome, argumentos] = chamadas.at(-1)!;
+    expect(nome).toBe("concluir_editais_com_cronograma_encerrado");
+    expect(argumentos).toEqual({
+      p_editais: Array.from({ length: 20 }, (_, i) => `e${i + 1}`),
+      p_motivo: "conferido com a equipe em 19/11",
+    });
+    // Os 19 marcados saem; o recusado fica, com o motivo à vista.
+    expect(document.querySelectorAll("[data-edital-encerrado]")).toHaveLength(
+      6,
+    );
+    expect(
+      document.querySelector("[data-recusados-do-lote]")?.textContent,
+    ).toContain(
+      'Edital 20/2099: Pelo cronograma, o edital está "Em andamento"',
+    );
+    expect(toast).toHaveBeenCalledWith(
+      "19 editais marcados como concluídos · 1 recusado",
+      "warning",
+    );
+    expect(aoConcluir).toHaveBeenCalledTimes(1);
+  });
+
+  it("selecionar todos os N leva o lote inteiro e a confirmação diz que não é só a página", async () => {
+    const { supabase } = cliente(() => lista(25));
+    await montar(supabase);
+    await abrir();
+    await clicar(document.querySelector('[data-acao="selecionar-pagina"]'));
+    await clicar(botao("Selecionar todos os 25 resultados"));
+    expect(texto()).toContain("Todos os 25 editais do resultado selecionados");
+    await clicar(botao("Marcar como concluídos"));
+    expect(
+      document.querySelector("[data-resumo-da-confirmacao]")?.textContent,
+    ).toBe(
+      "25 editais serão afetados · todos os resultados do filtro, não só os 20 desta página",
+    );
+  });
+
+  it("quem só lê vê a lista, sem seleção nem marcação", async () => {
+    await montar(cliente(() => lista(3, { pode_concluir: false })).supabase);
+    await abrir();
+    expect(document.querySelectorAll("[data-edital-encerrado]")).toHaveLength(
+      3,
+    );
+    expect(
+      document.querySelector('[data-acao="selecionar-pagina"]'),
+    ).toBeNull();
+    expect(document.querySelector(".editais-encerrados-item input")).toBeNull();
+  });
+
+  it("mostra as outras pendências do edital pelo título da conferência", async () => {
+    await montar(
+      cliente(() => ({
+        pode_concluir: true,
+        editais: [
+          edital(1, {
+            pendencias: [
+              {
+                conferencia: "CARGA_VARIACAO_BRUSCA",
+                gravidade: "ATENCAO",
+                quantidade: 2,
+              },
+            ],
+          }),
+        ],
+      })).supabase,
+    );
+    await abrir();
+    expect(
+      document.querySelector('[data-pendencia="CARGA_VARIACAO_BRUSCA"]')
+        ?.textContent,
+    ).toBe("Variação brusca de candidatos na Empregare (2)");
+  });
+
+  it("Dispensar pede justificativa e usa a RPC da central; o edital sai da lista", async () => {
+    const { supabase, chamadas } = cliente((nome) =>
+      nome === "listar_editais_com_cronograma_encerrado"
+        ? {
+            pode_concluir: true,
+            editais: [
+              edital(1, {
+                aviso: {
+                  id: "a1",
+                  tratamento: "EM_ANALISE",
+                  pode_dispensar: true,
+                },
+              }),
+              edital(2),
+            ],
+          }
+        : { id: "a1", tratamento: "DISPENSADO" },
+    );
+    await montar(supabase);
+    await abrir();
+    expect(texto()).toContain("Em análise");
+    // Só o edital com permissão tem o atalho.
+    expect(
+      document.querySelectorAll('[data-acao="dispensar-aviso"]'),
+    ).toHaveLength(1);
+    await clicar(document.querySelector('[data-acao="dispensar-aviso"]'));
+    await clicar(document.querySelector('[data-acao="confirmar-dispensa"]'));
+    expect(texto()).toContain("pelo menos 10 caracteres");
+    await digitar(
+      document.querySelector(".editais-encerrados-dispensa textarea"),
+      "Homologação ainda não publicada",
+    );
+    await clicar(document.querySelector('[data-acao="confirmar-dispensa"]'));
+    await esperar();
+    expect(chamadas.at(-1)).toEqual([
+      "tratar_aviso_conferencia",
+      {
+        p_id: "a1",
+        p_tratamento: "DISPENSADO",
+        p_motivo: "Homologação ainda não publicada",
+      },
+    ]);
+    expect(
+      [...document.querySelectorAll("[data-edital-encerrado]")].map((li) =>
+        li.getAttribute("data-edital-encerrado"),
+      ),
+    ).toEqual(["e2"]);
   });
 });
 
