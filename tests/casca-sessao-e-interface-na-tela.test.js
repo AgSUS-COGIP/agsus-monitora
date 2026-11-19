@@ -8783,6 +8783,68 @@ bloco("modulos/mapa-saude-indigena", () => {
       ]);
     });
 
+    it("os indicadores do topo seguem o recorte: Brasil, DSEI ou CASAI", async () => {
+      const indicadores = () =>
+        Object.fromEntries(
+          [
+            ...host.querySelectorAll(
+              "[aria-label^='Indicadores do mapa'] > div",
+            ),
+          ].map((d) => [
+            d.querySelector("span").textContent,
+            d.querySelector("strong").textContent,
+          ]),
+        );
+      const recorte = () =>
+        host.querySelector(".mapa-si-resumo__recorte").textContent;
+      const barra = () =>
+        host.querySelector(".mapa-si-resumo__preenchimento")?.textContent || "";
+
+      await montar();
+      expect(recorte()).toBe("Brasil");
+      expect(indicadores()).toMatchObject({
+        "Editais acompanhados": "2",
+        "Vagas acompanhadas": "50",
+      });
+      // 19 de 50 contratadas: 38%.
+      expect(barra()).toContain("38%");
+      expect(barra()).toContain("19 de 50 vagas preenchidas");
+
+      await rerender({ dseiSelecionado: "ALAGOAS E SERGIPE" });
+      expect(recorte()).not.toBe("Brasil");
+      expect(indicadores()).toMatchObject({ Editais: "1", Vagas: "10" });
+      expect(Object.keys(indicadores())).toEqual([
+        "População indígena",
+        "Pontos de unidades",
+        "Municípios",
+        "Editais",
+        "Vagas",
+      ]);
+      expect(barra()).toContain("90%");
+      expect(barra()).toContain("1 ociosa");
+
+      await rerender({
+        dseiSelecionado: null,
+        casaiSelecionada: "DF",
+        linhas: [
+          ...LINHAS,
+          {
+            unidade: "CASAI Brasília",
+            vagas_total: 4,
+            contratados: 1,
+            status: "Concluído",
+          },
+        ],
+      });
+      expect(recorte()).toBe("CASAI DF");
+      expect(indicadores()).toEqual({
+        Editais: "1",
+        Vagas: "4",
+        Contratadas: "1",
+        Ociosas: "3",
+      });
+    });
+
     it("o seletor tem as CASAIs nacionais num grupo próprio", async () => {
       const aoEscolherCasai = vi.fn();
       await montar({ aoEscolherCasai });

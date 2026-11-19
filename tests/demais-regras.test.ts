@@ -21,6 +21,10 @@ import {
   xlsxDaTabela,
 } from "../src/lib/base/exportacao-da-tabela.ts";
 import { chaveDosEditaisDaCasai } from "../src/lib/mapas/mapa-saude-indigena/mapa-nacional.ts";
+import {
+  indicadoresDoRecorte,
+  municipiosDoDsei,
+} from "../src/lib/mapas/mapa-saude-indigena/indicadores-do-recorte.ts";
 import { contarPorDsei } from "../src/lib/mapas/mapa-saude-indigena/contagem-por-dsei.ts";
 import {
   camposDasLinhas,
@@ -7459,5 +7463,70 @@ bloco("lib/edital-na-lista", () => {
   it("sem edital aberto, nada", () => {
     expect(situacaoDoEscolhido(EDITAIS, "", true)).toBe("nenhum");
     expect(rotuloDoEscolhido(null, null, true)).toBe("");
+  });
+});
+
+bloco("lib/indicadores-do-recorte", () => {
+  /*
+    Os números do topo da aba Mapa seguem o seletor (Brasil, DSEI ou CASAI),
+    como no Mapa dos DSEIs do SIGEPSI. Dados fictícios.
+  */
+  const dsei = {
+    k: "XINGU",
+    n: "Xingu",
+    pop: 9000,
+    polos: [
+      { n: "Polo A", municipio: "Canarana", uf: "MT" },
+      { n: "Polo B", municipio: "CANARANA", uf: "MT" },
+      { n: "Polo C", municipio: "Querência", uf: "MT" },
+      { n: "Polo D" },
+    ],
+  };
+  const contagens = new Map([
+    ["XINGU", { editais: 2, vagas: 20, contratadas: 15, ociosas: 5 }],
+    ["DF", { editais: 1, vagas: 4, contratadas: 1, ociosas: 3 }],
+  ]);
+
+  it("municípios distintos dos pontos, sem diferença de caixa", () => {
+    expect(municipiosDoDsei(dsei)).toBe(2);
+  });
+
+  it("Brasil soma tudo; DSEI e CASAI só o deles", () => {
+    const brasil = indicadoresDoRecorte({ dseis: [dsei], contagens });
+    expect(brasil.titulo).toBe("Brasil");
+    expect(brasil.vagas).toBe(24);
+    expect(brasil.preenchidas).toBe(67);
+
+    const doDsei = indicadoresDoRecorte({ dseis: [dsei], contagens, dsei });
+    expect(doDsei.titulo).toBe("Xingu");
+    expect(
+      Object.fromEntries(doDsei.indicadores.map((i) => [i.chave, i.valor])),
+    ).toEqual({
+      populacao: 9000,
+      unidades: 4,
+      municipios: 2,
+      editais: 2,
+      vagas: 20,
+    });
+    expect(doDsei.preenchidas).toBe(75);
+
+    const casai = {
+      chave: "CASAI DF|-15.8|-47.9",
+      nome: "CASAI DF",
+      cnes: "",
+      lat: -15.8,
+      lon: -47.9,
+      cidade: "Brasília",
+      uf: "DF",
+      editais: 1,
+      termoDeBusca: "CASAI Brasília",
+    };
+    const daCasai = indicadoresDoRecorte({ contagens, casai });
+    expect(daCasai.titulo).toBe("CASAI DF");
+    expect(daCasai.ociosas).toBe(3);
+  });
+
+  it("sem vagas, a barra não se aplica (0%)", () => {
+    expect(indicadoresDoRecorte({}).preenchidas).toBe(0);
   });
 });

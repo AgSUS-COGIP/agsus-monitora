@@ -9,7 +9,15 @@ import {
 import { leafletDoMapa } from "./tipos-do-leaflet.ts";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { usarTemaEscuro } from "../../app/tema.ts";
-import { chaveDoDsei } from "../../lib/mapas/mapa-saude-indigena/chaves.ts";
+import {
+  chaveDoDsei,
+  formatarNumero,
+  plural,
+} from "../../lib/mapas/mapa-saude-indigena/chaves.ts";
+import {
+  indicadoresDoRecorte,
+  situacaoDoPreenchimento,
+} from "../../lib/mapas/mapa-saude-indigena/indicadores-do-recorte.ts";
 import {
   bolhasDosDsei,
   casaisNacionais,
@@ -120,24 +128,6 @@ export function MapaSaudeIndigena({
   });
 
   const contagens = useMemo(() => contarPorDsei(linhas), [linhas]);
-  const totais = useMemo(() => {
-    let editais = 0;
-    let vagas = 0;
-    for (const valor of contagens.values()) {
-      editais += valor.editais;
-      vagas += valor.vagas;
-    }
-    return {
-      distritos: dseis.length,
-      casais: nac.length,
-      unidades: dseis.reduce(
-        (total, item) => total + (item.polos?.length ?? 0),
-        0,
-      ),
-      editais,
-      vagas,
-    };
-  }, [dseis, nac, contagens]);
   const bolhas = useMemo(
     () => bolhasDosDsei({ dseis, contagens, filtroAtivo }),
     [dseis, contagens, filtroAtivo],
@@ -157,6 +147,12 @@ export function MapaSaudeIndigena({
       ? casais.find((c) => chaveDoDsei(c.nome) === chave) || null
       : null;
   }, [casais, casaiSelecionada, dsei]);
+
+  // Os números do topo seguem o seletor (Brasil, DSEI ou CASAI), como no SIGEPSI.
+  const recorte = useMemo(
+    () => indicadoresDoRecorte({ dseis, casais, contagens, dsei, casai }),
+    [dseis, casais, contagens, dsei, casai],
+  );
 
   /*
     Acesso, território e CNES do SIGEPSI. O acesso das unidades vem nos
@@ -326,31 +322,39 @@ export function MapaSaudeIndigena({
               </select>
             </label>
           </div>
+          <h3 className="mapa-si-resumo__recorte">{recorte.titulo}</h3>
           <div
             className="mapa-si-resumo__indicadores"
-            aria-label="Indicadores do mapa"
+            aria-label={`Indicadores do mapa: ${recorte.titulo}`}
           >
-            <div>
-              <strong>{totais.distritos.toLocaleString("pt-BR")}</strong>
-              <span>DSEIs mapeados</span>
-            </div>
-            <div>
-              <strong>{totais.casais.toLocaleString("pt-BR")}</strong>
-              <span>CASAIs nacionais</span>
-            </div>
-            <div>
-              <strong>{totais.unidades.toLocaleString("pt-BR")}</strong>
-              <span>Pontos de unidades</span>
-            </div>
-            <div>
-              <strong>{totais.editais.toLocaleString("pt-BR")}</strong>
-              <span>Editais acompanhados</span>
-            </div>
-            <div>
-              <strong>{totais.vagas.toLocaleString("pt-BR")}</strong>
-              <span>Vagas acompanhadas</span>
-            </div>
+            {recorte.indicadores.map((item) => (
+              <div key={item.chave} data-indicador={item.chave}>
+                <strong>{item.valor.toLocaleString("pt-BR")}</strong>
+                <span>{item.rotulo}</span>
+              </div>
+            ))}
           </div>
+          {recorte.vagas ? (
+            <div
+              className="mapa-si-resumo__preenchimento"
+              data-situacao={situacaoDoPreenchimento(recorte.preenchidas)}
+            >
+              <div className="mapa-si-resumo__preenchimento-topo">
+                <strong>{recorte.preenchidas}%</strong>
+                <span>das vagas preenchidas</span>
+              </div>
+              <span className="mapa-si-territorio__barra" aria-hidden="true">
+                <i style={{ width: `${recorte.preenchidas}%` }} />
+              </span>
+              <div className="mapa-si-resumo__preenchimento-base">
+                <span>
+                  {formatarNumero(Math.min(recorte.contratadas, recorte.vagas))}{" "}
+                  de {formatarNumero(recorte.vagas)} vagas preenchidas
+                </span>
+                <span>{plural(recorte.ociosas, "ociosa", "ociosas")}</span>
+              </div>
+            </div>
+          ) : null}
           <p className="mapa-si-resumo__fonte">
             Unidades: SIGEPSI. Editais e vagas: Monitora.
           </p>
