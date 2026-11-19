@@ -13,6 +13,7 @@ import { ErrorBoundary } from "./ErrorBoundary.tsx";
 import { avisar, mostrarCarregamento } from "./avisos.ts";
 import { chamarAcaoDaCasca } from "./casca/acoes.ts";
 import {
+  usarAppAberto,
   usarAviso,
   usarEstadoDaNavegacao,
   usarNavegacao,
@@ -55,6 +56,10 @@ import { telaDaRota } from "../lib/navegacao/rotas.ts";
 
   - A tela visitada continua montada, escondida: filtros, aba e rolagem
     ficam como a pessoa deixou (era assim com as ilhas).
+  - Sem sessão (tela de acesso), nenhuma tela monta: a casca escondida não
+    tem conteúdo nem o aviso de quem não tem módulo, e ao sair o que o
+    usuário anterior via sai do DOM. O endereço pedido fica guardado pela
+    navegação e abre depois de entrar.
   - Visão geral e Editais vêm no pacote principal; as outras baixam na
     primeira abertura (`React.lazy` sobre `carregarTela`, que recarrega a
     página uma vez se a versão publicada mudou). Enquanto baixa,
@@ -512,8 +517,11 @@ function CabecalhoDaPagina({ view }: { view: ViewDeTela }) {
  */
 export function Telas() {
   const { view, aviso } = usarEstadoDaNavegacao();
-  const montada = usarTelasMontadas(view, aviso);
+  const montadas = usarTelasMontadas(view, aviso);
+  const appAberto = usarAppAberto();
+  const montada = (tela: ViewDeTela) => appAberto && montadas(tela);
   const aberta = (tela: string) => view === tela && !aviso;
+  const semAcesso = appAberto && aviso === "sem-acesso";
   return (
     <>
       <FaixaDeManutencao />
@@ -534,11 +542,10 @@ export function Telas() {
         ))}
         <QuadroDoPainelExterno ativo={ehPainelExterno(view) && !aviso} />
         <PaginaDeConfiguracoes ativa={aberta("config")} />
-        <section
-          id="page-sem-acesso"
-          className={classeDaPagina(aviso === "sem-acesso")}
-        >
-          <div className="alert warn">{TEXTO_SEM_ACESSO}</div>
+        <section id="page-sem-acesso" className={classeDaPagina(semAcesso)}>
+          {semAcesso ? (
+            <div className="alert warn">{TEXTO_SEM_ACESSO}</div>
+          ) : null}
         </section>
         <AvisoNoLugarDaPagina />
       </div>
