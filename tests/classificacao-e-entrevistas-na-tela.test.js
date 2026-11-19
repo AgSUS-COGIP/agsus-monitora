@@ -46,6 +46,7 @@ import { criarEstadoDaClassificacao } from "../src/modulos/classificacao/estado.
 import {
   definirAreaAtual,
   redefinirDadosDoMonitoramento,
+  publicarErroDoMonitoramento,
   publicarLinhasDoMonitoramento,
 } from "../src/componentes/dados-do-monitoramento.ts";
 import {
@@ -1753,6 +1754,8 @@ bloco("modulos/classificacao", () => {
   beforeEach(() => {
     redefinirDadosDoMonitoramento();
     definirAreaAtual("saude-indigena");
+    // No app, a casca já leu as linhas do monitoramento (o status dos editais).
+    publicarLinhasDoMonitoramento([]);
   });
   afterEach(async () => {
     await act(async () => painel?.raiz?.unmount());
@@ -1791,6 +1794,39 @@ bloco("modulos/classificacao", () => {
         "casai",
       );
       expect(cardsDosEditais().map((c) => c.dataset.edital)).toEqual(["e100"]);
+    });
+
+    it("Ativos e Histórico não piscam: até o status chegar, só o esqueleto; depois, já separados", async () => {
+      redefinirDadosDoMonitoramento();
+      definirAreaAtual("saude-indigena");
+      await montar(supabaseFalso());
+      const abas = () =>
+        secao.querySelector("[data-tour='classificacao-ativos-e-historico']");
+      // Antes: os dois editais em "Ativos · Sem situação 2", e um pulava depois.
+      expect(abas()).toBeNull();
+      expect(cardsDosEditais()).toEqual([]);
+      expect(
+        secao.querySelector(".classificacao-editais[aria-busy='true']"),
+      ).not.toBeNull();
+      await act(async () =>
+        publicarLinhasDoMonitoramento([
+          { id: "e83", CO_AREA: "saude-indigena", status: "Em andamento" },
+          { id: "e100", CO_AREA: "saude-indigena", status: "Concluído" },
+        ]),
+      );
+      expect(abas().querySelector("[data-valor='ativos']").textContent).toBe(
+        "Ativos1",
+      );
+      expect(cardsDosEditais().map((c) => c.dataset.edital)).toEqual(["e83"]);
+    });
+
+    it("se a leitura do status falhar, a lista abre assim mesmo (sem esqueleto para sempre)", async () => {
+      redefinirDadosDoMonitoramento();
+      definirAreaAtual("saude-indigena");
+      await montar(supabaseFalso());
+      expect(cardsDosEditais()).toEqual([]);
+      await act(async () => publicarErroDoMonitoramento("Falha de rede"));
+      expect(cardsDosEditais().length).toBeGreaterThan(0);
     });
 
     it("Ativos e Histórico: o edital concluído sai da lista de trabalho e fica a um clique", async () => {
