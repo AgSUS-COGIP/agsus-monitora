@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-18
+atualizado: 2026-11-19
 ---
 
 # Módulo: Mapa da Saúde Indígena
@@ -33,6 +33,11 @@ Tipos e fronteiras dos dados (e o que saiu do legado): [[mapa-saude-indigena-con
 - Peças comuns aos dois mapas: `leaflet.ts`, `painel-do-mapa.tsx`, `legenda.tsx`
   (`<LegendaFlutuante>`), `tela-cheia.tsx` (`travarRolagemDaPagina` é contada: tela cheia e edição
   de Projetos), `usar-ultimo.ts`.
+- `processos-do-dsei.tsx` — o cartão "Processos seletivos" do DSEI aberto (editais abertos, vagas,
+  contratadas, em seleção, ociosas e aguardando chamada), pelas contas da Visão geral
+  (`processosDoDsei`, `src/lib/mapas/mapa-saude-indigena/processos-do-dsei.ts`). "Abrir na Visão
+  geral" chama `aoAbrirNaVisaoGeral` com as unidades do DSEI; a aba põe o filtro Unidade e abre a
+  Visão geral. Não depende do SIGEPSI.
 - `ordem-da-lista.tsx` — "Ordenar" (Vagas, A–Z, Nº do DSEI, % preenchidas, Ociosas), escolha
   guardada no navegador; regras em `src/lib/mapas/mapa-saude-indigena/ordem-dos-territorios.ts`.
 - Regras puras em `src/lib/mapas/mapa-saude-indigena/` (`chaves`, `formas`, `contagem-por-dsei`
@@ -165,7 +170,7 @@ Terceiro botão do seletor do fundo, só no `#map` (`map-base-layer-switcher.ts`
 `tests/mapas-e-visao-geral.test.js` (bloco `mapa-saude-indigena`) (fixture real das Lotações),
 `tests/mapas-e-visao-geral.test.js` (bloco `coordenadas-so-do-sigepsi`), `tests/demais-regras.test.ts` (bloco `lib/localizacoes-do-sigepsi`),
 `tests/casca-sessao-e-interface-na-tela.test.js` (bloco `modulos/mapa-saude-indigena`) (Leaflet falso em `tests/modulos/leaflet-falso.js`),
-`tests/casca-com-modulo-simulado-na-tela.test.ts` (bloco `modulos/mapa`: a aba e o DSEI no endereço), `tests/demais-telas-na-tela.test.ts` (bloco `modulos/cartao-do-mapa`), `tests/demais-regras.test.ts` (bloco `lib/aba-do-mapa`), `tests/repositorio-e-banco.test.ts` (bloco `aba-mapa-no-banco`: migration, ensaio e rollback), `tests/casca-sessao-e-interface.test.js` (bloco `rotas`), `tests/mapas-e-visao-geral-na-tela.test.js` (bloco `dica-dentro-do-mapa`),
+`tests/casca-com-modulo-simulado-na-tela.test.ts` (bloco `modulos/mapa`: a aba e o DSEI no endereço), `tests/demais-telas-na-tela.test.ts` (bloco `modulos/cartao-do-mapa`), `tests/demais-regras.test.ts` (blocos `lib/aba-do-mapa` e `lib/processos-do-dsei`), `tests/repositorio-e-banco.test.ts` (bloco `aba-mapa-no-banco`: migration, ensaio e rollback), `tests/casca-sessao-e-interface.test.js` (bloco `rotas`), `tests/mapas-e-visao-geral-na-tela.test.js` (bloco `dica-dentro-do-mapa`),
 `tests/mapas-e-visao-geral-na-tela.test.js` (bloco `modulos/modo-de-edicao`) (hoje só Projetos) e, do Mapa DSEIs,
 `tests/mapas-e-visao-geral.test.js` (bloco `mapa-simples`), `tests/mapas-e-visao-geral-na-tela.test.js` (bloco `map-base-layer-simples`) e
 `tests/mapas-e-visao-geral-na-tela.test.js` (bloco `modulos/mapa-simples`).

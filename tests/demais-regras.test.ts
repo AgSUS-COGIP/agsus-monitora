@@ -259,6 +259,7 @@ import {
   dseiNoEndereco,
   resumoDoMapa,
 } from "../src/lib/mapas/mapa-saude-indigena/aba-do-mapa.ts";
+import { processosDoDsei } from "../src/lib/mapas/mapa-saude-indigena/processos-do-dsei.ts";
 import { chaveDoDsei } from "../src/lib/mapas/mapa-saude-indigena/chaves.ts";
 import { origemDoNumero } from "../src/lib/visao-geral/origem-dos-numeros.ts";
 import {
@@ -430,6 +431,81 @@ bloco("lib/aba-do-mapa", () => {
       expect(resumo.maisOciosas?.nome).toBe("Bahia");
       expect(resumo.menosPreenchido?.nome).toBe("Bahia");
     });
+  });
+});
+
+bloco("lib/processos-do-dsei", () => {
+  /*
+    O cartão "Processos seletivos" do DSEI no Mapa
+    (src/lib/mapas/mapa-saude-indigena/processos-do-dsei.ts): as contas da
+    Visão geral só com as linhas do distrito. Dados fictícios.
+  */
+  const linha = (
+    unidade: string,
+    campos: Record<string, unknown>,
+  ): LinhaDoMonitoramento => ({ unidade, ...campos });
+
+  const LINHAS = [
+    linha("DSEI Yanomami", {
+      vagas_total: 10,
+      contratados: 6,
+      status: "Concluído",
+      cadastro_reserva: 3,
+    }),
+    linha("Yanomami", {
+      vagas_total: 5,
+      contratados: 1,
+      status: "Em andamento",
+      fase: "Inscrições",
+      cadastro_reserva: null,
+    }),
+    linha("DSEI Yanomami", {
+      vagas_total: 8,
+      contratados: 0,
+      status: "Cancelado",
+      cadastro_reserva: 4,
+    }),
+    linha("DSEI Xingu", {
+      vagas_total: 20,
+      contratados: 0,
+      status: "Concluído",
+    }),
+  ];
+
+  it("conta só o DSEI, pelas contas da Visão geral", () => {
+    const p = processosDoDsei(LINHAS, "YANOMAMI");
+    expect(p.indicadores.processos).toBe(3);
+    expect(p.editaisAbertos).toBe(1);
+    // O cancelado não entra nas vagas.
+    expect(p.indicadores.vagas).toBe(15);
+    expect(p.indicadores.contratadas).toBe(7);
+    expect(p.indicadores.ociosas).toBe(4);
+    expect(p.indicadores.emSelecao).toBe(4);
+    expect(
+      p.indicadores.contratadas +
+        p.indicadores.emSelecao +
+        p.indicadores.ociosas,
+    ).toBe(p.indicadores.vagas);
+  });
+
+  it("aguardando chamada soma só os editais com lista e não cancelados", () => {
+    expect(processosDoDsei(LINHAS, "Yanomami").aguardandoChamada).toBe(3);
+    // Nenhum edital com lista: dado ausente, não zero.
+    expect(processosDoDsei(LINHAS, "Xingu").aguardandoChamada).toBeNull();
+  });
+
+  it("devolve as unidades do DSEI para o filtro Unidade da Visão geral", () => {
+    expect(processosDoDsei(LINHAS, "DSEI Yanomami").unidades).toEqual([
+      "DSEI Yanomami",
+      "Yanomami",
+    ]);
+  });
+
+  it("DSEI sem edital ou vazio fica zerado", () => {
+    const p = processosDoDsei(LINHAS, "Alto Rio Negro");
+    expect(p.indicadores.processos).toBe(0);
+    expect(p.unidades).toEqual([]);
+    expect(processosDoDsei(null, "").editaisAbertos).toBe(0);
   });
 });
 
