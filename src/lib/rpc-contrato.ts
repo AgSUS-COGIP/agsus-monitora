@@ -637,6 +637,25 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     resumo:
       "Pendência Convocado sem desfecho: registra o desfecho ou a nova data da convocação. Administrador global ou permissão Pendências dos aprovados, com motivo; histórico do status e da pendência.",
   },
+  ler_observacao_status_aprovado: {
+    argumentos: ["p_candidato_id"],
+    critica: true,
+    resumo:
+      "Lê a observação de status do candidato aprovado com verificação de acesso à área e ao edital.",
+  },
+  alterar_status_aprovado_com_observacao: {
+    argumentos: [
+      "p_candidato_id",
+      "p_status",
+      "p_processo_sei",
+      "p_matricula",
+      "p_data_convocacao",
+      "p_observacao",
+    ],
+    critica: true,
+    resumo:
+      "Altera status e observação do candidato na mesma transação, preservando as validações de acesso e status da RPC original.",
+  },
   alterar_status_candidato_aprovado: {
     argumentos: [
       "p_candidato_id",
