@@ -208,11 +208,14 @@ export interface FiltroDeAcesso {
   meio: string;
   /** "" = todas; "Sim" ou "Não". */
   floresta: string;
+  /** Categoria da localidade (como no SIGEPSI): "" = todas; "Urbano", "Rural" ou "Não informado". */
+  localidade: string;
 }
 
 export const FILTRO_DE_ACESSO_VAZIO: Readonly<FiltroDeAcesso> = Object.freeze({
   meio: "",
   floresta: "",
+  localidade: "",
 });
 
 export const OPCOES_DE_MEIO: readonly string[] = [
@@ -220,8 +223,14 @@ export const OPCOES_DE_MEIO: readonly string[] = [
   NAO_INFORMADO,
 ];
 export const OPCOES_DE_FLORESTA: readonly string[] = ["Sim", "Não"];
+export const OPCOES_DE_LOCALIDADE: readonly string[] = [
+  "Urbano",
+  "Rural",
+  NAO_INFORMADO,
+];
 
-export const filtroAtivo = (f: FiltroDeAcesso) => Boolean(f.meio || f.floresta);
+export const filtroAtivo = (f: FiltroDeAcesso) =>
+  Boolean(f.meio || f.floresta || f.localidade);
 
 export function atendeAoFiltro(
   u: UnidadeComAcesso,
@@ -232,6 +241,7 @@ export function atendeAoFiltro(
     if (!meios.includes(f.meio)) return false;
   }
   if (f.floresta && u.floresta !== f.floresta) return false;
+  if (f.localidade && u.localidade !== f.localidade) return false;
   return true;
 }
 
@@ -292,6 +302,7 @@ const descricaoDoFiltro = (f: FiltroDeAcesso) =>
   [
     f.meio ? `acesso ${f.meio}` : "",
     f.floresta ? `floresta: ${f.floresta}` : "",
+    f.localidade ? `localidade: ${f.localidade}` : "",
   ]
     .filter(Boolean)
     .join(", ");

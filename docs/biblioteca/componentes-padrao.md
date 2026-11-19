@@ -83,7 +83,9 @@ Peças de layout só em CSS: `.ui-tela`, `.ui-card`, `.ui-titulo`, `.ui-linha-de
 
 - `icone.tsx` — `<Icone nome="…">`, Lucide, do registro de `src/modules/icones.ts` (ver Ícones).
 - `multi-select-busca.tsx` — `<MultiSelectBusca>`: seleção múltipla com busca, controlada (a única
-  do app; CSS em `src/styles/multi-select-busca.css`).
+  do app; CSS em `src/styles/multi-select-busca.css`). As opções aparecem na ordem em que chegam
+  (quem monta ordena: editais pelo número, `compararNumeroDoEdital`); o clique fora numa área
+  clicável que não é controle (a linha da tabela) só fecha o menu; num botão ou campo, vale.
 - `selo-de-treinamento.tsx` — selo "Treinamento" do edital de treinamento.
 - `seletor-de-edital.tsx` — a escolha do edital das telas da seleção (Triagem, Avaliação
   documental, Classificação), com selo e "Mostrar todos".

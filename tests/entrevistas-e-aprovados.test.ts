@@ -79,7 +79,9 @@ import {
   summarizeApprovedCandidates,
   tomDoStatus,
   filterApprovedCandidates,
+  opcoesDeEdital,
 } from "../src/lib/aprovados/lista-aprovados-rules.ts";
+import { compararNumeroDoEdital } from "../src/lib/editais/numero-do-edital.ts";
 import { type CandidatoDasRegrasDeAprovados } from "../src/lib/aprovados/tipos-das-regras-de-aprovados.ts";
 import { type CandidatoDaConvocacao } from "../src/lib/aprovados/tipos-da-lista-de-convocacao.ts";
 import { dadosDaAgenda } from "../src/lib/entrevistas/dados-da-agenda.ts";
@@ -1439,6 +1441,49 @@ bloco("lib/aprovados-ativos-e-historico", () => {
       "ativos",
     );
     expect(vistaDoPedido(separados, "historico", {}, id)).toBe("historico");
+  });
+});
+
+bloco("lib/aprovados-filtro-de-edital-em-ordem", () => {
+  /*
+    O filtro de edital da Lista de aprovados vinha em ordem de texto:
+    "92/2026, 94/2025, 94/2026, 95/2025, 95/2026, 97/2026". Agora, do mais
+    recente para o mais antigo: o ano, depois o número.
+  */
+  it("ordena pelo ano e pelo número, do mais recente para o mais antigo", () => {
+    const listas = [
+      { edital_id: "a", edital: "92/2026", unidade: "DSEI Rio Tapajós" },
+      { edital_id: "b", edital: "94/2025", unidade: "DSEI Tocantins" },
+      { edital_id: "c", edital: "94/2026", unidade: "DSEI Vilhena" },
+      { edital_id: "d", edital: "95/2025", unidade: "DSEI Bahia" },
+      { edital_id: "e", edital: "95/2026", unidade: "DSEI Minas Gerais" },
+      { edital_id: "f", edital: "97/2026", unidade: "DSEI Maranhão" },
+      { edital_id: "g", edital: "03/2025", unidade: "DSEI Alto Rio Solimões" },
+      { edital_id: "h", edital: "100/2026", unidade: "CASAI Brasília" },
+      { edital_id: "a", edital: "92/2026", unidade: "DSEI Rio Tapajós" },
+    ];
+    expect(opcoesDeEdital(listas).map((o) => o.label)).toEqual([
+      "100/2026 · CASAI Brasília",
+      "97/2026 · DSEI Maranhão",
+      "95/2026 · DSEI Minas Gerais",
+      "94/2026 · DSEI Vilhena",
+      "92/2026 · DSEI Rio Tapajós",
+      "95/2025 · DSEI Bahia",
+      "94/2025 · DSEI Tocantins",
+      "03/2025 · DSEI Alto Rio Solimões",
+    ]);
+  });
+
+  it("no mesmo número, a unidade; sem número, no fim", () => {
+    const listas = [
+      { edital_id: "x", edital: "", unidade: "Sem número" },
+      { edital_id: "b", edital: "10/2026", unidade: "DSEI Xingu" },
+      { edital_id: "a", edital: "10/2026", unidade: "DSEI Araguaia" },
+    ];
+    expect(opcoesDeEdital(listas).map((o) => o.value)).toEqual(["a", "b", "x"]);
+    expect(compararNumeroDoEdital("Edital nº 091/2026", "91/2026")).toBe(0);
+    expect(compararNumeroDoEdital("3/2026", "12/2025")).toBeLessThan(0);
+    expect(compararNumeroDoEdital(null, "1/2020")).toBeGreaterThan(0);
   });
 });
 

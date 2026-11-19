@@ -10,6 +10,7 @@ import type {
 } from "../../lib/base/exportacao-da-tabela.ts";
 import {
   OPCOES_DE_FLORESTA,
+  OPCOES_DE_LOCALIDADE,
   OPCOES_DE_MEIO,
   TEXTO_DA_FONTE_INDISPONIVEL,
   tabelaDasUnidades,
@@ -31,7 +32,7 @@ import { CardDaLista, TabelaDaLista, baixarArquivo } from "../../ui/index.ts";
 
   - `CartaoDoTerritorio`: população indígena, aldeias e terras indígenas do
     DSEI aberto (`/territorio` do SIGEPSI).
-  - `FiltrosDeAcesso`: meio de acesso e área de floresta, os mesmos para o
+  - `FiltrosDeAcesso`: meio de acesso, área de floresta e categoria da localidade, os mesmos para o
     Brasil e para o DSEI (o estado mora em MapaSaudeIndigena).
   - `UnidadesDoDsei`: a tabela das unidades do DSEI com acesso e CNES,
     exportável (Exportar em Excel / Salvar em PDF, padrão do #904).
@@ -154,6 +155,20 @@ export function FiltrosDeAcesso({
           ))}
         </select>
       </label>
+      <label className="mapa-si-resumo__seletor">
+        <span>Categoria da localidade</span>
+        <select
+          value={filtro.localidade}
+          onChange={(e) => aoMudar({ ...filtro, localidade: e.target.value })}
+        >
+          <option value="">Todas</option>
+          {OPCOES_DE_LOCALIDADE.map((opcao) => (
+            <option key={opcao} value={opcao}>
+              {opcao}
+            </option>
+          ))}
+        </select>
+      </label>
     </div>
   );
 }
@@ -230,7 +245,7 @@ export function UnidadesDoDsei({
         colunas={colunas}
         itens={unidades}
         carregado={acesso.tipo !== "carregando" && cnes.tipo !== "carregando"}
-        chaveDoRecorte={`${dsei.k}|${filtro.meio}|${filtro.floresta}`}
+        chaveDoRecorte={`${dsei.k}|${filtro.meio}|${filtro.floresta}|${filtro.localidade}`}
         vazio={
           todas
             ? "Nenhuma unidade com esses filtros."
@@ -316,7 +331,7 @@ export function AcessoNoBrasil({
             ]}
             itens={linhas}
             carregado={acesso.tipo === "pronta"}
-            chaveDoRecorte={`${filtro.meio}|${filtro.floresta}`}
+            chaveDoRecorte={`${filtro.meio}|${filtro.floresta}|${filtro.localidade}`}
             vazio="Nenhum DSEI com unidade nesses filtros."
             exportacao={{
               excel: () => baixar("excel"),

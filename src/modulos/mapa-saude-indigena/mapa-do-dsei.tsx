@@ -40,6 +40,7 @@ import {
 } from "../../lib/mapas/mapa-saude-indigena/mapa-do-dsei.ts";
 import { chaveDaUnidade } from "../../lib/mapas/mapa-saude-indigena/territorio-na-tela.ts";
 import { EstadoVazio, classes } from "../../ui/index.ts";
+import { MinimapaDoDsei } from "./minimapa.tsx";
 import { Forma, LegendaDoDsei } from "./legenda.tsx";
 import {
   adicionarFundo,
@@ -383,7 +384,9 @@ export function MapaDoDsei({
               role="img"
               aria-label={`Mapa dos polos e unidades do DSEI ${dsei.n}`}
             />
-          ) : (
+          ) : null}
+          {L ? <MinimapaDoDsei dsei={dsei} /> : null}
+          {L ? null : (
             <EstadoVazio className="ui-vazio mapa-si-sem-mapa">
               Mapa indisponível sem conexão: o fundo geográfico precisa de
               internet.
