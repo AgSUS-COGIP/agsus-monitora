@@ -1,3 +1,7 @@
+-- Migration aplicada em produção e registrada em public.migracoes_aplicadas (18/11/2026).
+-- Guardada aqui só para montar o banco do teste "aba-mapa-no-banco"
+-- (tests/repositorio-e-banco.test.ts). A fonte do código do banco é o banco e o
+-- retrato supabase/esquema-atual.sql.
 /*
   ABA "MAPA" NA SAÚDE INDÍGENA (18/11/2026)
 

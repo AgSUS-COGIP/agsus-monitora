@@ -20271,6 +20271,33 @@ $$;
 COMMENT ON FUNCTION public.alterar_congelamento_inscricoes(p_edital uuid, p_congelar boolean, p_motivo text) IS 'Congela (p_congelar = true) ou libera as inscrições do edital (20261020170000), com motivo de 10 a 500 caracteres; grava o estado em TB_CONGELAMENTO_INSCRICAO e o evento em TH_CONGELAMENTO_INSCRICAO e devolve obter_congelamento_inscricoes. Só a coordenação da avaliação do edital ou o administrador global (pode_recalcular_pre_classificacao). 28000 sem sessão, 42501 sem permissão, 22023 entrada inválida, 55000 já está no estado pedido.';
 
 --
+-- Name: alterar_status_aprovado_com_observacao(uuid, text, text, text, date, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.alterar_status_aprovado_com_observacao(p_candidato_id uuid, p_status text, p_processo_sei text DEFAULT NULL::text, p_matricula text DEFAULT NULL::text, p_data_convocacao date DEFAULT NULL::date, p_observacao text DEFAULT NULL::text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+  v_resultado jsonb;
+  v_observacao text := nullif(btrim(coalesce(p_observacao, '')), '');
+begin
+  if length(coalesce(v_observacao, '')) > 2000 then
+    raise exception 'A observação deve ter no máximo 2000 caracteres' using errcode = '22023';
+  end if;
+  -- A RPC anterior faz todas as verificações de perfil, área, edital e status.
+  -- Ambas as alterações são atômicas na mesma transação.
+  v_resultado := public.alterar_status_candidato_aprovado(
+    p_candidato_id, p_status, p_processo_sei, p_matricula, p_data_convocacao
+  );
+  update public."TB_CANDIDATO_APROVADO"
+     set observacao_status = v_observacao
+   where id = p_candidato_id and removido_em is null;
+  return v_resultado;
+end;
+$$;
+
+--
 -- Name: alterar_status_candidato_aprovado(uuid, text, text, text, date); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -29376,6 +29403,33 @@ $$;
 COMMENT ON FUNCTION public.lancar_notas_entrevista(p_entrevista uuid, p_dados jsonb) IS 'Lança/corrige notas ({notas:[{competencia, avaliador, nota|null}]}; roteiro com aspectos: {competencia, avaliador, aspectos:[{aspecto, nota}]|null}, todos os aspectos), o comparecimento ({compareceu:S|N, banca}), as observações dos avaliadores ({observacoes:[{avaliador, texto|null}]}, até 1.000 caracteres) e a justificativa da banca ({justificativa}, até 4.000) de um convocado, valida a escala do roteiro, recusa (23514) a nota de avaliador em competência que não é dele e a gravação que termina INAPTO ou com Faltou sem justificativa, grava o histórico e recalcula o resultado. entrevistas >= editor; no modo AVALIADOR, só a própria nota e a própria observação.';
 
 --
+-- Name: ler_observacao_status_aprovado(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.ler_observacao_status_aprovado(p_candidato_id uuid) RETURNS text
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare v_observacao text;
+begin
+  if (select auth.uid()) is null or not private.pode_recurso('aprovados', 1) then
+    raise exception 'Sem permissão para consultar observação' using errcode = '42501';
+  end if;
+  perform private."FC_EXIGIR_AREA_EDITAL"(
+    (select l.edital_id from public."TB_CANDIDATO_APROVADO" c
+     join public."TB_LISTA_APROVADO" l on l.id = c.lista_id
+     where c.id = p_candidato_id and c.removido_em is null and l.vigente is true)
+  );
+  select c.observacao_status into v_observacao
+  from public."TB_CANDIDATO_APROVADO" c
+  join public."TB_LISTA_APROVADO" l on l.id = c.lista_id
+  where c.id = p_candidato_id and c.removido_em is null and l.vigente is true;
+  if not found then raise exception 'Candidato não encontrado' using errcode = '22023'; end if;
+  return v_observacao;
+end;
+$$;
+
+--
 -- Name: ler_relatorio_do_painel(text, text, integer, integer); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -29696,7 +29750,7 @@ CREATE FUNCTION public.listar_acompanhamento_da_visao_geral(p_area text) RETURNS
     LANGUAGE plpgsql STABLE SECURITY DEFINER
     SET search_path TO ''
     SET statement_timeout TO '5s'
-    AS $$
+    AS $_$
 declare
   v_area text := lower(btrim(coalesce(p_area, '')));
   v_editais uuid[];
@@ -29735,18 +29789,30 @@ begin
                'com_status', r.com_status,
                'contratados', r.contratados,
                'desistentes', r.desistentes
-             ) order by r.edital_id)
+             ) || case when r.resultado_sem_aprovados then jsonb_build_object('resultado_sem_aprovados', true, 'fonte_resultado', r.fonte_resultado) else '{}'::jsonb end order by r.edital_id)
         from (
           select l.edital_id,
                  count(c.id)::integer as aprovados,
                  (count(c.id) filter (where nullif(btrim(c.status), '') is not null))::integer as com_status,
                  (count(c.id) filter (where c.status in ('Contratado', 'Migração') and not private."FC_EM_OUTRA_LISTA"(c.id)))::integer as contratados,
-                 (count(c.id) filter (where c.status = 'Desistente'))::integer as desistentes
+                 (count(c.id) filter (where c.status = 'Desistente'))::integer as desistentes,
+                 false as resultado_sem_aprovados,
+                 null::text as fonte_resultado
             from public."TB_LISTA_APROVADO" l
             left join public."TB_CANDIDATO_APROVADO" c on c.lista_id = l.id and c.removido_em is null
            where l.vigente is true
              and l.edital_id = any (select unnest(v_editais)::text)
            group by l.edital_id
+          union all
+          -- Resultado oficial sem aprovados: resumo zero documentado, sem lista nominal artificial.
+          select m.id::text,0::integer,0::integer,0::integer,0::integer,true,
+                 m.raw_json#>>'{resultado_final_conferido,fonte}'
+            from public."TB_MONITORAMENTO_INDIGENA" m
+           where m.id=any(v_editais)
+             and m.raw_json#>>'{resultado_final_conferido,situacao}'='SEM_APROVADOS'
+             and m.raw_json#>>'{resultado_final_conferido,fonte}' like 'https://www.agenciasus.org.br/%'
+             and (m.raw_json#>>'{resultado_final_conferido,sha256}') ~ '^[0-9a-f]{64}$'
+             and not exists(select 1 from public."TB_LISTA_APROVADO" l where l.edital_id=m.id::text and l.vigente is true)
         ) r
     ), '[]'::jsonb),
     -- A 1ª e a última admissão por edital, das admissões conciliadas com o RH (20261113210000).
@@ -29769,7 +29835,7 @@ begin
     ), '[]'::jsonb)
   );
 end;
-$$;
+$_$;
 
 --
 -- Name: FUNCTION listar_acompanhamento_da_visao_geral(p_area text); Type: COMMENT; Schema: public; Owner: -
@@ -45563,6 +45629,7 @@ CREATE TABLE public."TB_CANDIDATO_APROVADO" (
     "TP_SITUACAO_CLASSIFICACAO" character varying(4),
     "CO_CANDIDATO_ANTERIOR" uuid,
     "DT_CONVOCACAO" date,
+    observacao_status text,
     CONSTRAINT "CK_CANDAPROVADO_DTCONVOCACAO" CHECK (((("DT_CONVOCACAO" IS NULL) OR (status IS NOT NULL)) AND ((status IS DISTINCT FROM 'Convocado'::text) OR ("DT_CONVOCACAO" IS NOT NULL)))),
     CONSTRAINT "CK_CANDAPROVADO_TPSITUACAO" CHECK ((("TP_SITUACAO_CLASSIFICACAO" IS NULL) OR (("TP_SITUACAO_CLASSIFICACAO")::text = ANY (ARRAY[('VAGA'::character varying)::text, ('CR'::character varying)::text])))),
     CONSTRAINT "CK_CANDIDATO_APROVADO_STATUS" CHECK (((status IS NULL) OR (status = ANY (ARRAY['Convocado'::text, 'Contratado'::text, 'Contratado em outra lista'::text, 'Desistente'::text, 'Migração'::text, 'Documentação Rejeitada'::text])))),
@@ -76749,6 +76816,13 @@ REVOKE ALL ON FUNCTION public.alterar_congelamento_inscricoes(p_edital uuid, p_c
 GRANT ALL ON FUNCTION public.alterar_congelamento_inscricoes(p_edital uuid, p_congelar boolean, p_motivo text) TO authenticated;
 
 --
+-- Name: FUNCTION alterar_status_aprovado_com_observacao(p_candidato_id uuid, p_status text, p_processo_sei text, p_matricula text, p_data_convocacao date, p_observacao text); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.alterar_status_aprovado_com_observacao(p_candidato_id uuid, p_status text, p_processo_sei text, p_matricula text, p_data_convocacao date, p_observacao text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.alterar_status_aprovado_com_observacao(p_candidato_id uuid, p_status text, p_processo_sei text, p_matricula text, p_data_convocacao date, p_observacao text) TO authenticated;
+
+--
 -- Name: FUNCTION alterar_status_candidato_aprovado(p_candidato_id uuid, p_status text, p_processo_sei text, p_matricula text, p_data_convocacao date); Type: ACL; Schema: public; Owner: -
 --
 
@@ -77702,6 +77776,13 @@ GRANT ALL ON FUNCTION public.jsonb_timestamptz_or_null(p_payload jsonb, p_key te
 REVOKE ALL ON FUNCTION public.lancar_notas_entrevista(p_entrevista uuid, p_dados jsonb) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.lancar_notas_entrevista(p_entrevista uuid, p_dados jsonb) TO authenticated;
 GRANT ALL ON FUNCTION public.lancar_notas_entrevista(p_entrevista uuid, p_dados jsonb) TO service_role;
+
+--
+-- Name: FUNCTION ler_observacao_status_aprovado(p_candidato_id uuid); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.ler_observacao_status_aprovado(p_candidato_id uuid) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.ler_observacao_status_aprovado(p_candidato_id uuid) TO authenticated;
 
 --
 -- Name: FUNCTION ler_relatorio_do_painel(p_area text, p_relatorio text, p_pagina integer, p_por_pagina integer); Type: ACL; Schema: public; Owner: -

@@ -49,16 +49,15 @@ bloco("aba-mapa-no-banco", () => {
     (fixtures/listar-abas-do-menu-triagem.json, já com o Mapa: o "hoje" é ela
     sem o Mapa e com as abas uma posição acima).
 
-    hoje × migrada (a resposta da fixture) × migrada + rollback (hoje de novo),
-    e o ensaio, que não grava nada.
+    hoje × migrada (a resposta da fixture). A migration foi aplicada e registrada
+    em 18/11/2026 e saiu de supabase/migrations/; o teste a lê da cópia em
+    fixtures/sql-do-banco/ (o rollback e o ensaio saíram com ela).
   */
 
   const ler = (caminho: string) =>
     readFileSync(caminho, "utf8").replace(/\r\n/g, "\n");
   const NOME = "20261118160000_aba_mapa_na_saude_indigena.sql";
-  const migration = () => ler(`supabase/migrations/${NOME}`);
-  const rollback = () => ler(`supabase/rollback/${NOME}`);
-  const ensaio = () => ler(`supabase/ensaios/${NOME}`);
+  const migration = () => ler(`tests/fixtures/sql-do-banco/${NOME}`);
 
   interface AreaDoMenu {
     co_area: string;
@@ -158,20 +157,6 @@ bloco("aba-mapa-no-banco", () => {
       const db = await banco();
       await db.exec(migration());
       await expect(db.exec(migration())).rejects.toThrow(/já existe/);
-    });
-
-    it("o rollback volta ao catálogo de hoje", async () => {
-      const db = await banco();
-      await db.exec(migration());
-      await db.exec(rollback());
-      expect(await menu(db)).toEqual(resumo(HOJE));
-      await expect(db.exec(rollback())).rejects.toThrow(/nada a desfazer/);
-    });
-
-    it("o ensaio passa e não grava nada", async () => {
-      const db = await banco();
-      await db.exec(ensaio());
-      expect(await menu(db)).toEqual(resumo(HOJE));
     });
   });
 });
