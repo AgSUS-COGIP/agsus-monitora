@@ -194,8 +194,10 @@ export function MarcasDasEtapas({
   );
 }
 
-const pelaBusca = (recursos: readonly RecursoDoPainel[], busca: string) =>
-  filtrarRecursos(recursos, { ...FILTROS_VAZIOS, busca });
+export const pelaBusca = (
+  recursos: readonly RecursoDoPainel[],
+  busca: string,
+) => filtrarRecursos(recursos, { ...FILTROS_VAZIOS, busca });
 
 function LinhaDoRecurso({
   recurso: r,
@@ -294,6 +296,8 @@ export function TabelaDeRecursos({
   aoNovo,
   comemoracoes = false,
   analise = false,
+  busca,
+  aoBuscar,
 }: {
   recursos: RecursoDoPainel[];
   total: number;
@@ -304,6 +308,9 @@ export function TabelaDeRecursos({
   aoNovo?: () => void;
   comemoracoes?: boolean;
   analise?: boolean;
+  /** A busca da tabela, guardada pela tela (o Anterior/Próximo da gaveta segue ela). */
+  busca?: string;
+  aoBuscar?: (busca: string) => void;
 }) {
   return (
     <TabelaInfinita
@@ -313,6 +320,8 @@ export function TabelaDeRecursos({
       busca={{
         placeholder: BUSCAR_NESTA_TABELA,
         rotulo: "Buscar nesta tabela de recursos",
+        valor: busca,
+        aoMudar: aoBuscar,
       }}
       carregado={carregado}
       itens={recursos}

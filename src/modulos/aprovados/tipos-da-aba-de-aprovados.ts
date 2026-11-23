@@ -4,6 +4,10 @@ import type {
   ListaParaFiltroDeAprovados,
 } from "../../lib/aprovados/tipos-das-regras-de-aprovados.ts";
 import type { EstadoDaAcao } from "../../ui/botao-de-acao.tsx";
+import type {
+  ChaveDaOrdemDosAprovados,
+  OrdemDosAprovados,
+} from "../../lib/aprovados/ordem-dos-aprovados.ts";
 import type { ConvocacoesDaTabela } from "./tipos-da-aba-de-convocacao.ts";
 export interface CandidatoDaTabelaDeAprovados extends CandidatoDasRegrasDeAprovados {
   candidato_id: string;
@@ -68,4 +72,7 @@ export interface PropsDaAbaDeAprovados {
   /** A busca só da tabela (a tela a limpa junto com os filtros). */
   busca: string;
   aoBuscar: (busca: string) => void;
+  /** A ordem das colunas, guardada pela tela (o Anterior/Próximo da gaveta segue ela). */
+  ordem: OrdemDosAprovados;
+  aoOrdenar: (chave: ChaveDaOrdemDosAprovados) => void;
 }

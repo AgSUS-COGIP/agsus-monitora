@@ -325,6 +325,11 @@ import {
   textoDosDiasRestantes,
 } from "../src/lib/base/prazos.ts";
 import {
+  passoDaTecla,
+  textoDaPosicao,
+  vizinhosNaLista,
+} from "../src/lib/base/navegacao-da-lista.ts";
+import {
   chaveDaCasaiNoEndereco,
   casaiNoEndereco,
   chaveDoDseiNoEndereco,
@@ -6622,6 +6627,51 @@ bloco("cronograma-encerrado-na-visao-geral", () => {
         "Cronograma encerrado",
       );
     });
+  });
+});
+
+bloco("lib/base/navegacao-da-lista", () => {
+  /* Anterior e Próximo na ficha: os vizinhos na lista da tela e as setas. */
+  const LISTA = ["a", "b", "c", "d"];
+
+  it("dá a posição e os vizinhos, sem vizinho nas pontas", () => {
+    expect(vizinhosNaLista(LISTA, "b")).toEqual({
+      posicao: 2,
+      total: 4,
+      anterior: "a",
+      proximo: "c",
+    });
+    expect(vizinhosNaLista(LISTA, "a")?.anterior).toBeNull();
+    expect(vizinhosNaLista(LISTA, "d")?.proximo).toBeNull();
+    expect(vizinhosNaLista(LISTA, "x")).toBeNull();
+  });
+
+  it("o item que saiu da lista acha os vizinhos pela lista de antes", () => {
+    expect(vizinhosNaLista(["a", "d"], "b", LISTA)).toEqual({
+      posicao: null,
+      total: 2,
+      anterior: "a",
+      proximo: "d",
+    });
+    expect(vizinhosNaLista(["c"], "b", ["b", "c"])?.anterior).toBeNull();
+    expect(vizinhosNaLista(["a"], "b", ["a", "c"])).toBeNull();
+  });
+
+  it("escreve a posição", () => {
+    expect(textoDaPosicao(3, 41)).toBe("3 de 41");
+    expect(textoDaPosicao(1, 1200)).toBe("1 de 1.200");
+    expect(textoDaPosicao(null, 40)).toBe("40 na lista");
+  });
+
+  it("← e → sem modificador; outras teclas, não", () => {
+    expect(passoDaTecla({ key: "ArrowLeft" })).toBe("anterior");
+    expect(passoDaTecla({ key: "ArrowRight" })).toBe("proximo");
+    expect(passoDaTecla({ key: "ArrowDown" })).toBeNull();
+    expect(passoDaTecla({ key: "ArrowLeft", altKey: true })).toBeNull();
+    expect(passoDaTecla({ key: "ArrowRight", shiftKey: true })).toBeNull();
+    expect(
+      passoDaTecla({ key: "ArrowRight", defaultPrevented: true }),
+    ).toBeNull();
   });
 });
 

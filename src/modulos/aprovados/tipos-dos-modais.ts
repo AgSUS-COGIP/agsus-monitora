@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { PropriedadesDaNavegacaoDaFicha } from "../../ui/index.ts";
 import type {
   EstadoDosAprovados,
   SnapshotDosAprovados,
@@ -87,4 +88,6 @@ export interface PropsDaGavetaDoAprovado {
   perfil: unknown;
   candidato: CandidatoAprovado;
   convocacao?: ConvocacaoDoAprovado;
+  /** Anterior/Próximo da tabela de Aprovados. */
+  navegacao?: PropriedadesDaNavegacaoDaFicha;
 }

@@ -1,7 +1,7 @@
 ---
 tipo: referencia
 area: front
-atualizado: 2026-11-19
+atualizado: 2026-11-23
 ---
 
 # Componentes padrão (`src/ui/`)
@@ -31,7 +31,7 @@ API completa (uma linha por componente) está em [docs/arquitetura-react.md](../
 | Indicadores      | `Kpi` (card de 78px; com `aoClicar` vira filtro), `GradeDeKpis`, `FaixaDeSituacao`, `ListaDePendencias`                                                                                                           |
 | Gráficos         | `CardDeGrafico`, `Grafico` (Chart.js criado uma vez), `paletaDosGraficos` (cores dos tokens)                                                                                                                      |
 | Listas e tabelas | `TabelaInfinita` (50 por vez, avisa `agsus:content-updated`), `CardDaLista` + `TabelaDaLista`, `BarraDaLista`, `usarCargaContinua` + `MaisDaCarga`                                                                |
-| Camadas          | `Gaveta`, `TopoDaGaveta`, `Modal` (portal, Esc, foco preso), `Popover`, `MenuDeAcoes`                                                                                                                             |
+| Camadas          | `Gaveta`, `TopoDaGaveta`, `Modal` (portal, Esc, foco preso), `Popover`, `MenuDeAcoes`, `usarNavegacaoDaLista` (Anterior/Próximo da ficha)                                                                         |
 | Detalhe          | `Secao`, `Kv`, `GradeDeKv`                                                                                                                                                                                        |
 | Formulário       | `Campo` (liga o rótulo ao controle), `Segmentado` (radiogroup), `Abas` (tablist), `ContagemDaAba` (o número no rótulo)                                                                                            |
 | Estados          | `EstadoVazio`, `Carregando`, `CarregandoConteudo`, `ErroAoCarregar`, `LinhasEsqueleto`, `BlocosEsqueleto`, `Aviso`, `Selo`                                                                                        |
@@ -49,6 +49,22 @@ se houver; o padrão é `aoFechar`). O Cancelar/Fechar de quem usa é um `<Fecha
 `usarFecharModal()`) para passar pela pergunta; o ✕ da gaveta e do modal institucional já passa.
 Salvar fecha direto com `aoFechar`. Janela só de leitura e confirmação sem campo não passam
 `alterado`. Não se abre modal a partir de modal para perguntar, nem `window.confirm`.
+
+Anterior e Próximo nas fichas: a gaveta aberta de uma lista vai ao item anterior e ao próximo sem
+fechar. Quem abre passa a lista como está na tela (filtro, busca e ordem) a
+`usarNavegacaoDaLista(itens, aberto, chaveDe, abrir)` e o resultado a `<Gaveta navegacao>` (ou ao
+`TopoDaGaveta`). No topo, ao lado do ✕: ‹ "3 de 41" › (botões só com ícone, `aria-label`
+"Anterior"/"Próximo"; na ponta ficam `aria-disabled`, sem sair do foco) e ← → no teclado, fora de
+campos e de controles que usam as setas (abas, opções, menus) e só no modal de cima. Com alteração
+não salva, trocar mostra a mesma "Descartar as alterações?" (`usarTrocarNoModal`); "Descartar
+alterações" vai ao outro item com a gaveta aberta. O corpo da gaveta
+recomeça a cada item (`key` pela chave); a gaveta **não leva `key` pelo item** (remontar tira o
+foco do botão), e o estado do próprio componente da ficha recomeça à mão (Recursos). O item que sai da lista enquanto está
+aberto (decidido no filtro de pendentes) mostra "40 na lista" e "Próximo" leva ao seguinte. Lista
+de um item não mostra a navegação. Lógica em `src/lib/base/navegacao-da-lista.ts`. Ligada em
+Análises, Recursos, Entrevistas, Visão geral, Lista de aprovados (aba Aprovados) e Classificação;
+a ficha da Avaliação documental tem a sua (no cabeçalho da ficha). Guarda:
+`tests/casca-sessao-e-interface-na-tela.test.ts` (bloco `ui/navegacao-da-ficha`).
 
 Navegador de mês: `NavegadorDeMes` — ‹ anterior, › próximo (só ícone, com `aria-label` e
 `title`), o mês à vista (`aria-live`) e o botão do atual; quem usa guarda o mês. No Cronograma

@@ -19,6 +19,7 @@ import {
   descricaoDoRecorte,
   ESCOPO_PADRAO,
   filtrarLinhas,
+  filtrarPelaBuscaDaFila,
   filtrarPorPeriodo,
   FILTROS_VAZIOS,
   formatarDataHora,
@@ -45,6 +46,7 @@ import {
   LinhaDoRecorte,
   MarcasDoRecorte,
   TopoDoPainel,
+  usarNavegacaoDaLista,
 } from "../../ui/index.ts";
 import { criarEstadoDasAnalises } from "./estado.ts";
 import { GavetaDaAnalise } from "./gaveta.tsx";
@@ -267,6 +269,17 @@ function TelaDaArea({
     () => filtrarPorPeriodo(recorteSemData, periodo),
     [recorteSemData, periodo],
   );
+  // Anterior/Próximo da gaveta: a fila como está na tela (com a busca dela).
+  const naFila = useMemo(
+    () => filtrarPelaBuscaDaFila(recorte, buscaDaFila),
+    [recorte, buscaDaFila],
+  );
+  const navegacao = usarNavegacaoDaLista(
+    naFila,
+    e.gaveta,
+    (linha) => linha.__chave,
+    (linha) => void estado.abrirDetalhe(linha.__chave),
+  );
   const comData = temPeriodo(periodo);
   const clicarNoDia = (dia: string, opcoes: { estender: boolean }) =>
     setPeriodo((atual) => periodoDoClique(atual, dia, opcoes));
@@ -444,6 +457,7 @@ function TelaDaArea({
           detalhe={e.detalhes.get(aberto.__chave)}
           area={area}
           aoFechar={estado.fecharDetalhe}
+          navegacao={navegacao}
           aoTentarDeNovo={() => void estado.abrirDetalhe(aberto.__chave)}
         />
       ) : null}

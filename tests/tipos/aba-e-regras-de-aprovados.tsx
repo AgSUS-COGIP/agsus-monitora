@@ -65,6 +65,8 @@ const props: PropsDaAbaDeAprovados = {
   linhas: pagina.rows,
   busca: "",
   aoBuscar: (busca) => void busca.trim(),
+  ordem: { chave: "", sentido: "" },
+  aoOrdenar: (chave) => void chave,
 };
 void (<AbaAprovados {...props} />);
 void (

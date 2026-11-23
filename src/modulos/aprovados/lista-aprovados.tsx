@@ -11,7 +11,7 @@ import type {
   ListaDeAprovados,
 } from "./tipos-do-estado.ts";
 import type { FiltrosDaTabelaDeAprovados } from "./tipos-da-aba-de-aprovados.ts";
-import { useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
 import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
 import { filtrosDosAprovados } from "../../lib/aya/filtro-da-aya.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
@@ -40,7 +40,16 @@ import {
   ErroAoCarregar,
   TopoDoPainel,
   usarEstadoDaSessao,
+  usarNavegacaoDaLista,
+  type PropriedadesDaNavegacaoDaFicha,
 } from "../../ui/index.ts";
+import {
+  ordenarAprovados,
+  proximaOrdemDosAprovados,
+  SEM_ORDEM,
+  type ChaveDaOrdemDosAprovados,
+  type OrdemDosAprovados,
+} from "../../lib/aprovados/ordem-dos-aprovados.ts";
 import {
   separarAprovados,
   vistaDoPedido,
@@ -51,7 +60,7 @@ import {
 } from "../../lib/base/ativos-e-historico.ts";
 import { tomDaSituacaoDoEdital } from "../../lib/editais/editais-ativos.ts";
 import { FluxoDasEtapas } from "../../componentes/fluxo-das-etapas.tsx";
-import { AbaAprovados } from "./aba-aprovados.tsx";
+import { AbaAprovados, pelaBusca } from "./aba-aprovados.tsx";
 import { AbaConvocacao } from "./aba-convocacao.tsx";
 import { AbaResumo } from "./aba-resumo.tsx";
 import type { ResumoPorCargoEStatus } from "../../lib/aprovados/exportacao/resumo-por-cargo-e-status.ts";
@@ -219,10 +228,13 @@ function ModalAberto({
   estado,
   dados,
   daArea,
+  navegacao,
 }: {
   estado: EstadoDosAprovados;
   dados: SnapshotDosAprovados;
   daArea: { candidatos: CandidatoAprovado[]; listas: ListaDeAprovados[] };
+  /** Anterior/Próximo da gaveta do candidato. */
+  navegacao?: PropriedadesDaNavegacaoDaFicha;
 }) {
   const { modal } = dados;
   if (!modal) return null;
@@ -251,9 +263,10 @@ function ModalAberto({
     ) : null;
   if (modal.tipo === "candidato")
     return candidato ? (
+      // Sem `key`: o Anterior/Próximo troca o candidato com a gaveta aberta.
       <GavetaDoCandidato
-        key={modal.abertura}
         estado={estado}
+        navegacao={navegacao}
         perfil={dados.perfil}
         candidato={candidato}
         convocacao={dados.convocacoes.get(String(candidato.candidato_id))}
@@ -375,6 +388,12 @@ export function ListaAprovados({
   const [filtros, setFiltros] = useState(FILTROS_INICIAIS);
   // A busca só da tabela; "Limpar filtros" e o pedido de filtro a limpam.
   const [busca, setBusca] = useState("");
+  const [ordem, setOrdem] = useState<OrdemDosAprovados>(SEM_ORDEM);
+  const ordenar = useCallback(
+    (chave: ChaveDaOrdemDosAprovados) =>
+      setOrdem((atual) => proximaOrdemDosAprovados(atual, chave)),
+    [],
+  );
 
   /*
     Cargo e modalidade só oferecem o que existe nos editais escolhidos, e o que
@@ -444,6 +463,23 @@ export function ListaAprovados({
   const filtrados = useMemo(
     () => filterApprovedCandidates(candidatosDaVista, efetivos),
     [candidatosDaVista, chaveDosFiltros],
+  );
+  /*
+    Anterior/Próximo da gaveta do candidato: a tabela de Aprovados como está
+    (filtros, ordem e busca). Aberta da Convocação, a lista é outra: sem
+    navegação.
+  */
+  const naTabela = useMemo(
+    () => pelaBusca(ordenarAprovados(filtrados, ordem), busca),
+    [filtrados, ordem, busca],
+  );
+  const navegacao = usarNavegacaoDaLista(
+    aba === "aprovados" && dados.modal?.tipo === "candidato" ? naTabela : null,
+    dados.modal && "candidatoId" in dados.modal
+      ? dados.modal.candidatoId
+      : null,
+    (candidato) => String(candidato.candidato_id),
+    (candidato) => estado.abrirCandidato(String(candidato.candidato_id)),
   );
 
   function mudarFiltro(
@@ -635,6 +671,8 @@ export function ListaAprovados({
         linhas={filtrados}
         busca={busca}
         aoBuscar={setBusca}
+        ordem={ordem}
+        aoOrdenar={ordenar}
       />
       <AbaResumo
         ativa={aba === "resumo"}
@@ -674,6 +712,7 @@ export function ListaAprovados({
         estado={estado}
         dados={dados}
         daArea={{ listas, candidatos }}
+        navegacao={navegacao}
       />
       {exportar ? (
         <ModalDaExportacao

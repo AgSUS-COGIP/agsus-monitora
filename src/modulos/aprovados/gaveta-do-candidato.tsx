@@ -70,6 +70,7 @@ export function GavetaDoCandidato({
   perfil,
   candidato,
   convocacao,
+  navegacao,
 }: PropsDaGavetaDoAprovado) {
   const { historicos } = useSyncExternalStore(
     estado.carta.assinar,
@@ -87,6 +88,7 @@ export function GavetaDoCandidato({
       id="approvedCandidatoGaveta"
       tituloId="approvedCandidatoTitulo"
       aoFechar={fechar}
+      navegacao={navegacao}
       sobretitulo={[candidato.edital, candidato.unidade]
         .filter(Boolean)
         .join(" · ")}

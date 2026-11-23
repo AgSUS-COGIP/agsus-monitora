@@ -53,8 +53,10 @@ export function ResumoDaAnalise({
   );
 }
 
-const pelaBusca = (entrevistas: readonly EntrevistaDoPainel[], busca: string) =>
-  filtrarEntrevistas(entrevistas, { ...FILTROS_VAZIOS, busca });
+export const pelaBusca = (
+  entrevistas: readonly EntrevistaDoPainel[],
+  busca: string,
+) => filtrarEntrevistas(entrevistas, { ...FILTROS_VAZIOS, busca });
 
 function LinhaDaEntrevista({
   entrevista: e,
@@ -134,12 +136,17 @@ export function TabelaDeEntrevistas({
   carregado,
   empates = null,
   aoAbrir,
+  busca,
+  aoBuscar,
 }: {
   entrevistas: readonly EntrevistaDoPainel[];
   total: number;
   carregado: boolean;
   empates?: ReadonlyMap<string, number> | null;
   aoAbrir(id: string): void;
+  /** A busca da tabela, guardada pela tela (o Anterior/Próximo da gaveta segue ela). */
+  busca?: string;
+  aoBuscar?: (busca: string) => void;
 }) {
   return (
     <TabelaInfinita
@@ -149,6 +156,8 @@ export function TabelaDeEntrevistas({
       busca={{
         placeholder: BUSCAR_NESTA_TABELA,
         rotulo: "Buscar nesta tabela de entrevistas",
+        valor: busca,
+        aoMudar: aoBuscar,
       }}
       carregado={carregado}
       itens={entrevistas}

@@ -27,7 +27,7 @@ import {
   pendenciasPrioritarias,
 } from "../../lib/recursos/recursos-dos-candidatos.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
-import { Aviso, EstadoVazio } from "../../ui/index.ts";
+import { Aviso, EstadoVazio, usarNavegacaoDaLista } from "../../ui/index.ts";
 import { irParaTela } from "../../app/ir-para-tela.ts";
 import { criarEstadoDosRecursos } from "./estado.ts";
 import { FormularioDoRecurso } from "./formulario.tsx";
@@ -42,7 +42,7 @@ import {
   Topo,
 } from "./paineis.tsx";
 import { PainelDeModelos } from "./modelos.tsx";
-import { TabelaDeRecursos } from "./tabela.tsx";
+import { pelaBusca, TabelaDeRecursos } from "./tabela.tsx";
 import "./recursos.css";
 
 /*
@@ -141,6 +141,7 @@ function TelaDaArea({
 }) {
   const analise = modo === "analise";
   const [filtros, setFiltros] = useState(FILTROS_VAZIOS);
+  const [buscaDaFila, setBuscaDaFila] = useState("");
   const escuro = usarTemaEscuro();
   const { carregado, dados, area } = e;
 
@@ -181,6 +182,17 @@ function TelaDaArea({
   );
   const ativos = filtrosAtivos(filtros, opcoes);
   const aberto = e.gaveta ? recursos.find((r) => r.id === e.gaveta) : null;
+  // Anterior/Próximo da gaveta: a fila como está na tela (filtros e busca).
+  const naFila = useMemo(
+    () => pelaBusca(filtrados, buscaDaFila),
+    [filtrados, buscaDaFila],
+  );
+  const navegacao = usarNavegacaoDaLista(
+    naFila,
+    e.gaveta,
+    (recurso) => recurso.id,
+    (recurso) => estado.abrirGaveta(recurso.id),
+  );
   const idEmEdicao = e.formulario?.id;
   const emEdicao =
     e.formulario?.modo === "edicao"
@@ -328,6 +340,8 @@ function TelaDaArea({
             origens={origens}
             carregado={carregado}
             aoAbrir={estado.abrirGaveta}
+            busca={buscaDaFila}
+            aoBuscar={setBuscaDaFila}
             aoNovo={analise && podeEditar ? estado.abrirNovo : undefined}
             comemoracoes={e.comemoracoes}
             analise={analise}
@@ -338,9 +352,9 @@ function TelaDaArea({
       {/* Com o formulário aberto, a gaveta sai de cena e volta quando ele fecha. */}
       {aberto && !e.formulario && !e.modelosAbertos ? (
         <GavetaDoRecurso
-          key={aberto.id}
           estado={estado}
           recurso={aberto}
+          navegacao={navegacao}
           detalhe={e.detalhes.get(aberto.id)}
           origens={origens}
           podeEditar={podeEditar}

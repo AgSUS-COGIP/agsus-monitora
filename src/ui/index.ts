@@ -116,6 +116,8 @@ export {
   Modal,
   usarAlteradoNoModal,
   usarFecharModal,
+  usarTecladoDoModal,
+  usarTrocarNoModal,
 } from "./modal.tsx";
 export type { PropriedadesDoModal } from "./modal.tsx";
 export {
@@ -143,6 +145,11 @@ export type {
   PropriedadesDoKv,
 } from "./secao.tsx";
 export { NavegadorDeMes } from "./navegador-de-mes.tsx";
+export {
+  NavegacaoDaFicha,
+  usarNavegacaoDaLista,
+} from "./navegacao-da-ficha.tsx";
+export type { NavegacaoDaFicha as PropriedadesDaNavegacaoDaFicha } from "./navegacao-da-ficha.tsx";
 export type { PropriedadesDoNavegadorDeMes } from "./navegador-de-mes.tsx";
 export {
   AtivosEHistorico,

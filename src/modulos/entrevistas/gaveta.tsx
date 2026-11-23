@@ -21,6 +21,7 @@ import {
   MaisDaCarga,
   Secao,
   usarCargaContinua,
+  type PropriedadesDaNavegacaoDaFicha,
 } from "../../ui/index.ts";
 import { SeloDoParecer } from "./tabela.tsx";
 
@@ -100,9 +101,12 @@ function BarraDoCriterio({ nota }: { nota: number }) {
 export function GavetaDaEntrevista({
   entrevista: e,
   aoFechar,
+  navegacao,
 }: {
   entrevista: EntrevistaDoPainel;
   aoFechar(): void;
+  /** Anterior/Próximo da tabela na tela. */
+  navegacao?: PropriedadesDaNavegacaoDaFicha;
 }) {
   const link = linkSeguro(e.link);
   return (
@@ -110,6 +114,7 @@ export function GavetaDaEntrevista({
       id="entrevistasGaveta"
       tituloId="entrevistasGavetaTitulo"
       aoFechar={aoFechar}
+      navegacao={navegacao}
       className="entrevistas-gaveta"
       sobretitulo={e.codigo ? `Candidato · cód. ${e.codigo}` : "Candidato"}
       titulo={e.candidato}
