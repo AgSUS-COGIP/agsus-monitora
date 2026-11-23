@@ -108,6 +108,15 @@ Os `*.spec.js` de `tests/` rodam no Playwright. O CI roda todos (`npm run test:e
   `pageerror`, rolagem horizontal ou cenário que não aparece na tela. **Só roda sob demanda**
   (comando abaixo). Usa `tests/apoio/sessao-simulada.js` (`abrirComSessao` com `rpcs` e `tabelas`)
   e as respostas de `tests/fixtures/acabamento/`.
+- **`auditoria-visual`:** diagnóstico de responsividade e harmonia: todas as telas das áreas e as
+  seções de Configurações, cheia, vazia, erro e as camadas (modal, gaveta, menu), a 375, 768 e
+  1280px, claro e escuro; mede rolagem horizontal, transbordo, texto cortado, toque < 44px, fonte,
+  espaço e cor fora dos tokens e componente feito à mão (`tests/apoio/medir-tela.js`), e
+  `npm run auditoria:visual` monta `test-results/auditoria-visual/resumo.md`. Não falha: é para
+  ler. Respostas fictícias em `tests/fixtures/auditoria-visual/`. O bloco "sem rolagem horizontal a
+  375px" é a trava que o lote 3 da
+  [auditoria de 23/11/2026](../_arquivo/auditoria-responsividade-e-harmonia-2026-11-23.md) liga (até lá,
+  `AUDITORIA_ROLAGEM=1`).
 - **Com banco de desenvolvimento** (`E2E_SUPABASE_SESSION_JSON`; sem ela, pulados):
   `sessao-autenticada`, `analises-authenticated`, `mapa-workspace-autenticado`.
 
@@ -115,6 +124,7 @@ Os `*.spec.js` de `tests/` rodam no Playwright. O CI roda todos (`npm run test:e
 VITE_SUPABASE_URL=https://teste.supabase.co VITE_SUPABASE_PUBLISHABLE_KEY=teste npm run build
 PLAYWRIGHT_DIST_PRONTO=1 npx playwright test tests/sessao-simulada.spec.js
 CAPTURAS=1 PLAYWRIGHT_DIST_PRONTO=1 npx playwright test tests/acabamento-capturas.spec.js
+npm run auditoria:visual                   # compila simulado, mede todas as telas e resume
 ```
 
 `npm run test:smoke:servidor` aceita specs a mais depois de `--`; o CI passa
