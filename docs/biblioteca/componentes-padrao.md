@@ -27,7 +27,7 @@ API completa (uma linha por componente) está em [docs/arquitetura-react.md](../
 
 | Grupo            | Componentes                                                                                                                                                                                                       |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Topo e filtros   | `TopoDoPainel`, `PainelDeFiltros`, `ChipsDeFiltro`/`ChipDeFiltro`, `MaisOpcoes`, `LinhaDoRecorte`/`MarcasDoRecorte`                                                                                               |
+| Topo e filtros   | `TopoDoPainel`, `MaisAcoes`, `PainelDeFiltros`, `ChipsDeFiltro`/`ChipDeFiltro`, `MaisOpcoes`, `LinhaDoRecorte`/`MarcasDoRecorte`                                                                                  |
 | Indicadores      | `Kpi` (card de 78px; com `aoClicar` vira filtro), `GradeDeKpis`, `FaixaDeSituacao`, `ListaDePendencias`                                                                                                           |
 | Gráficos         | `CardDeGrafico`, `Grafico` (Chart.js criado uma vez), `paletaDosGraficos` (cores dos tokens)                                                                                                                      |
 | Listas e tabelas | `TabelaInfinita` (50 por vez, avisa `agsus:content-updated`), `CardDaLista` + `TabelaDaLista`, `BarraDaLista`, `usarCargaContinua` + `MaisDaCarga`                                                                |
@@ -115,6 +115,12 @@ Popover). Toda ação é `.btn.ghost.ui-botao-icone.topo-acao`, com a mesma caix
 Nas telas das áreas o título é o da tela (`CabecalhoDaTela`) e o do cabeçalho fica só para o leitor
 de tela (`data-compacto`). Embaixo do cabeçalho da tela, numa linha, `etapas` recebe a faixa das
 etapas do edital ([[modulo-pagina-do-edital]], "Fluxo entre as etapas").
+
+Ações do topo da tela: abaixo de 768px, só a principal fica à vista; as outras vão para "Mais
+ações" (`MaisAcoes`: o mesmo botão em linha a partir de 768px, atrás do "⋯ Mais ações" abaixo
+disso; só o CSS troca, os ids continuam). No `TopoDoPainel`, a principal entra por `principal`
+(Novo edital, Novo recurso, Sub judice), sempre por último; sem ela, a principal é o Atualizar.
+O `MaisOpcoes` é outra peça: os filtros adicionais, em qualquer largura.
 
 Peças de layout só em CSS: `.ui-tela`, `.ui-card`, `.ui-titulo`, `.ui-linha-de-cards`,
 `.ui-pilha`, `.ui-grade-de-campos`, `.ui-acoes`, `.ui-barra-de-salvar`, `.ui-gaveta-*`,

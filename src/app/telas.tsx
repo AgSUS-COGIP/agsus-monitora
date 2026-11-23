@@ -662,9 +662,9 @@ const ConteudoDoQuadro = memo(function ConteudoDoQuadro() {
 /*
   Configurações (/administracao/configuracoes/<seção>): um
   `<article class="config-secao">` por seção, só o da seção aberta à vista
-  (a navegação diz qual). A moldura (`#configuracoesApp`: cabeçalho, barra de
-  salvar, diálogos e as seções que publicam pela barra, por portal no corpo
-  de cada uma) baixa na primeira abertura da página; Acessos, Módulos e abas,
+  (a navegação diz qual). A moldura (`#configuracoesApp`: cabeçalho, diálogos,
+  a barra de salvar, por portal no `.config-rodape`, e as seções que publicam
+  pela barra, por portal no corpo de cada uma) baixa na primeira abertura da página; Acessos, Módulos e abas,
   Status das atualizações e Automação são telas próprias, cada uma no seu
   bloco (`#acessosApp`…), baixadas na primeira abertura da seção. As
   visitadas continuam montadas (o rascunho de Acessos fica).
@@ -681,6 +681,7 @@ function PaginaDeConfiguracoes({ ativa }: { ativa: boolean }) {
   const { secao } = usarEstadoDaNavegacao();
   const aberta = secao || SECOES[0]!.id;
   const [pagina, definirPagina] = useState<HTMLElement | null>(null);
+  const [rodape, definirRodape] = useState<HTMLElement | null>(null);
   const [corpos, definirCorpos] = useState<
     Partial<Record<string, Element | null>>
   >({});
@@ -703,7 +704,10 @@ function PaginaDeConfiguracoes({ ativa }: { ativa: boolean }) {
   );
   if (ativa && !visitadas.has(aberta))
     definirVisitadas(new Set(visitadas).add(aberta));
-  const contexto = useMemo(() => ({ pagina, corpos }), [pagina, corpos]);
+  const contexto = useMemo(
+    () => ({ pagina, corpos, rodape }),
+    [pagina, corpos, rodape],
+  );
 
   return (
     <section
@@ -741,6 +745,8 @@ function PaginaDeConfiguracoes({ ativa }: { ativa: boolean }) {
           ))}
         </div>
       </div>
+      {/* A barra de salvar (por portal), colada no pé da página: config-rodape. */}
+      <div className="config-rodape" ref={definirRodape} />
     </section>
   );
 }

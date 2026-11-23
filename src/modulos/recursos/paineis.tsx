@@ -81,8 +81,33 @@ export function Topo({
   /** Analisar recursos: volta ao painel com o mesmo recorte. */
   aoVerPainel?: () => void;
 }) {
+  const novo = aoNovo ? (
+    <button
+      type="button"
+      className="btn"
+      data-acao="novo-recurso"
+      data-tour="recursos-novo"
+      disabled={novoDesativado}
+      onClick={aoNovo}
+    >
+      <i className="fa-solid fa-plus" aria-hidden="true" /> Novo recurso
+    </button>
+  ) : null;
+  const analisar = aoAnalisar ? (
+    <button
+      type="button"
+      className="btn"
+      data-acao="analisar-recursos"
+      data-tour="recursos-analisar"
+      title="Analisar recursos com os mesmos filtros"
+      onClick={aoAnalisar}
+    >
+      <i className="fa-solid fa-gavel" aria-hidden="true" /> Analisar
+    </button>
+  ) : null;
+  // A principal fica à vista no celular: Novo recurso ou, no painel, Analisar.
   return (
-    <TopoDoPainel {...props}>
+    <TopoDoPainel {...props} principal={novo ?? analisar}>
       {aoVerPainel ? (
         <button
           type="button"
@@ -109,30 +134,7 @@ export function Topo({
           Modelos de resposta
         </button>
       ) : null}
-      {aoNovo ? (
-        <button
-          type="button"
-          className="btn"
-          data-acao="novo-recurso"
-          data-tour="recursos-novo"
-          disabled={novoDesativado}
-          onClick={aoNovo}
-        >
-          <i className="fa-solid fa-plus" aria-hidden="true" /> Novo recurso
-        </button>
-      ) : null}
-      {aoAnalisar ? (
-        <button
-          type="button"
-          className="btn"
-          data-acao="analisar-recursos"
-          data-tour="recursos-analisar"
-          title="Analisar recursos com os mesmos filtros"
-          onClick={aoAnalisar}
-        >
-          <i className="fa-solid fa-gavel" aria-hidden="true" /> Analisar
-        </button>
-      ) : null}
+      {novo ? analisar : null}
     </TopoDoPainel>
   );
 }

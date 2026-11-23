@@ -211,10 +211,66 @@
   align-items: center;
   gap: var(--space-2);
 }
-/* No topo, a data da última carga fica numa linha só. */
+/*
+  No topo, a data da última carga fica numa linha só e ocupa a sobra à
+  esquerda, empurrando as ações para a direita (sem margem automática, que
+  sai da escala de espaço).
+*/
 .ui-topo-acoes .status-discreto {
-  margin-right: auto;
+  flex: 1 1 auto;
   white-space: nowrap;
+}
+
+/*
+  "Mais ações" (MaisAcoes): a partir de 768px, o invólucro e a lista somem do
+  layout e as ações ficam em linha no topo; o botão só aparece abaixo disso.
+*/
+.ui-mais-acoes,
+.ui-mais-acoes-lista {
+  display: contents;
+}
+.ui-mais-acoes-botao {
+  display: none;
+}
+@media (max-width: 767px) {
+  .ui-mais-acoes {
+    position: relative;
+    display: block;
+    flex: 0 0 auto;
+    order: 1;
+  }
+  .ui-mais-acoes:has(> .ui-mais-acoes-lista:empty) {
+    display: none;
+  }
+  .ui-mais-acoes-botao {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+  .ui-mais-acoes-lista {
+    position: absolute;
+    top: calc(100% + var(--space-1));
+    right: 0;
+    z-index: var(--z-popover);
+    display: none;
+    width: max-content;
+    min-width: 240px;
+    max-width: calc(100vw - 2 * var(--space-4));
+    padding: var(--space-2);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--surface-card);
+    box-shadow: var(--shadow-overlay);
+  }
+  .ui-mais-acoes[data-aberto] > .ui-mais-acoes-lista,
+  .ui-mais-acoes-lista .ui-exportacao {
+    display: grid;
+    gap: var(--space-2);
+  }
+  .ui-mais-acoes-lista .btn {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 
 /*
@@ -2130,12 +2186,14 @@ html[data-theme="dark"]
   flex: 0 1 380px;
   min-width: min(100%, 240px);
 }
+/* As ações ocupam a sobra da linha, alinhadas à direita (sem margem automática). */
 .ui-cabecalho-acoes {
   display: flex;
+  flex: 1 1 auto;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--space-2);
-  margin-left: auto;
 }
 .ui-cabecalho-acoes .ui-segmentado {
   border: 0;
@@ -2445,7 +2503,7 @@ button.ui-faixa-item:hover {
 
 @media (max-width: 900px) {
   .ui-cabecalho-acoes {
-    margin-left: 0;
+    justify-content: flex-start;
   }
   .ui-cabecalho-edital {
     flex-basis: 100%;

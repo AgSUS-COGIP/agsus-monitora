@@ -3138,7 +3138,7 @@ bloco("layout-no-celular", () => {
       ],
       [
         "src/modulos/configuracoes/configuracoes.css",
-        /\.config-barra\s*\{[^}]*right:[^;]*var\(--aya-reserva/,
+        /\.config-barra\s*\{[^}]*padding:[^;]*var\(--aya-reserva/,
       ],
     ])("%s recua da arara", (arquivo, regra) => {
       expect(css(arquivo)).toMatch(regra);
@@ -6912,8 +6912,7 @@ bloco("modulos/configuracoes-inicio-acesso-aparencia", () => {
 
   const $ = (id) => document.getElementById(id);
   const salvar = () => document.querySelector(".config-barra__salvar");
-  const sujo = () =>
-    Boolean(document.querySelector(".config-cabecalho__pendente"));
+  const sujo = () => Boolean(document.querySelector(".config-pendente"));
   const tituloDoDialogo = () => $("configGovernanceTitle")?.textContent;
   const secao = (id) =>
     document.querySelector(`.config-secao[data-secao="${id}"]`);
@@ -7570,8 +7569,7 @@ bloco("modulos/configuracoes-paineis-e-operacao", () => {
 
   const $ = (id) => document.getElementById(id);
   const salvar = () => document.querySelector(".config-barra__salvar");
-  const sujo = () =>
-    Boolean(document.querySelector(".config-cabecalho__pendente"));
+  const sujo = () => Boolean(document.querySelector(".config-pendente"));
   const tituloDoDialogo = () => $("configGovernanceTitle")?.textContent;
   const botaoFinal = () =>
     [...document.querySelectorAll(".config-governance-footer .btn")].at(-1);
@@ -8047,8 +8045,7 @@ bloco("modulos/configuracoes", () => {
   const $ = (id) => document.getElementById(id);
   const barra = () => document.querySelector(".config-barra");
   const salvar = () => document.querySelector(".config-barra__salvar");
-  const sujo = () =>
-    Boolean(document.querySelector(".config-cabecalho__pendente"));
+  const sujo = () => Boolean(document.querySelector(".config-pendente"));
   const tituloDoDialogo = () => $("configGovernanceTitle")?.textContent;
   const ctrlS = () => teclar(document, "s", { ctrlKey: true });
 
@@ -8078,7 +8075,11 @@ bloco("modulos/configuracoes", () => {
   describe("cabeçalho da seção", () => {
     it("mostra só o nome da seção aberta, sem descrição nem cabeçalho repetido", async () => {
       await montar();
-      const cabecalho = document.querySelector(".config-cabecalho");
+      // O mesmo CabecalhoDaTela das outras telas.
+      const cabecalho = document.querySelector(
+        '[data-tour="config-cabecalho"]',
+      );
+      expect(cabecalho.classList).toContain("ui-cabecalho-da-tela");
       expect(cabecalho.querySelector("h2").textContent).toBe("Marca");
       expect(cabecalho.querySelector("p")).toBeNull();
       expect(cabecalho.textContent).not.toContain(
@@ -8086,16 +8087,12 @@ bloco("modulos/configuracoes", () => {
       );
       expect(document.body.textContent).not.toContain("Ajustes do sistema");
       expect(document.querySelector(".config-secao__cabecalho")).toBeNull();
-      // O mesmo ícone do item no menu lateral.
-      expect(
-        cabecalho.querySelector(".config-cabecalho__icone svg").dataset.icone,
-      ).toBe("type");
     });
 
     it("acompanha a troca de seção", async () => {
       await montar();
       await act(async () => abrirSecaoNoTeste("operacao"));
-      expect(document.querySelector(".config-cabecalho h2").textContent).toBe(
+      expect(document.querySelector(".ui-cabecalho-titulo").textContent).toBe(
         "Operação",
       );
     });
@@ -8214,7 +8211,7 @@ bloco("modulos/configuracoes", () => {
       expect(sujo()).toBe(true);
       await act(async () => abrirSecaoNoTeste("cargas"));
       await esperar();
-      expect(document.querySelector(".config-cabecalho h2").textContent).toBe(
+      expect(document.querySelector(".ui-cabecalho-titulo").textContent).toBe(
         "Status das atualizações",
       );
       expect(barra()).toBeNull();

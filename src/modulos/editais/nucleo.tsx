@@ -598,6 +598,19 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
         }}
         idDaAtualizacao="nucleoOperationalRefresh"
         atualizarDesativado={nucleo.atualizandoResumo}
+        principal={
+          podeEditar ? (
+            <button
+              id="newEditalBtn"
+              data-tour="editais-novo"
+              className="btn green"
+              type="button"
+              onClick={() => estado.abrirEdital()}
+            >
+              <i className="fa-solid fa-plus" aria-hidden="true" /> Novo edital
+            </button>
+          ) : null
+        }
       >
         <Suspense fallback={null}>
           <SeloDeAvisos modulo="editais" />
@@ -617,17 +630,6 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
               }}
             />
           </Suspense>
-        ) : null}
-        {podeEditar ? (
-          <button
-            id="newEditalBtn"
-            data-tour="editais-novo"
-            className="btn green"
-            type="button"
-            onClick={() => estado.abrirEdital()}
-          >
-            <i className="fa-solid fa-plus" aria-hidden="true" /> Novo edital
-          </button>
         ) : null}
       </TopoDoPainel>
 

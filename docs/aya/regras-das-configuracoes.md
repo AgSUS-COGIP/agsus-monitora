@@ -89,7 +89,7 @@ publicação no histórico de Operação, de onde uma versão pode ser restaurad
 ## Publicar uma alteração
 
 **perguntas:** como publicar uma alteracao nas configuracoes | publicar alteracao | salvar alteracoes | motivo da alteracao | nada a publicar
-**resposta:** Nas seções Marca, Página inicial, Tela de acesso, Aparência, Painéis externos e Operação, o que muda fica pendente até "Salvar alterações" (na barra fixa, ou Ctrl+S): o sistema valida, compara com o que está publicado e abre a revisão; sem diferença, não há nada a publicar. A publicação pede o motivo da alteração, grava tudo numa transação só e cria uma nova entrada no histórico, sem apagar nada. Acessos e Módulos e abas salvam pela própria tela, também com motivo. Sair com alteração pendente pergunta antes.
+**resposta:** Nas seções Marca, Página inicial, Tela de acesso, Aparência, Painéis externos e Operação, o que muda fica pendente até "Salvar alterações" (na barra no pé da página, ou Ctrl+S): o sistema valida, compara com o que está publicado e abre a revisão; sem diferença, não há nada a publicar. A publicação pede o motivo da alteração, grava tudo numa transação só e cria uma nova entrada no histórico, sem apagar nada. Acessos e Módulos e abas salvam pela própria tela, também com motivo. Sair com alteração pendente pergunta antes.
 **fonte:** src/modulos/configuracoes/estado.ts; src/modulos/configuracoes/configuracoes.tsx
 
 ## Restaurar uma versão publicada

@@ -188,7 +188,9 @@ test.describe("sessão simulada", () => {
     const secao = (id) => page.locator(`.config-secao[data-secao="${id}"]`);
     await expect(secao("operacao")).toBeVisible();
     await expect(secao("marca")).toBeHidden();
-    await expect(page.locator(".config-cabecalho h2")).toHaveText("Operação");
+    await expect(page.locator("#page-config .ui-cabecalho-titulo")).toHaveText(
+      "Operação",
+    );
 
     await page.reload({ waitUntil: "domcontentloaded" });
     await expect(page).toHaveURL(/\/administracao\/configuracoes\/operacao$/);

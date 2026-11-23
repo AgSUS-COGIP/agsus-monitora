@@ -1,7 +1,7 @@
 ---
 tipo: regra
 area: front
-atualizado: 2026-11-17
+atualizado: 2026-11-23
 ---
 
 # Acessibilidade e mobile
@@ -52,6 +52,10 @@ Não basta diminuir os componentes: reorganize a tela.
 - **900px** — tablet; a barra lateral vira gaveta (contrato com
   `src/componentes/barra-lateral/usar-ambiente.ts`) e as tabelas viram cartões
 - **1220px** — desktop estreito
+
+A grade da página e o cabeçalho seguem os da norma: padding lateral de 16px abaixo de 768px, 24px
+até 1023px e 32px a partir de 1024px (`.content` em `app.css`, `.top` em `topo.css`), e as ações
+do topo da tela recolhem em "Mais ações" abaixo de 768px ([[componentes-padrao]]).
 
 Os valores antigos (560, 680, 700, 720, 820, 1180) migram para o mais próximo quando a regra for
 tocada.
