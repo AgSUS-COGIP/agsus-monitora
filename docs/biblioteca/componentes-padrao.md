@@ -81,7 +81,8 @@ Navegador de mês: `NavegadorDeMes` — ‹ anterior, › próximo (só ícone, 
 
 Ativos e Histórico: `AtivosEHistorico` + `usarAtivosEHistorico(itens, { chave, ehHistorico,
 situacao })` deixam a lista de trabalho só com o que está em curso e o resto a um clique, com a
-contagem no rótulo ("Ativos 12", "Histórico 30") e por situação ("Em andamento 12 · Suspenso 1",
+contagem no rótulo ("Ativos 12", "Histórico 30"; com `todas`, a terceira opção, e `rotulos` para
+outros nomes, como "Listas ativas" e "Inativas" na Lista de aprovados) e por situação ("Em andamento 12 · Suspenso 1",
 selos com ponto: a cor só complementa). A vista volta no F5 (sessão). Lógica em
 `src/lib/base/ativos-e-historico.ts`; a regra dos editais (concluído, cancelado ou desativado vai
 para o Histórico) em `src/lib/editais/editais-ativos.ts`. Usado em Editais, nas entradas da

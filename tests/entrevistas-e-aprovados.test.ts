@@ -64,6 +64,7 @@ import {
   lerConfiguracoesDoBanco,
 } from "../src/lib/aprovados/carta-de-convocacao/configuracao-de-convocacao.ts";
 import { criarEstadoDaListaDeAprovados } from "../src/modulos/aprovados/estado.ts";
+import { vistaDaLista } from "../src/lib/base/ativos-e-historico.ts";
 import {
   separarAprovados,
   vistaDoPedido,
@@ -1451,6 +1452,21 @@ bloco("lib/aprovados-ativos-e-historico", () => {
       "ativos",
     );
     expect(vistaDoPedido(separados, "historico", {}, id)).toBe("historico");
+    // Em Todas, o pedido sempre está: fica em Todas.
+    expect(vistaDoPedido(separados, "todas", { editalIds: ["e5"] }, id)).toBe(
+      "todas",
+    );
+  });
+
+  it("Todas junta as listas e os candidatos das duas, na ordem em que vieram", () => {
+    const { todas } = separarAprovados(LISTAS, CANDIDATOS, LINHAS);
+    expect(todas.candidatos.map((c) => c.candidato_id)).toEqual(
+      CANDIDATOS.map((c) => c.candidato_id),
+    );
+    expect(todas.listas).toHaveLength(LISTAS.length);
+    expect(todas.editais).toBe(6);
+    expect(vistaDaLista("todas")).toBe("todas");
+    expect(vistaDaLista("qualquer")).toBe("ativos");
   });
 });
 
