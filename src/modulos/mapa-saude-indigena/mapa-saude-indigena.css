@@ -428,7 +428,7 @@
 /* O minimapa de localização do DSEI (minimapa.tsx), como no SIGEPSI. */
 .mapa-si-minimapa {
   position: absolute;
-  z-index: 900;
+  z-index: 900; /* acabamento: permitido(zIndex) — camada do Leaflet: acima da legenda (800), abaixo dos controles (1000) */
   right: var(--space-3);
   /* Acima da escala e da atribuição do Leaflet. */
   bottom: 56px;
