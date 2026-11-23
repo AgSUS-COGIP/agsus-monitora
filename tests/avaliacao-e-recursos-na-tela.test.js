@@ -21,6 +21,11 @@ import {
   resumoPorVaga,
 } from "../src/lib/avaliacao-documental/andamento-por-vaga.ts";
 import { readFileSync } from "node:fs";
+import {
+  definirAreaAtual,
+  publicarLinhasDoMonitoramento,
+  redefinirDadosDoMonitoramento,
+} from "../src/componentes/dados-do-monitoramento.ts";
 import { act, createElement, createElement as h } from "react";
 import { createRoot } from "react-dom/client";
 import {
@@ -1849,6 +1854,40 @@ bloco("modulos/avaliacao-documental-abas", () => {
       expect(controle.querySelector(".ui-ativos-situacoes").title).toMatch(
         /Suspenso 1/,
       );
+    });
+
+    it("o status é o do monitoramento (calculado pelo cronograma), não o gravado na lista", async () => {
+      // A lista diz "Em andamento" para os três; o monitoramento já encerrou o 114.
+      definirAreaAtual("projetos");
+      publicarLinhasDoMonitoramento([
+        { id: "e93", CO_AREA: "projetos", status: "Em andamento" },
+        { id: "e114", CO_AREA: "projetos", status: "Concluído" },
+      ]);
+      const supabase = supabaseFalso({
+        editais: [
+          VARIOS[0],
+          VARIOS[1],
+          { ...VARIOS[2], status: "Em andamento" },
+        ],
+        coordena: false,
+      });
+      await montar(supabase);
+      const controle = secao.querySelector(
+        "[data-tour='avd-ativos-e-historico']",
+      );
+      expect(controle.querySelector("[data-valor='ativos']").textContent).toBe(
+        "Ativos2",
+      );
+      expect(
+        [...secao.querySelectorAll(".avd-entrada-cartao")].map((c) =>
+          c.getAttribute("data-edital"),
+        ),
+      ).toEqual(["e93", "e23"]);
+      await clicar(controle.querySelector("[data-valor='historico']"));
+      expect(controle.querySelector(".ui-ativos-situacoes").textContent).toBe(
+        "Concluído 1",
+      );
+      redefinirDadosDoMonitoramento();
     });
 
     it("com um edital vigente só, abre direto nele", async () => {
