@@ -66,6 +66,14 @@ Análises, Recursos, Entrevistas, Visão geral, Lista de aprovados (aba Aprovado
 a ficha da Avaliação documental tem a sua (no cabeçalho da ficha). Guarda:
 `tests/casca-sessao-e-interface-na-tela.test.ts` (bloco `ui/navegacao-da-ficha`).
 
+KPI clicável: quando a lista da mesma tela tem um filtro que corresponde ao número, o `Kpi` recebe
+`aoClicar` e vira `<button>` (foco, Enter e Espaço do navegador). Filtro leva `ativo`
+(`aria-pressed` e `.is-ativo` quando o recorte dele está aplicado); clicar de novo tira o filtro, e
+o "Total", se houver, o limpa sem `ativo`. Atalho (abre outra lista) vai sem `ativo`. Sem filtro
+correspondente, o número fica estático: não se cria filtro só para o KPI. Ligados hoje: Visão
+geral, Editais, Análises (status), Entrevistas (comparecimento e parecer), Recursos (situação e
+prazo), Lista de aprovados (Situação) e Pendências dos aprovados (tipo).
+
 Navegador de mês: `NavegadorDeMes` — ‹ anterior, › próximo (só ícone, com `aria-label` e
 `title`), o mês à vista (`aria-live`) e o botão do atual; quem usa guarda o mês. No Cronograma
 (mês e semana, com "Hoje") e na agenda dos convocados da Classificação, quando ela passa de um mês

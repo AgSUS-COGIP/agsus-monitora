@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-19
+atualizado: 2026-11-23
 ---
 
 # Módulo: Lista de aprovados
@@ -47,7 +47,8 @@ vai ao banco como os cargos dela (a conferência do total é por edital, cargo e
 lista-aprovados.tsx         <ListaAprovados>, criarListaAprovados() e os modais (ModalAberto)
 estado.ts                   store sem React: candidatos (pacote compacto por área, cópia no
                             navegador), listas, convocação, anexos, convocações, ações e estado.carta
-aba-aprovados.tsx           KPIs (Convocados no lugar de Fim de fila), filtros, TabelaInfinita (50 por
+aba-aprovados.tsx           KPIs (Convocados no lugar de Fim de fila; clicar filtra a Situação),
+                            filtros, TabelaInfinita (50 por
                             vez), ações por linha (anexos, status, carta, decisão judicial, sub judice)
 central-de-convocacoes.tsx  bloco Convocações no topo da aba Convocação (#581): "Para contratação"
                             (a aba de sempre) e "Para entrevistas" (só com acesso às Entrevistas e

@@ -15,6 +15,8 @@ import {
 } from "react";
 import {
   OPCOES_DO_FILTRO_DE_STATUS,
+  STATUS_CONTRATADO_EM_OUTRA_LISTA,
+  STATUS_CONVOCADO,
   filterApprovedCandidates,
   nomeDosCandidatosFiltrados,
   summarizeApprovedCandidates,
@@ -385,6 +387,11 @@ export function AbaAprovados({
       )
     : "";
 
+  /*
+    Cada card filtra a Situação da tabela (os números ignoram esse filtro, então
+    não mudam ao clicar); clicar de novo, ou no Total, tira o filtro.
+  */
+  const statusEscolhidos = filtros.status || [];
   const kpi = (
     idDoValor: string,
     chave: string,
@@ -392,17 +399,29 @@ export function AbaAprovados({
     icone: string,
     rotulo: string,
     valor: number,
-  ) => (
-    <Kpi
-      idDoValor={idDoValor}
-      chave={chave}
-      tom={tom}
-      icone={icone}
-      rotulo={rotulo}
-      valor={formatNumberBR(valor)}
-      carregando={carregando}
-    />
-  );
+    status: string,
+  ) => {
+    const ativo =
+      statusEscolhidos.length === 1 && statusEscolhidos[0] === status;
+    return (
+      <Kpi
+        idDoValor={idDoValor}
+        chave={chave}
+        tom={tom}
+        icone={icone}
+        rotulo={rotulo}
+        valor={formatNumberBR(valor)}
+        carregando={carregando}
+        ativo={!carregado || !status ? undefined : ativo}
+        titulo={status ? `Filtrar: ${rotulo}` : "Mostrar todas as situações"}
+        aoClicar={
+          carregado
+            ? () => aoMudarFiltro("status", !status || ativo ? [] : [status])
+            : undefined
+        }
+      />
+    );
+  };
 
   return (
     <div
@@ -424,6 +443,7 @@ export function AbaAprovados({
           "fa-users",
           "Total de aprovados",
           resumo.total,
+          "",
         )}
         {kpi(
           "approvedKpiContratado",
@@ -434,6 +454,7 @@ export function AbaAprovados({
           // aqui as duas situações têm card próprio.
           "Contratados (sem migração)",
           resumo.contratado,
+          "Contratado",
         )}
         {kpi(
           "approvedKpiDesistente",
@@ -442,6 +463,7 @@ export function AbaAprovados({
           "fa-user-xmark",
           "Desistentes",
           resumo.desistente,
+          "Desistente",
         )}
         {kpi(
           "approvedKpiMigracao",
@@ -450,6 +472,7 @@ export function AbaAprovados({
           "fa-right-left",
           "Migração",
           resumo.migracao,
+          "Migração",
         )}
         {kpi(
           "approvedKpiDocumentacaoRejeitada",
@@ -458,6 +481,7 @@ export function AbaAprovados({
           "fa-file-circle-xmark",
           "Documentação rejeitada",
           resumo.documentacaoRejeitada,
+          "Documentação Rejeitada",
         )}
         {kpi(
           "approvedKpiConvocado",
@@ -466,6 +490,7 @@ export function AbaAprovados({
           "fa-envelope-open-text",
           "Convocados",
           resumo.convocado,
+          STATUS_CONVOCADO,
         )}
         {kpi(
           "approvedKpiContratadoEmOutraLista",
@@ -475,6 +500,7 @@ export function AbaAprovados({
           // Fora dos contratados: a pessoa já conta pela outra linha do edital.
           "Contratados em outra lista",
           resumo.contratadoEmOutraLista,
+          STATUS_CONTRATADO_EM_OUTRA_LISTA,
         )}
       </GradeDeKpis>
 
