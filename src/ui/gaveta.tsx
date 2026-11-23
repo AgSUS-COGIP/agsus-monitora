@@ -1,6 +1,9 @@
+import { Fragment } from "react";
 import type { ReactNode } from "react";
 import { Modal, usarFecharModal } from "./modal.tsx";
 import { classes } from "./classes.ts";
+import { NavegacaoDaFicha } from "./navegacao-da-ficha.tsx";
+import type { NavegacaoDaFicha as Navegacao } from "./navegacao-da-ficha.tsx";
 
 /*
   A gaveta lateral: um <Modal> (portal, Esc, foco preso) com o topo —
@@ -10,6 +13,12 @@ import { classes } from "./classes.ts";
   Marcação: `.ui-gaveta-fundo` > `.ui-gaveta` (`.ui-gaveta-topo`…).
   `usarClassesDaGaveta()` dá as duas classes, para quem monta a gaveta direto
   no <Modal> (o formulário de Recursos).
+
+  `navegacao` (de `usarNavegacaoDaLista`): ‹ "3 de 41" › ao lado do fechar,
+  para ir ao anterior e ao próximo da lista sem fechar a ficha. O corpo
+  recomeça a cada item (`key` pela chave dele): o estado dos filhos — um
+  formulário, uma seção aberta — não passa de um item para o outro. A gaveta
+  em si não remonta, e o foco fica no botão.
 */
 
 export function usarClassesDaGaveta() {
@@ -22,6 +31,8 @@ export interface PropriedadesDoTopoDaGaveta {
   tituloId?: string;
   resumo?: ReactNode;
   rotuloDoFechar?: string;
+  /** Anterior/Próximo da lista de onde a ficha abriu. */
+  navegacao?: Navegacao;
 }
 
 /*
@@ -34,6 +45,7 @@ export function TopoDaGaveta({
   tituloId,
   resumo,
   rotuloDoFechar = "Fechar",
+  navegacao,
 }: PropriedadesDoTopoDaGaveta) {
   const fechar = usarFecharModal();
   return (
@@ -45,15 +57,18 @@ export function TopoDaGaveta({
         <h2 id={tituloId}>{titulo}</h2>
         {resumo ? <div className="ui-gaveta-resumo">{resumo}</div> : null}
       </div>
-      <button
-        type="button"
-        className="ui-gaveta-fechar"
-        aria-label={rotuloDoFechar}
-        title="Fechar"
-        onClick={() => fechar?.()}
-      >
-        <i className="fa-solid fa-xmark" aria-hidden="true" />
-      </button>
+      <div className="ui-gaveta-topo-acoes">
+        {navegacao ? <NavegacaoDaFicha {...navegacao} /> : null}
+        <button
+          type="button"
+          className="ui-gaveta-fechar"
+          aria-label={rotuloDoFechar}
+          title="Fechar"
+          onClick={() => fechar?.()}
+        >
+          <i className="fa-solid fa-xmark" aria-hidden="true" />
+        </button>
+      </div>
     </div>
   );
 }
@@ -75,6 +90,8 @@ export interface PropriedadesDaGaveta {
   titulo: ReactNode;
   resumo?: ReactNode;
   rotuloDoFechar?: string;
+  /** Anterior/Próximo da lista de onde a ficha abriu (`usarNavegacaoDaLista`). */
+  navegacao?: Navegacao;
   tour?: string;
   children?: ReactNode;
 }
@@ -91,6 +108,7 @@ export function Gaveta({
   titulo,
   resumo,
   rotuloDoFechar,
+  navegacao,
   tour,
   children,
 }: PropriedadesDaGaveta) {
@@ -112,8 +130,9 @@ export function Gaveta({
         tituloId={tituloId}
         resumo={resumo}
         rotuloDoFechar={rotuloDoFechar}
+        navegacao={navegacao}
       />
-      {children}
+      <Fragment key={navegacao?.chave}>{children}</Fragment>
     </Modal>
   );
 }

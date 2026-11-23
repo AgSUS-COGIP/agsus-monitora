@@ -31,6 +31,7 @@ import {
   estadoDaVisaoGeral,
 } from "./estado.ts";
 import { GavetaDoProcesso } from "./gaveta.tsx";
+import { usarNavegacaoDaLista } from "../../ui/index.ts";
 import {
   Cabecalho,
   EmAndamento,
@@ -159,6 +160,13 @@ export function TelaDaVisaoGeral({
   const linhaAberta = aberta
     ? e.linhasDaArea.find((linha) => String(linha.id) === aberta) || null
     : null;
+  // Anterior/Próximo da gaveta: a tabela como está (filtros, busca e ordem).
+  const navegacao = usarNavegacaoDaLista(
+    e.filtradas,
+    aberta,
+    (linha) => String(linha.id),
+    (linha) => abrir(linha),
+  );
   // Montada escondida desde o início: nada (mapas, marcos) antes da primeira abertura.
   if (!e.visitada) return null;
 
@@ -263,6 +271,7 @@ export function TelaDaVisaoGeral({
           aoAbrirCentral={abrirCentral}
           secaoInicial={secaoDaGaveta}
           linhasDaArea={e.linhasDaArea}
+          navegacao={navegacao}
           aoFechar={() => setAberta(null)}
           aoVoltarALinha={() => {
             setAberta(null);

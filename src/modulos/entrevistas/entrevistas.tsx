@@ -24,7 +24,7 @@ import {
   textoDasFontesDoPainel,
 } from "../../lib/entrevistas/entrevistas-do-painel.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
-import { Aviso } from "../../ui/index.ts";
+import { Aviso, usarNavegacaoDaLista } from "../../ui/index.ts";
 import { hojeEmBrasilia } from "../../lib/entrevistas/fila-de-conducao.ts";
 import {
   editalDoRecorte,
@@ -43,7 +43,11 @@ import {
   Recorte,
   Topo,
 } from "./paineis.tsx";
-import { MENSAGEM_SEM_ENTREVISTAS, TabelaDeEntrevistas } from "./tabela.tsx";
+import {
+  MENSAGEM_SEM_ENTREVISTAS,
+  pelaBusca,
+  TabelaDeEntrevistas,
+} from "./tabela.tsx";
 import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
 import "./entrevistas.css";
 
@@ -113,6 +117,7 @@ function TelaDaArea({
   e: SnapshotDasEntrevistas;
 }) {
   const [filtros, setFiltros] = useState<FiltrosDoPainel>(FILTROS_VAZIOS);
+  const [buscaDaTabela, setBuscaDaTabela] = useState("");
   const escuro = usarTemaEscuro();
   const { carregado, dados, area } = e;
 
@@ -148,6 +153,17 @@ function TelaDaArea({
   const editalId = doRecorte?.editalId || "";
   const ativos = filtrosAtivos(filtros, opcoes);
   const aberta = e.gaveta ? entrevistas.find((x) => x.id === e.gaveta) : null;
+  // Anterior/Próximo da gaveta: a tabela como está na tela (filtros e busca).
+  const naTabela = useMemo(
+    () => pelaBusca(filtradas, buscaDaTabela),
+    [filtradas, buscaDaTabela],
+  );
+  const navegacao = usarNavegacaoDaLista(
+    naTabela,
+    e.gaveta,
+    (entrevista) => entrevista.id,
+    (entrevista) => estado.abrirGaveta(entrevista.id),
+  );
   const vazio = carregado && !entrevistas.length;
   const bloqueado = e.semAcesso || e.semSessao;
 
@@ -280,6 +296,8 @@ function TelaDaArea({
             carregado={carregado}
             empates={empates}
             aoAbrir={estado.abrirGaveta}
+            busca={buscaDaTabela}
+            aoBuscar={setBuscaDaTabela}
           />
         </>
       )}
@@ -288,6 +306,7 @@ function TelaDaArea({
         <GavetaDaEntrevista
           entrevista={aberta}
           aoFechar={estado.fecharGaveta}
+          navegacao={navegacao}
         />
       ) : null}
       {e.semEntrevistaAberta ? (

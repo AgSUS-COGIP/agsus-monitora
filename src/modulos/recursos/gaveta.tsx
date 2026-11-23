@@ -133,6 +133,7 @@ export function GavetaDoRecurso({
   area = "",
   somenteLeitura = false,
   aoAnalisar,
+  navegacao,
 }: PropsDaGavetaDoRecurso) {
   const podeEditar = podeEditarNaTela && !somenteLeitura;
   const podeDecidir = podeDecidirNaTela && !somenteLeitura;
@@ -147,6 +148,16 @@ export function GavetaDoRecurso({
   const resposta = detalhe?.resposta;
   const [excluindo, setExcluindo] = useState(false);
   const [motivo, setMotivo] = useState("");
+  /*
+    Anterior/Próximo troca o recurso sem remontar a gaveta (o corpo recomeça
+    pela chave): a exclusão em curso era do recurso de antes.
+  */
+  const [doRecurso, setDoRecurso] = useState(r.id);
+  if (doRecurso !== r.id) {
+    setDoRecurso(r.id);
+    setExcluindo(false);
+    setMotivo("");
+  }
   const carregando = !detalhe;
   const erro = detalhe?.erro;
   const prazo = detalheDoPrazo(r);
@@ -157,6 +168,7 @@ export function GavetaDoRecurso({
       tituloId="recursosGavetaTitulo"
       aoFechar={estado.fecharGaveta}
       alterado={podeExcluir && excluindo && motivo.trim() !== ""}
+      navegacao={navegacao}
       className="recursos-gaveta"
       sobretitulo={`Recurso nº ${r.nu} · ${rotuloDaOrigem(r.origem, origens)}`}
       titulo={r.candidato}

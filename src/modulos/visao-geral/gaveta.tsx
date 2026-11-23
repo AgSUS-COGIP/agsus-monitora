@@ -23,7 +23,13 @@ import {
   statusCanonico,
   urgenciaDoCronograma,
 } from "../../lib/visao-geral/visao-geral.ts";
-import { Gaveta, GradeDeKv, Kv, Secao } from "../../ui/index.ts";
+import {
+  Gaveta,
+  GradeDeKv,
+  Kv,
+  Secao,
+  type PropriedadesDaNavegacaoDaFicha,
+} from "../../ui/index.ts";
 
 /*
   Os detalhes de um processo seletivo (clique na linha da tabela ou num item
@@ -50,6 +56,7 @@ export function GavetaDoProcesso({
   aoAbrirCentral = null,
   secaoInicial = "",
   linhasDaArea = [],
+  navegacao,
 }: {
   linha: LinhaDaVisaoGeral;
   aoFechar: () => void;
@@ -63,6 +70,8 @@ export function GavetaDoProcesso({
   secaoInicial?: string;
   /** As linhas da área: o endereço da página do edital usa o número só se ele não se repete. */
   linhasDaArea?: readonly LinhaDaVisaoGeral[];
+  /** Anterior/Próximo da tabela na tela. */
+  navegacao?: PropriedadesDaNavegacaoDaFicha;
 }) {
   const corpo = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -90,6 +99,7 @@ export function GavetaDoProcesso({
       id="visaoGeralGaveta"
       tituloId="visaoGeralGavetaTitulo"
       aoFechar={aoFechar}
+      navegacao={navegacao}
       className="visao-geral-gaveta"
       sobretitulo="Detalhes do processo"
       titulo={linha.edital || "Processo seletivo"}

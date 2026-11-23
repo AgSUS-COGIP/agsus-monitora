@@ -327,6 +327,7 @@ import {
   ChipsDeFiltro,
   ErroAoCarregar,
   Gaveta,
+  usarNavegacaoDaLista,
   GradeDeKpis,
   Kv,
   LinhaDoRecorte,
@@ -8180,6 +8181,202 @@ bloco("ui/modal-padrao", () => {
       await clicar(botao("Descartar alterações"));
       expect(aoFechar).toHaveBeenCalledTimes(1);
     });
+  });
+});
+
+bloco("ui/navegacao-da-ficha", () => {
+  /*
+    Anterior e Próximo na ficha aberta de uma lista (src/ui/navegacao-da-ficha.tsx):
+    segue a lista como está na tela (filtro e ordem), para nas pontas, ← →
+    fora de campos e, com alteração não salva, trocar pergunta antes.
+  */
+  interface Pessoa {
+    id: string;
+    nome: string;
+  }
+  const TODAS: readonly Pessoa[] = [
+    { id: "p1", nome: "Ana" },
+    { id: "p2", nome: "Bruno" },
+    { id: "p3", nome: "Carla" },
+    { id: "p4", nome: "Davi" },
+  ];
+  let raiz: Root | null = null;
+  let mostrar: (itens: readonly Pessoa[]) => void = () => undefined;
+
+  function Anotacao() {
+    const [texto, setTexto] = useState("");
+    usarAlteradoNoModal(texto !== "");
+    return h("textarea", {
+      id: "anotacao",
+      value: texto,
+      onChange: (evento: ChangeEvent<HTMLTextAreaElement>) =>
+        setTexto(evento.target.value),
+    });
+  }
+
+  function Tela({
+    inicial,
+    abertoInicial,
+  }: {
+    inicial: readonly Pessoa[];
+    abertoInicial: string;
+  }) {
+    const [itens, setItens] = useState(inicial);
+    const [aberto, setAberto] = useState<string | null>(abertoInicial);
+    mostrar = setItens;
+    const navegacao = usarNavegacaoDaLista(
+      itens,
+      aberto,
+      (pessoa) => pessoa.id,
+      (pessoa) => setAberto(pessoa.id),
+    );
+    const pessoa = TODAS.find((p) => p.id === aberto);
+    if (!pessoa) return null;
+    return h(
+      Gaveta,
+      {
+        id: "ficha",
+        titulo: pessoa.nome,
+        aoFechar: () => setAberto(null),
+        navegacao,
+      },
+      // Sem `key` aqui: a gaveta recomeça o corpo a cada item.
+      h(Anotacao, { key: "anotacao" }),
+      h("div", { key: "abas", role: "tablist", id: "abas", tabIndex: 0 }),
+    );
+  }
+
+  async function desenhar(inicial: readonly Pessoa[], abertoInicial: string) {
+    document.body.innerHTML = `<div id="raiz"></div>`;
+    await act(async () => {
+      raiz = createRoot(definido(document.getElementById("raiz")));
+      raiz.render(h(Tela, { inicial, abertoInicial }));
+    });
+  }
+  const titulo = () => document.querySelector("#ficha h2")?.textContent ?? "";
+  const posicao = () =>
+    document.querySelector(".ui-navegacao-da-ficha-posicao")?.textContent ?? "";
+  const anterior = () =>
+    definido(
+      document.querySelector<HTMLElement>('[data-acao="ficha-anterior"]'),
+    );
+  const proximo = () =>
+    definido(
+      document.querySelector<HTMLElement>('[data-acao="ficha-proximo"]'),
+    );
+  const pergunta = () => document.querySelector(".ui-modal-descarte");
+  const botao = (texto: string) =>
+    [...document.querySelectorAll<HTMLElement>("#ficha button")].find(
+      (b) => b.textContent?.trim() === texto,
+    ) ?? null;
+
+  afterEach(async () => {
+    await act(async () => raiz?.unmount());
+    raiz = null;
+    document.body.innerHTML = "";
+  });
+
+  it("Próximo e Anterior trocam o item, com a posição, sem fechar a ficha", async () => {
+    await desenhar(TODAS, "p2");
+    expect(titulo()).toBe("Bruno");
+    expect(posicao()).toBe("2 de 4");
+    expect(proximo().getAttribute("aria-label")).toBe("Próximo");
+
+    await clicar(proximo());
+    expect(titulo()).toBe("Carla");
+    expect(posicao()).toBe("3 de 4");
+    expect(document.querySelectorAll("#ficha").length).toBe(1);
+
+    await clicar(anterior());
+    await clicar(anterior());
+    expect(titulo()).toBe("Ana");
+    expect(posicao()).toBe("1 de 4");
+  });
+
+  it("segue o filtro da lista e para nas pontas", async () => {
+    const filtradas = [TODAS[3]!, TODAS[1]!]; // Davi, Bruno: filtro e ordem da tela
+    await desenhar(filtradas, "p4");
+    expect(posicao()).toBe("1 de 2");
+    expect(anterior().getAttribute("aria-disabled")).toBe("true");
+    await clicar(anterior());
+    expect(titulo()).toBe("Davi");
+
+    await clicar(proximo());
+    expect(titulo()).toBe("Bruno");
+    expect(posicao()).toBe("2 de 2");
+    expect(proximo().getAttribute("aria-disabled")).toBe("true");
+    await clicar(proximo());
+    await teclar(document.body, "ArrowRight");
+    expect(titulo()).toBe("Bruno");
+  });
+
+  it("o item que sai da lista (decidido no filtro de pendentes) leva ao seguinte", async () => {
+    await desenhar(TODAS, "p2");
+    await act(async () => mostrar([TODAS[0]!, TODAS[2]!, TODAS[3]!]));
+    expect(titulo()).toBe("Bruno");
+    expect(posicao()).toBe("3 na lista");
+    await clicar(proximo());
+    expect(titulo()).toBe("Carla");
+    expect(posicao()).toBe("2 de 3");
+  });
+
+  it("ao abrir, o foco vai ao fechar, não à navegação", async () => {
+    await desenhar(TODAS, "p2");
+    expect(document.activeElement).toBe(
+      document.querySelector(".ui-gaveta-fechar:not([data-acao])"),
+    );
+    expect(document.activeElement?.getAttribute("aria-label")).toBe("Fechar");
+  });
+
+  it("lista de um item só não mostra a navegação", async () => {
+    await desenhar([TODAS[0]!], "p1");
+    expect(document.querySelector(".ui-navegacao-da-ficha")).toBeNull();
+  });
+
+  it("← e → navegam, mas não dentro de campo de texto nem de abas", async () => {
+    await desenhar(TODAS, "p2");
+    await teclar(document.body, "ArrowRight");
+    expect(titulo()).toBe("Carla");
+    await teclar(document.body, "ArrowLeft");
+    expect(titulo()).toBe("Bruno");
+
+    await teclar(definido(document.getElementById("anotacao")), "ArrowRight");
+    expect(titulo()).toBe("Bruno");
+    await teclar(definido(document.getElementById("abas")), "ArrowRight");
+    expect(titulo()).toBe("Bruno");
+    await teclar(document.body, "ArrowRight", { altKey: true });
+    expect(titulo()).toBe("Bruno");
+  });
+
+  it("com alteração, trocar pergunta; Continuar editando fica, Descartar troca", async () => {
+    await desenhar(TODAS, "p2");
+    await digitar(document.getElementById("anotacao"), "nota");
+    await clicar(proximo());
+    expect(titulo()).toBe("Bruno");
+    expect(definido(pergunta()).textContent).toContain(
+      "Descartar as alterações?",
+    );
+    // Com a pergunta na tela, as setas não trocam.
+    await teclar(document.body, "ArrowRight");
+    expect(titulo()).toBe("Bruno");
+
+    await clicar(botao("Continuar editando"));
+    expect(pergunta()).toBeNull();
+    expect(
+      (document.getElementById("anotacao") as HTMLTextAreaElement).value,
+    ).toBe("nota");
+
+    await teclar(document.body, "ArrowRight");
+    expect(pergunta()).not.toBeNull();
+    await clicar(botao("Descartar alterações"));
+    expect(titulo()).toBe("Carla");
+    expect(pergunta()).toBeNull();
+    expect(
+      (document.getElementById("anotacao") as HTMLTextAreaElement).value,
+    ).toBe("");
+    // O formulário voltou limpo: a próxima troca não pergunta.
+    await clicar(proximo());
+    expect(titulo()).toBe("Davi");
   });
 });
 

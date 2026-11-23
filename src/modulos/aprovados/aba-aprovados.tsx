@@ -4,10 +4,7 @@ import type {
   PropsDaAbaDeAprovados,
 } from "./tipos-da-aba-de-aprovados.ts";
 import type { ConvocacoesDaTabela } from "./tipos-da-aba-de-convocacao.ts";
-import type {
-  ChaveDaOrdemDosAprovados,
-  OrdemDosAprovados,
-} from "../../lib/aprovados/ordem-dos-aprovados.ts";
+import type { ChaveDaOrdemDosAprovados } from "../../lib/aprovados/ordem-dos-aprovados.ts";
 import {
   memo,
   useCallback,
@@ -24,11 +21,7 @@ import {
   nomeDosCandidatosFiltrados,
   summarizeApprovedCandidates,
 } from "../../lib/aprovados/lista-aprovados-rules.ts";
-import {
-  SEM_ORDEM,
-  ordenarAprovados,
-  proximaOrdemDosAprovados,
-} from "../../lib/aprovados/ordem-dos-aprovados.ts";
+import { ordenarAprovados } from "../../lib/aprovados/ordem-dos-aprovados.ts";
 import { formatNumberBR } from "../../lib/base/formatters";
 import {
   acoesDaLinhaDoAprovado,
@@ -107,7 +100,7 @@ import { ModalDoStatusEmLote } from "./status-em-lote.tsx";
 const text = (value: unknown) => String(value ?? "").trim();
 
 /* A busca da tabela: nome, cargo, edital… (a regra do filtro). Estável, de módulo. */
-const pelaBusca = (
+export const pelaBusca = (
   linhas: readonly CandidatoDaTabelaDeAprovados[],
   busca: string,
 ) =>
@@ -314,8 +307,9 @@ export function AbaAprovados({
   linhas,
   busca,
   aoBuscar,
+  ordem,
+  aoOrdenar,
 }: PropsDaAbaDeAprovados) {
-  const [ordem, setOrdem] = useState<OrdemDosAprovados>(SEM_ORDEM);
   const chaveDosFiltros = JSON.stringify(filtros);
   const resumo = useMemo(
     () => summarizeApprovedCandidates(candidatos, filtros),
@@ -334,12 +328,11 @@ export function AbaAprovados({
               ...coluna,
               chave,
               ordem: ordem.chave === chave ? ordem.sentido : "",
-              aoOrdenar: () =>
-                setOrdem((atual) => proximaOrdemDosAprovados(atual, chave)),
+              aoOrdenar: () => aoOrdenar(chave),
             }
           : coluna,
       ),
-    [ordem],
+    [ordem, aoOrdenar],
   );
   const carregando = !carregado && !erroAoCarregar;
 

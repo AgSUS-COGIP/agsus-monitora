@@ -11,7 +11,14 @@ import {
 import { espelhoDoDetalhe } from "../../lib/analises/espelho-do-painel-de-analises.ts";
 import { mesclarDetalhe } from "../../lib/analises/lista-do-painel-de-analises.ts";
 import { linhaSemParecer } from "../../lib/analises/textos-do-painel-de-analises.ts";
-import { Gaveta, GradeDeKv, Kv, Secao, Selo } from "../../ui/index.ts";
+import {
+  Gaveta,
+  GradeDeKv,
+  Kv,
+  Secao,
+  Selo,
+  type PropriedadesDaNavegacaoDaFicha,
+} from "../../ui/index.ts";
 import { EspelhoNaGaveta } from "./espelho-na-gaveta.tsx";
 
 /*
@@ -62,11 +69,14 @@ export function GavetaDaAnalise({
   area,
   aoFechar,
   aoTentarDeNovo,
+  navegacao,
 }: {
   linha: LinhaDaAnalise;
   detalhe?: DetalheDaAnalise;
   area: string;
   aoFechar(): void;
+  /** Anterior/Próximo da fila na tela. */
+  navegacao?: PropriedadesDaNavegacaoDaFicha;
   aoTentarDeNovo(): void;
 }) {
   const situacao = detalhe?.situacao;
@@ -88,6 +98,7 @@ export function GavetaDaAnalise({
       id="analisesGaveta"
       tituloId="analisesGavetaTitulo"
       aoFechar={aoFechar}
+      navegacao={navegacao}
       sobretitulo="Análise curricular"
       titulo={d.titulo}
       rotuloDoFechar="Fechar detalhamento"

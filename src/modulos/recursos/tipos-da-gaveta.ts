@@ -1,3 +1,4 @@
+import type { PropriedadesDaNavegacaoDaFicha } from "../../ui/index.ts";
 import type {
   RecursoDoPainel,
   IdentificadorDoRecurso,
@@ -71,4 +72,6 @@ export interface PropsDaGavetaDoRecurso extends Omit<
   somenteLeitura?: boolean;
   /** Painel de recursos, para quem analisa: abre o recurso em Analisar recursos. */
   aoAnalisar?: () => void;
+  /** Anterior/Próximo da fila na tela. */
+  navegacao?: PropriedadesDaNavegacaoDaFicha;
 }

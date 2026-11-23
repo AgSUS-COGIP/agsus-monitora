@@ -77,11 +77,13 @@ import {
   Segmentado,
   Selo,
   TabelaDaLista,
+  usarNavegacaoDaLista,
 } from "../../ui/index.ts";
 import type {
   AcaoDoMenu,
   ColunaDaTabela,
   ItemDaFaixa,
+  PropriedadesDaNavegacaoDaFicha,
 } from "../../ui/index.ts";
 import { CarregandoConteudo } from "../../ui/index.ts";
 
@@ -517,6 +519,7 @@ function GavetaDoCandidato({
   podeEditar,
   aoSalvarHora,
   aoFechar,
+  navegacao,
 }: {
   explicacao: ExplicacaoDoCandidato;
   vaga?: VagaDoResultado;
@@ -525,6 +528,8 @@ function GavetaDoCandidato({
   podeEditar: boolean;
   aoSalvarHora: EstadoDaClassificacao["salvarHoraDeNascimento"];
   aoFechar: () => void;
+  /** Anterior/Próximo da tabela na tela. */
+  navegacao?: PropriedadesDaNavegacaoDaFicha;
 }) {
   const posicoes = Object.entries(explicacao.posicoes || {});
   return (
@@ -540,6 +545,7 @@ function GavetaDoCandidato({
       }
       rotuloDoFechar="Fechar a explicação"
       aoFechar={aoFechar}
+      navegacao={navegacao}
     >
       <div className="ui-gaveta-corpo">
         {explicacao.elegivel ? (
@@ -1440,6 +1446,26 @@ export function Listas({
   );
   const linhasDaTabela = useMemo(() => linhasDasVagas(vagas), [vagas]);
   const [recolhidas, setRecolhidas] = useState(() => new Set<string>());
+  /*
+    Anterior/Próximo da gaveta: as pessoas da tabela como está na tela
+    (recorte, busca e ordem do motor), sem as vagas recolhidas e só quem tem
+    a explicação.
+  */
+  const abriveis = useMemo(
+    () =>
+      linhasDaTabela.filter(
+        (linha) =>
+          !recolhidas.has(linha.vaga) &&
+          Boolean(resultado?.explicacoes[linha.l.analiseId]),
+      ),
+    [linhasDaTabela, recolhidas, resultado],
+  );
+  const navegacao = usarNavegacaoDaLista(
+    abriveis,
+    aberto,
+    (linha) => linha.l.analiseId,
+    (linha) => setAberto(linha.l.analiseId),
+  );
   const cabecalhosDasVagas = useMemo(
     () => new Map(vagas.map((v) => [v.chave, v])),
     [vagas],
@@ -1656,6 +1682,7 @@ export function Listas({
           podeEditar={e.podeEditar}
           aoSalvarHora={estado.salvarHoraDeNascimento}
           aoFechar={() => setAberto("")}
+          navegacao={navegacao}
         />
       ) : null}
       {pendencia ? (

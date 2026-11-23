@@ -37,6 +37,12 @@ import { classes } from "./classes.ts";
   dentro da gaveta) avisa com `usarAlteradoNoModal(mudou)`, sem subir o
   estado: o modal pergunta se ele ou qualquer filho tem alteração.
 
+  Trocar o item à vista sem fechar (Anterior/Próximo da ficha,
+  src/ui/navegacao-da-ficha.tsx) passa pela mesma pergunta:
+  `usarTrocarNoModal()(ir)` chama `ir` direto sem alteração; com alteração,
+  "Descartar alterações" chama `ir` e o modal continua aberto (quem usa troca
+  o conteúdo com `key`, e o formulário volta limpo).
+
   Sem título visível (a busca global), `rotulo` dá o nome do diálogo.
 
   `tamanho` (pequeno, medio, grande) é o modal padrão: o cartão ganha o
@@ -73,12 +79,29 @@ const focaveisDe = (cartao: HTMLElement) =>
 /* O modal em volta: fechar (com a pergunta) e os filhos com alteração. */
 const DoModal = createContext<{
   fechar: () => void;
+  trocar: (ir: () => void) => void;
+  /** O teclado é deste modal: é o de cima e não há pergunta na tela. */
+  livre: () => boolean;
   marcar: (filho: string, alterado: boolean) => void;
 } | null>(null);
 
 /** O fechar do modal em volta (com a pergunta de descarte); fora de um modal, `null`. */
 export function usarFecharModal() {
   return useContext(DoModal)?.fechar ?? null;
+}
+
+/**
+ * Trocar o que o modal mostra (o próximo da lista) passando pela pergunta de
+ * descarte; fora de um modal, `null`.
+ */
+export function usarTrocarNoModal() {
+  return useContext(DoModal)?.trocar ?? null;
+}
+
+/** Se o teclado é deste modal agora (o de cima, sem pergunta); fora dele, sempre. */
+export function usarTecladoDoModal() {
+  const modal = useContext(DoModal);
+  return modal ? modal.livre : () => true;
 }
 
 /** Um filho com formulário próprio diz ao modal em volta que tem alteração. */
@@ -147,6 +170,9 @@ export function Modal({
   const mudou = alterado || filhosAlterados.length > 0;
   const perguntando = confirmando && mudou;
   const idDaPergunta = useId();
+  /* O que "Descartar alterações" faz: fechar, ou ir ao item pedido. */
+  const aoConfirmar = useRef<(() => void) | null>(null);
+  const eu = useRef({});
 
   /*
     Esc e os botões de fechar passam por aqui. Com a pergunta na tela, volta à
@@ -154,16 +180,40 @@ export function Modal({
   */
   function pedirParaFechar() {
     if (perguntando) setConfirmando(false);
-    else if (mudou) setConfirmando(true);
-    else aoFechar();
+    else if (mudou) {
+      aoConfirmar.current = null;
+      setConfirmando(true);
+    } else aoFechar();
+  }
+  /* Trocar de item: sem mudança, vai direto; com mudança, pergunta. */
+  function pedirParaTrocar(ir: () => void) {
+    if (perguntando) return;
+    if (mudou) {
+      aoConfirmar.current = ir;
+      setConfirmando(true);
+    } else ir();
+  }
+  function descartar() {
+    const ir = aoConfirmar.current;
+    aoConfirmar.current = null;
+    if (ir) {
+      setConfirmando(false);
+      ir();
+    } else (aoDescartar || aoFechar)();
   }
   const fechar = useRef(pedirParaFechar);
+  const trocar = useRef(pedirParaTrocar);
+  const livre = useRef(() => !perguntando);
   useLayoutEffect(() => {
     fechar.current = pedirParaFechar;
+    trocar.current = pedirParaTrocar;
+    livre.current = () => !perguntando && ABERTOS.at(-1) === eu.current;
   });
   const doModal = useMemo(
     () => ({
       fechar: () => fechar.current(),
+      trocar: (ir: () => void) => trocar.current(ir),
+      livre: () => livre.current(),
       marcar: (filho: string, sim: boolean) =>
         setFilhosAlterados((atuais) =>
           sim
@@ -182,17 +232,20 @@ export function Modal({
 
   useEffect(() => {
     const anterior = document.activeElement as HTMLElement | null;
+    // O Anterior/Próximo da ficha não recebe o foco ao abrir: o fechar, sim.
     const inicial =
       cartao.current?.querySelector<HTMLElement>("[data-foco-inicial]") ||
-      focaveisDe(cartao.current!)[0];
+      focaveisDe(cartao.current!).find(
+        (elemento) => !elemento.closest(".ui-navegacao-da-ficha"),
+      );
     inicial?.focus();
-    const eu = {};
-    ABERTOS.push(eu);
+    const meu = eu.current;
+    ABERTOS.push(meu);
 
     function aoTeclar(evento: KeyboardEvent) {
       // Modal aberto por cima de outro (a montagem do parecer sobre a gaveta):
       // Esc e Tab são só do de cima.
-      if (ABERTOS.at(-1) !== eu) return;
+      if (ABERTOS.at(-1) !== meu) return;
       if (evento.key === "Escape") {
         // Um controle de dentro (menu aberto) já tratou o Esc: só ele fecha.
         if (!evento.defaultPrevented) fechar.current();
@@ -222,7 +275,7 @@ export function Modal({
     document.addEventListener("keydown", aoTeclar);
     return () => {
       document.removeEventListener("keydown", aoTeclar);
-      ABERTOS.splice(ABERTOS.indexOf(eu), 1);
+      ABERTOS.splice(ABERTOS.indexOf(meu), 1);
       if (anterior?.isConnected) anterior.focus?.();
     };
   }, []);
@@ -269,11 +322,7 @@ export function Modal({
               >
                 Continuar editando
               </button>
-              <button
-                className="btn danger"
-                type="button"
-                onClick={aoDescartar || aoFechar}
-              >
+              <button className="btn danger" type="button" onClick={descartar}>
                 Descartar alterações
               </button>
             </div>

@@ -1033,6 +1033,33 @@ th[aria-sort="descending"] .ui-ordenar i {
   background: var(--surface-hover);
   color: var(--text-primary);
 }
+.ui-gaveta-fechar[aria-disabled="true"] {
+  color: var(--color-text-disabled);
+  cursor: not-allowed;
+}
+.ui-gaveta-fechar[aria-disabled="true"]:hover {
+  background: transparent;
+}
+/* O fechar e, numa ficha aberta de uma lista, ‹ "3 de 41" ›. */
+.ui-gaveta-topo-acoes {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--space-2);
+}
+.ui-navegacao-da-ficha {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-0-5);
+}
+.ui-navegacao-da-ficha-posicao {
+  min-width: 4.5em;
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  white-space: nowrap;
+}
 /* Os dados de contexto, em cartões pequenos, logo abaixo do topo. */
 .ui-gaveta-contexto {
   display: grid;
