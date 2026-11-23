@@ -111,7 +111,12 @@ export type {
   AcaoDoMenu,
   PropriedadesDoMenuDeAcoes,
 } from "./menu-de-acoes.tsx";
-export { Modal } from "./modal.tsx";
+export {
+  FecharModal,
+  Modal,
+  usarAlteradoNoModal,
+  usarFecharModal,
+} from "./modal.tsx";
 export type { PropriedadesDoModal } from "./modal.tsx";
 export {
   CampoNomeDaVersao,

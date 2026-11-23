@@ -2,7 +2,7 @@ import { useState, useSyncExternalStore, type FormEvent } from "react";
 import { gruposAtribuiveis } from "../../lib/acessos/teto-de-acessos.ts";
 import { coordenacoesPorArea } from "../../lib/acessos/grupos-e-coordenacoes.ts";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
-import { BotaoDeAcao, Campo, Modal } from "../../ui/index.ts";
+import { BotaoDeAcao, Campo, FecharModal, Modal } from "../../ui/index.ts";
 import { CabecalhoDaGaveta, CampoMotivo, motivoValido } from "./partes.tsx";
 import { AcoesDoConvite } from "./convite.tsx";
 import {
@@ -76,6 +76,16 @@ export function ModalAdicionarPessoa({
     areas.length === 1 && areas[0]?.id ? [areas[0].id] : [],
   );
   const [motivo, setMotivo] = useState("");
+  /* O formulário como abriu: fechar com algo diferente pergunta antes. */
+  const preenchido = JSON.stringify([
+    email,
+    nome,
+    grupo,
+    coordenacao,
+    areasEscolhidas,
+    motivo,
+  ]);
+  const [vazio] = useState(preenchido);
   const [tentou, setTentou] = useState(false);
   /** { nome, email, reativada } depois de gravar: passo "Convite pronto". */
   const [convite, setConvite] = useState<ConvitePronto | null>(null);
@@ -131,7 +141,6 @@ export function ModalAdicionarPessoa({
               ? `O acesso de ${convite.nome} foi reativado.`
               : `${convite.nome} já pode entrar.`
           }
-          aoFechar={estado.fecharAdicionar}
         />
         <div className="acessos-modal-corpo">
           <AcoesDoConvite nome={convite.nome} email={convite.email} />
@@ -157,12 +166,11 @@ export function ModalAdicionarPessoa({
       className="acessos-modal"
       cartaoClassName="acessos-modal-cartao"
       aoFechar={estado.fecharAdicionar}
-      fecharAoClicarFora={false}
+      alterado={preenchido !== vazio}
     >
       <CabecalhoDaGaveta
         tituloId="acessosAdicionarTitulo"
         titulo="Adicionar pessoa"
-        aoFechar={estado.fecharAdicionar}
       />
       <form
         className="acessos-modal-corpo"
@@ -249,13 +257,7 @@ export function ModalAdicionarPessoa({
           erro={tentou && !motivoValido(motivo)}
         />
         <div className="ui-acoes acessos-modal-rodape">
-          <button
-            type="button"
-            className="btn ghost"
-            onClick={estado.fecharAdicionar}
-          >
-            Cancelar
-          </button>
+          <FecharModal className="btn ghost">Cancelar</FecharModal>
           <BotaoDeAcao
             estado={estado}
             acao="adicionar"

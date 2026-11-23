@@ -31,9 +31,11 @@ import {
   Aviso,
   BarraDeSelecao,
   Campo,
+  FecharModal,
   Gaveta,
   Modal,
   Selo,
+  usarAlteradoNoModal,
 } from "../../ui/index.ts";
 import "./encerrados-do-cronograma.css";
 
@@ -348,6 +350,7 @@ function LinhaDoEncerrado({
   const fim = dataDoFim(edital.fim);
   const tratamento = edital.aviso?.tratamento as Tratamento | undefined;
   const erroDaJustificativa = erroDoMotivoDoLote(justificativa);
+  usarAlteradoNoModal(dispensando && justificativa.trim() !== "");
 
   async function dispensar() {
     setTentou(true);
@@ -523,7 +526,7 @@ function ConfirmacaoDoLote({
       aoFechar={() => {
         if (!gravando) aoFechar();
       }}
-      fecharAoClicarFora={false}
+      alterado={motivo.trim() !== ""}
       tamanho="medio"
       cartaoClassName="editais-encerrados-confirmacao"
     >
@@ -564,14 +567,9 @@ function ConfirmacaoDoLote({
         </Aviso>
       ) : null}
       <div className="ui-acoes">
-        <button
-          type="button"
-          className="btn secondary"
-          disabled={gravando}
-          onClick={aoFechar}
-        >
+        <FecharModal className="btn secondary" disabled={gravando}>
           Cancelar
-        </button>
+        </FecharModal>
         <button
           type="button"
           className="btn"

@@ -52,6 +52,7 @@ import {
   CampoNomeDaVersao,
   Carregando,
   EstadoVazio,
+  FecharModal,
   Gaveta,
   NomeDaVersao,
   nomeDoCampo,
@@ -706,7 +707,10 @@ export function EditorDeRoteiro({
   const [tentou, setTentou] = useState(false);
   const [erroDoBanco, setErroDoBanco] = useState("");
   const [nomeDaVersao, setNomeDaVersao] = useState<string | null>(null);
-  /* O rascunho com que o editor abriu: com mudança, fechar pede confirmação. */
+  /*
+    O rascunho com que o editor abriu: com mudança, fechar pergunta pela faixa
+    de descarte da gaveta, e a guarda do app segura o F5 e a versão nova.
+  */
   const [inicial] = useState(r);
   const alterado =
     !somenteLeitura &&
@@ -721,15 +725,6 @@ export function EditorDeRoteiro({
       }),
     [],
   );
-  function fechar() {
-    if (
-      alteradoRef.current &&
-      globalThis.confirm?.("Fechar o roteiro sem salvar as alterações?") !==
-        true
-    )
-      return;
-    aoFechar();
-  }
   const [hoje] = useState(() => new Date());
   const sugestaoDoNome = sugerirNomeDaVersao({
     tipo: "roteiro",
@@ -844,8 +839,8 @@ export function EditorDeRoteiro({
     <Gaveta
       id="entrevistasEditorDeRoteiro"
       tituloId="entrevistasEditorDeRoteiroTitulo"
-      aoFechar={fechar}
-      fecharAoClicarFora={somenteLeitura}
+      aoFechar={aoFechar}
+      alterado={alterado}
       className="entrevistas-gaveta"
       cartaoClassName="entrevistas-gaveta-larga"
       sobretitulo={sobretitulo}
@@ -1137,9 +1132,9 @@ export function EditorDeRoteiro({
           <span className="entrevistas-rodape-resumo">
             {textoDaPontuacao(r)}
           </span>
-          <button type="button" className="btn secondary" onClick={fechar}>
+          <FecharModal className="btn secondary">
             {somenteLeitura ? "Fechar" : "Cancelar"}
-          </button>
+          </FecharModal>
           {somenteLeitura ? null : (
             <button
               type="submit"

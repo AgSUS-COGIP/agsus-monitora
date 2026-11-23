@@ -25,10 +25,12 @@ import {
   Carregando,
   ErroAoCarregar,
   EstadoVazio,
+  FecharModal,
   Modal,
   Segmentado,
   Selo,
   classes,
+  usarAlteradoNoModal,
 } from "../../../ui/index.ts";
 import { dadosFicticios } from "./dados-ficticios.ts";
 import { FormularioDoBloco, SeloDaFonte, type Mudar } from "./blocos.tsx";
@@ -99,7 +101,10 @@ const Rotulo = ({
 export interface PropriedadesDoEditorDoParecer {
   fonte: FonteDoParecer;
   recursoId: string | number;
-  /** Fecha a montagem (o "x" do topo); sem ele, não há botão de fechar. */
+  /**
+   * Fecha a montagem (o "x" do topo, pela pergunta de descarte do modal em
+   * volta); sem ele, não há botão de fechar.
+   */
   aoFechar?: () => void;
   /** Dados fictícios: o selo "Protótipo" e o salvar desligado. */
   prototipo?: boolean;
@@ -117,6 +122,8 @@ export function EditorDoParecer({
   aoMudarRascunho,
 }: PropriedadesDoEditorDoParecer) {
   const [estado, setEstado] = useState<Estado | null>(null);
+  /* O rascunho como chegou: mudou, o modal em volta pergunta antes de fechar. */
+  const [carregado, setCarregado] = useState("");
   const [erro, setErro] = useState("");
   const [tentativa, setTentativa] = useState(0);
   const [visao, setVisao] = useState<"formulario" | "previa">("formulario");
@@ -131,6 +138,7 @@ export function EditorDoParecer({
         if (!vivo) return;
         const inicial = rascunhoInicial(dados);
         setEstado({ ...inicial, textos: textosDoModelo(dados.textos) });
+        setCarregado(JSON.stringify(inicial.rascunho));
         setErro("");
       })
       .catch(
@@ -148,6 +156,9 @@ export function EditorDoParecer({
   useEffect(() => {
     if (estado) aoMudarRascunho?.(estado.rascunho);
   }, [estado, aoMudarRascunho]);
+  usarAlteradoNoModal(
+    Boolean(estado) && JSON.stringify(estado?.rascunho) !== carregado,
+  );
 
   if (erro)
     return (
@@ -235,15 +246,13 @@ export function EditorDoParecer({
           aoMudar={(v) => setVisao(v as typeof visao)}
         />
         {aoFechar ? (
-          <button
-            type="button"
+          <FecharModal
             className="ui-gaveta-fechar"
             aria-label="Fechar a montagem do parecer"
             title="Fechar"
-            onClick={aoFechar}
           >
             <i className="fa-solid fa-xmark" aria-hidden="true" />
-          </button>
+          </FecharModal>
         ) : null}
       </header>
 
@@ -789,7 +798,6 @@ export function MontarParecer(
     <Modal
       rotuloId="parecerMontagemTitulo"
       aoFechar={props.aoFechar}
-      fecharAoClicarFora={false}
       className="parecer-montagem-fundo"
       cartaoClassName="parecer-montagem-cartao"
     >

@@ -4,7 +4,12 @@ import type {
   PedidoDaExportacao,
 } from "../../../lib/aprovados/exportacao/exportacao-da-lista-de-aprovados.ts";
 import { useEffect, useRef, useState } from "react";
-import { BotaoDeAcao, Modal, Segmentado } from "../../../ui/index.ts";
+import {
+  BotaoDeAcao,
+  FecharModal,
+  Modal,
+  Segmentado,
+} from "../../../ui/index.ts";
 import {
   contarRegistros,
   FORMATOS_DA_EXPORTACAO,
@@ -106,9 +111,7 @@ export function ModalDaExportacao({
             · {pedido.rotuloDaArea}
           </p>
         </div>
-        <button className="btn secondary" type="button" onClick={aoFechar}>
-          Fechar
-        </button>
+        <FecharModal className="btn secondary">Fechar</FecharModal>
       </div>
       <div className="modal-body">
         <ul className="approved-export-filtros" data-export-filtros>
@@ -143,9 +146,7 @@ export function ModalDaExportacao({
           aoMudar={setFormato}
         />
         <div className="approved-modal-actions">
-          <button className="btn secondary" type="button" onClick={aoFechar}>
-            Cancelar
-          </button>
+          <FecharModal className="btn secondary">Cancelar</FecharModal>
           <BotaoDeAcao
             estado={estado}
             acao="exportar"

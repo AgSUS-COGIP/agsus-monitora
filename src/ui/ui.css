@@ -896,8 +896,12 @@ th[aria-sort="descending"] .ui-ordenar i {
 .modal-card.ui-modal-grande {
   --largura-do-modal: 960px;
 }
-/* O formulário (ou o bloco) que envolve o conteúdo segue a mesma coluna. */
-.modal-card.ui-modal > :is(form, div):only-child {
+/* O formulário (ou o bloco) que envolve o conteúdo segue a mesma coluna
+   (também com a pergunta de descarte acima dele). */
+.modal-card.ui-modal > :is(form, div):not(.ui-modal-descarte):only-child,
+.modal-card.ui-modal
+  > .ui-modal-descarte:first-child
+  + :is(form, div):last-child {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-content: start;
@@ -919,6 +923,40 @@ th[aria-sort="descending"] .ui-ordenar i {
 .modal-card.ui-modal .ui-acoes {
   justify-content: flex-end;
   padding-top: var(--space-2);
+}
+
+/*
+  A pergunta "Descartar as alterações?" (<Modal alterado>): faixa no alto do
+  cartão, fixa ao rolar, por cima do cabeçalho do modal ou da gaveta.
+*/
+.ui-modal-descarte {
+  position: sticky;
+  top: 0;
+  z-index: calc(var(--z-sticky, 100) + 1);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  background: var(--state-danger-soft);
+  box-shadow: var(--shadow-raised);
+  color: var(--state-danger);
+  font-size: var(--text-body);
+}
+.modal-card.ui-modal > .ui-modal-descarte {
+  margin: 0;
+}
+.ui-modal-descarte p {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-body-sm);
+}
+.ui-modal-descarte-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
 /* ── Gaveta (o <Modal> do app, encostado à direita) ─────────────────── */

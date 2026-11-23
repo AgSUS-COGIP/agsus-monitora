@@ -10,7 +10,7 @@ import {
 import type { VersaoComNome } from "../lib/base/nome-da-versao.ts";
 import { Aviso } from "./aviso.tsx";
 import { Campo } from "./campo.tsx";
-import { Modal } from "./modal.tsx";
+import { FecharModal, Modal } from "./modal.tsx";
 
 /*
   O nome das versões das três regras (avaliação documental, classificação e
@@ -188,6 +188,7 @@ export function RenomearVersao({
         <Modal
           rotulo="Renomear a versão"
           aoFechar={() => setAberto(false)}
+          alterado={!igual || motivo.trim() !== ""}
           tamanho="medio"
         >
           <h2 className="ui-titulo">
@@ -226,13 +227,7 @@ export function RenomearVersao({
             />
           </Campo>
           <div className="ui-acoes">
-            <button
-              type="button"
-              className="btn secondary"
-              onClick={() => setAberto(false)}
-            >
-              Cancelar
-            </button>
+            <FecharModal className="btn secondary">Cancelar</FecharModal>
             <button
               type="button"
               className="btn"

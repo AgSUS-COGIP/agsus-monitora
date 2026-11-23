@@ -9,8 +9,8 @@ import { assinarSaida, obterSaida, responderASaida } from "./saida.ts";
   `data-shell-logout-*` são os mesmos.
 
   Aberto, o foco vai para "Continuar no sistema" (a opção segura), o Tab
-  fica entre os dois botões, Esc e o fundo cancelam, e ao fechar o foco volta
-  para quem abriu.
+  fica entre os dois botões, Esc cancela, e ao fechar o foco volta para quem
+  abriu. Clicar no fundo não fecha, como em todo modal do sistema (`ui/modal.tsx`).
 */
 export function ConfirmacaoDeSaida() {
   const { perguntando, comRascunho, saindo } = useSyncExternalStore(
@@ -59,11 +59,7 @@ export function ConfirmacaoDeSaida() {
         className="shell-confirm-layer"
         hidden={!perguntando}
       >
-        <div
-          className="shell-confirm-backdrop"
-          data-shell-logout-cancel=""
-          onClick={() => responderASaida(false)}
-        ></div>
+        <div className="shell-confirm-backdrop"></div>
         <section
           className="shell-confirm-dialog"
           role="dialog"

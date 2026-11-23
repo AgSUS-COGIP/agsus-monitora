@@ -20,6 +20,7 @@ import {
   BlocosEsqueleto,
   BotaoDeAcao,
   Campo,
+  FecharModal,
   Modal,
   Segmentado,
 } from "../../../ui/index.ts";
@@ -199,7 +200,10 @@ export function ModalDaCarta({
       id="cartaModal"
       rotuloId="cartaTitulo"
       aoFechar={fechar}
-      fecharAoClicarFora={false}
+      // Texto editado ou candidato tirado, antes de emitir: fechar pergunta.
+      alterado={
+        !emitida && (Object.keys(valores).length > 0 || candidatos !== iniciais)
+      }
       cartaoClassName="carta-modal"
     >
       <div className="modal-head">
@@ -209,9 +213,7 @@ export function ModalDaCarta({
             {titulo}
           </p>
         </div>
-        <button className="btn secondary" type="button" onClick={fechar}>
-          Fechar
-        </button>
+        <FecharModal className="btn secondary">Fechar</FecharModal>
       </div>
 
       {carta.carregando && !carta.carregado ? (

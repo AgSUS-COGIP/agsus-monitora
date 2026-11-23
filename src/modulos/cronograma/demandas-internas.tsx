@@ -19,7 +19,7 @@ import { registroDoCalendario } from "../../lib/cronograma/calendario-editais.ts
 import { formatarDataHora } from "../../lib/cronograma/cronograma-do-edital.ts";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
-import { Aviso, Campo, Modal, classes } from "../../ui/index.ts";
+import { Aviso, Campo, FecharModal, Modal, classes } from "../../ui/index.ts";
 import "./demandas-internas.css";
 
 /*
@@ -381,9 +381,8 @@ function FormularioDeDemanda({
   aoSalvar: (demanda: DemandaInterna) => void;
 }) {
   const idDoTitulo = useId();
-  const [formulario, setFormulario] = useState<FormularioDaDemanda>(() =>
-    formularioDaDemanda(demanda, area),
-  );
+  const [inicial] = useState(() => formularioDaDemanda(demanda, area));
+  const [formulario, setFormulario] = useState<FormularioDaDemanda>(inicial);
   const [pessoas, setPessoas] = useState<PessoaDaDemanda[]>(
     () => demanda?.responsaveis || [],
   );
@@ -472,8 +471,8 @@ function FormularioDeDemanda({
       id="demandaFormulario"
       tamanho="medio"
       rotuloId={idDoTitulo}
-      fecharAoClicarFora={false}
       aoFechar={aoFechar}
+      alterado={JSON.stringify(formulario) !== JSON.stringify(inicial)}
     >
       <h3 id={idDoTitulo}>{demanda ? "Editar demanda" : "Nova demanda"}</h3>
       <div className="ui-grade-de-campos">
@@ -562,9 +561,7 @@ function FormularioDeDemanda({
         </Aviso>
       ) : null}
       <div className="ui-acoes">
-        <button type="button" className="btn secondary" onClick={aoFechar}>
-          Cancelar
-        </button>
+        <FecharModal className="btn secondary">Cancelar</FecharModal>
         <button
           id="demandaSalvar"
           type="button"

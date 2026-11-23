@@ -22,8 +22,10 @@ import {
   Aviso,
   BotaoDeAcao,
   classes,
+  FecharModal,
   Modal,
   Selo,
+  usarAlteradoNoModal,
 } from "../../ui/index.ts";
 import { abrirRegrasDoEdital } from "../regras-do-edital/abrir.ts";
 import { ResumoDaChamada } from "./chamada-para-contratacao.tsx";
@@ -209,6 +211,8 @@ function PainelDoArquivo({
     setEscolhida(situacao);
   }
   const ativo = escolhida !== "false";
+  // Prévia à espera de confirmação ou situação trocada: fechar pergunta antes.
+  usarAlteradoNoModal(previa !== null || escolhida !== situacao);
 
   return (
     <div
@@ -469,9 +473,7 @@ export function ModalListasDoEdital({
             {rotulo || "Edital"}
           </p>
         </div>
-        <button className="btn secondary" type="button" onClick={fechar}>
-          Fechar
-        </button>
+        <FecharModal className="btn secondary">Fechar</FecharModal>
       </div>
       <div className="modal-body">
         <Abas

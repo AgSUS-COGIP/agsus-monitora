@@ -18,7 +18,13 @@ import {
   type TextosDoEspelho,
 } from "../../lib/avaliacao-documental/modelo-do-espelho.ts";
 import { formatarDataHora } from "../../lib/cronograma/cronograma-do-edital.ts";
-import { Aviso, Campo, Carregando, Segmentado } from "../../ui/index.ts";
+import {
+  Aviso,
+  Campo,
+  Carregando,
+  FecharModal,
+  Segmentado,
+} from "../../ui/index.ts";
 import { ModalInstitucional } from "../../ui/modal-institucional.tsx";
 import { imprimirPagina } from "../classificacao/documento-no-navegador.ts";
 import { marcaDaPagina } from "./ficha/espelho-de-nota.ts";
@@ -297,6 +303,7 @@ export function ModeloDoEspelhoDeNota({
       descricao="Personalize os textos e confira a prévia antes de salvar."
       icone="fa-file-lines"
       aoFechar={aoFechar}
+      alterado={mudou}
       fecharDesabilitado={salvando}
       amplo
       classeDoCartao="avd-modelo-espelho"
@@ -312,14 +319,9 @@ export function ModeloDoEspelhoDeNota({
       infoRodape="As alterações afetam os próximos documentos emitidos, sem modificar avaliações."
       acoes={
         <>
-          <button
-            type="button"
-            className="btn secondary"
-            disabled={salvando}
-            onClick={aoFechar}
-          >
-            {mudou ? "Descartar e fechar" : "Fechar"}
-          </button>
+          <FecharModal className="btn secondary" disabled={salvando}>
+            Fechar
+          </FecharModal>
           {podeEditar ? (
             <>
               <button

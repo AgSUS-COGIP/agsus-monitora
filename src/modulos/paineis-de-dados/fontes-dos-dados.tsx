@@ -1,5 +1,10 @@
 import { useId, useState, useSyncExternalStore } from "react";
-import { Aviso, Carregando, Gaveta } from "../../ui/index.ts";
+import {
+  Aviso,
+  Carregando,
+  Gaveta,
+  usarAlteradoNoModal,
+} from "../../ui/index.ts";
 import { nomeDaArea } from "../../lib/navegacao/menu-lateral.ts";
 import { definicaoDoRelatorio } from "../../lib/paineis/relatorios-dos-paineis.ts";
 import type { ColunaComFonte } from "../../lib/paineis/fontes-dos-paineis.ts";
@@ -60,6 +65,7 @@ function LinhaDaColuna({
       colunaDaVisao !== coluna.escolha?.coluna
     : coluna.escolha !== null;
   const ocupado = salvando !== null;
+  usarAlteradoNoModal(podeEditar && (mudou || motivo.trim() !== ""));
 
   return (
     <section className="ui-secao" data-coluna={coluna.coluna}>

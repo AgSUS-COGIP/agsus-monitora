@@ -19,8 +19,10 @@ import {
   BlocosEsqueleto,
   BotaoDeAcao,
   Campo,
+  FecharModal,
   Modal,
   Selo,
+  usarAlteradoNoModal,
 } from "../../../ui/index.ts";
 
 /*
@@ -59,6 +61,7 @@ function MudarSituacao({
 }) {
   const [abrindo, setAbrindo] = useState(false);
   const [motivo, setMotivo] = useState("");
+  usarAlteradoNoModal(abrindo && motivo.trim() !== "");
   const rotulo = modelo.ativo ? "Inativar" : "Reativar";
   if (!abrindo)
     return (
@@ -118,6 +121,8 @@ function Editor({
   aoVoltar: () => void;
 }) {
   const [rascunho, setRascunho] = useState(() => rascunhoDoModelo(modelo));
+  const [inicial] = useState(rascunho);
+  usarAlteradoNoModal(JSON.stringify(rascunho) !== JSON.stringify(inicial));
   const texto = useRef<HTMLTextAreaElement | null>(null);
   const editando = Boolean(modelo);
   const { erros, avisos } = validarModelo(rascunho, {
@@ -373,16 +378,13 @@ export function ModelosDaCarta({
       id="cartaModelosModal"
       rotuloId="cartaModelosTitulo"
       aoFechar={fechar}
-      fecharAoClicarFora={false}
       cartaoClassName="carta-modal"
     >
       <div className="modal-head">
         <div>
           <h3 id="cartaModelosTitulo">Modelos da carta de convocação</h3>
         </div>
-        <button className="btn secondary" type="button" onClick={fechar}>
-          Fechar
-        </button>
+        <FecharModal className="btn secondary">Fechar</FecharModal>
       </div>
       {editando ? (
         <Editor

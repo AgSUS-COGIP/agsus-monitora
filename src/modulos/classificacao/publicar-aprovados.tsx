@@ -32,7 +32,7 @@ import {
   motivoValido,
   origemDaLista,
 } from "../../lib/aprovados/publicacao-de-aprovados.ts";
-import { Aviso, GradeDeKpis, Kpi, Modal } from "../../ui/index.ts";
+import { Aviso, FecharModal, GradeDeKpis, Kpi, Modal } from "../../ui/index.ts";
 
 /*
   "Publicar como lista de aprovados" (Classificação › Listas › Resultado final):
@@ -258,7 +258,7 @@ export function ModalDePublicacaoDeAprovados({
       id="classificacaoPublicarAprovados"
       rotuloId="classificacaoPublicarAprovadosTitulo"
       aoFechar={aoFechar}
-      fecharAoClicarFora={false}
+      alterado={!publicado && (revisaoMudou || motivo.trim() !== "")}
       cartaoClassName="classificacao-publicar-aprovados"
       tamanho="grande"
     >
@@ -395,13 +395,7 @@ export function ModalDePublicacaoDeAprovados({
               </>
             ) : null}
             <div className="ui-acoes">
-              <button
-                type="button"
-                className="btn secondary"
-                onClick={aoFechar}
-              >
-                Cancelar
-              </button>
+              <FecharModal className="btn secondary">Cancelar</FecharModal>
               <button
                 type="button"
                 className="btn"

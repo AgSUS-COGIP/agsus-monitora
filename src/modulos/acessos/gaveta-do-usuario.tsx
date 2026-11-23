@@ -47,6 +47,7 @@ import {
   classes,
   Modal,
   Selo,
+  usarAlteradoNoModal,
 } from "../../ui/index.ts";
 import {
   AvisoSemArea,
@@ -488,6 +489,8 @@ function SalvarNaGaveta({
   semArea: boolean;
 }) {
   const [motivo, setMotivo] = useState("");
+  // O rascunho da pessoa fica na página; o motivo digitado, não.
+  usarAlteradoNoModal(motivo.trim() !== "");
   const [tentou, setTentou] = useState(false);
   const { daPessoa } = separarRascunhoDaPessoa(rascunho, usuario.id);
   const itens =
@@ -634,7 +637,6 @@ export function GavetaDoUsuario({
             ? `${usuario.email} · setor informado: ${usuario.setor}`
             : usuario.email
         }
-        aoFechar={estado.fecharGaveta}
       />
       <div className="acessos-gaveta-corpo">
         {edicao.motivo ? (

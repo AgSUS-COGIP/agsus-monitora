@@ -30,6 +30,7 @@ import {
   Campo,
   CampoNomeDaVersao,
   EstadoVazio,
+  FecharModal,
   Modal,
   NomeDaVersao,
   nomeDoCampo,
@@ -514,6 +515,7 @@ function CarregarAldeias({
     <Modal
       rotulo="Lista de aldeias do DSEI"
       aoFechar={aoFechar}
+      alterado={texto.trim() !== "" || fonte.trim() !== ""}
       tamanho="medio"
     >
       <h2 className="ui-titulo">Lista de aldeias do DSEI</h2>
@@ -537,9 +539,7 @@ function CarregarAldeias({
         />
       </Campo>
       <div className="ui-acoes">
-        <button type="button" className="btn secondary" onClick={aoFechar}>
-          Cancelar
-        </button>
+        <FecharModal className="btn secondary">Cancelar</FecharModal>
         <button
           type="button"
           className="btn"
