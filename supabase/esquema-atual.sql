@@ -8456,6 +8456,34 @@ $$;
 COMMENT ON FUNCTION private."FC_LIMPAR_MANIFESTO_ANALISE"(p_dias integer) IS 'Apaga o manifesto (TM_MANIFESTO_ANALISE) com mais de p_dias (1 a 30; padrão 2) de sync de análises que não está em andamento (erro, processado ou sem log); o sync em andamento nunca é tocado. Devolve as linhas apagadas. Chamada pela tarefa agsus_analises_limpar_manifesto (20261022154000). Só o dono (pg_cron).';
 
 --
+-- Name: FC_LIMPAR_TEXTO_ERRO(text, integer); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_LIMPAR_TEXTO_ERRO"(p_texto text, p_limite integer DEFAULT 500) RETURNS text
+    LANGUAGE sql IMMUTABLE
+    SET search_path TO ''
+    AS $$
+  select left(btrim(
+    regexp_replace(regexp_replace(regexp_replace(regexp_replace(regexp_replace(regexp_replace(
+    regexp_replace(
+      left(coalesce(p_texto, ''), 20000),
+      '[\x01-\x08\x0b\x0c\x0e-\x1f\x7f]', ' ', 'g'),
+      '(bearer)\s+[A-Za-z0-9._~+/=-]+', '\1 [token]', 'gi'),
+      'eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+(\.[A-Za-z0-9_-]+)?', '[token]', 'g'),
+      '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}', '[e-mail]', 'g'),
+      '[0-9]{3}\.[0-9]{3}\.[0-9]{3}-[0-9]{2}', '[número]', 'g'),
+      '\(?[0-9]{2}\)?\s?[0-9]{4,5}-[0-9]{4}', '[número]', 'g'),
+      '[0-9]{5,}', '[número]', 'g')),
+    least(greatest(coalesce(p_limite, 500), 1), 4000));
+$$;
+
+--
+-- Name: FUNCTION "FC_LIMPAR_TEXTO_ERRO"(p_texto text, p_limite integer); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_LIMPAR_TEXTO_ERRO"(p_texto text, p_limite integer) IS 'Limpa um texto de erro antes de gravar, como o navegador (src/lib/seguranca/registro-de-erros.ts, limparTextoDoErro): caracteres de controle viram espaço; "Bearer <token>" vira "Bearer [token]"; JWT vira [token]; e-mail vira [e-mail]; CPF com pontuação, telefone e qualquer sequência de 5 ou mais dígitos viram [número]; corta no limite (1 a 4.000; padrão 500). (20261123150000)';
+
+--
 -- Name: FC_LINHAS_APROVADOS_DO_PAINEL(text); Type: FUNCTION; Schema: private; Owner: -
 --
 
@@ -31563,6 +31591,61 @@ $_$;
 COMMENT ON FUNCTION public.listar_eliminados_fila(p_edital uuid, p_vaga text, p_modalidade text, p_busca text, p_ordem text, p_sentido text, p_apos jsonb, p_limite integer) IS 'Aba Eliminados da fila em páginas (a tela pede 50): vaga, modalidade, busca e ordem no banco, cursor estável, total do recorte; linhas no formato da fila. Leitor da Avaliação documental (analista: só as vagas dele).';
 
 --
+-- Name: listar_erros_da_aplicacao(text, text, timestamp with time zone, integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.listar_erros_da_aplicacao(p_referencia text DEFAULT NULL::text, p_tipo text DEFAULT NULL::text, p_desde timestamp with time zone DEFAULT NULL::timestamp with time zone, p_limite integer DEFAULT 100) RETURNS json
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    SET statement_timeout TO '10s'
+    AS $_$
+declare
+  v_uid uuid := (select auth.uid());
+  v_referencia text := lower(nullif(btrim(coalesce(p_referencia, '')), ''));
+  v_tipo text := upper(nullif(btrim(coalesce(p_tipo, '')), ''));
+  v_limite integer := least(greatest(coalesce(p_limite, 100), 1), 500);
+begin
+  if v_uid is null then
+    raise exception 'Sessão não localizada.' using errcode = '28000';
+  end if;
+  if not private."FC_ADMIN_GLOBAL_ATIVO"(v_uid) then
+    raise exception 'Só o administrador global vê os erros registrados.' using errcode = '42501';
+  end if;
+  if v_referencia is not null and v_referencia !~ '^[a-z0-9-]{4,64}$' then
+    raise exception 'Referência inválida: use letras, dígitos e hífen.' using errcode = '22023';
+  end if;
+
+  return coalesce((
+    select json_agg(json_build_object(
+             'referencia', l."CO_REFERENCIA",
+             'tipo', l."TP_ERRO",
+             'mensagem', l."DS_MENSAGEM",
+             'rota', l."DS_ROTA",
+             'contexto', l."DS_CONTEXTO",
+             'versao', l."CO_VERSAO_BUILD",
+             'area', l."CO_AREA",
+             'status', l."NU_STATUS_HTTP",
+             'usuario', l."CO_USUARIO",
+             'registrado_em', l."DT_REGISTRO")
+           order by l."DT_REGISTRO" desc)
+      from (
+        select * from public."TL_ERRO_APLICACAO" e
+         where (v_referencia is null or e."CO_REFERENCIA" like v_referencia || '%')
+           and (v_tipo is null or e."TP_ERRO" = v_tipo)
+           and (p_desde is null or e."DT_REGISTRO" >= p_desde)
+         order by e."DT_REGISTRO" desc
+         limit v_limite
+      ) l), '[]'::json);
+end;
+$_$;
+
+--
+-- Name: FUNCTION listar_erros_da_aplicacao(p_referencia text, p_tipo text, p_desde timestamp with time zone, p_limite integer); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.listar_erros_da_aplicacao(p_referencia text, p_tipo text, p_desde timestamp with time zone, p_limite integer) IS 'Lista os erros registrados do navegador (TL_ERRO_APLICACAO), dos mais novos: filtro pelo começo da referência (o "Código do erro" que a pessoa passou), pelo tipo e pela data; até 500 (padrão 100). Só administrador global ativo (42501 para os demais). Devolve o id de quem estava com a sessão, nunca o e-mail. Para uma tela futura: entra em src/lib/rpc-contrato.ts com ela. (20261123150000)';
+
+--
 -- Name: listar_etapas_do_cronograma(); Type: FUNCTION; Schema: public; Owner: -
 --
 
@@ -39432,6 +39515,122 @@ $$;
 --
 
 COMMENT ON FUNCTION public.registrar_download_anexo_recurso(p_anexo_id uuid) IS 'Confere o acesso (leitor; anexo arquivado, editor), registra o download no histórico do anexo e devolve o caminho. A política de leitura do bucket só libera a URL assinada (60 s) a quem tem este registro nos últimos 5 minutos.';
+
+--
+-- Name: registrar_erro_da_aplicacao(text, text, text, text, jsonb, text, text, integer); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.registrar_erro_da_aplicacao(p_referencia text, p_tipo text, p_mensagem text, p_rota text DEFAULT NULL::text, p_contexto jsonb DEFAULT '{}'::jsonb, p_versao text DEFAULT NULL::text, p_area text DEFAULT NULL::text, p_status integer DEFAULT NULL::integer) RETURNS json
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    SET statement_timeout TO '5s'
+    AS $_$
+declare
+  c_limite_por_minuto constant integer := 30;
+  c_janela_da_repeticao constant interval := interval '30 seconds';
+  c_guarda constant interval := interval '180 days';
+  v_uid uuid := (select auth.uid());
+  v_referencia text := lower(btrim(coalesce(p_referencia, '')));
+  v_tipo text := upper(btrim(coalesce(p_tipo, '')));
+  v_mensagem text;
+  v_rota text;
+  v_contexto jsonb := '{}'::jsonb;
+  v_versao text := nullif(btrim(coalesce(p_versao, '')), '');
+  v_area text := lower(nullif(btrim(coalesce(p_area, '')), ''));
+  v_status smallint;
+  v_repetida text;
+  v_recentes integer;
+begin
+  if v_uid is null then
+    raise exception 'Sessão não localizada.' using errcode = '28000';
+  end if;
+  if v_referencia !~ '^[a-z0-9-]{8,64}$' then
+    raise exception 'Referência do erro inválida.' using errcode = '22023';
+  end if;
+
+  -- O navegador já limpou; o banco limpa de novo e corta.
+  if v_tipo not in ('CLIENTE', 'SERVIDOR', 'REDE', 'BANCO', 'DESCONHECIDO') then
+    v_tipo := 'DESCONHECIDO';
+  end if;
+  v_mensagem := coalesce(nullif(private."FC_LIMPAR_TEXTO_ERRO"(p_mensagem, 500), ''), '(sem mensagem)');
+  v_rota := nullif(private."FC_LIMPAR_TEXTO_ERRO"(
+    split_part(split_part(coalesce(p_rota, ''), '?', 1), '#', 1), 200), '');
+  if v_versao is not null and v_versao !~ '^[A-Za-z0-9._-]{1,64}$' then
+    v_versao := null;
+  end if;
+  if v_area is not null and not exists (select 1 from public."TB_AREA" a where a."CO_AREA" = v_area) then
+    v_area := null;
+  end if;
+  if p_status between 100 and 599 then
+    v_status := p_status;
+  end if;
+  -- Contexto: até 12 chaves simples; texto limpo e cortado, só número pequeno (linha, coluna).
+  if jsonb_typeof(p_contexto) = 'object' then
+    select coalesce(jsonb_object_agg(x.chave, x.valor), '{}'::jsonb) into v_contexto
+      from (
+        select e.key as chave,
+               case jsonb_typeof(e.value)
+                 when 'string' then to_jsonb(private."FC_LIMPAR_TEXTO_ERRO"(e.value #>> '{}', 1500))
+                 when 'number' then case when abs((e.value #>> '{}')::numeric) < 100000 then e.value end
+                 when 'boolean' then e.value
+               end as valor
+          from jsonb_each(p_contexto) e
+         where e.key ~ '^[a-z_]{1,40}$'
+         order by e.key
+         limit 12
+      ) x
+     where x.valor is not null;
+  end if;
+
+  -- Um registro por vez por pessoa: a repetição e o limite contam certo.
+  perform pg_advisory_xact_lock(hashtext('TL_ERRO_APLICACAO:' || v_uid::text));
+
+  select l."CO_REFERENCIA" into v_repetida
+    from public."TL_ERRO_APLICACAO" l
+   where l."CO_USUARIO" = v_uid
+     and l."DT_REGISTRO" > now() - c_janela_da_repeticao
+     and l."TP_ERRO" = v_tipo
+     and l."DS_MENSAGEM" = v_mensagem
+     and l."DS_ROTA" is not distinct from v_rota
+     and l."NU_STATUS_HTTP" is not distinct from v_status
+   order by l."DT_REGISTRO" desc
+   limit 1;
+  if v_repetida is not null then
+    return json_build_object('registrado', false, 'motivo', 'repetido', 'referencia', v_repetida);
+  end if;
+
+  select count(*) into v_recentes
+    from public."TL_ERRO_APLICACAO" l
+   where l."CO_USUARIO" = v_uid
+     and l."DT_REGISTRO" > now() - interval '1 minute';
+  if v_recentes >= c_limite_por_minuto then
+    return json_build_object('registrado', false, 'motivo', 'limite');
+  end if;
+
+  insert into public."TL_ERRO_APLICACAO" (
+    "CO_REFERENCIA", "TP_ERRO", "DS_MENSAGEM", "DS_ROTA", "DS_CONTEXTO",
+    "CO_VERSAO_BUILD", "CO_AREA", "NU_STATUS_HTTP", "CO_USUARIO")
+  values (
+    v_referencia, v_tipo, v_mensagem, v_rota, v_contexto,
+    v_versao, v_area, v_status, v_uid);
+
+  -- A guarda de 180 dias, aos poucos: nada de tarefa agendada para um log.
+  delete from public."TL_ERRO_APLICACAO"
+   where "CO_ERRO_APLICACAO" in (
+     select v."CO_ERRO_APLICACAO" from public."TL_ERRO_APLICACAO" v
+      where v."DT_REGISTRO" < now() - c_guarda
+      order by v."DT_REGISTRO"
+      limit 50);
+
+  return json_build_object('registrado', true, 'referencia', v_referencia);
+end;
+$_$;
+
+--
+-- Name: FUNCTION registrar_erro_da_aplicacao(p_referencia text, p_tipo text, p_mensagem text, p_rota text, p_contexto jsonb, p_versao text, p_area text, p_status integer); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.registrar_erro_da_aplicacao(p_referencia text, p_tipo text, p_mensagem text, p_rota text, p_contexto jsonb, p_versao text, p_area text, p_status integer) IS 'Registra um erro que aconteceu no navegador (src/app/registro-de-erros.ts), só com sessão (28000 sem ela). Repete a limpeza do navegador (private."FC_LIMPAR_TEXTO_ERRO"), limita os tamanhos (mensagem 500, rota 200 sem consulta, contexto de 12 chaves simples), aceita só tipo, versão, área e status válidos (o resto vira DESCONHECIDO ou nulo). Não grava, sem erro, a repetição do mesmo erro da mesma pessoa em 30 s (motivo repetido) nem o que passar de 30 registros da pessoa no último minuto (motivo limite). Apaga até 50 registros com mais de 180 dias por chamada. Devolve {registrado, motivo?, referencia?}. Grava TL_ERRO_APLICACAO. (20261123150000)';
 
 --
 -- Name: registrar_evento_acesso(text, text, text, jsonb, text, text, text); Type: FUNCTION; Schema: public; Owner: -
@@ -61757,6 +61956,124 @@ ALTER TABLE public."TL_DISPARO_ROBO" ALTER COLUMN "CO_DISPARO" ADD GENERATED ALW
 );
 
 --
+-- Name: TL_ERRO_APLICACAO; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."TL_ERRO_APLICACAO" (
+    "CO_ERRO_APLICACAO" uuid DEFAULT gen_random_uuid() NOT NULL,
+    "CO_REFERENCIA" character varying(64) NOT NULL,
+    "TP_ERRO" character varying(12) NOT NULL,
+    "DS_MENSAGEM" character varying(500) NOT NULL,
+    "DS_ROTA" character varying(200),
+    "DS_CONTEXTO" jsonb DEFAULT '{}'::jsonb NOT NULL,
+    "CO_VERSAO_BUILD" character varying(64),
+    "CO_AREA" text,
+    "NU_STATUS_HTTP" smallint,
+    "CO_USUARIO" uuid NOT NULL,
+    "DT_REGISTRO" timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT "CK_ERROAPLIC_COREFERENCIA" CHECK ((("CO_REFERENCIA")::text ~ '^[a-z0-9-]{8,64}$'::text)),
+    CONSTRAINT "CK_ERROAPLIC_DSCONTEXTO" CHECK (((jsonb_typeof("DS_CONTEXTO") = 'object'::text) AND (pg_column_size("DS_CONTEXTO") <= 16384))),
+    CONSTRAINT "CK_ERROAPLIC_NUSTATUSHTTP" CHECK ((("NU_STATUS_HTTP" >= 100) AND ("NU_STATUS_HTTP" <= 599))),
+    CONSTRAINT "CK_ERROAPLIC_TPERRO" CHECK ((("TP_ERRO")::text = ANY ((ARRAY['CLIENTE'::character varying, 'SERVIDOR'::character varying, 'REDE'::character varying, 'BANCO'::character varying, 'DESCONHECIDO'::character varying])::text[])))
+);
+
+--
+-- Name: TABLE "TL_ERRO_APLICACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public."TL_ERRO_APLICACAO" IS 'Erros que aconteceram no navegador de quem usa o Yeendé (JavaScript, promessa rejeitada, parte da tela que não desenhou), já limpos de dado pessoal: referência mostrada à pessoa, tipo, mensagem, rota, contexto, versão do build, área, status HTTP, quem (id) e quando. Grava só registrar_erro_da_aplicacao; lê só listar_erros_da_aplicacao (administrador global). Guarda 180 dias. (20261123150000)';
+
+--
+-- Name: COLUMN "TL_ERRO_APLICACAO"."CO_ERRO_APLICACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TL_ERRO_APLICACAO"."CO_ERRO_APLICACAO" IS 'Identificador do registro.';
+
+--
+-- Name: COLUMN "TL_ERRO_APLICACAO"."CO_REFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TL_ERRO_APLICACAO"."CO_REFERENCIA" IS 'Referência opaca gerada no navegador (UUID em minúsculas); a pessoa vê o começo dela ("Código do erro: …") e o suporte acha o registro pelo prefixo.';
+
+--
+-- Name: COLUMN "TL_ERRO_APLICACAO"."TP_ERRO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TL_ERRO_APLICACAO"."TP_ERRO" IS 'Tipo do erro: CLIENTE (código do navegador), SERVIDOR (HTTP 5xx), REDE (sem conexão ou falha de rede), BANCO (erro do PostgREST/PostgreSQL) ou DESCONHECIDO.';
+
+--
+-- Name: COLUMN "TL_ERRO_APLICACAO"."DS_MENSAGEM"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TL_ERRO_APLICACAO"."DS_MENSAGEM" IS 'Mensagem do erro, sem e-mail, CPF, telefone, token nem sequência de 5 ou mais dígitos (private."FC_LIMPAR_TEXTO_ERRO"); até 500 caracteres.';
+
+--
+-- Name: COLUMN "TL_ERRO_APLICACAO"."DS_ROTA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TL_ERRO_APLICACAO"."DS_ROTA" IS 'Caminho da página onde o erro aconteceu, sem consulta nem âncora, limpo como a mensagem; até 200 caracteres.';
+
+--
+-- Name: COLUMN "TL_ERRO_APLICACAO"."DS_CONTEXTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TL_ERRO_APLICACAO"."DS_CONTEXTO" IS 'Contexto técnico (objeto JSON de até 12 chaves simples: arquivo, linha, coluna, pilha, online, código, parte da tela…), com os textos limpos e cortados em 1.500 caracteres e só números pequenos (linha e coluna).';
+
+--
+-- Name: COLUMN "TL_ERRO_APLICACAO"."CO_VERSAO_BUILD"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TL_ERRO_APLICACAO"."CO_VERSAO_BUILD" IS 'Versão do build aberta no navegador (o commit gravado no JS; nulo fora da Vercel).';
+
+--
+-- Name: COLUMN "TL_ERRO_APLICACAO"."CO_AREA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TL_ERRO_APLICACAO"."CO_AREA" IS 'Área aberta quando o erro aconteceu (TB_AREA), quando havia uma.';
+
+--
+-- Name: COLUMN "TL_ERRO_APLICACAO"."NU_STATUS_HTTP"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TL_ERRO_APLICACAO"."NU_STATUS_HTTP" IS 'Status HTTP da resposta que falhou, quando o erro veio de uma (100 a 599).';
+
+--
+-- Name: COLUMN "TL_ERRO_APLICACAO"."CO_USUARIO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TL_ERRO_APLICACAO"."CO_USUARIO" IS 'Quem estava com a sessão aberta (auth.uid()); nunca o e-mail.';
+
+--
+-- Name: COLUMN "TL_ERRO_APLICACAO"."DT_REGISTRO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TL_ERRO_APLICACAO"."DT_REGISTRO" IS 'Data e hora do registro (do servidor).';
+
+--
+-- Name: CONSTRAINT "CK_ERROAPLIC_COREFERENCIA" ON "TL_ERRO_APLICACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_ERROAPLIC_COREFERENCIA" ON public."TL_ERRO_APLICACAO" IS 'Referência só com letras minúsculas, dígitos e hífen (8 a 64).';
+
+--
+-- Name: CONSTRAINT "CK_ERROAPLIC_DSCONTEXTO" ON "TL_ERRO_APLICACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_ERROAPLIC_DSCONTEXTO" ON public."TL_ERRO_APLICACAO" IS 'O contexto é um objeto JSON de até 16 kB.';
+
+--
+-- Name: CONSTRAINT "CK_ERROAPLIC_NUSTATUSHTTP" ON "TL_ERRO_APLICACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_ERROAPLIC_NUSTATUSHTTP" ON public."TL_ERRO_APLICACAO" IS 'Status HTTP válido (100 a 599).';
+
+--
+-- Name: CONSTRAINT "CK_ERROAPLIC_TPERRO" ON "TL_ERRO_APLICACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_ERROAPLIC_TPERRO" ON public."TL_ERRO_APLICACAO" IS 'Tipos de erro válidos.';
+
+--
 -- Name: TL_EVENTO_ACESSO; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -64348,6 +64665,19 @@ ALTER TABLE ONLY public."TL_DISPARO_ROBO"
 COMMENT ON CONSTRAINT "PK_TL_DISPARO_ROBO" ON public."TL_DISPARO_ROBO" IS 'Uma linha por pedido.';
 
 --
+-- Name: TL_ERRO_APLICACAO PK_TL_ERRO_APLICACAO; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TL_ERRO_APLICACAO"
+    ADD CONSTRAINT "PK_TL_ERRO_APLICACAO" PRIMARY KEY ("CO_ERRO_APLICACAO");
+
+--
+-- Name: CONSTRAINT "PK_TL_ERRO_APLICACAO" ON "TL_ERRO_APLICACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "PK_TL_ERRO_APLICACAO" ON public."TL_ERRO_APLICACAO" IS 'Um registro por erro.';
+
+--
 -- Name: TL_EXPORTACAO_APROVADO PK_TL_EXPORTACAO_APROVADO; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -65530,6 +65860,42 @@ COMMENT ON INDEX public."IN_ENTREVISTA_AREA_ATIVO" IS 'Entrevistas ativas por á
 --
 
 CREATE UNIQUE INDEX "IN_ENTRLIBERACAO_VIGENTE" ON public."TB_ENTREVISTA_LIBERACAO" USING btree ("CO_MONITORAMENTO") WHERE (("ST_REGISTRO_ATIVO")::text = 'S'::text);
+
+--
+-- Name: IN_ERROAPLIC_COREFERENCIA; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "IN_ERROAPLIC_COREFERENCIA" ON public."TL_ERRO_APLICACAO" USING btree ("CO_REFERENCIA" varchar_pattern_ops);
+
+--
+-- Name: INDEX "IN_ERROAPLIC_COREFERENCIA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON INDEX public."IN_ERROAPLIC_COREFERENCIA" IS 'Busca do suporte pelo começo da referência (LIKE ''prefixo%'').';
+
+--
+-- Name: IN_ERROAPLIC_COUSUARIO; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "IN_ERROAPLIC_COUSUARIO" ON public."TL_ERRO_APLICACAO" USING btree ("CO_USUARIO", "DT_REGISTRO" DESC);
+
+--
+-- Name: INDEX "IN_ERROAPLIC_COUSUARIO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON INDEX public."IN_ERROAPLIC_COUSUARIO" IS 'Erros de cada pessoa, dos mais novos: a repetição em 30 s e o limite por minuto.';
+
+--
+-- Name: IN_ERROAPLIC_DTREGISTRO; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "IN_ERROAPLIC_DTREGISTRO" ON public."TL_ERRO_APLICACAO" USING btree ("DT_REGISTRO" DESC);
+
+--
+-- Name: INDEX "IN_ERROAPLIC_DTREGISTRO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON INDEX public."IN_ERROAPLIC_DTREGISTRO" IS 'Erros mais novos primeiro; e a limpeza do que passou de 180 dias.';
 
 --
 -- Name: IN_EXPAPROV_AREA_DATA; Type: INDEX; Schema: public; Owner: -
@@ -70348,6 +70714,19 @@ ALTER TABLE ONLY public."TB_ENTREVISTA"
 COMMENT ON CONSTRAINT "FK_AREA_ENTREVISTA" ON public."TB_ENTREVISTA" IS 'Área da entrevista.';
 
 --
+-- Name: TL_ERRO_APLICACAO FK_AREA_ERROAPLIC; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TL_ERRO_APLICACAO"
+    ADD CONSTRAINT "FK_AREA_ERROAPLIC" FOREIGN KEY ("CO_AREA") REFERENCES public."TB_AREA"("CO_AREA");
+
+--
+-- Name: CONSTRAINT "FK_AREA_ERROAPLIC" ON "TL_ERRO_APLICACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "FK_AREA_ERROAPLIC" ON public."TL_ERRO_APLICACAO" IS 'Área do erro, quando havia uma aberta.';
+
+--
 -- Name: TL_EXPORTACAO_APROVADO FK_AREA_EXPAPROV; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -73943,6 +74322,12 @@ ALTER TABLE public."TL_CONFERENCIA" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public."TL_DISPARO_ROBO" ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: TL_ERRO_APLICACAO; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public."TL_ERRO_APLICACAO" ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: TL_EVENTO_ACESSO; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -75683,6 +76068,12 @@ REVOKE ALL ON FUNCTION private."FC_LIMPAR_HISTORICO_DO_CRON"(p_dias integer, p_m
 --
 
 REVOKE ALL ON FUNCTION private."FC_LIMPAR_MANIFESTO_ANALISE"(p_dias integer) FROM PUBLIC;
+
+--
+-- Name: FUNCTION "FC_LIMPAR_TEXTO_ERRO"(p_texto text, p_limite integer); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_LIMPAR_TEXTO_ERRO"(p_texto text, p_limite integer) FROM PUBLIC;
 
 --
 -- Name: FUNCTION "FC_LINHAS_APROVADOS_DO_PAINEL"(p_area text); Type: ACL; Schema: private; Owner: -
@@ -78243,6 +78634,13 @@ REVOKE ALL ON FUNCTION public.listar_eliminados_fila(p_edital uuid, p_vaga text,
 GRANT ALL ON FUNCTION public.listar_eliminados_fila(p_edital uuid, p_vaga text, p_modalidade text, p_busca text, p_ordem text, p_sentido text, p_apos jsonb, p_limite integer) TO authenticated;
 
 --
+-- Name: FUNCTION listar_erros_da_aplicacao(p_referencia text, p_tipo text, p_desde timestamp with time zone, p_limite integer); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.listar_erros_da_aplicacao(p_referencia text, p_tipo text, p_desde timestamp with time zone, p_limite integer) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.listar_erros_da_aplicacao(p_referencia text, p_tipo text, p_desde timestamp with time zone, p_limite integer) TO authenticated;
+
+--
 -- Name: FUNCTION listar_etapas_do_cronograma(); Type: ACL; Schema: public; Owner: -
 --
 
@@ -79177,6 +79575,13 @@ GRANT ALL ON FUNCTION public.registrar_divergencia_do_calculo(p_pedido uuid, p_t
 REVOKE ALL ON FUNCTION public.registrar_download_anexo_recurso(p_anexo_id uuid) FROM PUBLIC;
 GRANT ALL ON FUNCTION public.registrar_download_anexo_recurso(p_anexo_id uuid) TO authenticated;
 GRANT ALL ON FUNCTION public.registrar_download_anexo_recurso(p_anexo_id uuid) TO service_role;
+
+--
+-- Name: FUNCTION registrar_erro_da_aplicacao(p_referencia text, p_tipo text, p_mensagem text, p_rota text, p_contexto jsonb, p_versao text, p_area text, p_status integer); Type: ACL; Schema: public; Owner: -
+--
+
+REVOKE ALL ON FUNCTION public.registrar_erro_da_aplicacao(p_referencia text, p_tipo text, p_mensagem text, p_rota text, p_contexto jsonb, p_versao text, p_area text, p_status integer) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.registrar_erro_da_aplicacao(p_referencia text, p_tipo text, p_mensagem text, p_rota text, p_contexto jsonb, p_versao text, p_area text, p_status integer) TO authenticated;
 
 --
 -- Name: FUNCTION registrar_evento_acesso(p_evento text, p_tela text, p_origem text, p_detalhes jsonb, p_client_session_id text, p_user_agent text, p_app_version text); Type: ACL; Schema: public; Owner: -
@@ -80589,6 +80994,12 @@ GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TL_ACESSO_FICHA_ANAL
 --
 
 GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TL_CONFERENCIA" TO service_role;
+
+--
+-- Name: TABLE "TL_ERRO_APLICACAO"; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TL_ERRO_APLICACAO" TO service_role;
 
 --
 -- Name: TABLE "TL_EVENTO_ACESSO"; Type: ACL; Schema: public; Owner: -

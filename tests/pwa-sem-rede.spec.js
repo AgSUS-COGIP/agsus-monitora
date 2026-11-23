@@ -303,7 +303,25 @@ test.describe("aba aberta durante a publicação", () => {
     expect(pedacoAntigo).toBeTruthy();
 
     await vercel.publicar();
-    // O navegador acha o sw.js novo; a página pede para ele assumir já.
+    /*
+      O navegador acha o sw.js novo, que instala e fica esperando: sozinho não
+      assume (src/modules/pwa-lifecycle.ts). Assume quando alguém aceita a
+      versão nova — aqui, a mensagem que o "Atualizar" do aviso manda
+      (aplicarVersaoNova), como se viesse de outra aba: esta segue aberta.
+    */
+    const assumiuSozinho = await page.evaluate(async () => {
+      const registro = await navigator.serviceWorker.ready;
+      const anterior = navigator.serviceWorker.controller;
+      await registro.update();
+      // Instalado, fica esperando. Conferir o `waiting` não perde evento já
+      // disparado (o navegador pode ter achado a versão antes do update()).
+      while (!registro.waiting)
+        await new Promise((pronto) => setTimeout(pronto, 100));
+      await new Promise((pronto) => setTimeout(pronto, 1000));
+      return navigator.serviceWorker.controller !== anterior;
+    });
+    expect(assumiuSozinho).toBe(false);
+
     await page.evaluate(async () => {
       const registro = await navigator.serviceWorker.ready;
       const trocou = new Promise((pronto) =>
@@ -311,7 +329,7 @@ test.describe("aba aberta durante a publicação", () => {
           once: true,
         }),
       );
-      await registro.update();
+      registro.waiting.postMessage({ type: "SKIP_WAITING" });
       await trocou;
       const novo = navigator.serviceWorker.controller;
       if (novo.state !== "activated")

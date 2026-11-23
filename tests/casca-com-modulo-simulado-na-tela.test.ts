@@ -136,6 +136,7 @@ bloco("app/pecas-da-casca", async () => {
         telaAntiga: false,
         fechado: false,
         pendencia: false,
+        atualizando: false,
       }),
       fechar: vi.fn(),
       atualizar: vi.fn(),

@@ -5238,18 +5238,104 @@ bloco("pwa-lifecycle", () => {
       expect(recargas).toBe(1);
     });
 
-    it("a troca de controlador não recarrega na hora (quem digita não perde o texto)", () => {
-      const trecho = lifecycleSource.slice(
-        lifecycleSource.indexOf('addEventListener("controllerchange"'),
+    it("a página não manda o service worker novo assumir sozinho", () => {
+      // Só aplicarVersaoNova (o "Atualizar" do aviso) fala com o que espera.
+      const ocorrencias = lifecycleSource.match(/postMessage\(/g) ?? [];
+      expect(ocorrencias).toHaveLength(1);
+      const aceite = lifecycleSource.slice(
+        lifecycleSource.indexOf("export function aplicarVersaoNova"),
       );
-      const handler = trecho.slice(
-        0,
-        trecho.indexOf("export function aplicarAtualizacaoPendente"),
-      );
-      expect(handler).not.toContain("location.reload");
-      expect(handler).toContain("atualizacaoPendente = true");
+      expect(aceite).toContain('postMessage({ type: "SKIP_WAITING" })');
+      expect(lifecycleSource).not.toContain('addEventListener("updatefound"');
     });
 
+    it("troca pedida por outra aba não recarrega na hora (quem digita não perde o texto)", async () => {
+      const {
+        aoTrocarDeControlador,
+        aplicarAtualizacaoPendente,
+        marcarAtualizacaoPendenteParaTeste,
+      } = await import("../src/modules/pwa-lifecycle.ts");
+      marcarAtualizacaoPendenteParaTeste(false);
+      let recargas = 0;
+      aoTrocarDeControlador();
+      expect(recargas).toBe(0);
+      // Entra na próxima troca de página.
+      expect(aplicarAtualizacaoPendente(() => (recargas += 1))).toBe(true);
+      expect(recargas).toBe(1);
+    });
+
+    it("a primeira instalação (sem controlador antes) não pede recarga", async () => {
+      const {
+        aoTrocarDeControlador,
+        aplicarAtualizacaoPendente,
+        marcarAtualizacaoPendenteParaTeste,
+      } = await import("../src/modules/pwa-lifecycle.ts");
+      marcarAtualizacaoPendenteParaTeste(false, { controlador: false });
+      aoTrocarDeControlador();
+      expect(aplicarAtualizacaoPendente(() => {})).toBe(false);
+    });
+  });
+
+  describe("o service worker novo só assume quando a pessoa aceita", () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    it("aceito: SKIP_WAITING ao que espera e recarrega uma vez, quando ele assume", async () => {
+      const {
+        aplicarVersaoNova,
+        aoTrocarDeControlador,
+        marcarAtualizacaoPendenteParaTeste,
+      } = await import("../src/modules/pwa-lifecycle.ts");
+      marcarAtualizacaoPendenteParaTeste(false);
+      const postMessage = vi.fn();
+      const recarregar = vi.fn();
+      aplicarVersaoNova({
+        registro: { waiting: { postMessage } },
+        recarregar,
+        esperaMs: 4000,
+      });
+      expect(postMessage).toHaveBeenCalledWith({ type: "SKIP_WAITING" });
+      expect(recarregar).not.toHaveBeenCalled();
+
+      aoTrocarDeControlador();
+      expect(recarregar).toHaveBeenCalledTimes(1);
+      // O prazo de reserva vence depois: não recarrega de novo.
+      await vi.advanceTimersByTimeAsync(4000);
+      // Nem um segundo aceite.
+      aplicarVersaoNova({ registro: { waiting: { postMessage } }, recarregar });
+      expect(recarregar).toHaveBeenCalledTimes(1);
+      expect(postMessage).toHaveBeenCalledTimes(1);
+    });
+
+    it("sem a troca de controlador, recarrega passado o prazo, uma vez", async () => {
+      const { aplicarVersaoNova, marcarAtualizacaoPendenteParaTeste } =
+        await import("../src/modules/pwa-lifecycle.ts");
+      marcarAtualizacaoPendenteParaTeste(false);
+      const recarregar = vi.fn();
+      aplicarVersaoNova({
+        registro: { waiting: { postMessage: vi.fn() } },
+        recarregar,
+        esperaMs: 4000,
+      });
+      await vi.advanceTimersByTimeAsync(3999);
+      expect(recarregar).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(1);
+      expect(recarregar).toHaveBeenCalledTimes(1);
+    });
+
+    it("sem service worker esperando, recarrega na hora (a navegação vem da rede)", async () => {
+      const { aplicarVersaoNova, marcarAtualizacaoPendenteParaTeste } =
+        await import("../src/modules/pwa-lifecycle.ts");
+      marcarAtualizacaoPendenteParaTeste(false);
+      const recarregar = vi.fn();
+      aplicarVersaoNova({ registro: { waiting: null }, recarregar });
+      expect(recarregar).toHaveBeenCalledTimes(1);
+      aplicarVersaoNova({ registro: null, recarregar });
+      expect(recarregar).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("a versão nova de outra aba entra na troca de página", () => {
     it("o navigate aplica a versão nova depois da guarda de alterações não salvas", () => {
       // src/app/navegacao.ts: a guarda pergunta primeiro; recusada, nada recarrega.
       const ordem = [];

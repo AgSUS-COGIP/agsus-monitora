@@ -126,8 +126,9 @@ Peças de layout só em CSS: `.ui-tela`, `.ui-card`, `.ui-titulo`, `.ui-linha-de
 - `seletor-de-edital.tsx` — a escolha do edital das telas da seleção (Triagem, Avaliação
   documental, Classificação), com selo e "Mostrar todos".
 - `pessoas-online/` ("Pessoas online" no menu da conta, estado em `src/app/presenca.ts`) e
-  `aviso-de-versao/` (faixa "Há uma versão nova", regra em `src/app/aviso-de-versao.ts`): filhas da
-  casca. `usar-area-atual.ts`: hook da área atual, suas linhas e os ids dos editais.
+  `aviso-de-versao/` (cartão "O Yeendé foi atualizado" no canto de baixo, acima da arara da Aya;
+  no celular, embaixo na largura da tela; "Agora não" e "Atualizar", que vira "Atualizando…";
+  regra em `src/app/aviso-de-versao.ts`): filhas da casca. `usar-area-atual.ts`: hook da área atual, suas linhas e os ids dos editais.
 
 `icone.tsx` e `multi-select-busca.tsx` vão para `src/ui/` ao serem tocados.
 
