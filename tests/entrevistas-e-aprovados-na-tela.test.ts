@@ -3024,10 +3024,12 @@ bloco("componentes/lista-aprovados", () => {
       expect($("approvedCount").textContent).toBe("1 candidato");
     });
 
-    it("edital concluído vai para o Histórico mesmo com a lista ativa, com a contagem por situação", async () => {
+    it("edital concluído com lista ativa fica nos Ativos; o cancelado vai para o Histórico", async () => {
+      // Em produção, com a regra de Editais (concluído no Histórico), os
+      // Ativos ficaram vazios: quase toda lista é de edital já concluído.
       publicarLinhasDoMonitoramento([
         { id: "10", CO_AREA: "saude-indigena", status: "Concluído" },
-        { id: "20", CO_AREA: "saude-indigena", status: "Em andamento" },
+        { id: "20", CO_AREA: "saude-indigena", status: "Cancelado" },
       ]);
       await montar({
         supabase: supabaseFalso({
@@ -3035,17 +3037,17 @@ bloco("componentes/lista-aprovados", () => {
           candidatos: CANDIDATOS().map((c) => ({ ...c, lista_ativa: true })),
         }),
       });
-      expect(nomes()).toEqual(["Diego Alves"]);
-      expect(
-        achar('[data-tour="aprovados-ativos-e-historico"] .ui-ativos-situacoes')
-          .textContent,
-      ).toContain("Em andamento");
-      await verHistorico();
       expect(nomes()).toEqual(["Ana Ribeiro", "Bruno Lima", "Carla Souza"]);
       expect(
         achar('[data-tour="aprovados-ativos-e-historico"] .ui-ativos-situacoes')
           .textContent,
       ).toContain("Concluído");
+      await verHistorico();
+      expect(nomes()).toEqual(["Diego Alves"]);
+      expect(
+        achar('[data-tour="aprovados-ativos-e-historico"] .ui-ativos-situacoes')
+          .textContent,
+      ).toContain("Cancelado");
     });
 
     it("o pedido de um edital do Histórico (faixa das etapas, Visão geral) abre o Histórico nele", async () => {

@@ -1,10 +1,14 @@
 /*
   Ativos e Histórico da Lista de aprovados (abas Aprovados e Resumo por
-  cargo). A lista de trabalho (Ativos, o padrão) tem só os candidatos de
-  edital vigente E de lista ativa; o resto fica no Histórico, a um clique:
-  os editais concluídos, cancelados ou desativados (a regra é
-  src/lib/editais/editais-ativos.ts, pelo status das linhas do monitoramento)
-  e as listas inativas ou substituídas, mesmo de edital em andamento.
+  cargo). A lista de trabalho (Ativos, o padrão) tem os candidatos de lista
+  ativa; o Histórico, a um clique, tem as listas inativas ou substituídas e as
+  de edital cancelado ou desativado.
+
+  O edital CONCLUÍDO fica nos Ativos: na Lista de aprovados quase todo edital
+  com lista já concluiu a seleção, e é justamente a lista dele que está em
+  convocação. Com a regra das telas de Editais (concluído vai para o
+  Histórico), a vista Ativos ficou vazia em produção (23/11/2026: os 85
+  editais no Histórico).
 
   O filtro de Edital, os indicadores e o "N de M candidatos" partem da vista
   escolhida. A Convocação, o sub judice e os modais continuam vendo a área
@@ -16,10 +20,10 @@ import {
   type VistaDaLista,
 } from "../base/ativos-e-historico.ts";
 import {
-  editalDoHistorico,
   situacaoDoEdital,
   type EditalComSituacao,
 } from "../editais/editais-ativos.ts";
+import { ehCancelado } from "../visao-geral/indicadores-do-monitoramento.ts";
 
 interface ListaDaVista {
   edital_id?: unknown;
@@ -45,7 +49,7 @@ const texto = (valor: unknown) => String(valor ?? "").trim();
 /**
  * Separa as listas e os candidatos da área em Ativos e Histórico. `linhas`
  * são as linhas do monitoramento da área (id, status, ativo); edital sem
- * linha conta como vigente.
+ * linha conta como vigente, e o concluído também.
  */
 export function separarAprovados<
   L extends ListaDaVista,
@@ -60,9 +64,10 @@ export function separarAprovados<
     const l = linha as EditalComSituacao | null;
     if (l && l.id !== undefined && l.id !== null) porId.set(texto(l.id), l);
   }
+  // Só o edital cancelado ou desativado tira a lista dos Ativos (o concluído, não).
   const vigente = (editalId: unknown) => {
     const linha = porId.get(texto(editalId));
-    return !linha || !editalDoHistorico(linha);
+    return !linha || !(linha.ativo === false || ehCancelado(linha));
   };
 
   const vista = (ativos: boolean): VistaDosAprovados<L, C> => {
