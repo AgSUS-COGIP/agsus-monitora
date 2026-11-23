@@ -454,6 +454,7 @@ export function Graficos({
         >
           <Grafico
             id="chartResponsavel"
+            item="Responsável"
             tipo="bar"
             rotulo="Análises por responsável, empilhadas por status"
             dependencias={[porResponsavel, tema]}
@@ -461,6 +462,7 @@ export function Graficos({
               const p = paleta(escuro);
               const cores = CORES_DO_STATUS(p);
               return {
+                rotulosCompletos: porResponsavel.map((r) => r.rotulo),
                 data: {
                   labels: porResponsavel.map((r) => truncar(r.rotulo, 22)),
                   datasets: STATUS_DO_GRAFICO.map((status) => ({
@@ -538,6 +540,7 @@ export function Graficos({
       >
         <Grafico
           id="chartTendencia"
+          item="Data"
           tipo="line"
           rotulo={`Análises por data; pontos em vermelho: fora da janela oficial ou com data no futuro. Clique num dia para filtrar a tela; o período também se escolhe em Mais opções${comData ? `. Data escolhida: ${rotuloDoPeriodo(periodo)}` : ""}`}
           dependencias={[porDia, tema, periodo]}

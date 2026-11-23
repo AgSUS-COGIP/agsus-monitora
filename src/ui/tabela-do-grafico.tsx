@@ -34,19 +34,32 @@ function textoDoValor(valor: unknown): string {
   return String(valor);
 }
 
-/** Tabela a partir de `data` do Chart.js; null se não há rótulo nem série. */
-export function dadosDaTabelaDoGrafico(data: {
-  labels?: ReadonlyArray<unknown>;
-  datasets?: ReadonlyArray<SerieDoGrafico>;
-}): DadosDaTabelaDoGrafico | null {
+/**
+ * Tabela a partir de `data` do Chart.js; null se não há rótulo nem série.
+ * `rotulosCompletos`: os nomes inteiros, quando o gráfico os abrevia (a
+ * tabela mostra o nome todo); `valor`: o nome da coluna da série sem rótulo
+ * (o padrão é "Valor").
+ */
+export function dadosDaTabelaDoGrafico(
+  data: {
+    labels?: ReadonlyArray<unknown>;
+    datasets?: ReadonlyArray<SerieDoGrafico>;
+  },
+  {
+    rotulosCompletos,
+    valor = "Valor",
+  }: { rotulosCompletos?: ReadonlyArray<string>; valor?: string } = {},
+): DadosDaTabelaDoGrafico | null {
   const series = (data.datasets || []).filter((s) => Array.isArray(s.data));
-  const rotulos = (data.labels || []).map((r) =>
-    Array.isArray(r) ? r.join(" ") : String(r ?? ""),
-  );
+  const rotulos = (data.labels || []).map((r, i) => {
+    const completo = rotulosCompletos?.[i];
+    if (completo) return completo;
+    return Array.isArray(r) ? r.join(" ") : String(r ?? "");
+  });
   if (!series.length || !rotulos.length) return null;
   return {
     colunas: series.map((s, i) =>
-      String(s.label || (series.length === 1 ? "Valor" : `Série ${i + 1}`)),
+      String(s.label || (series.length === 1 ? valor : `Série ${i + 1}`)),
     ),
     linhas: rotulos.map((rotulo, i) => ({
       rotulo,
@@ -87,11 +100,14 @@ export function TabelaDoGrafico({
   dados,
   titulo,
   visivel,
+  item = "Item",
   aoEscolher,
 }: {
   dados: DadosDaTabelaDoGrafico;
   titulo: string;
   visivel: boolean;
+  /** O nome da primeira coluna ("Critério", "Unidade"). */
+  item?: string;
   /** Com a tabela à vista, o rótulo de cada linha filtra (como o clique no gráfico). */
   aoEscolher?: (indice: number) => void;
 }) {
@@ -106,9 +122,7 @@ export function TabelaDoGrafico({
         <caption className="sr-only">{titulo}</caption>
         <thead>
           <tr>
-            <th scope="col">
-              <span className="sr-only">Item</span>
-            </th>
+            <th scope="col">{item}</th>
             {dados.colunas.map((coluna, i) => (
               <th key={i} scope="col">
                 {coluna}
@@ -119,7 +133,7 @@ export function TabelaDoGrafico({
         <tbody>
           {dados.linhas.map((linha, i) => (
             <tr key={i}>
-              <th scope="row">
+              <th scope="row" title={linha.rotulo}>
                 {aoEscolher && visivel ? (
                   <button
                     type="button"

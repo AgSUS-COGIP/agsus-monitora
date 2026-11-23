@@ -619,11 +619,12 @@
   text-decoration: underline;
   cursor: pointer;
 }
-/* A tabela no lugar do gráfico: rola dentro da mesma altura. */
+/* A tabela no lugar do gráfico: rola só na vertical, dentro da mesma altura. */
 .ui-grafico.is-em-tabela {
   height: auto;
   max-height: 380px;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 /* `min-width: 0` e o `tbody th` sem `top` desfazem o `table`/`th` globais de
    app.css (1180px de largura mínima, 720px no celular, e todo th grudado no
@@ -646,6 +647,19 @@
 }
 .ui-grafico-tabela :is(thead th, tbody th) {
   font-weight: var(--font-weight-medium);
+}
+/* O nome quebra linha (inteiro no title); os números não quebram. */
+.ui-grafico-tabela tbody th {
+  max-width: none;
+  overflow: visible;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+}
+.ui-grafico-tabela td,
+.ui-grafico-tabela thead th + th {
+  width: 1%;
+  white-space: nowrap;
 }
 .ui-grafico-tabela thead th {
   position: sticky;

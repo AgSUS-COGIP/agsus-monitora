@@ -460,6 +460,7 @@ export function Graficos({
         >
           <Grafico
             id="chartEliminados"
+            item="Motivo"
             tipo="bar"
             rotulo="Eliminados antes da análise: cancelados, questionário não finalizado e eliminados por nota"
             plugins={[rotuloDeValor]}
@@ -490,6 +491,8 @@ export function Graficos({
         >
           <Grafico
             id="chartAptos"
+            item="Situação"
+            valor="Candidatos"
             tipo="doughnut"
             rotulo="Aptos para análise e eliminados"
             dependencias={[aptos, tema]}
@@ -518,6 +521,8 @@ export function Graficos({
         <CardDeGrafico titulo="Contratados" carregando={carregando}>
           <Grafico
             id="chartContratados"
+            item="Situação"
+            valor="Candidatos"
             tipo="doughnut"
             rotulo={`Contratados: ${formatarTaxa(indicadores.taxa)} dos aprovados`}
             plugins={[textoNoCentro]}
@@ -585,6 +590,7 @@ export function Graficos({
         >
           <Grafico
             id="chartAnalise"
+            item="Situação"
             tipo="bar"
             rotulo="Triados e reprovados na análise"
             plugins={[rotuloDeValor]}
@@ -626,6 +632,7 @@ export function Graficos({
       >
         <Grafico
           id="chartDsei"
+          item={unidade === "DSEIs" ? "DSEI" : "Unidade"}
           tipo="bar"
           rotulo={`Top ${unidade} por inscritos`}
           plugins={[rotuloDeValor]}
@@ -634,6 +641,7 @@ export function Graficos({
           montar={() => {
             const p = paleta(escuro);
             return {
+              rotulosCompletos: unidades.map((u) => u.rotulo),
               data: {
                 labels: unidades.map((u) => truncar(u.rotulo, 34)),
                 datasets: [

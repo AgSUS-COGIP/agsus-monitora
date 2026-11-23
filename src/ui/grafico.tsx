@@ -133,6 +133,8 @@ export function proximoDestaque(
 export interface MontagemDoGrafico<T extends ChartType> {
   data: ChartData<T, number[], string>;
   options?: ChartOptions<T>;
+  /** Os nomes inteiros, quando `data.labels` os abrevia: a tabela mostra o nome todo. */
+  rotulosCompletos?: ReadonlyArray<string>;
 }
 
 export interface PropriedadesDoGrafico<T extends ChartType> {
@@ -143,6 +145,10 @@ export interface PropriedadesDoGrafico<T extends ChartType> {
   id?: string;
   plugins?: Plugin<NoInfer<T>>[];
   aoEscolher?: (indice: number) => void;
+  /** O nome da primeira coluna da tabela ("Critério", "Unidade"). */
+  item?: string;
+  /** O nome da coluna da série sem rótulo (rosca); o padrão é "Valor". */
+  valor?: string;
 }
 
 export function Grafico<T extends ChartType>({
@@ -153,6 +159,8 @@ export function Grafico<T extends ChartType>({
   id,
   plugins,
   aoEscolher,
+  item,
+  valor,
 }: PropriedadesDoGrafico<T>) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const grafico = useRef<ChartJs<T, number[], string> | null>(null);
@@ -210,7 +218,13 @@ export function Grafico<T extends ChartType>({
 
   useEffect(() => {
     // A tabela não espera o Chart.js baixar: sai direto dos dados.
-    definirDados(dadosDaTabelaDoGrafico(ultimoMontar.current().data));
+    const montado = ultimoMontar.current();
+    definirDados(
+      dadosDaTabelaDoGrafico(montado.data, {
+        rotulosCompletos: montado.rotulosCompletos,
+        valor,
+      }),
+    );
     destaque.current = null;
     definirAnuncio("");
     const atual = grafico.current;
@@ -297,6 +311,7 @@ export function Grafico<T extends ChartType>({
             dados={dados}
             titulo={rotulo}
             visivel={emTabela}
+            item={item}
             aoEscolher={aoEscolher}
           />
         </>
