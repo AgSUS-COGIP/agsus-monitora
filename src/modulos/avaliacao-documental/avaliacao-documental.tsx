@@ -1,4 +1,4 @@
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { irParaTela } from "../../app/ir-para-tela.ts";
 import {
   TelaNaUrl,
@@ -11,6 +11,7 @@ import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitorame
 import { SeletorDeEdital } from "../../componentes/seletor-de-edital.tsx";
 import { FluxoDasEtapas } from "../../componentes/fluxo-das-etapas.tsx";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
+import { comSituacaoDoMonitoramento } from "../../lib/editais/editais-ativos.ts";
 import { editalEscolhido } from "../../lib/editais/edital-de-treinamento.ts";
 import {
   PAPEIS_DA_EQUIPE,
@@ -153,6 +154,16 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
   useEffect(() => {
     if (lerEquipe) void estado.carregarEquipe(e.editalId);
   }, [estado, lerEquipe, e.editalId]);
+  /*
+    O status de cada edital é o do monitoramento (calculado pelo cronograma,
+    o mesmo de Editais e da Classificação): o que listar_editais_avaliacao
+    devolve é o gravado, que fica para trás quando o cronograma termina.
+  */
+  const { linhas } = usarAreaAtual();
+  const editaisComSituacao = useMemo(
+    () => comSituacaoDoMonitoramento(e.editais, linhas),
+    [e.editais, linhas],
+  );
   const recarregar = () => void estado.carregar(e.area);
   const papel = e.dados?.papel;
   const escolhido = editalEscolhido(e.editais, e.editalId);
@@ -182,7 +193,7 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
                 className="avd-edital"
                 tour="avd-seletor-edital"
                 dadosDosTodos={{ "data-tour": "avd-todos-editais" }}
-                editais={e.editais}
+                editais={editaisComSituacao}
                 escolhido={e.editalId}
                 carregado={e.carregado}
                 soVigentes
@@ -378,7 +389,7 @@ function TelaDaArea({ estado, pre, fila, atualizar, e }: PropsDaTelaDaArea) {
             )
           ) : e.carregado && !e.erroAoCarregar ? (
             <EntradaDaAvaliacao
-              editais={e.editais}
+              editais={editaisComSituacao}
               area={e.area}
               aoAbrir={escolherEdital}
             />

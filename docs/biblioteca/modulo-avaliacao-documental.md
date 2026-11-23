@@ -24,7 +24,9 @@ Regra, Equipe e Triagem são só de quem coordena o edital (`pode_coordenar`, ou
 seletor de abas, e a equipe nem é lida (`abas-e-entrada.ts`). Sem edital escolhido não há abas: a
 tela abre sozinha a ficha que estava aberta, o último edital aberto (localStorage, por pessoa e
 área) ou o único vigente; senão, mostra os cartões dos editais, Ativos e Histórico separados, com a contagem por situação
-(`entrada-da-avaliacao.tsx`, `AtivosEHistorico`).
+(`entrada-da-avaliacao.tsx`, `AtivosEHistorico`). O status de cada edital, nos cartões e no
+seletor, é o do monitoramento (calculado pelo cronograma, como em Editais); o de
+`listar_editais_avaliacao` é o gravado, que fica para trás quando o cronograma termina.
 O seletor mostra só os editais vigentes (`src/lib/avaliacao-documental/editais.ts`), com "Mostrar
 todos os editais da área".
 
