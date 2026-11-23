@@ -23,7 +23,11 @@ import {
 import type { ColunaDaTabela } from "../../ui/index.ts";
 import { Icone } from "../../componentes/icone.tsx";
 import { formatNumberBR } from "../../lib/base/formatters";
-import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
+import {
+  assinarDadosDoMonitoramento,
+  obterDadosDoMonitoramento,
+  pedirLinhasDoMonitoramento,
+} from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import { usarLojaNaUrl } from "../../app/usar-filtros-na-url.ts";
@@ -703,6 +707,30 @@ export interface ApoioDoRelatorio {
   supabase: ClienteDoRelatorio | null;
   /** O estado da Lista de aprovados (o Resumo por cargo e status). */
   aprovados: () => Promise<{ estado: EstadoDosAprovados }>;
+  /**
+   * Pede as linhas do monitoramento (os editais da área), que só são lidas
+   * sob demanda (src/componentes/dados-do-monitoramento.ts); devolve a
+   * devolução do pedido.
+   */
+  pedirLinhas: () => () => void;
+  /** Pede as linhas e espera que cheguem (a diretoria, gerada no clique). */
+  esperarLinhas: () => Promise<void>;
+}
+
+/* As linhas do monitoramento já lidas, ou o pedido até chegarem (ou falharem). */
+function esperarLinhasDoMonitoramento(): Promise<void> {
+  if (obterDadosDoMonitoramento().carregado) return Promise.resolve();
+  const devolver = pedirLinhasDoMonitoramento();
+  return new Promise((pronto, falhou) => {
+    const parar = assinarDadosDoMonitoramento(() => {
+      const { carregado, erro } = obterDadosDoMonitoramento();
+      if (!carregado && !erro) return;
+      parar();
+      devolver();
+      if (carregado) pronto();
+      else falhou(new Error(erro));
+    });
+  });
 }
 
 function usarTextosDoRelatorio(configuracoes: Configuracoes) {
@@ -776,16 +804,17 @@ export function TelaDePaineisDeDados({
   relatorio: ApoioDoRelatorio;
 }) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
-  const { area: areaDoApp } = usarAreaAtual();
+  const { area: areaDoApp, carregado: linhasProntas } = usarAreaAtual();
   const textos = usarTextosDoRelatorio(apoio.configuracoes);
   const podeAprovados = podeBaixarAprovados(apoio.obterPerfil());
   const relatorios = catalogoPermitido({ aprovados: podeAprovados });
   // O montador e o Resumo por cargo abrem por cima do catálogo.
   const [extra, setExtra] = useState<Extra>("");
-  // O recorte é tirado ao abrir: o montador não muda com uma recarga no meio.
+  /*
+    O montador aberto e de onde vem o recorte. O recorte é tirado quando as
+    linhas da área chegam e não muda com uma recarga no meio.
+  */
   const [montando, setMontando] = useState<{
-    recorte: RecorteDoRelatorio;
-    descricao: string;
     origem: OrigemDoRecorte;
   } | null>(null);
   /*
@@ -798,6 +827,22 @@ export function TelaDePaineisDeDados({
   const { aprovados, erro: erroDosAprovados } = usarAprovados(
     extra === "resumo-por-cargo",
     apoio,
+  );
+
+  /*
+    O montador e o Resumo precisam dos editais da área (as linhas do
+    monitoramento, lidas só sob demanda): pedidas enquanto um deles está
+    aberto.
+  */
+  useEffect(() => (extra ? apoio.pedirLinhas() : undefined), [extra, apoio]);
+  const recorteMontado = useMemo(
+    () =>
+      montando && linhasProntas && e.area
+        ? recorteDoMontador(apoio, e.area, montando.origem)
+        : null,
+    // Só ao abrir e quando as linhas chegam: uma recarga no meio não muda o montador.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [montando, linhasProntas, e.area],
   );
 
   /*
@@ -838,11 +883,7 @@ export function TelaDePaineisDeDados({
         relatorio === "montar-relatorio" && ehOrigemDoRecorte(parte.origem)
           ? parte.origem
           : "";
-      setMontando(
-        relatorio === "montar-relatorio"
-          ? { ...recorteDoMontador(apoio, estado.obter().area, origem), origem }
-          : null,
-      );
+      setMontando(relatorio === "montar-relatorio" ? { origem } : null);
       void estado.voltarAoCatalogo();
       return;
     }
@@ -885,6 +926,7 @@ export function TelaDePaineisDeDados({
   async function gerarDiretoria(formato: "PDF" | "XLSX") {
     setErroNaGeracao("");
     try {
+      await apoio.esperarLinhas();
       const { arquivo, nome } = await gerarRelatorio({
         escolha: escolhaDaDiretoria(formato),
         recorte: recorteDaAreaInteira(e.area, apoio.linhasDaArea()),
@@ -958,10 +1000,15 @@ export function TelaDePaineisDeDados({
           <GavetaDeFontes estado={estado} />
         </>
       )}
-      {montando && extra === "montar-relatorio" ? (
+      {montando && extra === "montar-relatorio" && !recorteMontado ? (
+        <p className="ui-texto-secundario" role="status">
+          Carregando os editais da área…
+        </p>
+      ) : null}
+      {recorteMontado && extra === "montar-relatorio" ? (
         <MontadorDeRelatorio
-          e={montando.recorte}
-          descricao={montando.descricao}
+          e={recorteMontado.recorte}
+          descricao={recorteMontado.descricao}
           textos={textos}
           configuracoes={apoio.configuracoes}
           obterPerfil={apoio.obterPerfil}
@@ -1000,6 +1047,8 @@ export function criarPaineisDeDados({
     agora: () => new Date(),
     supabase: getSupabaseClient() as ClienteDoRelatorio | null,
     aprovados: () => carregarTela("approved"),
+    pedirLinhas: pedirLinhasDoMonitoramento,
+    esperarLinhas: esperarLinhasDoMonitoramento,
     ...relatorio,
   };
   return {

@@ -47,6 +47,9 @@ item Relatórios do bloco **Dados**, abaixo de Processo seletivo (`BLOCO_DE_DADO
     Os editais escolhidos ficam no endereço (`edital=7,8`); o atalho da Lista leva os dela.
   - O atalho deixa o endereço guardado (a tela ainda não montada o lê ao abrir) e faz um pedido
     de filtro (`src/app/pedido-de-filtro.ts`: a tela já montada abre o relatório pedido).
+  - Os editais da área são as linhas do monitoramento, lidas só sob demanda
+    (`pedirLinhasDoMonitoramento`): Relatórios as pede enquanto o montador ou o Resumo está aberto
+    e espera por elas antes de gerar a diretoria (sem isso o montador abria com 0 processos).
 - **Catálogo**: ao abrir, a tela lê a primeira página de cada relatório (a mesma que a tabela usa
   depois, do cache) para o cartão mostrar a data do cálculo e o total. A falha de leitura (sem
   permissão, sem a migration) aparece uma vez em cima dos cartões. Sincronizar no catálogo

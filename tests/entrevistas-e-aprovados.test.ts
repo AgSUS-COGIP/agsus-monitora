@@ -2682,7 +2682,7 @@ bloco("lib/exportacao-do-resumo-por-cargo", () => {
   describe("exportarResumoPorCargo: registro antes do arquivo", () => {
     it("registra com p_conteudo RESUMO e só então baixa", async () => {
       const { exportarResumoPorCargo } =
-        await import("../src/modulos/paineis-de-dados/exportar-resumo.ts");
+        await import("../src/modulos/aprovados/exportacao/exportar-resumo.ts");
       const chamadas: string[] = [];
       const baixados: string[] = [];
       const resultado = await exportarResumoPorCargo(
@@ -2711,7 +2711,7 @@ bloco("lib/exportacao-do-resumo-por-cargo", () => {
 
     it("banco sem a atualização: diz o que falta e não baixa nada", async () => {
       const { exportarResumoPorCargo } =
-        await import("../src/modulos/paineis-de-dados/exportar-resumo.ts");
+        await import("../src/modulos/aprovados/exportacao/exportar-resumo.ts");
       const baixados: string[] = [];
       await expect(
         exportarResumoPorCargo(pedido(), resumo(), "XLSX", {

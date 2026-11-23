@@ -5194,6 +5194,9 @@ bloco("modulos/paineis-de-dados", () => {
         supabase: null,
         // A Lista de aprovados não baixa nestes testes: fica carregando.
         aprovados: () => new Promise(() => {}),
+        // As linhas do monitoramento vêm de publicarLinhasDoMonitoramento.
+        pedirLinhas: () => () => {},
+        esperarLinhas: async () => {},
         ...relatorio,
       },
     });
@@ -6090,7 +6093,40 @@ bloco("modulos/paineis-de-dados", () => {
       );
     const montador = () => document.getElementById("montadorDeRelatorio");
 
-    afterEach(() => window.history.replaceState(null, "", "/"));
+    // Os editais da área já lidos (o montador espera por eles).
+    beforeEach(() => publicarLinhasDoMonitoramento([]));
+    afterEach(() => {
+      window.history.replaceState(null, "", "/");
+      redefinirDadosDoMonitoramento();
+    });
+
+    it("sem os editais da área lidos, o montador os pede e espera por eles", async () => {
+      redefinirDadosDoMonitoramento();
+      window.history.replaceState(null, "", "/saude-indigena/relatorios");
+      const devolver = vi.fn();
+      const pedirLinhas = vi.fn(() => devolver);
+      await montar(
+        {},
+        { linhasDaArea: () => [linha("e1", "01/2099")], pedirLinhas },
+        { abrir: null },
+      );
+      expect(pedirLinhas).not.toHaveBeenCalled();
+      await clicar(botaoEmCartao("montar-relatorio", "Montar"));
+      await esperar();
+      expect(pedirLinhas).toHaveBeenCalledTimes(1);
+      expect(montador()).toBeNull();
+      expect(caixa?.textContent).toContain("Carregando os editais da área");
+      await act(async () => publicarLinhasDoMonitoramento([]));
+      expect(montador()?.textContent).toContain("1 processo da área");
+      // Fechar devolve o pedido (a leitura cara não fica ligada à toa).
+      await clicar(
+        [...(montador()?.querySelectorAll("button") ?? [])].find(
+          (b) => b.textContent?.trim() === "Cancelar",
+        ),
+      );
+      await esperar();
+      expect(devolver).toHaveBeenCalledTimes(1);
+    });
 
     it("o cartão Montar relatório abre o montador com a área inteira, e ele vai no endereço", async () => {
       window.history.replaceState(null, "", "/saude-indigena/relatorios");
@@ -6146,9 +6182,10 @@ bloco("modulos/paineis-de-dados", () => {
     });
 
     it("o cartão da diretoria gera direto (sem Abrir) e mostra a falha", async () => {
+      const esperarLinhas = vi.fn(async () => {});
       await montar(
         {},
-        { linhasDaArea: () => [linha("e1", "01/2099")] },
+        { linhasDaArea: () => [linha("e1", "01/2099")], esperarLinhas },
         { abrir: null },
       );
       expect(botaoEmCartao("relatorio-da-diretoria", "Abrir")).toBeUndefined();
@@ -6158,6 +6195,8 @@ bloco("modulos/paineis-de-dados", () => {
       );
       await esperar();
       expect(alertas()).toContain("Sem conexão com o banco.");
+      // Gera só depois dos editais da área lidos.
+      expect(esperarLinhas).toHaveBeenCalledTimes(1);
       const pdf = escolhaDaDiretoria("PDF");
       expect(pdf.secoes).toEqual(["editais", "cargos", "aprovados"]);
       expect(pdf.formato).toBe("PDF");
