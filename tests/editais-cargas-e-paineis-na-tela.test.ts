@@ -2687,8 +2687,21 @@ bloco("componentes/nucleo-treinamento", () => {
 
   const linha = (id: string) =>
     document.querySelector(`#nucleoRows tr[data-record-id="${id}"]`);
-  const botaoReiniciar = (id: string) =>
-    linha(id)?.querySelector('[aria-label^="Reiniciar treinamento"]');
+  const linhaDoEdital = (id: string) =>
+    document.querySelector<HTMLElement>(
+      `#nucleoRows tr[data-record-id="${id}"]`,
+    );
+  /* "Reiniciar treinamento" fica no "⋯" da linha (AcoesDaLinha). */
+  const botaoReiniciar = async (id: string) => {
+    const menu = linhaDoEdital(id)?.querySelector<HTMLElement>(
+      '[aria-label^="Mais ações de"]',
+    );
+    if (menu && menu.getAttribute("aria-expanded") !== "true")
+      await clicar(menu);
+    return linhaDoEdital(id)?.querySelector<HTMLElement>(
+      '[data-acao="reiniciar-treinamento"]',
+    );
+  };
   const ADMIN = { perfil: "admin", admin_global: true };
 
   describe("edital de treinamento em Editais", () => {
@@ -2704,23 +2717,23 @@ bloco("componentes/nucleo-treinamento", () => {
     it("só o admin global vê 'Reiniciar treinamento', e só no edital de treinamento", async () => {
       await montar({ perfil: { perfil: "edital_gestor" } });
       await esperar(() => linha("treino"));
-      expect(botaoReiniciar("treino")).toBeFalsy();
+      expect(await botaoReiniciar("treino")).toBeFalsy();
       await act(async () => controlador?.raiz?.unmount());
       controlador?.estado.desligar();
       await act(async () => redefinirDadosDoMonitoramento());
 
       await montar({ perfil: ADMIN });
       await esperar(() => linha("treino"));
-      expect(botaoReiniciar("treino")).toBeTruthy();
-      expect(botaoReiniciar("real")).toBeFalsy();
+      expect(await botaoReiniciar("treino")).toBeTruthy();
+      expect(await botaoReiniciar("real")).toBeFalsy();
     });
 
     it("confirma na própria linha (sem window.confirm) e chama o RPC com o edital", async () => {
       const { supabase, confirmar, aoSalvar, toast } = await montar({
         perfil: ADMIN,
       });
-      await esperar(() => botaoReiniciar("treino"));
-      await clicar(botaoReiniciar("treino"));
+      await esperar(() => linha("treino"));
+      await clicar(await botaoReiniciar("treino"));
       const grupo = definido(
         linha("treino")?.querySelector(".nucleo-confirma-reinicio"),
       );
@@ -2753,8 +2766,8 @@ bloco("componentes/nucleo-treinamento", () => {
 
     it("Cancelar fecha a confirmação sem chamar o banco", async () => {
       const { supabase } = await montar({ perfil: ADMIN });
-      await esperar(() => botaoReiniciar("treino"));
-      await clicar(botaoReiniciar("treino"));
+      await esperar(() => linha("treino"));
+      await clicar(await botaoReiniciar("treino"));
       const cancelar = [
         ...definido(linha("treino")).querySelectorAll(
           ".nucleo-confirma-reinicio button",
@@ -3189,6 +3202,15 @@ bloco("componentes/nucleo", () => {
     document.querySelector<HTMLElement>(
       `#nucleoRows tr[data-record-id="${id}"]`,
     );
+  /* A ação da linha no "⋯" (AcoesDaLinha): abre o menu e devolve o item. */
+  const acaoDaLinha = async (id: string, acao: string) => {
+    const menu = linha(id)?.querySelector<HTMLElement>(
+      '[aria-label^="Mais ações de"]',
+    );
+    if (menu && menu.getAttribute("aria-expanded") !== "true")
+      await clicar(menu);
+    return linha(id)?.querySelector<HTMLElement>(`[data-acao="${acao}"]`);
+  };
   /* O indicador clicável (o botão do Kpi); o skeleton não tem botão. */
   const cartao = (chave: string) =>
     document.querySelector<HTMLElement>(
@@ -3204,7 +3226,7 @@ bloco("componentes/nucleo", () => {
       ([nome]) => nome === "get_nucleo_cronograma_resumo",
     );
   const abrirEdital = async (id: string) =>
-    clicar(linha(id)?.querySelector<HTMLElement>('[aria-label^="Editar"]'));
+    clicar(await acaoDaLinha(id, "editar"));
   /* A vista da tabela: Ativos (o padrão) ou Histórico (concluídos e cancelados). */
   const vista = (valor: "ativos" | "historico") =>
     document.querySelector<HTMLElement>(
@@ -3310,12 +3332,14 @@ bloco("componentes/nucleo", () => {
         supabase: supabaseFalso({ resumo: [] }),
       });
       expect($("newEditalBtn")).toBeNull();
+      // Só o "Abrir": sem o que editar, a linha não tem o "⋯".
       expect(
-        document.querySelector<HTMLElement>('[aria-label^="Editar"]'),
-      ).toBeNull();
-      expect(
-        linha("1")?.querySelector<HTMLElement>(".approved-no-action"),
+        linha("1")?.querySelector('[data-acao="pagina-do-edital"]'),
       ).not.toBeNull();
+      expect(
+        linha("1")?.querySelector('[aria-label^="Mais ações de"]'),
+      ).toBeNull();
+      expect(document.querySelector('[data-acao="editar"]')).toBeNull();
     });
 
     it("o botão de listas abre o modal da Lista de Aprovados (pelo registro das telas)", async () => {
@@ -3332,11 +3356,7 @@ bloco("componentes/nucleo", () => {
       });
       try {
         await montar();
-        await clicar(
-          linha("1")?.querySelector<HTMLElement>(
-            '[aria-label^="Lista de aprovados"]',
-          ),
-        );
+        await clicar(await acaoDaLinha("1", "listas"));
         await vi.waitFor(() =>
           expect(aprovados.openImportModal).toHaveBeenCalledWith(
             "1",
@@ -3367,16 +3387,15 @@ bloco("componentes/nucleo", () => {
             listas: [{ edital_id: "2", total_candidatos: 0 }],
           }),
         });
+        // Com aviso, o botão fica à vista; sem aviso, a lista vai para o "⋯".
         const botao = (id: string) =>
-          linha(id)?.querySelector<HTMLElement>(
-            ".nucleo-row-actions .fa-file-arrow-up",
-          )?.parentElement;
+          linha(id)?.querySelector<HTMLElement>(".nucleo-listas");
         // Edital ainda não concluído não é marcado, mesmo sem lista.
         for (const id of ["1", "3"]) {
-          expect(botao(id)?.classList.contains("nucleo-listas-aviso")).toBe(
-            false,
+          expect(botao(id)).toBeNull();
+          expect((await acaoDaLinha(id, "listas"))?.textContent).toContain(
+            "Lista de aprovados",
           );
-          expect(botao(id)?.getAttribute("title")).toBe("Lista de aprovados");
         }
         await verHistorico();
         expect(botao("2")?.classList.contains("nucleo-listas-aviso")).toBe(
@@ -3404,7 +3423,7 @@ bloco("componentes/nucleo", () => {
       vi.stubGlobal("navigate", navigate);
       await montar();
       const botao = linha("1")?.querySelector<HTMLElement>(
-        ".nucleo-pagina-do-edital",
+        '[data-acao="pagina-do-edital"]',
       );
       expect(botao?.getAttribute("title")).toBe("Abrir página do edital");
       await clicar(botao);
@@ -3412,7 +3431,9 @@ bloco("componentes/nucleo", () => {
       expect(navigate).toHaveBeenCalledWith("edital", { edital: "1" });
       await verHistorico();
       await clicar(
-        linha("2")?.querySelector<HTMLElement>(".nucleo-pagina-do-edital"),
+        linha("2")?.querySelector<HTMLElement>(
+          '[data-acao="pagina-do-edital"]',
+        ),
       );
       expect(navigate).toHaveBeenLastCalledWith("edital", {
         edital: "11-2026",
@@ -3434,11 +3455,7 @@ bloco("componentes/nucleo", () => {
         }
         return null;
       };
-      await clicar(
-        linha("1")?.querySelector<HTMLElement>(
-          '[aria-label^="Regras do edital"]',
-        ),
-      );
+      await clicar(await acaoDaLinha("1", "regras"));
       const regras = await pagina();
       expect(regras).not.toBeNull();
       expect(regras?.dataset.etapa).toBe("triagem");
@@ -3494,11 +3511,7 @@ bloco("componentes/nucleo", () => {
       await import("../src/modulos/regras-do-edital/regras-do-edital.tsx");
       await montar({ comNavegacao: true });
       definido(navegacao).abrirEntrada();
-      await clicar(
-        linha("1")?.querySelector<HTMLElement>(
-          '[aria-label^="Regras do edital"]',
-        ),
-      );
+      await clicar(await acaoDaLinha("1", "regras"));
       expect(definido(navegacao).obter().regras).toEqual({
         edital: "1",
         etapa: "triagem",
@@ -4121,13 +4134,13 @@ bloco("componentes/nucleo", () => {
       );
     });
 
-    it("Esc fecha e devolve o foco ao botão que abriu", async () => {
+    it("Esc fecha e devolve o foco ao botão que abriu (o ⋯ da linha)", async () => {
       await montar();
       const botao = definido(
-        linha("1")?.querySelector<HTMLElement>('[aria-label^="Editar"]'),
+        linha("1")?.querySelector<HTMLElement>('[aria-label^="Mais ações de"]'),
       );
       botao.focus();
-      await clicar(botao);
+      await clicar(await acaoDaLinha("1", "editar"));
       await teclar(document, "Escape");
       expect($("editModal")).toBeNull();
       expect(document.activeElement).toBe(botao);
@@ -4441,9 +4454,7 @@ bloco("componentes/nucleo", () => {
   describe("linha do tempo", () => {
     it("mostra a situação de cada etapa e o histórico", async () => {
       await montar();
-      await clicar(
-        linha("1")?.querySelector<HTMLElement>(".nucleo-view-timeline"),
-      );
+      await clicar(await acaoDaLinha("1", "cronograma"));
       expect($("nucleoTimelineTitle")?.textContent).toBe("10/2026");
       expect($("nucleoTimelineSubtitle")?.textContent).toBe("DSEI Manaus");
       const situacoes = [
@@ -4527,9 +4538,7 @@ bloco("componentes/nucleo", () => {
       });
       await montar({ supabase });
 
-      await clicar(
-        linha("1")?.querySelector<HTMLElement>(".nucleo-view-timeline"),
-      );
+      await clicar(await acaoDaLinha("1", "cronograma"));
       const conteudo = () => $("nucleoTimelineContent");
       expect(
         conteudo()?.querySelector<HTMLElement>(

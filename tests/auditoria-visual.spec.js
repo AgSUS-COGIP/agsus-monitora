@@ -29,13 +29,15 @@ import { rpcsDaAuditoria } from "./fixtures/auditoria-visual/dados.js";
   (scripts/resumir-auditoria-visual.mjs). Só roda com AUDITORIA=1: são ~450
   aberturas de página e o resultado é para ler, não para passar ou falhar.
 
-  O bloco "sem rolagem horizontal a 375px", no fim, é a trava que o lote 3 do
-  plano de correção liga (AUDITORIA_ROLAGEM=1 até lá).
+  Os blocos do fim são travas, ligadas no CI pelo lote 3 do plano de correção
+  (tabelas): nenhuma tela passa de 375 nem de 320px, nenhum alvo de toque
+  dentro de tabela tem menos de 44px, e nenhuma palavra curta da tabela quebra
+  no meio a 1280px.
   Relatório e plano: docs/_arquivo/auditoria-responsividade-e-harmonia-2026-11-23.md.
 */
 
 const PASTA = "test-results/auditoria-visual";
-const ALTURA = { 375: 812, 768: 1024, 1280: 900 };
+const ALTURA = { 320: 640, 375: 812, 768: 1024, 1280: 900 };
 const LARGURAS = [375, 768, 1280];
 const TEMAS = ["claro", "escuro"];
 const ESTADOS = ["cheia", "vazia", "erro"];
@@ -316,15 +318,11 @@ test.describe("auditoria visual", () => {
 });
 
 /*
-  A trava do lote 3 do plano (tabelas): nenhuma tela passa de 375px. Em
-  23/11/2026 já passava nas 25 telas; fica desligada no CI até o lote 3, que
-  a liga tirando a condição AUDITORIA_ROLAGEM (e acrescenta 320px).
+  As travas do lote 3 do plano (tabelas), no CI: nenhuma tela passa de 375 nem
+  de 320px (WCAG 1.4.10; a tabela rola dentro da própria caixa), e nenhum alvo
+  de toque dentro de tabela tem menos de 44px.
 */
-test.describe("sem rolagem horizontal a 375px", () => {
-  test.skip(
-    !process.env.AUDITORIA_ROLAGEM,
-    "liga no lote 3 da auditoria visual (até lá, AUDITORIA_ROLAGEM=1)",
-  );
+test.describe("sem rolagem horizontal a 375 e 320px", () => {
   test.beforeEach(async ({ request }) => {
     test.skip(
       !(await buildSimulado(request)),
@@ -332,22 +330,79 @@ test.describe("sem rolagem horizontal a 375px", () => {
     );
   });
 
-  for (const { tela, caminho } of TELAS)
-    test(`${tela} cabe em 375px`, async ({ browser }) => {
+  for (const largura of [375, 320])
+    for (const { tela, caminho } of TELAS)
+      test(`${tela} cabe em ${largura}px`, async ({ browser }) => {
+        const aberta = await abrir(browser, {
+          caminho,
+          estado: "cheia",
+          largura,
+          tema: "claro",
+        });
+        // A medida de medirTela pega também o que o overflow-x do body corta.
+        const { achados } = await aberta.page.evaluate(medirTela, {
+          toque: true,
+        });
+        await aberta.contexto.close();
+        expect(
+          achados.rolagem,
+          `passa de ${largura}px: ${achados.rolagem?.culpados.map((c) => c.caminho).join("; ")}`,
+        ).toBeNull();
+        const pequenos = achados.toque.filter((a) => a.naTabela);
+        expect(
+          pequenos,
+          `alvo < 44px na tabela: ${pequenos.map((a) => `${a.caminho} (${a.tamanho})`).join("; ")}`,
+        ).toEqual([]);
+      });
+});
+
+/*
+  Palavra inteira nas tabelas a 1280px: "Enfermeiro" não vira "Enfermeir/o".
+  A palavra (sem espaço, hífen nem barra) de até 20 letras não pode cair em
+  duas linhas; a mais comprida pode, para não alargar a tabela sem fim.
+*/
+function palavrasQuebradas() {
+  const quebradas = [];
+  for (const celula of document.querySelectorAll("td")) {
+    const textos = document.createTreeWalker(celula, NodeFilter.SHOW_TEXT);
+    for (let no = textos.nextNode(); no; no = textos.nextNode())
+      for (const palavra of no.data.matchAll(/[^\s\-–/]+/g)) {
+        if (palavra[0].length > 20) continue;
+        const trecho = document.createRange();
+        trecho.setStart(no, palavra.index);
+        trecho.setEnd(no, palavra.index + palavra[0].length);
+        const linhas = new Set(
+          [...trecho.getClientRects()].map((r) => Math.round(r.top)),
+        );
+        if (linhas.size > 1) quebradas.push(palavra[0]);
+      }
+  }
+  return [...new Set(quebradas)];
+}
+
+test.describe("palavra inteira nas tabelas a 1280px", () => {
+  test.beforeEach(async ({ request }) => {
+    test.skip(
+      !(await buildSimulado(request)),
+      `Compile com VITE_SUPABASE_URL=${SUPABASE} para rodar este teste.`,
+    );
+  });
+
+  for (const { tela, caminho } of TELAS.filter((t) =>
+    ["editais", "aprovados"].includes(t.tela),
+  ))
+    test(`${tela}: nenhuma palavra curta quebrada`, async ({ browser }) => {
       const aberta = await abrir(browser, {
         caminho,
         estado: "cheia",
-        largura: 375,
+        largura: 1280,
         tema: "claro",
       });
-      // A medida de medirTela pega também o que o overflow-x do body corta.
-      const { achados } = await aberta.page.evaluate(medirTela, {
-        toque: true,
-      });
+      await expect(
+        aberta.page.locator("tbody td:visible").first(),
+      ).toBeVisible();
+      const quebradas = await aberta.page.evaluate(palavrasQuebradas);
       await aberta.contexto.close();
-      expect(
-        achados.rolagem,
-        `passa de 375px: ${achados.rolagem?.culpados.map((c) => c.caminho).join("; ")}`,
-      ).toBeNull();
+      expect(quebradas, `quebradas: ${quebradas.join(", ")}`).toEqual([]);
     });
 });

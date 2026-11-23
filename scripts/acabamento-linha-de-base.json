@@ -99,10 +99,7 @@
     "important": 2
   },
   "src/styles/mobile-app.css": {
-    "important": 33
-  },
-  "src/styles/mobile-table-cards.css": {
-    "important": 3
+    "important": 31
   },
   "src/styles/nielsen-shell-ux.css": {
     "important": 22,

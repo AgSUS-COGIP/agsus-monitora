@@ -8,9 +8,6 @@
 
 /* ── Tabela ─────────────────────────────────────────────────────────── */
 
-.ui-tabela-rolagem table.editais-tabela {
-  min-width: 1180px;
-}
 .editais-tabela .num {
   text-align: right;
   font-variant-numeric: tabular-nums;

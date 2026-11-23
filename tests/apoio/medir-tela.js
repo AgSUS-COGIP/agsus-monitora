@@ -297,6 +297,8 @@ export function medirTela({ toque, limiteDeOrigens = 60 }) {
           caminho: caminho(alvo),
           tamanho: `${Math.round(r.width)}×${Math.round(r.height)}`,
           texto: textoCurto(el),
+          // Dentro de tabela: a trava do lote 3 (auditoria-visual.spec.js).
+          naTabela: Boolean(alvo.closest("table")),
         });
     }
   }

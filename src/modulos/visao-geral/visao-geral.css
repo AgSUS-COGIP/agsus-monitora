@@ -421,8 +421,6 @@
 }
 .visao-geral-prazo,
 .visao-geral-cronograma {
-  /* Dentro da célula (`overflow-wrap: anywhere` em ui.css): o selo quebra só entre palavras. */
-  overflow-wrap: normal;
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
@@ -770,6 +768,14 @@
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
+}
+/* No toque, o número (de 8 a 24px de largura) ganha o alvo de 44 × 44px. */
+@media (pointer: coarse) {
+  .visao-geral-numero-botao {
+    min-width: 44px;
+    min-height: 44px;
+    text-align: inherit;
+  }
 }
 .visao-geral-origem {
   display: grid;

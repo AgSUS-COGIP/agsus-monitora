@@ -188,19 +188,15 @@ textarea,
     min-width: 720px;
   }
 
+  /*
+    O padding e a fonte das células são os de app.css e de ui.css (8/12px,
+    tokens), iguais aos do desktop; aqui só não quebra a linha, para a tabela
+    rolar de lado. A primeira coluna fixa e o sinal de rolagem ficam em
+    ui.css (.ui-tabela-rolagem) e em app.css (.table-wrap).
+  */
   th,
   td {
-    padding: 11px 10px !important;
-    font-size: 0.82rem !important;
     white-space: nowrap;
-  }
-
-  th:first-child,
-  td:first-child {
-    position: sticky;
-    left: 0;
-    z-index: var(--z-sticky);
-    background: inherit;
   }
 
   .modal,

@@ -40,6 +40,7 @@ import { formatNumberBR } from "../../lib/base/formatters";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { abrirPaginaDoEdital } from "../pagina-do-edital/abrir.ts";
 import {
+  AcoesDaLinha,
   AtivosEHistorico,
   Selo,
   TabelaInfinita,
@@ -252,6 +253,12 @@ function LinhaDoEdital({
     ? avisoDaListaDoEdital(aprovados, linha.id, linha.status)
     : null;
   const rotulo = [linha.edital, linha.unidade].filter(Boolean).join(" · ");
+  // Cancelado/suspenso só avisa; concluído sem aprovados (amarelo) abre as
+  // listas como os outros, para importar a lista.
+  const abrirListas = () =>
+    aviso?.tom === "perigo"
+      ? estado.toast(aviso.texto, "error")
+      : abrirListasDoEdital(String(linha.id), rotulo);
   const alerta =
     item && item.alerta_tipo !== "ok" ? alertaDoTipo(item.alerta_tipo) : null;
 
@@ -302,86 +309,25 @@ function LinhaDoEdital({
         <Selo tom={SELO[tomDoRisco(linha.risco)]}>{linha.risco || "-"}</Selo>
       </td>
       <td>
+        {/*
+          Ações (23/11/2026): "Abrir" (a página do edital) à vista e o resto
+          no "⋯" (AcoesDaLinha). Os seis ícones lado a lado não cabiam a
+          1280px. A Lista de aprovados com aviso (amarelo ou vermelho) fica à
+          vista, porque pede atenção; sem aviso, vai para o "⋯".
+        */}
         <div className="nucleo-row-actions" data-tour="editais-acoes-da-linha">
-          <button
-            className="btn icon outline nucleo-pagina-do-edital"
-            type="button"
-            title="Abrir página do edital"
-            aria-label={`Abrir página do edital ${nome || ""}`}
-            onClick={() => abrirPaginaDoEdital(linha, linhasDaArea)}
-          >
-            <i className="fa-solid fa-file-lines" aria-hidden="true" />
-          </button>
-          {podeEditar ? (
+          {podeListas && aviso ? (
             <button
-              className="btn icon outline"
+              className={`btn icon outline nucleo-listas nucleo-listas-${aviso.tom}`}
               type="button"
-              title="Editar registro"
-              data-tour="editais-editar"
-              aria-label={`Editar ${nome}`}
-              onClick={() => estado.abrirEdital(linha.id)}
-            >
-              <i className="fa-solid fa-pen-to-square" aria-hidden="true" />
-            </button>
-          ) : null}
-          {podeListas ? (
-            <button
-              className={`btn icon outline${aviso ? ` nucleo-listas-${aviso.tom}` : ""}`}
-              type="button"
-              title={aviso ? aviso.texto : "Lista de aprovados"}
-              aria-label={
-                aviso
-                  ? `${aviso.texto}: ${nome}`
-                  : `Lista de aprovados de ${nome}`
-              }
-              onClick={() =>
-                // Cancelado/suspenso só avisa; concluído sem aprovados (amarelo)
-                // abre as listas como os outros, para importar a lista.
-                aviso?.tom === "perigo"
-                  ? estado.toast(aviso.texto, "error")
-                  : abrirListasDoEdital(String(linha.id), rotulo)
-              }
+              title={aviso.texto}
+              aria-label={`${aviso.texto}: ${nome}`}
+              onClick={abrirListas}
             >
               <i className="fa-solid fa-file-arrow-up" aria-hidden="true" />
             </button>
           ) : null}
-          {item ? (
-            <button
-              type="button"
-              className="btn icon outline"
-              title="Regras do edital"
-              data-tour="editais-regras-do-edital"
-              aria-label={`Regras do edital ${item.edital || ""}`}
-              onClick={() => navegacao.abrirRegrasDoEdital(String(item.id))}
-            >
-              <i className="fa-solid fa-list-check" aria-hidden="true" />
-            </button>
-          ) : null}
-          {item ? (
-            <button
-              type="button"
-              className="btn icon outline nucleo-view-timeline"
-              title="Ver cronograma"
-              data-tour="editais-linha-do-tempo"
-              aria-label={`Ver cronograma ${item.edital || ""}`}
-              onClick={() => estado.abrirLinhaDoTempo(item.id)}
-            >
-              <i className="fa-solid fa-timeline" aria-hidden="true" />
-            </button>
-          ) : null}
-          {podeReiniciar && !confirmando ? (
-            <button
-              type="button"
-              className="btn icon outline nucleo-reiniciar-treinamento"
-              title="Reiniciar treinamento"
-              aria-label={`Reiniciar treinamento ${nome || ""}`}
-              disabled={salvando}
-              onClick={() => setConfirmando(true)}
-            >
-              <i className="fa-solid fa-rotate" aria-hidden="true" />
-            </button>
-          ) : null}
-          {podeReiniciar && confirmando ? (
+          {confirmando ? (
             <div
               className="nucleo-confirma-reinicio"
               role="group"
@@ -408,10 +354,75 @@ function LinhaDoEdital({
                 Cancelar
               </button>
             </div>
-          ) : null}
-          {!podeEditar && !podeListas && !item && !podeReiniciar ? (
-            <span className="approved-no-action">—</span>
-          ) : null}
+          ) : (
+            <AcoesDaLinha
+              pessoa={nome || "este edital"}
+              principal={{
+                rotulo: "Abrir",
+                acao: "pagina-do-edital",
+                titulo: "Abrir página do edital",
+                dados: {
+                  "aria-label": `Abrir página do edital ${nome || ""}`.trim(),
+                },
+                aoClicar: () => abrirPaginaDoEdital(linha, linhasDaArea),
+              }}
+              outras={[
+                ...(podeEditar
+                  ? [
+                      {
+                        id: "editar",
+                        rotulo: "Editar",
+                        icone: "fa-pen-to-square",
+                        dados: { "data-acao": "editar" },
+                        aoEscolher: () => estado.abrirEdital(linha.id),
+                      },
+                    ]
+                  : []),
+                ...(podeListas && !aviso
+                  ? [
+                      {
+                        id: "listas",
+                        rotulo: "Lista de aprovados",
+                        icone: "fa-file-arrow-up",
+                        dados: { "data-acao": "listas" },
+                        aoEscolher: abrirListas,
+                      },
+                    ]
+                  : []),
+                ...(item
+                  ? [
+                      {
+                        id: "regras",
+                        rotulo: "Regras do edital",
+                        icone: "fa-list-check",
+                        dados: { "data-acao": "regras" },
+                        aoEscolher: () =>
+                          navegacao.abrirRegrasDoEdital(String(item.id)),
+                      },
+                      {
+                        id: "cronograma",
+                        rotulo: "Ver cronograma",
+                        icone: "fa-timeline",
+                        dados: { "data-acao": "cronograma" },
+                        aoEscolher: () => estado.abrirLinhaDoTempo(item.id),
+                      },
+                    ]
+                  : []),
+                ...(podeReiniciar
+                  ? [
+                      {
+                        id: "reiniciar",
+                        rotulo: "Reiniciar treinamento",
+                        icone: "fa-rotate",
+                        desabilitado: salvando,
+                        dados: { "data-acao": "reiniciar-treinamento" },
+                        aoEscolher: () => setConfirmando(true),
+                      },
+                    ]
+                  : []),
+              ]}
+            />
+          )}
         </div>
       </td>
     </tr>

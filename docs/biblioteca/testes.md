@@ -113,10 +113,11 @@ Os `*.spec.js` de `tests/` rodam no Playwright. O CI roda todos (`npm run test:e
   1280px, claro e escuro; mede rolagem horizontal, transbordo, texto cortado, toque < 44px, fonte,
   espaço e cor fora dos tokens e componente feito à mão (`tests/apoio/medir-tela.js`), e
   `npm run auditoria:visual` monta `test-results/auditoria-visual/resumo.md`. Não falha: é para
-  ler. Respostas fictícias em `tests/fixtures/auditoria-visual/`. O bloco "sem rolagem horizontal a
-  375px" é a trava que o lote 3 da
-  [auditoria de 23/11/2026](../_arquivo/auditoria-responsividade-e-harmonia-2026-11-23.md) liga (até lá,
-  `AUDITORIA_ROLAGEM=1`).
+  ler. Respostas fictícias em `tests/fixtures/auditoria-visual/`. Os blocos do fim são travas
+  (lote 3 da [auditoria de 23/11/2026](../_arquivo/auditoria-responsividade-e-harmonia-2026-11-23.md))
+  e rodam no CI: nenhuma tela passa de 375 nem de 320px, nenhum alvo de toque dentro de tabela
+  tem menos de 44px, e nenhuma palavra de até 20 letras quebra no meio nas tabelas de Editais e
+  Aprovados a 1280px.
 - **Com banco de desenvolvimento** (`E2E_SUPABASE_SESSION_JSON`; sem ela, pulados):
   `sessao-autenticada`, `analises-authenticated`, `mapa-workspace-autenticado`.
 
