@@ -1,35 +1,59 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-16
+atualizado: 2026-11-23
 ---
 
-# Módulo: Painéis (bloco Dados)
+# Módulo: Relatórios (bloco Dados; antes Painéis)
 
-Relatórios de conferência da área escolhida, em tabela, para baixar em Excel e PDF: Resumo dos
-editais, Editais por cargo e Aprovados, um por aba. Rota `/<área>/paineis-de-dados`, pasta
-`src/modulos/paineis-de-dados/`. No menu, é o item Painéis do bloco **Dados**, abaixo de Processo
-seletivo (`BLOCO_DE_DADOS` em `src/lib/navegacao/menu-lateral.ts`). Não confundir com os painéis externos
-(`panel:<código>`, [[modulo-paineis-externos]]).
+Os relatórios de **acompanhamento e gestão** da área escolhida, que cruzam editais, num catálogo:
+a entrada é uma grade de cartões em grupos (Editais: Resumo dos editais e Editais por cargo;
+Aprovados: Aprovados; Produtividade, quando tiver relatório), cada um com o que mostra em uma
+linha, quando foi calculado, quantas linhas tem e os botões de exportar (Excel e PDF, o relatório
+inteiro). "Abrir" mostra a tabela paginada, com "Todos os relatórios" para voltar. No menu, é o
+item Relatórios do bloco **Dados**, abaixo de Processo seletivo (`BLOCO_DE_DADOS` em
+`src/lib/navegacao/menu-lateral.ts`). Não confundir com os painéis externos (`panel:<código>`,
+[[modulo-paineis-externos]]).
+
+- **Nomes**: só o que a pessoa lê mudou em 23/11/2026 (menu, título, Acessos, Aya, mensagens). A
+  view, a aba do catálogo, a pasta e o recurso seguem `paineis-de-dados` / `paineis_dados`
+  (permissões, `TB_ABA`, tours e `**abrir:**` da Aya continuam valendo). O nome no menu vem de
+  `TB_ABA."NO_ABA"`: até a migration `20261123180000_aba_paineis_vira_relatorios.sql` ser aplicada,
+  o menu mostra "Painéis" e o resto já diz Relatórios.
+- **Endereço**: `/<área>/relatorios` (catálogo) e `/<área>/relatorios?relatorio=<id>` (um aberto:
+  abrir é entrada nova no histórico, e o voltar do navegador volta aos cartões). O caminho antigo
+  `/<área>/paineis-de-dados` é `caminhosAntigos` da rota (`src/lib/navegacao/rotas.ts`): abre a
+  tela e a navegação troca o endereço pelo novo, sem nova entrada no histórico.
+- **O que entra**: só relatório de gestão que cruza editais. Os documentos de uma etapa (resultado
+  e relatório de desempate da Classificação, cartas de convocação, exportação da lista de
+  aprovados) ficam na tela da etapa; ali entra, no máximo, um atalho "Ver em Relatórios" para o
+  relatório de gestão correspondente.
+- **Catálogo**: ao abrir, a tela lê a primeira página de cada relatório (a mesma que a tabela usa
+  depois, do cache) para o cartão mostrar a data do cálculo e o total. A falha de leitura (sem
+  permissão, sem a migration) aparece uma vez em cima dos cartões. Sincronizar no catálogo
+  recalcula todos; com um relatório aberto, só ele. A data no topo ("Sincronizado em") só aparece
+  com um relatório aberto; no catálogo, cada cartão tem a sua.
 
 ## Arquivos
 
 ```
-paineis-de-dados.tsx  abas, tabela paginada, alça de largura, ⓘ da origem e botões; criarPaineisDeDados()
-estado.ts             store sem React: relatório ativo, página lida por relatório e área, cache em memória,
-                      larguras, download, gaveta de fontes
+paineis-de-dados.tsx  catálogo (cartões por grupo), relatório aberto (tabela paginada, alça de largura,
+                      ⓘ da origem e botões), o relatório no endereço; criarPaineisDeDados()
+estado.ts             store sem React: catálogo ou relatório aberto, página lida por relatório e área,
+                      cache em memória, larguras, download (do aberto ou de um cartão), gaveta de fontes
 fontes-dos-dados.tsx  a gaveta "Fontes dos dados" (uma coluna por bloco: Origem, Coluna, Motivo)
-paineis-de-dados.css  a alça de largura e o painel do ⓘ
+paineis-de-dados.css  a alça de largura, o painel do ⓘ, a grade de cartões e a volta ao catálogo
 ```
 
-Regras puras em `src/lib/paineis/relatorios-dos-paineis.ts` (colunas, leitura da página, XLSX, tabela do PDF, nome do
+Regras puras em `src/lib/paineis/catalogo-dos-relatorios.ts` (os cartões, o grupo e o resumo de
+cada um, os grupos com relatório e o id que vale no endereço), `src/lib/paineis/relatorios-dos-paineis.ts` (colunas, leitura da página, XLSX, tabela do PDF, nome do
 arquivo, largura arrastada e texto da origem) e `src/lib/paineis/fontes-dos-paineis.ts` (leitura das fontes).
 RPCs no contrato (`src/lib/rpc-contrato.ts`): `ler_relatorio_do_painel`,
 `sincronizar_relatorio_do_painel`, `listar_fontes_do_painel` e `salvar_fonte_da_coluna`.
 
 ## Regras e contratos
 
-- Permissão: recurso `paineis_dados` (Painéis (Dados)), liberado em Acessos; aba
+- Permissão: recurso `paineis_dados` (Relatórios, em Acessos), liberado em Acessos; aba
   `paineis-de-dados` em `TB_ABA`, nas três áreas (migration `20261113200000_paineis_no_bloco_dados.sql`).
 - **Resultado pronto** (migration `20261116160000_relatorios_dos_paineis_prontos.sql`; desenho em
   `docs/_arquivo/planos/2026-11-16-paineis-carregamento-e-tabela-design.md`): o banco guarda o
@@ -60,7 +84,8 @@ RPCs no contrato (`src/lib/rpc-contrato.ts`): `ler_relatorio_do_painel`,
   cálculo. O download pede todas as linhas ("Exportar em Excel": XLSX com o gerador de
   `src/lib/classificacao/exportacao.ts` e `fflate` sob demanda; "Salvar em PDF":
   `src/lib/base/exportacao-da-tabela.ts`).
-- **Montar relatório** (16/11/2026; antes no menu da conta): o botão no topo abre o montador da
+- **Montar relatório** (16/11/2026; antes no menu da conta): o botão no topo (no catálogo e no
+  relatório aberto) abre o montador da
   Visão geral (`src/modulos/visao-geral/montador-de-relatorio.tsx`, [[modulo-visao-geral]]) com
   todos os editais da área, sem os filtros da Visão geral (`recorteDaAreaInteira`, em
   `src/lib/visao-geral/relatorio-da-visao-geral.ts`). As linhas são as do estado da Visão geral, lidas no
@@ -95,7 +120,7 @@ RPCs no contrato (`src/lib/rpc-contrato.ts`): `ler_relatorio_do_painel`,
   admissão) podem vir, **por área**, de outra fonte conferida — visões `VW_<EDITAL|VAGA|APROVADO>_*`
   do schema `painel` (sem grant para a API), com a chave do grão e `COMMENT` na visão e na coluna.
   O seletor lista essas visões lendo o catálogo do PostgreSQL; fonte nova = visão nova numa
-  migration. Só o Administrador em Painéis troca (`TB_FONTE_COLUNA_PAINEL`, histórico em
+  migration. Só o Administrador em Relatórios troca (`TB_FONTE_COLUNA_PAINEL`, histórico em
   `TH_FONTE_COLUNA_PAINEL`). O cálculo dos relatórios monta o padrão e passa as linhas por
   `private."FC_APLICAR_FONTES_DO_PAINEL"`, que só usa nomes achados no catálogo: fonte que sumiu
   ou chave repetida deixam a célula vazia e avisam. Coluna fora do padrão tem `*` no cabeçalho
@@ -103,7 +128,8 @@ RPCs no contrato (`src/lib/rpc-contrato.ts`): `ler_relatorio_do_painel`,
 
 ## Testes
 
-`tests/editais-cargas-e-paineis-na-tela.test.ts` (bloco `modulos/paineis-de-dados`) (tela, permissão, rota, paginação no banco, cache,
+`tests/editais-cargas-e-paineis-na-tela.test.ts` (bloco `modulos/paineis-de-dados`) (catálogo: grupos, data do cálculo, abrir e
+voltar sem reler, exportar do cartão, Sincronizar de todos, falha uma vez, o relatório no endereço e o caminho antigo; tela, permissão, rota, paginação no banco, cache,
 Sincronizar, downloads, gaveta de fontes, largura das colunas, ⓘ e Montar relatório), `tests/editais-cargas-e-paineis.test.ts` (bloco `relatorios-dos-paineis`)
 (colunas, página lida, arquivos, largura, origem), `tests/editais-cargas-e-paineis.test.ts` (bloco `fontes-dos-paineis`) (leitura das
 fontes, permissão, aba Fontes), `tests/editais-cargas-e-paineis.test.ts` (bloco `fontes-dos-paineis-no-banco`) (o núcleo das fontes em
@@ -119,5 +145,6 @@ recorte da coordenação, Sincronizar 1/min, troca de fonte que falha, cálculo 
 - [[modulo-acessos]] — quem vê
 - [[modulo-barra-lateral]] — o bloco Dados do menu
 - [regras-dos-paineis](../aya/regras-dos-paineis.md) — o que a Aya responde sobre a tela
+- [[modulo-visao-geral]] — de onde vem o "Montar relatório"
 - [Desenho das fontes das colunas](../_arquivo/planos/2026-11-13-fontes-das-colunas-dos-paineis-design.md) e [plano](../_arquivo/planos/2026-11-13-fontes-das-colunas-dos-paineis.md) — feito no #829
 - [Desenho do carregamento rápido](../_arquivo/planos/2026-11-16-paineis-carregamento-e-tabela-design.md) e [plano](../_arquivo/planos/2026-11-16-paineis-carregamento-e-tabela.md) — feito no #836

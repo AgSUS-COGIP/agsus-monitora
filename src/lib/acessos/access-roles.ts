@@ -154,7 +154,7 @@ export function canViewSelecao(profile: unknown): boolean {
 }
 
 /*
-  Painéis (bloco Dados do menu): recurso próprio `paineis_dados`. Sem a
+  Relatórios (bloco Dados do menu, antes Painéis): recurso próprio `paineis_dados`. Sem a
   matriz (contexto antigo), não aparece: o recurso só existe na matriz.
 */
 export function canViewPaineisDeDados(profile: unknown): boolean {
@@ -164,7 +164,7 @@ export function canViewPaineisDeDados(profile: unknown): boolean {
 }
 
 /*
-  Trocar a fonte de uma coluna dos Painéis (Fontes dos dados): só o
+  Trocar a fonte de uma coluna dos Relatórios (Fontes dos dados): só o
   Administrador em paineis_dados (migration 20261113220000). O banco confere
   de novo, com a área.
 */

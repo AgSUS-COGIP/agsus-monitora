@@ -97,7 +97,7 @@ export const TELAS_DA_CASCA: readonly ViewDeTela[] = Object.freeze([
   "classificacao",
   // src/modulos/selecao/.
   "selecao",
-  // src/modulos/paineis-de-dados/ — Painéis (bloco Dados).
+  // src/modulos/paineis-de-dados/ — Relatórios (bloco Dados; antes Painéis).
   "paineis-de-dados",
   // src/modulos/pagina-do-edital/ — a página de um edital (/<área>/edital/<número>).
   "edital",

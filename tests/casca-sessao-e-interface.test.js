@@ -3220,12 +3220,12 @@ bloco("menu-lateral", () => {
               "Lista de aprovados",
             ],
           ],
-          ["Dados", ["Painéis"]],
+          ["Dados", ["Relatórios"]],
         ]);
       }
     });
 
-    it("Painéis entra no bloco Dados, sozinho", () => {
+    it("Relatórios entra no bloco Dados, sozinho", () => {
       const arvore = montarArvoreDoMenu({
         permitidas: { "paineis-de-dados": true },
       });

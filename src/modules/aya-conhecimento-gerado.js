@@ -4072,7 +4072,7 @@ export const VERBETES_AYA = Object.freeze([
       "aprovados com data de admissao",
     ],
     resposta:
-      'O botão Exportar da Visão geral abre o montador com o que está na tela; o botão "Montar relatório", no topo de Painéis (menu Dados), abre o mesmo montador com todos os editais da área, sem filtros. Escolha um modelo pronto (Resumo rápido, Completo ou Diretoria) ou monte o seu: marque as seções (resumo em números, tabela dos editais, vagas por cargo, aprovados, editais que pedem atenção), as colunas da tabela e o formato. O modelo Diretoria sai em Excel com três abas: Editais (número, unidade, vagas, divulgação, encerramento e ciclo), Vagas por cargo (cada vaga do edital com as vagas imediatas, os inscritos e os aprovados; as vagas imediatas vêm do quadro de vagas do edital ou do texto da vaga, e ficam "—" quando nenhum dos dois tem o número) e Aprovados (edital, cargo, nota, classificação, nome, status, matrícula e data de admissão conciliada com o RH). A seção Aprovados só aparece para quem tem acesso à Lista de aprovados, e cada download fica registrado com o nome de quem baixou. No PDF, acima de 3 mil aprovados, o Yeendé pede o Excel ou um recorte menor. O PDF sai como um documento, com o timbrado da AgSUS, os números, as tabelas e "Página X de Y"; o Excel sai com uma aba por seção; o CSV leva todas as colunas da tabela, como antes. Pela Visão geral, o relatório sai do que está na tela: área, filtros, busca e atalho; por Painéis, sai da área inteira. A última escolha fica guardada neste navegador.',
+      'O botão Exportar da Visão geral abre o montador com o que está na tela; o botão "Montar relatório", no topo de Relatórios (menu Dados), abre o mesmo montador com todos os editais da área, sem filtros. Escolha um modelo pronto (Resumo rápido, Completo ou Diretoria) ou monte o seu: marque as seções (resumo em números, tabela dos editais, vagas por cargo, aprovados, editais que pedem atenção), as colunas da tabela e o formato. O modelo Diretoria sai em Excel com três abas: Editais (número, unidade, vagas, divulgação, encerramento e ciclo), Vagas por cargo (cada vaga do edital com as vagas imediatas, os inscritos e os aprovados; as vagas imediatas vêm do quadro de vagas do edital ou do texto da vaga, e ficam "—" quando nenhum dos dois tem o número) e Aprovados (edital, cargo, nota, classificação, nome, status, matrícula e data de admissão conciliada com o RH). A seção Aprovados só aparece para quem tem acesso à Lista de aprovados, e cada download fica registrado com o nome de quem baixou. No PDF, acima de 3 mil aprovados, o Yeendé pede o Excel ou um recorte menor. O PDF sai como um documento, com o timbrado da AgSUS, os números, as tabelas e "Página X de Y"; o Excel sai com uma aba por seção; o CSV leva todas as colunas da tabela, como antes. Pela Visão geral, o relatório sai do que está na tela: área, filtros, busca e atalho; por Relatórios, sai da área inteira. A última escolha fica guardada neste navegador.',
     fato: "",
     fonte: "interface do Yeendé",
   },
@@ -6374,7 +6374,7 @@ export const VERBETES_AYA = Object.freeze([
       "excecao por modulo",
     ],
     resposta:
-      'O grupo define o nível de cada módulo (Visão geral, Análises, Editais, Cronograma, Aprovados, Entrevistas, Classificação, Recursos, Parecer jurídico, Seleção, Importação, Painéis, Configurações e Gestão de acessos): Sem acesso, Leitor, Editor ou Administrador. Os grupos de base são Usuário, Gestor, Contratador, Coordenador, Jurídico e Administrador global (acesso total, não editável). Mudar um grupo muda todos que o seguem; só o administrador global gerencia grupos, e grupo de sistema ou com pessoas não pode ser removido. Para casos especiais, o modal da pessoa tem "Exceções por módulo": vale só para ela e passa por cima do grupo ("Do grupo" volta a seguir o grupo). Área é Sim ou Não; painel externo é marcado por pessoa.',
+      'O grupo define o nível de cada módulo (Visão geral, Análises, Editais, Cronograma, Aprovados, Entrevistas, Classificação, Recursos, Parecer jurídico, Seleção, Importação, Relatórios, Configurações e Gestão de acessos): Sem acesso, Leitor, Editor ou Administrador. Os grupos de base são Usuário, Gestor, Contratador, Coordenador, Jurídico e Administrador global (acesso total, não editável). Mudar um grupo muda todos que o seguem; só o administrador global gerencia grupos, e grupo de sistema ou com pessoas não pode ser removido. Para casos especiais, o modal da pessoa tem "Exceções por módulo": vale só para ela e passa por cima do grupo ("Do grupo" volta a seguir o grupo). Área é Sim ou Não; painel externo é marcado por pessoa.',
     fato: "",
     fonte:
       "src/lib/acessos/permissoes-recursos.ts; supabase/migrations/20260929121000_grupos_de_acesso.sql; supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/modulos/acessos/gaveta-do-usuario.tsx",
@@ -7104,21 +7104,26 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-dos-paineis.md",
-    titulo: "Página Painéis",
+    titulo: "Página Relatórios",
     perguntas: [
+      "relatorios",
+      "pagina relatorios",
+      "para que serve relatorios",
+      "para que serve a pagina relatorios",
       "paineis",
       "pagina paineis",
       "para que serve paineis",
-      "para que serve a pagina paineis",
       "bloco dados",
-      "relatorios de conferencia",
-      "relatorios dos paineis",
+      "relatorios de gestao",
+      "relatorios de acompanhamento",
+      "catalogo de relatorios",
+      "onde ficaram os paineis",
     ],
     resposta:
-      'A página Painéis, no bloco Dados do menu, reúne relatórios para conferir os dados da área escolhida, cada um numa aba: Resumo dos editais, Editais por cargo e Aprovados. Cada tabela sai por "Exportar em Excel" ou "Salvar em PDF", com as mesmas linhas da tela. O sistema recalcula os relatórios de hora em hora; o botão Sincronizar, no topo, recalcula na hora o relatório aberto (no máximo uma vez por minuto), e ao lado dele aparece quando o cálculo foi feito. O ícone de informação ao lado dos botões diz de onde vêm os dados de cada relatório. Quem vê é quem o administrador libera em Painéis, na tela de Acessos.',
+      'A página Relatórios, no bloco Dados do menu (antes se chamava Painéis), reúne os relatórios de acompanhamento e gestão da área escolhida, que cruzam editais. Ela abre num catálogo de cartões, em grupos: Editais (Resumo dos editais e Editais por cargo) e Aprovados. Cada cartão diz o que o relatório mostra, quando foi calculado e quantas linhas tem, e já exporta o relatório inteiro por "Exportar em Excel" ou "Salvar em PDF". "Abrir" mostra a tabela, com "Todos os relatórios" para voltar ao catálogo; o endereço guarda o relatório aberto, então o link copiado abre direto nele, e o link antigo de Painéis continua funcionando. O sistema recalcula os relatórios de hora em hora; o botão Sincronizar, no topo, recalcula na hora o relatório aberto, ou todos quando o catálogo está à vista (no máximo uma vez por minuto cada um). O ícone de informação ao lado dos botões diz de onde vêm os dados de cada relatório. Os documentos de uma etapa, como o resultado da Classificação e as cartas de convocação, continuam na tela da etapa. Quem vê é quem o administrador libera em Relatórios, na tela de Acessos.',
     fato: "",
     fonte:
-      "src/modulos/paineis-de-dados/; src/lib/paineis/relatorios-dos-paineis.ts",
+      "src/modulos/paineis-de-dados/; src/lib/paineis/catalogo-dos-relatorios.ts",
     abrir: "paineis-de-dados",
   },
   {
@@ -7131,7 +7136,7 @@ export const VERBETES_AYA = Object.freeze([
       "vagas imediatas do edital",
     ],
     resposta:
-      "Nos Painéis, o Resumo dos editais traz uma linha por edital ativo da área: número, DSEI ou unidade, total de vagas imediatas (as do cadastro do edital), data da divulgação e data final do processo seletivo. A data da divulgação é o início da primeira etapa do cronograma, e a data final é o fim da última etapa; sem cronograma, valem as datas do cadastro do edital. Editais de treinamento não entram.",
+      "Em Relatórios, o Resumo dos editais traz uma linha por edital ativo da área: número, DSEI ou unidade, total de vagas imediatas (as do cadastro do edital), data da divulgação e data final do processo seletivo. A data da divulgação é o início da primeira etapa do cronograma, e a data final é o fim da última etapa; sem cronograma, valem as datas do cadastro do edital. Editais de treinamento não entram.",
     fato: "",
     fonte:
       "supabase/migrations/20261116160000_relatorios_dos_paineis_prontos.sql",
@@ -7146,10 +7151,10 @@ export const VERBETES_AYA = Object.freeze([
       "de onde vem as vagas por cargo",
       "vagas imediatas do titulo da vaga",
       "vagas imediatas vazias",
-      "quadro de vagas no painel",
+      "quadro de vagas no relatorio",
     ],
     resposta:
-      'Nos Painéis, Editais por cargo traz uma linha por vaga de cada edital (na Saúde Indígena, uma vaga é um cargo num DSEI): o código da vaga, o cargo, as vagas imediatas, os inscritos da Seleção e os aprovados da lista de aprovados vigente. Inscritos e aprovados se casam pelo código da vaga, como no Painel da Seleção; nas vagas de outras bancas, sem código, pelo nome da vaga. As vagas imediatas vêm, nesta ordem, do quadro de vagas do edital (como na Classificação), da convocação da Lista de aprovados, do local da vaga publicado no edital ou do número no título da vaga ("2 vagas (1 AC + …)" conta 2; "Cadastro Reserva" conta 0). Célula vazia quer dizer que o edital não tem quadro de vagas importado nem convocação configurada para aquela vaga. Aprovados de uma vaga que a Seleção não tem saem numa linha própria, e o edital sem vaga na Seleção sai numa linha só, com os inscritos do edital. Aprovados vazio quer dizer edital sem lista de aprovados.',
+      'Em Relatórios, Editais por cargo traz uma linha por vaga de cada edital (na Saúde Indígena, uma vaga é um cargo num DSEI): o código da vaga, o cargo, as vagas imediatas, os inscritos da Seleção e os aprovados da lista de aprovados vigente. Inscritos e aprovados se casam pelo código da vaga, como no Painel da Seleção; nas vagas de outras bancas, sem código, pelo nome da vaga. As vagas imediatas vêm, nesta ordem, do quadro de vagas do edital (como na Classificação), da convocação da Lista de aprovados, do local da vaga publicado no edital ou do número no título da vaga ("2 vagas (1 AC + …)" conta 2; "Cadastro Reserva" conta 0). Célula vazia quer dizer que o edital não tem quadro de vagas importado nem convocação configurada para aquela vaga. Aprovados de uma vaga que a Seleção não tem saem numa linha própria, e o edital sem vaga na Seleção sai numa linha só, com os inscritos do edital. Aprovados vazio quer dizer edital sem lista de aprovados.',
     fato: "",
     fonte:
       "supabase/migrations/20261116180000_vagas_imediatas_dos_paineis_pelo_quadro.sql",
@@ -7167,7 +7172,7 @@ export const VERBETES_AYA = Object.freeze([
       "asterisco no cabecalho",
     ],
     resposta:
-      "Nos Painéis, o botão Fontes dos dados mostra, para o relatório aberto e a área escolhida no menu, de onde vem cada coluna que pode trocar de origem (vagas, datas, inscritos, aprovados, nota, classificação, status, matrícula e data de admissão). Quem é Administrador em Painéis escolhe outra fonte, entre as conferidas que o sistema lista (por exemplo, as vagas da convocação ou o quadro de vagas do edital), informa o motivo e salva; ou volta ao padrão. A escolha vale só para aquela área, e cada troca fica no histórico com quem, quando e o motivo. Coluna com fonte diferente do padrão aparece com um asterisco no cabeçalho, com a fonte na dica, e o XLSX traz a aba Fontes. Se a fonte não tiver o dado de uma linha, a célula fica vazia; com fonte diferente do padrão, os totais entre os relatórios podem não fechar. Ninguém escreve SQL: fonte nova é criada pela equipe de desenvolvimento.",
+      "Em Relatórios, com um relatório aberto, o botão Fontes dos dados mostra, para esse relatório e a área escolhida no menu, de onde vem cada coluna que pode trocar de origem (vagas, datas, inscritos, aprovados, nota, classificação, status, matrícula e data de admissão). Quem é Administrador em Relatórios escolhe outra fonte, entre as conferidas que o sistema lista (por exemplo, as vagas da convocação ou o quadro de vagas do edital), informa o motivo e salva; ou volta ao padrão. A escolha vale só para aquela área, e cada troca fica no histórico com quem, quando e o motivo. Coluna com fonte diferente do padrão aparece com um asterisco no cabeçalho, com a fonte na dica, e o XLSX traz a aba Fontes. Se a fonte não tiver o dado de uma linha, a célula fica vazia; com fonte diferente do padrão, os totais entre os relatórios podem não fechar. Ninguém escreve SQL: fonte nova é criada pela equipe de desenvolvimento.",
     fato: "",
     fonte:
       "src/modulos/paineis-de-dados/fontes-dos-dados.tsx; supabase/migrations/20261113220000_fontes_das_colunas_dos_paineis.sql",
@@ -7175,15 +7180,16 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-dos-paineis.md",
-    titulo: "Aprovados nos Painéis",
+    titulo: "Aprovados em Relatórios",
     perguntas: [
+      "aprovados nos relatorios",
       "aprovados nos paineis",
       "relatorio de aprovados",
       "data de admissao",
       "matricula dos aprovados",
     ],
     resposta:
-      "Nos Painéis, a aba Aprovados traz uma linha por candidato da lista de aprovados vigente de cada edital da área: edital, cargo da vaga, nota, classificação, nome, status, matrícula e data de admissão. O sistema não guarda a data real de admissão: a coluna mostra a data em que o status atual (Contratado ou Migração) foi registrado no sistema, e fica vazia para os outros status.",
+      "Em Relatórios, o relatório Aprovados traz uma linha por candidato da lista de aprovados vigente de cada edital da área: edital, cargo da vaga, nota, classificação, nome, status, matrícula e data de admissão. O sistema não guarda a data real de admissão: a coluna mostra a data em que o status atual (Contratado ou Migração) foi registrado no sistema, e fica vazia para os outros status.",
     fato: "",
     fonte:
       "supabase/migrations/20261116160000_relatorios_dos_paineis_prontos.sql",
@@ -7200,7 +7206,7 @@ export const VERBETES_AYA = Object.freeze([
       "coluna larga",
     ],
     resposta:
-      "Nas tabelas dos Painéis, arraste a borda direita do cabeçalho de uma coluna para alargar ou estreitar a coluna; com o teclado, leve o foco até a borda e use as setas para a esquerda e para a direita. A largura vale enquanto a página estiver aberta, inclusive ao trocar de página ou de aba; ao recarregar a página, as colunas voltam ao tamanho original.",
+      "Nas tabelas de Relatórios, arraste a borda direita do cabeçalho de uma coluna para alargar ou estreitar a coluna; com o teclado, leve o foco até a borda e use as setas para a esquerda e para a direita. A largura vale enquanto a página estiver aberta, inclusive ao trocar de página ou de relatório; ao recarregar a página, as colunas voltam ao tamanho original.",
     fato: "",
     fonte: "src/modulos/paineis-de-dados/paineis-de-dados.tsx",
     abrir: "paineis-de-dados",
