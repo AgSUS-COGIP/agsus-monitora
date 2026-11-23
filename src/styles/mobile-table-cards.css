@@ -72,6 +72,15 @@
     font-size: var(--text-caption);
     font-weight: var(--font-weight-medium);
     line-height: 1.35;
+    text-align: start;
+  }
+  /*
+    O valor fica todo na coluna da direita: a célula com mais de um elemento
+    (a etapa e o alerta em Editais, a caixa e o nome em Aprovados) não joga o
+    segundo para baixo do rótulo.
+  */
+  table.mobile-card-table td[data-mobile-label] > * {
+    grid-column: 2;
   }
   /* Célula de mensagem (vazio, erro) ocupa a linha: sem rótulo de coluna. */
   table.mobile-card-table td:not([data-mobile-label])::before {
@@ -135,5 +144,8 @@
   table.mobile-card-table td {
     grid-template-columns: 1fr;
     gap: var(--space-1);
+  }
+  table.mobile-card-table td[data-mobile-label] > * {
+    grid-column: auto;
   }
 }
