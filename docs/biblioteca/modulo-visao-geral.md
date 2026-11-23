@@ -154,7 +154,7 @@ trabalho). De cima para baixo:
   ele e as regras do relatório saíram do pacote de entrada, que estava a 0,4 KB do orçamento; lógica em
   `src/lib/visao-geral/relatorio-da-visao-geral.ts`, PDF em `src/lib/visao-geral/relatorio-da-visao-geral-em-pdf.ts`): o
   botão Exportar abre a janela, que baixa só nessa hora (18/11/2026: fora do pacote de entrada, com o
-  relatório da diretoria e a exportação em Excel) (e, desde 16/11/2026, o "Montar relatório" dos Painéis, com a área
+  relatório da diretoria e a exportação em Excel) (e, desde 16/11/2026, o "Montar relatório" de Relatórios, antes Painéis, com a área
   inteira — [[modulo-paineis-de-dados]]; saiu do menu da conta). Modelo pronto (Resumo
   rápido, Completo, Diretoria) ou escolha das seções (números, tabela dos editais, atenção), das
   colunas e do formato (PDF desenhado com o timbrado de Configurações › Marca, Excel com uma aba por
@@ -191,9 +191,9 @@ trabalho). De cima para baixo:
   usam a mesma conta. Conferência de 16/11/2026 (dados reais, status pelo cronograma): −147 vagas na
   Saúde Indígena (2.263 → 2.116, 14 DSEIs), −10 na SEDE, nenhuma em Projetos. O código da vaga não liga os editais (a Empregare dá código
   novo a cada edital). Explicação para quem usa: seção "Vagas reabertas" da Aya.
-  Diferença conhecida: os Painéis (Editais por cargo, Resumo dos editais) mostram as vagas de cada
+  Diferença conhecida: os Relatórios (Editais por cargo, Resumo dos editais) mostram as vagas de cada
   edital como publicadas (pelo quadro, desde #850), sem o desconto; e o "Montar relatório" dos
-  Painéis só traz o desconto se a Visão geral já leu o acompanhamento da área nesta visita.
+  Relatórios só traz o desconto se a Visão geral já leu o acompanhamento da área nesta visita.
 
 ## Limites da tipagem
 

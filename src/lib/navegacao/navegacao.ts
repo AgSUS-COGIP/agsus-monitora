@@ -130,7 +130,7 @@ const BLOQUEIOS: Readonly<
   ],
   classificacao: [canViewClassificacao, "Sem permissão para Classificação."],
   selecao: [canViewSelecao, "Sem permissão para Seleção."],
-  "paineis-de-dados": [canViewPaineisDeDados, "Sem permissão para Painéis."],
+  "paineis-de-dados": [canViewPaineisDeDados, "Sem permissão para Relatórios."],
   config: [podeAbrirConfiguracoes, "Sem permissão para Configurações."],
   edital: [podeAbrirPaginaDoEdital, "Sem permissão para a página do edital."],
 });

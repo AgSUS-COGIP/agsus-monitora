@@ -8,6 +8,7 @@
     /<area>/edital/<edital>                     a página do edital (número "105-2026" ou id)
     /<area>/editais/<edital>/regras/<etapa>     Regras do edital (Editais), na etapa
     /<area>/mapa[/<dsei>]                       Mapa (o DSEI aberto é um filtro no caminho)
+    /<area>/relatorios[?relatorio=<id>]         Relatórios (o antigo /<area>/paineis-de-dados vem para cá)
     /administracao/configuracoes[/<seção>]      Configurações
     /paineis/<código>                           painel externo
     /sem-acesso                                 quem não tem módulo liberado
@@ -65,6 +66,12 @@ export interface TelaDaRota {
    * (src/app/filtros-no-endereco.ts) ele é um filtro como os outros.
    */
   campoNoCaminho?: string;
+  /**
+   * Caminhos que a tela já teve: o link salvo e o tour antigos abrem a tela,
+   * e a navegação troca o endereço pelo de hoje (sem nova entrada no
+   * histórico). Ex.: `/<área>/paineis-de-dados` → `/<área>/relatorios`.
+   */
+  caminhosAntigos?: readonly string[];
 }
 
 /*
@@ -133,7 +140,17 @@ const TELAS: TelaDaRota[] = [
     tituloNaTela: true,
   },
   { view: "selecao", caminho: "selecao", titulo: "Painel da Seleção" },
-  { view: "paineis-de-dados", caminho: "paineis-de-dados", titulo: "Painéis" },
+  /*
+    Relatórios (bloco Dados): a view e o recurso seguem `paineis-de-dados` e
+    `paineis_dados` (permissões, TB_ABA e a Aya); só o nome e o caminho
+    mudaram em 23/11/2026.
+  */
+  {
+    view: "paineis-de-dados",
+    caminho: "relatorios",
+    titulo: "Relatórios",
+    caminhosAntigos: ["paineis-de-dados"],
+  },
   {
     view: "edital",
     caminho: "edital",
@@ -151,7 +168,11 @@ const POR_VIEW: ReadonlyMap<string, TelaDaRota> = new Map(
   TELAS_DAS_AREAS.map((tela) => [tela.view, tela]),
 );
 const POR_CAMINHO: ReadonlyMap<string, TelaDaRota> = new Map(
-  TELAS_DAS_AREAS.map((tela) => [tela.caminho, tela]),
+  TELAS_DAS_AREAS.flatMap((tela) =>
+    [tela.caminho, ...(tela.caminhosAntigos ?? [])].map(
+      (caminho) => [caminho, tela] as const,
+    ),
+  ),
 );
 
 /** A tela de área da view (ou `undefined` para Configurações, painéis…). */

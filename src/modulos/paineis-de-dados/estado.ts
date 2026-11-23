@@ -32,8 +32,11 @@ import type {
 } from "../../lib/paineis/relatorios-dos-paineis.ts";
 
 /*
-  O estado da tela de Painéis (sem React): o relatório escolhido e, para cada
-  um, a página lida na área (`carregando`, `pronto` ou `erro`). O banco guarda
+  O estado da tela de Relatórios (antes Painéis; sem React): o catálogo ou o
+  relatório aberto e, para cada relatório, a página lida na área
+  (`carregando`, `pronto` ou `erro`). No catálogo, a primeira página de cada
+  um é lida para o cartão mostrar quando foi calculado e quantas linhas tem;
+  abrir o relatório depois usa a mesma página, do cache. O banco guarda
   cada relatório pronto (migration 20261116160000); a tela pede só a página
   visível e guarda as páginas já lidas em memória (nunca no disco: o relatório
   Aprovados tem dado pessoal). O cache de uma área e relatório cai quando o
@@ -73,6 +76,8 @@ export interface GavetaDeFontes {
 
 export interface EstadoDosPaineis {
   area: string;
+  /** A entrada (os cartões) está à vista; `false` = o relatório `ativo` aberto. */
+  noCatalogo: boolean;
   ativo: IdDoRelatorio;
   relatorios: Readonly<Record<IdDoRelatorio, LeituraDoRelatorio>>;
   baixando: FormatoDoRelatorio | null;
@@ -159,22 +164,23 @@ const GAVETA_FECHADA: GavetaDeFontes = Object.freeze({
 export function mensagemDaFalhaAoSalvar(erro: unknown): string {
   const codigo = String((erro as { code?: unknown } | null)?.code ?? "");
   const texto = String((erro as { message?: unknown } | null)?.message ?? "");
-  if (codigo === "42501") return "Só o Administrador em Painéis troca a fonte.";
+  if (codigo === "42501")
+    return "Só o Administrador em Relatórios troca a fonte.";
   if (codigo === "22023" && texto) return texto;
   return "Não foi possível salvar a fonte. Tente de novo.";
 }
 
 export const MENSAGEM_SEM_PERMISSAO =
-  "Sem permissão para os Painéis desta área.";
+  "Sem permissão para os Relatórios desta área.";
 export const MENSAGEM_SEM_PUBLICACAO =
-  "Os relatórios dos Painéis ainda não foram publicados no banco.";
+  "Os Relatórios ainda não foram publicados no banco.";
 
 /** A mensagem da falha da RPC, pelo código do PostgreSQL / PostgREST. */
 export function mensagemDaFalha(erro: unknown): string {
   const codigo = String((erro as { code?: unknown } | null)?.code ?? "");
   if (codigo === "PGRST202") return MENSAGEM_SEM_PUBLICACAO;
   if (codigo === "42501") return MENSAGEM_SEM_PERMISSAO;
-  if (codigo === "22023") return "Área inválida para os Painéis.";
+  if (codigo === "22023") return "Área inválida para os Relatórios.";
   const texto = String((erro as { message?: unknown } | null)?.message ?? "");
   return texto
     ? `Não foi possível ler o relatório: ${texto}`
@@ -225,6 +231,7 @@ export function criarEstadoDosPaineis({
 }: OpcoesDoEstadoDosPaineis = {}) {
   let estado: EstadoDosPaineis = {
     area: "",
+    noCatalogo: true,
     ativo: RELATORIOS_DOS_PAINEIS[0]!.id,
     relatorios: relatoriosVazios(),
     baixando: null,
@@ -336,16 +343,16 @@ export function criarEstadoDosPaineis({
     mostrar(id, area, porPagina, nova);
   }
 
-  /* O relatório ativo da área, se ainda não foi lido nela (ou se `forcar`). */
-  function garantir(forcar = false) {
-    const { area, ativo } = estado;
+  /* Um relatório da área, se ainda não foi lido nela (ou se `forcar`). */
+  function garantirUm(id: IdDoRelatorio, forcar = false) {
+    const { area } = estado;
     if (!area) return Promise.resolve();
-    const leitura = estado.relatorios[ativo];
+    const leitura = estado.relatorios[id];
     const mesmaArea = leitura.area === area;
     if (!forcar && mesmaArea && leitura.situacao !== "vazio")
       return Promise.resolve();
     return ler(
-      ativo,
+      id,
       area,
       mesmaArea ? leitura.pagina : 1,
       leitura.porPagina,
@@ -353,9 +360,27 @@ export function criarEstadoDosPaineis({
     );
   }
 
-  /** Recalcula no banco o relatório aberto e relê a página à vista. */
-  async function sincronizar() {
-    const { area, ativo } = estado;
+  /* O que está à vista: no catálogo, todos os relatórios; senão, o aberto. */
+  function garantir() {
+    if (!estado.noCatalogo) return garantirUm(estado.ativo);
+    return Promise.all(
+      RELATORIOS_DOS_PAINEIS.map((r) => garantirUm(r.id)),
+    ).then(() => undefined);
+  }
+
+  /*
+    Sincronizar: no relatório aberto, recalcula ele no banco e relê a página
+    à vista; no catálogo, faz o mesmo com cada relatório.
+  */
+  function sincronizar() {
+    if (!estado.noCatalogo) return sincronizarUm(estado.ativo);
+    return Promise.all(
+      RELATORIOS_DOS_PAINEIS.map((r) => sincronizarUm(r.id)),
+    ).then(() => undefined);
+  }
+
+  async function sincronizarUm(ativo: IdDoRelatorio) {
+    const { area } = estado;
     if (!area) return;
     const leitura = estado.relatorios[ativo];
     const pedido = ++numeroDoPedido;
@@ -408,9 +433,23 @@ export function criarEstadoDosPaineis({
         mudar({ area: limpa, erroNoDownload: "", gaveta: GAVETA_FECHADA });
       return garantir();
     },
-    escolher(id: IdDoRelatorio) {
-      if (id === estado.ativo) return Promise.resolve();
-      mudar({ ativo: definicaoDoRelatorio(id).id, erroNoDownload: "" });
+    /** Abre um relatório do catálogo (lê a página dele, se ainda não leu). */
+    abrir(id: IdDoRelatorio) {
+      const ativo = definicaoDoRelatorio(id).id;
+      if (!estado.noCatalogo && ativo === estado.ativo)
+        return Promise.resolve();
+      mudar({
+        noCatalogo: false,
+        ativo,
+        erroNoDownload: "",
+        gaveta: GAVETA_FECHADA,
+      });
+      return garantir();
+    },
+    /** Volta aos cartões (lê o que faltar para eles). */
+    voltarAoCatalogo() {
+      if (estado.noCatalogo) return Promise.resolve();
+      mudar({ noCatalogo: true, erroNoDownload: "", gaveta: GAVETA_FECHADA });
       return garantir();
     },
     /** Vai para outra página do relatório aberto (do cache, se já foi lida). */
@@ -517,9 +556,15 @@ export function criarEstadoDosPaineis({
       );
       return true;
     },
-    /** Baixa o relatório aberto inteiro (todas as linhas que a pessoa vê). */
-    async baixar(formato: FormatoDoRelatorio) {
-      const definicao = definicaoDoRelatorio(estado.ativo);
+    /**
+     * Baixa um relatório inteiro (todas as linhas que a pessoa vê): o
+     * aberto, ou o do cartão (`id`).
+     */
+    async baixar(
+      formato: FormatoDoRelatorio,
+      id: IdDoRelatorio = estado.ativo,
+    ) {
+      const definicao = definicaoDoRelatorio(id);
       const leitura = estado.relatorios[definicao.id];
       if (estado.baixando || leitura.situacao !== "pronto") return;
       mudar({ baixando: formato, erroNoDownload: "" });

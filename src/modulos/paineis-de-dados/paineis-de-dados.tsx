@@ -9,7 +9,6 @@ import {
 import { BotoesDeExportacao } from "../../ui/botoes-de-exportacao.tsx";
 import type { ReactNode } from "react";
 import {
-  Abas,
   Aviso,
   CabecalhosDaTabela,
   CardDaLista,
@@ -23,9 +22,15 @@ import { formatNumberBR } from "../../lib/base/formatters";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
+import { TelaNaUrl, usarLojaNaUrl } from "../../app/usar-filtros-na-url.ts";
+import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
+import {
+  ehIdDoRelatorio,
+  gruposDoCatalogo,
+} from "../../lib/paineis/catalogo-dos-relatorios.ts";
+import type { RelatorioDoCatalogo } from "../../lib/paineis/catalogo-dos-relatorios.ts";
 import {
   LINHAS_POR_PAGINA,
-  RELATORIOS_DOS_PAINEIS,
   definicaoDoRelatorio,
   larguraArrastada,
   linhasDaOrigem,
@@ -60,13 +65,20 @@ import type {
 } from "./estado.ts";
 
 /*
-  Painéis (bloco Dados do menu, em cada área): os relatórios de conferência
-  da área escolhida — Resumo dos editais, Editais por cargo e Aprovados —, um
-  por aba, em tabela, com o download em CSV e XLSX do que está na tabela.
-  Recurso de permissão `paineis_dados`; aba `paineis-de-dados` no catálogo
-  (`src/lib/navegacao/menu-lateral.ts`). As colunas e os arquivos são de
-  `src/lib/paineis/relatorios-dos-paineis.ts`; o estado, de `./estado.ts`. Título e
-  área ficam no cabeçalho da casca.
+  Relatórios (bloco Dados do menu, em cada área; antes "Painéis"): os
+  relatórios de acompanhamento e gestão da área escolhida, que cruzam
+  editais. A entrada é o catálogo — um cartão por relatório, em grupos
+  (Editais, Aprovados, Produtividade), com o que ele mostra, quando foi
+  calculado e os botões de exportar —; abrir um cartão mostra a tabela
+  paginada dele, com "Todos os relatórios" para voltar. O relatório aberto
+  fica no endereço (`/<área>/relatorios?relatorio=<id>`): link copiado,
+  voltar do navegador e atalho de outra tela abrem direto nele.
+
+  Recurso de permissão `paineis_dados`; aba e view `paineis-de-dados` no
+  catálogo (`src/lib/navegacao/menu-lateral.ts`). Os cartões e os grupos são
+  de `src/lib/paineis/catalogo-dos-relatorios.ts`; as colunas e os arquivos,
+  de `src/lib/paineis/relatorios-dos-paineis.ts`; o estado, de `./estado.ts`.
+  Título e área ficam no cabeçalho da casca.
 
   "Montar relatório" (no topo, desde 16/11/2026; antes ficava no menu da
   conta): abre o montador da Visão geral
@@ -74,12 +86,10 @@ import type {
   área, sem os filtros da Visão geral.
 */
 
-const ABAS = RELATORIOS_DOS_PAINEIS.map((r) => ({
-  id: r.id,
-  rotulo: r.rotulo,
-  idDaAba: `paineis-aba-${r.id}`,
-  idDoPainel: `paineis-painel-${r.id}`,
-}));
+/** O relatório aberto no endereço (`?relatorio=<id>`); sem ele, o catálogo. */
+const ESQUEMA_DO_RELATORIO: EsquemaDosFiltros<"relatorio"> = Object.freeze({
+  relatorio: { padrao: "", empilha: true, aceita: ehIdDoRelatorio },
+});
 
 const HORA = new Intl.DateTimeFormat("pt-BR", {
   timeZone: "America/Sao_Paulo",
@@ -280,7 +290,130 @@ function textoDaSincronizacao(leitura: LeituraDoRelatorio) {
   return "";
 }
 
-function Relatorio({ estado }: { estado: EstadoDaTelaDePaineis }) {
+/* A linha do cartão: quando foi calculado e quantas linhas tem. */
+function textoDoCartao(leitura: LeituraDoRelatorio) {
+  if (leitura.situacao === "erro") return "Sem dados";
+  if (leitura.situacao !== "pronto") return "Carregando…";
+  const linhas = `${formatNumberBR(leitura.total)} ${leitura.total === 1 ? "linha" : "linhas"}`;
+  return leitura.calculadoEm
+    ? `Calculado em ${HORA.format(new Date(leitura.calculadoEm))} · ${linhas}`
+    : linhas;
+}
+
+function CartaoDoRelatorio({
+  estado,
+  item,
+  aoAbrir,
+}: {
+  estado: EstadoDaTelaDePaineis;
+  item: RelatorioDoCatalogo;
+  aoAbrir: () => void;
+}) {
+  const e = useSyncExternalStore(estado.assinar, estado.obter);
+  const idDoTitulo = useId();
+  const leitura = e.relatorios[item.id];
+  const pronto = leitura.situacao === "pronto";
+  return (
+    <article
+      className="ui-card relatorios-cartao"
+      aria-labelledby={idDoTitulo}
+      data-relatorio={item.id}
+    >
+      <h3 className="ui-titulo" id={idDoTitulo}>
+        {item.nome}
+      </h3>
+      <p className="relatorios-cartao-resumo">{item.resumo}</p>
+      <p className="ui-texto-secundario" data-calculo="" aria-live="polite">
+        {textoDoCartao(leitura)}
+      </p>
+      <div className="relatorios-cartao-acoes">
+        <button
+          type="button"
+          className="btn secondary small"
+          data-acao="abrir-relatorio"
+          aria-label={`Abrir ${item.nome}`}
+          onClick={aoAbrir}
+        >
+          Abrir
+        </button>
+        <BotoesDeExportacao
+          pequenos
+          desativado={!pronto || e.baixando !== null}
+          excel={() => estado.baixar("XLSX", item.id)}
+          pdf={() => estado.baixar("PDF", item.id)}
+        />
+      </div>
+    </article>
+  );
+}
+
+/*
+  A entrada: os grupos com os cartões. A falha da leitura (sem permissão,
+  sem a migration) aparece uma vez em cima, não em cada cartão.
+*/
+function CatalogoDosRelatorios({
+  estado,
+  aoAbrir,
+}: {
+  estado: EstadoDaTelaDePaineis;
+  aoAbrir: (id: RelatorioDoCatalogo["id"]) => void;
+}) {
+  const e = useSyncExternalStore(estado.assinar, estado.obter);
+  const grupos = gruposDoCatalogo();
+  const erros = [
+    ...new Set(
+      Object.values(e.relatorios)
+        .filter((l) => l.situacao === "erro" && l.erro)
+        .map((l) => l.erro),
+    ),
+  ];
+  return (
+    <div className="relatorios-catalogo" data-catalogo-dos-relatorios="">
+      {erros.map((erro) => (
+        <Aviso key={erro} tom="danger" papel="alert">
+          {erro}
+        </Aviso>
+      ))}
+      {e.erroNoDownload ? (
+        <Aviso tom="danger" papel="alert">
+          {e.erroNoDownload}
+        </Aviso>
+      ) : null}
+      {grupos.map((grupo) => (
+        <section
+          key={grupo.id}
+          className="relatorios-grupo"
+          aria-labelledby={`relatorios-grupo-${grupo.id}`}
+        >
+          <h2
+            className="relatorios-grupo-titulo"
+            id={`relatorios-grupo-${grupo.id}`}
+          >
+            {grupo.rotulo}
+          </h2>
+          <div className="relatorios-cartoes">
+            {grupo.relatorios.map((item) => (
+              <CartaoDoRelatorio
+                key={item.id}
+                estado={estado}
+                item={item}
+                aoAbrir={() => aoAbrir(item.id)}
+              />
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}
+
+function Relatorio({
+  estado,
+  aoVoltar,
+}: {
+  estado: EstadoDaTelaDePaineis;
+  aoVoltar: () => void;
+}) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
   const definicao = definicaoDoRelatorio(e.ativo);
   const leitura = e.relatorios[definicao.id];
@@ -381,11 +514,18 @@ function Relatorio({ estado }: { estado: EstadoDaTelaDePaineis }) {
   );
 
   return (
-    <div
-      role="tabpanel"
-      id={`paineis-painel-${definicao.id}`}
-      aria-labelledby={`paineis-aba-${definicao.id}`}
-    >
+    <div className="relatorios-aberto" data-relatorio={definicao.id}>
+      <div className="relatorios-voltar">
+        <button
+          type="button"
+          className="btn ghost small"
+          data-acao="voltar-ao-catalogo"
+          onClick={aoVoltar}
+        >
+          <Icone nome="chevron-left" tamanho={16} /> Todos os relatórios
+        </button>
+        <h2 className="ui-titulo">{definicao.rotulo}</h2>
+      </div>
       <CardDaLista rotulo={definicao.rotulo}>
         <div className="ui-barra-da-lista">
           <BotoesDeExportacao
@@ -520,44 +660,73 @@ export function TelaDePaineisDeDados({
       void estado.carregar(areaDoApp);
   }, [estado, areaDoApp]);
 
+  /*
+    O relatório aberto mora no endereço: abrir um cartão é entrada nova no
+    histórico (o voltar do navegador volta aos cartões); link com
+    `?relatorio=<id>` abre direto nele.
+  */
+  const mudarNoEndereco = usarLojaNaUrl(
+    ESQUEMA_DO_RELATORIO,
+    { relatorio: e.noCatalogo ? "" : e.ativo },
+    ({ relatorio }) => {
+      if (relatorio === undefined) return;
+      void (ehIdDoRelatorio(relatorio)
+        ? estado.abrir(relatorio)
+        : estado.voltarAoCatalogo());
+    },
+  );
+
   const leitura = e.relatorios[e.ativo];
+  const lendo = e.noCatalogo
+    ? Object.values(e.relatorios).some((l) => l.situacao === "carregando")
+    : leitura.situacao === "carregando";
   return (
-    <div className="ui-tela paineis-tela">
-      <TopoDoPainel
-        status={textoDaSincronizacao(leitura)}
-        aoAtualizar={() => void estado.sincronizar()}
-        atualizarDesativado={!e.area || leitura.situacao === "carregando"}
-        rotuloDaAtualizacao="Sincronizar"
-      >
-        <button
-          type="button"
-          className="btn secondary"
-          data-acao="montar-relatorio"
-          disabled={!e.area}
-          onClick={() =>
-            setMontando(recorteDaAreaInteira(e.area, relatorio.linhasDaArea()))
-          }
+    <TelaNaUrl.Provider value="paineis-de-dados">
+      <div className="ui-tela paineis-tela">
+        <TopoDoPainel
+          status={e.noCatalogo ? "" : textoDaSincronizacao(leitura)}
+          aoAtualizar={() => void estado.sincronizar()}
+          atualizarDesativado={!e.area || lendo}
+          rotuloDaAtualizacao="Sincronizar"
         >
-          <i className="fa-solid fa-file-lines" aria-hidden="true" /> Montar
-          relatório
-        </button>
-      </TopoDoPainel>
-      <Abas
-        rotulo="Relatórios dos Painéis"
-        abas={ABAS}
-        ativa={e.ativo}
-        aoEscolher={(id) => void estado.escolher(id as IdDoRelatorio)}
-      />
-      <Relatorio estado={estado} />
-      <GavetaDeFontes estado={estado} />
-      {montando ? (
-        <MontadorDosPaineis
-          recorte={montando}
-          apoio={relatorio}
-          aoFechar={() => setMontando(null)}
-        />
-      ) : null}
-    </div>
+          <button
+            type="button"
+            className="btn secondary"
+            data-acao="montar-relatorio"
+            disabled={!e.area}
+            onClick={() =>
+              setMontando(
+                recorteDaAreaInteira(e.area, relatorio.linhasDaArea()),
+              )
+            }
+          >
+            <i className="fa-solid fa-file-lines" aria-hidden="true" /> Montar
+            relatório
+          </button>
+        </TopoDoPainel>
+        {e.noCatalogo ? (
+          <CatalogoDosRelatorios
+            estado={estado}
+            aoAbrir={(id) => mudarNoEndereco({ relatorio: id })}
+          />
+        ) : (
+          <>
+            <Relatorio
+              estado={estado}
+              aoVoltar={() => mudarNoEndereco({ relatorio: "" })}
+            />
+            <GavetaDeFontes estado={estado} />
+          </>
+        )}
+        {montando ? (
+          <MontadorDosPaineis
+            recorte={montando}
+            apoio={relatorio}
+            aoFechar={() => setMontando(null)}
+          />
+        ) : null}
+      </div>
+    </TelaNaUrl.Provider>
   );
 }
 
@@ -568,7 +737,7 @@ export interface OpcoesDaTelaDePaineis extends OpcoesDoEstadoDosPaineis {
 }
 
 /**
- * Cria a tela (rota `paineis-de-dados`, src/app/telas.tsx): o conteúdo React,
+ * Cria a tela (view `paineis-de-dados`, caminho `relatorios`, src/app/telas.tsx): o conteúdo React,
  * o estado e `render()` a cada abertura (lê a área atual do app).
  */
 export function criarPaineisDeDados({
@@ -588,7 +757,7 @@ export function criarPaineisDeDados({
   };
   return {
     estado,
-    nome: "a tela de Painéis",
+    nome: "a tela de Relatórios",
     conteudo: <TelaDePaineisDeDados estado={estado} relatorio={apoio} />,
     render() {
       return estado.carregar(String(areaAtual() ?? "").trim());

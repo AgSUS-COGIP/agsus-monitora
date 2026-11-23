@@ -74,7 +74,16 @@ import {
 import { strFromU8, unzipSync } from "fflate";
 import { paginasPermitidas } from "../src/lib/acessos/access-roles.ts";
 import { bloqueioDaTela } from "../src/lib/navegacao/navegacao.ts";
-import { telaDaRota } from "../src/lib/navegacao/rotas.ts";
+import {
+  caminhoDoDestino,
+  destinoDoCaminho,
+  telaDaRota,
+} from "../src/lib/navegacao/rotas.ts";
+import {
+  ehIdDoRelatorio,
+  gruposDoCatalogo,
+} from "../src/lib/paineis/catalogo-dos-relatorios.ts";
+import type { IdDoRelatorio } from "../src/lib/paineis/relatorios-dos-paineis.ts";
 import {
   type NiveisPorRecurso,
   type PerfilDeAcesso,
@@ -5039,8 +5048,9 @@ bloco("cronograma-somente-mes-selecionado", () => {
 
 bloco("modulos/paineis-de-dados", () => {
   /*
-  Painéis (bloco Dados do menu): a tela, a permissão pelo recurso
-  `paineis_dados`, a rota, a paginação e os downloads.
+  Relatórios (bloco Dados do menu; antes Painéis): o catálogo de cartões, a
+  tela de um relatório, a permissão pelo recurso `paineis_dados`, a rota
+  (com o caminho antigo), a paginação e os downloads.
 */
 
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
@@ -5150,9 +5160,14 @@ bloco("modulos/paineis-de-dados", () => {
   /* O mesmo objeto a cada leitura (useSyncExternalStore). */
   const SEM_CONFIGURACOES = {};
 
+  /*
+    `abrir`: o relatório já aberto na chegada (como o link
+    `?relatorio=<id>`); `null` = a tela abre no catálogo.
+  */
   async function montar(
     respostas: Record<string, Resposta> = {},
     relatorio: Partial<ApoioDoRelatorio> = {},
+    { abrir = "resumo-dos-editais" }: { abrir?: IdDoRelatorio | null } = {},
   ) {
     const supabase = supabaseFalso(respostas);
     const salvos: { arquivo: Blob; nome: string }[] = [];
@@ -5177,6 +5192,7 @@ bloco("modulos/paineis-de-dados", () => {
     document.body.append(caixa);
     raiz = createRoot(caixa);
     await act(async () => raiz?.render(tela.conteudo));
+    if (abrir) await esperar(() => tela.estado.abrir(abrir));
     await esperar(() => tela.render());
     return { tela, supabase, salvos, caixa };
   }
@@ -5185,9 +5201,152 @@ bloco("modulos/paineis-de-dados", () => {
     [...(caixa?.querySelectorAll("button") ?? [])].find(
       (b) => b.textContent?.trim() === rotulo,
     );
+  const cartao = (id: string) =>
+    caixa?.querySelector<HTMLElement>(
+      `[data-relatorio='${id}'].relatorios-cartao`,
+    );
+  const botaoEmCartao = (id: string, rotulo: string) =>
+    [...(cartao(id)?.querySelectorAll("button") ?? [])].find(
+      (b) => b.textContent?.trim() === rotulo,
+    );
 
-  describe("Painéis", () => {
-    it("abre no Resumo dos editais da área e desenha a tabela", async () => {
+  describe("catálogo", () => {
+    it("abre nos cartões, em grupos, com a data do cálculo de cada relatório", async () => {
+      const { supabase } = await montar(
+        {
+          "resumo-dos-editais": RESUMO,
+          aprovados: { data: { calculado_em: null, linhas: [] }, error: null },
+        },
+        {},
+        { abrir: null },
+      );
+      // A primeira página de cada um, a mesma que a tabela usa depois.
+      expect(leituras(supabase.chamadas)).toEqual([
+        "resumo-dos-editais:1:50",
+        "editais-por-cargo:1:50",
+        "aprovados:1:50",
+      ]);
+      const grupos = [
+        ...(caixa?.querySelectorAll(".relatorios-grupo") ?? []),
+      ].map((g) => [
+        g.querySelector("h2")?.textContent,
+        [...g.querySelectorAll("h3")].map((h) => h.textContent),
+      ]);
+      // Grupo sem relatório (Produtividade, por enquanto) não aparece.
+      expect(grupos).toEqual([
+        ["Editais", ["Resumo dos editais", "Editais por cargo"]],
+        ["Aprovados", ["Aprovados"]],
+      ]);
+      expect(
+        cartao("resumo-dos-editais")?.querySelector("[data-calculo]")
+          ?.textContent,
+      ).toMatch(/^Calculado em 13\/11\/2026,? 12:00 · 1 linha$/);
+      expect(
+        cartao("aprovados")?.querySelector("[data-calculo]")?.textContent,
+      ).toBe("0 linhas");
+      expect(caixa?.querySelector("table")).toBeNull();
+      // A data fica nos cartões; o topo não repete.
+      expect(caixa?.querySelector("[data-status-da-carga]")?.textContent).toBe(
+        "",
+      );
+    });
+
+    it("abrir um cartão mostra a tabela sem ler de novo, e Todos os relatórios volta", async () => {
+      const { supabase } = await montar(
+        { "resumo-dos-editais": RESUMO },
+        {},
+        { abrir: null },
+      );
+      await clicar(botaoEmCartao("resumo-dos-editais", "Abrir"));
+      await esperar();
+      expect(caixa?.querySelector(".relatorios-voltar h2")?.textContent).toBe(
+        "Resumo dos editais",
+      );
+      expect(caixa?.querySelectorAll("tbody tr")).toHaveLength(1);
+      expect(leituras(supabase.chamadas)).toHaveLength(3);
+      await clicar(caixa?.querySelector("[data-acao='voltar-ao-catalogo']"));
+      await esperar();
+      expect(caixa?.querySelectorAll(".relatorios-cartao")).toHaveLength(3);
+      expect(leituras(supabase.chamadas)).toHaveLength(3);
+    });
+
+    it("cada cartão exporta o seu relatório inteiro, em Excel e PDF", async () => {
+      const { supabase, salvos } = await montar(
+        { aprovados: { data: { linhas: [] }, error: null } },
+        {},
+        { abrir: null },
+      );
+      await clicar(botaoEmCartao("aprovados", "Exportar em Excel"));
+      await esperar(() => new Promise((ok) => setTimeout(ok, 50)));
+      await clicar(botaoEmCartao("aprovados", "Salvar em PDF"));
+      await esperar(() => new Promise((ok) => setTimeout(ok, 200)));
+      expect(leituras(supabase.chamadas).slice(-2)).toEqual([
+        "aprovados:1:null",
+        "aprovados:1:null",
+      ]);
+      expect(salvos.map((s) => s.nome)).toEqual([
+        "aprovados-saude-indigena-2026-11-13-1204.xlsx",
+        "aprovados-saude-indigena-2026-11-13-1204.pdf",
+      ]);
+    });
+
+    it("Sincronizar no catálogo recalcula todos", async () => {
+      const { supabase } = await montar({}, {}, { abrir: null });
+      await clicar(botao("Sincronizar"));
+      await esperar();
+      expect(
+        supabase.chamadas
+          .filter((c) => c.nome === "sincronizar_relatorio_do_painel")
+          .map((c) => (c.args as { p_relatorio: string }).p_relatorio),
+      ).toEqual(["resumo-dos-editais", "editais-por-cargo", "aprovados"]);
+    });
+
+    it("a falha da leitura aparece uma vez, em cima dos cartões", async () => {
+      const sem = { data: null, error: { code: "42501" } };
+      await montar(
+        { "resumo-dos-editais": sem, "editais-por-cargo": sem, aprovados: sem },
+        {},
+        { abrir: null },
+      );
+      expect(
+        [...(caixa?.querySelectorAll("[role=alert]") ?? [])].map(
+          (a) => a.textContent,
+        ),
+      ).toEqual([MENSAGEM_SEM_PERMISSAO]);
+      expect(
+        botaoEmCartao("aprovados", "Exportar em Excel")?.hasAttribute(
+          "disabled",
+        ),
+      ).toBe(true);
+    });
+
+    it("o relatório aberto vai no endereço e o caminho antigo continua valendo", () => {
+      expect(ehIdDoRelatorio("aprovados")).toBe(true);
+      expect(ehIdDoRelatorio("painel-x")).toBe(false);
+      expect(gruposDoCatalogo().map((g) => g.id)).toEqual([
+        "editais",
+        "aprovados",
+      ]);
+      expect(
+        destinoDoCaminho("/sede/paineis-de-dados", "?relatorio=aprovados"),
+      ).toEqual({
+        view: "paineis-de-dados",
+        area: "sede",
+        filtros: "relatorio=aprovados",
+      });
+      // O endereço escrito é sempre o novo.
+      expect(
+        caminhoDoDestino({
+          view: "paineis-de-dados",
+          area: "sede",
+          filtros: "relatorio=aprovados",
+        }),
+      ).toBe("/sede/relatorios?relatorio=aprovados");
+    });
+  });
+
+  describe("um relatório aberto", () => {
+    it("aberto pelo link, lê só a página do relatório e desenha a tabela", async () => {
       const { supabase } = await montar({
         "resumo-dos-editais": RESUMO,
       });
@@ -5204,10 +5363,9 @@ bloco("modulos/paineis-de-dados", () => {
         },
       ]);
       expect(
-        [...(caixa?.querySelectorAll("[role=tab]") ?? [])].map(
-          (aba) => aba.textContent,
-        ),
-      ).toEqual(["Resumo dos editais", "Editais por cargo", "Aprovados"]);
+        caixa?.querySelector("[data-acao='voltar-ao-catalogo']")?.textContent,
+      ).toContain("Todos os relatórios");
+      expect(caixa?.querySelector(".relatorios-cartao")).toBeNull();
       const celulas = [...(caixa?.querySelectorAll("tbody td") ?? [])].map(
         (td) => td.textContent,
       );
@@ -5220,14 +5378,15 @@ bloco("modulos/paineis-de-dados", () => {
       ]);
     });
 
-    it("cada aba lê o seu relatório uma vez", async () => {
+    it("cada relatório é lido uma vez; Sincronizar recalcula só o aberto", async () => {
       const { supabase } = await montar();
-      await clicar(botao("Aprovados"));
+      await clicar(caixa?.querySelector("[data-acao='voltar-ao-catalogo']"));
       await esperar();
-      await clicar(botao("Resumo dos editais"));
+      await clicar(botaoEmCartao("aprovados", "Abrir"));
       await esperar();
       expect(leituras(supabase.chamadas)).toEqual([
         "resumo-dos-editais:1:50",
+        "editais-por-cargo:1:50",
         "aprovados:1:50",
       ]);
       // Sincronizar recalcula só o relatório aberto e relê a página dele.
@@ -5239,11 +5398,11 @@ bloco("modulos/paineis-de-dados", () => {
       ]);
       expect(supabase.chamadas.at(-2)?.args).toEqual({
         p_area: "saude-indigena",
-        p_relatorio: "resumo-dos-editais",
+        p_relatorio: "aprovados",
       });
-      await clicar(botao("Aprovados"));
+      await clicar(caixa?.querySelector("[data-acao='voltar-ao-catalogo']"));
       await esperar();
-      expect(leituras(supabase.chamadas)).toHaveLength(3);
+      expect(leituras(supabase.chamadas)).toHaveLength(4);
     });
 
     it("o topo tem Sincronizar e a data da última leitura, uma vez só", async () => {
@@ -5459,14 +5618,15 @@ bloco("modulos/paineis-de-dados", () => {
         bloqueioDaTela("paineis-de-dados", perfil({ paineis_dados: "leitor" })),
       ).toBe("");
       expect(bloqueioDaTela("paineis-de-dados", perfil({}))).toBe(
-        "Sem permissão para Painéis.",
+        "Sem permissão para Relatórios.",
       );
     });
 
     it("tem rota própria", () => {
       expect(telaDaRota("paineis-de-dados")).toMatchObject({
-        caminho: "paineis-de-dados",
-        titulo: "Painéis",
+        caminho: "relatorios",
+        titulo: "Relatórios",
+        caminhosAntigos: ["paineis-de-dados"],
       });
     });
   });

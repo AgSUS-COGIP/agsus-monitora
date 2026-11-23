@@ -320,7 +320,7 @@ export const ABAS_DO_MENU = Object.freeze(
     },
     {
       id: "paineis-de-dados",
-      rotulo: "Painéis",
+      rotulo: "Relatórios",
       icone: "layout-dashboard",
       ordem: 15,
       view: "paineis-de-dados",
@@ -341,8 +341,8 @@ export const ABAS_DO_MENU = Object.freeze(
   - Processo seletivo: onde se trabalha, na ordem do fluxo (Editais, Triagem,
     Avaliação documental, Recursos, Entrevistas, Classificação, Lista de
     aprovados).
-  - Dados: os painéis de dados da área (Painéis), abaixo do processo
-    seletivo.
+  - Dados: os relatórios de acompanhamento e gestão da área (Relatórios,
+    view `paineis-de-dados`), abaixo do processo seletivo.
 
   Dentro de cada bloco vale a ordem do catálogo, que já segue as etapas. O
   bloco é da ABA (o código, não a view, que a área pode trocar): aba nova

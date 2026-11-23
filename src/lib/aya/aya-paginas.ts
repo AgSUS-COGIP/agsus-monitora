@@ -281,11 +281,11 @@ const PAGINAS: Readonly<Record<string, PaginaDoMenu>> = Object.freeze({
     ],
   },
   "paineis-de-dados": {
-    nome: "Painéis",
+    nome: "Relatórios",
     intro: () =>
-      "Posso explicar os relatórios de conferência, de onde vem cada coluna e como baixar em CSV ou XLSX.",
+      "Posso explicar os relatórios de acompanhamento, de onde vem cada coluna e como baixar em Excel ou PDF.",
     sugestoes: () => [
-      sug("Painéis", "Para que serve a página Painéis?"),
+      sug("Relatórios", "Para que serve a página Relatórios?"),
       sug("Por cargo", "De onde vêm as vagas por cargo?"),
       sug("Admissão", "De onde vem a data de admissão?"),
     ],
@@ -469,7 +469,7 @@ export const ACOES_DA_AYA: Readonly<Record<string, AcaoDaAya>> = Object.freeze({
     view: "selecao",
   }),
   "paineis-de-dados": Object.freeze({
-    rotulo: "Abrir Painéis",
+    rotulo: "Abrir Relatórios",
     view: "paineis-de-dados",
   }),
   ...Object.fromEntries(

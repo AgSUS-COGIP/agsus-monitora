@@ -23,7 +23,7 @@ export const RESOURCES: readonly RecursoDoCatalogo[] = Object.freeze([
   ["recursos", "Recursos"],
   ["recursos_parecer", "Parecer jurídico (Recursos)"],
   ["selecao", "Painel da Seleção"],
-  ["paineis_dados", "Painéis (Dados)"],
+  ["paineis_dados", "Relatórios"],
   ["importacao", "Importação e convocação"],
   ["paineis", "Painéis externos"],
   ["configuracoes", "Configurações"],

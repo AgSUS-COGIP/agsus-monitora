@@ -33,7 +33,7 @@ import { avisar as avisarPadrao } from "./avisos.ts";
   Contratos: `window.toggleSidebar`, `toggleDarkMode`, `toggleBrowserFullscreen`
   (casca em src/app/casca/ e barra lateral React), publicados por
   src/app/sistema.ts. O "Montar relatório" saiu do menu da conta em
-  16/11/2026: fica no topo dos Painéis (src/modulos/paineis-de-dados/).
+  16/11/2026: fica no topo de Relatórios (src/modulos/paineis-de-dados/).
 */
 
 export const CHAVE_DA_BARRA_RECOLHIDA = "agsus_monitora_sidebar_collapsed_v1";

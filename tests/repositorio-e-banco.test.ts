@@ -161,6 +161,117 @@ bloco("aba-mapa-no-banco", () => {
   });
 });
 
+bloco("aba-relatorios-no-banco", () => {
+  /*
+    A migration 20261123180000 (a aba "Painéis" vira "Relatórios") num
+    Postgres de verdade (PGlite), sobre o catálogo de abas copiado do banco
+    (fixtures/sql-do-banco/catalogo-de-abas-em-18-11.sql) com as linhas da
+    resposta real do menu (fixtures/listar-abas-do-menu-triagem.json, que já
+    traz o nome novo: o "hoje" é ela com "Painéis"). Confere também o ensaio
+    (roda, aprova e não grava) e o rollback.
+  */
+  const ler = (caminho: string) =>
+    readFileSync(caminho, "utf8").replace(/\r\n/g, "\n");
+  const NOME = "20261123180000_aba_paineis_vira_relatorios.sql";
+  const migration = () => ler(`supabase/migrations/${NOME}`);
+  const ensaio = () => ler(`supabase/ensaios/${NOME}`);
+  const rollback = () => ler(`supabase/rollback/${NOME}`);
+
+  interface AbaDoMenu {
+    co_aba: string;
+    no_aba: string;
+    ds_icone: string;
+    nu_ordem: number;
+    co_view: string;
+    co_recurso: string;
+    tp_aba: string;
+    st_beta: boolean;
+    areas: { co_area: string; nu_ordem: number }[];
+  }
+  const DEPOIS: AbaDoMenu[] = JSON.parse(
+    ler("tests/fixtures/listar-abas-do-menu-triagem.json"),
+  );
+  const HOJE: AbaDoMenu[] = DEPOIS.map((a) =>
+    a.co_aba === "paineis-de-dados" ? { ...a, no_aba: "Painéis" } : a,
+  );
+  const AREAS = ["saude-indigena", "sede", "projetos"];
+  const texto = (v: string) => `'${v.replace(/'/g, "''")}'`;
+  const semear = (abas: readonly AbaDoMenu[]) =>
+    [
+      ...AREAS.map(
+        (area, i) =>
+          `insert into public."TB_AREA" ("CO_AREA","NO_AREA","NO_GRUPO_PLANILHA","NU_ORDEM") values (${texto(area)}, ${texto(area)}, ${texto(area)}, ${i + 1});`,
+      ),
+      ...abas.flatMap((a) => [
+        `insert into public."TB_ABA" ("CO_ABA","NO_ABA","DS_ICONE","NU_ORDEM","CO_VIEW","CO_RECURSO","TP_ABA","ST_BETA") values (${texto(a.co_aba)}, ${texto(a.no_aba)}, ${texto(a.ds_icone)}, ${a.nu_ordem}, ${texto(a.co_view)}, ${texto(a.co_recurso)}, ${texto(a.tp_aba)}, ${a.st_beta ? "'S'" : "'N'"});`,
+        ...a.areas.map(
+          (x) =>
+            `insert into public."RL_ABA_AREA" ("CO_ABA","CO_AREA","NU_ORDEM") values (${texto(a.co_aba)}, ${texto(x.co_area)}, ${x.nu_ordem === a.nu_ordem ? "null" : x.nu_ordem});`,
+        ),
+      ]),
+    ].join("\n");
+
+  const banco = moldeDeBanco(async () => {
+    const db = await PGlite.create();
+    await db.exec(
+      ler("tests/fixtures/sql-do-banco/catalogo-de-abas-em-18-11.sql"),
+    );
+    await db.exec(semear(HOJE));
+    return db;
+  });
+
+  /* O menu como o front o lê: aba, nome, ordem, view, ícone, recurso e áreas. */
+  async function menu(db: PGlite) {
+    const { rows } = await db.query<{ menu: AbaDoMenu[] }>(
+      "select public.listar_abas_do_menu() as menu",
+    );
+    return resumo(rows[0]?.menu ?? []);
+  }
+  const resumo = (abas: readonly AbaDoMenu[]) =>
+    abas.map((a) => ({
+      aba: a.co_aba,
+      nome: a.no_aba,
+      ordem: a.nu_ordem,
+      view: a.co_view,
+      icone: a.ds_icone,
+      recurso: a.co_recurso,
+      areas: a.areas.map((x) => `${x.co_area}:${x.nu_ordem}`),
+    }));
+
+  describe("migration 20261123180000: Painéis vira Relatórios", () => {
+    it("troca só o nome da aba; view, recurso, ordem e áreas ficam", async () => {
+      const db = await banco();
+      expect(await menu(db)).toEqual(resumo(HOJE));
+      await db.exec(migration());
+      expect(await menu(db)).toEqual(resumo(DEPOIS));
+      // Idempotente: de novo, nada muda.
+      await db.exec(migration());
+      expect(await menu(db)).toEqual(resumo(DEPOIS));
+    });
+
+    it("o rollback volta o nome antigo", async () => {
+      const db = await banco();
+      await db.exec(migration());
+      await db.exec(rollback());
+      expect(await menu(db)).toEqual(resumo(HOJE));
+    });
+
+    it("o ensaio roda a migration sem mudança, aprova e não grava", async () => {
+      const corpo = (sql: string, de: RegExp, ate: RegExp) => {
+        const inicio = sql.search(de);
+        const fim = sql.search(ate);
+        return sql.slice(inicio, fim).replace(/^.*\n/, "").trim();
+      };
+      expect(corpo(ensaio(), /-- MIGRATION -/, /-- CONFERÊNCIAS -/)).toBe(
+        corpo(migration(), /^begin;$/m, /^commit;$/m),
+      );
+      const db = await banco();
+      await db.exec(ensaio());
+      expect(await menu(db)).toEqual(resumo(HOJE));
+    });
+  });
+});
+
 bloco("actions-por-sha", () => {
   /*
   Auditoria de 09/11/2026 (QA-01): Action de terceiro referenciada por tag

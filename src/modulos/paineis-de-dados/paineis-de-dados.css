@@ -1,5 +1,5 @@
 /*
-  Painéis: a alça de largura na borda direita de cada cabeçalho da tabela.
+  Relatórios (antes Painéis): a alça de largura na borda direita de cada cabeçalho da tabela.
   Arrastar (ou ←/→ com foco na alça) muda a largura da coluna; com alguma
   largura escolhida, a tabela passa a layout fixo para a coluna poder também
   estreitar. As larguras ficam só na memória da tela.
@@ -49,4 +49,62 @@
 
 .paineis-origem-dos-dados p:last-child {
   margin-bottom: 0;
+}
+
+/*
+  Relatórios: a entrada é o catálogo — um grupo por assunto, com os cartões
+  em grade (um por linha no celular) — e o relatório aberto tem, em cima,
+  "Todos os relatórios" e o nome dele.
+*/
+.relatorios-catalogo {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.relatorios-grupo {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.relatorios-grupo-titulo {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-label);
+  font-weight: var(--font-weight-semibold);
+}
+
+.relatorios-cartoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+  gap: var(--space-4);
+}
+
+.relatorios-cartao {
+  display: grid;
+  grid-template-rows: auto 1fr auto auto;
+  gap: var(--space-2);
+}
+
+.relatorios-cartao p {
+  margin: 0;
+}
+
+.relatorios-cartao-resumo {
+  color: var(--text-primary);
+  font-size: var(--text-body-sm);
+}
+
+.relatorios-cartao-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+}
+
+.relatorios-voltar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
 }
