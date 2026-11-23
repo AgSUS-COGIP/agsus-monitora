@@ -21,11 +21,6 @@ import {
   resumoPorVaga,
 } from "../src/lib/avaliacao-documental/andamento-por-vaga.ts";
 import { readFileSync } from "node:fs";
-import {
-  definirAreaAtual,
-  publicarLinhasDoMonitoramento,
-  redefinirDadosDoMonitoramento,
-} from "../src/componentes/dados-do-monitoramento.ts";
 import { act, createElement, createElement as h } from "react";
 import { createRoot } from "react-dom/client";
 import {
@@ -85,6 +80,7 @@ import { mesclarDetalhe } from "../src/lib/analises/lista-do-painel-de-analises.
 import { GavetaDaAnalise } from "../src/modulos/analises/gaveta.tsx";
 import {
   definirAreaAtual,
+  publicarLinhasDoMonitoramento,
   redefinirDadosDoMonitoramento,
 } from "../src/componentes/dados-do-monitoramento.ts";
 import {
@@ -1858,7 +1854,6 @@ bloco("modulos/avaliacao-documental-abas", () => {
 
     it("o status é o do monitoramento (calculado pelo cronograma), não o gravado na lista", async () => {
       // A lista diz "Em andamento" para os três; o monitoramento já encerrou o 114.
-      definirAreaAtual("projetos");
       publicarLinhasDoMonitoramento([
         { id: "e93", CO_AREA: "projetos", status: "Em andamento" },
         { id: "e114", CO_AREA: "projetos", status: "Concluído" },
@@ -1887,7 +1882,6 @@ bloco("modulos/avaliacao-documental-abas", () => {
       expect(controle.querySelector(".ui-ativos-situacoes").textContent).toBe(
         "Concluído 1",
       );
-      redefinirDadosDoMonitoramento();
     });
 
     it("com um edital vigente só, abre direto nele", async () => {
