@@ -83,11 +83,8 @@
     "animaLayout": 1
   },
   "src/styles/app.css": {
-    "important": 33,
+    "important": 29,
     "blur": 1
-  },
-  "src/styles/barra-lateral.css": {
-    "important": 1
   },
   "src/styles/indigenous-territories-layer.css": {
     "blur": 1
@@ -105,7 +102,7 @@
     "important": 3
   },
   "src/styles/nielsen-shell-ux.css": {
-    "important": 22,
+    "important": 12,
     "blur": 2
   },
   "src/styles/platform-shell.css": {

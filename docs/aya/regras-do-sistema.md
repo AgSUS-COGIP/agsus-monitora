@@ -11,7 +11,7 @@ O que vale em todas as telas: Pessoas online, atualização do sistema e busca g
 ## Pessoas online
 
 **perguntas:** o que mostra pessoas online | pessoas online | quem esta online | presenca online
-**resposta:** Pessoas online fica no menu da conta (clique no seu nome, no alto à direita) e só o administrador global e o Gestor veem. Mostra quem está com o Yeendé aberto: nome, foto ou iniciais, grupo e onde a pessoa está, como "Análises curriculares · Saúde Indígena" ou "Configurações › Acessos" (painel externo aparece como "Painel externo"). A presença de cada pessoa é avisada a cada 2 minutos e meio com a aba visível (e na hora de trocar de página, área ou seção); quem fecha ou esconde a aba sai da lista em até 6 minutos. A contagem do botão se atualiza a cada 10 minutos, e a lista aberta, a cada 2 minutos e meio.
+**resposta:** Pessoas online fica no menu da conta (clique na sua foto, no alto à direita) e só o administrador global e o Gestor veem. Mostra quem está com o Yeendé aberto: nome, foto ou iniciais, grupo e onde a pessoa está, como "Análises curriculares · Saúde Indígena" ou "Configurações › Acessos" (painel externo aparece como "Painel externo"). A presença de cada pessoa é avisada a cada 2 minutos e meio com a aba visível (e na hora de trocar de página, área ou seção); quem fecha ou esconde a aba sai da lista em até 6 minutos. A contagem do botão se atualiza a cada 10 minutos, e a lista aberta, a cada 2 minutos e meio.
 **fonte:** src/lib/sessao/online-presence.ts; src/app/presenca.ts; src/componentes/pessoas-online/pessoas-online.tsx; src/lib/acessos/access-roles.ts (podeVerPessoasOnline)
 
 ## Atualização do sistema
@@ -29,7 +29,7 @@ O que vale em todas as telas: Pessoas online, atualização do sistema e busca g
 ## Busca global
 
 **perguntas:** busca global | ctrl k | como buscar um edital | atalho de busca
-**resposta:** Ctrl+K (ou Cmd+K) abre a busca global, com usuário conectado. Ela procura em edital, unidade, etapa, status, UF, risco, ciclo, responsável e observações e mostra até 12 resultados. Escolher um resultado limpa os filtros, filtra a unidade e o edital, abre o painel e destaca a linha na tabela; sem permissão, aparece um aviso. Quem não é administrador global só encontra editais das suas áreas.
+**resposta:** Ctrl+K (ou Cmd+K) abre a busca global, com usuário conectado; no computador, o campo "Buscar editais" no meio do topo também. Ela procura em edital, unidade, etapa, status, UF, risco, ciclo, responsável e observações e mostra até 12 resultados. Escolher um resultado limpa os filtros, filtra a unidade e o edital, abre o painel e destaca a linha na tabela; sem permissão, aparece um aviso. Quem não é administrador global só encontra editais das suas áreas.
 **fonte:** src/lib/navegacao/busca-global.ts; src/componentes/busca-global/busca-global.tsx; src/lib/editais/responsavel-do-edital.ts
 
 ## Foto do perfil

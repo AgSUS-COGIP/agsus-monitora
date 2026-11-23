@@ -53,13 +53,18 @@ function usarLogo(logo: string) {
   };
 }
 
-function Marca({ logo }: { logo?: string }) {
+/** A logo gravada, com a volta para a padrão: a da barra e a do cabeçalho no celular. */
+export function usarLogoDaMarca(logo?: string) {
   const gravada = useSyncExternalStore(
     assinarMarcaDaBarraLateral,
     logoDaBarraLateral,
     logoDaBarraLateral,
   );
-  const imagem = usarLogo(logo ?? gravada);
+  return usarLogo(logo ?? gravada);
+}
+
+function Marca({ logo }: { logo?: string }) {
+  const imagem = usarLogoDaMarca(logo);
   return (
     <div className="side-brand" data-tour="barra-marca">
       <span className="side-logo-wrap">

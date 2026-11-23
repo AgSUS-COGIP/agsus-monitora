@@ -47,6 +47,9 @@ alimenta por `buildNav`/`setActiveNav`.
 
 ### Desenho
 
+- **Página aberta:** nome em peso 600 na cor de realce e um marcador fino (2px) sobre a linha-guia,
+  sem fundo; no trilho, o mesmo marcador à esquerda do ícone (referência do cabeçalho aprovada em
+  23/11/2026).
 - **Expandida:** acordeão com todas as áreas abertas por padrão; só a seta gira, a altura não anima.
   Guarda-se só a lista das áreas fechadas, então área nova nasce aberta; abrir uma página reabre a
   área dela. O item escolhido define a área atual; só o item da área atual fica ativo.
@@ -68,8 +71,10 @@ Busca nos editais do monitoramento, filha da raiz React. Pasta `src/componentes/
 (`busca-global.tsx`: painel, atalhos, seleção por teclado e mouse, realce e montagem; contratos em
 `tipos.ts`); regras puras em `src/lib/navegacao/busca-global.ts`.
 
-- Ctrl+K ou Cmd+K abre a busca com sessão conectada (sem botão no topo: a lupa saiu a pedido em
-  17/11/2026). Pesquisa os nove campos do monitoramento, em todas as áreas, sem diferenciar maiúsculas e acentos; mantém a ordem da fonte e para em 12.
+- Ctrl+K ou Cmd+K abre a busca com sessão conectada; o campo "Buscar editais" no meio do
+  cabeçalho também (evento `EVENTO_ABRIR_A_BUSCA`; some no celular, onde fica o atalho). Pesquisa
+  os nove campos do monitoramento, em todas as áreas, sem diferenciar maiúsculas e acentos; mantém
+  a ordem da fonte e para em 12.
 - O campo começa vazio; setas e Enter escolhem, Esc e o botão Esc fecham (o fundo não, como em todo modal); o modal mantém e devolve o foco.
 - A escolha publica `agsus:busca-global-escolhida` com `detail.id`. A navegação em `src/app/` cuida
   das permissões, da área e dos filtros da tela. **A busca não concede acesso** a dado que a carga

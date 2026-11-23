@@ -104,11 +104,15 @@ em PDF", sempre com esse nome e nessa ordem — no topo da tela (`TopoDoPainel` 
 rodapé da lista (`TabelaDaLista` `exportacao`, ao lado de "Mostrando N de M") ou na barra da tabela. O arquivo sai de `src/lib/base/exportacao-da-tabela.ts` (`arquivoDaTabela`), a
 partir do mesmo retrato (título, colunas e linhas); `baixarArquivo` entrega.
 
-Nas telas com `CabecalhoDaTela` (`tituloNaTela` em `src/lib/navegacao/rotas.ts`: Conduzir entrevistas,
-Classificação, Avaliação documental e Triagem), a faixa do topo do app (`header.top`) fica compacta
-(`data-compacto`, só a partir de 901px): sem o título, que é o da tela, e com a conta menor, o perfil
-só dentro do menu (`src/app/casca/topo.tsx`). Embaixo do cabeçalho, numa linha, `etapas` recebe a
-faixa das etapas do edital ([[modulo-pagina-do-edital]], "Fluxo entre as etapas").
+O cabeçalho do app (`header.top`, `src/app/casca/topo.tsx` e `topo.css`) é uma linha só: à
+esquerda o ☰ e a marca (só com a barra em gaveta, até 900px), a área e, fora das telas das áreas, o
+título; no meio o campo da busca global; à direita o sininho do resumo do dia, a Aya e a foto com o
+menu da conta (nome, e-mail, perfil, Pessoas online, Atualizar dados, Tela cheia, no painel do
+Popover). Toda ação é `.btn.ghost.ui-botao-icone.topo-acao`, com a mesma caixa (`--topo-acao`:
+40px no mouse, 44px no toque). No celular (até 640px) ficam só o ☰, a marca, o sininho e a foto.
+Nas telas das áreas o título é o da tela (`CabecalhoDaTela`) e o do cabeçalho fica só para o leitor
+de tela (`data-compacto`). Embaixo do cabeçalho da tela, numa linha, `etapas` recebe a faixa das
+etapas do edital ([[modulo-pagina-do-edital]], "Fluxo entre as etapas").
 
 Peças de layout só em CSS: `.ui-tela`, `.ui-card`, `.ui-titulo`, `.ui-linha-de-cards`,
 `.ui-pilha`, `.ui-grade-de-campos`, `.ui-acoes`, `.ui-barra-de-salvar`, `.ui-gaveta-*`,

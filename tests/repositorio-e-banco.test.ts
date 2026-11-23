@@ -1327,9 +1327,11 @@ bloco("paleta-do-rio", () => {
     });
 
     it("o título da página segue a área, com o padrão de antes fora dela", () => {
-      expect(app).toContain("color: var(--cor-da-area, var(--text-primary));");
-      expect(app).toContain(
-        "color: var(--cor-da-area, var(--color-text-brand)) !important;",
+      // O título da casca é do cabeçalho (src/app/casca/topo.css), sem !important.
+      const topo = readFileSync("src/app/casca/topo.css", "utf8");
+      expect(topo).toContain("color: var(--cor-da-area, var(--text-primary));");
+      expect(topo).toContain(
+        "color: var(--cor-da-area, var(--color-text-brand));",
       );
     });
 
@@ -1497,8 +1499,6 @@ bloco("tipografia-das-telas", () => {
     "src/modulos/entrevistas/entrevistas.css .entrevistas-aba-da-ficha-check",
     // Seta do botão do seletor múltiplo (ícone).
     "src/styles/multi-select-busca.css .multi-select-trigger .fa-chevron-down",
-    // Seta do menu da conta, no cabeçalho (ícone).
-    "src/styles/platform-shell.css .top-user-chevron",
   ]);
 
   function cssDe(pasta: string): string[] {

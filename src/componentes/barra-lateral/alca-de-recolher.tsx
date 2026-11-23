@@ -69,7 +69,7 @@ export function AlcaNoCabecalho({ recolhida }: { recolhida: boolean }) {
     <button
       id="globalSidebarToggle"
       type="button"
-      className="global-side-toggle"
+      className="global-side-toggle btn ghost ui-botao-icone topo-acao"
       data-tour="barra-abrir-menu"
       title={rotulo}
       aria-label={rotulo}

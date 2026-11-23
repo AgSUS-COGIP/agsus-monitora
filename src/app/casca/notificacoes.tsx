@@ -97,7 +97,7 @@ function CartaoDeNotificacao({ id, texto, tom }: Notificacao) {
   return (
     <div
       ref={cartao}
-      className={`toast ${tom}${saindo ? " is-saindo" : ""}`}
+      className={`ui-card toast ${tom}${saindo ? " is-saindo" : ""}`}
       role={tom === "error" ? "alert" : undefined}
     >
       <i
@@ -107,7 +107,7 @@ function CartaoDeNotificacao({ id, texto, tom }: Notificacao) {
       <p className="toast-texto">{texto}</p>
       <button
         type="button"
-        className="toast-fechar"
+        className="btn ghost ui-botao-icone toast-fechar"
         aria-label="Fechar notificação"
         onClick={() => definirSaindo(true)}
       >

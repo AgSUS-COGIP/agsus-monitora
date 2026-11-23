@@ -1099,10 +1099,11 @@ export function Aya({
     gravar(janela, CHAVE_OCULTA, "0");
   }
 
-  // O ⓘ "O que significa" de uma tela (src/app/pergunta-para-a-aya.ts): abre e pergunta.
+  // O ⓘ "O que significa" de uma tela (src/app/pergunta-para-a-aya.ts): abre e
+  // pergunta. O botão da Aya no cabeçalho só abre (pergunta vazia).
   usarPerguntaParaAAya((pergunta) => {
     abrir();
-    void enviar(pergunta);
+    if (pergunta) void enviar(pergunta);
   });
 
   const fechar = useCallback(() => {

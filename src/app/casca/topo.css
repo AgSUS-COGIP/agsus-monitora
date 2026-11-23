@@ -1,0 +1,359 @@
+/*
+  O cabeçalho do app (topo.tsx). Era espalhado por app.css, platform-shell.css,
+  nielsen-shell-ux.css e mobile-app.css, com `!important` no tema escuro; agora
+  mora só aqui e só com tokens (os tokens já trocam no tema escuro).
+
+  Três colunas: à esquerda o ☰, a marca, a área e o título; no meio a busca;
+  à direita as ações. Toda ação é `.btn.ghost.ui-botao-icone.topo-acao`, com a
+  mesma caixa: `--topo-acao`, 40px no mouse e 44px no toque.
+
+  Entra pelo topo.tsx, depois de ui.css: vence `.btn.ghost` e
+  `.ui-botao-icone` no empate. O padding lateral segue o da página no Design
+  System (seção 16): 32px no desktop, 24px no tablet e 16px no celular.
+*/
+.top {
+  --topo-acao: var(--space-10);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(12rem, 28rem) minmax(
+      max-content,
+      1fr
+    );
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-8);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+
+@media (pointer: coarse) {
+  .top {
+    --topo-acao: var(--mobile-touch-size);
+  }
+}
+
+/* ── À esquerda: ☰, marca, área e título ─────────────────────────────────── */
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+/* O ☰ chega por portal (alca-de-recolher.tsx), no fim: vai para o começo. */
+.title-row > .global-side-toggle {
+  order: -1;
+  flex: none;
+}
+
+/* A marca só com a barra em gaveta: acima de 900px a barra mostra a dela. */
+.topo-marca {
+  display: none;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+}
+
+.topo-marca__logo {
+  width: var(--space-8);
+  height: var(--space-8);
+  object-fit: contain;
+}
+
+.topo-marca__nome {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.topo-area {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-base);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* A cor da área (html[data-area], src/app/moldura.ts) no ponto; o nome fica na cor do texto. */
+.topo-area__ponto {
+  width: var(--space-2);
+  height: var(--space-2);
+  flex: none;
+  border-radius: var(--radius-full);
+  background: var(--cor-da-area, currentColor);
+}
+
+/* O título da casca (Administração e avisos); nas telas das áreas, é `sr-only`. */
+.page-title {
+  min-width: 0;
+}
+
+.page-title h1,
+.page-title p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.page-title h1 {
+  margin: 0;
+  color: var(--cor-da-area, var(--text-primary));
+  font-size: var(--text-xl);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* Fora das áreas, no escuro, o título fica na cor da marca (o padrão de antes). */
+[data-theme="dark"] .page-title h1 {
+  color: var(--cor-da-area, var(--color-text-brand));
+}
+
+.page-title p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 400;
+}
+
+/* ── No meio: o campo da busca global ────────────────────────────────────── */
+
+.top .topo-busca {
+  justify-self: center;
+  width: 100%;
+  min-height: var(--topo-acao);
+  justify-content: flex-start;
+  gap: var(--space-2);
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-card);
+  color: var(--text-secondary);
+  font-size: var(--text-base);
+  font-weight: 400;
+}
+
+.top .topo-busca:hover:not(:disabled) {
+  border-color: var(--border-control);
+  background: var(--surface-card);
+  color: var(--text-primary);
+}
+
+.topo-busca__texto {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+}
+
+.topo-busca__atalho {
+  padding: 0 var(--space-1-5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: var(--text-caption);
+  line-height: 1.6;
+}
+
+/* No toque não há teclado à vista: o atalho sai. */
+@media (pointer: coarse) {
+  .topo-busca__atalho {
+    display: none;
+  }
+}
+
+/* ── À direita: sininho, Aya e a foto com o menu da conta ────────────────── */
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-self: end;
+  gap: var(--space-2);
+}
+
+/* A mesma caixa para todas as ações do cabeçalho (e o ☰). */
+.top .topo-acao {
+  width: var(--topo-acao);
+  min-width: var(--topo-acao);
+  height: var(--topo-acao);
+  min-height: var(--topo-acao);
+  color: var(--text-secondary);
+}
+
+.top .topo-acao:hover:not(:disabled) {
+  color: var(--text-primary);
+}
+
+.top-user-menu {
+  position: relative;
+}
+
+.top-user-menu > summary {
+  position: relative;
+  list-style: none;
+}
+
+.top-user-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.top-user-menu[open] > summary {
+  background: var(--color-action-ghost-hover);
+}
+
+/* A foto (google-profile-photo.ts troca o ícone pela imagem). */
+.top-user-avatar {
+  width: var(--space-8);
+  height: var(--space-8);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--state-info-soft);
+  color: var(--state-info);
+}
+
+.top-user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* O selo do edital fica no canto da caixa (encerramento-do-edital.css desenha a marca). */
+.top-user-button > .selo-no-avatar {
+  position: absolute;
+  top: var(--space-1);
+  right: 0;
+}
+
+/* O menu da conta é o painel do Popover de src/ui/ (borda, raio, sombra e espaço). */
+.top .top-user-popover {
+  width: min(280px, calc(100vw - 2 * var(--space-4)));
+  max-width: none;
+}
+
+.top-user-popover > strong,
+.top-user-popover > small,
+.top-user-popover > span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.top-user-popover > strong {
+  font-size: var(--text-base);
+}
+
+.top-user-popover > small {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
+.top-user-popover > span {
+  color: var(--state-success);
+  font-size: var(--text-caption);
+  font-weight: 600;
+}
+
+.top-user-popover > span:empty,
+.top-user-popover-actions:empty {
+  display: none;
+}
+
+.pessoas-online-app,
+.top-user-popover-actions {
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.top-user-popover-actions {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.top-user-popover-actions button {
+  min-height: var(--topo-acao);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-md);
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.top-user-popover-actions button i {
+  color: var(--text-secondary);
+  font-size: 16px;
+}
+
+.top-user-popover-actions button:hover {
+  background: var(--surface-hover);
+}
+
+/* ── Larguras ────────────────────────────────────────────────────────────── */
+
+/* Barra em gaveta: o ☰ e a marca entram; o cabeçalho sobe acima do conteúdo. */
+@media (max-width: 900px) {
+  /* A esquerda (☰, marca, área) cabe inteira, até a metade; a busca fica com o resto. */
+  .top {
+    z-index: calc(var(--z-header) + 20);
+    grid-template-columns: fit-content(50%) minmax(0, 1fr) max-content;
+    padding-inline: var(--space-6);
+  }
+
+  .top .topo-busca {
+    max-width: 28rem;
+  }
+
+  .topo-marca {
+    display: inline-flex;
+  }
+
+  .topo-marca + .topo-area {
+    padding-left: var(--space-3);
+    border-left: 1px solid var(--border-subtle);
+  }
+}
+
+/* Celular: só o ☰, a marca, o sininho e a foto. A busca segue no Ctrl+K e a Aya na arara. */
+@media (max-width: 640px) {
+  .top {
+    grid-template-columns: minmax(0, 1fr) max-content;
+    gap: var(--space-2);
+    padding-inline: var(--space-4);
+  }
+
+  .top .topo-busca,
+  .top .topo-aya,
+  .topo-area {
+    display: none;
+  }
+
+  /* O título fica para o leitor de tela (o mesmo padrão de `.sr-only`). */
+  .page-title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

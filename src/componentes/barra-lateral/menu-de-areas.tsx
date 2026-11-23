@@ -453,7 +453,11 @@ function Area({
                   className="menu-bloco"
                   data-bloco={bloco.id}
                 >
-                  <p className="menu-bloco__titulo" id={idDoTitulo}>
+                  <p
+                    className="menu-bloco__titulo"
+                    id={idDoTitulo}
+                    title={bloco.rotulo}
+                  >
                     {bloco.rotulo}
                   </p>
                   {lista(bloco.itens, { "aria-labelledby": idDoTitulo })}

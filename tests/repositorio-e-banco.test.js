@@ -316,7 +316,7 @@ bloco("barras-fixas-no-celular", () => {
       const link = bloco(app, ".skip-link");
       expect(link).not.toMatch(/top:\s*-/);
       expect(link).toContain("transform: translateY(-100%)");
-      expect(link).toContain("max-width: calc(100vw - 16px)");
+      expect(link).toContain("max-width: calc(100vw - 2 * var(--space-2))");
       expect(bloco(app, ".skip-link:focus")).toContain("transform: none");
     });
   });
@@ -2464,15 +2464,16 @@ bloco("parabens-acima-do-cabecalho", () => {
     const zDoAviso = zDoBloco(comemoracao, ".comemoracao");
 
     it("acima do cabeçalho, da barra lateral e do menu da conta (com Pessoas online)", () => {
-      // O cabeçalho: --z-header em app.css; no celular, 10030 (mobile-app.css).
+      // O cabeçalho: --z-header; abaixo de 900px, 10030 (src/app/casca/topo.css).
       const cabecalho = Math.max(
-        zDoBloco(app, ".top"),
-        zDoBloco(ler("src/styles/mobile-app.css"), "  .app .top"),
+        zDoBloco(ler("src/app/casca/topo.css"), ".top"),
+        zDoBloco(ler("src/app/casca/topo.css"), "  .top"),
       );
-      // Pessoas online fica dentro do menu da conta desde 13/11/2026.
+      // Pessoas online fica dentro do menu da conta (o painel do Popover de src/ui/).
       const pessoasOnline = zDoBloco(
-        ler("src/styles/platform-shell.css"),
-        ".top-user-popover",
+        // `var(--z-popover, 10040)`: o resolvedor lê o token, não a reserva.
+        ler("src/ui/ui.css").replace(/var\((--[\w-]+),[^)]*\)/g, "var($1)"),
+        ".ui-popover-painel",
       );
       expect(cabecalho).toBeGreaterThan(0);
       expect(pessoasOnline).toBeGreaterThan(0);

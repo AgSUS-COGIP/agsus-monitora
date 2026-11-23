@@ -1544,8 +1544,10 @@ bloco("componentes/barra-lateral", () => {
       expect(botao.parentElement?.classList.contains("title-row")).toBe(true);
       expect(botao.closest<HTMLElement>(".sidebar")).toBeNull();
       expect(botao.querySelector("svg")?.dataset.icone).toBe("menu");
+      // Uma ação do cabeçalho, com a mesma caixa das outras.
+      expect(botao.classList).toContain("topo-acao");
       expect(
-        document.querySelectorAll<HTMLElement>("header.top button"),
+        document.querySelectorAll<HTMLElement>("header.top .title-row button"),
       ).toHaveLength(1);
       // Na gaveta, `sidebar-collapsed` quer dizer fechada.
       await recolher();
@@ -1749,24 +1751,23 @@ bloco("componentes/barra-lateral", () => {
     const main = readFileSync("src/main.ts", "utf8");
     const html = htmlDaPagina();
 
-    it("o botão único aparece em todo modo, sem outro hambúrguer", () => {
+    it("o botão único, sem outro hambúrguer nem regra de id com !important", () => {
       expect(css).not.toContain("#hambToggle");
-      expect(css).toMatch(
-        /#appScreen \.global-side-toggle\s*\{\s*display:\s*grid\s*!important/,
-      );
+      expect(css).not.toContain("#appScreen");
+      expect(css).not.toContain("!important");
     });
 
     it("fica no rodapé (sem alça na marca) e no fluxo do cabeçalho, nunca fixo", () => {
       expect(css).not.toContain(".side-brand > .global-side-toggle");
       expect(bloco(css, ".side-footer > .side-recolher {")).toContain(
-        "grid-auto-flow: column",
+        "display: flex",
       );
-      const noCabecalho = bloco(
-        css,
-        "#appScreen .title-row > .global-side-toggle",
+      const topo = semComentarios(
+        readFileSync("src/app/casca/topo.css", "utf8"),
       );
-      expect(noCabecalho).toContain("position: static");
+      const noCabecalho = bloco(topo, ".title-row > .global-side-toggle");
       expect(noCabecalho).toContain("order: -1");
+      expect(noCabecalho).not.toContain("position: fixed");
       expect(css).not.toContain("position: fixed;\n  top: 50%");
     });
 
@@ -1793,11 +1794,12 @@ bloco("componentes/barra-lateral", () => {
     });
 
     it("nenhum remendo esconde o botão nem guarda folga para a alça", () => {
-      // O system-ui-fixes.css foi dissolvido: o cabeçalho é de app.css e platform-shell.css.
+      // O system-ui-fixes.css foi dissolvido: o cabeçalho é de src/app/casca/topo.css.
       expect(existsSync("src/styles/system-ui-fixes.css")).toBe(false);
       const cabecalho = semComentarios(
         readFileSync("src/styles/app.css", "utf8") +
-          readFileSync("src/styles/platform-shell.css", "utf8"),
+          readFileSync("src/styles/platform-shell.css", "utf8") +
+          readFileSync("src/app/casca/topo.css", "utf8"),
       );
       expect(cabecalho).not.toMatch(
         /\.top\s*\{[^}]*padding-left:\s*var\(--space-6\)/,

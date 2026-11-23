@@ -249,7 +249,11 @@ import {
   EVENTO_PEDACO_QUE_SUMIU,
   EVENTO_TELA_ANTIGA,
 } from "../src/lib/base/versao-do-sistema.ts";
-import { EVENTO_ESCOLHA_DA_BUSCA } from "../src/lib/navegacao/busca-global.ts";
+import {
+  EVENTO_ABRIR_A_BUSCA,
+  EVENTO_ESCOLHA_DA_BUSCA,
+} from "../src/lib/navegacao/busca-global.ts";
+import { consumirPerguntaParaAAya } from "../src/app/pergunta-para-a-aya.ts";
 import { consumirPedidoDeFiltro } from "../src/app/pedido-de-filtro.ts";
 import { abrirTelaDoEdital } from "../src/app/abrir-tela-do-edital.ts";
 import { etapaDoFluxo } from "../src/lib/navegacao/fluxo-das-etapas.ts";
@@ -434,7 +438,7 @@ bloco("app/avisos", () => {
       montar();
       act(() => avisar("<b>oi</b>", "warn"));
       const el = achar(".toast", $("toastBox"));
-      expect(el.className).toBe("toast warn");
+      expect(el.className).toBe("ui-card toast warn");
       expect(el.querySelector(".fa-triangle-exclamation.toast-icone")).not.toBe(
         null,
       );
@@ -458,7 +462,7 @@ bloco("app/avisos", () => {
       const [erro, ok, outro] = $("toastBox").children;
       expect(erro?.getAttribute("role")).toBe("alert");
       expect(ok?.hasAttribute("role")).toBe(false);
-      expect(outro?.className).toBe("toast ok");
+      expect(outro?.className).toBe("ui-card toast ok");
       expect(normalizarTom("success")).toBe("ok");
     });
 
@@ -468,7 +472,7 @@ bloco("app/avisos", () => {
       act(() => vi.advanceTimersByTime(DURACAO_MS));
       expect(
         $("toastBox").querySelector<HTMLElement>(".toast")?.className,
-      ).toBe("toast ok is-saindo");
+      ).toBe("ui-card toast ok is-saindo");
       act(() => vi.advanceTimersByTime(200));
       expect($("toastBox").children).toHaveLength(0);
 
@@ -682,8 +686,6 @@ bloco("app/casca", () => {
         "topUserMenu",
         "topUserAvatar",
         "seloNoAvatarApp",
-        "userName",
-        "userProfileBadge",
         "topUserPopoverName",
         "userEmail",
         "topUserPopoverProfile",
@@ -827,15 +829,53 @@ bloco("app/casca", () => {
       ).toBe(false);
     });
 
-    it("o CSS compacto vale só fora do celular e tira o perfil do botão", () => {
-      const css = readFileSync("src/styles/app.css", "utf8");
-      const bloco = css.slice(
-        css.indexOf("@media (min-width: 901px) {\n  .top[data-compacto]"),
+    it("à esquerda a área, no meio a busca, à direita a Aya e a conta, com a mesma caixa", () => {
+      const topo = topoNa("dashboard");
+      expect(topo.querySelector(".title-row .topo-marca")).not.toBeNull();
+      expect(topo.children[1]?.classList).toContain("topo-busca");
+      const acoes = [...topo.querySelectorAll(".actions > *")];
+      expect(acoes.map((a) => a.className)).toEqual([
+        "btn ghost ui-botao-icone topo-acao topo-aya",
+        "top-user-menu",
+      ]);
+      expect(topo.querySelector("#topUserMenu > summary")?.classList).toContain(
+        "topo-acao",
       );
-      expect(bloco).toContain(
-        ".top[data-compacto] .top-user-compact-copy .user-profile-badge",
+      // A caixa é uma medida só, a de --topo-acao (40px no mouse, 44px no toque).
+      const css = readFileSync("src/app/casca/topo.css", "utf8");
+      const caixa = css.slice(css.indexOf(".top .topo-acao {"));
+      const bloco = caixa.slice(0, caixa.indexOf("}"));
+      for (const medida of ["width", "min-width", "height", "min-height"])
+        expect(bloco).toContain(`  ${medida}: var(--topo-acao);`);
+      expect(css).toMatch(
+        /@media \(pointer: coarse\) \{\s*\.top \{\s*--topo-acao: var\(--mobile-touch-size\);/,
       );
-      expect(bloco.slice(0, bloco.indexOf("\n}\n"))).toContain("display: none");
+    });
+
+    it("o campo de busca abre a busca global, e o botão da Aya pede a Aya", () => {
+      const topo = topoNa("dashboard");
+      const pedidos: string[] = [];
+      const ouvir = () => pedidos.push("busca");
+      document.addEventListener(EVENTO_ABRIR_A_BUSCA, ouvir);
+      act(() =>
+        definido(topo.querySelector<HTMLElement>(".topo-busca")).click(),
+      );
+      document.removeEventListener(EVENTO_ABRIR_A_BUSCA, ouvir);
+      expect(pedidos).toEqual(["busca"]);
+      act(() => definido(topo.querySelector<HTMLElement>(".topo-aya")).click());
+      expect(consumirPerguntaParaAAya()).toBe("");
+      expect(consumirPerguntaParaAAya()).toBeNull();
+    });
+
+    it("no celular ficam o ☰, a marca, o sininho e a foto; a busca, a Aya e a área saem", () => {
+      const css = readFileSync("src/app/casca/topo.css", "utf8");
+      const celular = css.slice(css.indexOf("@media (max-width: 640px)"));
+      expect(celular).toMatch(
+        /\.top \.topo-busca,\s*\.top \.topo-aya,\s*\.topo-area \{\s*display: none;/,
+      );
+      expect(css).toMatch(
+        /@media \(max-width: 900px\)[\s\S]*?\.topo-marca \{\s*display: inline-flex;/,
+      );
     });
   });
 
@@ -4305,8 +4345,8 @@ bloco("app/perfil", () => {
     document.body.className = "access-request-mode";
     document.body.innerHTML = `
     <section id="appScreen" class="app hidden"></section>
-    <strong id="userName"></strong><strong id="topUserPopoverName"></strong>
-    <small id="userEmail"></small><small id="userProfileBadge"></small>
+    <strong id="topUserPopoverName"></strong>
+    <small id="userEmail"></small>
     <span id="topUserPopoverProfile"></span>`;
   }
 
@@ -4345,7 +4385,7 @@ bloco("app/perfil", () => {
       expect(perfil.pode("cores")).toBe(false);
     });
 
-    it("mostra quem entrou no cabeçalho, com o rótulo do perfil", () => {
+    it("mostra quem entrou no menu da conta, com o rótulo do perfil", () => {
       montarPagina();
       const sessao = sessaoFalsa();
       const perfil = criarPerfil({ sessao });
@@ -4353,17 +4393,12 @@ bloco("app/perfil", () => {
       sessao.definir({ usuario: ANA, perfil: GESTOR });
       perfil.mostrarNaBarra();
       expect(document.getElementById("userEmail")?.textContent).toBe(ANA.email);
-      // Sem estilo escrito no elemento: mostrar é do CSS (a faixa compacta o esconde).
-      expect(document.getElementById("userProfileBadge")?.style.display).toBe(
-        "",
-      );
-      expect(document.getElementById("userProfileBadge")?.textContent).toBe(
-        "Gestor",
-      );
       expect(
         document.getElementById("topUserPopoverProfile")?.textContent,
       ).toBe("Gestor");
-      expect(document.getElementById("userName")?.textContent).not.toBe("");
+      expect(
+        document.getElementById("topUserPopoverName")?.textContent,
+      ).not.toBe("");
     });
 
     it("abre e esconde o app", () => {
@@ -7503,6 +7538,21 @@ bloco("componentes/busca-global", async () => {
       expect(dialogo()).toBeNull();
     });
 
+    it("o campo do cabeçalho abre pelo evento, só com usuário conectado, e não fecha", async () => {
+      const pedir = () =>
+        act(async () => {
+          document.dispatchEvent(new CustomEvent(EVENTO_ABRIR_A_BUSCA));
+        });
+      conectado = false;
+      await pedir();
+      expect(dialogo()).toBeNull();
+      conectado = true;
+      await pedir();
+      expect(dialogo()).not.toBeNull();
+      await pedir();
+      expect(dialogo()).not.toBeNull();
+    });
+
     it("Esc e o botão Esc fecham; o clique no fundo não", async () => {
       await ctrlK();
       await teclar(definido(campo()), "Escape");
@@ -9296,9 +9346,9 @@ bloco("componentes/pessoas-online", () => {
     /* 13/11/2026: o "3 online" saiu do cabeçalho e foi para o menu da conta. */
     it("fica no menu da conta, como uma linha, e a lista abre logo abaixo", () => {
       const topo = readFileSync("src/app/casca/topo.tsx", "utf8");
-      const menu = topo.slice(
-        topo.indexOf('<div className="top-user-popover">'),
-      );
+      const inicioDoMenu = topo.indexOf('<div className="top-user-popover');
+      expect(inicioDoMenu).toBeGreaterThan(-1);
+      const menu = topo.slice(inicioDoMenu);
       const acoes = topo.slice(
         topo.indexOf('<div className="actions">'),
         topo.indexOf("</header>"),

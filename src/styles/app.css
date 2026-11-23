@@ -140,22 +140,21 @@ strong {
   -100%), não por um "top" fixo: com o texto quebrando em duas linhas (celular
   estreito, fonte maior), o "top: -44px" deixava a segunda linha
   ("…principal") por cima do cabeçalho e cortava o título da página.
+  O desenho é o do botão primário (`.btn`, no index.html); aqui, só o lugar.
 */
 .skip-link {
   position: absolute;
-  left: 8px;
+  left: var(--space-2);
   top: 0;
   z-index: var(--z-toast);
-  max-width: calc(100vw - 16px);
-  background: var(--agsus-azul);
-  color: var(--color-text-inverse);
-  padding: 10px 16px;
-  border-bottom-left-radius: var(--radius-lg);
-  border-bottom-right-radius: var(--radius-lg);
-  font-weight: 600;
+  max-width: calc(100vw - 2 * var(--space-2));
+  min-width: var(--mobile-touch-size);
   transform: translateY(-100%);
   transition: transform var(--duration-fast) var(--ease-standard);
-  text-decoration: none;
+}
+.btn.skip-link {
+  padding-block: var(--space-2);
+  white-space: normal;
 }
 .skip-link:focus {
   transform: none;
@@ -563,7 +562,7 @@ textarea:focus-visible,
   right: max(18px, env(safe-area-inset-right, 0px));
   z-index: var(--z-toast);
   display: grid;
-  gap: 10px;
+  gap: var(--space-2);
   width: min(390px, calc(100vw - 30px));
   max-height: calc(100dvh - 96px);
   overflow: visible;
@@ -573,9 +572,10 @@ textarea:focus-visible,
   Notificação: cartão claro com ícone na cor do estado (src/app/casca/notificacoes.tsx).
   Antes era um bloco verde/vermelho/amarelo saturado com texto branco em
   negrito — gritava mais que o conteúdo, e o amarelo com texto escuro fugia
-  do padrão dos outros três.
+  do padrão dos outros três. É um `.ui-card` (src/ui/): `.toast-box` na frente
+  vence o `.ui-card`, que vem depois (ui.css).
 */
-.toast {
+.toast-box .toast {
   pointer-events: auto;
   display: flex;
   align-items: flex-start;
@@ -620,27 +620,27 @@ textarea:focus-visible,
   font-weight: 500;
   line-height: 1.45;
 }
-.toast-fechar {
-  display: grid;
-  place-items: center;
-  flex: 0 0 28px;
-  width: 28px;
-  height: 28px;
-  margin: -2px 0 -2px auto;
-  border: 0;
-  border-radius: var(--radius-md);
-  background: transparent;
+/* O × é um botão de ícone do DS (.btn.ghost.ui-botao-icone): 32px no mouse, 44px no toque. */
+.toast-box .toast .toast-fechar {
+  flex: none;
+  width: var(--space-8);
+  min-width: var(--space-8);
+  height: var(--space-8);
+  min-height: var(--space-8);
+  margin: calc(-1 * var(--space-1)) calc(-1 * var(--space-1)) 0 auto;
   color: var(--text-secondary);
   font-size: 14px;
-  cursor: pointer;
 }
-.toast-fechar:hover {
-  background: var(--surface-hover);
+.toast-box .toast .toast-fechar:hover {
   color: var(--text-primary);
 }
-.toast-fechar:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 1px;
+@media (pointer: coarse) {
+  .toast-box .toast .toast-fechar {
+    width: var(--mobile-touch-size);
+    min-width: var(--mobile-touch-size);
+    height: var(--mobile-touch-size);
+    min-height: var(--mobile-touch-size);
+  }
 }
 @keyframes toast-entrada {
   from {
@@ -886,76 +886,7 @@ body.external-clean #externalReturnBar {
 .main {
   min-width: 0;
 }
-/*
-  O cabeçalho fica acima do conteúdo e isola o próprio empilhamento: os
-  popovers dele (--z-popover) e os overlays (--z-overlay…) se ordenam a
-  partir daqui. No celular, mobile-app.css o sobe para 10030.
-*/
-.top {
-  position: sticky;
-  top: 0;
-  z-index: var(--z-header);
-  isolation: isolate;
-  background: var(--surface-raised);
-  border-bottom: 1px solid var(--line);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 12px 18px 12px 14px;
-}
-/*
-  Telas com título próprio (tituloNaTela): a faixa só tem a conta. Compacta,
-  com o avatar menor e o perfil só dentro do menu. No celular a faixa já é
-  uma linha só (com o ☰), por isso só a partir de 901px.
-*/
-@media (min-width: 901px) {
-  .top[data-compacto] {
-    padding-block: var(--space-1-5);
-  }
-  .top[data-compacto] .top-user-button {
-    min-height: var(--space-8);
-    padding-block: var(--space-0-5);
-  }
-  .top[data-compacto] .top-user-avatar {
-    width: var(--space-6);
-    height: var(--space-6);
-    flex-basis: var(--space-6);
-  }
-  .top[data-compacto] .top-user-compact-copy .user-profile-badge {
-    display: none;
-  }
-}
-.title-row {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  min-width: 0;
-}
-.page-title {
-  min-width: 0;
-}
-.page-title h1 {
-  margin: 0;
-  font-size: var(--text-2xl);
-  line-height: 1.15;
-  color: var(--cor-da-area, var(--text-primary));
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-.page-title p {
-  margin: 4px 0 0;
-  color: var(--text-secondary);
-  font-weight: 400;
-  font-size: var(--text-md);
-}
-.actions {
-  display: flex;
-  gap: 9px;
-  align-items: center;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
+/* O cabeçalho (`.top`, título e ações) é de src/app/casca/topo.css. */
 @media (prefers-reduced-motion: no-preference) {
   @keyframes agsusPulse {
     0%,
@@ -1156,10 +1087,6 @@ body.external-clean #externalReturnBar {
 [data-theme="dark"] .app {
   color: var(--color-text-primary);
 }
-[data-theme="dark"] .app .top {
-  background: var(--color-bg-subtle) !important;
-  border-color: var(--color-border-subtle) !important;
-}
 [data-theme="dark"] .app .card,
 [data-theme="dark"] .app .table-card {
   background: var(--card) !important;
@@ -1188,12 +1115,6 @@ body.external-clean #externalReturnBar {
     var(--color-action-primary) 12%,
     transparent
   ) !important;
-}
-[data-theme="dark"] .app .page-title h1 {
-  color: var(--cor-da-area, var(--color-text-brand)) !important;
-}
-[data-theme="dark"] .app .page-title p {
-  color: var(--color-text-secondary) !important;
 }
 [data-theme="dark"] .app input,
 [data-theme="dark"] .app select,
@@ -1512,51 +1433,6 @@ body.system-fullscreen-mode.external-clean .external-panel {
   }
   body.sidebar-collapsed .app {
     grid-template-columns: 1fr;
-  }
-  /*
-    Topo compacto: uma linha só (☰ da gaveta, título, Pessoas online e conta),
-    preso no alto. Não há navegação no pé da tela: o menu é a gaveta.
-  */
-  .top {
-    gap: 8px;
-    padding: 6px 12px;
-  }
-  .title-row {
-    flex: 1 1 auto;
-    gap: 10px;
-  }
-  .page-title h1,
-  .page-title p {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .page-title h1 {
-    font-size: 20px;
-  }
-  .page-title p {
-    margin-top: 2px;
-  }
-  .actions {
-    flex: 0 0 auto;
-    flex-wrap: nowrap;
-    gap: 6px;
-  }
-}
-@media (max-width: 640px) {
-  /*
-    O título inteiro no celular: 18px e até duas linhas antes das reticências
-    ("Painel de entrevistas" pede 181px; ao lado do ☰, de Pessoas online e da
-    conta, sobram uns 170px em 375px).
-  */
-  .page-title h1 {
-    display: -webkit-box;
-    font-size: var(--text-xl);
-    line-height: 1.2;
-    white-space: normal;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
   }
 }
 @media (max-width: 540px) {

@@ -14,6 +14,7 @@ import {
   totalDoResumo,
 } from "../../lib/resumo-do-dia/resumo-do-dia.ts";
 import { Aviso, Modal } from "../../ui/index.ts";
+import { Icone } from "../../componentes/icone.tsx";
 import type { EstadoDoResumoDoDia } from "./estado.ts";
 import { resumoDoDia } from "./estado.ts";
 import "./resumo-do-dia.css";
@@ -51,13 +52,13 @@ export function SininhoDoResumo({
       <button
         id="resumoDoDiaSininho"
         type="button"
-        className="resumo-sininho"
+        className="resumo-sininho btn ghost ui-botao-icone topo-acao"
         aria-label={rotulo}
         title={rotulo}
         aria-haspopup="dialog"
         onClick={() => estado.abrir()}
       >
-        <i className="fa-solid fa-bell" aria-hidden="true" />
+        <Icone nome="bell" tamanho={20} />
         {total ? (
           <span className="resumo-sininho-numero" aria-hidden="true">
             {total > 99 ? "99+" : total}

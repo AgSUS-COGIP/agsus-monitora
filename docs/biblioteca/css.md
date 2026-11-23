@@ -28,6 +28,7 @@ Depois, confira no navegador com `getComputedStyle(el).prop`, e não no arquivo.
 
 ## Onde colocar
 
+- O cabeçalho do app → `src/app/casca/topo.css`, importado por `topo.tsx` (depois do `ui.css`).
 - Estilo de uma tela → o CSS do módulo dela, em `src/modulos/<nome>/<nome>.css` (ex.:
   `editais.css`, `cronograma.css`, `aprovados.css` + `convocacao.css`). Peça comum de várias telas
   → `src/ui/ui.css`. Legado que ainda mora em `src/styles/`: `health-*.css` e `saude-das-cargas.css`.

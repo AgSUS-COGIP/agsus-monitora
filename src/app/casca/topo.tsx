@@ -1,7 +1,17 @@
 import type { MouseEvent } from "react";
+import { useSyncExternalStore } from "react";
 import { chamarAcaoDaCasca, fecharMenuDaConta } from "./acoes.ts";
 import { usarEstadoDaNavegacao } from "../contexto-do-app.ts";
+import { abrirAAya } from "../pergunta-para-a-aya.ts";
 import { telaDaRota } from "../../lib/navegacao/rotas.ts";
+import { nomeDaArea } from "../../lib/navegacao/menu-lateral.ts";
+import { EVENTO_ABRIR_A_BUSCA } from "../../lib/navegacao/busca-global.ts";
+import {
+  assinarDadosDoMonitoramento,
+  obterDadosDoMonitoramento,
+} from "../../componentes/dados-do-monitoramento.ts";
+import { usarLogoDaMarca } from "../../componentes/barra-lateral/barra-lateral.tsx";
+import { Icone } from "../../componentes/icone.tsx";
 import { SininhoDoResumo } from "../../modulos/resumo-do-dia/resumo-do-dia.tsx";
 import {
   IconeDaTelaCheia,
@@ -9,38 +19,55 @@ import {
   SeloNoAvatarDoApp,
   SelosDoEditalDoApp,
 } from "./pecas.tsx";
+import "./topo.css";
 
 /*
-  O cabeçalho do app (`header.top`): o título da página e, à direita, o
-  sininho do resumo do dia e o menu da conta (com Pessoas online dentro, desde
-  13/11/2026). No celular, uma linha só, com o ☰ da gaveta antes
-  do título.
+  O cabeçalho do app (`header.top`), numa linha só, em três partes:
 
-  Nas telas das áreas, o título fica no conteúdo (`CabecalhoDaTela`, pelo módulo
-  ou por src/app/telas.tsx). O título daqui
-  fica só para o leitor de tela e a faixa fica compacta (`data-compacto`):
-  sobra só a conta, menor, com o perfil dentro do menu (17/11/2026).
+    à esquerda  -> o ☰ e a marca (só com a barra em gaveta, até 900px), a
+                   área atual e, fora das telas das áreas, o título da página;
+    no meio     -> o campo da busca global (abre a mesma busca do Ctrl+K);
+    à direita   -> o sininho do resumo do dia, a Aya e a foto com o menu da
+                   conta (Pessoas online, Atualizar dados, Tela cheia).
 
-  O título da página vem da navegação (src/app/navegacao.ts), pelo contexto
-  da raiz. Os outros textos ainda são escritos de fora: nome, e-mail e perfil
-  por `src/app/perfil.ts`, os rótulos configuráveis por
-  `src/app/configuracao.ts` e a foto por `google-profile-photo.ts`. Por isso
-  só o título se redesenha; o resto o React desenha uma vez.
+  As ações da direita e o ☰ são `.btn.ghost.ui-botao-icone` com a mesma caixa
+  (`.topo-acao`, topo.css). No celular (até 640px) ficam só o ☰, a marca, o
+  sininho e a foto: a busca segue no Ctrl+K e a Aya na arara.
 
-  Pessoas online e os selos do edital (`pecas.tsx`) leem o estado do sistema
-  pelo contexto da raiz; o ☰ (`#globalSidebarToggle`) é da barra
-  lateral e entra por portal no `.title-row` até 900px (`alca-de-recolher.tsx`).
+  Nas telas das áreas, o título fica no conteúdo (`CabecalhoDaTela`, pelo
+  módulo ou por src/app/telas.tsx); o daqui fica só para o leitor de tela e
+  a faixa leva `data-compacto`. Aviso e Administração mantêm o título aqui.
+
+  O título vem da navegação (src/app/navegacao.ts), pelo contexto da raiz; a
+  área, dos dados do monitoramento. Nome, e-mail e perfil são escritos de fora
+  (`src/app/perfil.ts`) e a foto por `google-profile-photo.ts`, nos ids de
+  sempre. Pessoas online e os selos do edital (`pecas.tsx`) leem o estado do
+  sistema pelo contexto da raiz; o ☰ (`#globalSidebarToggle`) é da barra
+  lateral e entra por portal no `.title-row` até 900px
+  (`alca-de-recolher.tsx`).
 */
 export function Topo() {
   const naTela = usarTituloNaTela();
   return (
     <header className="top" data-compacto={naTela ? "" : undefined}>
       <div className="title-row">
+        <MarcaDoTopo />
+        {naTela ? <AreaDoTopo /> : null}
         <TituloDaPagina naTela={naTela} />
       </div>
+      <BuscaDoTopo />
       <div className="actions">
         {/* Resumo do dia do responsável (src/modulos/resumo-do-dia/) */}
         <SininhoDoResumo />
+        <button
+          type="button"
+          className="btn ghost ui-botao-icone topo-acao topo-aya"
+          aria-label="Abrir a Aya"
+          title="Aya"
+          onClick={() => abrirAAya()}
+        >
+          <Icone nome="bird" tamanho={20} />
+        </button>
         <MenuDaConta />
       </div>
     </header>
@@ -53,6 +80,37 @@ function usarTituloNaTela() {
   return !aviso && Boolean(telaDaRota(view));
 }
 
+/* A marca, com a barra em gaveta (o CSS a mostra só até 900px; acima, a barra tem a dela). */
+function MarcaDoTopo() {
+  const imagem = usarLogoDaMarca();
+  return (
+    <span className="topo-marca">
+      <img className="topo-marca__logo" alt="" {...imagem} />
+      <strong className="topo-marca__nome">Yeendé</strong>
+    </span>
+  );
+}
+
+const areaAtual = () => obterDadosDoMonitoramento().areaAtual;
+
+/* A área das telas (Saúde Indígena, SEDE, Projetos), com o ponto na cor dela. */
+function AreaDoTopo() {
+  const area = useSyncExternalStore(
+    assinarDadosDoMonitoramento,
+    areaAtual,
+    areaAtual,
+  );
+  const nome = nomeDaArea(area);
+  if (!nome) return null;
+  return (
+    <p className="topo-area">
+      <span className="topo-area__ponto" aria-hidden="true" />
+      <span className="sr-only">Área: </span>
+      {nome}
+    </p>
+  );
+}
+
 /* Nas telas com título próprio (`tituloNaTela`), o daqui fica só para o leitor de tela. */
 function TituloDaPagina({ naTela }: { naTela: boolean }) {
   const { titulo, subtitulo } = usarEstadoDaNavegacao();
@@ -61,6 +119,27 @@ function TituloDaPagina({ naTela }: { naTela: boolean }) {
       <h1 id="pageTitle">{titulo}</h1>
       <p id="pageSubtitle">{subtitulo}</p>
     </div>
+  );
+}
+
+/* Parece um campo, mas é o botão que abre a busca global (src/componentes/busca-global/). */
+function BuscaDoTopo() {
+  return (
+    <button
+      type="button"
+      className="btn ghost topo-busca"
+      aria-haspopup="dialog"
+      aria-keyshortcuts="Control+K Meta+K"
+      onClick={() =>
+        document.dispatchEvent(new CustomEvent(EVENTO_ABRIR_A_BUSCA))
+      }
+    >
+      <Icone nome="search" tamanho={16} />
+      <span className="topo-busca__texto">Buscar editais</span>
+      <kbd className="topo-busca__atalho" aria-hidden="true">
+        Ctrl K
+      </kbd>
+    </button>
   );
 }
 
@@ -85,26 +164,19 @@ function MenuDaConta() {
   return (
     <details id="topUserMenu" className="top-user-menu">
       <summary
-        className="top-user-button"
+        className="btn ghost ui-botao-icone topo-acao top-user-button"
         aria-label="Abrir informações da conta"
+        title="Conta"
       >
         <span id="topUserAvatar" className="top-user-avatar" aria-hidden="true">
-          <i className="fa-solid fa-user"></i>
+          <Icone nome="user-round" tamanho={18} />
         </span>
         {/* Selo do edital no avatar (React: src/modulos/encerramento-do-edital/) */}
         <span id="seloNoAvatarApp" className="selo-no-avatar">
           <SeloNoAvatarDoApp />
         </span>
-        <span className="top-user-compact-copy">
-          <strong id="userName">-</strong>{" "}
-          <small id="userProfileBadge" className="user-profile-badge"></small>
-        </span>
-        <i
-          className="fa-solid fa-chevron-down top-user-chevron"
-          aria-hidden="true"
-        ></i>
       </summary>
-      <div className="top-user-popover">
+      <div className="top-user-popover ui-popover-painel" data-lado="direita">
         <strong id="topUserPopoverName">-</strong>{" "}
         <small id="userEmail">-</small> <span id="topUserPopoverProfile"></span>
         {/* Selos de editais (React: src/modulos/encerramento-do-edital/) */}

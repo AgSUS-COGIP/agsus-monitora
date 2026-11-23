@@ -33,6 +33,8 @@ export const PADROES = Object.freeze({
   password_reset_flow: "admin",
   broadcast_type: "info",
   external_back_text: "Voltar ao sistema",
+  // Sem texto, o link de pular ficava sem nome para o leitor de tela.
+  skip_link_text: "Pular para o conteúdo",
   auth_google_enabled: "true",
   auth_google_allowed_domains: "agenciasus.org.br,agsus.org.br",
   auth_access_background_url: DEFAULT_ACCESS_BRANDING.backgroundUrl,

@@ -14,11 +14,6 @@
   --ux-dark-muted: var(--color-text-secondary);
 }
 
-/* O menu de conta vira informativo; preferencias e saida nao ficam escondidas nele. */
-.top-user-popover-actions:empty {
-  display: none;
-}
-
 /* Dialogo de confirmacao e estado de saida. */
 .shell-confirm-layer,
 .shell-signout-busy {
@@ -223,45 +218,6 @@ html[data-theme="dark"] .content {
 html[data-theme="dark"] body {
   background: var(--surface-page) !important;
   color: var(--ux-dark-text) !important;
-}
-
-html[data-theme="dark"] .top {
-  border-color: var(--ux-dark-border) !important;
-  background: color-mix(
-    in srgb,
-    var(--color-bg-canvas) 96%,
-    transparent
-  ) !important;
-  color: var(--ux-dark-text) !important;
-}
-
-html[data-theme="dark"] .page-title h1,
-html[data-theme="dark"] .page-title p,
-html[data-theme="dark"] .top-user-button strong,
-html[data-theme="dark"] .top-user-popover strong {
-  color: var(--ux-dark-text) !important;
-}
-
-html[data-theme="dark"] .page-title p,
-html[data-theme="dark"] .top-user-button small,
-html[data-theme="dark"] .top-user-popover small {
-  color: var(--ux-dark-muted) !important;
-}
-
-html[data-theme="dark"] .top-user-button,
-html[data-theme="dark"] .top-user-popover {
-  border-color: var(--ux-dark-border) !important;
-  background: var(--ux-dark-surface) !important;
-  color: var(--ux-dark-text) !important;
-}
-
-html[data-theme="dark"] .top-user-button:hover {
-  background: var(--ux-dark-surface-soft) !important;
-}
-
-html[data-theme="dark"] .pessoas-online-app,
-html[data-theme="dark"] .top-user-popover-actions {
-  border-color: var(--ux-dark-border) !important;
 }
 
 html[data-theme="dark"] .online-presence-list > p {
