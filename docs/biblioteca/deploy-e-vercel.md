@@ -33,8 +33,11 @@ servidor opcional em container ([[servidor-web]]).
 1. PR com o CI verde e revisão.
 2. Migrations: aplicadas **antes** do merge quando o front novo depende delas, **depois** da
    publicação quando removem algo que o front atual ainda usa.
-3. Merge em `main` → a Vercel publica. As outras branches não geram prévia (`ignoreCommand` no
-   `vercel.json`): o que depende de `/api` só é testado depois do merge.
+3. Merge em `main` → a Vercel publica. As outras branches não geram prévia: `git.deploymentEnabled`
+   (`"**": false`, `"main": true`) nem cria a publicação, e o `ignoreCommand` fica como segunda
+   proteção. O plano gratuito tem limite de publicações por dia, e a publicação cancelada pelo
+   `ignoreCommand` foi criada (em 19/11/2026 o limite estourou e o `main` ficou dias sem publicar).
+   O que depende de `/api` só é testado depois do merge, ou no `npm run dev:frontend` local.
 
 **Checklist de publicação:** CI verde; migrations ensaiadas, aplicadas na ordem certa e
 registradas; login e solicitação de acesso funcionando; telas afetadas conferidas na versão
