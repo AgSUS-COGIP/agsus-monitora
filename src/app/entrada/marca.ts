@@ -81,7 +81,8 @@ export type EstadoDaMarcaDaEntrada = {
 };
 
 /** O documento onde está o `#loginScreen` (o real ou um de teste). */
-export type DocumentoDaEntrada = Pick<Document, "getElementById">;
+export type DocumentoDaEntrada = Pick<Document, "getElementById"> &
+  Partial<Pick<Document, "documentElement">>;
 
 /** A configuração que o legado repassa a `definirMarcaDaConfiguracao`. */
 export type ConfiguracaoDaMarca = {
@@ -379,7 +380,10 @@ export async function atualizarMarcaComBrandingPublico(
   const marca = await buscarMarcaPublica();
   /* Respondeu ou falhou, a espera acabou: a tela mostra o que tiver. */
   if (!estado.obter().resolvida) estado.definir({ resolvida: true });
-  if (!marca) return false;
+  if (!marca) {
+    liberarCartaoDaPrimeiraVisita(documento);
+    return false;
+  }
 
   /*
     Aplica o resultado da mescla, não a resposta crua. A resposta pública não
@@ -388,7 +392,20 @@ export async function atualizarMarcaComBrandingPublico(
     para evitar.
   */
   const completa = guardarMarca(marca) || marca;
-  return aplicarMarcaNaTela(completa, documento, estado);
+  const aplicada = aplicarMarcaNaTela(completa, documento, estado);
+  liberarCartaoDaPrimeiraVisita(documento);
+  return aplicada;
+}
+
+/*
+  Na primeira visita (sem marca guardada), o script do <head> do index.html
+  esconde o cartão (`marca-esperando`) até a marca pública chegar, para ele não
+  sair neutro e trocar de cara. Chegou (já aplicada) ou falhou: aparece.
+*/
+function liberarCartaoDaPrimeiraVisita(
+  documento: DocumentoDaEntrada | null | undefined,
+) {
+  documento?.documentElement?.classList?.remove("marca-esperando");
 }
 
 /**

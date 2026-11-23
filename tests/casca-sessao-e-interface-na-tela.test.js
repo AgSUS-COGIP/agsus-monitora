@@ -10146,6 +10146,67 @@ bloco("piscada-do-login", () => {
     return html.slice(i, html.indexOf("</script>", i));
   }
 
+  describe("primeira visita, sem marca guardada", () => {
+    /*
+      O cartão saía neutro e claro e trocava de cara quando a marca pública
+      chegava: parecia quebrado (23/11/2026). Agora ele espera a marca
+      (`marca-esperando`, até 1,5 s), e marca.ts o libera quando ela chega ou
+      falha.
+    */
+    beforeEach(() => {
+      localStorage.clear();
+      document.documentElement.className = "";
+    });
+
+    it("o script do head esconde o cartão e o libera sozinho em 1,5 s", () => {
+      vi.useFakeTimers();
+      try {
+        new Function(`(function ${scriptDoHead()}`)();
+        expect(
+          document.documentElement.classList.contains("marca-esperando"),
+        ).toBe(true);
+        vi.advanceTimersByTime(1500);
+        expect(
+          document.documentElement.classList.contains("marca-esperando"),
+        ).toBe(false);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("com marca guardada, não espera", () => {
+      localStorage.setItem(
+        "agsus_monitora_access_branding_v1",
+        JSON.stringify({ panelColor: "#002f2f" }),
+      );
+      new Function(`(function ${scriptDoHead()}`)();
+      expect(
+        document.documentElement.classList.contains("marca-esperando"),
+      ).toBe(false);
+    });
+
+    it("a marca pública que chega ou falha libera o cartão", async () => {
+      const original = globalThis.fetch;
+      globalThis.fetch = async () => {
+        throw new TypeError("Failed to fetch");
+      };
+      try {
+        document.documentElement.classList.add("marca-esperando");
+        await atualizarMarcaComBrandingPublico(document);
+        expect(
+          document.documentElement.classList.contains("marca-esperando"),
+        ).toBe(false);
+      } finally {
+        globalThis.fetch = original;
+      }
+    });
+
+    it("o CSS esconde o cartão enquanto espera", () => {
+      const css = readFileSync("src/styles/platform-shell.css", "utf8");
+      expect(css).toMatch(/html\.marca-esperando #loginScreen > \*/);
+    });
+  });
+
   describe("a marca é aplicada antes do primeiro paint", () => {
     it("o script do head é clássico e síncrono", () => {
       const trecho = html.slice(

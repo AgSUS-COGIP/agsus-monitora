@@ -46,12 +46,26 @@
     <script>
       (function aplicarMarcaAntesDoPrimeiroPaint() {
         try {
+          var raiz = document.documentElement;
           var bruto = localStorage.getItem("agsus_monitora_access_branding_v1");
-          if (!bruto) return;
+          if (!bruto) {
+            /*
+              Primeira visita (navegador novo, cache limpo): sem marca guardada
+              o cartão saía neutro e claro, sem a arte, e trocava de cara
+              quando a marca pública chegava — parecia quebrado (23/11/2026).
+              Agora o cartão espera a marca pública (`marca-esperando`), até
+              1,5 s; marca.ts tira a classe quando ela chega ou falha. Passou
+              disso, aparece o fundo neutro, como antes.
+            */
+            raiz.classList.add("marca-esperando");
+            setTimeout(function () {
+              raiz.classList.remove("marca-esperando");
+            }, 1500);
+            return;
+          }
           var marca = JSON.parse(bruto);
           if (!marca || typeof marca !== "object") return;
 
-          var raiz = document.documentElement;
           var cor =
             typeof marca.panelColor === "string" ? marca.panelColor.trim() : "";
           if (/^#[0-9a-f]{6}$/i.test(cor)) {
