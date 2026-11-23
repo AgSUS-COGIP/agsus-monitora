@@ -131,20 +131,9 @@ export const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
         "O que falta no edital, como cronograma ou quadro de vagas.",
       ),
       passo(
-        t("editais-editar"),
-        "Editar",
-        "Abre o formulário: dados, cronograma, anexos em PDF e quadro de vagas.",
-        { exige: canManageEditais },
-      ),
-      passo(
-        t("editais-regras-do-edital"),
-        "Regras do edital",
-        "Todas as regras do edital numa página, por etapa: Triagem, Avaliação documental, Entrevista, Classificação e Chamada para contratação.",
-      ),
-      passo(
-        t("editais-linha-do-tempo"),
-        "Linha do tempo",
-        "As etapas do edital de ponta a ponta e o histórico das mudanças.",
+        t("editais-acoes-da-linha"),
+        "Ações do edital",
+        "Abrir leva à página do edital. No ⋯ ficam Editar, Lista de aprovados, Regras do edital (todas as regras, por etapa) e Ver cronograma.",
       ),
       PASSO_DA_AYA,
     ]),

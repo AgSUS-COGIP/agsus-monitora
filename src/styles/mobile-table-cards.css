@@ -31,7 +31,7 @@
 
   table.mobile-card-table tbody {
     display: grid;
-    gap: 12px;
+    gap: var(--space-3);
   }
 
   table.mobile-card-table tr {
@@ -42,19 +42,24 @@
     box-shadow: var(--shadow-sm);
   }
 
+  /*
+    A célula do cartão: rótulo e valor lado a lado, no ritmo das telas novas
+    (8/12px, como a célula de .ui-tabela-rolagem em ui.css). A coluna fixa da
+    tabela que rola (ui.css) não vale aqui (:not(.mobile-card-table)). A
+    palavra só quebra se não couber sozinha na linha.
+  */
   table.mobile-card-table td {
-    position: static !important;
     display: grid;
     grid-template-columns: minmax(112px, 38%) minmax(0, 1fr);
     align-items: start;
-    gap: 10px;
+    gap: var(--space-3);
     min-height: 0;
-    padding: 10px 12px !important;
+    padding: var(--space-2) var(--space-3);
     border: 0;
     border-bottom: 1px solid var(--border-subtle);
-    background: transparent !important;
+    background: transparent;
     white-space: normal;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
   }
 
   table.mobile-card-table td:last-child {
@@ -67,6 +72,15 @@
     font-size: var(--text-caption);
     font-weight: var(--font-weight-medium);
     line-height: 1.35;
+    text-align: start;
+  }
+  /*
+    O valor fica todo na coluna da direita: a célula com mais de um elemento
+    (a etapa e o alerta em Editais, a caixa e o nome em Aprovados) não joga o
+    segundo para baixo do rótulo.
+  */
+  table.mobile-card-table td[data-mobile-label] > * {
+    grid-column: 2;
   }
   /* Célula de mensagem (vazio, erro) ocupa a linha: sem rótulo de coluna. */
   table.mobile-card-table td:not([data-mobile-label])::before {
@@ -120,7 +134,7 @@
   .approved-page-card table.mobile-card-table td::before {
     color: var(--text-secondary);
     font-size: var(--text-caption);
-    font-weight: 500;
+    font-weight: var(--font-weight-medium);
     letter-spacing: 0;
     text-transform: none;
   }
@@ -129,6 +143,9 @@
 @media (max-width: 480px) {
   table.mobile-card-table td {
     grid-template-columns: 1fr;
-    gap: 4px;
+    gap: var(--space-1);
+  }
+  table.mobile-card-table td[data-mobile-label] > * {
+    grid-column: auto;
   }
 }

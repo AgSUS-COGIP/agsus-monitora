@@ -775,27 +775,88 @@ th[aria-sort="descending"] .ui-ordenar i {
   color: var(--text-primary);
   font-weight: var(--font-weight-regular);
   /*
-    Nome sem espaço (ou de 200 caracteres) quebra na célula em vez de alargar a
-    tabela. Tem de ser `anywhere`: `break-word` não baixa o min-content, e no
-    auto-layout a palavra comprida alarga a coluna (conferido nas capturas).
+    A palavra só quebra se não couber nem sozinha na linha (23/11/2026). Com
+    `anywhere`, o auto-layout espremia as colunas curtas até a letra
+    ("Enfermeir/o", "001/202/6" em Aprovados a 1280px). Com `break-word`, a
+    largura mínima de cada coluna é a da maior palavra dela; o que passar da
+    caixa rola dentro dela, com a primeira coluna fixa e o sinal de rolagem
+    (abaixo).
   */
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 /*
-  Toque (12/11/2026): o link de uma célula (o número do edital em Editais e na
-  Visão geral) tinha 17px de altura no celular, alvo pequeno para o dedo. Com
-  ponteiro grosso ele ganha 24px de altura (WCAG 2.5.8); no mouse, nada muda.
+  Primeira coluna fixa ao rolar de lado (Design System, seção 16), em toda
+  largura: se a tabela cabe, nada muda. O fundo opaco esconde o que passa por
+  baixo, e o traço à direita marca a coluna presa. Abaixo do cabeçalho fixo
+  (`--z-sticky`); o canto do cabeçalho fica acima dos dois. Fora do modo
+  cartão do celular (mobile-table-cards.css), que não rola. Com `:where`,
+  o destaque de linha das telas (seletor com classe) continua valendo.
+*/
+:where(.ui-tabela-rolagem, .table-wrap)
+  > table:where(:not(.mobile-card-table))
+  > tbody
+  > tr
+  > td:first-child {
+  position: sticky;
+  left: 0;
+  z-index: calc(var(--z-sticky) - 1);
+  background: var(--surface-card);
+  box-shadow: inset -1px 0 0 var(--border-subtle);
+}
+:where(.ui-tabela-rolagem, .table-wrap)
+  > table:where(:not(.mobile-card-table))
+  > tbody
+  > tr:hover
+  > td:first-child {
+  background: var(--surface-hover);
+}
+:where(.ui-tabela-rolagem, .table-wrap)
+  > table:where(:not(.mobile-card-table))
+  > thead
+  > tr
+  > th:first-child {
+  left: 0;
+  z-index: calc(var(--z-sticky) + 1);
+  box-shadow: inset -1px 0 0 var(--border-subtle);
+}
+/*
+  Sinal de rolagem: uma sombra na borda direita enquanto houver tabela para a
+  direita. Truque de fundo: a sombra fica presa à caixa (`scroll`) e a
+  cobertura, da cor do cartão, anda com o conteúdo (`local`) e a tapa quando
+  a rolagem chega ao fim. Só CSS, sem medir no JS.
+*/
+:is(.ui-tabela-rolagem, .table-wrap) {
+  background:
+    linear-gradient(to left, var(--surface-card) 50%, transparent) right
+      center / var(--space-10) 100% no-repeat local,
+    radial-gradient(
+        farthest-side at 100% 50%,
+        color-mix(in srgb, var(--color-text-primary) 24%, transparent),
+        transparent
+      )
+      right center / var(--space-6) 100% no-repeat scroll,
+    var(--surface-card);
+}
+/*
+  Toque: os alvos dentro da tabela (o link do número do edital, o "⋯" e o
+  botão só com ícone) tinham 24 a 40px no celular. Com ponteiro grosso,
+  44 × 44px (Design System, seção 16); no mouse, nada muda.
 */
 @media (pointer: coarse) {
-  .ui-tabela-rolagem td a.link {
+  :is(td, th) a.link {
     display: inline-flex;
     align-items: center;
-    min-height: 24px;
+    min-width: 44px;
+    min-height: 44px;
   }
-}
-/* O selo e o chip quebram só entre palavras: o `anywhere` os espremeria a uma letra por linha. */
-.ui-tabela-rolagem td :is(.ui-selo, .ui-chip) {
-  overflow-wrap: normal;
+  td .ui-menu-reticencias {
+    width: 44px;
+    height: 44px;
+  }
+  /* O botão só com ícone da célula (o aviso da Lista de aprovados em Editais). */
+  td .btn.icon {
+    min-width: 44px;
+  }
 }
 .ui-tabela-rolagem td.ui-tabela-erro {
   padding: var(--space-3);

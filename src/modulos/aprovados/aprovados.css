@@ -692,9 +692,23 @@ table.mobile-card-table td.approved-actions {
   font-weight: var(--font-weight-medium);
 }
 
-.approved-selecao {
+.approved-selecao-alvo {
+  display: inline-flex;
+  align-items: center;
   margin-inline-end: var(--space-2);
   vertical-align: middle;
+  cursor: pointer;
+}
+.approved-selecao {
+  margin: 0;
+}
+/* No toque, o rótulo em volta da caixa é o alvo de 44px (a caixa tem 13px). */
+@media (pointer: coarse) {
+  .approved-selecao-alvo {
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 
 .approved-lote-resumo {

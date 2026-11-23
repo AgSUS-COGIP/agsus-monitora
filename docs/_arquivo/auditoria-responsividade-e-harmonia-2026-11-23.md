@@ -249,6 +249,12 @@ tela com mais de um botão de ação de largura cheia no topo a 375px.
 
 ### Lote 3 — Tabelas
 
+**Feito em 23/11/2026.** Na auditoria seguinte: 0 espaço fora da escala em `td`/`th` (eram 62
+achados distintos), 0 alvo < 44px dentro de tabela a 375 e 768px (eram 16), 0 rolagem. As travas
+de 375 e 320px, do toque na tabela e da palavra inteira (Editais e Aprovados a 1280px) rodam no
+CI (`tests/auditoria-visual.spec.js`). A palavra quebra só quando não cabe sozinha
+(`break-word`): a largura mínima de cada coluna é a da maior palavra dela, sem lista de colunas.
+
 - `mobile-app.css` e `mobile-table-cards.css`: padding e gap das células por token (8/12px),
   sem `!important`, sem `font-size: 0.82rem`; o modo cartão com o mesmo ritmo das telas novas.
 - Coluna Ações de Editais em `AcoesDaLinha`/menu de reticências quando não cabe; primeira coluna

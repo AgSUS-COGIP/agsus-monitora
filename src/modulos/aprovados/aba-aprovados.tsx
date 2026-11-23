@@ -241,14 +241,17 @@ const LinhaDoAprovado = memo(function LinhaDoAprovado({
     >
       <td>
         {aoSelecionar ? (
-          <input
-            type="checkbox"
-            className="approved-selecao"
-            data-selecao-do-candidato
-            checked={selecionado}
-            aria-label={`Selecionar ${row.nome}`}
-            onChange={() => aoSelecionar(row.candidato_id)}
-          />
+          // O rótulo é o alvo da caixa: 44px no toque (aprovados.css).
+          <label className="approved-selecao-alvo">
+            <input
+              type="checkbox"
+              className="approved-selecao"
+              data-selecao-do-candidato
+              checked={selecionado}
+              aria-label={`Selecionar ${row.nome}`}
+              onChange={() => aoSelecionar(row.candidato_id)}
+            />
+          </label>
         ) : null}
         <NomeDoCandidato candidato={row} aoAbrir={estado.abrirCandidato} />
       </td>

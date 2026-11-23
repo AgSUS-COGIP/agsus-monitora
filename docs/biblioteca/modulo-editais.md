@@ -22,6 +22,10 @@ Tabela, alertas, formulário e linha do tempo. A tela é `nucleo.tsx`; o estado 
 
 - A tabela abre nos **Ativos**; concluídos, cancelados e desativados ficam no **Histórico**, a um
   clique ao lado da busca, com a contagem por situação (`AtivosEHistorico`, [[componentes-padrao]]).
+- **Ações da linha** (`AcoesDaLinha`): "Abrir" (a página do edital) à vista; no "⋯", Editar, Lista
+  de aprovados, Regras do edital, Ver cronograma e Reiniciar treinamento (só admin, no edital de
+  treinamento). A Lista de aprovados com aviso (amarelo: concluído sem aprovados; vermelho:
+  cancelado ou suspenso) sai do "⋯" e fica à vista na linha.
 - Cadastro do edital e do cronograma; importa cronograma e quadro de vagas do PDF de anexos.
 - **Vagas ligadas ao quadro** (`vinculos-do-quadro.tsx`, `src/lib/editais/vinculos-do-quadro.ts`,
   migration `20261118120000`): no quadro salvo, a fila do vínculo de cada vaga com código com a

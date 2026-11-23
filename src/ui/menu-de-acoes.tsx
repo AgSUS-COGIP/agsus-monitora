@@ -181,6 +181,9 @@ export function MenuDeAcoes({
               {...a.dados}
               onClick={() => {
                 setAberto(false);
+                // O item some com a lista: o foco volta ao botão do menu antes
+                // da ação, e o modal que ela abrir o devolve a ele ao fechar.
+                botao.current?.focus();
                 a.aoEscolher();
               }}
             >
