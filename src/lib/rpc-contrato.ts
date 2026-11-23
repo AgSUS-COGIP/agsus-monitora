@@ -1238,6 +1238,21 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
   },
 
   // ── Auditoria e presença ────────────────────────────────────────────────
+  registrar_erro_da_aplicacao: {
+    argumentos: [
+      "p_referencia",
+      "p_tipo",
+      "p_mensagem",
+      "p_rota",
+      "p_contexto",
+      "p_versao",
+      "p_area",
+      "p_status",
+    ],
+    critica: false,
+    resumo:
+      "Registra, limpo de dado pessoal, um erro que aconteceu no navegador (error, unhandledrejection, ErrorBoundary) em TL_ERRO_APLICACAO; só com sessão, sem repetir o mesmo erro em 30 s e no máximo 30 por pessoa por minuto. Ausente (PGRST202), o front ignora em silêncio (migration 20261123150000).",
+  },
   registrar_evento_acesso: {
     argumentos: [
       "p_evento",

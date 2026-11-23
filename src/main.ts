@@ -6,6 +6,7 @@ import { installSessionLifecycle } from "./lib/sessao/session-lifecycle";
 import { installBackgroundResourceLifecycle } from "./lib/carga/background-resource-lifecycle";
 import { installFrontendPerformanceMonitor } from "./lib/carga/frontend-performance-monitor";
 import { installCspReportMonitor } from "./lib/seguranca/csp-report-monitor";
+import { ligarRegistroDeErros } from "./app/registro-de-erros.ts";
 import "./lib/base/chartjs-global.ts";
 import "./styles/tokens.css";
 import "./styles/icones-lucide.css";
@@ -141,6 +142,8 @@ installSessionLifecycle({
 installBackgroundResourceLifecycle();
 installFrontendPerformanceMonitor();
 installCspReportMonitor();
+// Erros do navegador (error, unhandledrejection) vão, limpos, para o banco.
+ligarRegistroDeErros();
 instalarCarregamento();
 initPwaLifecycle();
 initGoogleProfilePhoto();

@@ -1,7 +1,7 @@
 ---
 tipo: regra
 area: seguranca
-atualizado: 2026-11-17
+atualizado: 2026-11-23
 ---
 
 # Segurança
@@ -84,6 +84,36 @@ fixado ([[rpc-e-contrato]]). Não desligar RLS para "resolver" permissão.
   Supabase de produção via `.env.local`).
 - O servidor e o `dist/` não servem `CLAUDE.md`, `.env` nem arquivo com ponto
   (`tests/repositorio-e-banco.test.js` (bloco `servidor`)).
+
+## Erros do navegador (observabilidade)
+
+O que quebra no navegador de quem usa vai para o banco, limpo de dado pessoal (desenho do SIGAV;
+migration `20261123150000`, **pendente de aplicação**).
+
+- **O que entra:** `error` e `unhandledrejection` da página (ouvinte ligado uma vez em
+  `src/main.ts`) e o erro de desenho de cada `ErrorBoundary`, que mostra à pessoa o
+  **"Código do erro: 3F2A9C1B"** (o começo da referência) para passar ao suporte. Ruído não
+  entra: extensão do navegador, `Script error.`, aviso do `ResizeObserver`.
+- **Regra** (`src/lib/seguranca/registro-de-erros.ts`): referência opaca (`crypto.randomUUID`,
+  com alternativa), tipo (`CLIENTE`, `SERVIDOR`, `REDE`, `BANCO`, `DESCONHECIDO`; sem rede é
+  `REDE`), limpeza, contexto curto (arquivo sem origem, linha, coluna, pilha de 8 linhas, parte da
+  tela) e janela de 30 s: o mesmo erro (tipo, rota, mensagem, status) não vai de novo e a pessoa
+  vê o código do primeiro. **Envio** (`src/app/registro-de-erros.ts`): só com sessão, no máximo
+  50 por página, nunca lança; a RPC ausente (PGRST202) desliga o envio naquela página, em
+  silêncio.
+- **Limpeza, igual no navegador e no banco** (`private."FC_LIMPAR_TEXTO_ERRO"`; o teste compara
+  as duas): token (`Bearer …`, JWT), e-mail, CPF com pontuação, telefone e qualquer sequência de
+  5+ dígitos viram `[token]`, `[e-mail]`, `[número]`. A rota vai sem consulta nem âncora (os
+  filtros podem ter nome).
+- **Banco:** `TL_ERRO_APLICACAO` (RLS ligada, sem privilégio para `anon`/`authenticated`).
+  `registrar_erro_da_aplicacao` limpa de novo, corta (mensagem 500, rota 200, contexto de 12
+  chaves simples, só número pequeno), aceita só sessão, ignora a repetição em 30 s e passa de 30
+  por pessoa por minuto, e guarda 180 dias (apaga aos poucos a cada gravação). Quem: o id do
+  usuário, nunca o e-mail. `listar_erros_da_aplicacao` (pelo começo da referência, tipo e data)
+  é só do administrador global; entra no contrato com a tela que a usar.
+- Testes: blocos `lib/registro-de-erros` (`tests/demais-regras.test.ts`),
+  `app/registro-de-erros` e `app/error-boundary` (`tests/casca-sessao-e-interface-na-tela.test.ts`)
+  e `registro-de-erros-no-banco` (`tests/repositorio-e-banco.test.ts`, PGlite).
 
 ## Processo
 

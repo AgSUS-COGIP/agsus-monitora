@@ -1,10 +1,14 @@
 import { Component, Fragment } from "react";
 import type { ErrorInfo, ReactNode } from "react";
+import { referenciaCurta } from "../lib/seguranca/registro-de-erros.ts";
+import { registrarErro } from "./registro-de-erros.ts";
 
 /*
   Isola um módulo (uma tela, uma parte da casca): erro de render num filho mostra
   um aviso curto no lugar dele, sem derrubar o resto da página. "Tentar de
-  novo" remonta os filhos do zero (a `key` muda), e o erro vai para o console.
+  novo" remonta os filhos do zero (a `key` muda), e o erro vai para o console
+  e para o registro dos erros (src/app/registro-de-erros.ts): o aviso mostra o
+  código curto ("Código do erro: 3F2A9C1B") que a pessoa passa ao suporte.
 
   Não pega erro de evento nem de promessa — esses continuam com quem os trata
   (toast, aviso do estado). Cada tela do app tem o seu (src/app/telas.tsx), e
@@ -24,6 +28,8 @@ type PropsDoErrorBoundary = {
 type EstadoDoErrorBoundary = {
   erro: unknown;
   tentativa: number;
+  /** A referência do registro do erro (null até o componentDidCatch). */
+  referencia: string | null;
 };
 
 export class ErrorBoundary extends Component<
@@ -32,7 +38,7 @@ export class ErrorBoundary extends Component<
 > {
   constructor(props: PropsDoErrorBoundary) {
     super(props);
-    this.state = { erro: null, tentativa: 0 };
+    this.state = { erro: null, tentativa: 0, referencia: null };
     this.tentarDeNovo = this.tentarDeNovo.bind(this);
   }
 
@@ -46,11 +52,21 @@ export class ErrorBoundary extends Component<
       erro,
       info?.componentStack || "",
     );
+    const referencia = registrarErro({
+      erro,
+      origem: "tela",
+      parte: this.props.nome || "módulo",
+    });
+    this.setState({ referencia });
   }
 
   tentarDeNovo() {
     this.props.aoTentarDeNovo?.();
-    this.setState((atual) => ({ erro: null, tentativa: atual.tentativa + 1 }));
+    this.setState((atual) => ({
+      erro: null,
+      tentativa: atual.tentativa + 1,
+      referencia: null,
+    }));
   }
 
   render() {
@@ -61,6 +77,11 @@ export class ErrorBoundary extends Component<
             {this.props.mensagem ||
               "Não foi possível mostrar esta parte da tela."}
           </p>
+          {this.state.referencia ? (
+            <p className="ui-erro-do-modulo__codigo">
+              Código do erro: {referenciaCurta(this.state.referencia)}
+            </p>
+          ) : null}
           <button
             type="button"
             className="btn secondary"

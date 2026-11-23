@@ -1,7 +1,7 @@
 ---
 tipo: regra
 area: seguranca
-atualizado: 2026-11-17
+atualizado: 2026-11-23
 ---
 
 # Dados pessoais (LGPD)
@@ -76,6 +76,10 @@ do que o banco mandou, para abrir na hora e para consultar sem rede.
   ([[modulo-aprovados]]).
 - Testes usam dados fictícios; nenhum teste fala com o Supabase ([[testes]]).
 - O chamado da Aya omite CPF e e-mail do corpo ([[aya-base-de-conhecimento]]).
+- Os erros do navegador (`TL_ERRO_APLICACAO`) vão sem e-mail, CPF, telefone, token nem sequência
+  de 5+ dígitos, limpos no navegador e de novo no banco; a rota sem consulta; quem, só pelo id do
+  usuário. Lê só o administrador global; guarda 180 dias ([[seguranca]], seção "Erros do
+  navegador").
 
 ## Relacionadas
 
