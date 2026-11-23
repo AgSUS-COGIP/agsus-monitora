@@ -29,7 +29,17 @@ import {
   textoDaCelula,
   xlsxDaTabela,
 } from "../src/lib/base/exportacao-da-tabela.ts";
-import { chaveDosEditaisDaCasai } from "../src/lib/mapas/mapa-saude-indigena/mapa-nacional.ts";
+import {
+  bolhasDosDsei,
+  chaveDosEditaisDaCasai,
+  numerosDoCartao,
+  territoriosPorVagas,
+} from "../src/lib/mapas/mapa-saude-indigena/mapa-nacional.ts";
+import {
+  PREENCHIMENTO_BAIXO,
+  destaquesDoMapa,
+  soAereoOuFluvial,
+} from "../src/lib/mapas/mapa-saude-indigena/pontos-de-interesse.ts";
 import {
   caminhoDaGeometria,
   contornoDoDsei,
@@ -40,7 +50,10 @@ import {
   municipiosDoDsei,
   redePorTipo,
 } from "../src/lib/mapas/mapa-saude-indigena/indicadores-do-recorte.ts";
-import { contarPorDsei } from "../src/lib/mapas/mapa-saude-indigena/contagem-por-dsei.ts";
+import {
+  contarPorDsei,
+  percentualPreenchido,
+} from "../src/lib/mapas/mapa-saude-indigena/contagem-por-dsei.ts";
 import {
   camposDasLinhas,
   casarChaveDoDsei,
@@ -63,6 +76,7 @@ import {
   unidadesComAcesso,
 } from "../src/lib/mapas/mapa-saude-indigena/territorio-na-tela.ts";
 import type { EstabelecimentoDoCnes } from "../src/lib/mapas/mapa-saude-indigena/territorio-do-sigepsi.ts";
+import type { UnidadeComAcesso } from "../src/lib/mapas/mapa-saude-indigena/territorio-na-tela.ts";
 import { lembrarBanco } from "./apoio/bancos-abertos.ts";
 import {
   CARREGANDO_O_EDITAL,
@@ -4927,6 +4941,134 @@ bloco("lib/territorio-na-tela", () => {
   });
 });
 
+bloco("lib/pontos-de-interesse", () => {
+  /*
+    Os chips do mapa nacional (src/lib/mapas/mapa-saude-indigena/pontos-de-interesse.ts)
+    e os números do cartão da bolha (`numerosDoCartao`), pelas contas que já
+    existem. Dados fictícios.
+  */
+  const dsei = (k: string, n: string, lat: number): DseiDoMapa => ({
+    k,
+    n,
+    lat,
+    lon: -50,
+    pop: 1000,
+  });
+  const DSEIS = [
+    dsei("NORTE", "Norte", -3),
+    dsei("SUL", "Sul", -25),
+    dsei("LESTE", "Leste", -10),
+  ];
+  const linha = (unidade: string, vagas: number, contratados: number) => ({
+    unidade,
+    vagas_total: vagas,
+    contratados,
+    status: "Concluído",
+  });
+  const territorios = territoriosPorVagas(
+    bolhasDosDsei({
+      dseis: DSEIS,
+      contagens: contarPorDsei([
+        // Norte: 10 vagas, 3 contratadas (30%, 7 ociosas).
+        linha("DSEI Norte", 10, 3),
+        // Sul: 4 vagas, 4 contratadas (100%, nenhuma ociosa).
+        linha("DSEI Sul", 4, 4),
+      ]),
+    }),
+  );
+  const unidade = (meios: string[] | null): UnidadeComAcesso => ({
+    chave: "x|0|0",
+    nome: "X",
+    tipo: "Polo base",
+    municipio: "",
+    uf: "",
+    meios,
+    acessibilidade: null,
+    localidade: null,
+    floresta: null,
+    cnes: null,
+  });
+  const porChave = (lista: ReturnType<typeof destaquesDoMapa>) =>
+    Object.fromEntries(lista.map((d) => [d.chave, [...d.dseis].sort()]));
+
+  it("o % preenchido é um só: contratadas ÷ vagas, até 100%, 0 sem vagas", () => {
+    expect(percentualPreenchido({ vagas: 10, contratadas: 3 })).toBe(30);
+    expect(percentualPreenchido({ vagas: 4, contratadas: 9 })).toBe(100);
+    expect(percentualPreenchido({ vagas: 0, contratadas: 2 })).toBe(0);
+    expect(territorios.find((t) => t.chave === "NORTE")?.preenchidas).toBe(30);
+  });
+
+  it("o cartão traz editais, vagas, contratadas, ociosas e o %, com a cor da barra", () => {
+    const norte = numerosDoCartao({
+      editais: 2,
+      vagas: 1500,
+      contratadas: 300,
+      ociosas: 1200,
+    });
+    expect(norte.numeros).toEqual([
+      { rotulo: "Editais", valor: "2" },
+      { rotulo: "Vagas", valor: "1.500" },
+      { rotulo: "Contratadas", valor: "300" },
+      { rotulo: "Ociosas", valor: "1.200" },
+      { rotulo: "Preenchidas", valor: "20%" },
+    ]);
+    expect(norte.preenchimento).toEqual({
+      percentual: 20,
+      situacao: "critico",
+    });
+    // Sem vagas, não há % nem barra.
+    const vazio = numerosDoCartao({
+      editais: 0,
+      vagas: 0,
+      contratadas: 0,
+      ociosas: 0,
+    });
+    expect(vazio.numeros.map((n) => n.rotulo)).not.toContain("Preenchidas");
+    expect(vazio.preenchimento).toBeNull();
+  });
+
+  it("vagas ociosas e menos de 40% preenchidas, sem o acesso do SIGEPSI", () => {
+    const destaques = destaquesDoMapa({ territorios });
+    expect(destaques.map((d) => d.rotulo)).toEqual([
+      "Com vagas ociosas",
+      `Menos de ${PREENCHIMENTO_BAIXO}% preenchidas`,
+    ]);
+    // Leste não tem vaga: não entra em "menos de 40%".
+    expect(porChave(destaques)).toEqual({
+      ociosas: ["NORTE"],
+      "preenchimento-baixo": ["NORTE"],
+    });
+  });
+
+  it("só aéreo ou fluvial: nenhum meio terrestre nem 'Não informado'", () => {
+    expect(soAereoOuFluvial(["Aéreo"])).toBe(true);
+    expect(soAereoOuFluvial(["Fluvial", "Aéreo"])).toBe(true);
+    expect(soAereoOuFluvial(["Terrestre", "Fluvial"])).toBe(false);
+    expect(soAereoOuFluvial(["Não informado"])).toBe(false);
+    expect(soAereoOuFluvial([])).toBe(false);
+    expect(soAereoOuFluvial(null)).toBe(false);
+  });
+
+  it("o chip de acesso conta o DSEI com unidade só aérea/fluvial, e some sem o acesso", () => {
+    const unidadesPorDsei = new Map([
+      ["Leste", { unidades: [unidade(["Terrestre"]), unidade(["Aéreo"])] }],
+      ["Sul", { unidades: [unidade(["Terrestre", "Fluvial"])] }],
+      // Fora do mapa (sem bolha): não acende nada.
+      ["Oeste", { unidades: [unidade(["Fluvial"])] }],
+    ]);
+    const destaques = destaquesDoMapa({ territorios, unidadesPorDsei });
+    expect(destaques.at(-1)?.rotulo).toBe("Acesso só aéreo ou fluvial");
+    expect(porChave(destaques)["acesso-aereo-fluvial"]).toEqual(["LESTE"]);
+    // A fonte não veio (meios null): o chip não aparece, em vez de zero.
+    const semFonte = new Map([["Leste", { unidades: [unidade(null)] }]]);
+    expect(
+      destaquesDoMapa({ territorios, unidadesPorDsei: semFonte }).map(
+        (d) => d.chave,
+      ),
+    ).not.toContain("acesso-aereo-fluvial");
+  });
+});
+
 bloco("lib/ponto-sem-cep-no-mapa-do-dsei", () => {
   /*
   PONTO DO SIGEPSI SEM CEP: VÍNCULO NÃO CLASSIFICADO
@@ -7606,6 +7748,9 @@ bloco("lib/indicadores-do-recorte", () => {
       cidade: "Brasília",
       uf: "DF",
       editais: 1,
+      vagas: 0,
+      contratadas: 0,
+      ociosas: 0,
       termoDeBusca: "CASAI Brasília",
     };
     const daCasai = indicadoresDoRecorte({ contagens, casai });

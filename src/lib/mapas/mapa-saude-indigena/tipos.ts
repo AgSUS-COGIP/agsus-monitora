@@ -69,7 +69,8 @@ export interface TerritorioDoMapa extends BolhaDoDsei {
   situacao: string;
   detalhe: string;
 }
-export interface CasaiNacionalDoMapa {
+/** A CASAI nacional, com a contagem dos editais dela (`chaveDosEditaisDaCasai`). */
+export interface CasaiNacionalDoMapa extends ContagemDoDsei {
   chave: string;
   nome: string;
   cnes: string;
@@ -77,7 +78,6 @@ export interface CasaiNacionalDoMapa {
   lon: number;
   cidade: string;
   uf: string;
-  editais: number;
   termoDeBusca: string;
 }
 export interface RegistroDoDsei {
@@ -166,6 +166,8 @@ export interface PropsDaVisaoNacional extends Pick<
   territorios: TerritorioDoMapa[];
   enquadramento: EnquadramentoDoMapa;
   voltaDoDsei?: VoltaDoDsei | null;
+  /** Os chips "pontos de interesse" (`destaquesDoMapa`). */
+  destaques?: readonly import("./pontos-de-interesse.ts").DestaqueDoMapa[];
   resumoDaRede(dsei: DseiDoMapa): string[];
 }
 export interface PropsDoMapaDoDsei extends Pick<

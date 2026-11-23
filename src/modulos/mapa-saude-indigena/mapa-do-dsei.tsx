@@ -43,13 +43,17 @@ import { EstadoVazio, classes } from "../../ui/index.ts";
 import { MinimapaDoDsei } from "./minimapa.tsx";
 import { Forma, LegendaDoDsei } from "./legenda.tsx";
 import {
+  DURACAO_DA_VOLTA_AO_BRASIL,
   adicionarFundo,
   conteudoEmElemento,
   criarMapa,
   desenharContornos,
+  enquadrarNoBrasil,
   iconeDoRegistro,
   ligarDicaEPopup,
   observarTamanho,
+  podeVoar,
+  prefereMenosMovimento,
   remedir,
 } from "./leaflet.ts";
 import { usarUltimo } from "./usar-ultimo.ts";
@@ -63,7 +67,16 @@ const OPCOES_DO_ENQUADRAMENTO = Object.freeze({
   O território de um DSEI: o mapa à esquerda, à direita as unidades (com os
   filtros por tipo) e as Terras Indígenas e povos. Monta uma vez por DSEI
   (`key` no pai): trocar de distrito começa sem tipo escondido. "Voltar ao
-  Brasil", no topo, pede a saída ao pai (o Esc faz o mesmo; volta-ao-brasil.ts).
+  Brasil", no topo e fixo no canto do mapa, pede a saída ao pai (o Esc faz o
+  mesmo; volta-ao-brasil.ts).
+
+  A chegada voa: o mapa nasce no Brasil (onde a pessoa estava) e desce até o
+  território em DURACAO_DA_VOLTA_AO_BRASIL, a mesma duração da volta. Enquanto
+  voa, as unidades ficam na coordenada verdadeira, sem leque (o leque é
+  calculado em pixels do zoom de partida e abriria em linhas enormes); ao
+  pousar, redesenha com o leque do zoom final. Se a abrangência oficial chega
+  no meio do voo, o voo segue até ela. Com menos movimento, nasce já no
+  território.
 */
 export function MapaDoDsei({
   L,
@@ -79,6 +92,10 @@ export function MapaDoDsei({
   const [mapa, definirMapa] = useState<MapaDoPainel | null>(null);
   const camada = useRef<CamadaDoMapa | null>(null);
   const escopo = useRef<"territorio" | "completo">("territorio");
+  // O voo de chegada: `emVoo` redesenha (sem leque / com leque); o ref é a leitura dos ouvintes.
+  const [emVoo, definirEmVoo] = useState(false);
+  const voando = useRef(false);
+  const pararVoo = useRef<((pousou: boolean) => void) | null>(null);
   const [comExternos, definirComExternos] = useState(false);
   const [ocultos, definirOcultos] = useState(() => new Set<string>());
   const [terras, definirTerras] = useState<TerraDoMapa[]>([]);
@@ -116,10 +133,33 @@ export function MapaDoDsei({
     [dsei, classificados],
   );
 
+  const voarAte = (alvo: MapaDoPainel, caixa: LimitesDoLeaflet) => {
+    pararVoo.current?.(false);
+    voando.current = true;
+    definirEmVoo(true);
+    let prazo: ReturnType<typeof setTimeout> | undefined;
+    const aoPousar = () => terminar(true);
+    function terminar(pousou: boolean) {
+      clearTimeout(prazo);
+      alvo.off("moveend", aoPousar);
+      pararVoo.current = null;
+      voando.current = false;
+      if (pousou) definirEmVoo(false);
+    }
+    // Se a animação for interrompida sem `moveend`, o prazo solta.
+    prazo = setTimeout(aoPousar, DURACAO_DA_VOLTA_AO_BRASIL * 1000 + 400);
+    alvo.on("moveend", aoPousar);
+    pararVoo.current = terminar;
+    alvo.flyToBounds(caixa, {
+      ...OPCOES_DO_ENQUADRAMENTO,
+      duration: DURACAO_DA_VOLTA_AO_BRASIL,
+    });
+  };
+
   const enquadrar = (
     alvo: MapaDoPainel | null,
     qual: "territorio" | "completo",
-    { animar = false } = {},
+    { animar = false, voar = false } = {},
   ) => {
     if (!L || !alvo) return;
     const pontos = limites[qual]?.length ? limites[qual] : limites.territorio;
@@ -131,7 +171,9 @@ export function MapaDoDsei({
     const caixa =
       oficial?.isValid?.() === true ? oficial : L.latLngBounds(pontos);
     try {
-      alvo.fitBounds(caixa, { ...OPCOES_DO_ENQUADRAMENTO, animate: animar });
+      if (voar) voarAte(alvo, caixa);
+      else
+        alvo.fitBounds(caixa, { ...OPCOES_DO_ENQUADRAMENTO, animate: animar });
     } catch {
       alvo.setView(primeiro, 7, { animate: false });
     }
@@ -168,6 +210,12 @@ export function MapaDoDsei({
     const aoChegarAbrangencia = (evento?: { bounds?: LimitesDoLeaflet }) => {
       if (escopo.current !== "territorio") return;
       if (evento?.bounds?.isValid?.() !== true) return;
+      // No voo de chegada: segue até a abrangência (ou ela entra quando o voo começar).
+      if (voando.current) {
+        if (pararVoo.current)
+          ultimoEnquadrar.current(novo, "territorio", { voar: true });
+        return;
+      }
       try {
         novo.fitBounds(evento.bounds, {
           ...OPCOES_DO_ENQUADRAMENTO,
@@ -179,23 +227,42 @@ export function MapaDoDsei({
     };
     novo.on("agsus:dsei-coverage-ready", aoChegarAbrangencia);
 
-    ultimoEnquadrar.current(novo, "territorio");
+    const voarAoAbrir = podeVoar(novo);
+    voando.current = voarAoAbrir;
+    definirEmVoo(voarAoAbrir);
+    if (voarAoAbrir) enquadrarNoBrasil(L, novo);
+    else ultimoEnquadrar.current(novo, "territorio");
     /*
       A troca para o mapa do DSEI muda a largura: o `fitBounds` feito antes
-      do layout calcula o zoom com a medida antiga. Remede e reenquadra depois.
+      do layout calcula o zoom com a medida antiga. Remede e reenquadra (ou
+      parte no voo) depois. Sem quadro (aba em segundo plano), o prazo
+      enquadra sem voar.
     */
-    const quadro = requestAnimationFrame(() => {
+    let abriu = false;
+    const abrir = (voar: boolean) => {
+      abriu = true;
       remedir(novo);
-      ultimoEnquadrar.current(novo, escopo.current);
+      if (!voar && voando.current && !pararVoo.current) {
+        voando.current = false;
+        definirEmVoo(false);
+      }
+      ultimoEnquadrar.current(novo, escopo.current, { voar });
+    };
+    const quadro = requestAnimationFrame(() => {
+      if (!abriu) abrir(voarAoAbrir);
     });
     const espera = setTimeout(() => {
-      remedir(novo);
-      ultimoEnquadrar.current(novo, escopo.current);
+      if (!abriu) abrir(false);
+      else if (!voando.current) {
+        remedir(novo);
+        ultimoEnquadrar.current(novo, escopo.current);
+      }
     }, 80);
     definirMapa(novo);
     return () => {
       cancelAnimationFrame(quadro);
       clearTimeout(espera);
+      pararVoo.current?.(false);
       pararDeObservar();
       novo.off("agsus:dsei-coverage-ready", aoChegarAbrangencia);
       novo.__agsusAoMudarTerras = null;
@@ -257,6 +324,12 @@ export function MapaDoDsei({
           );
         }
       }
+      // No voo de chegada, cada unidade na coordenada verdadeira (o leque vem ao pousar).
+      if (emVoo) {
+        for (const registro of mostrados)
+          unidades.addLayer(marcadorDe(registro));
+        return;
+      }
       agruparPorProximidadeNaTela(mostrados, (r: RegistroDoDsei) =>
         mapa.latLngToLayerPoint([r.lat, r.lon]),
       ).forEach((grupo) => {
@@ -289,7 +362,7 @@ export function MapaDoDsei({
     return () => {
       mapa.off("zoomend", desenhar);
     };
-  }, [L, mapa, dsei, mostrados, externos, ocultos]);
+  }, [L, mapa, dsei, mostrados, externos, ocultos, emVoo]);
 
   // Tela cheia muda o tamanho: remede.
   useEffect(() => {
@@ -301,7 +374,9 @@ export function MapaDoDsei({
   const alternarExternos = () => {
     const proximo = !comExternos;
     definirComExternos(proximo);
-    enquadrar(mapa, proximo ? "completo" : "territorio", { animar: true });
+    enquadrar(mapa, proximo ? "completo" : "territorio", {
+      animar: !prefereMenosMovimento(),
+    });
   };
 
   const alternarTipo = (chave: string) =>
@@ -314,9 +389,10 @@ export function MapaDoDsei({
 
   const irParaUnidade = (registro: RegistroDoDsei) => {
     if (mapa) {
-      mapa.flyTo([registro.lat, registro.lon], Math.max(mapa.getZoom(), 11), {
-        duration: 0.45,
-      });
+      const zoom = Math.max(mapa.getZoom(), 11);
+      if (prefereMenosMovimento())
+        mapa.setView([registro.lat, registro.lon], zoom, { animate: false });
+      else mapa.flyTo([registro.lat, registro.lon], zoom, { duration: 0.45 });
     }
     chamadas.current.aoEscolherUnidade?.(registro);
   };
@@ -341,6 +417,7 @@ export function MapaDoDsei({
             className="btn small mapa-si-voltar"
             data-tour="visao-geral-mapa-voltar-ao-brasil"
             title="Voltar ao mapa do Brasil (Esc)"
+            aria-keyshortcuts="Escape"
             onClick={() => aoVoltarAoBrasil?.()}
           >
             <span aria-hidden="true">←</span> Voltar ao Brasil
@@ -386,6 +463,18 @@ export function MapaDoDsei({
             />
           ) : null}
           {L ? <MinimapaDoDsei dsei={dsei} /> : null}
+          {L ? (
+            <button
+              type="button"
+              className="btn small mapa-si-voltar-no-mapa"
+              title="Voltar ao mapa do Brasil (Esc)"
+              aria-keyshortcuts="Escape"
+              onClick={() => aoVoltarAoBrasil?.()}
+            >
+              <span aria-hidden="true">←</span> Voltar ao Brasil{" "}
+              <kbd aria-hidden="true">Esc</kbd>
+            </button>
+          ) : null}
           {L ? null : (
             <EstadoVazio className="ui-vazio mapa-si-sem-mapa">
               Mapa indisponível sem conexão: o fundo geográfico precisa de

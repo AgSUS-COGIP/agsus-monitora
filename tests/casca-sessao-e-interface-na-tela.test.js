@@ -8512,6 +8512,12 @@ bloco("modulos/mapa-saude-indigena", () => {
       .desenhadas(mapa, "circleMarker")
       .filter((b) => b.opcoes.interactive !== false);
 
+  /* A bolha pelo nome do DSEI (o leque tira as de Roraima da coordenada). */
+  const bolhaDe = (mapa, nome) =>
+    bolhas(mapa).find((b) =>
+      b.getElement().getAttribute("aria-label").includes(`DSEI ${nome}:`),
+    );
+
   const mapaVivo = (id) =>
     leaflet.vivos().find((m) => m.elemento.id === id) || null;
 
@@ -8644,22 +8650,149 @@ bloco("modulos/mapa-saude-indigena", () => {
       expect(legenda).not.toContain("ociosas");
     });
 
-    it("Brasil volta à vista do país", async () => {
+    it("Brasil voa de volta à vista do país; com menos movimento, salta", async () => {
       await montar();
       const mapa = mapaVivo("map");
-      const antes = mapa.chamadas.length;
-      await clicar(
-        [...host.querySelectorAll("button")].find(
-          (b) => b.textContent === "Brasil",
-        ),
-      );
+      const brasil = () =>
+        clicar(
+          [...host.querySelectorAll("button")].find(
+            (b) => b.textContent === "Brasil",
+          ),
+        );
       // O remedir do requestAnimationFrame pode cair no meio (suíte carregada).
-      expect(
+      const depois = (antes) =>
         mapa.chamadas
           .slice(antes)
           .map(([n]) => n)
-          .filter((n) => n !== "invalidateSize"),
-      ).toEqual(["stop", "fitBounds"]);
+          .filter((n) => n !== "invalidateSize");
+      let antes = mapa.chamadas.length;
+      await brasil();
+      expect(depois(antes)).toEqual(["stop", "flyToBounds"]);
+      window.matchMedia = (consulta) => ({
+        matches: consulta.includes("prefers-reduced-motion"),
+      });
+      antes = mapa.chamadas.length;
+      await brasil();
+      expect(depois(antes)).toEqual(["stop", "fitBounds"]);
+    });
+
+    it("escolher a CASAI nacional voa até ela, e voltar ao Brasil voa de volta", async () => {
+      await montar();
+      const mapa = mapaVivo("map");
+      mapa.chamadas.length = 0;
+      await rerender({ casaiSelecionada: "DF" });
+      const ida = mapa.chamadas.find(([nome]) => nome === "flyTo");
+      expect(ida[1]).toEqual([-15.8, -47.9]);
+      expect(ida[3].duration).toBe(0.8);
+      expect(mapa.chamadas.some(([nome]) => nome === "setView")).toBe(false);
+      mapa.chamadas.length = 0;
+      await rerender({ casaiSelecionada: null });
+      expect(mapa.chamadas.some(([nome]) => nome === "flyToBounds")).toBe(true);
+      expect(mapa.chamadas.some(([nome]) => nome === "fitBounds")).toBe(false);
+    });
+
+    it("com menos movimento, a CASAI nacional enquadra sem voar", async () => {
+      window.matchMedia = (consulta) => ({
+        matches: consulta.includes("prefers-reduced-motion"),
+      });
+      await montar();
+      const mapa = mapaVivo("map");
+      mapa.chamadas.length = 0;
+      await rerender({ casaiSelecionada: "DF" });
+      const nomes = mapa.chamadas.map(([nome]) => nome);
+      expect(nomes).not.toContain("flyTo");
+      expect(nomes).not.toContain("flyToBounds");
+      const [, ponto, , opcoes] = mapa.chamadas.find(
+        ([nome]) => nome === "setView",
+      );
+      expect(ponto).toEqual([-15.8, -47.9]);
+      expect(opcoes).toEqual({ animate: false });
+    });
+
+    it("o cartão da bolha traz os números do recorte (editais, vagas, contratadas, ociosas, % preenchidas)", async () => {
+      window.matchMedia = () => ({ matches: true });
+      await montar();
+      const mapa = mapaVivo("map");
+      const yanomami = bolhas(mapa).find((b) =>
+        b.dica?.textContent.includes("Yanomami"),
+      );
+      const numeros = Object.fromEntries(
+        [
+          ...yanomami.dica.querySelectorAll(".mapa-si-balao__numeros > div"),
+        ].map((d) => [
+          d.querySelector("dt").textContent,
+          d.querySelector("dd").textContent,
+        ]),
+      );
+      expect(numeros).toEqual({
+        Editais: "1",
+        Vagas: "40",
+        Contratadas: "10",
+        Ociosas: "30",
+        Preenchidas: "25%",
+      });
+      expect(yanomami.dica.dataset.situacao).toBe("critico");
+      expect(
+        yanomami.dica.querySelector(".mapa-si-balao__barra i").style.width,
+      ).toBe("25%");
+      // O losango da CASAI nacional usa o mesmo cartão (sem vagas, sem %).
+      const [casai] = leaflet.desenhadas(mapa, "marker");
+      expect(
+        casai.dica.querySelector(".mapa-si-balao__numeros"),
+      ).not.toBeNull();
+      expect(casai.dica.querySelector(".mapa-si-balao__barra")).toBeNull();
+    });
+
+    it("a bolha recebe o foco do teclado: abre o cartão e Enter abre o DSEI", async () => {
+      const aoEscolherDsei = vi.fn();
+      window.matchMedia = () => ({ matches: true });
+      await montar({ aoEscolherDsei });
+      const mapa = mapaVivo("map");
+      const yanomami = bolhaDe(mapa, "Yanomami");
+      const caminho = yanomami.getElement();
+      expect(caminho.getAttribute("tabindex")).toBe("0");
+      expect(caminho.getAttribute("role")).toBe("button");
+      expect(caminho.getAttribute("aria-label")).toBe(
+        "Abrir o DSEI Yanomami: editais 1, vagas 40, contratadas 10, ociosas 30, preenchidas 25%",
+      );
+      await act(async () => caminho.dispatchEvent(new FocusEvent("focus")));
+      expect(yanomami.dicaAberta).toBe(true);
+      await act(async () => caminho.dispatchEvent(new FocusEvent("blur")));
+      expect(yanomami.dicaAberta).toBe(false);
+      await teclar(caminho, "Enter");
+      expect(aoEscolherDsei).toHaveBeenCalledWith(LMAP.dsei[1]);
+    });
+
+    it("pontos de interesse: o chip acende os DSEIs do critério no mapa e na lista", async () => {
+      await montar();
+      const mapa = mapaVivo("map");
+      const chips = [...host.querySelectorAll(".mapa-si-destaques button")];
+      expect(chips.map((c) => c.textContent)).toEqual([
+        "Com vagas ociosas 2",
+        "Menos de 40% preenchidas 1",
+      ]);
+      const classe = (nome) =>
+        bolhaDe(mapa, nome).getElement().getAttribute("class");
+      const apagadas = () =>
+        [...host.querySelectorAll(".mapa-si-territorio--apagado")].map(
+          (b) => b.dataset.dsei,
+        );
+      await clicar(chips[1]);
+      expect(chips[1].getAttribute("aria-pressed")).toBe("true");
+      expect(classe("Yanomami")).toContain("is-destaque");
+      expect(classe("Alagoas e Sergipe")).toContain("is-apagada");
+      expect(apagadas().sort()).toEqual([
+        "ALAGOAS E SERGIPE",
+        "LESTE DE RORAIMA",
+      ]);
+      // Trocar de chip troca o destaque; o mesmo chip de novo apaga.
+      await clicar(chips[0]);
+      expect(chips[1].getAttribute("aria-pressed")).toBe("false");
+      expect(classe("Alagoas e Sergipe")).toContain("is-destaque");
+      expect(apagadas()).toEqual(["LESTE DE RORAIMA"]);
+      await clicar(chips[0]);
+      expect(classe("Alagoas e Sergipe")).not.toContain("is-");
+      expect(apagadas()).toEqual([]);
     });
 
     it("a legenda começa recolhida, também no computador, e abre no botão", async () => {
@@ -9251,6 +9384,52 @@ bloco("modulos/mapa-saude-indigena", () => {
       expect(aoEscolherUnidade).toHaveBeenCalledWith(
         expect.objectContaining({ name: "CASAI AL/SE" }),
       );
+    });
+
+    it("abrir o DSEI voa do Brasil ao território, com as unidades sem leque até pousar", async () => {
+      const mapa = await abrirAlse();
+      // Nasce no Brasil, sem animar, e voa (no quadro seguinte) até o território.
+      await act(async () => new Promise((fim) => setTimeout(fim, 30)));
+      const nomes = mapa.chamadas.map(([nome]) => nome);
+      expect(nomes[0]).toBe("fitBounds");
+      expect(mapa.chamadas[0][2].animate).toBe(false);
+      const voo = mapa.chamadas.find(([nome]) => nome === "flyToBounds");
+      expect(voo[2].duration).toBe(0.8);
+      expect(voo[2].maxZoom).toBe(9);
+      const pernas = () =>
+        leaflet
+          .desenhadas(mapa, "polyline")
+          .filter((l) => l.opcoes.interactive === false);
+      expect(pernas()).toHaveLength(0);
+      await act(async () => mapa.fire("moveend"));
+      expect(pernas().length).toBeGreaterThan(0);
+    });
+
+    it("com menos movimento, o DSEI abre já no território, sem voo", async () => {
+      window.matchMedia = (consulta) => ({
+        matches: consulta.includes("prefers-reduced-motion"),
+      });
+      const mapa = await abrirAlse();
+      await act(async () => new Promise((fim) => setTimeout(fim, 30)));
+      const nomes = mapa.chamadas.map(([nome]) => nome);
+      expect(nomes).not.toContain("flyToBounds");
+      expect(nomes).not.toContain("flyTo");
+      // Os pontos do distrito, não o Brasil.
+      expect(mapa.chamadas[0][1].pontos).toContainEqual([-9.9, -36]);
+    });
+
+    it("'Voltar ao Brasil' fixo no canto do mapa do DSEI, com o atalho Esc", async () => {
+      const aoSairDoDsei = vi.fn();
+      await abrirAlse({ aoSairDoDsei });
+      const canto = host.querySelector(".mapa-si-voltar-no-mapa");
+      expect(canto.closest(".mapa-si-moldura")).not.toBeNull();
+      expect(canto.getAttribute("aria-keyshortcuts")).toBe("Escape");
+      expect(canto.textContent).toContain("Voltar ao Brasil");
+      expect(
+        host.querySelector(".mapa-si-voltar").getAttribute("aria-keyshortcuts"),
+      ).toBe("Escape");
+      await clicar(canto);
+      expect(aoSairDoDsei).toHaveBeenCalledTimes(1);
     });
 
     it("'Voltar ao Brasil' só aparece com um DSEI aberto, no topo do painel", async () => {

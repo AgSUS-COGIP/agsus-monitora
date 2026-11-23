@@ -32,8 +32,9 @@ Indígena** ([[modulo-mapa-saude-indigena]]) e usa as mesmas peças: muda o que 
   guarda do mapa (`opcoesDoMapa` e `protegerMapa`, `src/modulos/mapa-saude-indigena/guarda-do-mapa.ts`).
 - Enquadramento: `enquadramentoDoRecorte` — sem filtro, o Brasil; com filtro, zoom 7 num ponto só
   ou a caixa (padding 60, maxZoom 7) (`src/lib/mapas/enquadramento-do-brasil.ts`, `enquadrar`).
-- Reenquadra ao aparecer ou mudar de tamanho até a pessoa mexer; "Brasil" volta a acompanhar
-  (`pegar`/`soltar` em `criarMapaDoBrasil`).
+- Reenquadra ao aparecer ou mudar de tamanho até a pessoa mexer; "Brasil" voa de volta ao país
+  (`voltarAoBrasil`; salta com `prefers-reduced-motion`) e volta a acompanhar (`pegar`/`soltar`
+  em `criarMapaDoBrasil`).
 - Topo: título, contagem, "Coordenadas", "Brasil", "Tela cheia" (`TopoDoMapa`).
 - Tela cheia (Esc sai) e modo de edição: `usarTelaCheia` (`tela-cheia.tsx`), `usarModoDeEdicao`.
 - Mapa/Satélite: `map-base-layer-switcher.ts` (ids `map`, `detailMap`, `mapaDosProjetos`).

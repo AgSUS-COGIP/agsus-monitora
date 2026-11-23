@@ -2317,6 +2317,9 @@ bloco("modulos/mapa", () => {
           cidade: "BRASILIA",
           uf: "DF",
           editais: 0,
+          vagas: 0,
+          contratadas: 0,
+          ociosas: 0,
           termoDeBusca: "CASAI BRASILIA",
         }),
       );

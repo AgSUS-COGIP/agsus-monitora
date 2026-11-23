@@ -26,6 +26,9 @@ export interface MarcadorIndigena extends CamadaLeaflet {
   bindTooltip(conteudo: HTMLElement, opcoes?: object): MarcadorIndigena;
   on(evento: string, ouvinte: () => void): MarcadorIndigena;
   closeTooltip(): unknown;
+  openTooltip?(): unknown;
+  /** O nó do marcador no mapa (o `<path>` da bolha, o ícone do losango); some fora do mapa. */
+  getElement?(): Element | undefined;
   isPopupOpen?(): boolean;
   openPopup?(): void;
   setLatLng(posicao: CoordenadasDoMapa | PosicaoDoLeaflet): unknown;

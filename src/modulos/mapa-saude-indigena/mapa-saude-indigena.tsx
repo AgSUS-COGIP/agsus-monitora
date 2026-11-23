@@ -17,7 +17,6 @@ import {
 import {
   indicadoresDoRecorte,
   redePorTipo,
-  situacaoDoPreenchimento,
 } from "../../lib/mapas/mapa-saude-indigena/indicadores-do-recorte.ts";
 import {
   bolhasDosDsei,
@@ -26,7 +25,11 @@ import {
   enquadramentoNacional,
   territoriosPorVagas,
 } from "../../lib/mapas/mapa-saude-indigena/mapa-nacional.ts";
-import { contarPorDsei } from "../../lib/mapas/mapa-saude-indigena/contagem-por-dsei.ts";
+import { destaquesDoMapa } from "../../lib/mapas/mapa-saude-indigena/pontos-de-interesse.ts";
+import {
+  contarPorDsei,
+  situacaoDoPreenchimento,
+} from "../../lib/mapas/mapa-saude-indigena/contagem-por-dsei.ts";
 import {
   classificarRegistros,
   registrosDoDsei,
@@ -220,6 +223,15 @@ export function MapaSaudeIndigena({
         ? cruzarComOciosas(doTerritorio.unidades, contagens, filtroDeAcesso)
         : [],
     [doTerritorio, comAcesso, contagens, filtroDeAcesso],
+  );
+  // Os chips "pontos de interesse" do mapa nacional; o de acesso só com o do SIGEPSI.
+  const destaques = useMemo(
+    () =>
+      destaquesDoMapa({
+        territorios,
+        unidadesPorDsei: comAcesso ? (doTerritorio?.unidades ?? null) : null,
+      }),
+    [territorios, comAcesso, doTerritorio],
   );
   const unidadesDoDsei = useMemo(
     () => (dsei ? doTerritorio?.unidades.get(dsei.k)?.unidades || [] : []),
@@ -445,6 +457,7 @@ export function MapaSaudeIndigena({
         territorios={territorios}
         enquadramento={enquadramento}
         voltaDoDsei={voltaDoDsei}
+        destaques={destaques}
         resumoDaRede={resumoDaRedeDoDsei}
         carregando={carregando}
         aoEscolherDsei={aoEscolherDsei}

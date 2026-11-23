@@ -34,7 +34,11 @@ import {
 } from "./chaves.ts";
 import { CORES_DO_MAPA } from "./formas.ts";
 // A contagem (editais, vagas, contratadas e ociosas por DSEI): contagem-por-dsei.ts.
-import { CONTAGEM_VAZIA as VAZIO } from "./contagem-por-dsei.ts";
+import {
+  CONTAGEM_VAZIA as VAZIO,
+  percentualPreenchido,
+  situacaoDoPreenchimento,
+} from "./contagem-por-dsei.ts";
 
 /*
   Uma bolha por DSEI com coordenada. Ordem: da maior para a menor, para que a
@@ -105,15 +109,12 @@ export function territoriosPorVagas(
       (a, b) => b.vagas - a.vagas || numero(b.dsei?.pop) - numero(a.dsei?.pop),
     )
     .map((b, indice) => {
-      const preenchidas = b.vagas
-        ? Math.round((Math.min(b.contratadas, b.vagas) / b.vagas) * 100)
-        : 0;
+      const preenchidas = percentualPreenchido(b);
       return {
         ...b,
         posicao: indice + 1,
         preenchidas,
-        situacao:
-          preenchidas > 80 ? "ok" : preenchidas > 40 ? "atencao" : "critico",
+        situacao: situacaoDoPreenchimento(preenchidas),
         detalhe: [
           plural(b.ociosas, "ociosa", "ociosas"),
           b.editais ? plural(b.editais, "processo", "processos") : "",
@@ -162,6 +163,9 @@ export function casaisNacionais({
     .map((a) => {
       const nome = texto(a[0]);
       const cidade = texto(a[4]);
+      const { editais, vagas, contratadas, ociosas } =
+        contagens.get(chaveDosEditaisDaCasai({ nome, cidade }, contagens)) ||
+        VAZIO;
       return {
         chave: `${nome}|${a[2]}|${a[3]}`,
         nome,
@@ -170,10 +174,10 @@ export function casaisNacionais({
         lon: Number(a[3]),
         cidade,
         uf: siglaDaUf(a[5]) || texto(a[5]),
-        editais: (
-          contagens.get(chaveDosEditaisDaCasai({ nome, cidade }, contagens)) ||
-          VAZIO
-        ).editais,
+        editais,
+        vagas,
+        contratadas,
+        ociosas,
         termoDeBusca: `CASAI ${cidade}`.trim(),
       };
     })
@@ -204,34 +208,77 @@ export function enquadramentoNacional({
   });
 }
 
-/* Texto da dica (tooltip) da bolha do DSEI. */
+/*
+  O CARTÃO DA BOLHA E DO LOSANGO (dica ao passar o mouse ou focar): os
+  números do recorte, os mesmos de "Territórios por vagas" e do topo —
+  editais, vagas, contratadas, ociosas e o % preenchido (com a cor da barra).
+  Sem vagas, não há % a mostrar.
+*/
+export interface NumeroDoCartao {
+  rotulo: string;
+  valor: string;
+}
+export interface CartaoDoRecorte {
+  titulo: string;
+  linhas: string[];
+  numeros: NumeroDoCartao[];
+  preenchimento: { percentual: number; situacao: string } | null;
+}
+
+export function numerosDoCartao(c: ContagemDoDsei): {
+  numeros: NumeroDoCartao[];
+  preenchimento: CartaoDoRecorte["preenchimento"];
+} {
+  const percentual = percentualPreenchido(c);
+  const numeros = [
+    { rotulo: "Editais", valor: formatarNumero(c.editais) },
+    { rotulo: "Vagas", valor: formatarNumero(c.vagas) },
+    { rotulo: "Contratadas", valor: formatarNumero(c.contratadas) },
+    { rotulo: "Ociosas", valor: formatarNumero(c.ociosas) },
+  ];
+  if (!c.vagas) return { numeros, preenchimento: null };
+  return {
+    numeros: [...numeros, { rotulo: "Preenchidas", valor: `${percentual}%` }],
+    preenchimento: {
+      percentual,
+      situacao: situacaoDoPreenchimento(percentual),
+    },
+  };
+}
+
+/* O cartão (tooltip) da bolha do DSEI. */
 export function dicaDaBolha(
   bolha: BolhaDoDsei,
   resumoDaRede: readonly string[] = [],
-) {
+): CartaoDoRecorte {
   const d: Partial<DseiDoMapa> = bolha?.dsei || {};
-  const linhas = [
-    `População do DSEI: ${formatarNumero(d.pop)} indígenas`,
-    ...resumoDaRede,
-    `Estados administrativos: ${(d.ufs?.length ? d.ufs : [d.sedeuf]).filter(Boolean).join(", ")}`,
-    `Processos seletivos: ${formatarNumero(bolha?.editais)}`,
-  ];
-  if (bolha?.comEdital) {
-    linhas.push(
-      `Vagas ociosas: ${formatarNumero(bolha.ociosas)} de ${formatarNumero(bolha.vagas)}`,
-    );
-  }
-  return { titulo: `DSEI ${texto(d.n)}`, linhas };
+  return {
+    titulo: `DSEI ${texto(d.n)}`,
+    linhas: [
+      `População do DSEI: ${formatarNumero(d.pop)} indígenas`,
+      ...resumoDaRede,
+      `Estados administrativos: ${(d.ufs?.length ? d.ufs : [d.sedeuf]).filter(Boolean).join(", ")}`,
+    ],
+    ...numerosDoCartao(bolha || VAZIO),
+  };
 }
 
-export function dicaDaCasaiNacional(casai: CasaiNacionalDoMapa) {
+export function dicaDaCasaiNacional(
+  casai: CasaiNacionalDoMapa,
+): CartaoDoRecorte {
   return {
     titulo: casai.nome,
-    linhas: [
-      [casai.cidade, casai.uf].filter(Boolean).join(" – "),
-      `Processos seletivos: ${formatarNumero(casai.editais)}`,
-    ],
+    linhas: [[casai.cidade, casai.uf].filter(Boolean).join(" – ")],
+    ...numerosDoCartao(casai),
   };
+}
+
+/* O nome acessível da bolha (focável pelo teclado): o DSEI e os números do cartão. */
+export function rotuloDaBolha(bolha: BolhaDoDsei): string {
+  const { titulo, numeros } = dicaDaBolha(bolha);
+  return `Abrir o ${titulo}: ${numeros
+    .map((n) => `${n.rotulo.toLowerCase()} ${n.valor}`)
+    .join(", ")}`;
 }
 
 export function popupDaCasaiNacional(casai: CasaiNacionalDoMapa) {

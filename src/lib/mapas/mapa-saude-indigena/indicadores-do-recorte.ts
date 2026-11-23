@@ -22,6 +22,7 @@ import type {
 } from "./tipos.ts";
 import { chaveDoDsei, numero, texto } from "./chaves.ts";
 import { chaveDosEditaisDaCasai } from "./mapa-nacional.ts";
+import { percentualPreenchido } from "./contagem-por-dsei.ts";
 import { registrosDoDsei, tiposDoTerritorio } from "./mapa-do-dsei.ts";
 
 export interface IndicadorDoRecorte {
@@ -39,11 +40,6 @@ export interface IndicadoresDoRecorte {
   ociosas: number;
   /** Contratadas ÷ vagas, em % inteiro (0 sem vagas). */
   preenchidas: number;
-}
-
-/** A cor da barra, a mesma regra de "Territórios por vagas" (`territoriosPorVagas`). */
-export function situacaoDoPreenchimento(preenchidas: number) {
-  return preenchidas > 80 ? "ok" : preenchidas > 40 ? "atencao" : "critico";
 }
 
 const ZERO: Readonly<ContagemDoDsei> = Object.freeze({
@@ -85,9 +81,7 @@ function comPreenchimento(
     vagas: c.vagas,
     contratadas: c.contratadas,
     ociosas: c.ociosas,
-    preenchidas: c.vagas
-      ? Math.round((Math.min(c.contratadas, c.vagas) / c.vagas) * 100)
-      : 0,
+    preenchidas: percentualPreenchido(c),
   };
 }
 
