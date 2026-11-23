@@ -109,9 +109,12 @@
   cartão aparece e a arte entra com transição quando ficar pronta. E a arte
   só aparece depois de o cartão provisório ser lido (`cartao-lido`, posta
   por um script logo depois dele no index.html): sem isso, com a arte pronta,
-  saía um quadro com a arte e ainda sem o cartão.
+  saía um quadro com a arte e ainda sem o cartão. Na primeira visita, sem
+  marca guardada, o cartão espera a marca pública (`marca-esperando`, até
+  1,5 s; marca.ts a tira quando ela chega ou falha).
 */
-html.arte-esperando #loginScreen > * {
+html.arte-esperando #loginScreen > *,
+html.marca-esperando #loginScreen > * {
   visibility: hidden;
 }
 html:not(.cartao-lido) .login-screen::before,
