@@ -8486,6 +8486,74 @@ bloco("ui/grafico-acessivel", () => {
     expect(aoRemover).toHaveBeenCalledTimes(1);
   });
 
+  it("modo Tabela: a primeira coluna tem nome, o nome vem inteiro (title) e os valores ficam à vista", async () => {
+    const caixa = document.createElement("div");
+    document.body.append(caixa);
+    raiz = createRoot(caixa);
+    const NOMES = [
+      "Conhecimento de Políticas Públicas de Saúde Indígena",
+      "Habilidade técnica especializada",
+    ];
+    await act(async () =>
+      raiz.render(
+        createElement(
+          CardDeGrafico,
+          { titulo: "Média por critério" },
+          createElement(Grafico, {
+            tipo: "bar",
+            rotulo: "Média por critério",
+            item: "Critério",
+            dependencias: [],
+            montar: () => ({
+              rotulosCompletos: NOMES,
+              data: {
+                labels: NOMES.map((n) => `${n.slice(0, 10)}…`),
+                datasets: [{ label: "Média", data: [1.59, 1.68] }],
+              },
+            }),
+          }),
+        ),
+      ),
+    );
+    await clicar(caixa.querySelector(".ui-grafico-alternar"));
+    const tabela = caixa.querySelector("[data-tabela-do-grafico]");
+    expect(tabela.className).toBe("ui-grafico-tabela");
+    expect(
+      [...tabela.querySelectorAll("thead th")].map((th) => th.textContent),
+    ).toEqual(["Critério", "Média"]);
+    const linhas = [...tabela.querySelectorAll("tbody tr")];
+    expect(linhas.map((tr) => tr.querySelector("th").textContent)).toEqual(
+      NOMES,
+    );
+    expect(linhas[0].querySelector("th").title).toBe(NOMES[0]);
+    expect(linhas.map((tr) => tr.querySelector("td").textContent)).toEqual([
+      "1,59",
+      "1,68",
+    ]);
+    // Sem rótulo na série, a coluna leva o nome dado (rosca).
+    expect(
+      dadosDaTabelaDoGrafico(
+        { labels: ["Aptos"], datasets: [{ data: [3] }] },
+        { valor: "Entrevistas" },
+      ).colunas,
+    ).toEqual(["Entrevistas"]);
+  });
+
+  it("modo Tabela no CSS: rolagem só vertical, nome quebra linha, números não", () => {
+    const css = readFileSync("src/ui/ui.css", "utf8");
+    const regra = (seletor) => {
+      const inicio = css.indexOf(`${seletor} {`);
+      return inicio < 0 ? "" : css.slice(inicio, css.indexOf("}", inicio));
+    };
+    expect(regra(".ui-grafico.is-em-tabela")).toContain("overflow-x: hidden");
+    expect(regra(".ui-grafico-tabela tbody th")).toContain(
+      "white-space: normal",
+    );
+    expect(css).toMatch(
+      /\.ui-grafico-tabela td,\s*\.ui-grafico-tabela thead th \+ th \{[^}]*white-space: nowrap/,
+    );
+  });
+
   it("card sem Grafico dentro não ganha o botão", async () => {
     const caixa = document.createElement("div");
     document.body.append(caixa);

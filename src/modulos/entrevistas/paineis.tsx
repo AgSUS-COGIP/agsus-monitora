@@ -453,6 +453,8 @@ export function Graficos({
         >
           <Grafico
             id="chartParecer"
+            item="Parecer"
+            valor="Entrevistas"
             tipo="doughnut"
             rotulo="Entrevistas por parecer: aptos, inaptos, faltaram e sem parecer"
             dependencias={[pareceres, tema]}
@@ -486,6 +488,8 @@ export function Graficos({
         >
           <Grafico
             id="chartComparecimento"
+            item="Comparecimento"
+            valor="Entrevistas"
             tipo="doughnut"
             rotulo="Entrevistas por comparecimento"
             dependencias={[comparecimentos, tema]}
@@ -525,6 +529,7 @@ export function Graficos({
         >
           <Grafico
             id="chartFaixas"
+            item="Faixa de nota"
             tipo="bar"
             rotulo="Candidatos que compareceram por faixa de nota final"
             dependencias={[faixas, tema]}
@@ -575,12 +580,14 @@ export function Graficos({
           ) : (
             <Grafico
               id="chartCriterios"
+              item="Critério"
               tipo="bar"
               rotulo="Média das notas por critério da entrevista"
               dependencias={[porCriterio, tema]}
               montar={() => {
                 const p = paleta(escuro);
                 return {
+                  rotulosCompletos: porCriterio.map((c) => c.rotulo),
                   data: {
                     labels: porCriterio.map((c) => truncar(c.rotulo, 26)),
                     datasets: [
@@ -617,12 +624,14 @@ export function Graficos({
         >
           <Grafico
             id="chartUnidades"
+            item="Unidade"
             tipo="bar"
             rotulo="Unidades com mais entrevistados"
             dependencias={[unidades, tema]}
             montar={() => {
               const p = paleta(escuro);
               return {
+                rotulosCompletos: unidades.map((u) => u.rotulo),
                 data: {
                   labels: unidades.map((u) => truncar(u.rotulo, 24)),
                   datasets: [

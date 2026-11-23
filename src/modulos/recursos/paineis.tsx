@@ -556,12 +556,14 @@ export function Graficos({
         >
           <Grafico
             id="chartAnalista"
+            item="Analista"
             tipo="bar"
             rotulo="Recursos por analista: sem decisão e decididos"
             dependencias={[analistas, tema]}
             montar={() => {
               const p = paleta(escuro);
               return {
+                rotulosCompletos: analistas.map((a) => a.rotulo),
                 data: {
                   labels: analistas.map((a) => truncar(a.rotulo, 22)),
                   datasets: [
@@ -613,6 +615,7 @@ export function Graficos({
         <CardDeGrafico titulo="Situação" altura="short" carregando={carregando}>
           <Grafico
             id="chartSituacao"
+            item="Situação"
             tipo="bar"
             rotulo="Recursos por situação"
             dependencias={[situacoes, tema]}
@@ -649,6 +652,7 @@ export function Graficos({
         >
           <Grafico
             id="chartImpacto"
+            item="Impacto"
             tipo="bar"
             rotulo="Impacto dos recursos na nota e na classificação"
             dependencias={[impacto, tema]}
@@ -680,6 +684,7 @@ export function Graficos({
       >
         <Grafico
           id="chartEsteira"
+          item="Etapa"
           tipo="bar"
           rotulo="Recursos por etapa da esteira"
           dependencias={[esteira, tema]}
