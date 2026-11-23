@@ -1,15 +1,8 @@
 import type { MouseEvent } from "react";
-import { useSyncExternalStore } from "react";
 import { chamarAcaoDaCasca, fecharMenuDaConta } from "./acoes.ts";
 import { usarEstadoDaNavegacao } from "../contexto-do-app.ts";
-import { abrirAAya } from "../pergunta-para-a-aya.ts";
 import { telaDaRota } from "../../lib/navegacao/rotas.ts";
-import { nomeDaArea } from "../../lib/navegacao/menu-lateral.ts";
 import { EVENTO_ABRIR_A_BUSCA } from "../../lib/navegacao/busca-global.ts";
-import {
-  assinarDadosDoMonitoramento,
-  obterDadosDoMonitoramento,
-} from "../../componentes/dados-do-monitoramento.ts";
 import { usarLogoDaMarca } from "../../componentes/barra-lateral/barra-lateral.tsx";
 import { Icone } from "../../componentes/icone.tsx";
 import { SininhoDoResumo } from "../../modulos/resumo-do-dia/resumo-do-dia.tsx";
@@ -24,22 +17,25 @@ import "./topo.css";
 /*
   O cabeçalho do app (`header.top`), numa linha só, em três partes:
 
-    à esquerda  -> o ☰ e a marca (só com a barra em gaveta, até 900px), a
-                   área atual e, fora das telas das áreas, o título da página;
-    no meio     -> o campo da busca global (abre a mesma busca do Ctrl+K);
-    à direita   -> o sininho do resumo do dia, a Aya e a foto com o menu da
-                   conta (Pessoas online, Atualizar dados, Tela cheia).
+    à esquerda  -> o ☰ e a marca (só com a barra em gaveta, até 900px) e,
+                   fora das telas das áreas, o título da página;
+    no meio     -> o campo da busca global (abre a mesma busca do Ctrl+K); nas
+                   telas das áreas, sem nada à esquerda, ele vai para o começo;
+    à direita   -> o sininho do resumo do dia e a foto com o menu da conta
+                   (Pessoas online, Atualizar dados, Tela cheia).
+
+  Nada repetido: a área já está no título ou no subtítulo de cada tela
+  (`CabecalhoDaTela`) e no seletor da barra lateral, e a Aya tem a arara.
 
   As ações da direita e o ☰ são `.btn.ghost.ui-botao-icone` com a mesma caixa
   (`.topo-acao`, topo.css). No celular (até 640px) ficam só o ☰, a marca, o
-  sininho e a foto: a busca segue no Ctrl+K e a Aya na arara.
+  sininho e a foto: a busca segue no Ctrl+K.
 
   Nas telas das áreas, o título fica no conteúdo (`CabecalhoDaTela`, pelo
   módulo ou por src/app/telas.tsx); o daqui fica só para o leitor de tela e
   a faixa leva `data-compacto`. Aviso e Administração mantêm o título aqui.
 
-  O título vem da navegação (src/app/navegacao.ts), pelo contexto da raiz; a
-  área, dos dados do monitoramento. Nome, e-mail e perfil são escritos de fora
+  O título vem da navegação (src/app/navegacao.ts), pelo contexto da raiz. Nome, e-mail e perfil são escritos de fora
   (`src/app/perfil.ts`) e a foto por `google-profile-photo.ts`, nos ids de
   sempre. Pessoas online e os selos do edital (`pecas.tsx`) leem o estado do
   sistema pelo contexto da raiz; o ☰ (`#globalSidebarToggle`) é da barra
@@ -52,22 +48,12 @@ export function Topo() {
     <header className="top" data-compacto={naTela ? "" : undefined}>
       <div className="title-row">
         <MarcaDoTopo />
-        {naTela ? <AreaDoTopo /> : null}
         <TituloDaPagina naTela={naTela} />
       </div>
       <BuscaDoTopo />
       <div className="actions">
         {/* Resumo do dia do responsável (src/modulos/resumo-do-dia/) */}
         <SininhoDoResumo />
-        <button
-          type="button"
-          className="btn ghost ui-botao-icone topo-acao topo-aya"
-          aria-label="Abrir a Aya"
-          title="Aya"
-          onClick={() => abrirAAya()}
-        >
-          <Icone nome="bird" tamanho={20} />
-        </button>
         <MenuDaConta />
       </div>
     </header>
@@ -88,26 +74,6 @@ function MarcaDoTopo() {
       <img className="topo-marca__logo" alt="" {...imagem} />
       <strong className="topo-marca__nome">Yeendé</strong>
     </span>
-  );
-}
-
-const areaAtual = () => obterDadosDoMonitoramento().areaAtual;
-
-/* A área das telas (Saúde Indígena, SEDE, Projetos), com o ponto na cor dela. */
-function AreaDoTopo() {
-  const area = useSyncExternalStore(
-    assinarDadosDoMonitoramento,
-    areaAtual,
-    areaAtual,
-  );
-  const nome = nomeDaArea(area);
-  if (!nome) return null;
-  return (
-    <p className="topo-area">
-      <span className="topo-area__ponto" aria-hidden="true" />
-      <span className="sr-only">Área: </span>
-      {nome}
-    </p>
   );
 }
 

@@ -107,13 +107,14 @@ rodapé da lista (`TabelaDaLista` `exportacao`, ao lado de "Mostrando N de M") o
 partir do mesmo retrato (título, colunas e linhas); `baixarArquivo` entrega.
 
 O cabeçalho do app (`header.top`, `src/app/casca/topo.tsx` e `topo.css`) é uma linha só: à
-esquerda o ☰ e a marca (só com a barra em gaveta, até 900px), a área e, fora das telas das áreas, o
-título; no meio o campo da busca global; à direita o sininho do resumo do dia, a Aya e a foto com o
-menu da conta (nome, e-mail, perfil, Pessoas online, Atualizar dados, Tela cheia, no painel do
-Popover). Toda ação é `.btn.ghost.ui-botao-icone.topo-acao`, com a mesma caixa (`--topo-acao`:
-40px no mouse, 44px no toque). No celular (até 640px) ficam só o ☰, a marca, o sininho e a foto.
-Nas telas das áreas o título é o da tela (`CabecalhoDaTela`) e o do cabeçalho fica só para o leitor
-de tela (`data-compacto`). Embaixo do cabeçalho da tela, numa linha, `etapas` recebe a faixa das
+esquerda o ☰ e a marca (só com a barra em gaveta, até 900px) e, fora das telas das áreas, o título;
+no meio o campo da busca global; à direita o sininho do resumo do dia e a foto com o menu da conta
+(nome, e-mail, perfil, Pessoas online, Atualizar dados, Tela cheia, no painel do Popover). Toda ação
+é `.btn.ghost.ui-botao-icone.topo-acao`, com a mesma caixa (`--topo-acao`: 40px no mouse, 44px no
+toque). No celular (até 640px) ficam só o ☰, a marca, o sininho e a foto. Nas telas das áreas o
+título é o da tela (`CabecalhoDaTela`) e o do cabeçalho fica só para o leitor de tela
+(`data-compacto`); acima de 900px a esquerda fica vazia e a busca abre a linha. Nada se repete no
+cabeçalho: a área já está no título da tela e no seletor da barra, e a Aya tem a arara. Embaixo do cabeçalho da tela, numa linha, `etapas` recebe a faixa das
 etapas do edital ([[modulo-pagina-do-edital]], "Fluxo entre as etapas").
 
 Peças de layout só em CSS: `.ui-tela`, `.ui-card`, `.ui-titulo`, `.ui-linha-de-cards`,
