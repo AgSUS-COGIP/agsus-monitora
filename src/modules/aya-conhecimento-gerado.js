@@ -5690,7 +5690,7 @@ export const VERBETES_AYA = Object.freeze([
       "mapa da saude indigena",
     ],
     resposta:
-      'No Yeendé, a visão nacional do mapa mostra uma bolha por DSEI e, ao lado, a lista "Territórios por vagas". Clicar numa bolha ou numa linha da lista abre o mapa daquele DSEI, com os polos base, CASAIs, UBSIs e demais unidades, e o endereço da página passa a ser o do DSEI. "← Voltar ao Brasil", no topo do mapa do DSEI, volta à visão nacional.',
+      'No Yeendé, a visão nacional do mapa mostra uma bolha por DSEI e, ao lado, a lista "Territórios por vagas". Clicar numa bolha ou numa linha da lista abre o mapa daquele DSEI, com os polos base, CASAIs, UBSIs e demais unidades, e o endereço da página passa a ser o do DSEI. O mapa desce do Brasil até o distrito, em menos de um segundo, para quem abre não perder onde está. "← Voltar ao Brasil", no topo do mapa do DSEI ou no canto de baixo à esquerda do próprio mapa, volta à visão nacional (a tecla Esc faz o mesmo). Pelo teclado, Tab chega às bolhas; o foco abre o cartão do DSEI e Enter abre o distrito.',
     fato: "",
     fonte: "interface do Yeendé",
   },
@@ -5706,7 +5706,7 @@ export const VERBETES_AYA = Object.freeze([
       "dsei com processo ativo",
     ],
     resposta:
-      "No Yeendé, cada bolha da visão nacional fica na sede do DSEI, na posição cadastrada no SIGEPSI. O tamanho segue a população indígena atendida (a área da bolha é proporcional à população). Verde com borda amarela é DSEI com edital; azul, sem edital. O mapa mostra todos os DSEIs, com os editais da área inteira. A dica da bolha traz população, quantos polos base o distrito tem, quantos pontos o mapa desenha, as UFs administrativas, os processos seletivos e as vagas ociosas.",
+      'No Yeendé, cada bolha da visão nacional fica na sede do DSEI, na posição cadastrada no SIGEPSI. O tamanho segue a população indígena atendida (a área da bolha é proporcional à população). Verde com borda amarela é DSEI com edital; azul, sem edital. O mapa mostra todos os DSEIs, com os editais da área inteira. Passar o mouse (ou chegar pelo teclado) na bolha abre o cartão do DSEI: população, quantos polos base o distrito tem, quantos pontos o mapa desenha, as UFs administrativas e os números do recorte (editais, vagas, contratadas, ociosas e % preenchidas, com a barra na cor de "Territórios por vagas"). O losango da CASAI nacional mostra o mesmo cartão, com os números dela. São as mesmas contas da lista e dos indicadores do topo.',
     fato: "",
     fonte: "interface do Yeendé",
   },
@@ -5757,6 +5757,24 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-do-mapa-saude-indigena.md",
+    titulo: "Destacar no mapa",
+    perguntas: [
+      "destacar no mapa",
+      "pontos de interesse",
+      "chips do mapa",
+      "dseis com vagas ociosas no mapa",
+      "menos de 40% preenchidas",
+      "acesso so aereo ou fluvial",
+      "acender dseis no mapa",
+      "dsei remoto no mapa",
+    ],
+    resposta:
+      'No Yeendé, os botões acima do mapa nacional acendem os DSEIs que atendem a um critério e apagam os outros, no mapa e na lista "Territórios por vagas". "Com vagas ociosas" acende quem tem vaga ociosa; "Menos de 40% preenchidas", quem tem vaga e preencheu menos de 40% dela (DSEI sem vaga não entra); "Acesso só aéreo ou fluvial", quem tem ao menos uma unidade que, no SIGEPSI, só se alcança por avião ou barco. O número ao lado é quantos DSEIs acendem. Um destaque por vez; clicar de novo apaga. O de acesso só aparece quando o SIGEPSI traz o meio de acesso das unidades. No fundo "Mapa DSEIs" os botões saem, porque lá a cor vem de "Colorir por". As contas são as mesmas da lista e dos indicadores, nada é recontado.',
+    fato: "",
+    fonte: "src/lib/mapas/mapa-saude-indigena/pontos-de-interesse.ts",
+  },
+  {
+    arquivo: "regras-do-mapa-saude-indigena.md",
     titulo: "Duas bolhas no mesmo lugar do mapa",
     perguntas: [
       "bolhas sobrepostas",
@@ -5782,7 +5800,7 @@ export const VERBETES_AYA = Object.freeze([
       "dsei / casai",
     ],
     resposta:
-      'No Yeendé, o losango roxo marca as CASAIs de referência nacional (CASAI DF, em Brasília, e CASAI São Paulo), desenhadas a partir do SIGEPSI. Clicar nele abre a Visão geral filtrada pela busca "CASAI" mais o nome da cidade. No seletor "DSEI / CASAI" da página Mapa as duas ficam no grupo "CASAIs nacionais": escolher uma enquadra o mapa nela e mostra o município, a UF e os processos seletivos dela (os editais "CASAI Brasília" e "CASAI São Paulo", contados pelo nome ou pela cidade), com "Abrir na Visão geral". O endereço passa a ser o da CASAI (por exemplo, /saude-indigena/mapa/casai-df). As CASAIs nacionais não têm unidades próprias no mapa.',
+      'No Yeendé, o losango roxo marca as CASAIs de referência nacional (CASAI DF, em Brasília, e CASAI São Paulo), desenhadas a partir do SIGEPSI. Clicar nele abre a Visão geral filtrada pela busca "CASAI" mais o nome da cidade. No seletor "DSEI / CASAI" da página Mapa as duas ficam no grupo "CASAIs nacionais": escolher uma leva o mapa voando até ela e mostra o município, a UF e os processos seletivos dela (os editais "CASAI Brasília" e "CASAI São Paulo", contados pelo nome ou pela cidade), com "Abrir na Visão geral". O endereço passa a ser o da CASAI (por exemplo, /saude-indigena/mapa/casai-df). As CASAIs nacionais não têm unidades próprias no mapa.',
     fato: "",
     fonte: "interface do Yeendé",
   },
@@ -5876,7 +5894,7 @@ export const VERBETES_AYA = Object.freeze([
       "fechar o dsei",
     ],
     resposta:
-      'No Yeendé, com um DSEI aberto, o botão "← Voltar ao Brasil" no topo do mapa (ou a tecla Esc, com o foco no mapa) fecha o distrito: o mapa se afasta devagar até o Brasil inteiro e o endereço volta a ser o da página Mapa. O foco volta à linha do DSEI em "Territórios por vagas". O voltar do navegador faz a mesma volta. Em tela cheia, o primeiro Esc volta ao Brasil e o segundo sai da tela cheia. Quem pediu menos movimento ao sistema vê o mapa voltar sem animação.',
+      'No Yeendé, com um DSEI aberto, o botão "← Voltar ao Brasil" no topo do mapa ou o fixo no canto de baixo à esquerda do próprio mapa (ou a tecla Esc, com o foco no mapa; o botão do canto mostra o atalho) fecha o distrito: o mapa se afasta devagar até o Brasil inteiro e o endereço volta a ser o da página Mapa. O botão "Brasil" do mapa nacional também volta voando ao país inteiro. O foco volta à linha do DSEI em "Territórios por vagas". O voltar do navegador faz a mesma volta. Em tela cheia, o primeiro Esc volta ao Brasil e o segundo sai da tela cheia. Quem pediu menos movimento ao sistema vê o mapa ir e voltar sem animação (abrir um DSEI, escolher uma CASAI, voltar ao Brasil).',
     fato: "",
     fonte: "interface do Yeendé",
   },

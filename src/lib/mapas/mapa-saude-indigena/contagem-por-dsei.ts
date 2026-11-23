@@ -30,6 +30,24 @@ export const CONTAGEM_VAZIA: Readonly<ContagemDoDsei> = Object.freeze({
   ociosas: 0,
 });
 
+/*
+  O preenchimento (contratadas ÷ vagas, em %, arredondado): a barra de
+  "Territórios por vagas", a dos indicadores do topo e o cartão das bolhas.
+  Mais contratadas que vagas (reaberta noutro edital) não passa de 100%.
+*/
+export function percentualPreenchido(
+  c: Pick<ContagemDoDsei, "vagas" | "contratadas">,
+): number {
+  return c.vagas
+    ? Math.round((Math.min(c.contratadas, c.vagas) / c.vagas) * 100)
+    : 0;
+}
+
+/** A cor da barra do preenchimento: acima de 80% ok, acima de 40% atenção, o resto crítico. */
+export function situacaoDoPreenchimento(preenchidas: number) {
+  return preenchidas > 80 ? "ok" : preenchidas > 40 ? "atencao" : "critico";
+}
+
 export function contarPorDsei(
   linhas: readonly LinhaDoMonitoramento[],
 ): Map<string, ContagemDoDsei> {

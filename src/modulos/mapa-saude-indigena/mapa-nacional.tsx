@@ -4,7 +4,8 @@ import type {
   DseiDoMapa,
 } from "../../lib/mapas/mapa-saude-indigena/tipos.ts";
 import type { MapaDoPainel } from "./tipos-do-painel.ts";
-import type { LequeDoMapa } from "./tipos-do-leaflet.ts";
+import type { LequeDoMapa, MarcadorIndigena } from "./tipos-do-leaflet.ts";
+import type { ChaveDoDestaque } from "../../lib/mapas/mapa-saude-indigena/pontos-de-interesse.ts";
 import {
   memo,
   useCallback,
@@ -18,6 +19,7 @@ import {
   dicaDaBolha,
   dicaDaCasaiNacional,
   popupDaCasaiNacional,
+  rotuloDaBolha,
 } from "../../lib/mapas/mapa-saude-indigena/mapa-nacional.ts";
 import {
   formatarNumero,
@@ -84,6 +86,46 @@ export function usarAvisosDasTerras(mapa: MapaDoPainel | null) {
 }
 
 /*
+  A bolha do DSEI pelo teclado: o `<path>` do Leaflet vira um botão focável
+  (Tab chega nele, Enter ou espaço abre o DSEI) e o foco abre o mesmo cartão
+  do mouse. O Leaflet recria o `<path>` quando a camada volta ao mapa (Mapa
+  DSEIs com os pontos desligados e religados): quem chama liga isto também no
+  "add" do marcador.
+*/
+function tornarFocavel(
+  marcador: MarcadorIndigena,
+  rotulo: string,
+  aoEscolher: () => void,
+) {
+  const elemento = marcador.getElement?.();
+  if (!elemento || elemento.hasAttribute("tabindex")) return;
+  elemento.setAttribute("tabindex", "0");
+  elemento.setAttribute("role", "button");
+  elemento.setAttribute("aria-label", rotulo);
+  elemento.addEventListener("keydown", (evento) => {
+    if (!(evento instanceof KeyboardEvent)) return;
+    if (evento.key !== "Enter" && evento.key !== " ") return;
+    evento.preventDefault();
+    aoEscolher();
+  });
+  elemento.addEventListener("focus", () => marcador.openTooltip?.());
+  elemento.addEventListener("blur", () => marcador.closeTooltip());
+}
+
+/* O destaque dos pontos de interesse: acende os escolhidos e apaga os outros. */
+function pintarDestaque(
+  marcador: MarcadorIndigena,
+  chave: string,
+  destaque: ReadonlySet<string> | null,
+) {
+  const elemento = marcador.getElement?.();
+  const aceso = Boolean(destaque?.has(chave));
+  elemento?.classList.toggle("is-destaque", aceso);
+  elemento?.classList.toggle("is-apagada", Boolean(destaque) && !aceso);
+  if (aceso) marcador.bringToFront?.();
+}
+
+/*
   Quanto o mouse precisa ficar num DSEI do mapa para a linha dele acender na
   lista. Atravessar polígonos a caminho de outro lugar não mexe na lista.
 */
@@ -97,6 +139,8 @@ interface PropsDaLinha {
   numero: number | null;
   token?: string;
   realcado: boolean;
+  /** Fora do ponto de interesse escolhido (os chips acima do mapa). */
+  apagado: boolean;
   aoRealcar(numero: number | null): void;
 }
 
@@ -112,6 +156,7 @@ const LinhaDoTerritorio = memo(function LinhaDoTerritorio({
   numero,
   token,
   realcado,
+  apagado,
   aoRealcar,
 }: PropsDaLinha) {
   const { dsei, vagas, preenchidas, situacao, posicao, detalhe } = territorio;
@@ -126,6 +171,7 @@ const LinhaDoTerritorio = memo(function LinhaDoTerritorio({
           "mapa-si-territorio",
           !vagas && "mapa-si-territorio--sem-vagas",
           realcado && "is-realce",
+          apagado && "mapa-si-territorio--apagado",
         )}
         data-dsei={dsei.k}
         data-numero={numero ?? undefined}
@@ -183,6 +229,7 @@ export function MapaNacional({
   territorios,
   enquadramento,
   voltaDoDsei = null,
+  destaques = [],
   resumoDaRede,
   carregando,
   acoes,
@@ -220,6 +267,8 @@ export function MapaNacional({
   const voltaFocada = useRef(0);
   const chamadas = usarUltimo({ aoEscolherDsei, aoFiltrarPorBusca });
   const avisosDasTerras = usarAvisosDasTerras(mapa);
+  // Os marcadores das bolhas, pela chave do DSEI (o destaque os repinta sem redesenhar).
+  const bolhasNoMapa = useRef(new Map<string, MarcadorIndigena>());
 
   /*
     O "Mapa DSEIs" (terceiro botão do seletor do fundo): os 34 DSEIs
@@ -302,6 +351,25 @@ export function MapaNacional({
     },
   });
 
+  /*
+    Pontos de interesse (pontos-de-interesse.ts): um chip por vez acende os
+    DSEIs do critério e apaga os outros, no mapa e na lista. No Mapa DSEIs
+    quem colore é o "Colorir por", e os chips saem.
+  */
+  const [destaque, definirDestaque] = useState<ChaveDoDestaque | null>(null);
+  const emDestaque = useMemo(
+    () =>
+      simples || !destaque
+        ? null
+        : (destaques.find((d) => d.chave === destaque)?.dseis ?? null),
+    [simples, destaque, destaques],
+  );
+  const ultimoDestaque = usarUltimo(emDestaque);
+  useEffect(() => {
+    for (const [chave, marcador] of bolhasNoMapa.current)
+      pintarDestaque(marcador, chave, emDestaque);
+  }, [emDestaque]);
+
   // Pontos (bolhas e CASAIs nacionais): no Mapa DSEIs, só se pedidos.
   useEffect(() => {
     if (!mapa || !camadas.current) return;
@@ -321,9 +389,13 @@ export function MapaNacional({
     dsei.clearLayers();
     casai.clearLayers();
     leque.limpar();
+    bolhasNoMapa.current.clear();
     const flutua = podeFlutuar();
     for (const bolha of bolhas) {
-      const marcador = L.circleMarker([bolha.lat, bolha.lon], bolha.estilo);
+      const marcador = L.circleMarker([bolha.lat, bolha.lon], {
+        ...bolha.estilo,
+        className: "mapa-si-bolha",
+      });
       if (flutua) {
         marcador.bindTooltip(
           conteudoEmElemento(
@@ -333,8 +405,16 @@ export function MapaNacional({
           { direction: "top" },
         );
       }
-      marcador.on("click", () => chamadas.current.aoEscolherDsei?.(bolha.dsei));
+      const escolher = () => chamadas.current.aoEscolherDsei?.(bolha.dsei);
+      const vestir = () => {
+        tornarFocavel(marcador, rotuloDaBolha(bolha), escolher);
+        pintarDestaque(marcador, bolha.chave, ultimoDestaque.current);
+      };
+      marcador.on("click", escolher);
+      marcador.on("add", vestir);
       dsei.addLayer(marcador);
+      vestir();
+      bolhasNoMapa.current.set(bolha.chave, marcador);
       leque.adicionar(marcador, bolha.lat, bolha.lon);
     }
     for (const c of casais) {
@@ -353,14 +433,26 @@ export function MapaNacional({
       casai.addLayer(marcador);
     }
     leque.aplicar();
-  }, [L, mapa, camadas, bolhas, casais, resumoDaRede, chamadas]);
+  }, [
+    L,
+    mapa,
+    camadas,
+    bolhas,
+    casais,
+    resumoDaRede,
+    chamadas,
+    ultimoDestaque,
+  ]);
 
   /*
     Enquadramento: só quando muda o que enquadrar, e só com o mapa à vista —
     escondido (DSEI aberto) ele não tem tamanho e enquadra com a medida nova
     ao voltar. A volta de um DSEI (`voltaDoDsei`, uma `vez` nova a cada saída)
     sempre reenquadra: parte do distrito e voa em ~0,8 s até o enquadramento
-    (o Brasil, ou o recorte dos filtros que ficaram). Com menos movimento
+    (o Brasil, ou o recorte dos filtros que ficaram). Trocar de recorte com o
+    mapa à vista (escolher a CASAI nacional, voltar dela ao Brasil) também
+    voa, do ponto onde está. O primeiro enquadramento e o refeito por medida
+    nova (`ultimoEnquadramento` vazio) não voam. Com menos movimento
     (prefers-reduced-motion), salta direto, sem animação.
   */
   useEffect(() => {
@@ -369,11 +461,13 @@ export function MapaNacional({
       voltaDoDsei && voltaDoDsei.vez !== voltaEnquadrada.current
         ? voltaDoDsei
         : null;
-    if (!volta && enquadramento.chave === ultimoEnquadramento.current) return;
+    const anterior = ultimoEnquadramento.current;
+    if (!volta && enquadramento.chave === anterior) return;
     if (volta) voltaEnquadrada.current = volta.vez;
     ultimoEnquadramento.current = enquadramento.chave;
     remedir(mapa);
-    const voar = Boolean(volta) && podeVoar(mapa);
+    const trocouORecorte = anterior !== "" && anterior !== enquadramento.chave;
+    const voar = (Boolean(volta) || trocouORecorte) && podeVoar(mapa);
     try {
       if (voar) {
         voando.current?.();
@@ -460,6 +554,28 @@ export function MapaNacional({
         }
         acoes={acoes}
       />
+      {destaques.length && !simples && !carregando ? (
+        <div
+          className="mapa-si-destaques"
+          role="group"
+          aria-label="Destacar no mapa"
+        >
+          {destaques.map((d) => (
+            <button
+              key={d.chave}
+              type="button"
+              data-destaque={d.chave}
+              aria-pressed={destaque === d.chave}
+              disabled={!d.dseis.size && destaque !== d.chave}
+              onClick={() =>
+                definirDestaque((atual) => (atual === d.chave ? null : d.chave))
+              }
+            >
+              {d.rotulo} <b>{formatarNumero(d.dseis.size)}</b>
+            </button>
+          ))}
+        </div>
+      ) : null}
       <div className="mapa-si-painel__corpo">
         <MolduraDoMapa
           L={L}
@@ -511,6 +627,7 @@ export function MapaNacional({
                     realcado={
                       simples && numero !== null && realceNaLista === numero
                     }
+                    apagado={Boolean(emDestaque && !emDestaque.has(t.chave))}
                     aoRealcar={realcarDaLista}
                   />
                 );

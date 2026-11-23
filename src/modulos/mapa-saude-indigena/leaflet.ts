@@ -37,6 +37,10 @@ export interface ConteudoDoBalao {
   titulo?: string;
   linhas?: readonly string[];
   nota?: string;
+  /** O cartão da bolha e do losango (`dicaDaBolha`): rótulo e valor em grade. */
+  numeros?: readonly { rotulo: string; valor: string }[];
+  /** A barra do % preenchido, na cor da situação. */
+  preenchimento?: { percentual: number; situacao: string } | null;
 }
 import { BRASIL_BOUNDS } from "../../lib/mapas/brasil-bounds.ts";
 import {
@@ -297,7 +301,7 @@ export function enquadrar(
   else enquadrarNoBrasil(L, mapa);
 }
 
-/* O botão "Brasil": para a animação e volta ao país inteiro. */
+/* O botão "Brasil": para a animação e voa ao país inteiro (salta, com menos movimento). */
 export function voltarAoBrasil(
   L: LeafletDoMapa | null,
   mapa: MapaDoPainel | null,
@@ -305,7 +309,8 @@ export function voltarAoBrasil(
   if (!L || !mapa) return;
   try {
     mapa.stop?.();
-    enquadrarNoBrasil(L, mapa);
+    if (podeVoar(mapa)) voarAoBrasil(L, mapa);
+    else enquadrarNoBrasil(L, mapa);
   } catch {
     // mapa sem tamanho
   }
@@ -529,7 +534,7 @@ export function criarLeque(
 
 export function conteudoEmElemento(
   documento: Document,
-  { titulo, linhas = [], nota }: ConteudoDoBalao,
+  { titulo, linhas = [], nota, numeros = [], preenchimento }: ConteudoDoBalao,
 ) {
   const caixa = documento.createElement("div");
   caixa.className = "mapa-si-balao";
@@ -544,6 +549,31 @@ export function conteudoEmElemento(
     const span = documento.createElement("span");
     span.textContent = linha;
     caixa.append(span);
+  }
+  if (numeros.length) {
+    const grade = documento.createElement("dl");
+    grade.className = "mapa-si-balao__numeros";
+    for (const { rotulo, valor } of numeros) {
+      const item = documento.createElement("div");
+      const dt = documento.createElement("dt");
+      dt.textContent = rotulo;
+      const dd = documento.createElement("dd");
+      dd.textContent = valor;
+      item.append(dt, dd);
+      grade.append(item);
+    }
+    caixa.append(grade);
+  }
+  if (preenchimento) {
+    const barra = documento.createElement("span");
+    barra.className = "mapa-si-territorio__barra mapa-si-balao__barra";
+    // A cor vem da regra comum, `[data-situacao] .mapa-si-territorio__barra i`.
+    caixa.dataset.situacao = preenchimento.situacao;
+    barra.setAttribute("aria-hidden", "true");
+    const cheio = documento.createElement("i");
+    cheio.style.width = `${Math.max(0, Math.min(100, preenchimento.percentual))}%`;
+    barra.append(cheio);
+    caixa.append(barra);
   }
   if (nota) {
     const small = documento.createElement("small");

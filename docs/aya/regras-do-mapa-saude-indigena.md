@@ -18,13 +18,13 @@ modo Calor saiu em 02/10/2026.
 ## Como usar o mapa da Saúde Indígena
 
 **perguntas:** como usar o mapa | como abrir um dsei no mapa | ver polos e unidades | abrir o territorio | mapa detalhado do dsei | como uso o mapa dos dseis | mapa dos dseis | mapa da saude indigena
-**resposta:** No Yeendé, a visão nacional do mapa mostra uma bolha por DSEI e, ao lado, a lista "Territórios por vagas". Clicar numa bolha ou numa linha da lista abre o mapa daquele DSEI, com os polos base, CASAIs, UBSIs e demais unidades, e o endereço da página passa a ser o do DSEI. "← Voltar ao Brasil", no topo do mapa do DSEI, volta à visão nacional.
+**resposta:** No Yeendé, a visão nacional do mapa mostra uma bolha por DSEI e, ao lado, a lista "Territórios por vagas". Clicar numa bolha ou numa linha da lista abre o mapa daquele DSEI, com os polos base, CASAIs, UBSIs e demais unidades, e o endereço da página passa a ser o do DSEI. O mapa desce do Brasil até o distrito, em menos de um segundo, para quem abre não perder onde está. "← Voltar ao Brasil", no topo do mapa do DSEI ou no canto de baixo à esquerda do próprio mapa, volta à visão nacional (a tecla Esc faz o mesmo). Pelo teclado, Tab chega às bolhas; o foco abre o cartão do DSEI e Enter abre o distrito.
 **fonte:** interface do Yeendé
 
 ## Bolhas dos DSEIs no mapa
 
 **perguntas:** bolha do mapa | tamanho da bolha | cor da bolha | bolha verde | bolha azul | dsei com processo ativo
-**resposta:** No Yeendé, cada bolha da visão nacional fica na sede do DSEI, na posição cadastrada no SIGEPSI. O tamanho segue a população indígena atendida (a área da bolha é proporcional à população). Verde com borda amarela é DSEI com edital; azul, sem edital. O mapa mostra todos os DSEIs, com os editais da área inteira. A dica da bolha traz população, quantos polos base o distrito tem, quantos pontos o mapa desenha, as UFs administrativas, os processos seletivos e as vagas ociosas.
+**resposta:** No Yeendé, cada bolha da visão nacional fica na sede do DSEI, na posição cadastrada no SIGEPSI. O tamanho segue a população indígena atendida (a área da bolha é proporcional à população). Verde com borda amarela é DSEI com edital; azul, sem edital. O mapa mostra todos os DSEIs, com os editais da área inteira. Passar o mouse (ou chegar pelo teclado) na bolha abre o cartão do DSEI: população, quantos polos base o distrito tem, quantos pontos o mapa desenha, as UFs administrativas e os números do recorte (editais, vagas, contratadas, ociosas e % preenchidas, com a barra na cor de "Territórios por vagas"). O losango da CASAI nacional mostra o mesmo cartão, com os números dela. São as mesmas contas da lista e dos indicadores do topo.
 **fonte:** interface do Yeendé
 
 ## Mapa de calor
@@ -45,6 +45,12 @@ modo Calor saiu em 02/10/2026.
 **resposta:** No Yeendé, o botão "Mapa DSEIs" (ao lado de Mapa e Satélite, no mapa nacional da Saúde Indígena) troca o fundo de ruas por um fundo liso e pinta as áreas dos 34 DSEIs, cada uma com o seu número. É o fundo com que o mapa abre para todos; quem escolhe Mapa ou Satélite tem a escolha guardada neste navegador. A numeração é a ordem alfabética oficial: 1 Alagoas e Sergipe até 34 Yanomami; a lista "Territórios por vagas" mostra o mesmo número. "Colorir por" escolhe a cor: uma cor fixa por DSEI (padrão; a cor só identifica o DSEI, não indica situação), % preenchidas (cinco faixas de 20 pontos) ou vagas ociosas (cinco faixas pelos valores do recorte). DSEI fora do recorte ou sem vaga fica cinza, "sem dado". Passar o mouse num DSEI realça a linha da lista e vice-versa; clicar abre o DSEI. Nesse modo as sedes e as CASAIs começam ligadas ("Sedes e CASAIs" as desliga) e as Terras Indígenas, desligadas (o botão "Terras Indígenas" as liga). As áreas são as da camada de abrangência dos DSEIs publicada pela Funai (cópia de 20/04/2022): cobrem as regiões com atendimento, não o país inteiro.
 **fonte:** interface do Yeendé; Funai, camada areas_dsei
 
+## Destacar no mapa
+
+**perguntas:** destacar no mapa | pontos de interesse | chips do mapa | dseis com vagas ociosas no mapa | menos de 40% preenchidas | acesso so aereo ou fluvial | acender dseis no mapa | dsei remoto no mapa
+**resposta:** No Yeendé, os botões acima do mapa nacional acendem os DSEIs que atendem a um critério e apagam os outros, no mapa e na lista "Territórios por vagas". "Com vagas ociosas" acende quem tem vaga ociosa; "Menos de 40% preenchidas", quem tem vaga e preencheu menos de 40% dela (DSEI sem vaga não entra); "Acesso só aéreo ou fluvial", quem tem ao menos uma unidade que, no SIGEPSI, só se alcança por avião ou barco. O número ao lado é quantos DSEIs acendem. Um destaque por vez; clicar de novo apaga. O de acesso só aparece quando o SIGEPSI traz o meio de acesso das unidades. No fundo "Mapa DSEIs" os botões saem, porque lá a cor vem de "Colorir por". As contas são as mesmas da lista e dos indicadores, nada é recontado.
+**fonte:** src/lib/mapas/mapa-saude-indigena/pontos-de-interesse.ts
+
 ## Duas bolhas no mesmo lugar do mapa
 
 **perguntas:** bolhas sobrepostas | leque no mapa | traco ate o ponto | yanomami e leste de roraima no mapa
@@ -54,7 +60,7 @@ modo Calor saiu em 02/10/2026.
 ## CASAI Nacional no mapa
 
 **perguntas:** casai nacional no mapa | losango roxo | clicar na casai nacional | casai no seletor | escolher casai df | casai sao paulo no mapa | dsei / casai
-**resposta:** No Yeendé, o losango roxo marca as CASAIs de referência nacional (CASAI DF, em Brasília, e CASAI São Paulo), desenhadas a partir do SIGEPSI. Clicar nele abre a Visão geral filtrada pela busca "CASAI" mais o nome da cidade. No seletor "DSEI / CASAI" da página Mapa as duas ficam no grupo "CASAIs nacionais": escolher uma enquadra o mapa nela e mostra o município, a UF e os processos seletivos dela (os editais "CASAI Brasília" e "CASAI São Paulo", contados pelo nome ou pela cidade), com "Abrir na Visão geral". O endereço passa a ser o da CASAI (por exemplo, /saude-indigena/mapa/casai-df). As CASAIs nacionais não têm unidades próprias no mapa.
+**resposta:** No Yeendé, o losango roxo marca as CASAIs de referência nacional (CASAI DF, em Brasília, e CASAI São Paulo), desenhadas a partir do SIGEPSI. Clicar nele abre a Visão geral filtrada pela busca "CASAI" mais o nome da cidade. No seletor "DSEI / CASAI" da página Mapa as duas ficam no grupo "CASAIs nacionais": escolher uma leva o mapa voando até ela e mostra o município, a UF e os processos seletivos dela (os editais "CASAI Brasília" e "CASAI São Paulo", contados pelo nome ou pela cidade), com "Abrir na Visão geral". O endereço passa a ser o da CASAI (por exemplo, /saude-indigena/mapa/casai-df). As CASAIs nacionais não têm unidades próprias no mapa.
 **fonte:** interface do Yeendé
 
 ## Formas dos marcadores no mapa do DSEI
@@ -90,7 +96,7 @@ modo Calor saiu em 02/10/2026.
 ## Voltar ao Brasil
 
 **perguntas:** voltar ao brasil | sair do dsei | voltar para a visao geral do mapa | voltar ao mapa nacional | esc no mapa | fechar o dsei
-**resposta:** No Yeendé, com um DSEI aberto, o botão "← Voltar ao Brasil" no topo do mapa (ou a tecla Esc, com o foco no mapa) fecha o distrito: o mapa se afasta devagar até o Brasil inteiro e o endereço volta a ser o da página Mapa. O foco volta à linha do DSEI em "Territórios por vagas". O voltar do navegador faz a mesma volta. Em tela cheia, o primeiro Esc volta ao Brasil e o segundo sai da tela cheia. Quem pediu menos movimento ao sistema vê o mapa voltar sem animação.
+**resposta:** No Yeendé, com um DSEI aberto, o botão "← Voltar ao Brasil" no topo do mapa ou o fixo no canto de baixo à esquerda do próprio mapa (ou a tecla Esc, com o foco no mapa; o botão do canto mostra o atalho) fecha o distrito: o mapa se afasta devagar até o Brasil inteiro e o endereço volta a ser o da página Mapa. O botão "Brasil" do mapa nacional também volta voando ao país inteiro. O foco volta à linha do DSEI em "Territórios por vagas". O voltar do navegador faz a mesma volta. Em tela cheia, o primeiro Esc volta ao Brasil e o segundo sai da tela cheia. Quem pediu menos movimento ao sistema vê o mapa ir e voltar sem animação (abrir um DSEI, escolher uma CASAI, voltar ao Brasil).
 **fonte:** interface do Yeendé
 
 ## Tela cheia e mapa no celular

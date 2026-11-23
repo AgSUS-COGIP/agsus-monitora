@@ -2298,12 +2298,21 @@ bloco("modulos/mapa-de-projetos", () => {
       ]);
     });
 
-    it("o botão Brasil volta ao país inteiro", async () => {
+    it("o botão Brasil voa de volta ao país inteiro (salta com menos movimento)", async () => {
       const { carregador } = await carregadorCom(SIMPLES);
       await montar({ carregador });
       const mapa = mapaVivo();
       // O remedir da montagem vem no quadro seguinte; espera para não contá-lo.
       await act(() => new Promise((pronto) => requestAnimationFrame(pronto)));
+      mapa.chamadas.length = 0;
+      await clicar(botao("Brasil"));
+      expect(mapa.chamadas.map(([nome]) => nome)).toEqual([
+        "stop",
+        "flyToBounds",
+      ]);
+      window.matchMedia = (consulta) => ({
+        matches: consulta.includes("prefers-reduced-motion"),
+      });
       mapa.chamadas.length = 0;
       await clicar(botao("Brasil"));
       expect(mapa.chamadas.map(([nome]) => nome)).toEqual([

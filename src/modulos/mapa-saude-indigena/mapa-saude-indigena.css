@@ -1299,3 +1299,121 @@
   border-color: var(--text-primary);
   background: var(--surface-hover);
 }
+
+/*
+  Pontos de interesse (pontos-de-interesse.ts): os chips acima do mapa
+  nacional acendem os DSEIs do critério e apagam os outros, no mapa e na
+  lista. Um por vez.
+*/
+.mapa-si-destaques {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  padding-top: var(--space-2);
+}
+
+.mapa-si-destaques button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-0-5) var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--text-caption);
+  cursor: pointer;
+}
+
+.mapa-si-destaques button:hover {
+  background: var(--surface-hover);
+}
+
+.mapa-si-destaques button[aria-pressed="true"] {
+  border-color: var(--brand-primary);
+  background: var(--color-bg-selected);
+}
+
+.mapa-si-destaques button:disabled {
+  color: var(--text-secondary);
+  cursor: default;
+}
+
+.mapa-si-territorio--apagado {
+  opacity: 0.45;
+}
+
+/* As bolhas (SVG do Leaflet): foco do teclado, acesas e apagadas pelo destaque. */
+.mapa-si-mapa path.mapa-si-bolha {
+  transition: opacity var(--motion-base) var(--ease-standard);
+}
+
+.mapa-si-mapa path.mapa-si-bolha:focus-visible {
+  outline: none;
+  stroke: var(--focus-ring);
+  stroke-width: 4px;
+}
+
+.mapa-si-mapa path.mapa-si-bolha.is-destaque {
+  stroke: var(--brand-primary);
+  stroke-width: 4px;
+}
+
+.mapa-si-mapa path.mapa-si-bolha.is-apagada {
+  opacity: 0.2;
+}
+
+/* O cartão da bolha e do losango: os números do recorte em grade e a barra. */
+.mapa-si-balao__numeros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+  gap: var(--space-1) var(--space-2);
+  margin: var(--space-1) 0 0;
+}
+
+.mapa-si-balao__numeros div {
+  display: grid;
+}
+
+.mapa-si-balao__numeros dt {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+.mapa-si-balao__numeros dd {
+  margin: 0;
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.mapa-si-balao__barra {
+  display: block;
+  margin-top: var(--space-1);
+}
+
+/*
+  "Voltar ao Brasil" fixo no canto de baixo à esquerda do mapa do DSEI (o
+  canto livre: zoom e fundo em cima à esquerda, Terras Indígenas em cima à
+  direita, escala, créditos e minimapa embaixo à direita). Esc faz o mesmo.
+*/
+.mapa-si-voltar-no-mapa {
+  position: absolute;
+  z-index: 900; /* acabamento: permitido(zIndex) — camada do Leaflet: acima dos panes (até 700), abaixo dos controles (1000), como o minimapa */
+  bottom: var(--space-3);
+  left: var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  box-shadow: var(--shadow-md);
+}
+
+/* A tecla na cor do texto do botão (o fundo é o do botão primário). */
+.mapa-si-voltar-no-mapa kbd {
+  padding: 0 var(--space-1);
+  border: 1px solid currentcolor;
+  border-radius: var(--radius-sm);
+  color: inherit;
+  font-family: inherit;
+  font-size: var(--text-xs);
+}

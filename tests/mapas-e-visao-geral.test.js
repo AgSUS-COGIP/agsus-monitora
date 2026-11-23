@@ -4435,7 +4435,7 @@ bloco("mapa-saude-indigena", () => {
       expect(segundo.preenchidas).toBe(0);
     });
 
-    it("a dica da bolha diz população, rede, UFs, processos e ociosas", () => {
+    it("o cartão da bolha diz população, rede, UFs e os números do recorte", () => {
       const [ceara] = bolhasDosDsei({
         dseis: [dseis[0]],
         contagens: contarPorDsei(linhas),
@@ -4446,9 +4446,18 @@ bloco("mapa-saude-indigena", () => {
         "População do DSEI: 400 indígenas",
         "Polos base: 12",
         "Estados administrativos: CE",
-        "Processos seletivos: 2",
-        "Vagas ociosas: 7 de 15",
       ]);
+      expect(dica.numeros).toEqual([
+        { rotulo: "Editais", valor: "2" },
+        { rotulo: "Vagas", valor: "15" },
+        { rotulo: "Contratadas", valor: "8" },
+        { rotulo: "Ociosas", valor: "7" },
+        { rotulo: "Preenchidas", valor: "53%" },
+      ]);
+      expect(dica.preenchimento).toEqual({
+        percentual: 53,
+        situacao: "atencao",
+      });
     });
 
     it("enquadra o Brasil sem filtro, um ponto ou a caixa com filtro", () => {

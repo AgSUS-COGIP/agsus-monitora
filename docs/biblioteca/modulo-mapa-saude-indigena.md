@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-19
+atualizado: 2026-11-23
 ---
 
 # Módulo: Mapa da Saúde Indígena
@@ -24,6 +24,23 @@ Tipos e fronteiras dos dados (e o que saiu do legado): [[mapa-saude-indigena-con
 - **Dicas e popups.** `criarMapa` liga `manterDicasDentroDoMapa` (`src/lib/mapas/dica-dentro-do-mapa.ts`):
   perto da borda a dica troca de direção, com largura máxima relativa ao mapa (`.dica-no-mapa`);
   o popup tem `autoPan` com folga, `keepInView` e tamanhos relativos ao mapa.
+- **Cartão da bolha e do losango.** `dicaDaBolha` e `dicaDaCasaiNacional` devolvem, além das
+  linhas, `numeros` (editais, vagas, contratadas, ociosas e % preenchidas, `numerosDoCartao`) e
+  `preenchimento` (a barra, na cor de `situacaoDoPreenchimento`); `conteudoEmElemento` desenha a
+  grade (`.mapa-si-balao__numeros`) e a barra. O % é um só, `percentualPreenchido`
+  (`contagem-por-dsei.ts`), o mesmo da lista e do topo; a CASAI nacional carrega a contagem
+  inteira (`CasaiNacionalDoMapa extends ContagemDoDsei`).
+- **Bolha pelo teclado.** O `<path>` da bolha (`className: "mapa-si-bolha"`) vira botão focável
+  (`tabindex`, `role="button"`, `aria-label` de `rotuloDaBolha`): o foco abre o cartão, Enter ou
+  espaço abre o DSEI. O Leaflet recria o `<path>` quando a camada volta ao mapa; o "add" do
+  marcador refaz isso.
+- **Pontos de interesse.** Os chips acima do mapa nacional (`.mapa-si-destaques`, um por vez)
+  acendem os DSEIs de um critério e apagam os outros, no mapa (`is-destaque` / `is-apagada` no
+  `<path>`) e na lista (`mapa-si-territorio--apagado`): "Com vagas ociosas", "Menos de 40%
+  preenchidas" (só DSEI com vaga) e, com o acesso do SIGEPSI, "Acesso só aéreo ou fluvial" (DSEI
+  com unidade cujos meios são só aéreo e/ou fluvial). Regras em
+  `src/lib/mapas/mapa-saude-indigena/pontos-de-interesse.ts` (`destaquesDoMapa`), sobre
+  `territoriosPorVagas` e `unidadesComAcesso`, sem conta nova. No Mapa DSEIs os chips saem.
 
 ## Onde fica
 
@@ -180,9 +197,26 @@ Terceiro botão do seletor do fundo, só no `#map` (`map-base-layer-switcher.ts`
   Mapa DSEIs a camada esconde esse traço (pane `PANE_DA_ABRANGENCIA_DOS_DSEIS`) para não sair em
   dobro.
 
-## A volta ao Brasil
+## A volta ao Brasil e as outras viagens da câmera
 
-`volta-ao-brasil.ts` (`usarVoltaDoDsei`, `usarEscParaVoltar`).
+`volta-ao-brasil.ts` (`usarVoltaDoDsei`, `usarEscParaVoltar`). Toda troca de recorte voa em
+`DURACAO_DA_VOLTA_AO_BRASIL` (0,8 s) e, com `prefers-reduced-motion: reduce` (`podeVoar`,
+`prefereMenosMovimento`), salta:
+
+- **Abrir um DSEI.** O mapa do DSEI nasce no Brasil (`enquadrarNoBrasil`, sem animar) e, no
+  quadro seguinte (depois de remedir), voa até o território (`flyToBounds`, mesmas opções do
+  enquadramento). Durante o voo as unidades ficam na coordenada verdadeira, sem leque (`emVoo`):
+  o leque calculado no zoom de partida abriria em linhas enormes; o `moveend` (ou o prazo de
+  0,8 s + 400 ms) pousa e redesenha com o leque. A abrangência oficial que chega no meio do voo
+  redireciona o voo; sem quadro (aba em segundo plano), o prazo de 80 ms enquadra sem voar.
+- **Escolher a CASAI nacional e voltar dela.** O mapa nacional voa quando o enquadramento muda
+  com ele à vista (`ultimoEnquadramento` diferente e não vazio); o primeiro enquadramento e o
+  refeito por medida nova (vazio) não voam.
+- **"Brasil"** (topo do nacional, também no de Projetos): `voltarAoBrasil` voa
+  (`voarAoBrasil`).
+- **"Voltar ao Brasil" fixo no mapa do DSEI.** Além do botão do topo, `.mapa-si-voltar-no-mapa`
+  no canto de baixo à esquerda (o canto livre dos controles do Leaflet), com `<kbd>Esc</kbd>` e
+  `aria-keyshortcuts="Escape"` (o do topo também). Mesma ação.
 
 - Ao sair do DSEI ("← Voltar ao Brasil", Esc, o voltar do navegador),
   `usarVoltaDoDsei` entrega ao mapa nacional `{ k, lat, lon, focar, vez }`. O mapa parte da sede do
@@ -206,7 +240,10 @@ Terceiro botão do seletor do fundo, só no `#map` (`map-base-layer-switcher.ts`
 
 `tests/mapas-e-visao-geral.test.js` (bloco `mapa-saude-indigena`) (fixture real das Lotações),
 `tests/mapas-e-visao-geral.test.js` (bloco `coordenadas-so-do-sigepsi`), `tests/demais-regras.test.ts` (blocos `lib/localizacoes-do-sigepsi`, `lib/territorio-do-sigepsi` e `lib/territorio-na-tela`),
-`tests/casca-sessao-e-interface-na-tela.test.js` (bloco `modulos/mapa-saude-indigena`) (Leaflet falso em `tests/modulos/leaflet-falso.js`),
+`tests/casca-sessao-e-interface-na-tela.test.js` (bloco `modulos/mapa-saude-indigena`: também o
+voo ao abrir o DSEI e à CASAI, o cartão e o teclado das bolhas, os chips e o "Voltar ao Brasil"
+do canto) (Leaflet falso em `tests/modulos/leaflet-falso.js`, com `<path>` nas bolhas),
+`tests/demais-regras.test.ts` (bloco `lib/pontos-de-interesse`: chips e números do cartão),
 `tests/casca-com-modulo-simulado-na-tela.test.ts` (bloco `modulos/mapa`: a aba e o DSEI no endereço), `tests/demais-telas-na-tela.test.ts` (bloco `modulos/cartao-do-mapa`), `tests/demais-regras.test.ts` (blocos `lib/aba-do-mapa` e `lib/processos-do-dsei`), `tests/repositorio-e-banco.test.ts` (bloco `aba-mapa-no-banco`: migration, ensaio e rollback), `tests/casca-sessao-e-interface.test.js` (bloco `rotas`), `tests/mapas-e-visao-geral-na-tela.test.js` (bloco `dica-dentro-do-mapa`),
 `tests/mapas-e-visao-geral-na-tela.test.js` (bloco `modulos/modo-de-edicao`) (hoje só Projetos) e, do Mapa DSEIs,
 `tests/mapas-e-visao-geral.test.js` (bloco `mapa-simples`), `tests/mapas-e-visao-geral-na-tela.test.js` (bloco `map-base-layer-simples`) e

@@ -153,7 +153,25 @@ export function criarLeafletFalso({ aoCriarMapa } = {}) {
   const L = {
     map,
     layerGroup: grupo,
-    circleMarker: (latlng, opcoes) => camada("circleMarker", latlng, opcoes),
+    // Um <path> por bolha, como o renderizador SVG (foco do teclado, destaque).
+    circleMarker: (latlng, opcoes) => {
+      const c = camada("circleMarker", latlng, opcoes);
+      c.elemento = document.createElementNS(
+        "http://www.w3.org/2000/svg",
+        "path",
+      );
+      if (opcoes?.className) c.elemento.setAttribute("class", opcoes.className);
+      c.getElement = () => c.elemento;
+      c.openTooltip = () => {
+        c.dicaAberta = true;
+        return c;
+      };
+      c.closeTooltip = () => {
+        c.dicaAberta = false;
+        return c;
+      };
+      return c;
+    },
     marker: (latlng, opcoes) => camada("marker", latlng, opcoes),
     polyline: (pontos, opcoes) => camada("polyline", pontos, opcoes),
     // Um caminho SVG por camada, como o renderizador do Leaflet (Mapa DSEIs).
