@@ -167,15 +167,14 @@ bloco("aba-relatorios-no-banco", () => {
     Postgres de verdade (PGlite), sobre o catálogo de abas copiado do banco
     (fixtures/sql-do-banco/catalogo-de-abas-em-18-11.sql) com as linhas da
     resposta real do menu (fixtures/listar-abas-do-menu-triagem.json, que já
-    traz o nome novo: o "hoje" é ela com "Painéis"). Confere também o ensaio
-    (roda, aprova e não grava) e o rollback.
+    traz o nome novo: o "hoje" é ela com "Painéis"). Aplicada em 23/11/2026:
+    o arquivo, como entrou no banco, está em tests/fixtures/sql-do-banco/ (o
+    rollback e o ensaio saíram com ela).
   */
   const ler = (caminho: string) =>
     readFileSync(caminho, "utf8").replace(/\r\n/g, "\n");
   const NOME = "20261123180000_aba_paineis_vira_relatorios.sql";
-  const migration = () => ler(`supabase/migrations/${NOME}`);
-  const ensaio = () => ler(`supabase/ensaios/${NOME}`);
-  const rollback = () => ler(`supabase/rollback/${NOME}`);
+  const migration = () => ler(`tests/fixtures/sql-do-banco/${NOME}`);
 
   interface AbaDoMenu {
     co_aba: string;
@@ -247,27 +246,6 @@ bloco("aba-relatorios-no-banco", () => {
       // Idempotente: de novo, nada muda.
       await db.exec(migration());
       expect(await menu(db)).toEqual(resumo(DEPOIS));
-    });
-
-    it("o rollback volta o nome antigo", async () => {
-      const db = await banco();
-      await db.exec(migration());
-      await db.exec(rollback());
-      expect(await menu(db)).toEqual(resumo(HOJE));
-    });
-
-    it("o ensaio roda a migration sem mudança, aprova e não grava", async () => {
-      const corpo = (sql: string, de: RegExp, ate: RegExp) => {
-        const inicio = sql.search(de);
-        const fim = sql.search(ate);
-        return sql.slice(inicio, fim).replace(/^.*\n/, "").trim();
-      };
-      expect(corpo(ensaio(), /-- MIGRATION -/, /-- CONFERÊNCIAS -/)).toBe(
-        corpo(migration(), /^begin;$/m, /^commit;$/m),
-      );
-      const db = await banco();
-      await db.exec(ensaio());
-      expect(await menu(db)).toEqual(resumo(HOJE));
     });
   });
 });
