@@ -5,7 +5,7 @@
   Quem está com uma versão antiga aberta não tem esta lista: o build copia as
   novidades marcadas com `visivel: true` para o `versao.json` publicado
   (vite.config.js), e a página antiga lê de lá. O aviso mostra a mais recente
-  que a versão aberta ainda não tem; sem nenhuma, só "Há uma versão nova".
+  que a versão aberta ainda não tem; sem nenhuma, só "O Yeendé foi atualizado".
 
   Como adicionar (README, "Novidades do aviso de versão"): uma entrada no topo,
   `id` único (data + assunto), `data` (AAAA-MM-DD), `texto` curto, sem ponto
@@ -24,6 +24,13 @@ export type Novidade = {
 export const NOVIDADES_PUBLICADAS = 5;
 
 export const NOVIDADES: readonly Novidade[] = [
+  {
+    id: "2026-11-23-aviso-de-versao-em-cartao",
+    data: "2026-11-23",
+    texto:
+      "aviso de versão nova num cartão no canto, com agora não e atualizar",
+    visivel: false,
+  },
   {
     id: "2026-11-18-aba-mapa",
     data: "2026-11-18",

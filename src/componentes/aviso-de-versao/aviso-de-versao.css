@@ -1,41 +1,140 @@
 /*
-  Aviso de versão nova (aviso-de-versao.tsx): a faixa `.ui-aviso` de src/ui/,
-  logo abaixo do cabeçalho, com o texto e as ações na mesma linha. Quebra em
-  duas no celular.
+  Aviso de versão nova (aviso-de-versao.tsx): cartão no canto de baixo, à
+  direita, acima da arara da Aya (aya.css: a arara fica a até 24px da borda e
+  tem 56px; ALTURA_DA_ARARA em src/modulos/aya/mascote/mascote.tsx). No
+  celular, embaixo na largura da tela, acima da arara e da área segura do pé
+  (barra de gestos).
+
+  Camada: a da barra lateral (--z-sidebar). Acima do conteúdo; abaixo da
+  gaveta do celular, da Aya aberta (10038) e dos menus: quem abriu um deles
+  escolheu olhar para ele.
 */
 .aviso-de-versao {
+  --aviso-de-versao-folga-da-aya: calc(
+    clamp(16px, 2vw, 24px) + 56px + var(--space-4)
+  );
+  position: fixed;
+  z-index: var(--z-sidebar);
+  right: clamp(14px, 2vw, 24px);
+  bottom: var(--aviso-de-versao-folga-da-aya);
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2) var(--space-3);
-  margin: var(--space-3) var(--space-3) 0;
-  box-shadow: var(--shadow-card);
+  align-items: flex-start;
+  gap: var(--space-3);
+  width: min(380px, calc(100vw - 2 * var(--space-4)));
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-overlay);
+  color: var(--text-primary);
+  animation: aviso-de-versao-entrada var(--motion-base) var(--ease-standard);
 }
-.aviso-de-versao-texto {
-  flex: 1 1 260px;
-  margin: 0;
+.aviso-de-versao[data-tone="warning"] {
+  border-color: color-mix(in srgb, var(--state-warning) 40%, transparent);
+}
+
+/* O ícone num círculo do tom do aviso. */
+.aviso-de-versao-icone {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: var(--space-8);
+  height: var(--space-8);
+  border-radius: var(--radius-full);
+  background: var(--state-info-soft);
+  color: var(--state-info);
+}
+.aviso-de-versao[data-tone="warning"] .aviso-de-versao-icone {
+  background: var(--state-warning-soft);
+  color: var(--state-warning);
+}
+
+.aviso-de-versao-corpo {
+  display: grid;
+  flex: 1;
+  gap: var(--space-1);
   min-width: 0;
 }
+.aviso-de-versao-corpo p {
+  margin: 0;
+}
+.aviso-de-versao-titulo {
+  font-size: var(--text-base);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.4;
+}
+.aviso-de-versao-texto,
 .aviso-de-versao-novidade {
   color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+  line-height: 1.45;
+}
+.aviso-de-versao-novidade {
   font-weight: var(--font-weight-medium);
 }
 .aviso-de-versao-pendencia {
-  flex-basis: 100%;
-  order: 3;
-  margin: 0;
   color: var(--state-warning);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-medium);
 }
+
 .aviso-de-versao-acoes {
   display: flex;
-  align-items: center;
-  gap: var(--space-1);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
 }
-.aviso-de-versao .btn.small {
+.aviso-de-versao-acoes .btn.small {
   min-height: 32px;
   padding: 0 var(--space-3);
   font-size: var(--text-body-sm);
 }
-.aviso-de-versao-fechar.btn.small {
-  padding: 0 var(--space-2);
+
+.aviso-de-versao-girando {
+  animation: ui-carregando-giro 0.8s linear infinite; /* acabamento: permitido(curva) — rotação contínua; o linear é o que faz o giro parecer constante */
+}
+
+@keyframes aviso-de-versao-entrada {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Celular: embaixo, na largura da tela, acima da arara (aya.css, 900px) e da barra de gestos. */
+@media (max-width: 900px) {
+  .aviso-de-versao {
+    --aviso-de-versao-folga-da-aya: calc(
+      env(safe-area-inset-bottom, 0px) + var(--space-4) + 56px + var(--space-3)
+    );
+    right: var(--space-3);
+    left: var(--space-3);
+    width: auto;
+  }
+}
+@media (max-width: 600px) {
+  /* A arara encolhe para 46px no celular estreito (aya.css). */
+  .aviso-de-versao {
+    --aviso-de-versao-folga-da-aya: calc(
+      env(safe-area-inset-bottom, 0px) + var(--space-4) + 46px + var(--space-3)
+    );
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aviso-de-versao,
+  .aviso-de-versao-girando {
+    animation: none;
+  }
+}
+
+@media print {
+  .aviso-de-versao {
+    display: none;
+  }
 }

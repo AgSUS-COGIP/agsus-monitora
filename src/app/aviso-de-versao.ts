@@ -19,10 +19,12 @@ import { guardaDeAlteracoes } from "./guarda-de-alteracoes.ts";
   aba e ao voltar o foco (no máximo uma vez por minuto). Aba oculta: o relógio
   para. Sem versão gravada (npm run dev:frontend, testes) não confere nada.
 
-  A pessoa decide quando atualizar: nada recarrega sozinho. "Atualizar agora"
-  com rascunho ou mudança não salva (src/app/guarda-de-alteracoes.ts) não
-  recarrega e pede para salvar antes. Fechar o aviso vale só para aquela
-  versão: uma mais nova o traz de volta.
+  A pessoa decide quando atualizar: nada recarrega sozinho. "Atualizar" com
+  rascunho ou mudança não salva (src/app/guarda-de-alteracoes.ts) não
+  recarrega e pede para salvar antes; aceito, o aviso fica "Atualizando…" até
+  a página recarregar (o service worker novo só assume aí: aplicarVersaoNova,
+  src/modules/pwa-lifecycle.ts). "Agora não" vale só para aquela versão: uma
+  mais nova o traz de volta.
 
   Tela antiga: uma RPC falhou como só falha a versão anterior (evento de
   src/lib/sessao/supabaseClient.ts), ou um pedaço sob demanda não baixou
@@ -62,6 +64,8 @@ export type EstadoDoAviso = {
   fechado: boolean;
   /** Pediu para atualizar com algo por salvar. */
   pendencia: boolean;
+  /** Aceitou: a página está recarregando com a versão nova. */
+  atualizando: boolean;
 };
 
 type Documento = Pick<
@@ -124,6 +128,7 @@ export function criarAvisoDeVersao({
     telaAntiga: false,
     fechado: false,
     pendencia: false,
+    atualizando: false,
   });
   const ouvintes = new Set<() => void>();
   let relogio: ReturnType<typeof setInterval> | null = null;
@@ -251,12 +256,13 @@ export function criarAvisoDeVersao({
     },
     /** Recarrega, se nada se perde; senão, pede para salvar antes. true = recarregou. */
     atualizarAgora(): boolean {
+      if (estado.atualizando) return false;
       if (temPendencia()) {
         mudar({ pendencia: true });
         return false;
       }
       if (!confirmarSaida()) return false;
-      mudar({ pendencia: false });
+      mudar({ pendencia: false, atualizando: true });
       recarregar();
       return true;
     },

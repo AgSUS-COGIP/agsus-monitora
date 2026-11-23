@@ -17,7 +17,7 @@ de 17/11/2026). Esta nota diz o que o service worker guarda, o que abre sem inte
 | `sw-policy.js`                                   | a política pura (estratégia, o que se guarda, limite, hash), testada à parte |
 | `src/lib/carga/cache-do-service-worker.ts`       | o que o build grava no `sw.js`: a versão e a lista `PRECACHE`                |
 | `vite.config.js` (`copyProgressiveWebAppAssets`) | monta a lista e publica `sw.js`, `sw-policy.js`, `offline.html`, ícones      |
-| `src/modules/pwa-lifecycle.ts`                   | registra o service worker e aplica a versão nova na próxima troca de página  |
+| `src/modules/pwa-lifecycle.ts`                   | registra o service worker; o novo só assume no "Atualizar" do aviso          |
 | `src/app/casca/aviso-de-conexao.tsx`             | "Sem conexão com a internet" e "Conexão restabelecida"                       |
 
 ## O que o service worker guarda
@@ -56,7 +56,7 @@ anterior e o pede ao abrir uma tela pela primeira vez. Antes de 18/11/2026 a tel
 
 1. **Service worker da versão anterior:** o pedaço vem do cache (cache primeiro para arquivo com
    hash; antes, rede primeiro devolvia o 404 mesmo com a cópia guardada).
-2. **Service worker novo já no comando** (a página pede `SKIP_WAITING` assim que ele instala): o
+2. **Service worker novo já no comando** (alguém aceitou a versão nova noutra aba): o
    `activate` copia para o cache novo os arquivos com hash da versão anterior que a nova não tem
    (`entriesToCarry`), antes de apagar o cache anterior. Entram no limite de 150; os herdados de
    versões mais velhas saem primeiro.
@@ -64,8 +64,20 @@ anterior e o pede ao abrir uma tela pela primeira vez. Antes de 18/11/2026 a tel
    (`importarComRecarga`). A falha do CSS da tela ("Unable to preload CSS", do Vite) conta como
    falha de carregamento; antes não contava e a recarga não acontecia.
 4. **Outro `import()` fora das telas** (modal do edital, Aya, PDF): o Vite dispara
-   `vite:preloadError` e o aviso de versão vira "Atualize para continuar", com "Atualizar agora"
+   `vite:preloadError` e o aviso de versão vira "Atualize para continuar", com "Atualizar"
    (`src/app/aviso-de-versao.ts`; não recarrega sozinho, porque pode haver algo digitado).
+
+## Quando o service worker novo assume
+
+Como no SIGAV: só quando a pessoa aceita. Instalado, o novo fica esperando
+(`registration.waiting`) e a página segue com o anterior e o cache dele (a camada 1 acima). O
+"Atualizar" do aviso de versão chama `aplicarVersaoNova` (`src/modules/pwa-lifecycle.ts`): manda
+`SKIP_WAITING` ao que espera, o controlador troca e a página recarrega uma vez; se a troca não vier
+em 4 s, recarrega assim mesmo, e nunca duas vezes. Sem service worker esperando, recarrega na hora
+(a navegação é rede primeiro, então vem a versão nova). Antes de 23/11/2026 a própria página mandava
+o `SKIP_WAITING` assim que o novo instalava. O novo assume todas as abas: nas que não pediram, a
+recarga espera a próxima troca de página (`aplicarAtualizacaoPendente`, depois da guarda de
+alterações não salvas). Fechar todas as abas também o põe no comando (regra do navegador).
 
 ## Dados sem rede
 

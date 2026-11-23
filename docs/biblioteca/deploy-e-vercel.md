@@ -141,15 +141,17 @@ casaisNacionais, lidoEm }` (a lista de DSEIs do mapa e as CASAIs nacionais, loca
 
 ## Versão nova e novidades
 
-- Cada build publica `/versao.json`. Quem está com o sistema aberto vê a faixa "Há uma versão nova
-  do MONITORA" (`src/app/aviso-de-versao.ts`, componente `src/componentes/aviso-de-versao/`).
+- Cada build publica `/versao.json`. Quem está com o sistema aberto vê o cartão "O Yeendé foi
+  atualizado" no canto de baixo, com "Agora não" (volta só numa versão mais nova) e "Atualizar"
+  (`src/app/aviso-de-versao.ts`, componente `src/componentes/aviso-de-versao/`). O service worker
+  novo só assume nesse aceite ([[pwa-e-modo-offline]]).
 - **Mudança visível para quem usa entra no topo de `NOVIDADES` em `src/lib/base/novidades.ts`, no mesmo
   PR.** Entrada nova: `id` único (data + assunto), `data` (AAAA-MM-DD), `texto` curto, sem ponto
   final, em minúscula ("motivo padronizado na reabertura"), e `visivel: true` só quando a mudança
   importa para quem usa (correção interna fica `false`).
 - O build copia as novidades com `visivel: true` para o `versao.json` (`vite.config.js`), e a
   página antiga lê de lá; o aviso mostra a mais recente que a versão aberta ainda não tem (sem
-  nenhuma, só "Há uma versão nova").
+  nenhuma, só "O Yeendé foi atualizado").
 - `src/lib/base/versao-do-sistema.ts` lê o `versao.json`, escolhe a novidade e dá o sinal de "tela
   antiga" (PGRST202 / "recarregue a página"). Tela sob demanda baixada com a versão velha recarrega
   uma vez (`importarComRecarga`); outro pedaço que não baixa (`vite:preloadError`) vira "Atualize

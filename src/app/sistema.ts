@@ -24,6 +24,7 @@ import {
 import { criarEstadoDoEncerramento } from "../modulos/encerramento-do-edital/estado.ts";
 import { resumoDoDia } from "../modulos/resumo-do-dia/estado.ts";
 import { criarAvisoDeVersao } from "./aviso-de-versao.ts";
+import { aplicarVersaoNova } from "../modules/pwa-lifecycle.ts";
 import { avisar, mostrarCarregamento } from "./avisos.ts";
 import { criarCarga } from "./carga.ts";
 import { configuracaoDoApp as configuracao } from "./configuracao.ts";
@@ -52,7 +53,7 @@ import type { OrigemDaEntrada } from "./sessao.ts";
     carga.ts             carga dos dados, cópia da sessão, Realtime
     inicio-da-sessao.ts  configuração, painéis, abas, situação e unidades numa chamada
     pagina-aberta.ts     a página aberta pede as linhas e abre a Visão geral
-    aviso-de-versao.ts   versão nova publicada: aviso no topo, sem recarregar à força
+    aviso-de-versao.ts   versão nova publicada: cartão no canto, sem recarregar à força
     encerramento-do-edital/  tela de fim de edital e selos no perfil (src/modulos/)
     presenca.ts          auditoria, heartbeat e Pessoas online
     vigia-do-catalogo.ts página desligada pela coordenação fecha sem recarregar
@@ -118,9 +119,13 @@ export const presenca = criarPresenca({
   aoRegistrar: vigiaDoCatalogo.aoRegistrarPresenca,
 });
 
-/* Versão nova publicada (/versao.json, sem banco): aviso no topo; a pessoa decide. */
+/*
+  Versão nova publicada (/versao.json, sem banco): cartão no canto; a pessoa
+  decide. Aceito, o service worker novo assume e a página recarrega uma vez.
+*/
 export const avisoDeVersao = criarAvisoDeVersao({
   confirmarSaida: confirmarSaidaPadrao,
+  recarregar: () => aplicarVersaoNova(),
 });
 
 const viewAtual = () => navegacao.obter().view;
