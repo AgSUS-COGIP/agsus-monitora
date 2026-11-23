@@ -797,6 +797,14 @@
   cursor: pointer;
   vertical-align: middle;
 }
+/* No toque, o "ⓘ" (13px de largura) ganha o alvo de 44 × 44px. */
+@media (pointer: coarse) {
+  .visao-geral-numero-info {
+    min-width: 44px;
+    min-height: 44px;
+    margin-left: 0;
+  }
+}
 .visao-geral-numero-info:hover {
   color: var(--text-primary);
 }

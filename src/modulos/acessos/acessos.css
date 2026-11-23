@@ -81,33 +81,15 @@ td.acessos-vazio {
   opacity: 0.6;
   cursor: not-allowed;
 }
-.acessos-busca {
-  position: relative;
-  display: block;
-  width: min(320px, 100%);
-}
-.acessos-busca > .icone {
-  position: absolute;
-  top: 50%;
-  left: var(--space-3);
-  color: var(--text-secondary);
-  transform: translateY(-50%);
-  pointer-events: none;
-}
-.acessos-busca input {
-  width: 100%;
-  padding-left: calc(var(--space-3) + 16px + var(--space-2));
-}
-
 /* ── Filtros em linha (design.md 11.3) ────────────────────────────────────── */
 .acessos-filtros {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: end;
   gap: var(--space-3);
 }
-.acessos-filtros select {
-  min-width: 160px;
+.acessos-filtros > .ui-barra-busca {
+  max-width: 320px;
 }
 .acessos-contagem-resultados {
   margin-left: auto;
@@ -286,7 +268,7 @@ td.acessos-vazio {
   display: flex;
   gap: var(--space-2);
 }
-.acessos-mestre-topo .acessos-busca {
+.acessos-mestre-topo .ui-barra-busca {
   flex: 1;
 }
 .acessos-mestre ul {
@@ -601,8 +583,10 @@ td.acessos-vazio {
   border-radius: var(--radius-md);
   box-shadow: none;
 }
-.acessos-tela .acessos-busca input {
+/* O padding das regras de input acima apagava o recuo da lupa da .ui-barra-busca. */
+.acessos-tela .ui-barra-busca input {
   width: 100%;
+  padding-left: var(--space-8);
 }
 .acessos-tela .ui-campo input,
 .acessos-gaveta .ui-campo input {
@@ -726,9 +710,6 @@ td.acessos-vazio {
   color: var(--text-primary);
   font-size: var(--text-body);
   font-weight: 400;
-}
-.acessos-tela .acessos-busca input {
-  padding-left: calc(var(--space-3) + 16px + var(--space-2));
 }
 .acessos-tabela td,
 .acessos-tabela td small,

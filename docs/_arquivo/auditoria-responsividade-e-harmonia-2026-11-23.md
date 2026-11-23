@@ -272,6 +272,12 @@ trava de 375 e 320px ligada e verde no CI.
 
 ### Lote 4 — Filtros, controles e alvos de toque
 
+**Feito em 23/11/2026.** Na auditoria seguinte: 0 alvo < 44px a 375 e 768px (eram 163 na tela),
+0 campo feito à mão (eram 8), 0 espaço fora da escala em `input`, `select` e `.ui-tabela-busca`.
+A trava de 375 e 320px do lote 3 passou a cobrir todo alvo de toque, não só o da tabela. A regra
+de toque de `ui.css` vale em qualquer tela e inclui abas, botão só com ícone e o rótulo em volta
+da caixa de marcar; regras locais que prendiam os campos em 36–40px (Entrevistas) saíram.
+
 - A regra `@media (pointer: coarse)` de `ui.css` passa a valer para os controles em qualquer
   tela (sem o escopo de `.ui-tela`), com `.btn.icon` e `.btn.contorno` em 44 × 44px; abas,
   segmentados, chips e o `label.modulos-beta` de Configurações incluídos.
