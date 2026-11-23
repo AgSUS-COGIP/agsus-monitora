@@ -2629,11 +2629,13 @@ bloco("app/pagina-aberta", () => {
   }
 
   describe("as páginas que usam as linhas", () => {
-    it("Visão geral, Mapa, Editais, Cronograma e Lista de aprovados; não a Avaliação documental", () => {
+    it("Visão geral, Mapa, Editais, Cronograma, Lista de aprovados, Classificação e Conduzir entrevistas; não a Avaliação documental", () => {
       expect([...TELAS_COM_LINHAS].sort()).toEqual(
         [
           "approved",
           "calendario",
+          "classificacao",
+          "conduzir-entrevistas",
           "dashboard",
           "edital",
           "mapa",
@@ -2645,7 +2647,6 @@ bloco("app/pagina-aberta", () => {
         "analises",
         "recursos",
         "entrevistas",
-        "classificacao",
         "selecao",
         "config",
         "panel:bi",
