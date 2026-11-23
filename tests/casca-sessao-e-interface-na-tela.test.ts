@@ -9346,9 +9346,9 @@ bloco("componentes/pessoas-online", () => {
     /* 13/11/2026: o "3 online" saiu do cabeçalho e foi para o menu da conta. */
     it("fica no menu da conta, como uma linha, e a lista abre logo abaixo", () => {
       const topo = readFileSync("src/app/casca/topo.tsx", "utf8");
-      const menu = topo.slice(
-        topo.indexOf('<div className="top-user-popover">'),
-      );
+      const inicioDoMenu = topo.indexOf('<div className="top-user-popover');
+      expect(inicioDoMenu).toBeGreaterThan(-1);
+      const menu = topo.slice(inicioDoMenu);
       const acoes = topo.slice(
         topo.indexOf('<div className="actions">'),
         topo.indexOf("</header>"),
