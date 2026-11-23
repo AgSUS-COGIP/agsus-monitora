@@ -6719,7 +6719,7 @@ bloco("arte-no-primeiro-quadro", () => {
     it("o CSS esconde o cartão e a arte enquanto espera; atrasada, a arte entra com transição", () => {
       const css = readFileSync("src/styles/platform-shell.css", "utf8");
       expect(css).toContain(
-        "html.arte-esperando #loginScreen > * {\n  visibility: hidden;\n}",
+        "html.arte-esperando #loginScreen > *,\nhtml.marca-esperando #loginScreen > * {\n  visibility: hidden;\n}",
       );
       expect(css).toContain(
         "html.arte-atrasada:not(.arte-pronta) .login-screen::after {\n  opacity: 0;\n}",
