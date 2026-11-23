@@ -1499,8 +1499,6 @@ bloco("tipografia-das-telas", () => {
     "src/modulos/entrevistas/entrevistas.css .entrevistas-aba-da-ficha-check",
     // Seta do botão do seletor múltiplo (ícone).
     "src/styles/multi-select-busca.css .multi-select-trigger .fa-chevron-down",
-    // Seta do menu da conta, no cabeçalho (ícone).
-    "src/styles/platform-shell.css .top-user-chevron",
   ]);
 
   function cssDe(pasta: string): string[] {
