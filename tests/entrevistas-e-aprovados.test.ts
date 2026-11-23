@@ -1376,20 +1376,24 @@ bloco("lib/aprovados-colunas-e-acoes-da-linha", () => {
 
 bloco("lib/aprovados-ativos-e-historico", () => {
   /*
-    Ativos (a lista de trabalho): edital vigente e lista ativa. Histórico: o
-    edital concluído, cancelado ou desativado e a lista inativa.
+    Ativos (a lista de trabalho): lista ativa. Histórico: a lista inativa e a
+    de edital cancelado ou desativado. O edital concluído fica nos Ativos: é
+    a lista dele que está em convocação (em produção, com a regra de Editais,
+    os 85 editais foram para o Histórico e os Ativos ficaram vazios).
   */
   const LINHAS = [
     { id: "e1", status: "Em andamento" },
     { id: "e2", status: "Concluído" },
     { id: "e3", status: "Em andamento", ativo: false },
     { id: "e4", status: "Suspenso" },
+    { id: "e5", status: "Cancelado" },
   ];
   const LISTAS = [
     { edital_id: "e1", ativo: true },
     { edital_id: "e2", ativo: true },
     { edital_id: "e3", ativo: true },
     { edital_id: "e4", ativo: false },
+    { edital_id: "e5", ativo: true },
     { edital_id: "e9", ativo: true },
   ];
   const CANDIDATOS = [
@@ -1397,28 +1401,34 @@ bloco("lib/aprovados-ativos-e-historico", () => {
     { candidato_id: "b", edital_id: "e2", lista_ativa: true },
     { candidato_id: "c", edital_id: "e3", lista_ativa: true },
     { candidato_id: "d", edital_id: "e4", lista_ativa: false },
+    { candidato_id: "f", edital_id: "e5", lista_ativa: true },
     { candidato_id: "e", edital_id: "e9", lista_ativa: true },
   ];
 
-  it("separa por edital vigente e lista ativa, com a contagem por situação", () => {
+  it("separa pela lista ativa; concluído fica nos Ativos", () => {
     const { ativos, historico } = separarAprovados(LISTAS, CANDIDATOS, LINHAS);
-    expect(ativos.candidatos.map((c) => c.candidato_id)).toEqual(["a", "e"]);
-    expect(ativos.listas.map((l) => l.edital_id)).toEqual(["e1", "e9"]);
-    // Edital sem linha do monitoramento conta como vigente (sem situação).
-    expect(ativos.editais).toBe(2);
-    expect(ativos.situacoes).toEqual([
-      { rotulo: "Em andamento", quantos: 1 },
-      { rotulo: "Sem situação", quantos: 1 },
-    ]);
-    // Concluído, desativado e a lista inativa (mesmo de edital Suspenso).
-    expect(historico.candidatos.map((c) => c.candidato_id)).toEqual([
+    expect(ativos.candidatos.map((c) => c.candidato_id)).toEqual([
+      "a",
       "b",
+      "e",
+    ]);
+    expect(ativos.listas.map((l) => l.edital_id)).toEqual(["e1", "e2", "e9"]);
+    // Edital sem linha do monitoramento conta como vigente (sem situação).
+    expect(ativos.editais).toBe(3);
+    expect(ativos.situacoes.map((s) => s.rotulo).sort()).toEqual([
+      "Concluído",
+      "Em andamento",
+      "Sem situação",
+    ]);
+    // Desativado, cancelado e a lista inativa (mesmo de edital Suspenso).
+    expect(historico.candidatos.map((c) => c.candidato_id)).toEqual([
       "c",
       "d",
+      "f",
     ]);
     expect(historico.editais).toBe(3);
     expect(historico.situacoes.map((s) => s.rotulo).sort()).toEqual([
-      "Concluído",
+      "Cancelado",
       "Desativado",
       "Suspenso",
     ]);
@@ -1427,7 +1437,7 @@ bloco("lib/aprovados-ativos-e-historico", () => {
   it("o pedido abre a vista onde o edital ou a pessoa está", () => {
     const separados = separarAprovados(LISTAS, CANDIDATOS, LINHAS);
     const id = (c: { candidato_id: string }) => c.candidato_id;
-    expect(vistaDoPedido(separados, "ativos", { editalIds: ["e2"] }, id)).toBe(
+    expect(vistaDoPedido(separados, "ativos", { editalIds: ["e5"] }, id)).toBe(
       "historico",
     );
     expect(

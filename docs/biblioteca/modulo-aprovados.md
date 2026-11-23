@@ -24,9 +24,10 @@ todas ordenáveis. As ações da linha são uma principal com nome ("Mudar statu
 lista importada e a data, e "Ver nota e classificação na Classificação").
 
 **Ativos e Histórico** (19/11/2026, abas Aprovados e Resumo por cargo): a lista de trabalho
-(**Ativos**, o padrão) tem só os candidatos de edital vigente e lista ativa; o edital concluído,
-cancelado ou desativado (`src/lib/editais/editais-ativos.ts`, pelo status das linhas do
-monitoramento) e a lista inativa ficam no **Histórico**, a um clique (`AtivosEHistorico`, com a
+(**Ativos**, o padrão) tem os candidatos de lista ativa; a lista inativa e a de edital cancelado ou
+desativado (pelo status das linhas do monitoramento) ficam no **Histórico**, a um clique. O edital
+**concluído** fica nos Ativos: é a lista dele que está em convocação (com a regra de Editais, em
+23/11/2026 os 85 editais foram para o Histórico e os Ativos ficaram vazios) (`AtivosEHistorico`, com a
 contagem de editais por situação; a vista volta no F5). O filtro de Edital, os indicadores, a
 contagem e a exportação partem da vista; trocar de vista recomeça os filtros. Um pedido de filtro
 (faixa das etapas, Visão geral) de um edital do Histórico abre o Histórico nele. A Convocação, o

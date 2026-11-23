@@ -21,7 +21,7 @@ publicada do resultado final da Classificação; `src/lib/aprovados/publicacao-d
 ## Lista inativa
 
 **perguntas:** o que acontece com uma lista inativa | lista inativa | listas inativas | ativar lista | inativar lista
-**resposta:** Listas inativas continuam consultáveis, mas seus candidatos não podem ser alterados, nem receber anexos. Nas abas Aprovados e Resumo por cargo, elas ficam no "Histórico", junto com os editais concluídos, cancelados ou desativados: a vista "Ativos", a que abre, mostra só a lista de trabalho (edital em andamento e lista ativa), e os indicadores, os filtros e a exportação contam só a vista escolhida. Ativar ou inativar a lista é de quem pode importar (Editor em Importação, como o grupo Gestor); substituir ou remover o XLSX de uma lista existente é do Administrador em Importação.
+**resposta:** Listas inativas continuam consultáveis, mas seus candidatos não podem ser alterados, nem receber anexos. Nas abas Aprovados e Resumo por cargo, elas ficam no "Histórico", junto com as listas de editais cancelados ou desativados: a vista "Ativos", a que abre, mostra a lista de trabalho (as listas ativas, inclusive as de edital já concluído, que estão em convocação), e os indicadores, os filtros e a exportação contam só a vista escolhida. Ativar ou inativar a lista é de quem pode importar (Editor em Importação, como o grupo Gestor); substituir ou remover o XLSX de uma lista existente é do Administrador em Importação.
 **fonte:** src/lib/aprovados/lista-aprovados-rules.ts; src/lib/acessos/access-roles.ts
 
 ## Importar a lista
