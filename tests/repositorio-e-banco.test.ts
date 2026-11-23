@@ -1540,8 +1540,10 @@ bloco("tokens-do-acabamento", () => {
 
 bloco("registro-de-erros-no-banco", () => {
   /*
-    A migration 20261123150000 (registro dos erros do navegador, ainda não
-    aplicada: está em supabase/migrations/) num Postgres de verdade (PGlite).
+    A migration 20261123150000 (registro dos erros do navegador, aplicada em
+    23/11/2026: o arquivo, do jeito que entrou no banco, está em
+    tests/fixtures/sql-do-banco/; o rollback e o ensaio saíram com ela) num
+    Postgres de verdade (PGlite).
     Imitações: os papéis, a sessão (auth.uid() lê teste.uid ou, como o
     Supabase, request.jwt.claims), o administrador global
     (FC_ADMIN_GLOBAL_ATIVO lê teste.admin) e as áreas. Dados fictícios.
@@ -1549,9 +1551,7 @@ bloco("registro-de-erros-no-banco", () => {
   const ler = (caminho: string) =>
     readFileSync(caminho, "utf8").replace(/\r\n/g, "\n");
   const NOME = "20261123150000_registro_de_erros_da_aplicacao.sql";
-  const MIGRATION = ler(`supabase/migrations/${NOME}`);
-  const ROLLBACK = ler(`supabase/rollback/${NOME}`);
-  const ENSAIO = ler(`supabase/ensaios/${NOME}`);
+  const MIGRATION = ler(`tests/fixtures/sql-do-banco/${NOME}`);
 
   const PESSOA = "11111111-1111-4111-8111-111111111111";
   const ADMIN = "22222222-2222-4222-8222-222222222222";
@@ -1921,45 +1921,6 @@ insert into public."TB_AREA" values ('saude-indigena'), ('sede'), ('projetos');
           db.query(`select public.listar_erros_da_aplicacao('3f2a%')`),
         ),
       ).toBe("22023");
-    });
-  });
-
-  describe("ensaio e rollback", () => {
-    it("o ensaio traz o corpo da migration sem mudança, roda e desfaz", async () => {
-      const corpo = /^begin;\n([\s\S]*)^commit;\n/m.exec(MIGRATION)?.[1];
-      expect(corpo).toBeTruthy();
-      expect(ENSAIO).toContain(String(corpo));
-      expect(ENSAIO.trimEnd().endsWith("rollback;")).toBe(true);
-      const db = await bancoAntes();
-      await db.exec(ENSAIO);
-      const { rows } = await db.query<{ t: string | null }>(
-        `select to_regclass('public."TL_ERRO_APLICACAO"')::text as t`,
-      );
-      expect(rows[0]?.t).toBeNull();
-    });
-
-    it("o rollback volta ao banco de antes e recusa rodar sem a migration", async () => {
-      const objetos = async (db: PGlite) =>
-        (
-          await db.query<{ nome: string }>(
-            `select n.nspname || '.' || p.proname as nome from pg_proc p
-               join pg_namespace n on n.oid = p.pronamespace
-              where n.nspname in ('public', 'private')
-             union all
-             select 'tabela ' || c.relname from pg_class c
-               join pg_namespace n on n.oid = c.relnamespace
-              where n.nspname = 'public' and c.relkind = 'r'
-             order by 1`,
-          )
-        ).rows.map((r) => r.nome);
-      const antes = await bancoAntes();
-      const deHoje = await objetos(antes);
-      expect(await codigoDoErro(antes.exec(ROLLBACK))).toBe("P0001");
-
-      const db = await bancoMigrado();
-      expect(await objetos(db)).not.toEqual(deHoje);
-      await db.exec(ROLLBACK);
-      expect(await objetos(db)).toEqual(deHoje);
     });
   });
 });
