@@ -1,16 +1,16 @@
 import type { jsPDF as TipoJsPdf } from "jspdf";
-import type { CelulaDaPlanilha } from "../../classificacao/tipos-dos-documentos.ts";
+import type { CelulaDaPlanilha } from "../classificacao/tipos-dos-documentos.ts";
 import type {
   BibliotecasDoPdf,
   MarcaDoPdf,
-} from "../../avaliacao-documental/espelho-em-pdf.ts";
+} from "../avaliacao-documental/espelho-em-pdf.ts";
 import type {
   PedidoDaExportacao,
   RegistroDaExportacao,
-} from "./exportacao-da-lista-de-aprovados.ts";
+} from "../aprovados/exportacao/exportacao-da-lista-de-aprovados.ts";
 import type { ResumoPorCargoEStatus } from "./resumo-por-cargo-e-status.ts";
-import { textoParaOPdf } from "../../avaliacao-documental/espelho-em-pdf.ts";
-import { CABECALHO_PADRAO } from "../../base/cabecalho-dos-documentos.ts";
+import { textoParaOPdf } from "../avaliacao-documental/espelho-em-pdf.ts";
+import { CABECALHO_PADRAO } from "../base/cabecalho-dos-documentos.ts";
 import {
   identificacaoDoResumo,
   numerosDaContagem,

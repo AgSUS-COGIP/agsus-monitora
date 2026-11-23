@@ -34,7 +34,8 @@ Escolhido entre três prévias (A, painel de decisão; B, mapa em primeiro plano
 trabalho). De cima para baixo:
 
 - **Cabeçalho** (`Cabecalho`): saudação e "N editais têm etapa nos próximos 7 dias · Ver
-  cronograma" à esquerda; hora da carga, "Filtros (n)", Atualizar e Exportar à direita. Substituiu
+  cronograma" à esquerda; hora da carga, "Filtros (n)", Atualizar, a exportação da tabela (Excel e
+  PDF) e "Ver em Relatórios" à direita. Substituiu
   o card de boas-vindas, o topo separado e o card "Filtros" quase vazio.
 - **Filtros** (`Filtros`): os campos abrem pelo botão; os chips do recorte e "Limpar tudo" ficam à
   vista com o painel fechado.
@@ -150,24 +151,28 @@ trabalho). De cima para baixo:
   (`classe` da coluna na `TabelaInfinita`). No celular, em cartões, rótulo e valor ficam na
   mesma linha e só a página rola.
 - O CSV mantém a proteção contra fórmulas e o nome do arquivo usa a data de Brasília.
-- **Montador de relatório** (13/11/2026; `montador-de-relatorio.tsx`, por `lazy()` desde 18/11/2026:
-  ele e as regras do relatório saíram do pacote de entrada, que estava a 0,4 KB do orçamento; lógica em
-  `src/lib/visao-geral/relatorio-da-visao-geral.ts`, PDF em `src/lib/visao-geral/relatorio-da-visao-geral-em-pdf.ts`): o
-  botão Exportar abre a janela, que baixa só nessa hora (18/11/2026: fora do pacote de entrada, com o
-  relatório da diretoria e a exportação em Excel) (e, desde 16/11/2026, o "Montar relatório" de Relatórios, antes Painéis, com a área
-  inteira — [[modulo-paineis-de-dados]]; saiu do menu da conta). Modelo pronto (Resumo
-  rápido, Completo, Diretoria) ou escolha das seções (números, tabela dos editais, atenção), das
-  colunas e do formato (PDF desenhado com o timbrado de Configurações › Marca, Excel com uma aba por
-  seção, ou o CSV de antes). Sai do recorte da tela; a última escolha fica no navegador. Substituiu a
-  impressão da tela inteira (o cabeçalho `.print-only` saiu).
-- **Relatório da diretoria** (16/11/2026; migration `20261116120000`): o modelo Diretoria leva três
+- **Exportar** (23/11/2026): os dois botões de toda tabela ("Exportar em Excel" e "Salvar em PDF",
+  `BotoesDeExportacao`) baixam a tabela de processos como está: as linhas do recorte (filtros,
+  busca e atalho) e as colunas à vista, na ordem da tela, com as contagens como número
+  (`src/lib/visao-geral/tabela-para-exportar.ts` e `src/lib/base/exportacao-da-tabela.ts`, baixados
+  só no clique; `estado.exportar`). Recorte vazio não exporta.
+- **Ver em Relatórios** (23/11/2026; `src/componentes/ver-em-relatorios.tsx`, só para quem vê
+  Relatórios): o **montador de relatório** saiu daqui e virou o cartão "Montar relatório" de
+  Relatórios ([[modulo-paineis-de-dados]]); o atalho abre o montador com o recorte da Visão geral
+  como está (`?relatorio=montar-relatorio&origem=visao-geral`; o recorte é o do estado desta tela,
+  então busca e atalho valem, mas não viajam num link copiado). O montador (modelo pronto — Resumo
+  rápido, Completo, Diretoria — ou a escolha das seções, das colunas e do formato: PDF com o
+  timbrado, Excel com uma aba por seção ou CSV) e as regras dele moram em
+  `src/modulos/paineis-de-dados/` e `src/lib/paineis/`.
+- **Relatório da diretoria** (16/11/2026; migration `20261116120000`; desde 23/11/2026 é um cartão de
+  Relatórios, gerado direto dele, além de modelo do montador): o modelo Diretoria leva três
   abas. **Editais** (número, unidade, vagas, divulgação, encerramento e ciclo); **Vagas por cargo**
   (`listar_vagas_por_cargo_da_visao_geral`, recurso dashboard, sem dado pessoal): uma linha por vaga
   com vagas imediatas, inscritos e aprovados; **Aprovados** (`exportar_aprovados_da_diretoria`,
   Aprovados leitor): cargo, nota, classificação, nome, status, matrícula e a admissão conciliada.
   A aba Aprovados só aparece para quem vê a Lista de aprovados (`podeBaixarAprovados`), e o banco
   grava cada download em `TL_EXPORTACAO_APROVADO` (`DIRETORIA`) antes de devolver os nomes. A
-  ligação vaga ↔ quadro ↔ lista é feita em `src/lib/visao-geral/relatorio-da-diretoria.ts`: pelo código da
+  ligação vaga ↔ quadro ↔ lista é feita em `src/lib/paineis/relatorio-da-diretoria.ts`: pelo código da
   vaga, pelo número do começo ou pelo texto (Projetos e SEDE guardam o texto no lugar do código);
   as vagas imediatas vêm do quadro do edital (cargo e lotação) ou do texto da vaga ("2 vagas",
   "Cadastro Reserva" = 0), e sem os dois ficam "—". No PDF, acima de 3 mil aprovados, pede o Excel.

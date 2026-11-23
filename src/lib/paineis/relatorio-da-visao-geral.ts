@@ -19,7 +19,7 @@ import {
   contratadasImediatas,
   ehCritica,
   vagasSemContratacao,
-} from "./indicadores-do-monitoramento.ts";
+} from "../visao-geral/indicadores-do-monitoramento.ts";
 import {
   COLUNAS_DA_TABELA,
   COLUNAS_INICIAIS,
@@ -30,7 +30,7 @@ import {
   indicadoresDaVisaoGeral,
   resumoDoRelatorio,
   taxaDeOciosidade,
-} from "./visao-geral.ts";
+} from "../visao-geral/visao-geral.ts";
 
 /*
   O MONTADOR DE RELATÓRIO DA VISÃO GERAL (pedido de 13/11/2026: "no SIGEPSI
@@ -43,7 +43,9 @@ import {
   cargo" e "Aprovados" (abas 2 e 3 do relatório da diretoria) vêm do banco na
   hora de gerar; as linhas delas, em relatorio-da-diretoria.ts. O PDF é desenhado em
   relatorio-da-visao-geral-em-pdf.ts; a janela, em
-  src/modulos/visao-geral/montador-de-relatorio.tsx.
+  src/modulos/paineis-de-dados/montador-de-relatorio.tsx (cartão "Montar
+  relatório" de Relatórios), e a geração do arquivo, em
+  src/modulos/paineis-de-dados/gerar-relatorio.ts.
 */
 
 export type SecaoDoRelatorio =

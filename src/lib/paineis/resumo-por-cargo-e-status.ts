@@ -1,17 +1,17 @@
-import type { CandidatoDasRegrasDeAprovados } from "../tipos-das-regras-de-aprovados.ts";
+import type { CandidatoDasRegrasDeAprovados } from "../aprovados/tipos-das-regras-de-aprovados.ts";
 import type {
   CandidatoDaConvocacao,
   ConfiguracaoDaVagaParaChamada,
-} from "../tipos-da-lista-de-convocacao.ts";
+} from "../aprovados/tipos-da-lista-de-convocacao.ts";
 import {
   STATUS_CONTRATADO_EM_OUTRA_LISTA,
   STATUS_CONVOCADO,
   statusEfetivo,
-} from "../lista-aprovados-rules.ts";
+} from "../aprovados/lista-aprovados-rules.ts";
 import {
   montarListaDeConvocacao,
   situacaoNaChamada,
-} from "../lista-convocacao-rules.ts";
+} from "../aprovados/lista-convocacao-rules.ts";
 
 /*
   RESUMO POR CARGO E STATUS (pedido da CORES, Lista de aprovados)

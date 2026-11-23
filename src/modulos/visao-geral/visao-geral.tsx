@@ -41,10 +41,7 @@ import {
   Vagas,
 } from "./paineis.tsx";
 import { TabelaDeProcessos } from "./tabela.tsx";
-import {
-  podeBaixarAprovados,
-  secaoDeConfiguracaoPermitida,
-} from "../../lib/acessos/access-roles.ts";
+import { secaoDeConfiguracaoPermitida } from "../../lib/acessos/access-roles.ts";
 import type { ClienteDosAvisos } from "../conferencias/tipos.ts";
 import { telaPermitida } from "../../lib/navegacao/navegacao.ts";
 import { pedirFiltro } from "../../app/pedido-de-filtro.ts";
@@ -52,7 +49,6 @@ import { carregarTela } from "../../app/registro-das-telas.ts";
 import { canImportApprovedList } from "../../lib/acessos/access-roles.ts";
 import { ACAO_DA_PENDENCIA } from "../../lib/visao-geral/visao-geral.ts";
 import { irParaTela, type JanelaDoApp } from "../../app/ir-para-tela.ts";
-import { ErrorBoundary } from "../../app/ErrorBoundary.tsx";
 
 type PerfilDaNavegacao = Parameters<typeof telaPermitida>[1];
 
@@ -69,8 +65,8 @@ type PerfilDaNavegacao = Parameters<typeof telaPermitida>[1];
   é pedido com a página aberta: quem não abre a Visão geral não paga por ela.
 
   Ordem (o "painel de decisão", layout A, 17/11/2026): o cabeçalho
-  (saudação, editais com etapa na semana, hora da carga, Filtros, Atualizar
-  e Exportar), os marcos do ano, os filtros (só abertos pelo botão; os chips
+  (saudação, editais com etapa na semana, hora da carga, Filtros, Atualizar,
+  Excel/PDF da tabela e Ver em Relatórios), os marcos do ano, os filtros (só abertos pelo botão; os chips
   do recorte sempre à vista), as vagas, "Pede ação" (críticos e
   pós-resultado) ao lado de "Em andamento, por fase", "Processos por
   projeto" (só Projetos), o MAPA DA ÁREA e a tabela de processos, com os
@@ -102,19 +98,6 @@ const baixarCartaoDoMapa = importarComRecarga(() =>
 const SemCartao = (_props: PropsDoCartaoDoMapa) => null;
 const CartaoDoMapa = lazy<ComponentType<PropsDoCartaoDoMapa>>(() =>
   baixarCartaoDoMapa().catch(() => ({ default: SemCartao })),
-);
-
-/*
-  O montador de relatório (e as regras do relatório e da diretoria) só abre no
-  Exportar: chega por import(), fora do pacote de entrada (orçamento de
-  bundle, `check:bundle-size`). Os Painéis já o pedem sob demanda.
-*/
-const MontadorDeRelatorio = lazy(
-  importarComRecarga(() =>
-    import("./montador-de-relatorio.tsx").then((m) => ({
-      default: m.MontadorDeRelatorio,
-    })),
-  ),
 );
 
 function usarTextos(configuracoes: Configuracoes) {
@@ -178,7 +161,7 @@ export function TelaDaVisaoGeral({
         agora={agora}
         filtrosAbertos={filtrosAbertos}
         aoAlternarFiltros={() => setFiltrosAbertos((valor) => !valor)}
-        aoExportar={estado.abrirMontador}
+        aoExportar={estado.exportar}
       />
       <MarcosDoAno
         obterPerfil={obterPerfil}
@@ -246,23 +229,6 @@ export function TelaDaVisaoGeral({
           irParaTela({ view: origem.view });
         }}
       />
-      {e.montador && e.aberta ? (
-        <ErrorBoundary nome="o montador de relatório">
-          <Suspense fallback={null}>
-            <MontadorDeRelatorio
-              e={e}
-              aoBaixarCsv={estado.exportarCsv}
-              textos={textos}
-              configuracoes={configuracoes}
-              obterPerfil={obterPerfil}
-              agora={agora}
-              aoFechar={estado.fecharMontador}
-              supabase={supabase}
-              podeAprovados={podeBaixarAprovados(obterPerfil?.())}
-            />
-          </Suspense>
-        </ErrorBoundary>
-      ) : null}
       {linhaAberta ? (
         <GavetaDoProcesso
           linha={linhaAberta}

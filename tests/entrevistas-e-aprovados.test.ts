@@ -120,8 +120,8 @@ import {
   linhasDoArquivoDoResumo,
   nomeDoArquivoDoResumo,
   xlsxDoResumo,
-} from "../src/lib/aprovados/exportacao/exportacao-do-resumo-por-cargo.ts";
-import { pdfDoResumo } from "../src/lib/aprovados/exportacao/exportacao-do-resumo-por-cargo-em-pdf.ts";
+} from "../src/lib/paineis/exportacao-do-resumo-por-cargo.ts";
+import { pdfDoResumo } from "../src/lib/paineis/exportacao-do-resumo-por-cargo-em-pdf.ts";
 import {
   montarResumoPorCargoEStatus,
   type CandidatoDoResumo,
@@ -132,7 +132,7 @@ import {
   resumoAteOLimite,
   situacoesNaFila,
   type ContagemDoResumo,
-} from "../src/lib/aprovados/exportacao/resumo-por-cargo-e-status.ts";
+} from "../src/lib/paineis/resumo-por-cargo-e-status.ts";
 import { cartasDoHistorico } from "../src/lib/aprovados/carta-de-convocacao/dados-da-carta.ts";
 import { publicacaoDoEdital } from "../src/lib/aprovados/dados-do-historico-de-publicacoes.ts";
 import { criarEstadoDaCarta } from "../src/modulos/aprovados/carta-de-convocacao/estado.ts";

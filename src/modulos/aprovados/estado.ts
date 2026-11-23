@@ -119,7 +119,7 @@ import {
   exportarResumoPorCargo,
   type GerarPdfDoResumo,
 } from "./exportacao/exportar-resumo.ts";
-import type { ResumoPorCargoEStatus } from "../../lib/aprovados/exportacao/resumo-por-cargo-e-status.ts";
+import type { ResumoPorCargoEStatus } from "../../lib/paineis/resumo-por-cargo-e-status.ts";
 import {
   argumentosDaConfiguracao,
   fixarIdsNovos,
@@ -392,7 +392,8 @@ export function criarEstadoDaListaDeAprovados({
   }
 
   /*
-    Exportar o Resumo por cargo e status (aba Resumo): o mesmo registro no
+    Exportar o Resumo por cargo e status (cartão de Relatórios,
+    src/modulos/paineis-de-dados/resumo-por-cargo.tsx): o mesmo registro no
     banco, com p_conteudo 'RESUMO' (exportacao/exportar-resumo.ts).
   */
   async function exportarResumo(

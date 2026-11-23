@@ -7,10 +7,11 @@ atualizado: 2026-11-23
 # Módulo: Relatórios (bloco Dados; antes Painéis)
 
 Os relatórios de **acompanhamento e gestão** da área escolhida, que cruzam editais, num catálogo:
-a entrada é uma grade de cartões em grupos (Editais: Resumo dos editais e Editais por cargo;
-Aprovados: Aprovados; Produtividade, quando tiver relatório), cada um com o que mostra em uma
-linha, quando foi calculado, quantas linhas tem e os botões de exportar (Excel e PDF, o relatório
-inteiro). "Abrir" mostra a tabela paginada, com "Todos os relatórios" para voltar. No menu, é o
+a entrada é uma grade de cartões em grupos (Editais: Resumo dos editais, Editais por cargo e Montar
+relatório; Aprovados: Aprovados, Resumo por cargo e status e Relatório da diretoria; Produtividade,
+quando tiver relatório), cada um com o que mostra em uma linha, quando foi calculado e os botões.
+Os calculados no banco têm "Abrir" (a tabela paginada, com "Todos os relatórios" para voltar) e a
+exportação do relatório inteiro (Excel e PDF). No menu, é o
 item Relatórios do bloco **Dados**, abaixo de Processo seletivo (`BLOCO_DE_DADOS` em
 `src/lib/navegacao/menu-lateral.ts`). Não confundir com os painéis externos (`panel:<código>`,
 [[modulo-paineis-externos]]).
@@ -28,6 +29,27 @@ item Relatórios do bloco **Dados**, abaixo de Processo seletivo (`BLOCO_DE_DADO
   e relatório de desempate da Classificação, cartas de convocação, exportação da lista de
   aprovados) ficam na tela da etapa; ali entra, no máximo, um atalho "Ver em Relatórios" para o
   relatório de gestão correspondente.
+- **Relatórios gerados no navegador** (23/11/2026, Parte 2: vieram da Visão geral e da Lista de
+  aprovados, que ficaram com o atalho **Ver em Relatórios**, `src/componentes/ver-em-relatorios.tsx`):
+  - **Montar relatório** (grupo Editais): o montador (`montador-de-relatorio.tsx`) com os editais
+    da área; aberto pelo atalho da Visão geral (`?relatorio=montar-relatorio&origem=visao-geral`),
+    com a Visão geral como estava (filtros, busca e atalho). Fica no endereço; fechar volta aos
+    cartões. Era o botão "Montar relatório" do topo e o "Exportar" da Visão geral, que agora
+    exporta só a tabela à vista ([[modulo-visao-geral]]).
+  - **Relatório da diretoria** (grupo Aprovados): o modelo Diretoria do montador (editais, vagas
+    por cargo e aprovados, com a admissão conciliada com o RH), gerado direto do cartão em Excel ou
+    PDF (`gerar-relatorio.ts`, a mesma geração do montador). As duas versões da admissão ficam até
+    a regra ser uma só: o cartão Aprovados diz "o dia em que virou Contratado no sistema", o da
+    diretoria, "conciliada com o RH" (linha `regra` do catálogo).
+  - **Resumo por cargo e status** (grupo Aprovados, só com o recurso `aprovados`): a contagem que
+    era a aba da Lista de aprovados ([[modulo-aprovados]]), sobre o estado dela (o controlador da
+    tela `approved`, pedido sob demanda) e o mesmo recorte (`src/modulos/aprovados/recorte-dos-aprovados.ts`).
+    Os editais escolhidos ficam no endereço (`edital=7,8`); o atalho da Lista leva os dela.
+  - O atalho deixa o endereço guardado (a tela ainda não montada o lê ao abrir) e faz um pedido
+    de filtro (`src/app/pedido-de-filtro.ts`: a tela já montada abre o relatório pedido).
+  - Os editais da área são as linhas do monitoramento, lidas só sob demanda
+    (`pedirLinhasDoMonitoramento`): Relatórios as pede enquanto o montador ou o Resumo está aberto
+    e espera por elas antes de gerar a diretoria (sem isso o montador abria com 0 processos).
 - **Catálogo**: ao abrir, a tela lê a primeira página de cada relatório (a mesma que a tabela usa
   depois, do cache) para o cartão mostrar a data do cálculo e o total. A falha de leitura (sem
   permissão, sem a migration) aparece uma vez em cima dos cartões. Sincronizar no catálogo
@@ -37,16 +59,25 @@ item Relatórios do bloco **Dados**, abaixo de Processo seletivo (`BLOCO_DE_DADO
 ## Arquivos
 
 ```
-paineis-de-dados.tsx  catálogo (cartões por grupo), relatório aberto (tabela paginada, alça de largura,
-                      ⓘ da origem e botões), o relatório no endereço; criarPaineisDeDados()
-estado.ts             store sem React: catálogo ou relatório aberto, página lida por relatório e área,
-                      cache em memória, larguras, download (do aberto ou de um cartão), gaveta de fontes
+paineis-de-dados.tsx  catálogo (cartões por grupo e tipo), relatório aberto (tabela paginada, alça de
+                      largura, ⓘ da origem e botões), montador e Resumo por cima, o endereço e o
+                      pedido de filtro do atalho; criarPaineisDeDados()
+estado.ts             store sem React dos calculados: catálogo ou relatório aberto, página lida por
+                      relatório e área, cache em memória, larguras, download, gaveta de fontes
 fontes-dos-dados.tsx  a gaveta "Fontes dos dados" (uma coluna por bloco: Origem, Coluna, Motivo)
-paineis-de-dados.css  a alça de largura, o painel do ⓘ, a grade de cartões e a volta ao catálogo
+montador-de-relatorio.tsx  o montador (modelo, seções, colunas, formato; a escolha fica no navegador)
+gerar-relatorio.ts    o PDF/Excel do montador e da diretoria (vagas por cargo e aprovados lidos na hora)
+dados-da-diretoria.ts as RPCs das abas 2 e 3 da diretoria (a 3 registra o download)
+resumo-por-cargo.tsx  o Resumo por cargo e status (filtros, tabela agrupada, gaveta, Exportar)
+paineis-de-dados.css  a alça de largura, o painel do ⓘ, os cartões, a volta, o montador e o Resumo
 ```
 
-Regras puras em `src/lib/paineis/catalogo-dos-relatorios.ts` (os cartões, o grupo e o resumo de
-cada um, os grupos com relatório e o id que vale no endereço), `src/lib/paineis/relatorios-dos-paineis.ts` (colunas, leitura da página, XLSX, tabela do PDF, nome do
+Regras puras em `src/lib/paineis/catalogo-dos-relatorios.ts` (os cartões, o tipo, o grupo, o resumo e
+a regra de cada um, quem vê o Resumo, os grupos com relatório e o que vale no endereço),
+`endereco-dos-relatorios.ts` (a busca do atalho, a origem e os editais do endereço; só tipos e
+texto, porque o atalho mora na Visão geral, no pacote de entrada), `relatorio-da-visao-geral.ts` (+ `-em-pdf`), `relatorio-da-diretoria.ts`,
+`resumo-por-cargo-e-status.ts` e `exportacao-do-resumo-por-cargo.ts` (+ `-em-pdf`), todos em
+`src/lib/paineis/`, `src/lib/paineis/relatorios-dos-paineis.ts` (colunas, leitura da página, XLSX, tabela do PDF, nome do
 arquivo, largura arrastada e texto da origem) e `src/lib/paineis/fontes-dos-paineis.ts` (leitura das fontes).
 RPCs no contrato (`src/lib/rpc-contrato.ts`): `ler_relatorio_do_painel`,
 `sincronizar_relatorio_do_painel`, `listar_fontes_do_painel` e `salvar_fonte_da_coluna`.
@@ -84,12 +115,10 @@ RPCs no contrato (`src/lib/rpc-contrato.ts`): `ler_relatorio_do_painel`,
   cálculo. O download pede todas as linhas ("Exportar em Excel": XLSX com o gerador de
   `src/lib/classificacao/exportacao.ts` e `fflate` sob demanda; "Salvar em PDF":
   `src/lib/base/exportacao-da-tabela.ts`).
-- **Montar relatório** (16/11/2026; antes no menu da conta): o botão no topo (no catálogo e no
-  relatório aberto) abre o montador da
-  Visão geral (`src/modulos/visao-geral/montador-de-relatorio.tsx`, [[modulo-visao-geral]]) com
-  todos os editais da área, sem os filtros da Visão geral (`recorteDaAreaInteira`, em
-  `src/lib/visao-geral/relatorio-da-visao-geral.ts`). As linhas são as do estado da Visão geral, lidas no
-  clique; "Aprovados" só para quem tem acesso à Lista de aprovados.
+- **Montar relatório** (16/11/2026 no topo; cartão desde 23/11/2026): os editais da área, sem os
+  filtros da Visão geral (`recorteDaAreaInteira`, em `src/lib/paineis/relatorio-da-visao-geral.ts`).
+  As linhas são as do estado da Visão geral, lidas ao abrir; "Aprovados" só para quem tem acesso à
+  Lista de aprovados, e o banco registra o download.
 - Largura das colunas: a alça na borda direita do cabeçalho (arrastar, ou ←/→ com foco nela) muda
   a largura; no primeiro arraste a tabela vai a layout fixo. A largura fica só em memória:
   recarregar a página volta às originais.
@@ -130,7 +159,12 @@ RPCs no contrato (`src/lib/rpc-contrato.ts`): `ler_relatorio_do_painel`,
 
 `tests/editais-cargas-e-paineis-na-tela.test.ts` (bloco `modulos/paineis-de-dados`) (catálogo: grupos, data do cálculo, abrir e
 voltar sem reler, exportar do cartão, Sincronizar de todos, falha uma vez, o relatório no endereço e o caminho antigo; tela, permissão, rota, paginação no banco, cache,
-Sincronizar, downloads, gaveta de fontes, largura das colunas, ⓘ e Montar relatório), `tests/editais-cargas-e-paineis.test.ts` (bloco `relatorios-dos-paineis`)
+Sincronizar, downloads, gaveta de fontes, largura das colunas e ⓘ; os gerados no navegador: o
+montador no endereço e com o recorte da Visão geral, a diretoria direto do cartão, o Resumo só com
+o recurso `aprovados` e o atalho com a tela já montada), `tests/entrevistas-e-aprovados-na-tela.test.ts`
+(bloco `componentes/lista-aprovados`, "Resumo por cargo e status (em Relatórios)", sobre o estado da
+Lista), `tests/demais-regras.test.ts` (blocos `lib/relatorio-da-visao-geral` e
+`lib/relatorio-da-diretoria`), `tests/editais-cargas-e-paineis.test.ts` (bloco `relatorios-dos-paineis`)
 (colunas, página lida, arquivos, largura, origem), `tests/editais-cargas-e-paineis.test.ts` (bloco `fontes-dos-paineis`) (leitura das
 fontes, permissão, aba Fontes), `tests/editais-cargas-e-paineis.test.ts` (bloco `fontes-dos-paineis-no-banco`) (o núcleo das fontes em
 PGlite), `tests/editais-cargas-e-paineis.test.ts` (bloco `relatorios-prontos-dos-paineis-no-banco`) (resultado pronto em PGlite: página,
@@ -145,6 +179,7 @@ recorte da coordenação, Sincronizar 1/min, troca de fonte que falha, cálculo 
 - [[modulo-acessos]] — quem vê
 - [[modulo-barra-lateral]] — o bloco Dados do menu
 - [regras-dos-paineis](../aya/regras-dos-paineis.md) — o que a Aya responde sobre a tela
-- [[modulo-visao-geral]] — de onde vem o "Montar relatório"
+- [[modulo-visao-geral]] — de onde vem o "Montar relatório" (e o atalho com o recorte dela)
+- [[modulo-aprovados]] — de onde vem o Resumo por cargo e status
 - [Desenho das fontes das colunas](../_arquivo/planos/2026-11-13-fontes-das-colunas-dos-paineis-design.md) e [plano](../_arquivo/planos/2026-11-13-fontes-das-colunas-dos-paineis.md) — feito no #829
 - [Desenho do carregamento rápido](../_arquivo/planos/2026-11-16-paineis-carregamento-e-tabela-design.md) e [plano](../_arquivo/planos/2026-11-16-paineis-carregamento-e-tabela.md) — feito no #836

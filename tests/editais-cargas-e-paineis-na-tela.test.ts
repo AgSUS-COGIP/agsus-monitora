@@ -80,9 +80,18 @@ import {
   telaDaRota,
 } from "../src/lib/navegacao/rotas.ts";
 import {
+  catalogoPermitido,
   ehIdDoRelatorio,
+  ehRelatorioDoEndereco,
   gruposDoCatalogo,
 } from "../src/lib/paineis/catalogo-dos-relatorios.ts";
+import {
+  buscaDoRelatorio,
+  editaisDoEndereco,
+} from "../src/lib/paineis/endereco-dos-relatorios.ts";
+import { abrirEmRelatorios } from "../src/componentes/ver-em-relatorios.tsx";
+import { escolhaDaDiretoria } from "../src/modulos/paineis-de-dados/gerar-relatorio.ts";
+import { recorteDaAreaInteira } from "../src/lib/paineis/relatorio-da-visao-geral.ts";
 import type { IdDoRelatorio } from "../src/lib/paineis/relatorios-dos-paineis.ts";
 import {
   type NiveisPorRecurso,
@@ -5185,6 +5194,11 @@ bloco("modulos/paineis-de-dados", () => {
         obterPerfil: () => null,
         agora: () => new Date("2026-11-13T15:04:00Z"),
         supabase: null,
+        // A Lista de aprovados não baixa nestes testes: fica carregando.
+        aprovados: () => new Promise(() => {}),
+        // As linhas do monitoramento vêm de publicarLinhasDoMonitoramento.
+        pedirLinhas: () => () => {},
+        esperarLinhas: async () => {},
         ...relatorio,
       },
     });
@@ -5232,11 +5246,25 @@ bloco("modulos/paineis-de-dados", () => {
         g.querySelector("h2")?.textContent,
         [...g.querySelectorAll("h3")].map((h) => h.textContent),
       ]);
-      // Grupo sem relatório (Produtividade, por enquanto) não aparece.
+      /*
+        Grupo sem relatório (Produtividade, por enquanto) não aparece; sem o
+        recurso `aprovados`, o Resumo por cargo e status também não.
+      */
       expect(grupos).toEqual([
-        ["Editais", ["Resumo dos editais", "Editais por cargo"]],
-        ["Aprovados", ["Aprovados"]],
+        [
+          "Editais",
+          ["Resumo dos editais", "Editais por cargo", "Montar relatório"],
+        ],
+        ["Aprovados", ["Aprovados", "Relatório da diretoria"]],
       ]);
+      // As duas versões da admissão dizem a regra de cada uma.
+      expect(
+        cartao("aprovados")?.querySelector("[data-regra]")?.textContent,
+      ).toMatch(/virou Contratado no sistema/);
+      expect(
+        cartao("relatorio-da-diretoria")?.querySelector("[data-regra]")
+          ?.textContent,
+      ).toMatch(/conciliada com o RH/);
       expect(
         cartao("resumo-dos-editais")?.querySelector("[data-calculo]")
           ?.textContent,
@@ -5266,7 +5294,7 @@ bloco("modulos/paineis-de-dados", () => {
       expect(leituras(supabase.chamadas)).toHaveLength(3);
       await clicar(caixa?.querySelector("[data-acao='voltar-ao-catalogo']"));
       await esperar();
-      expect(caixa?.querySelectorAll(".relatorios-cartao")).toHaveLength(3);
+      expect(caixa?.querySelectorAll(".relatorios-cartao")).toHaveLength(5);
       expect(leituras(supabase.chamadas)).toHaveLength(3);
     });
 
@@ -5355,6 +5383,24 @@ bloco("modulos/paineis-de-dados", () => {
     it("o relatório aberto vai no endereço e o caminho antigo continua valendo", () => {
       expect(ehIdDoRelatorio("aprovados")).toBe(true);
       expect(ehIdDoRelatorio("painel-x")).toBe(false);
+      // Os que abrem por cima do catálogo; a diretoria só gera o arquivo.
+      expect(ehIdDoRelatorio("resumo-por-cargo")).toBe(false);
+      expect(ehRelatorioDoEndereco("resumo-por-cargo")).toBe(true);
+      expect(ehRelatorioDoEndereco("montar-relatorio")).toBe(true);
+      expect(ehRelatorioDoEndereco("relatorio-da-diretoria")).toBe(false);
+      expect(
+        catalogoPermitido({ aprovados: false }).map((r) => r.id),
+      ).not.toContain("resumo-por-cargo");
+      expect(catalogoPermitido({ aprovados: true }).map((r) => r.id)).toContain(
+        "resumo-por-cargo",
+      );
+      expect(
+        buscaDoRelatorio("resumo-por-cargo", { editais: ["7", " 8", "7", ""] }),
+      ).toBe("relatorio=resumo-por-cargo&edital=7%2C8");
+      expect(
+        buscaDoRelatorio("montar-relatorio", { origem: "visao-geral" }),
+      ).toBe("relatorio=montar-relatorio&origem=visao-geral");
+      expect(editaisDoEndereco(" 3, 4,,3 ")).toEqual(["3", "4"]);
       expect(gruposDoCatalogo().map((g) => g.id)).toEqual([
         "editais",
         "aprovados",
@@ -6026,38 +6072,198 @@ bloco("modulos/paineis-de-dados", () => {
         "Fonte trocada nesta área: Total de vagas imediatas → Quadro de vagas do edital › Vagas imediatas (soma do quadro)",
       );
     });
+  });
 
-    it("Montar relatório (antes no menu da conta) abre o montador com a área inteira", async () => {
-      const linha = (id: string, edital: string): LinhaDaVisaoGeral => ({
-        id,
-        edital,
-        unidade: "DSEI Teste",
-        fase: "Concluído",
-        atencao: [],
-        pos_resultado: [],
-        desistentes: 0,
-        aprovados: null,
-        cadastro_reserva: null,
-        primeira_admissao: null,
-        ultima_admissao: null,
-        admissoes: 0,
-      });
+  describe("os relatórios gerados no navegador (23/11/2026)", () => {
+    const linha = (id: string, edital: string): LinhaDaVisaoGeral => ({
+      id,
+      edital,
+      unidade: "DSEI Teste",
+      fase: "Concluído",
+      atencao: [],
+      pos_resultado: [],
+      desistentes: 0,
+      aprovados: null,
+      cadastro_reserva: null,
+      primeira_admissao: null,
+      ultima_admissao: null,
+      admissoes: 0,
+    });
+    const alertas = () =>
+      [...(caixa?.querySelectorAll("[role=alert]") ?? [])].map(
+        (a) => a.textContent,
+      );
+    const montador = () => document.getElementById("montadorDeRelatorio");
+
+    // Os editais da área já lidos (o montador espera por eles).
+    beforeEach(() => publicarLinhasDoMonitoramento([]));
+    afterEach(() => {
+      window.history.replaceState(null, "", "/");
+      redefinirDadosDoMonitoramento();
+    });
+
+    it("sem os editais da área lidos, o montador os pede e espera por eles", async () => {
+      redefinirDadosDoMonitoramento();
+      window.history.replaceState(null, "", "/saude-indigena/relatorios");
+      const devolver = vi.fn();
+      const pedirLinhas = vi.fn(() => devolver);
+      await montar(
+        {},
+        { linhasDaArea: () => [linha("e1", "01/2099")], pedirLinhas },
+        { abrir: null },
+      );
+      expect(pedirLinhas).not.toHaveBeenCalled();
+      await clicar(botaoEmCartao("montar-relatorio", "Montar"));
+      await esperar();
+      expect(pedirLinhas).toHaveBeenCalledTimes(1);
+      expect(montador()).toBeNull();
+      expect(caixa?.textContent).toContain("Carregando os editais da área");
+      await act(async () => publicarLinhasDoMonitoramento([]));
+      expect(montador()?.textContent).toContain("1 processo da área");
+      // Fechar devolve o pedido (a leitura cara não fica ligada à toa).
+      await clicar(
+        [...(montador()?.querySelectorAll("button") ?? [])].find(
+          (b) => b.textContent?.trim() === "Cancelar",
+        ),
+      );
+      await esperar();
+      expect(devolver).toHaveBeenCalledTimes(1);
+    });
+
+    it("o cartão Montar relatório abre o montador com a área inteira, e ele vai no endereço", async () => {
+      window.history.replaceState(null, "", "/saude-indigena/relatorios");
       const linhasDaArea = vi.fn(() => [
         linha("e1", "01/2099"),
         linha("e2", "02/2099"),
       ]);
-      await montar({ "resumo-dos-editais": RESUMO }, { linhasDaArea });
-      expect(document.getElementById("visaoGeralRelatorio")).toBeNull();
-      await clicar(botao("Montar relatório"));
-      const janela = document.getElementById("visaoGeralRelatorio");
-      expect(janela?.textContent).toContain("2 processos da área");
+      await montar(
+        { "resumo-dos-editais": RESUMO },
+        { linhasDaArea },
+        { abrir: null },
+      );
+      // O botão do topo saiu: o montador é um cartão.
+      expect(caixa?.querySelector("[data-acao='montar-relatorio']")).toBeNull();
+      expect(montador()).toBeNull();
+      await clicar(botaoEmCartao("montar-relatorio", "Montar"));
+      await esperar();
+      expect(montador()?.textContent).toContain("2 processos da área");
       expect(linhasDaArea).toHaveBeenCalledTimes(1);
+      expect(window.location.search).toBe("?relatorio=montar-relatorio");
       await clicar(
-        [...(janela?.querySelectorAll("button") ?? [])].find(
+        [...(montador()?.querySelectorAll("button") ?? [])].find(
           (b) => b.textContent?.trim() === "Cancelar",
         ),
       );
-      expect(document.getElementById("visaoGeralRelatorio")).toBeNull();
+      await esperar();
+      expect(montador()).toBeNull();
+      expect(window.location.search).toBe("");
+    });
+
+    it("vindo da Visão geral (origem=visao-geral), o montador leva o recorte dela", async () => {
+      window.history.replaceState(
+        null,
+        "",
+        "/saude-indigena/relatorios?relatorio=montar-relatorio&origem=visao-geral",
+      );
+      const recorte = {
+        ...recorteDaAreaInteira("saude-indigena", [linha("e1", "01/2099")]),
+        carregado: true,
+      };
+      await montar(
+        {},
+        {
+          linhasDaArea: () => [linha("e1", "01/2099"), linha("e2", "02/2099")],
+          visaoGeral: () => recorte,
+        },
+        { abrir: null },
+      );
+      await esperar();
+      expect(montador()?.textContent).toContain(
+        "1 processo do recorte da Visão geral",
+      );
+    });
+
+    it("o cartão da diretoria gera direto (sem Abrir) e mostra a falha", async () => {
+      const esperarLinhas = vi.fn(async () => {});
+      await montar(
+        {},
+        { linhasDaArea: () => [linha("e1", "01/2099")], esperarLinhas },
+        { abrir: null },
+      );
+      expect(botaoEmCartao("relatorio-da-diretoria", "Abrir")).toBeUndefined();
+      // Sem banco, as vagas por cargo (aba 2) não chegam.
+      await clicar(
+        botaoEmCartao("relatorio-da-diretoria", "Exportar em Excel"),
+      );
+      await esperar();
+      expect(alertas()).toContain("Sem conexão com o banco.");
+      // Gera só depois dos editais da área lidos.
+      expect(esperarLinhas).toHaveBeenCalledTimes(1);
+      const pdf = escolhaDaDiretoria("PDF");
+      expect(pdf.secoes).toEqual(["editais", "cargos", "aprovados"]);
+      expect(pdf.formato).toBe("PDF");
+    });
+
+    it("o Resumo por cargo e status só aparece com o recurso aprovados e abre no endereço", async () => {
+      window.history.replaceState(null, "", "/saude-indigena/relatorios");
+      const aprovados = vi.fn(() => new Promise<never>(() => {}));
+      await montar(
+        {},
+        {
+          obterPerfil: () => ({ permissoes: { aprovados: "leitor" } }),
+          aprovados,
+        },
+        { abrir: null },
+      );
+      expect(
+        [...(cartao("resumo-por-cargo")?.querySelectorAll("h3") ?? [])].map(
+          (h) => h.textContent,
+        ),
+      ).toEqual(["Resumo por cargo e status"]);
+      await clicar(botaoEmCartao("resumo-por-cargo", "Abrir"));
+      await esperar();
+      expect(window.location.search).toBe("?relatorio=resumo-por-cargo");
+      expect(aprovados).toHaveBeenCalledTimes(1);
+      expect(caixa?.querySelector(".relatorios-voltar h2")?.textContent).toBe(
+        "Resumo por cargo e status",
+      );
+      expect(botao("Atualizar")).toBeDefined();
+    });
+
+    it("sem o recurso aprovados, o link do Resumo por cargo fica no catálogo", async () => {
+      window.history.replaceState(
+        null,
+        "",
+        "/saude-indigena/relatorios?relatorio=resumo-por-cargo",
+      );
+      const aprovados = vi.fn(() => new Promise<never>(() => {}));
+      await montar({}, { aprovados }, { abrir: null });
+      await esperar();
+      expect(
+        caixa?.querySelector("[data-catalogo-dos-relatorios]"),
+      ).not.toBeNull();
+      expect(aprovados).not.toHaveBeenCalled();
+    });
+
+    it("Ver em Relatórios com a tela já montada abre o relatório pedido, com os editais", async () => {
+      window.history.replaceState(null, "", "/saude-indigena/relatorios");
+      await montar(
+        {},
+        { obterPerfil: () => ({ permissoes: { aprovados: "leitor" } }) },
+        { abrir: null },
+      );
+      const irPara = vi.fn();
+      await act(async () =>
+        abrirEmRelatorios("resumo-por-cargo", { editais: ["7"] }, irPara),
+      );
+      await esperar();
+      expect(irPara).toHaveBeenCalledWith("paineis-de-dados");
+      expect(window.location.search).toBe(
+        "?relatorio=resumo-por-cargo&edital=7",
+      );
+      expect(caixa?.querySelector(".relatorios-voltar h2")?.textContent).toBe(
+        "Resumo por cargo e status",
+      );
     });
   });
 });

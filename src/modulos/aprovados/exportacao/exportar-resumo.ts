@@ -3,7 +3,7 @@ import type {
   PedidoDaExportacao,
   RegistroDaExportacao,
 } from "../../../lib/aprovados/exportacao/exportacao-da-lista-de-aprovados.ts";
-import type { ResumoPorCargoEStatus } from "../../../lib/aprovados/exportacao/resumo-por-cargo-e-status.ts";
+import type { ResumoPorCargoEStatus } from "../../../lib/paineis/resumo-por-cargo-e-status.ts";
 import type {
   DependenciasDaExportacao,
   MarcaDaExportacao,
@@ -17,7 +17,7 @@ import {
   csvDoResumo,
   nomeDoArquivoDoResumo,
   xlsxDoResumo,
-} from "../../../lib/aprovados/exportacao/exportacao-do-resumo-por-cargo.ts";
+} from "../../../lib/paineis/exportacao-do-resumo-por-cargo.ts";
 import { erroDeVersaoNova } from "../../../lib/carga/importar-com-recarga.ts";
 import { mensagemDoErroDaExportacao } from "./exportar.ts";
 
@@ -43,7 +43,7 @@ const gerarPdfNaPagina: GerarPdfDoResumo = async (
 ) => {
   const [{ carregarBibliotecasDoPdf }, { pdfDoResumo }] = await Promise.all([
     import("../../../lib/avaliacao-documental/espelho-em-pdf.ts"),
-    import("../../../lib/aprovados/exportacao/exportacao-do-resumo-por-cargo-em-pdf.ts"),
+    import("../../../lib/paineis/exportacao-do-resumo-por-cargo-em-pdf.ts"),
   ]).catch((erro: unknown) => {
     throw erroDeVersaoNova(erro);
   });

@@ -209,7 +209,8 @@ Como **a CORES**, quero ver por cargo, regime, jornada, vaga e modalidade quanto
 contratados, desistiram e seguem no cadastro de reserva, com subtotais e
 total, para acompanhar o edital sem montar a planilha à mão.
 
-- **Dado** a aba Resumo por cargo, **então** cada vaga distinta tem a sua linha por modalidade, com
+- **Dado** o Resumo por cargo e status (cartão de Relatórios desde 23/11/2026; a Lista de aprovados
+  leva a ele por "Ver em Relatórios"), **então** cada vaga distinta tem a sua linha por modalidade, com
   subtotal por cargo/regime/jornada e total geral, em números pt-BR.
 - **Dado** os filtros da lista (edital, cargo, modalidade, situação), **quando** mudam, **então** o
   resumo muda junto; o filtro Situação restringe a base e a tela diz isso.
@@ -227,4 +228,4 @@ total, para acompanhar o edital sem montar a planilha à mão.
 
 Testes: `tests/entrevistas-e-aprovados.test.ts` (bloco `lib/resumo-por-cargo-e-status`) (reproduz os subtotais da referência com dados
 fictícios), `tests/entrevistas-e-aprovados.test.ts` (bloco `lib/exportacao-do-resumo-por-cargo`), `tests/entrevistas-e-aprovados-na-tela.test.ts` (bloco `componentes/lista-aprovados`)
-("Resumo por cargo").
+("Resumo por cargo e status (em Relatórios)").

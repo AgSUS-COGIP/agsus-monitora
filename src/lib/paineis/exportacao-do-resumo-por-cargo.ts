@@ -1,24 +1,24 @@
 import type {
   CelulaDaPlanilha,
   PlanilhaDaClassificacao,
-} from "../../classificacao/tipos-dos-documentos.ts";
+} from "../classificacao/tipos-dos-documentos.ts";
 import type {
   FormatoDaExportacao,
   PedidoDaExportacao,
   RegistroDaExportacao,
-} from "./exportacao-da-lista-de-aprovados.ts";
+} from "../aprovados/exportacao/exportacao-da-lista-de-aprovados.ts";
 import type {
   ContagemDoResumo,
   LinhaPlanaDoResumo,
   ResumoPorCargoEStatus,
 } from "./resumo-por-cargo-e-status.ts";
-import { sanitizeCsvCell } from "../../seguranca/csv-security.ts";
-import { arquivosDoXlsx } from "../../classificacao/exportacao.ts";
+import { sanitizeCsvCell } from "../seguranca/csv-security.ts";
+import { arquivosDoXlsx } from "../classificacao/exportacao.ts";
 import {
   argumentosDoRegistro,
   identificacaoDaExportacao,
   nomeDoArquivoDaExportacao,
-} from "./exportacao-da-lista-de-aprovados.ts";
+} from "../aprovados/exportacao/exportacao-da-lista-de-aprovados.ts";
 import {
   CATEGORIAS_DO_RESUMO,
   linhasPlanasDoResumo,

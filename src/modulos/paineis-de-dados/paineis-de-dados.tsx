@@ -3,10 +3,14 @@ import {
   useEffect,
   useId,
   useMemo,
+  useRef,
   useState,
   useSyncExternalStore,
 } from "react";
-import { BotoesDeExportacao } from "../../ui/botoes-de-exportacao.tsx";
+import {
+  BotoesDeExportacao,
+  baixarArquivo,
+} from "../../ui/botoes-de-exportacao.tsx";
 import type { ReactNode } from "react";
 import {
   Aviso,
@@ -19,16 +23,30 @@ import {
 import type { ColunaDaTabela } from "../../ui/index.ts";
 import { Icone } from "../../componentes/icone.tsx";
 import { formatNumberBR } from "../../lib/base/formatters";
-import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
+import {
+  assinarDadosDoMonitoramento,
+  obterDadosDoMonitoramento,
+  pedirLinhasDoMonitoramento,
+} from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import { usarLojaNaUrl } from "../../app/usar-filtros-na-url.ts";
+import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
+import { carregarTela } from "../../app/registro-das-telas.ts";
 import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
 import {
+  catalogoPermitido,
   ehIdDoRelatorio,
+  ehRelatorioDoEndereco,
   gruposDoCatalogo,
 } from "../../lib/paineis/catalogo-dos-relatorios.ts";
 import type { RelatorioDoCatalogo } from "../../lib/paineis/catalogo-dos-relatorios.ts";
+import {
+  editaisDoEndereco,
+  editaisParaOEndereco,
+  ehOrigemDoRecorte,
+} from "../../lib/paineis/endereco-dos-relatorios.ts";
+import type { OrigemDoRecorte } from "../../lib/paineis/endereco-dos-relatorios.ts";
 import {
   LINHAS_POR_PAGINA,
   definicaoDoRelatorio,
@@ -43,12 +61,20 @@ import type {
 } from "../../lib/paineis/relatorios-dos-paineis.ts";
 import { podeBaixarAprovados } from "../../lib/acessos/access-roles.ts";
 import { textosDaVisaoGeral } from "../../lib/visao-geral/visao-geral.ts";
-import { recorteDaAreaInteira } from "../../lib/visao-geral/relatorio-da-visao-geral.ts";
-import type { RecorteDoRelatorio } from "../../lib/visao-geral/relatorio-da-visao-geral.ts";
+import { recorteDaAreaInteira } from "../../lib/paineis/relatorio-da-visao-geral.ts";
+import type { RecorteDoRelatorio } from "../../lib/paineis/relatorio-da-visao-geral.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
 import { estadoDaVisaoGeral } from "../visao-geral/estado.ts";
-import { MontadorDeRelatorio } from "../visao-geral/montador-de-relatorio.tsx";
-import type { ClienteDoRelatorio } from "../visao-geral/dados-da-diretoria.ts";
+import { CHAVE_DO_CABECALHO } from "../../lib/base/cabecalho-dos-documentos.ts";
+import { MontadorDeRelatorio } from "./montador-de-relatorio.tsx";
+import type { ClienteDoRelatorio } from "./dados-da-diretoria.ts";
+import {
+  escolhaDaDiretoria,
+  gerarRelatorio,
+  mensagemDaFalha,
+} from "./gerar-relatorio.ts";
+import { RelatorioResumoPorCargo } from "./resumo-por-cargo.tsx";
+import type { EstadoDosAprovados } from "../aprovados/tipos-do-estado.ts";
 import type {
   Configuracoes,
   LinhaDaVisaoGeral,
@@ -76,23 +102,44 @@ import type {
 
   Recurso de permissão `paineis_dados`; aba e view `paineis-de-dados` no
   catálogo (`src/lib/navegacao/menu-lateral.ts`). Os cartões e os grupos são
-  de `src/lib/paineis/catalogo-dos-relatorios.ts`; as colunas e os arquivos,
-  de `src/lib/paineis/relatorios-dos-paineis.ts`; o estado, de `./estado.ts`.
-  Título e área ficam no cabeçalho da casca.
+  de `src/lib/paineis/catalogo-dos-relatorios.ts`; as colunas e os arquivos
+  dos relatórios calculados, de `src/lib/paineis/relatorios-dos-paineis.ts`;
+  o estado deles, de `./estado.ts`. Título e área ficam no cabeçalho da casca.
 
-  "Montar relatório" (no topo, desde 16/11/2026; antes ficava no menu da
-  conta): abre o montador da Visão geral
-  (src/modulos/visao-geral/montador-de-relatorio.tsx) com todos os editais da
-  área, sem os filtros da Visão geral.
+  Os outros cartões (23/11/2026, vindos da Visão geral e da Lista de
+  aprovados, que ficaram com o atalho "Ver em Relatórios"):
+  - "Montar relatório" abre o montador (./montador-de-relatorio.tsx) com os
+    editais da área — ou, com `origem=visao-geral` no endereço, com a Visão
+    geral como estava (filtros, busca e atalho);
+  - "Relatório da diretoria" gera direto do cartão o modelo Diretoria
+    (./gerar-relatorio.ts);
+  - "Resumo por cargo e status" (só com o recurso `aprovados`) abre a
+    contagem sobre a Lista de aprovados (./resumo-por-cargo.tsx; o estado é
+    o da tela `approved`, pedido sob demanda), com os editais no endereço
+    (`edital=7,8`).
+  O atalho de outra tela chega pelo endereço (a tela ainda não montada) e
+  pelo pedido de filtro (já montada).
 */
 
 /** A view da tela (rota em src/lib/navegacao/rotas.ts; o caminho é `relatorios`). */
 const VIEW_DOS_RELATORIOS = "paineis-de-dados";
 
-/** O relatório aberto no endereço (`?relatorio=<id>`); sem ele, o catálogo. */
-const ESQUEMA_DO_RELATORIO: EsquemaDosFiltros<"relatorio"> = Object.freeze({
-  relatorio: { padrao: "", empilha: true, aceita: ehIdDoRelatorio },
+/*
+  O relatório aberto no endereço (`?relatorio=<id>`; sem ele, o catálogo), o
+  recorte do montador (`origem=visao-geral`) e os editais do Resumo por cargo
+  (`edital=7,8`).
+*/
+type CampoDoEndereco = "relatorio" | "origem" | "edital";
+const ESQUEMA_DO_RELATORIO: EsquemaDosFiltros<CampoDoEndereco> = Object.freeze({
+  relatorio: { padrao: "", empilha: true, aceita: ehRelatorioDoEndereco },
+  origem: { padrao: "", aceita: (v: string) => ehOrigemDoRecorte(v) },
+  edital: { padrao: "" },
 });
+
+/** O que abre por cima do catálogo e não é relatório calculado. */
+type Extra = "" | "montar-relatorio" | "resumo-por-cargo";
+
+const EM_BRANCO = "Gerado na hora, com os editais da área";
 
 const HORA = new Intl.DateTimeFormat("pt-BR", {
   timeZone: "America/Sao_Paulo",
@@ -303,48 +350,76 @@ function textoDoCartao(leitura: LeituraDoRelatorio) {
     : linhas;
 }
 
+/* A linha de cada cartão que não é calculado no banco. */
+const LINHA_DO_TIPO: Readonly<Record<string, string>> = Object.freeze({
+  montador: EM_BRANCO,
+  diretoria: EM_BRANCO,
+  "resumo-por-cargo": "Contado na hora, da lista de aprovados vigente",
+});
+
 function CartaoDoRelatorio({
   estado,
   item,
   aoAbrir,
+  aoGerarDiretoria,
 }: {
   estado: EstadoDaTelaDePaineis;
   item: RelatorioDoCatalogo;
   aoAbrir: () => void;
+  aoGerarDiretoria: (formato: "PDF" | "XLSX") => Promise<void>;
 }) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
   const idDoTitulo = useId();
-  const leitura = e.relatorios[item.id];
-  const pronto = leitura.situacao === "pronto";
+  const id = item.id;
+  const leitura = ehIdDoRelatorio(id) ? e.relatorios[id] : null;
+  const pronto = leitura?.situacao === "pronto";
   return (
     <article
       className="ui-card relatorios-cartao"
       aria-labelledby={idDoTitulo}
-      data-relatorio={item.id}
+      data-relatorio={id}
     >
       <h3 className="ui-titulo" id={idDoTitulo}>
         {item.nome}
       </h3>
       <p className="relatorios-cartao-resumo">{item.resumo}</p>
+      {item.regra ? (
+        <p className="relatorios-cartao-regra" data-regra="">
+          {item.regra}
+        </p>
+      ) : null}
       <p className="ui-texto-secundario" data-calculo="" aria-live="polite">
-        {textoDoCartao(leitura)}
+        {leitura ? textoDoCartao(leitura) : LINHA_DO_TIPO[item.tipo]}
       </p>
       <div className="relatorios-cartao-acoes">
-        <button
-          type="button"
-          className="btn secondary small"
-          data-acao="abrir-relatorio"
-          aria-label={`Abrir ${item.nome}`}
-          onClick={aoAbrir}
-        >
-          Abrir
-        </button>
-        <BotoesDeExportacao
-          pequenos
-          desativado={!pronto || e.baixando !== null}
-          excel={() => estado.baixar("XLSX", item.id)}
-          pdf={() => estado.baixar("PDF", item.id)}
-        />
+        {item.tipo === "diretoria" ? null : (
+          <button
+            type="button"
+            className="btn secondary small"
+            data-acao="abrir-relatorio"
+            aria-label={`Abrir ${item.nome}`}
+            disabled={!e.area}
+            onClick={aoAbrir}
+          >
+            {item.tipo === "montador" ? "Montar" : "Abrir"}
+          </button>
+        )}
+        {ehIdDoRelatorio(id) ? (
+          <BotoesDeExportacao
+            pequenos
+            desativado={!pronto || e.baixando !== null}
+            excel={() => estado.baixar("XLSX", id)}
+            pdf={() => estado.baixar("PDF", id)}
+          />
+        ) : null}
+        {item.tipo === "diretoria" ? (
+          <BotoesDeExportacao
+            pequenos
+            desativado={!e.area}
+            excel={() => aoGerarDiretoria("XLSX")}
+            pdf={() => aoGerarDiretoria("PDF")}
+          />
+        ) : null}
       </div>
     </article>
   );
@@ -356,13 +431,19 @@ function CartaoDoRelatorio({
 */
 function CatalogoDosRelatorios({
   estado,
+  relatorios,
   aoAbrir,
+  aoGerarDiretoria,
+  erroNaGeracao,
 }: {
   estado: EstadoDaTelaDePaineis;
+  relatorios: readonly RelatorioDoCatalogo[];
   aoAbrir: (id: RelatorioDoCatalogo["id"]) => void;
+  aoGerarDiretoria: (formato: "PDF" | "XLSX") => Promise<void>;
+  erroNaGeracao: string;
 }) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
-  const grupos = gruposDoCatalogo();
+  const grupos = gruposDoCatalogo(relatorios);
   const erros = [
     ...new Set(
       Object.values(e.relatorios)
@@ -380,6 +461,11 @@ function CatalogoDosRelatorios({
       {e.erroNoDownload ? (
         <Aviso tom="danger" papel="alert">
           {e.erroNoDownload}
+        </Aviso>
+      ) : null}
+      {erroNaGeracao ? (
+        <Aviso tom="danger" papel="alert">
+          {erroNaGeracao}
         </Aviso>
       ) : null}
       {grupos.map((grupo) => (
@@ -401,11 +487,35 @@ function CatalogoDosRelatorios({
                 estado={estado}
                 item={item}
                 aoAbrir={() => aoAbrir(item.id)}
+                aoGerarDiretoria={aoGerarDiretoria}
               />
             ))}
           </div>
         </section>
       ))}
+    </div>
+  );
+}
+
+/* "Todos os relatórios" e o nome do relatório aberto. */
+function BarraDeVoltar({
+  titulo,
+  aoVoltar,
+}: {
+  titulo: string;
+  aoVoltar: () => void;
+}) {
+  return (
+    <div className="relatorios-voltar">
+      <button
+        type="button"
+        className="btn ghost small"
+        data-acao="voltar-ao-catalogo"
+        onClick={aoVoltar}
+      >
+        <Icone nome="chevron-left" tamanho={16} /> Todos os relatórios
+      </button>
+      <h2 className="ui-titulo">{titulo}</h2>
     </div>
   );
 }
@@ -518,17 +628,7 @@ function Relatorio({
 
   return (
     <div className="relatorios-aberto" data-relatorio={definicao.id}>
-      <div className="relatorios-voltar">
-        <button
-          type="button"
-          className="btn ghost small"
-          data-acao="voltar-ao-catalogo"
-          onClick={aoVoltar}
-        >
-          <Icone nome="chevron-left" tamanho={16} /> Todos os relatórios
-        </button>
-        <h2 className="ui-titulo">{definicao.rotulo}</h2>
-      </div>
+      <BarraDeVoltar titulo={definicao.rotulo} aoVoltar={aoVoltar} />
       <CardDaLista rotulo={definicao.rotulo}>
         <div className="ui-barra-da-lista">
           <BotoesDeExportacao
@@ -595,14 +695,42 @@ function Relatorio({
   );
 }
 
-/* O que o montador de relatório precisa, fora o recorte (vem da criação da tela). */
+/* O que os relatórios gerados no navegador precisam (vem da criação da tela). */
 export interface ApoioDoRelatorio {
   /** Os editais da área, já enriquecidos (os da Visão geral, sem filtro). */
   linhasDaArea: () => readonly LinhaDaVisaoGeral[];
+  /** A Visão geral como está (o recorte do "Ver em Relatórios"). */
+  visaoGeral: () => RecorteDoRelatorio & { carregado: boolean };
   configuracoes: Configuracoes;
   obterPerfil: () => Perfil | null;
   agora: () => Date;
   supabase: ClienteDoRelatorio | null;
+  /** O estado da Lista de aprovados (o Resumo por cargo e status). */
+  aprovados: () => Promise<{ estado: EstadoDosAprovados }>;
+  /**
+   * Pede as linhas do monitoramento (os editais da área), que só são lidas
+   * sob demanda (src/componentes/dados-do-monitoramento.ts); devolve a
+   * devolução do pedido.
+   */
+  pedirLinhas: () => () => void;
+  /** Pede as linhas e espera que cheguem (a diretoria, gerada no clique). */
+  esperarLinhas: () => Promise<void>;
+}
+
+/* As linhas do monitoramento já lidas, ou o pedido até chegarem (ou falharem). */
+function esperarLinhasDoMonitoramento(): Promise<void> {
+  if (obterDadosDoMonitoramento().carregado) return Promise.resolve();
+  const devolver = pedirLinhasDoMonitoramento();
+  return new Promise((pronto, falhou) => {
+    const parar = assinarDadosDoMonitoramento(() => {
+      const { carregado, erro } = obterDadosDoMonitoramento();
+      if (!carregado && !erro) return;
+      parar();
+      devolver();
+      if (carregado) pronto();
+      else falhou(new Error(erro));
+    });
+  });
 }
 
 function usarTextosDoRelatorio(configuracoes: Configuracoes) {
@@ -616,42 +744,106 @@ function usarTextosDoRelatorio(configuracoes: Configuracoes) {
   );
 }
 
-function MontadorDosPaineis({
-  recorte,
-  apoio,
-  aoFechar,
-}: {
-  recorte: RecorteDoRelatorio;
-  apoio: ApoioDoRelatorio;
-  aoFechar: () => void;
-}) {
-  const textos = usarTextosDoRelatorio(apoio.configuracoes);
-  return (
-    <MontadorDeRelatorio
-      e={recorte}
-      descricao="da área"
-      textos={textos}
-      configuracoes={apoio.configuracoes}
-      obterPerfil={apoio.obterPerfil}
-      agora={apoio.agora}
-      aoFechar={aoFechar}
-      supabase={apoio.supabase}
-      podeAprovados={podeBaixarAprovados(apoio.obterPerfil())}
-    />
-  );
+/* O montador: a área inteira ou a Visão geral como estava (mesma área). */
+function recorteDoMontador(
+  apoio: ApoioDoRelatorio,
+  area: string,
+  origem: OrigemDoRecorte,
+): { recorte: RecorteDoRelatorio; descricao: string } {
+  if (origem === "visao-geral") {
+    const visao = apoio.visaoGeral();
+    if (visao.carregado && visao.area === area)
+      return { recorte: visao, descricao: "do recorte da Visão geral" };
+  }
+  return {
+    recorte: recorteDaAreaInteira(area, apoio.linhasDaArea()),
+    descricao: "da área",
+  };
+}
+
+/*
+  O estado da Lista de aprovados, pedido quando o Resumo por cargo abre (a
+  tela `approved` baixa sob demanda): o mesmo controlador da Lista, então a
+  carga é uma só para as duas telas.
+*/
+function usarAprovados(ligado: boolean, apoio: ApoioDoRelatorio) {
+  const [aprovados, setAprovados] = useState<{
+    estado: EstadoDosAprovados;
+  } | null>(null);
+  const [erro, setErro] = useState("");
+  useEffect(() => {
+    if (!ligado || aprovados) return;
+    let vivo = true;
+    apoio
+      .aprovados()
+      .then((controlador) => {
+        if (!vivo) return;
+        setAprovados(controlador);
+        void controlador.estado.garantirCarregado();
+      })
+      .catch((falha: unknown) => {
+        if (vivo)
+          setErro(
+            falha instanceof Error && falha.message
+              ? falha.message
+              : "Não foi possível abrir a lista de aprovados.",
+          );
+      });
+    return () => {
+      vivo = false;
+    };
+  }, [ligado, aprovados, apoio]);
+  return { aprovados, erro };
 }
 
 export function TelaDePaineisDeDados({
   estado,
-  relatorio,
+  relatorio: apoio,
 }: {
   estado: EstadoDaTelaDePaineis;
   relatorio: ApoioDoRelatorio;
 }) {
   const e = useSyncExternalStore(estado.assinar, estado.obter);
-  const { area: areaDoApp } = usarAreaAtual();
-  // O recorte é tirado no clique: o montador não muda com uma recarga no meio.
-  const [montando, setMontando] = useState<RecorteDoRelatorio | null>(null);
+  const { area: areaDoApp, carregado: linhasProntas } = usarAreaAtual();
+  const textos = usarTextosDoRelatorio(apoio.configuracoes);
+  const podeAprovados = podeBaixarAprovados(apoio.obterPerfil());
+  const relatorios = catalogoPermitido({ aprovados: podeAprovados });
+  // O montador e o Resumo por cargo abrem por cima do catálogo.
+  const [extra, setExtra] = useState<Extra>("");
+  /*
+    O montador aberto e de onde vem o recorte. O recorte é tirado quando as
+    linhas da área chegam e não muda com uma recarga no meio.
+  */
+  const [montando, setMontando] = useState<{
+    origem: OrigemDoRecorte;
+  } | null>(null);
+  /*
+    Os editais do Resumo no endereço; `vez` remonta o relatório quando eles
+    chegam de fora (atalho, voltar do navegador), não quando a pessoa troca
+    o filtro nele.
+  */
+  const [resumo, setResumo] = useState({ editais: "", vez: 0 });
+  const [erroNaGeracao, setErroNaGeracao] = useState("");
+  const { aprovados, erro: erroDosAprovados } = usarAprovados(
+    extra === "resumo-por-cargo",
+    apoio,
+  );
+
+  /*
+    O montador e o Resumo precisam dos editais da área (as linhas do
+    monitoramento, lidas só sob demanda): pedidas enquanto um deles está
+    aberto.
+  */
+  useEffect(() => (extra ? apoio.pedirLinhas() : undefined), [extra, apoio]);
+  const recorteMontado = useMemo(
+    () =>
+      montando && linhasProntas && e.area
+        ? recorteDoMontador(apoio, e.area, montando.origem)
+        : null,
+    // Só ao abrir e quando as linhas chegam: uma recarga no meio não muda o montador.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [montando, linhasProntas, e.area],
+  );
 
   /*
     A área do app mudou com a tela já aberta: lê a nova. Quem abre a tela é o
@@ -663,24 +855,97 @@ export function TelaDePaineisDeDados({
       void estado.carregar(areaDoApp);
   }, [estado, areaDoApp]);
 
+  const aplicar = useRef<
+    (parte: Partial<Record<CampoDoEndereco, string>>) => void
+  >(() => {});
+  aplicar.current = (parte) => {
+    if (parte.edital !== undefined) {
+      const editais = editaisParaOEndereco(editaisDoEndereco(parte.edital));
+      setResumo((atual) =>
+        atual.editais === editais ? atual : { editais, vez: atual.vez + 1 },
+      );
+    }
+    const relatorio = parte.relatorio;
+    if (relatorio === undefined) return;
+    setErroNaGeracao("");
+    if (ehIdDoRelatorio(relatorio)) {
+      setExtra("");
+      setMontando(null);
+      void estado.abrir(relatorio);
+      return;
+    }
+    if (
+      relatorio === "montar-relatorio" ||
+      (relatorio === "resumo-por-cargo" && podeAprovados)
+    ) {
+      setExtra(relatorio);
+      const origem =
+        relatorio === "montar-relatorio" && ehOrigemDoRecorte(parte.origem)
+          ? parte.origem
+          : "";
+      setMontando(relatorio === "montar-relatorio" ? { origem } : null);
+      void estado.voltarAoCatalogo();
+      return;
+    }
+    setExtra("");
+    setMontando(null);
+    void estado.voltarAoCatalogo();
+  };
+
   /*
     O relatório aberto mora no endereço: abrir um cartão é entrada nova no
     histórico (o voltar do navegador volta aos cartões); link com
     `?relatorio=<id>` abre direto nele. A tela vai por `tela` (não por
     <TelaNaUrl>): o hook está neste componente, acima de qualquer Provider.
+    Só depois da área (o montador tira o recorte dela).
   */
   const mudarNoEndereco = usarLojaNaUrl(
     ESQUEMA_DO_RELATORIO,
-    { relatorio: e.noCatalogo ? "" : e.ativo },
-    ({ relatorio }) => {
-      if (relatorio === undefined) return;
-      void (ehIdDoRelatorio(relatorio)
-        ? estado.abrir(relatorio)
-        : estado.voltarAoCatalogo());
+    {
+      relatorio: extra || (e.noCatalogo ? "" : e.ativo),
+      origem: extra === "montar-relatorio" ? (montando?.origem ?? "") : "",
+      edital: extra === "resumo-por-cargo" ? resumo.editais : "",
     },
-    { tela: VIEW_DOS_RELATORIOS },
+    (parte) => aplicar.current(parte),
+    { tela: VIEW_DOS_RELATORIOS, pronta: Boolean(e.area) },
   );
 
+  // O atalho de outra tela com esta já montada (src/componentes/ver-em-relatorios.tsx).
+  usarPedidoDeFiltro(VIEW_DOS_RELATORIOS, Boolean(e.area), (pedido) => {
+    if (!ehRelatorioDoEndereco(pedido.relatorio)) return;
+    mudarNoEndereco({
+      relatorio: pedido.relatorio,
+      origem: ehOrigemDoRecorte(pedido.origem) ? pedido.origem : "",
+      edital: editaisParaOEndereco(pedido.editais ?? []),
+    });
+  });
+
+  const voltar = () =>
+    mudarNoEndereco({ relatorio: "", origem: "", edital: "" });
+
+  async function gerarDiretoria(formato: "PDF" | "XLSX") {
+    setErroNaGeracao("");
+    try {
+      await apoio.esperarLinhas();
+      const { arquivo, nome } = await gerarRelatorio({
+        escolha: escolhaDaDiretoria(formato),
+        recorte: recorteDaAreaInteira(e.area, apoio.linhasDaArea()),
+        textos,
+        cabecalho: String(
+          apoio.configuracoes.obter().valores?.get?.(CHAVE_DO_CABECALHO) || "",
+        ),
+        quem: String(apoio.obterPerfil()?.nome || ""),
+        agora: apoio.agora(),
+        supabase: apoio.supabase,
+        podeAprovados,
+      });
+      baixarArquivo(arquivo, nome);
+    } catch (falha) {
+      setErroNaGeracao(mensagemDaFalha(falha));
+    }
+  }
+
+  const noResumo = extra === "resumo-por-cargo";
   const leitura = e.relatorios[e.ativo];
   const lendo = e.noCatalogo
     ? Object.values(e.relatorios).some((l) => l.situacao === "carregando")
@@ -689,42 +954,68 @@ export function TelaDePaineisDeDados({
     <div className="ui-tela paineis-tela">
       <TopoDoPainel
         status={e.noCatalogo ? "" : textoDaSincronizacao(leitura)}
-        aoAtualizar={() => void estado.sincronizar()}
-        atualizarDesativado={!e.area || lendo}
-        rotuloDaAtualizacao="Sincronizar"
-      >
-        <button
-          type="button"
-          className="btn secondary"
-          data-acao="montar-relatorio"
-          disabled={!e.area}
-          onClick={() =>
-            setMontando(recorteDaAreaInteira(e.area, relatorio.linhasDaArea()))
-          }
-        >
-          <i className="fa-solid fa-file-lines" aria-hidden="true" /> Montar
-          relatório
-        </button>
-      </TopoDoPainel>
-      {e.noCatalogo ? (
+        aoAtualizar={() =>
+          void (noResumo ? aprovados?.estado.carregar() : estado.sincronizar())
+        }
+        atualizarDesativado={!e.area || (noResumo ? !aprovados : lendo)}
+        rotuloDaAtualizacao={noResumo ? "Atualizar" : "Sincronizar"}
+      />
+      {noResumo ? (
+        <div className="relatorios-aberto" data-relatorio="resumo-por-cargo">
+          <BarraDeVoltar titulo="Resumo por cargo e status" aoVoltar={voltar} />
+          {erroDosAprovados ? (
+            <Aviso tom="danger" papel="alert">
+              {erroDosAprovados}
+            </Aviso>
+          ) : aprovados ? (
+            <RelatorioResumoPorCargo
+              key={resumo.vez}
+              estado={aprovados.estado}
+              editais={editaisDoEndereco(resumo.editais)}
+              aoMudarEditais={(editais) => {
+                const texto = editaisParaOEndereco(editais);
+                setResumo((atual) => ({ ...atual, editais: texto }));
+                mudarNoEndereco({ edital: texto }, { substituir: true });
+              }}
+            />
+          ) : (
+            <p className="ui-texto-secundario" role="status">
+              Carregando…
+            </p>
+          )}
+        </div>
+      ) : e.noCatalogo ? (
         <CatalogoDosRelatorios
           estado={estado}
-          aoAbrir={(id) => mudarNoEndereco({ relatorio: id })}
+          relatorios={relatorios}
+          aoAbrir={(id) =>
+            mudarNoEndereco({ relatorio: id, origem: "", edital: "" })
+          }
+          aoGerarDiretoria={gerarDiretoria}
+          erroNaGeracao={erroNaGeracao}
         />
       ) : (
         <>
-          <Relatorio
-            estado={estado}
-            aoVoltar={() => mudarNoEndereco({ relatorio: "" })}
-          />
+          <Relatorio estado={estado} aoVoltar={voltar} />
           <GavetaDeFontes estado={estado} />
         </>
       )}
-      {montando ? (
-        <MontadorDosPaineis
-          recorte={montando}
-          apoio={relatorio}
-          aoFechar={() => setMontando(null)}
+      {montando && extra === "montar-relatorio" && !recorteMontado ? (
+        <p className="ui-texto-secundario" role="status">
+          Carregando os editais da área…
+        </p>
+      ) : null}
+      {recorteMontado && extra === "montar-relatorio" ? (
+        <MontadorDeRelatorio
+          e={recorteMontado.recorte}
+          descricao={recorteMontado.descricao}
+          textos={textos}
+          configuracoes={apoio.configuracoes}
+          obterPerfil={apoio.obterPerfil}
+          agora={apoio.agora}
+          aoFechar={voltar}
+          supabase={apoio.supabase}
+          podeAprovados={podeAprovados}
         />
       ) : null}
     </div>
@@ -733,7 +1024,7 @@ export function TelaDePaineisDeDados({
 
 export interface OpcoesDaTelaDePaineis extends OpcoesDoEstadoDosPaineis {
   areaAtual?: () => string | null | undefined;
-  /** O montador de relatório; cada parte tem o padrão do app. */
+  /** Os relatórios gerados no navegador; cada parte tem o padrão do app. */
   relatorio?: Partial<ApoioDoRelatorio>;
 }
 
@@ -750,10 +1041,14 @@ export function criarPaineisDeDados({
   const estado = criarEstadoDosPaineis({ supabase, ...opcoes });
   const apoio: ApoioDoRelatorio = {
     linhasDaArea: () => estadoDaVisaoGeral.obter().linhasDaArea,
+    visaoGeral: () => estadoDaVisaoGeral.obter(),
     configuracoes: estadoDasConfiguracoes,
     obterPerfil: () => window.getMonitoraProfile?.() || null,
     agora: () => new Date(),
     supabase: getSupabaseClient() as ClienteDoRelatorio | null,
+    aprovados: () => carregarTela("approved"),
+    pedirLinhas: pedirLinhasDoMonitoramento,
+    esperarLinhas: esperarLinhasDoMonitoramento,
     ...relatorio,
   };
   return {

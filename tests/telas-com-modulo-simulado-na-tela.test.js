@@ -7331,38 +7331,38 @@ bloco("modulos/visao-geral", async () => {
       expect(linhas()[0].classList.contains("is-destacada")).toBe(true);
     });
 
-    /* 13/11/2026: Exportar abre o montador de relatório; o CSV é um dos formatos. */
-    it("Exportar abre o montador; o formato CSV baixa o CSV do recorte", async () => {
+    /*
+      23/11/2026: o Exportar da Visão geral é o da tabela (Excel e PDF, as
+      colunas à vista e o recorte); o montador virou cartão de Relatórios.
+    */
+    it("Exportar em Excel baixa a tabela do recorte, com as colunas à vista", async () => {
       await montar();
       await act(async () => estado.definirFiltro("uf", ["RR"]));
-      await clicar(secao.querySelector('[data-acao="exportar"]'));
-      // O montador chega por import(), fora do pacote de entrada.
-      await vi.waitFor(
-        async () => {
-          await esperar();
-          expect(document.getElementById("visaoGeralRelatorio")).not.toBeNull();
-        },
-        { timeout: 8000 },
-      );
-      const montador = document.getElementById("visaoGeralRelatorio");
-      const csv = [...montador.querySelectorAll('[role="radio"]')].find(
-        (b) => b.textContent.trim() === "CSV",
-      );
-      await clicar(csv);
-      await clicar(document.getElementById("visaoGeralRelatorioGerar"));
-      expect(document.getElementById("visaoGeralRelatorio")).toBeNull();
-      const [conteudo, nome] = baixar.mock.calls[0];
-      expect(nome).toBe("AgSUS_Monitora_SaudeIndigena_20261001.csv");
-      expect(conteudo).toContain("DSEI Yanomami");
-      expect(conteudo).not.toContain("DSEI Xingu");
+      await clicar(secao.querySelector('[data-acao="exportar-excel"]'));
+      await vi.waitFor(() => expect(baixar).toHaveBeenCalledTimes(1), {
+        timeout: 8000,
+      });
+      const [bytes, nome, tipo] = baixar.mock.calls[0];
+      expect(nome).toBe("visao-geral-saude-indigena-2026-10-01.xlsx");
+      expect(tipo).toMatch(/spreadsheetml/);
+      const { unzipSync, strFromU8 } = await import("fflate");
+      const planilha = Object.entries(unzipSync(bytes))
+        .filter(([caminho]) => caminho.startsWith("xl/"))
+        .map(([, conteudo]) => strFromU8(conteudo))
+        .join("");
+      expect(planilha).toContain("DSEI Yanomami");
+      expect(planilha).not.toContain("DSEI Xingu");
+      expect(planilha).not.toContain("Observações");
     });
 
     it("recorte sem nenhuma linha não exporta a área inteira", async () => {
       await montar();
       await act(async () => estado.definirBusca("nenhum processo tem isto"));
       expect(linhas()).toHaveLength(0);
-      expect(secao.querySelector('[data-acao="exportar"]').disabled).toBe(true);
-      estado.exportarCsv();
+      expect(secao.querySelector('[data-acao="exportar-excel"]').disabled).toBe(
+        true,
+      );
+      await estado.exportar("excel");
       expect(baixar).not.toHaveBeenCalled();
     });
   });

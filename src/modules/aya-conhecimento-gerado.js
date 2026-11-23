@@ -3131,7 +3131,7 @@ export const VERBETES_AYA = Object.freeze([
       "inativar lista",
     ],
     resposta:
-      'Listas inativas continuam consultáveis, mas seus candidatos não podem ser alterados, nem receber anexos. Nas abas Aprovados e Resumo por cargo, elas ficam no "Histórico", junto com as listas de editais cancelados ou desativados: a vista "Ativos", a que abre, mostra a lista de trabalho (as listas ativas, inclusive as de edital já concluído, que estão em convocação), e os indicadores, os filtros e a exportação contam só a vista escolhida. Ativar ou inativar a lista é de quem pode importar (Editor em Importação, como o grupo Gestor); substituir ou remover o XLSX de uma lista existente é do Administrador em Importação.',
+      'Listas inativas continuam consultáveis, mas seus candidatos não podem ser alterados, nem receber anexos. Na aba Aprovados (e no Resumo por cargo e status, em Relatórios), elas ficam no "Histórico", junto com as listas de editais cancelados ou desativados: a vista "Ativos", a que abre, mostra a lista de trabalho (as listas ativas, inclusive as de edital já concluído, que estão em convocação), e os indicadores, os filtros e a exportação contam só a vista escolhida. Ativar ou inativar a lista é de quem pode importar (Editor em Importação, como o grupo Gestor); substituir ou remover o XLSX de uma lista existente é do Administrador em Importação.',
     fato: "",
     fonte:
       "src/lib/aprovados/lista-aprovados-rules.ts; src/lib/acessos/access-roles.ts",
@@ -3375,11 +3375,11 @@ export const VERBETES_AYA = Object.freeze([
       "resumo por cargo lento de aprovados",
     ],
     resposta:
-      'A aba "Resumo por cargo" conta a lista vigente com os mesmos filtros da aba Aprovados: por edital, cargo, regime e jornada, uma linha por vaga e modalidade, com subtotal e total geral. Cada vínculo (a linha da lista: vaga e modalidade) cai numa coluna só, e as colunas fecham o total de Aprovados: Contratados (Contratado e Migração), Desistentes (uma coluna só: o sistema não registra se a desistência foi voluntária ou tácita), Em reserva (o cadastro de reserva: quem está na fila de convocação depois das vagas imediatas e ainda não foi chamado) e Outros (Convocado, A convocar, Documentação Rejeitada, Contratado em outra lista, Não classificado). Passar o mouse no título da coluna mostra a definição. O cabeçalho e a coluna "Cargo e vaga" ficam fixos enquanto a tabela rola. Quem concorre à cota e à ampla tem duas linhas e conta nas duas em Aprovados; contratado por uma delas, a outra vai a Outras situações, sem contar dois contratados. Listas inativas ficam fora. O filtro Situação restringe a base. Clicar num número mostra quem está nele. A tabela mostra 50 linhas de vaga por vez e carrega mais ao rolar até o fim ou em "Carregar mais"; o Total geral é sempre do recorte inteiro. "Exportar" baixa o resumo em XLSX, CSV ou PDF, sem nomes, com o registro da exportação. Regime e jornada vêm do nome do cargo (ex.: "… - Teletrabalho - 20h" ou "Assistente Social 30h"); o grupo mostra só o que o nome traz, e a tela avisa quantos vínculos ficam sem regime ou jornada (o sistema não tem esse campo; vem do texto do cargo da lista).',
+      'O Resumo por cargo e status fica em Relatórios (menu Dados), num cartão do grupo Aprovados; até 23/11/2026 era a aba "Resumo por cargo" da Lista de aprovados, que agora tem o botão "Ver em Relatórios" no topo da aba Aprovados, que abre o resumo já nos editais escolhidos. Só aparece para quem tem acesso à Lista de aprovados. Ele conta a lista vigente com os mesmos filtros da aba Aprovados: por edital, cargo, regime e jornada, uma linha por vaga e modalidade, com subtotal e total geral. Cada vínculo (a linha da lista: vaga e modalidade) cai numa coluna só, e as colunas fecham o total de Aprovados: Contratados (Contratado e Migração), Desistentes (uma coluna só: o sistema não registra se a desistência foi voluntária ou tácita), Em reserva (o cadastro de reserva: quem está na fila de convocação depois das vagas imediatas e ainda não foi chamado) e Outros (Convocado, A convocar, Documentação Rejeitada, Contratado em outra lista, Não classificado). Passar o mouse no título da coluna mostra a definição. O cabeçalho e a coluna "Cargo e vaga" ficam fixos enquanto a tabela rola. Quem concorre à cota e à ampla tem duas linhas e conta nas duas em Aprovados; contratado por uma delas, a outra vai a Outras situações, sem contar dois contratados. Listas inativas ficam fora. O filtro Situação restringe a base. Clicar num número mostra quem está nele. A tabela mostra 50 linhas de vaga por vez e carrega mais ao rolar até o fim ou em "Carregar mais"; o Total geral é sempre do recorte inteiro. "Exportar" baixa o resumo em XLSX, CSV ou PDF, sem nomes, com o registro da exportação. Regime e jornada vêm do nome do cargo (ex.: "… - Teletrabalho - 20h" ou "Assistente Social 30h"); o grupo mostra só o que o nome traz, e a tela avisa quantos vínculos ficam sem regime ou jornada (o sistema não tem esse campo; vem do texto do cargo da lista).',
     fato: "",
     fonte:
-      "src/lib/aprovados/exportacao/resumo-por-cargo-e-status.ts; src/modulos/aprovados/aba-resumo.tsx; src/lib/aprovados/exportacao/exportacao-do-resumo-por-cargo.ts",
-    abrir: "approved",
+      "src/lib/paineis/resumo-por-cargo-e-status.ts; src/modulos/paineis-de-dados/resumo-por-cargo.tsx; src/lib/paineis/exportacao-do-resumo-por-cargo.ts",
+    abrir: "paineis-de-dados",
   },
   {
     arquivo: "regras-da-lista-de-aprovados.md",
@@ -3692,7 +3692,7 @@ export const VERBETES_AYA = Object.freeze([
       "tela da visao geral",
     ],
     resposta:
-      'A Visão geral do Yeendé é a mesma página nas três áreas (Saúde Indígena, SEDE e Projetos) e mostra só os editais da área escolhida no menu. De cima para baixo: o cabeçalho (saudação, quantos editais têm etapa nos próximos 7 dias, a hora da carga e os botões Filtros, Atualizar e Exportar), as vagas, "Pede ação" (críticos e pendências do pós-resultado) ao lado de "Em andamento, por fase", o mapa e a tabela de processos. Em Projetos há também "Processos por projeto". Na Saúde Indígena, no lugar do mapa fica o cartão "Mapa" (quantos DSEIs têm edital, o com mais vagas ociosas e o menos preenchido, e "Abrir no mapa"): o mapa dos DSEIs é a página Mapa. Em Projetos, o mapa mostra os municípios das vagas; a SEDE não tem mapa.',
+      'A Visão geral do Yeendé é a mesma página nas três áreas (Saúde Indígena, SEDE e Projetos) e mostra só os editais da área escolhida no menu. De cima para baixo: o cabeçalho (saudação, quantos editais têm etapa nos próximos 7 dias, a hora da carga e os botões Filtros, Atualizar, Exportar em Excel, Salvar em PDF e Ver em Relatórios), as vagas, "Pede ação" (críticos e pendências do pós-resultado) ao lado de "Em andamento, por fase", o mapa e a tabela de processos. Em Projetos há também "Processos por projeto". Na Saúde Indígena, no lugar do mapa fica o cartão "Mapa" (quantos DSEIs têm edital, o com mais vagas ociosas e o menos preenchido, e "Abrir no mapa"): o mapa dos DSEIs é a página Mapa. Em Projetos, o mapa mostra os municípios das vagas; a SEDE não tem mapa.',
     fato: "",
     fonte: "interface do Yeendé",
   },
@@ -3911,7 +3911,7 @@ export const VERBETES_AYA = Object.freeze([
       "taxa de vagas sem contratacao",
     ],
     resposta:
-      'Na tabela de processos da Visão geral, a coluna Contratados mostra as contratações dentro das vagas, como o indicador "Contratadas"; as que passam das vagas imediatas aparecem ao lado, como "+N além". A célula do edital mostra o prazo do edital (encerra em até 7 dias em vermelho, em até 30 dias em amarelo; "Cronograma encerrado" ou cancelado em cinza) e a situação do cronograma de Editais (atrasada ou próxima etapa em até 3 dias em vermelho, em até 7 dias em amarelo; "Processo suspenso" ou "Processo paralisado" em amarelo; "Sem cronograma" só quando o edital não tem nenhuma etapa em Editais). "Cronograma encerrado" quer dizer que a última data do cronograma passou: não prova que o resultado foi publicado nem que o processo foi homologado, e a validade do cadastro reserva conta a partir da data de encerramento do edital. Por isso, na Visão geral, o status "Concluído" calculado pelas datas aparece como "Cronograma encerrado" também na coluna Status, na fase, nos filtros e no CSV; "Concluído" fica só para o que foi digitado à mão com o cálculo manual. Edital com o cálculo automático desligado (cálculo manual) e com etapas tem cronograma: os detalhes dizem "Cronograma cadastrado · cálculo manual", com o status digitado (por exemplo, "· suspenso"), e o andamento e a próxima etapa vêm das etapas. A borda esquerda da linha segue a mesma cor. "Sem contratação" é vagas menos contratados, com a porcentagem das vagas (a partir de 20% em amarelo, de 40% em vermelho). As colunas Fase e Atenção mostram a fase calculada e os motivos de crítico. Sem coluna escolhida, os críticos vêm primeiro (marcados manualmente como críticos) e depois quem tem mais vagas sem contratação. Clicar no cabeçalho ordena a coluna (crescente, decrescente e de volta à ordem padrão). "Colunas" escolhe as colunas visíveis, guardadas no navegador, uma a uma ou por um conjunto pronto: Gestão (vagas, contratados, sem contratação, status, fase e atenção), Prazos (ciclo, início, encerramento, duração, status e fase) e Contratação (vagas, inscritos, aprovados, aguardando chamada, contratados, sem contratação, 1ª e última admissão); Unidade e Edital estão em todos, e o conjunto à vista fica marcado; o padrão, para todos, são todas menos Observações, que entra pelo menu "Colunas". Quando a tabela rola para o lado, Unidade e Edital ficam presas à esquerda. Clicar na linha (ou Enter) abre os detalhes do processo, com o andamento do cronograma ("N% do cronograma": quanto do cronograma já passou, não a contratação), a linha do tempo de Editais e o link do edital. Exportar abre o montador de relatório.',
+      'Na tabela de processos da Visão geral, a coluna Contratados mostra as contratações dentro das vagas, como o indicador "Contratadas"; as que passam das vagas imediatas aparecem ao lado, como "+N além". A célula do edital mostra o prazo do edital (encerra em até 7 dias em vermelho, em até 30 dias em amarelo; "Cronograma encerrado" ou cancelado em cinza) e a situação do cronograma de Editais (atrasada ou próxima etapa em até 3 dias em vermelho, em até 7 dias em amarelo; "Processo suspenso" ou "Processo paralisado" em amarelo; "Sem cronograma" só quando o edital não tem nenhuma etapa em Editais). "Cronograma encerrado" quer dizer que a última data do cronograma passou: não prova que o resultado foi publicado nem que o processo foi homologado, e a validade do cadastro reserva conta a partir da data de encerramento do edital. Por isso, na Visão geral, o status "Concluído" calculado pelas datas aparece como "Cronograma encerrado" também na coluna Status, na fase, nos filtros e no CSV; "Concluído" fica só para o que foi digitado à mão com o cálculo manual. Edital com o cálculo automático desligado (cálculo manual) e com etapas tem cronograma: os detalhes dizem "Cronograma cadastrado · cálculo manual", com o status digitado (por exemplo, "· suspenso"), e o andamento e a próxima etapa vêm das etapas. A borda esquerda da linha segue a mesma cor. "Sem contratação" é vagas menos contratados, com a porcentagem das vagas (a partir de 20% em amarelo, de 40% em vermelho). As colunas Fase e Atenção mostram a fase calculada e os motivos de crítico. Sem coluna escolhida, os críticos vêm primeiro (marcados manualmente como críticos) e depois quem tem mais vagas sem contratação. Clicar no cabeçalho ordena a coluna (crescente, decrescente e de volta à ordem padrão). "Colunas" escolhe as colunas visíveis, guardadas no navegador, uma a uma ou por um conjunto pronto: Gestão (vagas, contratados, sem contratação, status, fase e atenção), Prazos (ciclo, início, encerramento, duração, status e fase) e Contratação (vagas, inscritos, aprovados, aguardando chamada, contratados, sem contratação, 1ª e última admissão); Unidade e Edital estão em todos, e o conjunto à vista fica marcado; o padrão, para todos, são todas menos Observações, que entra pelo menu "Colunas". Quando a tabela rola para o lado, Unidade e Edital ficam presas à esquerda. Clicar na linha (ou Enter) abre os detalhes do processo, com o andamento do cronograma ("N% do cronograma": quanto do cronograma já passou, não a contratação), a linha do tempo de Editais e o link do edital. "Exportar em Excel" e "Salvar em PDF", no cabeçalho, baixam a tabela como está: as linhas do recorte e as colunas à vista. Para escolher seções e modelos, "Ver em Relatórios" abre o montador com o mesmo recorte.',
     fato: "",
     fonte: "interface do Yeendé",
   },
@@ -4058,7 +4058,7 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-da-visao-geral.md",
-    titulo: "Montar relatório da Visão geral",
+    titulo: "Montar relatório",
     perguntas: [
       "como gerar relatorio",
       "montar relatorio",
@@ -4072,9 +4072,11 @@ export const VERBETES_AYA = Object.freeze([
       "aprovados com data de admissao",
     ],
     resposta:
-      'O botão Exportar da Visão geral abre o montador com o que está na tela; o botão "Montar relatório", no topo de Relatórios (menu Dados), abre o mesmo montador com todos os editais da área, sem filtros. Escolha um modelo pronto (Resumo rápido, Completo ou Diretoria) ou monte o seu: marque as seções (resumo em números, tabela dos editais, vagas por cargo, aprovados, editais que pedem atenção), as colunas da tabela e o formato. O modelo Diretoria sai em Excel com três abas: Editais (número, unidade, vagas, divulgação, encerramento e ciclo), Vagas por cargo (cada vaga do edital com as vagas imediatas, os inscritos e os aprovados; as vagas imediatas vêm do quadro de vagas do edital ou do texto da vaga, e ficam "—" quando nenhum dos dois tem o número) e Aprovados (edital, cargo, nota, classificação, nome, status, matrícula e data de admissão conciliada com o RH). A seção Aprovados só aparece para quem tem acesso à Lista de aprovados, e cada download fica registrado com o nome de quem baixou. No PDF, acima de 3 mil aprovados, o Yeendé pede o Excel ou um recorte menor. O PDF sai como um documento, com o timbrado da AgSUS, os números, as tabelas e "Página X de Y"; o Excel sai com uma aba por seção; o CSV leva todas as colunas da tabela, como antes. Pela Visão geral, o relatório sai do que está na tela: área, filtros, busca e atalho; por Relatórios, sai da área inteira. A última escolha fica guardada neste navegador.',
+      'O montador de relatório fica em Relatórios (menu Dados), no cartão "Montar relatório" do grupo Editais, com todos os editais da área, sem filtros. Na Visão geral, o botão "Ver em Relatórios" abre o mesmo montador com o que está na tela (área, filtros, busca e atalho); os botões "Exportar em Excel" e "Salvar em PDF" da Visão geral baixam só a tabela como está. O modelo Diretoria também sai direto do cartão "Relatório da diretoria", em Relatórios. Escolha um modelo pronto (Resumo rápido, Completo ou Diretoria) ou monte o seu: marque as seções (resumo em números, tabela dos editais, vagas por cargo, aprovados, editais que pedem atenção), as colunas da tabela e o formato. O modelo Diretoria sai em Excel com três abas: Editais (número, unidade, vagas, divulgação, encerramento e ciclo), Vagas por cargo (cada vaga do edital com as vagas imediatas, os inscritos e os aprovados; as vagas imediatas vêm do quadro de vagas do edital ou do texto da vaga, e ficam "—" quando nenhum dos dois tem o número) e Aprovados (edital, cargo, nota, classificação, nome, status, matrícula e data de admissão conciliada com o RH). A seção Aprovados só aparece para quem tem acesso à Lista de aprovados, e cada download fica registrado com o nome de quem baixou. No PDF, acima de 3 mil aprovados, o Yeendé pede o Excel ou um recorte menor. O PDF sai como um documento, com o timbrado da AgSUS, os números, as tabelas e "Página X de Y"; o Excel sai com uma aba por seção; o CSV leva todas as colunas da tabela, como antes. Pelo "Ver em Relatórios" da Visão geral, o relatório sai do que estava na tela; pelo cartão, sai da área inteira. A última escolha fica guardada neste navegador.',
     fato: "",
-    fonte: "interface do Yeendé",
+    fonte:
+      "src/modulos/paineis-de-dados/montador-de-relatorio.tsx; src/lib/paineis/relatorio-da-visao-geral.ts",
+    abrir: "paineis-de-dados",
   },
   {
     arquivo: "regras-das-analises.md",
@@ -7120,7 +7122,7 @@ export const VERBETES_AYA = Object.freeze([
       "onde ficaram os paineis",
     ],
     resposta:
-      'A página Relatórios, no bloco Dados do menu (antes se chamava Painéis), reúne os relatórios de acompanhamento e gestão da área escolhida, que cruzam editais. Ela abre num catálogo de cartões, em grupos: Editais (Resumo dos editais e Editais por cargo) e Aprovados. Cada cartão diz o que o relatório mostra, quando foi calculado e quantas linhas tem, e já exporta o relatório inteiro por "Exportar em Excel" ou "Salvar em PDF". "Abrir" mostra a tabela, com "Todos os relatórios" para voltar ao catálogo; o endereço guarda o relatório aberto, então o link copiado abre direto nele, e o link antigo de Painéis continua funcionando. O sistema recalcula os relatórios de hora em hora; o botão Sincronizar, no topo, recalcula na hora o relatório aberto, ou todos quando o catálogo está à vista (no máximo uma vez por minuto cada um). O ícone de informação ao lado dos botões diz de onde vêm os dados de cada relatório. Os documentos de uma etapa, como o resultado da Classificação e as cartas de convocação, continuam na tela da etapa. Quem vê é quem o administrador libera em Relatórios, na tela de Acessos.',
+      'A página Relatórios, no bloco Dados do menu (antes se chamava Painéis), reúne os relatórios de acompanhamento e gestão da área escolhida, que cruzam editais. Ela abre num catálogo de cartões, em grupos: Editais (Resumo dos editais, Editais por cargo e Montar relatório) e Aprovados (Aprovados, Resumo por cargo e status e Relatório da diretoria). Cada cartão diz o que o relatório mostra e quando foi calculado; os calculados no banco mostram quantas linhas têm e já exportam o relatório inteiro por "Exportar em Excel" ou "Salvar em PDF". Montar relatório abre o montador (seções, colunas e formato); o Relatório da diretoria sai direto do cartão; o Resumo por cargo e status só aparece para quem tem acesso à Lista de aprovados. A Visão geral e a Lista de aprovados têm o botão "Ver em Relatórios", que abre o relatório que saiu delas já no recorte da tela. "Abrir" mostra a tabela, com "Todos os relatórios" para voltar ao catálogo; o endereço guarda o relatório aberto, então o link copiado abre direto nele, e o link antigo de Painéis continua funcionando. O sistema recalcula os relatórios de hora em hora; o botão Sincronizar, no topo, recalcula na hora o relatório aberto, ou todos quando o catálogo está à vista (no máximo uma vez por minuto cada um). O ícone de informação ao lado dos botões diz de onde vêm os dados de cada relatório. Os documentos de uma etapa, como o resultado da Classificação e as cartas de convocação, continuam na tela da etapa. Quem vê é quem o administrador libera em Relatórios, na tela de Acessos.',
     fato: "",
     fonte:
       "src/modulos/paineis-de-dados/; src/lib/paineis/catalogo-dos-relatorios.ts",
@@ -7176,6 +7178,40 @@ export const VERBETES_AYA = Object.freeze([
     fato: "",
     fonte:
       "src/modulos/paineis-de-dados/fontes-dos-dados.tsx; supabase/migrations/20261113220000_fontes_das_colunas_dos_paineis.sql",
+    abrir: "paineis-de-dados",
+  },
+  {
+    arquivo: "regras-dos-paineis.md",
+    titulo: "Relatório da diretoria",
+    perguntas: [
+      "relatorio da diretoria em relatorios",
+      "cartao da diretoria",
+      "baixar relatorio da diretoria",
+      "diferenca entre aprovados e diretoria",
+      "duas datas de admissao",
+      "admissao conciliada com o rh",
+    ],
+    resposta:
+      'Em Relatórios, o cartão "Relatório da diretoria" (grupo Aprovados) gera direto, em Excel ou PDF, o modelo Diretoria com os editais da área: Editais, Vagas por cargo e Aprovados. Ele convive com os cartões Editais por cargo e Aprovados, que contam parecido por regras diferentes, e cada cartão diz a sua: no Relatório da diretoria, a data de admissão é a conciliada com o RH e cada download fica registrado com o nome de quem baixou; no relatório Aprovados, é o dia em que o aprovado virou Contratado no sistema. Editais por cargo é calculado no banco, com os aprovados casados pelo código da vaga; as vagas por cargo da diretoria são ligadas na hora de gerar. A aba Aprovados da diretoria só sai para quem tem acesso à Lista de aprovados. Unificar as duas regras depende de decisão da equipe.',
+    fato: "",
+    fonte:
+      "src/lib/paineis/catalogo-dos-relatorios.ts; src/modulos/paineis-de-dados/gerar-relatorio.ts; src/lib/paineis/relatorio-da-diretoria.ts",
+    abrir: "paineis-de-dados",
+  },
+  {
+    arquivo: "regras-dos-paineis.md",
+    titulo: "Ver em Relatórios",
+    perguntas: [
+      "ver em relatorios",
+      "botao ver em relatorios",
+      "sumiu a aba do resumo",
+      "atalho para relatorios",
+    ],
+    resposta:
+      'O botão "Ver em Relatórios" leva ao relatório que saiu de uma tela, já no recorte dela: na Visão geral, abre o montador de relatório com os filtros, a busca e o atalho que estavam na tela; na Lista de aprovados (topo da aba Aprovados), abre o Resumo por cargo e status nos editais escolhidos. O montador e o Resumo por cargo moraram nessas telas até 23/11/2026; a Visão geral continua exportando a tabela em Excel e PDF. O botão só aparece para quem tem acesso a Relatórios. O endereço guarda o relatório aberto (e os editais do Resumo), então o link copiado abre do mesmo jeito.',
+    fato: "",
+    fonte:
+      "src/componentes/ver-em-relatorios.tsx; src/modulos/paineis-de-dados/paineis-de-dados.tsx",
     abrir: "paineis-de-dados",
   },
   {

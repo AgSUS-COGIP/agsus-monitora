@@ -25,6 +25,7 @@ import {
   esperar,
   teclar,
 } from "./componentes/interacoes.ts";
+import { RelatorioResumoPorCargo } from "../src/modulos/paineis-de-dados/resumo-por-cargo.tsx";
 import { criarListaAprovados } from "../src/modulos/aprovados/lista-aprovados.tsx";
 import {
   compactarPorArea,
@@ -3693,19 +3694,53 @@ bloco("componentes/lista-aprovados", () => {
     });
   });
 
-  describe("Resumo por cargo (pedido da CORES)", () => {
+  /*
+    O Resumo por cargo e status (pedido da CORES) saiu da Lista de aprovados
+    para Relatórios em 23/11/2026; conta o mesmo estado da Lista, então é
+    testado aqui, sobre ela.
+  */
+  describe("Resumo por cargo e status (em Relatórios)", () => {
+    let raizDoResumo: Root | null = null;
+    afterEach(async () => {
+      await act(async () => raizDoResumo?.unmount());
+      raizDoResumo = null;
+    });
+    async function abrirResumo(editais: string[] = []) {
+      const estado = definido(controlador).estado;
+      const caixa = document.createElement("div");
+      document.body.append(caixa);
+      raizDoResumo = createRoot(caixa);
+      const aoMudarEditais = vi.fn<(editais: readonly string[]) => void>();
+      await act(async () =>
+        raizDoResumo?.render(
+          createElement(RelatorioResumoPorCargo, {
+            estado,
+            editais,
+            aoMudarEditais,
+          }),
+        ),
+      );
+      return { aoMudarEditais };
+    }
+
+    it("a Lista de aprovados não tem mais a aba; o atalho leva aos editais escolhidos", async () => {
+      await montar();
+      expect(talvez("approvedTabResumo")).toBeNull();
+      expect(
+        acharTodos("[data-approved-tab]").map((b) => b.dataset.approvedTab),
+      ).toEqual(["aprovados", "convocacao", "pendencias"]);
+    });
+
     it("conta a lista vigente ativa por vaga e modalidade, com reserva pela fila e total geral", async () => {
       await montar();
-      await clicar($("approvedTabResumo"));
-      expect($("approvedPanelResumo").classList.contains("hidden")).toBe(false);
-      expect($("approvedHeadActions").classList.contains("hidden")).toBe(true);
-      const total = definido(achar("#approvedPanelResumo tfoot tr"));
+      await abrirResumo();
+      const total = definido(achar("#relatoriosResumoPorCargo tfoot tr"));
       const celulas = acharTodos("td", total).map((td) =>
         td.textContent?.trim(),
       );
       // Aprovados, Contratados, Desistentes, Em reserva, Outros.
       expect(
-        acharTodos("#approvedPanelResumo thead th").map((th) =>
+        acharTodos("#relatoriosResumoPorCargo thead th").map((th) =>
           th.textContent?.trim(),
         ),
       ).toEqual([
@@ -3718,41 +3753,56 @@ bloco("componentes/lista-aprovados", () => {
       ]);
       expect(celulas).toEqual(["3", "1", "0", "2", "0"]);
       const avisos = definido(
-        achar("#approvedPanelResumo .approved-resumo-avisos"),
+        achar("#relatoriosResumoPorCargo .relatorios-resumo-avisos"),
       ).textContent;
       // A lista inativa nem chega ao resumo dos Ativos (está no Histórico).
       expect(avisos).not.toMatch(/lista inativa ficou fora/);
       expect(avisos).toMatch(/Não informado no cargo/);
-      expect($("approvedPanelResumo").textContent).not.toMatch(/Diego Alves/);
+      expect($("relatoriosResumoPorCargo").textContent).not.toMatch(
+        /Diego Alves/,
+      );
     });
 
     it("o número abre os vínculos daquele recorte numa gaveta que fecha com Esc", async () => {
       await montar();
-      await clicar($("approvedTabResumo"));
+      await abrirResumo();
       const reserva = definido(
         achar<HTMLButtonElement>(
-          "#approvedPanelResumo tfoot button[aria-label^='Ver os 2 de Em reserva']",
+          "#relatoriosResumoPorCargo tfoot button[aria-label^='Ver os 2 de Em reserva']",
         ),
       );
       await clicar(reserva);
-      const gaveta = $("approvedResumoDetalhe");
+      const gaveta = $("relatoriosResumoDetalhe");
       expect(gaveta.textContent).toMatch(/Bruno Lima/);
       expect(gaveta.textContent).toMatch(/Carla Souza/);
       expect(gaveta.textContent).not.toMatch(/Ana Ribeiro/);
       await teclar(document, "Escape");
-      expect(document.getElementById("approvedResumoDetalhe")).toBeNull();
+      expect(document.getElementById("relatoriosResumoDetalhe")).toBeNull();
     });
 
     it("o filtro Situação restringe a base e diz isso", async () => {
       await montar();
-      await clicar($("approvedTabResumo"));
-      await clicar(opcaoDoFiltro("approvedResumoFiltroStatus", "Contratado"));
-      const total = definido(achar("#approvedPanelResumo tfoot tr"));
+      await abrirResumo();
+      await clicar(opcaoDoFiltro("relatoriosResumoFiltroStatus", "Contratado"));
+      const total = definido(achar("#relatoriosResumoPorCargo tfoot tr"));
       expect(acharTodos("td", total)[0]?.textContent?.trim()).toBe("1");
       expect(
-        definido(achar("#approvedPanelResumo .approved-resumo-avisos"))
+        definido(achar("#relatoriosResumoPorCargo .relatorios-resumo-avisos"))
           .textContent,
       ).toMatch(/Situação restringe a base/);
+    });
+
+    it("o edital do atalho chega escolhido e a escolha volta ao endereço", async () => {
+      await montar();
+      const { aoMudarEditais } = await abrirResumo(["10"]);
+      expect(aoMudarEditais).toHaveBeenLastCalledWith(["10"]);
+      const marcadas = acharTodos(
+        ".multi-select-option",
+        definido($("relatoriosResumoFiltroEdital").closest(".multi-select")),
+      ).filter((opcao) => opcao.querySelector("input")?.checked);
+      expect(marcadas.map((o) => o.textContent)).toEqual([
+        expect.stringContaining("03/2025"),
+      ]);
     });
 
     it("sem a lista carregada, diz que o resumo depende dela (não é vazio)", async () => {
@@ -3761,8 +3811,8 @@ bloco("componentes/lista-aprovados", () => {
           erros: { listar_listas_aprovados: "sem rede" },
         }),
       });
-      await clicar($("approvedTabResumo"));
-      expect($("approvedPanelResumo").textContent).toMatch(/não carregou/);
+      await abrirResumo();
+      expect($("relatoriosResumoPorCargo").textContent).toMatch(/não carregou/);
     });
   });
 });

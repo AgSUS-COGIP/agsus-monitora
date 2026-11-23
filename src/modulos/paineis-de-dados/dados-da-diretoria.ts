@@ -1,8 +1,8 @@
-import type { FormatoDoRelatorio } from "../../lib/visao-geral/relatorio-da-visao-geral.ts";
+import type { FormatoDoRelatorio } from "../../lib/paineis/relatorio-da-visao-geral.ts";
 import {
   normalizarAprovadosDaDiretoria,
   normalizarVagasPorCargo,
-} from "../../lib/visao-geral/relatorio-da-diretoria.ts";
+} from "../../lib/paineis/relatorio-da-diretoria.ts";
 
 /*
   As leituras das abas 2 e 3 do relatório da diretoria, na hora de gerar
