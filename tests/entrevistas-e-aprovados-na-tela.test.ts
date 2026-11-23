@@ -1443,6 +1443,47 @@ bloco("componentes/lista-aprovados", () => {
       expect($("approvedKpiTotal").textContent).toBe("3");
     });
 
+    it("KPI clicável: filtra a Situação, marca o card e clicar de novo limpa", async () => {
+      await montar();
+      const alvo = (chave: string) =>
+        achar<HTMLButtonElement>(
+          `#approvedPanelAprovados [data-kpi="${chave}"] .ui-kpi-alvo`,
+        );
+      const contratado = alvo("contratado");
+      // Botão nativo: recebe foco, e Enter/Espaço o acionam pelo navegador.
+      expect(contratado.tagName).toBe("BUTTON");
+      expect(contratado.type).toBe("button");
+      contratado.focus();
+      expect(document.activeElement).toBe(contratado);
+      expect(contratado.getAttribute("aria-pressed")).toBe("false");
+
+      await clicar(contratado);
+      expect(nomes()).toEqual(["Ana Ribeiro"]);
+      expect(contratado.getAttribute("aria-pressed")).toBe("true");
+      expect(
+        achar('#approvedPanelAprovados [data-kpi="contratado"]').classList,
+      ).toContain("is-ativo");
+      // Os números não mudam com o filtro de Situação.
+      expect($("approvedKpiTotal").textContent).toBe("3");
+
+      await clicar(contratado);
+      expect(nomes()).toHaveLength(3);
+      expect(contratado.getAttribute("aria-pressed")).toBe("false");
+      expect(
+        achar('#approvedPanelAprovados [data-kpi="contratado"]').classList,
+      ).not.toContain("is-ativo");
+
+      // Trocar de card troca o filtro; o Total o tira.
+      await clicar(contratado);
+      await clicar(alvo("desistente"));
+      expect(contratado.getAttribute("aria-pressed")).toBe("false");
+      expect(alvo("desistente").getAttribute("aria-pressed")).toBe("true");
+      expect(alvo("total").hasAttribute("aria-pressed")).toBe(false);
+      await clicar(alvo("total"));
+      expect(nomes()).toHaveLength(3);
+      expect(alvo("desistente").getAttribute("aria-pressed")).toBe("false");
+    });
+
     it("rolagem contínua da TabelaInfinita: 50 por vez, sem paginação", async () => {
       const muitos = Array.from({ length: 120 }, (_, indice) =>
         candidato({ cargo: indice < 60 ? "Enfermeiro" : "Médico" }),
