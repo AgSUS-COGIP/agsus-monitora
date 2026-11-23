@@ -5936,6 +5936,21 @@ bloco("lib/relatorio-da-visao-geral", () => {
       );
       expect(cabecalho).toContain('relatorio="montar-relatorio"');
       expect(cabecalho).toContain('origem="visao-geral"');
+      /*
+        O atalho mora na Visão geral (pacote de entrada): não pode puxar o
+        catálogo, que traz as definições e a exportação em Excel/PDF (o
+        orçamento de bundle estourou assim, 23/11/2026).
+      */
+      const atalho = readFileSync(
+        "src/componentes/ver-em-relatorios.tsx",
+        "utf8",
+      );
+      expect(atalho).not.toContain("catalogo-dos-relatorios");
+      const endereco = readFileSync(
+        "src/lib/paineis/endereco-dos-relatorios.ts",
+        "utf8",
+      );
+      expect(endereco.match(/^import (?!type ).*$/gm) ?? []).toEqual([]);
       // 16/11/2026: o "Montar relatório" saiu do menu da conta para os Painéis.
       const sistema = readFileSync("src/app/sistema.ts", "utf8");
       expect(sistema).not.toContain("exportPDF");

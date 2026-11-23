@@ -73,8 +73,9 @@ paineis-de-dados.css  a alça de largura, o painel do ⓘ, os cartões, a volta,
 ```
 
 Regras puras em `src/lib/paineis/catalogo-dos-relatorios.ts` (os cartões, o tipo, o grupo, o resumo e
-a regra de cada um, quem vê o Resumo, os grupos com relatório, o que vale no endereço e a busca do
-atalho), `relatorio-da-visao-geral.ts` (+ `-em-pdf`), `relatorio-da-diretoria.ts`,
+a regra de cada um, quem vê o Resumo, os grupos com relatório e o que vale no endereço),
+`endereco-dos-relatorios.ts` (a busca do atalho, a origem e os editais do endereço; só tipos e
+texto, porque o atalho mora na Visão geral, no pacote de entrada), `relatorio-da-visao-geral.ts` (+ `-em-pdf`), `relatorio-da-diretoria.ts`,
 `resumo-por-cargo-e-status.ts` e `exportacao-do-resumo-por-cargo.ts` (+ `-em-pdf`), todos em
 `src/lib/paineis/`, `src/lib/paineis/relatorios-dos-paineis.ts` (colunas, leitura da página, XLSX, tabela do PDF, nome do
 arquivo, largura arrastada e texto da origem) e `src/lib/paineis/fontes-dos-paineis.ts` (leitura das fontes).

@@ -80,13 +80,15 @@ import {
   telaDaRota,
 } from "../src/lib/navegacao/rotas.ts";
 import {
-  buscaDoRelatorio,
   catalogoPermitido,
-  editaisDoEndereco,
   ehIdDoRelatorio,
   ehRelatorioDoEndereco,
   gruposDoCatalogo,
 } from "../src/lib/paineis/catalogo-dos-relatorios.ts";
+import {
+  buscaDoRelatorio,
+  editaisDoEndereco,
+} from "../src/lib/paineis/endereco-dos-relatorios.ts";
 import { abrirEmRelatorios } from "../src/componentes/ver-em-relatorios.tsx";
 import { escolhaDaDiretoria } from "../src/modulos/paineis-de-dados/gerar-relatorio.ts";
 import { recorteDaAreaInteira } from "../src/lib/paineis/relatorio-da-visao-geral.ts";

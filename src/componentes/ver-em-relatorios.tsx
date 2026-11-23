@@ -1,8 +1,8 @@
 import type {
   IdQueAbre,
   OrigemDoRecorte,
-} from "../lib/paineis/catalogo-dos-relatorios.ts";
-import { buscaDoRelatorio } from "../lib/paineis/catalogo-dos-relatorios.ts";
+} from "../lib/paineis/endereco-dos-relatorios.ts";
+import { buscaDoRelatorio } from "../lib/paineis/endereco-dos-relatorios.ts";
 import { guardarFiltrosDaTela } from "../app/filtros-no-endereco.ts";
 import { pedirFiltro } from "../app/pedido-de-filtro.ts";
 import { telaPermitida } from "../lib/navegacao/navegacao.ts";

@@ -36,17 +36,17 @@ import { carregarTela } from "../../app/registro-das-telas.ts";
 import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
 import {
   catalogoPermitido,
-  editaisDoEndereco,
-  editaisParaOEndereco,
   ehIdDoRelatorio,
-  ehOrigemDoRecorte,
   ehRelatorioDoEndereco,
   gruposDoCatalogo,
 } from "../../lib/paineis/catalogo-dos-relatorios.ts";
-import type {
-  OrigemDoRecorte,
-  RelatorioDoCatalogo,
-} from "../../lib/paineis/catalogo-dos-relatorios.ts";
+import type { RelatorioDoCatalogo } from "../../lib/paineis/catalogo-dos-relatorios.ts";
+import {
+  editaisDoEndereco,
+  editaisParaOEndereco,
+  ehOrigemDoRecorte,
+} from "../../lib/paineis/endereco-dos-relatorios.ts";
+import type { OrigemDoRecorte } from "../../lib/paineis/endereco-dos-relatorios.ts";
 import {
   LINHAS_POR_PAGINA,
   definicaoDoRelatorio,
