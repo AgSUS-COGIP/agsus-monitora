@@ -1,27 +1,16 @@
 /*
-  Sininho do topo e popup do resumo do dia (resumo-do-dia.tsx). A cor de cada
-  linha é a do tipo no Cronograma: `data-cor` → `--cal-cor` (tabela no fim de
-  src/modulos/cronograma/cronograma.css).
+  Sininho do topo e popup do resumo do dia (resumo-do-dia.tsx). O botão é uma
+  ação do cabeçalho (`.topo-acao`, src/app/casca/topo.css); aqui só o número.
+  A cor de cada linha é a do tipo no Cronograma: `data-cor` → `--cal-cor`
+  (tabela no fim de src/modulos/cronograma/cronograma.css).
 */
 .resumo-sininho {
   position: relative;
-  display: inline-grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border: 1px solid var(--platform-border, var(--border-subtle));
-  border-radius: var(--radius-xl);
-  background: var(--surface-card);
-  color: var(--text-primary);
-  cursor: pointer;
-}
-.resumo-sininho:hover {
-  background: var(--surface-hover);
 }
 .resumo-sininho-numero {
   position: absolute;
-  top: -4px;
-  right: -4px;
+  top: var(--space-0-5);
+  right: var(--space-0-5);
   min-width: 18px;
   height: 18px;
   padding: 0 var(--space-1);

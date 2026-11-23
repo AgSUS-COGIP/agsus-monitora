@@ -1327,9 +1327,11 @@ bloco("paleta-do-rio", () => {
     });
 
     it("o título da página segue a área, com o padrão de antes fora dela", () => {
-      expect(app).toContain("color: var(--cor-da-area, var(--text-primary));");
-      expect(app).toContain(
-        "color: var(--cor-da-area, var(--color-text-brand)) !important;",
+      // O título da casca é do cabeçalho (src/app/casca/topo.css), sem !important.
+      const topo = readFileSync("src/app/casca/topo.css", "utf8");
+      expect(topo).toContain("color: var(--cor-da-area, var(--text-primary));");
+      expect(topo).toContain(
+        "color: var(--cor-da-area, var(--color-text-brand));",
       );
     });
 

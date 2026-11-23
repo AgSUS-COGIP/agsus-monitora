@@ -5,60 +5,12 @@
 
   O contêiner da barra (largura, marca, navegação, rodapé, trilho recolhido e os
   tokens de componente `--menu-*`) é de `platform-shell.css`. Aqui ficam só as
-  peças que os componentes desenham. Seletores só com classe, salvo os dois de
-  `#appScreen` herdados do controle único de recolher, explicados abaixo.
+  peças que os componentes desenham, com seletores só de classe.
+
+  O botão de recolher (`alca-de-recolher.tsx`) mora no rodapé acima de 900px,
+  com o desenho do Sair (seção do rodapé, abaixo); até 900px vai para o
+  cabeçalho como uma ação dele (`.topo-acao`, src/app/casca/topo.css).
 */
-
-/* ── Alça de recolher ─────────────────────────────────────────────────────── */
-
-/*
-  Os seletores usam `#appScreen` porque as regras concorrentes usam
-  `!important`: `app.css` esconde o botão em `body.sidebar-locked` (páginas que
-  travam a barra recolhida), mas no celular é ele que abre a gaveta. Entre declarações `!important`, quem
-  decide é a especificidade — e um id resolve de uma vez, sem escalada de
-  classes.
-*/
-
-/* O botão único aparece sempre, em qualquer largura e em qualquer modo. */
-#appScreen .global-side-toggle {
-  display: grid !important;
-}
-
-/*
-  No rodapé da barra (acima de 900px), entre o tema e o Sair: uma linha como a
-  do Sair, com o ícone e "Recolher menu"; recolhida, só o ícone (regras do
-  trilho, no fim do arquivo). É o mesmo lugar nos dois modos. O `display: grid`
-  vem da regra de cima (`!important`), então a linha é uma grade em coluna; o
-  resto do desenho é o do Sair (seção do rodapé, abaixo).
-*/
-.side-footer > .side-recolher {
-  grid-auto-flow: column;
-  justify-content: start;
-  align-items: center;
-}
-
-/*
-  No cabeçalho, quando a barra é uma gaveta fora da tela: no fluxo, na vaga que
-  o hambúrguer deixou. O React o põe no `.title-row` por portal, que acrescenta
-  no fim; `order: -1` o leva para antes do título. Flutuar aqui não serve —
-  `.top` tem `z-index: 10030` e as ações dele ocupam o canto superior esquerdo,
-  então um botão fixo nasceria coberto.
-*/
-#appScreen .title-row > .global-side-toggle {
-  position: static;
-  order: -1;
-  margin: 0;
-  flex: 0 0 auto;
-  width: 44px;
-  height: 44px;
-  place-items: center;
-  padding: 0;
-  border: 1px solid var(--platform-border);
-  border-radius: var(--radius-lg);
-  background: var(--card);
-  color: var(--slate);
-  cursor: pointer;
-}
 
 /* ── Menu em áreas ────────────────────────────────────────────────────────── */
 
@@ -152,19 +104,25 @@
   display: block;
 }
 
-/* Os itens penduram numa linha-guia alinhada ao centro do ícone da área. */
+/*
+  Os itens penduram numa linha-guia no centro do ícone da área (8px de recuo
+  + metade do ícone de 18px ≈ 16px). A linha é um fundo de 1px, não borda: o
+  texto dos itens e dos títulos fica a 16px dela, na escala de espaço.
+*/
 .menu-area__itens {
   display: grid;
-  gap: 2px;
-  margin: 2px 0 var(--space-1);
-  margin-inline-start: calc(var(--space-2) + var(--menu-icone) / 2);
+  gap: var(--space-0-5);
+  margin: var(--space-0-5) 0 var(--space-1);
+  margin-inline-start: var(--space-4);
   padding: 0 0 0 var(--space-2);
-  border-inline-start: 1px solid var(--menu-borda);
+  background: linear-gradient(var(--menu-borda), var(--menu-borda)) left / 1px
+    100% no-repeat;
   list-style: none;
 }
 
 /* O ícone da página à esquerda do nome, na cor do texto do item (o mesmo do trilho). */
 .menu-item {
+  position: relative;
   min-height: 32px;
   gap: var(--space-2);
   padding: 0 var(--space-2);
@@ -172,6 +130,10 @@
 
 .menu-item__icone {
   flex: 0 0 auto;
+}
+
+.menu-item__rotulo {
+  flex: 1;
 }
 
 /*
@@ -183,32 +145,46 @@
 */
 .menu-item__selo {
   flex: 0 0 auto;
-  margin-left: auto;
-  padding: 1px 5px;
+  padding: 0 var(--space-1-5);
   border-radius: var(--radius-pill);
   background: var(--menu-fundo-ativo);
   color: var(--menu-realce);
   font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
-  line-height: 1.2;
+  line-height: 1.5;
 }
 
+/*
+  A página aberta: o nome em 600 na cor de realce e um marcador fino sobre a
+  linha-guia, sem fundo (referência aprovada em 23/11/2026). O marcador é
+  forma, não só cor: aparece também para quem não distingue o realce.
+*/
 .menu-item.active {
-  background: var(--menu-fundo-ativo);
   color: var(--menu-realce);
   font-weight: 600;
+}
+
+.menu-item.active::before {
+  content: "";
+  position: absolute;
+  top: var(--space-1-5);
+  bottom: var(--space-1-5);
+  left: calc(-1 * var(--space-2));
+  width: var(--space-0-5);
+  border-radius: var(--radius-pill);
+  background: currentColor;
 }
 
 /*
   Blocos da área (Acompanhar e Processo seletivo) e os três grupos de
   Administração (Aparência, Pessoas e acessos, Sistema): título em caption
   500, sentence case (Design System AgSUS, "Grupos": sem caixa alta), na cor
-  suave, alinhado ao ícone das páginas. Cada bloco tem a sua linha-guia.
+  suave, alinhado ao nome das páginas. Cada bloco tem a sua linha-guia.
 */
 .menu-bloco__titulo {
-  margin: var(--space-2) 0 2px;
-  margin-inline-start: calc(var(--space-2) + var(--menu-icone) / 2);
-  padding: 0 calc(var(--space-2) * 2 + 1px);
+  margin: var(--space-2) 0 var(--space-0-5);
+  margin-inline-start: var(--space-4);
+  padding: 0 var(--space-4);
   overflow: hidden;
   color: var(--menu-texto-suave);
   font-size: var(--text-caption);
@@ -264,9 +240,24 @@
     display: none;
   }
 
-  body.sidebar-collapsed .menu-area--atual > .menu-area__cabecalho,
+  /* Aberto, o flutuante marca o ícone dele; a área atual leva o marcador (abaixo). */
   body.sidebar-collapsed .menu-area--flutuante > .menu-area__cabecalho {
     background: var(--menu-fundo-ativo);
+  }
+
+  body.sidebar-collapsed .menu-area__cabecalho {
+    position: relative;
+  }
+
+  body.sidebar-collapsed .menu-area--atual > .menu-area__cabecalho::before {
+    content: "";
+    position: absolute;
+    top: var(--space-1-5);
+    bottom: var(--space-1-5);
+    left: calc(-1 * var(--space-2));
+    width: var(--space-0-5);
+    border-radius: var(--radius-pill);
+    background: currentColor;
   }
 
   body.sidebar-collapsed .menu-area__painel {
@@ -444,11 +435,9 @@
     color: var(--menu-texto);
   }
 
+  /* A página aberta no trilho: a cor de realce e o mesmo marcador, à esquerda do ícone. */
   body.sidebar-collapsed .menu-area--direta .menu-item.active {
-    background: var(--menu-fundo-ativo);
     color: var(--menu-realce);
-    box-shadow: inset 0 0 0 1px
-      color-mix(in srgb, currentColor 35%, transparent);
   }
 
   body.sidebar-collapsed .menu-area__itens .menu-item__selo {
@@ -526,10 +515,14 @@
   margin-bottom: var(--space-1);
 }
 
-/* Duas linhas ("Área" e o nome), com borda: é um controle, não um grupo. */
+/*
+  Duas linhas ("Área" e o nome), com contorno: é um controle, não um grupo.
+  O contorno é um anel de 1px, como o do trilho (abaixo): o fundo segue o da
+  barra, e quem tem desenho de botão são as ações do cabeçalho.
+*/
 .menu-seletor__botao {
   min-height: 44px;
-  border: 1px solid var(--menu-borda);
+  box-shadow: inset 0 0 0 1px var(--menu-borda);
 }
 
 .menu-seletor__marca {
@@ -596,7 +589,6 @@
 
   /* No trilho, o anel na cor da área diz que é o seletor, não uma página. */
   body.sidebar-collapsed .menu-seletor__botao {
-    border: 0;
     box-shadow: inset 0 0 0 2px
       color-mix(in srgb, var(--cor-da-area, currentColor) 80%, transparent);
   }
@@ -615,12 +607,17 @@
   vêm dos tokens `--menu-*` da barra, então seguem o tema escuro e a cor
   configurada sem regra própria. O segmento ativo é um cartão da página
   (`--menu-flutuante-*`), legível em qualquer cor de barra.
+
+  O seletor é o Segmentado de src/ui/ (`.ui-segmentado`), com as cores da
+  barra: `.side-tema` na frente vence o ui.css, que entra depois.
 */
-.side-tema__opcoes {
+.side-tema .side-tema__opcoes {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 2px;
-  padding: 2px;
+  width: auto;
+  gap: var(--space-0-5);
+  padding: var(--space-0-5);
+  border: 0;
   border-radius: var(--radius-lg);
   background: var(--menu-fundo-hover);
 }
@@ -686,10 +683,10 @@
   display: none;
 }
 
-/* Na gaveta do celular, alvo de toque de 44px (o seletor soma 2px de cada lado). */
+/* Na gaveta do celular, alvo de toque de 44px. */
 @media (max-width: 900px) {
   .side-tema__opcao {
-    min-height: calc(var(--mobile-touch-size, 44px) - 4px);
+    min-height: var(--mobile-touch-size, 44px);
   }
 
   .sidebar .side-logout {

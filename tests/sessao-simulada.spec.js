@@ -44,7 +44,11 @@ test.describe("sessão simulada", () => {
 
     await expect(page).toHaveURL(/\/saude-indigena\/visao-geral$/);
     await expect(page.locator("#loginScreen")).toBeHidden();
-    await expect(page.getByText("Pessoa Teste").first()).toBeVisible();
+    // O nome fica no menu da conta (o cabeçalho mostra só a foto).
+    await page.locator("#topUserMenu > summary").click();
+    await expect(page.locator("#topUserPopoverName")).toHaveText(
+      "Pessoa Teste",
+    );
     expect(erros).toEqual([]);
   });
 
@@ -106,6 +110,71 @@ test.describe("sessão simulada", () => {
     await expect(busca).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(busca).toBeHidden();
+    expect(erros).toEqual([]);
+  });
+
+  /*
+    O cabeçalho (src/app/casca/topo.tsx): no celular, só o ☰, a marca, o
+    sininho e a foto; no desktop, a área, a busca e, à direita, sininho, Aya e
+    foto. As ações têm todas a mesma caixa (44px no toque, 40px no mouse).
+  */
+  const RESUMO_DE_RESPONSAVEL = {
+    obter_meu_resumo_do_dia: {
+      data: "2026-11-23",
+      responsavel: true,
+      mostrar_ao_entrar: false,
+      hoje: [],
+      proximos: [],
+      atrasadas: [],
+    },
+  };
+  const caixa = async (local) => {
+    const r = await local.boundingBox();
+    return r && `${Math.round(r.width)}×${Math.round(r.height)}`;
+  };
+
+  test("no celular, o cabeçalho mostra o ☰, a marca, o sininho e a foto, na mesma caixa", async ({
+    browser,
+  }) => {
+    const contexto = await browser.newContext({
+      viewport: { width: 375, height: 812 },
+      isMobile: true,
+      hasTouch: true,
+    });
+    const page = await contexto.newPage();
+    const erros = await abrirComSessao(page, { rpcs: RESUMO_DE_RESPONSAVEL });
+    await page.goto("/sede/visao-geral", { waitUntil: "domcontentloaded" });
+    const topo = page.locator("header.top");
+    const menu = topo.locator("#globalSidebarToggle");
+    const sininho = topo.locator("#resumoDoDiaSininho");
+    const foto = topo.locator("#topUserMenu > summary");
+    for (const visivel of [menu, topo.locator(".topo-marca"), sininho, foto])
+      await expect(visivel).toBeVisible();
+    for (const fora of [".topo-busca", ".topo-aya", ".topo-area"])
+      await expect(topo.locator(fora)).toBeHidden();
+    for (const acao of [menu, sininho, foto])
+      expect(await caixa(acao)).toBe("44×44");
+    expect(erros).toEqual([]);
+    await contexto.close();
+  });
+
+  test("no desktop, a área à esquerda, a busca no meio e sininho, Aya e foto com a mesma caixa", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    const erros = await abrirComSessao(page, { rpcs: RESUMO_DE_RESPONSAVEL });
+    await page.goto("/sede/visao-geral", { waitUntil: "domcontentloaded" });
+    const topo = page.locator("header.top");
+    await expect(topo.locator(".topo-area")).toHaveText(/SEDE/);
+    await expect(topo.locator(".topo-marca")).toBeHidden();
+    const acoes = [
+      topo.locator("#resumoDoDiaSininho"),
+      topo.locator(".topo-aya"),
+      topo.locator("#topUserMenu > summary"),
+    ];
+    for (const acao of acoes) expect(await caixa(acao)).toBe("40×40");
+    await topo.locator(".topo-busca").click();
+    await expect(page.locator('[role="dialog"].search-modal')).toBeVisible();
     expect(erros).toEqual([]);
   });
 

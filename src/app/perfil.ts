@@ -66,28 +66,19 @@ export function criarPerfil({
     ouvintes.forEach((ouvinte) => ouvinte(atual));
   }
 
-  /** Nome, e-mail e perfil de quem entrou, no topo e na barra. */
+  /** Nome, e-mail e perfil de quem entrou, no menu da conta (o cabeçalho só tem a foto). */
   function mostrarNaBarra() {
     const nome = profileDisplayName(perfil, usuario);
-    escrever("userName", nome);
     escrever("topUserPopoverName", nome);
     escrever("userEmail", usuario?.email || perfil?.email || "-");
-    const selo = $("userProfileBadge");
-    if (selo && perfil?.perfil) {
-      const rotulo = roleLabel(perfil);
-      // Mostrar ou não é do CSS (vazio some; na faixa compacta, só no menu).
-      selo.textContent = rotulo;
-      escrever("topUserPopoverProfile", rotulo);
-    }
+    if (perfil?.perfil) escrever("topUserPopoverProfile", roleLabel(perfil));
   }
 
   /** Mostra o app (a tela de acesso é da entrada, que segue a fase da sessão). */
   function mostrarApp() {
     documento.body.classList.remove("access-request-mode");
     $("appScreen")?.classList.remove("hidden");
-    const nome = profileDisplayName(perfil, usuario);
-    escrever("userName", nome);
-    escrever("topUserPopoverName", nome);
+    escrever("topUserPopoverName", profileDisplayName(perfil, usuario));
     escrever("userEmail", usuario?.email || "-");
   }
 

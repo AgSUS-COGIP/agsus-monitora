@@ -405,11 +405,15 @@ export function medirTela({ toque, limiteDeOrigens = 60 }) {
     (px(cs.borderTopWidth) > 0 &&
       cs.borderTopStyle !== "none" &&
       !transparente(cs.borderTopColor));
+  /* O véu atrás da gaveta ou do modal (fixo, cobrindo a janela) não é botão desenhado. */
+  const veu = (el, cs, r) =>
+    cs.position === "fixed" && r.width >= vw && r.height >= window.innerHeight;
   for (const el of todos) {
     const cs = estilo(el);
     const r = caixa(el);
     const tag = el.tagName;
     let tipo = "";
+    if (veu(el, cs, r)) continue;
     if (
       (tag === "BUTTON" ||
         el.getAttribute("role") === "button" ||

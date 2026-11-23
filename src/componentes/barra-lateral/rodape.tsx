@@ -44,7 +44,11 @@ export function Rodape({
   return (
     <div className="side-footer" data-tour="barra-rodape">
       <div className="side-tema" data-tema={tema.tema} data-tour="barra-tema">
-        <div className="side-tema__opcoes" role="group" aria-label="Tema">
+        <div
+          className="side-tema__opcoes ui-segmentado"
+          role="group"
+          aria-label="Tema"
+        >
           {OPCOES_DE_TEMA.map((opcao) => (
             <button
               key={opcao.tema}

@@ -39,6 +39,13 @@ export const CAMPOS_DA_BUSCA = Object.freeze([
 */
 export const EVENTO_ESCOLHA_DA_BUSCA = "agsus:busca-global-escolhida";
 
+/*
+  O campo de busca do cabeçalho (src/app/casca/topo.tsx) abre a busca por
+  este evento em `document`, como o Ctrl+K: a busca é filha da raiz e o
+  cabeçalho, da casca, sem estado em comum.
+*/
+export const EVENTO_ABRIR_A_BUSCA = "agsus:abrir-busca-global";
+
 const textoBruto = (valor: unknown) =>
   typeof valor === "string" ||
   typeof valor === "number" ||

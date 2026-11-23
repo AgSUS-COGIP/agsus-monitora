@@ -250,12 +250,14 @@
 
 /* ---------- Oferta de "Primeiros passos" (primeira entrada) ---------- */
 
+/* Um cartão (`.ui-card`, src/ui/) com os botões do DS; aqui, o espaço e o lugar. */
 .aya-oferta {
   box-sizing: border-box;
-  padding: 12px 14px;
+  padding: var(--space-3) var(--space-4);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-xl);
   background: var(--surface-card);
+  box-shadow: none;
   color: var(--text-primary);
 }
 
@@ -278,31 +280,8 @@
 
 .aya-oferta__acoes {
   display: flex;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.aya-oferta__acoes button {
-  padding: 5px 12px;
-  border: 1px solid var(--brand-primary);
-  border-radius: var(--radius-full);
-  background: var(--surface-card);
-  color: var(--brand-primary);
-  font: inherit;
-  font-size: var(--text-md);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.aya-oferta__acoes .aya-oferta__sim {
-  background: var(--brand-primary);
-  color: var(--surface-card);
-}
-
-.aya-oferta__acoes .aya-oferta__nao {
-  border-color: transparent;
-  color: var(--text-secondary);
-  font-weight: 400;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
 }
 
 .aya-oferta :focus-visible {
@@ -320,7 +299,7 @@
 @media (max-width: 640px) {
   .aya-oferta--balao {
     width: min(240px, calc(100vw - 32px));
-    padding: 10px 12px;
+    padding: var(--space-2) var(--space-3);
   }
   .aya-oferta--balao .aya-oferta__texto {
     font-size: var(--text-body-sm);

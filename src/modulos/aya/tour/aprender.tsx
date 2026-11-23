@@ -108,8 +108,8 @@ export function OfertaDePrimeirosPassos({
     <div
       className={
         noPainel
-          ? "aya-oferta aya-oferta--painel"
-          : "aya-oferta aya-oferta--balao"
+          ? "ui-card aya-oferta aya-oferta--painel"
+          : "ui-card aya-oferta aya-oferta--balao"
       }
       style={noPainel ? undefined : estilo}
       role="region"
@@ -119,10 +119,18 @@ export function OfertaDePrimeirosPassos({
         <strong>{destaque}</strong> {texto}
       </p>
       <div className="aya-oferta__acoes">
-        <button type="button" className="aya-oferta__sim" onClick={aoAceitar}>
+        <button
+          type="button"
+          className="btn aya-oferta__sim"
+          onClick={aoAceitar}
+        >
           Mostrar
         </button>
-        <button type="button" className="aya-oferta__nao" onClick={aoRecusar}>
+        <button
+          type="button"
+          className="btn ghost aya-oferta__nao"
+          onClick={aoRecusar}
+        >
           Agora não
         </button>
       </div>

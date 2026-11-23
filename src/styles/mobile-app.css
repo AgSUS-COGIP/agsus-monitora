@@ -30,11 +30,7 @@ textarea,
 }
 
 @media (max-width: 900px) {
-  /* No celular o cabeçalho sobe para 10030 (app.css: --z-header 10010). */
-  .app .top {
-    z-index: calc(var(--z-header) + 20);
-  }
-
+  /* O cabeçalho sobe para 10030 (--z-header + 20) em src/app/casca/topo.css. */
   body {
     background: var(--surface-raised);
     padding-top: var(--mobile-safe-top);
@@ -126,6 +122,8 @@ textarea,
     position: fixed;
     inset: 0;
     z-index: calc(var(--z-sidebar) + 14);
+    padding: 0;
+    border: 0;
     background: var(--color-bg-overlay);
     backdrop-filter: blur(2px);
   }
