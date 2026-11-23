@@ -74,9 +74,9 @@ pendencias/                 aba Pendências (migration 20261026190000; detecçã
                             scripts/aprovados/pendencias.py; regras em src/lib/aprovados/pendencias-do-edital.ts)
 exportacao/                 "Exportar" da aba Aprovados: modal-da-exportacao.tsx, exportar.ts
                             (registro no banco → arquivo → download); exportar-resumo.ts, o
-                            mesmo caminho para o Resumo por cargo
-aba-resumo.tsx              Resumo por cargo e status: filtros da lista, tabela agrupada com
-                            subtotal e total, número que abre os vínculos numa gaveta, Exportar
+                            mesmo caminho para o Resumo por cargo (que mora em Relatórios)
+recorte-dos-aprovados.ts    o recorte da lista (Ativos × Histórico, filtros e opções), o mesmo
+                            da aba Aprovados e do Resumo por cargo de Relatórios
 aprovados.css, convocacao.css
 ```
 
@@ -127,9 +127,14 @@ filtros, registros, data dos dados, data de emissão e o número do registro. N�
 
 ## Resumo por cargo e status (pedido da CORES)
 
-Aba **Resumo por cargo**, ao lado de Aprovados: a mesma lista vigente, os mesmos filtros e a mesma
-permissão, contados. Conta em `src/lib/aprovados/exportacao/resumo-por-cargo-e-status.ts` (uma estrutura para a tabela,
-o detalhe e o arquivo); arquivo em `src/lib/aprovados/exportacao/exportacao-do-resumo-por-cargo.ts`.
+Desde 23/11/2026 é um **cartão de Relatórios** (grupo Aprovados, [[modulo-paineis-de-dados]]); a
+Lista de aprovados ficou com o atalho **Ver em Relatórios** (no topo da aba Aprovados), que abre o
+relatório nos editais escolhidos. Continua a mesma lista vigente, com os mesmos filtros (o recorte de
+`src/modulos/aprovados/recorte-dos-aprovados.ts`) e a mesma permissão (recurso `aprovados`), sobre o
+estado da Lista (o controlador da tela `approved`). Tela em
+`src/modulos/paineis-de-dados/resumo-por-cargo.tsx`; conta em
+`src/lib/paineis/resumo-por-cargo-e-status.ts` (uma estrutura para a tabela, o detalhe e o arquivo);
+arquivo em `src/lib/paineis/exportacao-do-resumo-por-cargo.ts`.
 
 - **Grupos:** edital → cargo + regime + jornada → uma linha por vaga (código) e modalidade, subtotal
   do grupo, do edital (com mais de um) e total geral. Regime e jornada saem do texto do cargo por

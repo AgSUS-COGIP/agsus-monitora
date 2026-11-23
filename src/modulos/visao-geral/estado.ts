@@ -42,6 +42,9 @@ import type {
   e as colunas visíveis da tabela (`agsus_visible_cols_v2`).
 */
 import { colunasDoPreset } from "../../lib/visao-geral/presets-de-colunas.ts";
+import { baixarArquivo } from "../../ui/botoes-de-exportacao.tsx";
+import { erroDeVersaoNova } from "../../lib/carga/importar-com-recarga.ts";
+import { nomeDaArea } from "../../lib/navegacao/menu-lateral.ts";
 import {
   assinarDadosDoMonitoramento,
   linhasDaArea,
@@ -59,11 +62,9 @@ import {
   linhasDaResposta,
   alternarColuna,
   camposAtivos,
-  csvDaVisaoGeral,
   enriquecerLinhas,
   filtrosVazios,
   indicadoresDaVisaoGeral,
-  nomeDoCsv,
   normalizarColunas,
   normalizarFiltros,
   opcoesDosFiltros,
@@ -209,16 +210,6 @@ function guardar(
   }
 }
 
-function baixarNoNavegador(conteudo: string, nome: string) {
-  const arquivo = new Blob([conteudo], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(arquivo);
-  const ancora = document.createElement("a");
-  ancora.href = url;
-  ancora.download = nome;
-  ancora.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
 const mesmaLista = (a: readonly string[] = [], b: readonly string[] = []) =>
   a.length === b.length && a.every((valor, i) => valor === b[i]);
 const mesmosFiltros = (a: FiltrosDaVisaoGeral, b: FiltrosDaVisaoGeral) =>
@@ -239,7 +230,7 @@ export function criarEstadoDaVisaoGeral({
   },
   armazenamento = armazenamentoPadrao(),
   agora = () => Date.now(),
-  baixar = baixarNoNavegador,
+  baixar = baixarArquivo,
   aberta = true,
 }: OpcoesDoEstado = {}): EstadoDaVisaoGeral {
   const ouvintes = new Set<() => void>();
@@ -259,7 +250,6 @@ export function criarEstadoDaVisaoGeral({
     carregadoEm: 0,
     aberta,
     visitada: aberta,
-    montador: false,
   };
   let instantaneo: SnapshotDaVisaoGeral;
   let fonte: { linhas: readonly unknown[] | null; area: string } = {
@@ -693,15 +683,39 @@ export function criarEstadoDaVisaoGeral({
         acompanhamento: null,
       });
     },
-    exportarCsv() {
-      // O recorte da tela; sem recorte, ele já é a área inteira.
-      const { filtradas, area } = obterInstantaneo();
+    /*
+      O Exportar: a tabela como está (recorte e colunas à vista), em Excel
+      ou PDF (src/lib/visao-geral/tabela-para-exportar.ts, baixado só aqui).
+      Sem recorte, ele já é a área inteira; recorte vazio não exporta.
+    */
+    async exportar(formato) {
+      const { filtradas, area, colunas } = obterInstantaneo();
       if (!filtradas.length) return;
-      baixar(csvDaVisaoGeral(filtradas), nomeDoCsv(area, new Date(agora())));
+      const [
+        { tabelaDaVisaoGeral },
+        { arquivoDaTabela, nomeDoArquivoExportado },
+      ] = await Promise.all([
+        import("../../lib/visao-geral/tabela-para-exportar.ts"),
+        import("../../lib/base/exportacao-da-tabela.ts"),
+      ]).catch((erro: unknown) => {
+        throw erroDeVersaoNova(erro);
+      });
+      const quando = new Date(agora());
+      const rotulo = nomeDaArea(area) || area;
+      const arquivo = await arquivoDaTabela(
+        formato,
+        tabelaDaVisaoGeral(filtradas, colunas, rotulo),
+        quando,
+      );
+      baixar(
+        arquivo.bytes,
+        nomeDoArquivoExportado(
+          ["visao-geral", rotulo, hojeEmBrasilia(quando)],
+          arquivo.extensao,
+        ),
+        arquivo.tipo,
+      );
     },
-    /* O montador de relatório (src/modulos/visao-geral/montador-de-relatorio.tsx). */
-    abrirMontador: () => publicar({ montador: true }),
-    fecharMontador: () => publicar({ montador: false }),
   };
 }
 

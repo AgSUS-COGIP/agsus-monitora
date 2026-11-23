@@ -53,13 +53,16 @@ import {
   Popover,
 } from "../../ui/index.ts";
 import { useState } from "react";
+import { BotoesDeExportacao } from "../../ui/botoes-de-exportacao.tsx";
+import { VerEmRelatorios } from "../../componentes/ver-em-relatorios.tsx";
 
 /*
   Os blocos da Visão geral no "painel de decisão" (layout A, escolhido em
   17/11/2026 entre três prévias):
 
   - Cabeçalho: a saudação e os editais com etapa na semana à esquerda; a hora
-    da carga, "Filtros (n)", Atualizar e Exportar à direita. Substituiu três
+    da carga, "Filtros (n)", Atualizar, a exportação da tabela (Excel e
+    PDF) e "Ver em Relatórios" (o montador com o recorte) à direita. Substituiu três
     faixas (o card de boas-vindas, o topo e o card "Filtros" quase vazio).
   - Filtros: o painel só aparece quando aberto pelo botão; os chips do
     recorte ficam sempre à vista, com "Limpar tudo".
@@ -112,7 +115,8 @@ export function Cabecalho({
   agora: () => Date;
   filtrosAbertos: boolean;
   aoAlternarFiltros: () => void;
-  aoExportar: () => void;
+  /** O Exportar: a tabela como está, em Excel ou PDF. */
+  aoExportar: (formato: "excel" | "pdf") => unknown;
 }) {
   const status =
     e.erro && !e.carregado
@@ -185,15 +189,18 @@ export function Cabecalho({
         >
           <i className="fa-solid fa-rotate" aria-hidden="true" /> Atualizar
         </button>
-        <button
-          type="button"
-          className="btn secondary"
-          data-acao="exportar"
-          disabled={!e.carregado || !e.filtradas.length}
-          onClick={aoExportar}
-        >
-          <i className="fa-solid fa-download" aria-hidden="true" /> Exportar
-        </button>
+        <BotoesDeExportacao
+          desativado={!e.carregado || !e.filtradas.length}
+          excel={() => aoExportar("excel")}
+          pdf={() => aoExportar("pdf")}
+        />
+        <VerEmRelatorios
+          relatorio="montar-relatorio"
+          origem="visao-geral"
+          perfil={perfil}
+          rotulo="Montar relatório com este recorte em Relatórios"
+          desativado={!e.carregado || !e.filtradas.length}
+        />
       </div>
     </header>
   );

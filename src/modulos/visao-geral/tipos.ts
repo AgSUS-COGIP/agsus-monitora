@@ -235,8 +235,6 @@ export type EstadoProprio = {
   aberta: boolean;
   /** Já foi aberta nesta visita: até lá a tela não monta mapas nem marcos. */
   visitada: boolean;
-  /** O montador de relatório está aberto (botão Exportar). */
-  montador: boolean;
 };
 export type SnapshotDaVisaoGeral = Readonly<
   Omit<EstadoProprio, "filtros" | "colunas"> & {
@@ -297,15 +295,14 @@ export type EstadoDaVisaoGeral = {
   alternarColuna: (campo: ColunaDaTabela, visivel: boolean) => void;
   /** Gestão, Prazos ou Contratação (src/lib/visao-geral/presets-de-colunas.ts). */
   aplicarPresetDeColunas: (id: string) => void;
-  exportarCsv: () => void;
-  abrirMontador: () => void;
-  fecharMontador: () => void;
+  /** O Exportar: a tabela como está, em Excel ou PDF. */
+  exportar: (formato: "excel" | "pdf") => Promise<void>;
 };
 export type OpcoesDoEstado = {
   dados?: DadosDoMonitoramento;
   armazenamento?: Armazenamento | null;
   agora?: () => number;
-  baixar?: (conteudo: string, nome: string) => void;
+  baixar?: (conteudo: Uint8Array, nome: string, tipo: string) => void;
   /** Começa aberta? A instância do app começa fechada (a navegação abre). */
   aberta?: boolean;
 };

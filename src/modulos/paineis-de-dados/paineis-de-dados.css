@@ -94,6 +94,12 @@
   font-size: var(--text-body-sm);
 }
 
+/* A regra que separa dois relatórios parecidos (admissão do RH × do sistema). */
+.relatorios-cartao-regra {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+
 .relatorios-cartao-acoes {
   display: flex;
   flex-wrap: wrap;
@@ -107,4 +113,230 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
+}
+
+/* ── Montador de relatório (montador-de-relatorio.tsx) ───────────────── */
+.relatorios-montador-recorte {
+  margin: var(--space-1) 0 0;
+  color: var(--text-secondary);
+  font-size: var(--text-body-sm);
+}
+.relatorios-montador-corpo {
+  display: grid;
+  gap: var(--space-4);
+}
+.relatorios-montador-modelo {
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--text-body-sm);
+  font-weight: var(--font-weight-medium);
+}
+.relatorios-montador-escolhas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: var(--space-4);
+}
+.relatorios-montador-grupo {
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.relatorios-montador-grupo legend {
+  padding: 0 var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+}
+.relatorios-montador-grupo label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  font-size: var(--text-body-sm);
+  overflow-wrap: anywhere;
+}
+.relatorios-montador-grupo input {
+  flex-shrink: 0;
+}
+.relatorios-montador-grupo:disabled {
+  opacity: 0.55;
+}
+/* As colunas lado a lado quando cabem (são muitas); na tela estreita, uma por linha. */
+.relatorios-montador-escolhas .relatorios-montador-grupo:last-child {
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+}
+.relatorios-montador-escolhas .relatorios-montador-grupo:last-child legend {
+  grid-column: 1 / -1;
+}
+.relatorios-montador-nota,
+.relatorios-montador-erro {
+  margin: 0;
+  font-size: var(--text-body-sm);
+}
+.relatorios-montador-nota {
+  color: var(--text-secondary);
+}
+.relatorios-montador-erro {
+  color: var(--state-danger);
+}
+.relatorios-montador-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+@media (max-width: 640px) {
+  .relatorios-montador-escolhas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── Resumo por cargo e status (resumo-por-cargo.tsx) ─────────────────────── */
+.relatorios-resumo-card {
+  display: grid;
+  gap: var(--space-3);
+}
+.relatorios-resumo-avisos {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding-left: var(--space-4);
+}
+.relatorios-resumo-tabela {
+  width: 100%;
+}
+/* A tabela tem 8 colunas: no celular rola dentro do cartão, não a página. */
+.relatorios-resumo-rolagem table {
+  min-width: 840px;
+}
+.relatorios-resumo-tabela td,
+.relatorios-resumo-tabela th {
+  vertical-align: middle;
+}
+.relatorios-resumo-tabela .relatorios-resumo-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+/*
+  Congelado (16/11/2026): o cabeçalho fica no topo e a coluna "Cargo e vaga" à
+  esquerda enquanto a tabela rola. A regra geral prende todo th no topo; aqui
+  só o do cabeçalho fica no topo — o th de linha (vaga, totais) subia por cima
+  dele. Os títulos cabem numa linha (são curtos e uniformes).
+*/
+.relatorios-resumo-tabela thead th {
+  white-space: nowrap;
+}
+.relatorios-resumo-tabela tbody th {
+  position: static;
+}
+@media (min-width: 901px) {
+  .relatorios-resumo-tabela th:first-child {
+    position: sticky;
+    left: 0;
+    border-right: 1px solid var(--border-subtle);
+  }
+  .relatorios-resumo-tabela tbody th:first-child {
+    z-index: calc(var(--z-sticky) - 1);
+    background: var(--surface-card);
+  }
+  .relatorios-resumo-tabela thead th:first-child,
+  .relatorios-resumo-tabela tfoot th:first-child {
+    z-index: calc(var(--z-sticky) + 1);
+  }
+  /* O nome do edital e do grupo acompanha a coluna presa ao rolar de lado. */
+  .relatorios-resumo-rotulo-preso {
+    position: sticky;
+    left: var(--space-3);
+  }
+  /* Edital e grupo ocupam a linha toda: rolam com ela, sem coluna presa. */
+  .relatorios-resumo-tabela
+    :is(.relatorios-resumo-edital, .relatorios-resumo-grupo)
+    th {
+    position: static;
+    border-right: 0;
+  }
+}
+.relatorios-resumo-vaga {
+  display: grid;
+  gap: 2px;
+  font-weight: var(--font-weight-regular);
+  text-align: left;
+}
+.relatorios-resumo-meta {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.relatorios-resumo-tabela .relatorios-resumo-edital th,
+.relatorios-resumo-tabela .relatorios-resumo-grupo th {
+  position: static;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font-weight: var(--font-weight-semibold);
+  text-align: left;
+}
+.relatorios-resumo-tabela .relatorios-resumo-subtotal th,
+.relatorios-resumo-tabela .relatorios-resumo-subtotal td,
+.relatorios-resumo-tabela .relatorios-resumo-total th,
+.relatorios-resumo-tabela .relatorios-resumo-total td,
+.relatorios-resumo-tabela .relatorios-resumo-subtotal th:first-child {
+  background: var(--surface-raised);
+  font-weight: var(--font-weight-semibold);
+  text-align: right;
+}
+.relatorios-resumo-tabela .relatorios-resumo-subtotal th,
+.relatorios-resumo-tabela .relatorios-resumo-total th {
+  text-align: left;
+}
+.relatorios-resumo-tabela tfoot th,
+.relatorios-resumo-tabela tfoot td {
+  position: sticky;
+  bottom: 0;
+  border-top: 2px solid var(--border-subtle);
+}
+.relatorios-resumo-valor {
+  display: inline-block;
+  padding: 0 var(--space-1);
+}
+.relatorios-resumo-numero {
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0 var(--space-1);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-link);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.relatorios-resumo-numero:hover {
+  background: var(--surface-hover);
+}
+.relatorios-resumo-numero:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+@media print {
+  .relatorios-resumo .ui-filtros,
+  .relatorios-resumo #approvedResumoExportar {
+    display: none;
+  }
+  .relatorios-resumo-rolagem {
+    max-height: none;
+    overflow: visible;
+  }
+  .relatorios-resumo-rolagem table {
+    min-width: 0;
+  }
+  .relatorios-resumo-numero {
+    text-decoration: none;
+  }
 }

@@ -29,6 +29,12 @@ export type FiltroDoPedido = {
   pendencias?: boolean;
   /** O código da vaga que segue entre as etapas (src/lib/navegacao/fluxo-das-etapas.ts). */
   vaga?: string;
+  /** Relatórios: o relatório que abre (src/componentes/ver-em-relatorios.tsx). */
+  relatorio?: string;
+  /** Relatórios: o recorte do montador ("visao-geral"). */
+  origem?: string;
+  /** Relatórios: os editais do Resumo por cargo e status. */
+  editais?: readonly string[];
 };
 
 interface PedidoGuardado {

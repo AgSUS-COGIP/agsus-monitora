@@ -283,7 +283,7 @@ import {
   normalizarAprovadosDaDiretoria,
   normalizarVagasPorCargo,
   vagasPeloTexto,
-} from "../src/lib/visao-geral/relatorio-da-diretoria.ts";
+} from "../src/lib/paineis/relatorio-da-diretoria.ts";
 import {
   conteudoDoRelatorio,
   MODELOS_DO_RELATORIO,
@@ -296,7 +296,7 @@ import {
   recorteDaAreaInteira,
   textoDaColuna,
   xlsxDoRelatorio,
-} from "../src/lib/visao-geral/relatorio-da-visao-geral.ts";
+} from "../src/lib/paineis/relatorio-da-visao-geral.ts";
 import {
   filtrosVazios,
   indicadoresDaVisaoGeral,
@@ -315,7 +315,8 @@ import {
 } from "../src/lib/visao-geral/visao-geral.ts";
 import { strFromU8, unzipSync, zipSync } from "fflate";
 import { carregarBibliotecasDoPdf } from "../src/lib/avaliacao-documental/espelho-em-pdf.ts";
-import { pdfDoRelatorio } from "../src/lib/visao-geral/relatorio-da-visao-geral-em-pdf.ts";
+import { pdfDoRelatorio } from "../src/lib/paineis/relatorio-da-visao-geral-em-pdf.ts";
+import { tabelaDaVisaoGeral } from "../src/lib/visao-geral/tabela-para-exportar.ts";
 import {
   type Indicadores,
   type LinhaDaVisaoGeral,
@@ -5883,7 +5884,30 @@ bloco("lib/relatorio-da-visao-geral", () => {
     });
   });
 
-  describe("o recorte da área inteira (montador nos Painéis)", () => {
+  describe("a tabela do Exportar da Visão geral (Excel e PDF)", () => {
+    it("leva o recorte e só as colunas à vista, na ordem da tela, com as contagens como número", () => {
+      const tabela = tabelaDaVisaoGeral(
+        LINHAS,
+        ["vagas_total", "edital", "unidade"],
+        "Saúde Indígena",
+      );
+      expect(tabela.titulo).toBe("Visão geral — Saúde Indígena");
+      expect(tabela.colunas).toEqual(["Unidade", "Edital", "Vagas"]);
+      expect(tabela.linhas[0]).toEqual(["DSEI Exemplo", "04/2099", 59]);
+      expect(tabela.linhas).toHaveLength(LINHAS.length);
+    });
+
+    it("contagem sem valor fica vazia (não vira zero)", () => {
+      const [primeira] = tabelaDaVisaoGeral(
+        [linha({ id: "x", edital: "1/2099", inscritos: null })],
+        ["inscritos"],
+        "",
+      ).linhas;
+      expect(primeira).toEqual([null]);
+    });
+  });
+
+  describe("o recorte da área inteira (montador em Relatórios)", () => {
     it("leva todos os editais da área, sem filtro, busca nem atalho", () => {
       const recorte = recorteDaAreaInteira("saude-indigena", LINHAS);
       expect(recorte).toEqual({
@@ -5898,13 +5922,20 @@ bloco("lib/relatorio-da-visao-geral", () => {
   });
 
   describe("na tela", () => {
-    it("o Exportar da Visão geral abre o montador; o menu da conta não tem mais", () => {
+    it("o montador mora em Relatórios; a Visão geral exporta a tabela e leva a ele", () => {
       const tela = readFileSync(
         "src/modulos/visao-geral/visao-geral.tsx",
         "utf8",
       );
-      expect(tela).toContain("aoExportar={estado.abrirMontador}");
-      expect(tela).toContain("<MontadorDeRelatorio");
+      // 23/11/2026: o Exportar da Visão geral é o da tabela; o montador é um cartão de Relatórios.
+      expect(tela).toContain("aoExportar={estado.exportar}");
+      expect(tela).not.toContain("MontadorDeRelatorio");
+      const cabecalho = readFileSync(
+        "src/modulos/visao-geral/paineis.tsx",
+        "utf8",
+      );
+      expect(cabecalho).toContain('relatorio="montar-relatorio"');
+      expect(cabecalho).toContain('origem="visao-geral"');
       // 16/11/2026: o "Montar relatório" saiu do menu da conta para os Painéis.
       const sistema = readFileSync("src/app/sistema.ts", "utf8");
       expect(sistema).not.toContain("exportPDF");

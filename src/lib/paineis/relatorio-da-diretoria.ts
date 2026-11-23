@@ -1,5 +1,5 @@
 import { formatarNota } from "../aprovados/lista-aprovados-rules.ts";
-import { dataCurta } from "./visao-geral.ts";
+import { dataCurta } from "../visao-geral/visao-geral.ts";
 
 /*
   AS ABAS 2 E 3 DO RELATÓRIO DA DIRETORIA (pedido de 13/11/2026)

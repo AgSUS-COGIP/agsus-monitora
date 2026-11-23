@@ -1,8 +1,4 @@
 import { rotuloDaCopia } from "../../lib/carga/rotulo-da-copia.ts";
-import {
-  naLocalidade,
-  opcoesDeLocalidade,
-} from "../../lib/aprovados/localidade-da-vaga.ts";
 import type {
   EstadoDosAprovados,
   SnapshotDosAprovados,
@@ -10,7 +6,6 @@ import type {
   CandidatoAprovado,
   ListaDeAprovados,
 } from "./tipos-do-estado.ts";
-import type { FiltrosDaTabelaDeAprovados } from "./tipos-da-aba-de-aprovados.ts";
 import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
 import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
 import { filtrosDosAprovados } from "../../lib/aya/filtro-da-aya.ts";
@@ -22,16 +17,8 @@ import {
 } from "../../lib/acessos/access-roles.ts";
 import { CHAVE_DO_CABECALHO } from "../../lib/base/cabecalho-dos-documentos.ts";
 import { estadoDasConfiguracoes } from "../configuracoes/estado.ts";
-import {
-  candidateCargosForEdital,
-  candidateModalidadesForEdital,
-  filterApprovedCandidates,
-  manterSoAsOpcoes,
-  opcoesDeEdital,
-} from "../../lib/aprovados/lista-aprovados-rules.ts";
 import { PLANILHAS } from "../../lib/base/planilhas.ts";
 import { formatarDataHora } from "../../lib/cronograma/cronograma-do-edital.ts";
-import { soDosEditais } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import {
   AtivosEHistorico,
@@ -39,7 +26,6 @@ import {
   ContagemDaAba,
   ErroAoCarregar,
   TopoDoPainel,
-  usarEstadoDaSessao,
   usarNavegacaoDaLista,
   type PropriedadesDaNavegacaoDaFicha,
 } from "../../ui/index.ts";
@@ -50,20 +36,17 @@ import {
   type ChaveDaOrdemDosAprovados,
   type OrdemDosAprovados,
 } from "../../lib/aprovados/ordem-dos-aprovados.ts";
-import {
-  separarAprovados,
-  vistaDoPedido,
-} from "../../lib/aprovados/ativos-e-historico-dos-aprovados.ts";
-import {
-  vistaDaLista,
-  type VistaDaLista,
-} from "../../lib/base/ativos-e-historico.ts";
+import { vistaDoPedido } from "../../lib/aprovados/ativos-e-historico-dos-aprovados.ts";
+import type { VistaDaLista } from "../../lib/base/ativos-e-historico.ts";
 import { tomDaSituacaoDoEdital } from "../../lib/editais/editais-ativos.ts";
 import { FluxoDasEtapas } from "../../componentes/fluxo-das-etapas.tsx";
 import { AbaAprovados, pelaBusca } from "./aba-aprovados.tsx";
 import { AbaConvocacao } from "./aba-convocacao.tsx";
-import { AbaResumo } from "./aba-resumo.tsx";
-import type { ResumoPorCargoEStatus } from "../../lib/aprovados/exportacao/resumo-por-cargo-e-status.ts";
+import {
+  FILTROS_INICIAIS,
+  usarRecorteDosAprovados,
+} from "./recorte-dos-aprovados.ts";
+import { VerEmRelatorios } from "../../componentes/ver-em-relatorios.tsx";
 import { criarEstadoDaListaDeAprovados } from "./estado.js";
 import { ModalDeAnexos, ModalDeStatus, ModalSubJudice } from "./modais.tsx";
 import { ModalListasDoEdital } from "./modal-listas-do-edital.tsx";
@@ -102,16 +85,7 @@ import "./carta-de-convocacao/carta.css";
   alguém numa redesenha a outra. Os modais são portais no fim do `body`.
 */
 
-const FILTROS_INICIAIS: FiltrosDaTabelaDeAprovados = Object.freeze({
-  candidatos: [],
-  editalId: [],
-  localidade: [],
-  cargo: [],
-  modalidade: [],
-  status: [],
-});
-
-type AbaDosAprovados = "aprovados" | "resumo" | "convocacao" | "pendencias";
+type AbaDosAprovados = "aprovados" | "convocacao" | "pendencias";
 const ABAS: {
   nome: AbaDosAprovados;
   id: string;
@@ -125,13 +99,6 @@ const ABAS: {
     painel: "approvedPanelAprovados",
     icone: "fa-user-check",
     rotulo: "Aprovados",
-  },
-  {
-    nome: "resumo",
-    id: "approvedTabResumo",
-    painel: "approvedPanelResumo",
-    icone: "fa-table-list",
-    rotulo: "Resumo por cargo",
   },
   {
     nome: "convocacao",
@@ -356,36 +323,30 @@ export function ListaAprovados({
   const { ids, area, nome, linhas } = usarAreaAtual();
   // O modal do "Exportar" da aba Aprovados (o pedido sai dos filtros da tela).
   const [exportar, setExportar] = useState(false);
-  // O resumo a exportar (aba Resumo por cargo): o mesmo objeto que a tabela desenha.
-  const [resumoParaExportar, setResumoParaExportar] =
-    useState<ResumoPorCargoEStatus | null>(null);
-  const listas = useMemo(
-    () => soDosEditais(dados.listas, ids),
-    [dados.listas, ids],
-  );
-  const candidatos = useMemo(
-    () => soDosEditais(dados.candidatos, ids),
-    [dados.candidatos, ids],
-  );
-  /*
-    Ativos (o padrão) e Histórico: a lista de trabalho tem só os candidatos
-    de edital vigente e lista ativa; o filtro de Edital, os indicadores e a
-    contagem partem da vista (src/lib/aprovados/ativos-e-historico-dos-aprovados.ts).
-    A Convocação, o sub judice e os modais seguem com a área inteira.
-  */
-  const [vista, setVista] = usarEstadoDaSessao<VistaDaLista>(
-    `yeende:aprovados:vista:${area}`,
-    "ativos",
-    vistaDaLista,
-  );
-  const separados = useMemo(
-    () => separarAprovados(listas, candidatos, linhas),
-    [listas, candidatos, linhas],
-  );
-  const listasDaVista = separados[vista].listas;
-  const candidatosDaVista = separados[vista].candidatos;
+  const recorte = usarRecorteDosAprovados(dados, {
+    ids,
+    linhas,
+    chaveDaVista: `yeende:aprovados:vista:${area}`,
+  });
+  const {
+    listas,
+    candidatos,
+    separados,
+    vista,
+    setVista,
+    listasDaVista,
+    candidatosDaVista,
+    setFiltros,
+    opcoesEditais,
+    opcoesDeTodos,
+    editais,
+    opcoes,
+    efetivos,
+    filtrosParaExportar,
+    filtrados,
+    mudarFiltro,
+  } = recorte;
   const [aba, setAba] = useState<AbaDosAprovados>("aprovados");
-  const [filtros, setFiltros] = useState(FILTROS_INICIAIS);
   // A busca só da tabela; "Limpar filtros" e o pedido de filtro a limpam.
   const [busca, setBusca] = useState("");
   const [ordem, setOrdem] = useState<OrdemDosAprovados>(SEM_ORDEM);
@@ -395,75 +356,6 @@ export function ListaAprovados({
     [],
   );
 
-  /*
-    Cargo e modalidade só oferecem o que existe nos editais escolhidos, e o que
-    deixou de ser opção deixa de filtrar — estaria a esconder linhas sem
-    aparecer na tela.
-  */
-  const opcoesEditais = useMemo(
-    () => opcoesDeEdital(listasDaVista),
-    [listasDaVista],
-  );
-  // Os editais das duas vistas: o pedido de filtro e a faixa das etapas.
-  const opcoesDeTodos = useMemo(() => opcoesDeEdital(listas), [listas]);
-  const editais = manterSoAsOpcoes(filtros.editalId, opcoesEditais);
-  const chaveDosEditais = editais.join("\u0000");
-  const localidades = useMemo(
-    () => opcoesDeLocalidade(candidatosDaVista, editais),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [candidatosDaVista, chaveDosEditais],
-  );
-  const localidadesEscolhidas = manterSoAsOpcoes(
-    filtros.localidade,
-    localidades,
-  );
-  const chaveDasLocalidades = localidadesEscolhidas.join("\u0000");
-  /*
-    Localidade (16/11/2026): sai do texto do cargo (localidade-da-vaga.ts); com
-    uma escolhida, o filtro Cargo só oferece os cargos dela.
-  */
-  const opcoes = useMemo(
-    () => ({
-      editais: opcoesEditais,
-      localidades,
-      cargos: candidateCargosForEdital(candidatosDaVista, editais).filter(
-        (cargo) => naLocalidade(cargo, localidadesEscolhidas),
-      ),
-      modalidades: candidateModalidadesForEdital(candidatosDaVista, editais),
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [
-      candidatosDaVista,
-      opcoesEditais,
-      chaveDosEditais,
-      localidades,
-      chaveDasLocalidades,
-    ],
-  );
-  const efetivos = {
-    candidatos: filtros.candidatos,
-    editalId: editais,
-    localidade: localidadesEscolhidas,
-    cargo: manterSoAsOpcoes(filtros.cargo, opcoes.cargos),
-    modalidade: manterSoAsOpcoes(filtros.modalidade, opcoes.modalidades),
-    status: filtros.status,
-  };
-  /*
-    O banco confere o total da exportação por edital, cargo e modalidade
-    (registrar_exportacao_aprovados): a localidade vai como os cargos dela.
-  */
-  const filtrosParaExportar = {
-    ...efetivos,
-    cargo:
-      efetivos.localidade.length && !efetivos.cargo.length
-        ? [...opcoes.cargos]
-        : efetivos.cargo,
-  };
-  const chaveDosFiltros = JSON.stringify(efetivos);
-  const filtrados = useMemo(
-    () => filterApprovedCandidates(candidatosDaVista, efetivos),
-    [candidatosDaVista, chaveDosFiltros],
-  );
   /*
     Anterior/Próximo da gaveta do candidato: a tabela de Aprovados como está
     (filtros, ordem e busca). Aberta da Convocação, a lista é outra: sem
@@ -482,44 +374,20 @@ export function ListaAprovados({
     (candidato) => estado.abrirCandidato(String(candidato.candidato_id)),
   );
 
-  function mudarFiltro(
-    campo: keyof FiltrosDaTabelaDeAprovados,
-    valores: string[],
-  ) {
-    setFiltros((atuais) => {
-      const proximos = { ...atuais, [campo]: valores };
-      if (campo === "editalId") {
-        proximos.localidade = manterSoAsOpcoes(
-          atuais.localidade,
-          opcoesDeLocalidade(candidatosDaVista, valores),
-        );
-        proximos.cargo = manterSoAsOpcoes(
-          atuais.cargo,
-          candidateCargosForEdital(candidatosDaVista, valores),
-        );
-        proximos.modalidade = manterSoAsOpcoes(
-          atuais.modalidade,
-          candidateModalidadesForEdital(candidatosDaVista, valores),
-        );
-      }
-      return proximos;
-    });
-  }
-
   const podeSubJudice =
     canManageSubJudice(perfil) || canAlterarPorDecisaoJudicial(perfil);
   const temListaAtiva = listas.some((item) => item.ativo);
 
   function limparFiltros() {
-    setFiltros(FILTROS_INICIAIS);
+    recorte.limparFiltros();
     setBusca("");
   }
 
-  // Trocar de vista recomeça os filtros (os editais de uma não são da outra).
+  // Trocar de vista recomeça os filtros e a busca.
   function mudarVista(nova: VistaDaLista) {
     if (nova === vista) return;
-    setVista(nova);
-    limparFiltros();
+    recorte.mudarVista(nova);
+    setBusca("");
   }
 
   /*
@@ -603,6 +471,12 @@ export function ListaAprovados({
           >
             <i className="fa-solid fa-download" aria-hidden="true" /> Exportar
           </button>
+          <VerEmRelatorios
+            relatorio="resumo-por-cargo"
+            editais={efetivos.editalId}
+            perfil={perfil}
+            rotulo="Resumo por cargo e status em Relatórios"
+          />
           {podeSubJudice ? (
             <button
               id="approvedAddSubJudiceBtn"
@@ -631,7 +505,7 @@ export function ListaAprovados({
           }}
         />
       ) : null}
-      {carregado && (aba === "aprovados" || aba === "resumo") ? (
+      {carregado && aba === "aprovados" ? (
         <AtivosEHistorico
           vista={vista}
           aoMudar={mudarVista}
@@ -674,21 +548,6 @@ export function ListaAprovados({
         ordem={ordem}
         aoOrdenar={ordenar}
       />
-      <AbaResumo
-        ativa={aba === "resumo"}
-        candidatos={candidatosDaVista}
-        filtrados={filtrados}
-        configs={dados.configs}
-        modelos={dados.modelos}
-        carregado={carregado}
-        erroAoCarregar={erroAoCarregar}
-        opcoes={opcoes}
-        filtros={efetivos}
-        aoMudarFiltro={mudarFiltro}
-        aoLimparFiltros={limparFiltros}
-        aoExportar={setResumoParaExportar}
-        exportarDesativado={!carregado || Boolean(dados.acao)}
-      />
       <AbaConvocacao
         ativa={aba === "convocacao"}
         estado={estado}
@@ -728,25 +587,6 @@ export function ListaAprovados({
             dadosDe: dados.carregadoEm,
           })}
           aoFechar={() => setExportar(false)}
-        />
-      ) : null}
-      {resumoParaExportar ? (
-        <ModalDaExportacao
-          estado={estado}
-          titulo="Exportar o resumo por cargo e status"
-          aoExportar={(pedido, formato, seguir) =>
-            estado.exportarResumo(pedido, resumoParaExportar, formato, seguir)
-          }
-          pedido={montarPedidoDaExportacao({
-            area: String(area || ""),
-            rotuloDaArea: nome || String(area || ""),
-            candidatosDaArea: candidatosDaVista,
-            filtrados,
-            filtros: filtrosParaExportar,
-            opcoesDeEdital: opcoesEditais,
-            dadosDe: dados.carregadoEm,
-          })}
-          aoFechar={() => setResumoParaExportar(null)}
         />
       ) : null}
     </div>

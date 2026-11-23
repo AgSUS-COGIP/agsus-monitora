@@ -1,7 +1,8 @@
 import type {
   CandidatoDaTabelaDeAprovados,
   FiltrosDaTabelaDeAprovados,
-} from "./tipos-da-aba-de-aprovados.ts";
+} from "../aprovados/tipos-da-aba-de-aprovados.ts";
+import type { EstadoDosAprovados } from "../aprovados/tipos-do-estado.ts";
 import type {
   ConfiguracoesDaConvocacao,
   ModelosDaConvocacao,
@@ -11,9 +12,15 @@ import type {
   ColunaDoResumo,
   ContagemDoResumo,
   ResumoPorCargoEStatus,
-} from "../../lib/aprovados/exportacao/resumo-por-cargo-e-status.ts";
+} from "../../lib/paineis/resumo-por-cargo-e-status.ts";
 import type { UIEvent } from "react";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import {
+  Fragment,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import {
   CATEGORIAS_DO_RESUMO,
   DICA_DA_COLUNA,
@@ -24,7 +31,7 @@ import {
   ROTULO_DA_COLUNA,
   ROTULO_DO_MOTIVO,
   situacoesNaFila,
-} from "../../lib/aprovados/exportacao/resumo-por-cargo-e-status.ts";
+} from "../../lib/paineis/resumo-por-cargo-e-status.ts";
 import { configuracaoDaVaga } from "../../lib/aprovados/carta-de-convocacao/configuracao-de-convocacao.ts";
 import {
   OPCOES_DO_FILTRO_DE_STATUS,
@@ -33,27 +40,39 @@ import {
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
 import { formatNumberBR } from "../../lib/base/formatters";
 import {
+  AtivosEHistorico,
   Campo,
   EstadoVazio,
   Gaveta,
   LinhasEsqueleto,
   PainelDeFiltros,
-  classes,
 } from "../../ui/index.ts";
-import { plural } from "./partes.tsx";
+import { plural } from "../aprovados/partes.tsx";
+import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
+import { usarRecorteDosAprovados } from "../aprovados/recorte-dos-aprovados.ts";
+import { vistaDoPedido } from "../../lib/aprovados/ativos-e-historico-dos-aprovados.ts";
+import { tomDaSituacaoDoEdital } from "../../lib/editais/editais-ativos.ts";
+import { montarPedidoDaExportacao } from "../../lib/aprovados/exportacao/exportacao-da-lista-de-aprovados.ts";
+import { ModalDaExportacao } from "../aprovados/exportacao/modal-da-exportacao.tsx";
 
 /*
-  A aba "Resumo por cargo" da Lista de aprovados (pedido da CORES): por
-  edital, cargo + regime + jornada, uma linha por vaga e modalidade, subtotal
-  e total geral. Fica aqui, ao lado de Aprovados, porque é a MESMA lista
-  vigente com os MESMOS filtros (edital, cargo, modalidade, situação), contada
-  — e não um painel novo com outra base e outra permissão.
+  O RESUMO POR CARGO E STATUS (cartão de Relatórios, grupo Aprovados; até
+  23/11/2026 era a aba "Resumo por cargo" da Lista de aprovados, que ficou só
+  com o atalho "Ver em Relatórios"; pedido da CORES): por edital, cargo +
+  regime + jornada, uma linha por vaga e modalidade, subtotal e total geral.
+  É a MESMA lista vigente da Lista de aprovados, com os MESMOS filtros
+  (edital, localidade, cargo, modalidade, situação) e a mesma vista Ativos ×
+  Histórico (src/modulos/aprovados/recorte-dos-aprovados.ts), e pede o mesmo
+  recurso (`aprovados`). Os dados vêm do estado da Lista de aprovados (o
+  controlador da tela `approved`, carregado sob demanda pela tela de
+  Relatórios): mudar um status lá muda a conta aqui.
 
-  A conta é de src/lib/aprovados/exportacao/resumo-por-cargo-e-status.ts; o cadastro de reserva sai
-  da fila de convocação (a mesma conta da aba Convocação), calculada sobre a
-  lista inteira das vagas no recorte de edital e cargo: modalidade e situação
-  só escolhem quem é contado, não mudam a fila. Clicar num número abre os
-  vínculos daquele número (o mesmo recorte).
+  A conta é de src/lib/paineis/resumo-por-cargo-e-status.ts; o cadastro de
+  reserva sai da fila de convocação (a mesma conta da aba Convocação),
+  calculada sobre a lista inteira das vagas no recorte de edital e cargo:
+  modalidade e situação só escolhem quem é contado, não mudam a fila. Clicar
+  num número abre os vínculos daquele número (o mesmo recorte). Os editais
+  escolhidos ficam no endereço (`?relatorio=resumo-por-cargo&edital=7`).
 
   A tabela desenha 50 linhas de vaga por vez (em grupos inteiros) e mais 50 ao
   rolar perto do fim ou em "Carregar mais", como a aba Aprovados: desenhar
@@ -63,8 +82,7 @@ import { plural } from "./partes.tsx";
 /* Perto do fim da caixa que rola, carrega mais (o mesmo da TabelaInfinita). */
 const PERTO_DO_FIM_PX = 240;
 
-export interface PropsDaAbaDoResumo {
-  ativa: boolean;
+interface PropsDaTabelaDoResumo {
   candidatos: readonly CandidatoDaTabelaDeAprovados[];
   /** Os que passaram pelos filtros (a busca da tabela não entra). */
   filtrados: readonly CandidatoDaTabelaDeAprovados[];
@@ -111,7 +129,7 @@ function Numero({
 }) {
   const valor = contagem[coluna];
   if (!valor)
-    return <span className="approved-resumo-valor">{formatNumberBR(0)}</span>;
+    return <span className="relatorios-resumo-valor">{formatNumberBR(0)}</span>;
   const titulo = `${ROTULO_DA_COLUNA[coluna]} · ${onde}`;
   const motivos =
     coluna === "outras"
@@ -127,7 +145,7 @@ function Numero({
   return (
     <button
       type="button"
-      className="approved-resumo-numero"
+      className="relatorios-resumo-numero"
       aria-label={`Ver os ${formatNumberBR(valor)} de ${titulo}`}
       title={motivos || undefined}
       onClick={() => aoAbrir({ titulo, ids: ids[coluna] })}
@@ -151,7 +169,7 @@ function Celulas({
   return (
     <>
       {(["aprovados", ...CATEGORIAS_DO_RESUMO] as const).map((coluna) => (
-        <td key={coluna} className="approved-resumo-num">
+        <td key={coluna} className="relatorios-resumo-num">
           <Numero
             contagem={contagem}
             ids={ids}
@@ -183,14 +201,14 @@ function GavetaDoDetalhe({
     .filter((c): c is CandidatoDaTabelaDeAprovados => Boolean(c));
   return (
     <Gaveta
-      id="approvedResumoDetalhe"
-      tituloId="approvedResumoDetalheTitulo"
+      id="relatoriosResumoDetalhe"
+      tituloId="relatoriosResumoDetalheTitulo"
       aoFechar={aoFechar}
       sobretitulo="Resumo por cargo e status"
       titulo={detalhe.titulo}
       resumo={plural(linhas.length, "vínculo", "vínculos")}
     >
-      <div className="ui-tabela-rolagem approved-resumo-detalhe">
+      <div className="ui-tabela-rolagem relatorios-resumo-detalhe">
         <table>
           <caption className="sr-only">{detalhe.titulo}</caption>
           <thead>
@@ -217,8 +235,7 @@ function GavetaDoDetalhe({
   );
 }
 
-export function AbaResumo({
-  ativa,
+function TabelaDoResumo({
   candidatos,
   filtrados,
   configs,
@@ -231,7 +248,7 @@ export function AbaResumo({
   aoLimparFiltros,
   aoExportar,
   exportarDesativado,
-}: PropsDaAbaDoResumo) {
+}: PropsDaTabelaDoResumo) {
   const [detalhe, setDetalhe] = useState<Detalhe | null>(null);
   const chaveDaFila = `${filtros.editalId.join("\u0000")}\u0001${filtros.cargo.join("\u0000")}`;
 
@@ -241,7 +258,6 @@ export function AbaResumo({
     mudam; modalidade e situação não mexem nela.
   */
   const situacoes = useMemo(() => {
-    if (!ativa) return new Map<string, string>();
     const noRecorte = candidatos.filter(
       (c) =>
         (!filtros.editalId.length ||
@@ -253,7 +269,7 @@ export function AbaResumo({
     );
     // A chave do recorte é o conteúdo dos filtros (arrays novos a cada desenho).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ativa, candidatos, configs, modelos, chaveDaFila]);
+  }, [candidatos, configs, modelos, chaveDaFila]);
 
   const rotulos = useMemo(
     () => new Map(opcoes.editais.map((o) => [String(o.value), o.label])),
@@ -261,14 +277,12 @@ export function AbaResumo({
   );
   const resumo = useMemo(
     () =>
-      ativa
-        ? montarResumoPorCargoEStatus({
-            candidatos: filtrados,
-            situacoes,
-            rotulosDosEditais: rotulos,
-          })
-        : null,
-    [ativa, filtrados, situacoes, rotulos],
+      montarResumoPorCargoEStatus({
+        candidatos: filtrados,
+        situacoes,
+        rotulosDosEditais: rotulos,
+      }),
+    [filtrados, situacoes, rotulos],
   );
 
   const quantos = Object.values(filtros).filter((lista) => lista.length).length;
@@ -340,8 +354,8 @@ export function AbaResumo({
   // O modo cartão do celular relê os cabeçalhos a cada desenho.
   const desenhadas = visivel?.mostradas ?? -1;
   useEffect(() => {
-    if (ativa) document.dispatchEvent(new CustomEvent("agsus:content-updated"));
-  }, [ativa, desenhadas]);
+    document.dispatchEvent(new CustomEvent("agsus:content-updated"));
+  }, [desenhadas]);
 
   let conteudo;
   if (semPermissao)
@@ -359,10 +373,10 @@ export function AbaResumo({
   else if (!carregado || !resumo)
     conteudo = (
       <div
-        className="ui-tabela-rolagem approved-resumo-rolagem"
+        className="ui-tabela-rolagem relatorios-resumo-rolagem"
         aria-busy="true"
       >
-        <table className="approved-resumo-tabela">
+        <table className="relatorios-resumo-tabela">
           <tbody>
             <LinhasEsqueleto linhas={6} colunas={colunas} />
           </tbody>
@@ -381,12 +395,12 @@ export function AbaResumo({
     conteudo = (
       <>
         <div
-          className="ui-tabela-rolagem approved-resumo-rolagem"
+          className="ui-tabela-rolagem relatorios-resumo-rolagem"
           onScroll={aoRolar}
         >
           <table
-            className="approved-resumo-tabela"
-            aria-describedby="approvedResumoBase"
+            className="relatorios-resumo-tabela"
+            aria-describedby="relatoriosResumoBase"
           >
             <caption className="sr-only">
               Contagem de candidatos por cargo e status
@@ -396,7 +410,7 @@ export function AbaResumo({
                 <th scope="col">Cargo e vaga</th>
                 <th
                   scope="col"
-                  className="approved-resumo-num"
+                  className="relatorios-resumo-num"
                   title={DICA_DA_COLUNA.aprovados}
                 >
                   {ROTULO_DA_COLUNA.aprovados}
@@ -405,7 +419,7 @@ export function AbaResumo({
                   <th
                     key={c}
                     scope="col"
-                    className="approved-resumo-num"
+                    className="relatorios-resumo-num"
                     title={DICA_DA_COLUNA[c]}
                   >
                     {ROTULO_DA_COLUNA[c]}
@@ -417,9 +431,9 @@ export function AbaResumo({
               <Fragment key={edital.editalId}>
                 {variosEditais ? (
                   <tbody>
-                    <tr className="approved-resumo-edital">
+                    <tr className="relatorios-resumo-edital">
                       <th scope="rowgroup" colSpan={colunas}>
-                        <span className="approved-resumo-rotulo-preso">
+                        <span className="relatorios-resumo-rotulo-preso">
                           {edital.rotulo}
                         </span>
                       </th>
@@ -428,9 +442,9 @@ export function AbaResumo({
                 ) : null}
                 {edital.grupos.map((grupo) => (
                   <tbody key={grupo.chave}>
-                    <tr className="approved-resumo-grupo">
+                    <tr className="relatorios-resumo-grupo">
                       <th scope="rowgroup" colSpan={colunas}>
-                        <span className="approved-resumo-rotulo-preso">
+                        <span className="relatorios-resumo-rotulo-preso">
                           {grupo.rotulo}
                         </span>
                       </th>
@@ -445,9 +459,9 @@ export function AbaResumo({
                         .join(" · ");
                       return (
                         <tr key={linha.chave}>
-                          <th scope="row" className="approved-resumo-vaga">
+                          <th scope="row" className="relatorios-resumo-vaga">
                             <span>{linha.modalidade}</span>
-                            <span className="approved-resumo-meta">
+                            <span className="relatorios-resumo-meta">
                               {[
                                 linha.codigoVaga
                                   ? `Vaga ${linha.codigoVaga}`
@@ -467,7 +481,7 @@ export function AbaResumo({
                         </tr>
                       );
                     })}
-                    <tr className="approved-resumo-subtotal">
+                    <tr className="relatorios-resumo-subtotal">
                       <th scope="row">Total · {grupo.rotulo}</th>
                       <Celulas
                         contagem={grupo.subtotal}
@@ -480,7 +494,7 @@ export function AbaResumo({
                 ))}
                 {variosEditais && edital.completo ? (
                   <tbody>
-                    <tr className="approved-resumo-subtotal">
+                    <tr className="relatorios-resumo-subtotal">
                       <th scope="row">Total do edital · {edital.rotulo}</th>
                       <Celulas
                         contagem={edital.subtotal}
@@ -494,7 +508,7 @@ export function AbaResumo({
               </Fragment>
             ))}
             <tfoot>
-              <tr className="approved-resumo-total">
+              <tr className="relatorios-resumo-total">
                 <th scope="row">Total geral</th>
                 <Celulas
                   contagem={resumo.total}
@@ -515,7 +529,7 @@ export function AbaResumo({
         ) : null}
         {faltam > 0 ? (
           <button
-            id="approvedResumoCarregarMais"
+            id="relatoriosResumoCarregarMais"
             type="button"
             className="btn secondary small ui-tabela-mais"
             data-acao="carregar-mais"
@@ -529,124 +543,105 @@ export function AbaResumo({
     );
 
   return (
-    <div
-      id="approvedPanelResumo"
-      className={classes(
-        "approved-tabpanel approved-resumo",
-        !ativa && "hidden",
-      )}
-      role="tabpanel"
-      aria-labelledby="approvedTabResumo"
-    >
-      {ativa ? (
-        <>
-          <PainelDeFiltros
-            idDoTitulo="approvedResumoFiltrosTitulo"
-            className="approved-filters"
-            quantos={quantos}
-            podeLimpar={quantos > 0}
-            aoLimpar={aoLimparFiltros}
+    <div id="relatoriosResumoPorCargo" className="relatorios-resumo">
+      <PainelDeFiltros
+        idDoTitulo="relatoriosResumoFiltrosTitulo"
+        quantos={quantos}
+        podeLimpar={quantos > 0}
+        aoLimpar={aoLimparFiltros}
+      >
+        {/* Os mesmos filtros da aba Aprovados da Lista de aprovados. */}
+        <div className="ui-grade-de-campos">
+          <Campo rotulo="Edital" idDoControle="relatoriosResumoFiltroEdital">
+            <MultiSelectBusca
+              id="relatoriosResumoFiltroEdital"
+              placeholder="Todos os editais"
+              opcoes={opcoes.editais}
+              selecionados={filtros.editalId}
+              aoMudar={(valores) => aoMudarFiltro("editalId", valores)}
+            />
+          </Campo>
+          {opcoes.localidades.length ? (
+            <Campo
+              rotulo="Localidade"
+              idDoControle="relatoriosResumoFiltroLocalidade"
+            >
+              <MultiSelectBusca
+                id="relatoriosResumoFiltroLocalidade"
+                placeholder="Todas as localidades"
+                opcoes={opcoes.localidades}
+                selecionados={filtros.localidade}
+                aoMudar={(valores) => aoMudarFiltro("localidade", valores)}
+              />
+            </Campo>
+          ) : null}
+          <Campo rotulo="Cargo" idDoControle="relatoriosResumoFiltroCargo">
+            <MultiSelectBusca
+              id="relatoriosResumoFiltroCargo"
+              placeholder="Todos os cargos"
+              opcoes={opcoes.cargos}
+              selecionados={filtros.cargo}
+              aoMudar={(valores) => aoMudarFiltro("cargo", valores)}
+            />
+          </Campo>
+          <Campo
+            rotulo="Modalidade"
+            idDoControle="relatoriosResumoFiltroModalidade"
           >
-            {/* Os mesmos filtros da aba Aprovados (o mesmo estado). */}
-            <div className="ui-grade-de-campos">
-              <Campo rotulo="Edital" idDoControle="approvedResumoFiltroEdital">
-                <MultiSelectBusca
-                  id="approvedResumoFiltroEdital"
-                  placeholder="Todos os editais"
-                  opcoes={opcoes.editais}
-                  selecionados={filtros.editalId}
-                  aoMudar={(valores) => aoMudarFiltro("editalId", valores)}
-                />
-              </Campo>
-              {opcoes.localidades.length ? (
-                <Campo
-                  rotulo="Localidade"
-                  idDoControle="approvedResumoFiltroLocalidade"
-                >
-                  <MultiSelectBusca
-                    id="approvedResumoFiltroLocalidade"
-                    placeholder="Todas as localidades"
-                    opcoes={opcoes.localidades}
-                    selecionados={filtros.localidade}
-                    aoMudar={(valores) => aoMudarFiltro("localidade", valores)}
-                  />
-                </Campo>
-              ) : null}
-              <Campo rotulo="Cargo" idDoControle="approvedResumoFiltroCargo">
-                <MultiSelectBusca
-                  id="approvedResumoFiltroCargo"
-                  placeholder="Todos os cargos"
-                  opcoes={opcoes.cargos}
-                  selecionados={filtros.cargo}
-                  aoMudar={(valores) => aoMudarFiltro("cargo", valores)}
-                />
-              </Campo>
-              <Campo
-                rotulo="Modalidade"
-                idDoControle="approvedResumoFiltroModalidade"
-              >
-                <MultiSelectBusca
-                  id="approvedResumoFiltroModalidade"
-                  placeholder="Todas as modalidades"
-                  opcoes={opcoes.modalidades}
-                  selecionados={filtros.modalidade}
-                  aoMudar={(valores) => aoMudarFiltro("modalidade", valores)}
-                />
-              </Campo>
-              <Campo
-                rotulo="Situação"
-                idDoControle="approvedResumoFiltroStatus"
-              >
-                <MultiSelectBusca
-                  id="approvedResumoFiltroStatus"
-                  placeholder="Todas as situações"
-                  opcoes={OPCOES_DO_FILTRO_DE_STATUS}
-                  selecionados={filtros.status}
-                  aoMudar={(valores) => aoMudarFiltro("status", valores)}
-                />
-              </Campo>
-            </div>
-          </PainelDeFiltros>
+            <MultiSelectBusca
+              id="relatoriosResumoFiltroModalidade"
+              placeholder="Todas as modalidades"
+              opcoes={opcoes.modalidades}
+              selecionados={filtros.modalidade}
+              aoMudar={(valores) => aoMudarFiltro("modalidade", valores)}
+            />
+          </Campo>
+          <Campo rotulo="Situação" idDoControle="relatoriosResumoFiltroStatus">
+            <MultiSelectBusca
+              id="relatoriosResumoFiltroStatus"
+              placeholder="Todas as situações"
+              opcoes={OPCOES_DO_FILTRO_DE_STATUS}
+              selecionados={filtros.status}
+              aoMudar={(valores) => aoMudarFiltro("status", valores)}
+            />
+          </Campo>
+        </div>
+      </PainelDeFiltros>
 
-          <section
-            className="ui-card approved-resumo-card"
-            aria-labelledby="approvedResumoTitulo"
+      <section
+        className="ui-card relatorios-resumo-card"
+        aria-labelledby="relatoriosResumoTitulo"
+      >
+        <div className="ui-tabela-topo">
+          <h3 id="relatoriosResumoTitulo">Contagem por cargo e status</h3>
+          <span
+            className="ui-tabela-meta"
+            id="relatoriosResumoBase"
+            aria-live="polite"
           >
-            <div className="ui-tabela-topo">
-              <h3 id="approvedResumoTitulo">Contagem por cargo e status</h3>
-              <span
-                className="ui-tabela-meta"
-                id="approvedResumoBase"
-                aria-live="polite"
-              >
-                {resumo && carregado
-                  ? `${plural(resumo.total.aprovados, "vínculo", "vínculos")} · ${plural(resumo.editais.length, "edital", "editais")}`
-                  : ""}
-              </span>
-              <button
-                id="approvedResumoExportar"
-                className="btn secondary"
-                type="button"
-                disabled={
-                  exportarDesativado || !resumo || !resumo.total.aprovados
-                }
-                onClick={() => resumo && aoExportar(resumo)}
-              >
-                <i className="fa-solid fa-download" aria-hidden="true" />{" "}
-                Exportar
-              </button>
-            </div>
-            {avisos.length ? (
-              <ul className="approved-resumo-avisos status-discreto">
-                {avisos.map((a) => (
-                  <li key={a}>{a}</li>
-                ))}
-              </ul>
-            ) : null}
-            {conteudo}
-          </section>
-        </>
-      ) : null}
+            {resumo && carregado
+              ? `${plural(resumo.total.aprovados, "vínculo", "vínculos")} · ${plural(resumo.editais.length, "edital", "editais")}`
+              : ""}
+          </span>
+          <button
+            id="relatoriosResumoExportar"
+            className="btn secondary"
+            type="button"
+            disabled={exportarDesativado || !resumo || !resumo.total.aprovados}
+            onClick={() => resumo && aoExportar(resumo)}
+          >
+            <i className="fa-solid fa-download" aria-hidden="true" /> Exportar
+          </button>
+        </div>
+        {avisos.length ? (
+          <ul className="relatorios-resumo-avisos status-discreto">
+            {avisos.map((a) => (
+              <li key={a}>{a}</li>
+            ))}
+          </ul>
+        ) : null}
+        {conteudo}
+      </section>
       {detalhe ? (
         <GavetaDoDetalhe
           detalhe={detalhe}
@@ -655,5 +650,107 @@ export function AbaResumo({
         />
       ) : null}
     </div>
+  );
+}
+
+/**
+ * O relatório na tela de Relatórios: a vista (Ativos × Histórico), os
+ * filtros e a contagem, sobre o estado da Lista de aprovados. `editais` são
+ * os do endereço ao abrir (o atalho "Ver em Relatórios"); cada troca de
+ * edital volta por `aoMudarEditais`.
+ */
+export function RelatorioResumoPorCargo({
+  estado,
+  editais,
+  aoMudarEditais,
+}: {
+  estado: EstadoDosAprovados;
+  editais: readonly string[];
+  aoMudarEditais: (editais: readonly string[]) => void;
+}) {
+  const dados = useSyncExternalStore(estado.assinar, estado.obter);
+  const { ids, area, nome, linhas } = usarAreaAtual();
+  const [iniciais] = useState(() => [...editais]);
+  const recorte = usarRecorteDosAprovados(dados, {
+    ids,
+    linhas,
+    chaveDaVista: `yeende:relatorios:resumo-por-cargo:vista:${area}`,
+    filtrosIniciais: { editalId: iniciais },
+  });
+  const { separados, vista, setVista, efetivos } = recorte;
+  const [resumoParaExportar, setResumoParaExportar] =
+    useState<ResumoPorCargoEStatus | null>(null);
+
+  /*
+    O edital do atalho pode estar no Histórico: com a lista carregada, abre a
+    vista dele (uma vez). Só depois disso a escolha volta ao endereço — antes,
+    o edital ainda não é opção e sairia dele.
+  */
+  const [ajustada, setAjustada] = useState(!iniciais.length);
+  useEffect(() => {
+    if (ajustada || !dados.carregado) return;
+    setVista(
+      vistaDoPedido(separados, vista, { editalIds: iniciais }, (c) =>
+        String(c.candidato_id),
+      ),
+    );
+    setAjustada(true);
+  }, [ajustada, dados.carregado, separados, vista, setVista, iniciais]);
+
+  const chaveDosEditais = efetivos.editalId.join(",");
+  useEffect(() => {
+    if (ajustada && dados.carregado) aoMudarEditais(efetivos.editalId);
+    // A chave é o conteúdo da lista (uma nova a cada desenho).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ajustada, dados.carregado, chaveDosEditais]);
+
+  return (
+    <>
+      {dados.carregado ? (
+        <AtivosEHistorico
+          vista={vista}
+          aoMudar={recorte.mudarVista}
+          ativos={separados.ativos.editais}
+          historico={separados.historico.editais}
+          situacoes={separados[vista].situacoes}
+          rotulo="Editais da lista de aprovados"
+          tomDaSituacao={tomDaSituacaoDoEdital}
+          className="relatorios-resumo-ativos-e-historico"
+        />
+      ) : null}
+      <TabelaDoResumo
+        candidatos={recorte.candidatosDaVista}
+        filtrados={recorte.filtrados}
+        configs={dados.configs}
+        modelos={dados.modelos}
+        carregado={dados.carregado}
+        erroAoCarregar={dados.erroAoCarregar}
+        opcoes={recorte.opcoes}
+        filtros={efetivos}
+        aoMudarFiltro={recorte.mudarFiltro}
+        aoLimparFiltros={recorte.limparFiltros}
+        aoExportar={setResumoParaExportar}
+        exportarDesativado={!dados.carregado || Boolean(dados.acao)}
+      />
+      {resumoParaExportar ? (
+        <ModalDaExportacao
+          estado={estado}
+          titulo="Exportar o resumo por cargo e status"
+          aoExportar={(pedido, formato, seguir) =>
+            estado.exportarResumo(pedido, resumoParaExportar, formato, seguir)
+          }
+          pedido={montarPedidoDaExportacao({
+            area: String(area || ""),
+            rotuloDaArea: nome || String(area || ""),
+            candidatosDaArea: recorte.candidatosDaVista,
+            filtrados: recorte.filtrados,
+            filtros: recorte.filtrosParaExportar,
+            opcoesDeEdital: recorte.opcoesEditais,
+            dadosDe: dados.carregadoEm,
+          })}
+          aoFechar={() => setResumoParaExportar(null)}
+        />
+      ) : null}
+    </>
   );
 }
