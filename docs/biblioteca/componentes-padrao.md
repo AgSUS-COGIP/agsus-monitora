@@ -1,7 +1,7 @@
 ---
 tipo: referencia
 area: front
-atualizado: 2026-11-19
+atualizado: 2026-11-23
 ---
 
 # Componentes padrão (`src/ui/`)
@@ -49,6 +49,14 @@ se houver; o padrão é `aoFechar`). O Cancelar/Fechar de quem usa é um `<Fecha
 `usarFecharModal()`) para passar pela pergunta; o ✕ da gaveta e do modal institucional já passa.
 Salvar fecha direto com `aoFechar`. Janela só de leitura e confirmação sem campo não passam
 `alterado`. Não se abre modal a partir de modal para perguntar, nem `window.confirm`.
+
+KPI clicável: quando a lista da mesma tela tem um filtro que corresponde ao número, o `Kpi` recebe
+`aoClicar` e vira `<button>` (foco, Enter e Espaço do navegador). Filtro leva `ativo`
+(`aria-pressed` e `.is-ativo` quando o recorte dele está aplicado); clicar de novo tira o filtro, e
+o "Total", se houver, o limpa sem `ativo`. Atalho (abre outra lista) vai sem `ativo`. Sem filtro
+correspondente, o número fica estático: não se cria filtro só para o KPI. Ligados hoje: Visão
+geral, Editais, Análises (status), Entrevistas (comparecimento e parecer), Recursos (situação e
+prazo), Lista de aprovados (Situação) e Pendências dos aprovados (tipo).
 
 Navegador de mês: `NavegadorDeMes` — ‹ anterior, › próximo (só ícone, com `aria-label` e
 `title`), o mês à vista (`aria-live`) e o botão do atual; quem usa guarda o mês. No Cronograma
