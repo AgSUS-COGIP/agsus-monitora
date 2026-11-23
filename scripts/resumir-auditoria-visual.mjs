@@ -242,7 +242,13 @@ for (const tipo of Object.keys(TIPOS))
 
 const linhasMd = [];
 const md = (texto = "") => linhasMd.push(texto);
-const celula = (texto) => String(texto).replace(/\|/g, "\\|");
+/* Texto numa célula de tabela Markdown: a barra invertida primeiro (senão o
+   escape do `|` se desfaz), depois a barra vertical, e a quebra de linha vira espaço. */
+const celula = (texto) =>
+  String(texto)
+    .replace(/\\/g, "\\\\")
+    .replace(/\|/g, "\\|")
+    .replace(/\r?\n/g, " ");
 
 md(`# Resumo da auditoria visual`);
 md();

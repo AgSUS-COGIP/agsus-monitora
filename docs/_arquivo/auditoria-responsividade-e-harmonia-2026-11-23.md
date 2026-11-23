@@ -51,11 +51,10 @@ endereço.
 **Causa:** `src/modulos/classificacao/entrada-da-classificacao.tsx` (linha 52) só fica `pronto`
 quando `monitoramento.carregado`, mas `classificacao` não está em `TELAS_COM_LINHAS`
 (`src/lib/navegacao/telas-com-linhas.ts`). Aberta direto, ninguém pede as linhas do
-monitoramento e a espera não termina. Correção: ou a entrada deixa de esperar as linhas (se não
-precisa delas), ou `classificacao` entra em `TELAS_COM_LINHAS` (o comentário do arquivo diz que
-ela "lê só a área atual"; conferir qual das duas é a verdade). Captura:
-`classificacao-cheia-1280-claro.png`. Reproduzido com sessão simulada; conferir no navegador
-real antes de corrigir.
+monitoramento e a espera não termina. Captura: `classificacao-cheia-1280-claro.png`
+(reproduzido com sessão simulada).
+
+**Correção:** no #960, `classificacao` e `conduzir-entrevistas` entraram em `TELAS_COM_LINHAS`.
 
 ## Como foi medido
 
