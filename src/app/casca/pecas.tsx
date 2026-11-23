@@ -42,7 +42,7 @@ export function PessoasOnlineDoApp() {
   );
 }
 
-/** A faixa de versão nova no topo (estado: src/app/aviso-de-versao.ts). */
+/** O cartão de versão nova no canto (estado: src/app/aviso-de-versao.ts). */
 export function AvisoDeVersaoDoApp() {
   const pecas = usarPecasDoApp();
   if (!pecas) return null;

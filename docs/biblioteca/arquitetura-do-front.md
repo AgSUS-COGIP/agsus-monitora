@@ -126,7 +126,7 @@ O que acontece entre o login ([[seguranca]]) e a primeira tela:
   e o script `marcarSessaoGuardada`. Carregando não é zero: enquanto não chega, skeleton.
 - Painel externo que avisa quando carregou: [[modulo-paineis-externos]] (seção Protocolo).
 - **Versão nova com a página aberta:** a tela sob demanda usa `importarComRecarga` e recarrega uma
-  vez; quem está com o sistema aberto vê a faixa "Há uma versão nova" ([[deploy-e-vercel]]).
+  vez; quem está com o sistema aberto vê o cartão "O Yeendé foi atualizado" ([[deploy-e-vercel]]).
 
 ## Ordem das etapas
 

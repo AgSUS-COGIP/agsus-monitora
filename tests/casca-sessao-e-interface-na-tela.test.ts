@@ -1993,6 +1993,7 @@ bloco("app/moldura-na-casca", () => {
             telaAntiga: false,
             fechado: false,
             pendencia: false,
+            atualizando: false,
           }),
         ),
         // Parado: nada confere, liga ou recarrega.
@@ -6998,7 +6999,7 @@ bloco("componentes/aviso-de-versao", () => {
     });
   });
 
-  describe("faixa de versão nova", () => {
+  describe("cartão de versão nova", () => {
     let elemento: HTMLDivElement;
     let montado: ReturnType<typeof desenharNoTeste> | null = null;
 
@@ -7020,30 +7021,44 @@ bloco("componentes/aviso-de-versao", () => {
         );
       });
     }
-    const faixa = () => elemento.querySelector(".aviso-de-versao");
+    const cartao = () => elemento.querySelector(".aviso-de-versao");
     const botao = (acao: string) =>
-      elemento.querySelector(`[data-acao="${acao}"]`);
+      elemento.querySelector<HTMLButtonElement>(`[data-acao="${acao}"]`);
 
     it("não aparece enquanto a versão aberta é a vigente", async () => {
       const c = montarCenario({ publicada: { versao: "v1" } });
       await montar(c.aviso);
       await act(() => c.aviso.conferir());
-      expect(faixa()).toBeNull();
+      expect(cartao()).toBeNull();
     });
 
-    it("aparece discreta com versão nova e fecha só para aquela versão", async () => {
+    it("aparece discreto, com título, Agora não e Atualizar", async () => {
+      const c = montarCenario();
+      await montar(c.aviso);
+      await act(() => c.aviso.conferir());
+
+      expect(cartao()?.getAttribute("role")).toBe("status");
+      expect(cartao()?.getAttribute("data-tone")).toBe("info");
+      const idDoTitulo = cartao()?.getAttribute("aria-labelledby") ?? "";
+      expect(document.getElementById(idDoTitulo)?.textContent).toBe(
+        "O Yeendé foi atualizado",
+      );
+      expect(cartao()?.textContent).not.toContain("Novo:");
+      expect(botao("fechar-aviso-de-versao")?.textContent).toBe("Agora não");
+      expect(botao("atualizar-versao")?.textContent).toBe("Atualizar");
+      expect(botao("atualizar-versao")?.disabled).toBe(false);
+    });
+
+    it("Agora não fecha só para aquela versão", async () => {
       let publicada = { versao: "v2", novidades: [] };
       const c = montarCenario({ publicada: () => publicada });
       await montar(c.aviso);
       await act(() => c.aviso.conferir());
 
-      expect(faixa()?.textContent).toContain("Há uma versão nova do Yeendé.");
-      expect(faixa()?.getAttribute("data-tone")).toBe("info");
-      expect(faixa()?.textContent).not.toContain("Novo:");
-
-      await clicar(botao("fechar-aviso-de-versao"));
-      expect(faixa()).toBeNull();
+      await clicar(definido(botao("fechar-aviso-de-versao")));
+      expect(cartao()).toBeNull();
       expect(c.armazenamento.getItem(CHAVE_DO_FECHAMENTO)).toBe("v2");
+      expect(c.recarregar).not.toHaveBeenCalled();
 
       // Outra página (ou recarga) com a mesma v2: continua fechado.
       const outra = montarCenario({ armazenamento: c.armazenamento });
@@ -7053,7 +7068,7 @@ bloco("componentes/aviso-de-versao", () => {
       // Versão mais nova: volta.
       publicada = { versao: "v3", novidades: [] };
       await act(() => c.aviso.conferir());
-      expect(faixa()?.textContent).toContain("Há uma versão nova");
+      expect(cartao()?.textContent).toContain("O Yeendé foi atualizado");
     });
 
     it("mostra a novidade só quando marcada como visível", async () => {
@@ -7062,7 +7077,7 @@ bloco("componentes/aviso-de-versao", () => {
       });
       await montar(c.aviso);
       await act(() => c.aviso.conferir());
-      expect(faixa()?.textContent).toContain(
+      expect(cartao()?.textContent).toContain(
         "Novo: motivo padronizado na reabertura",
       );
 
@@ -7076,26 +7091,46 @@ bloco("componentes/aviso-de-versao", () => {
       expect(d.aviso.obter().novidade).toBeNull();
     });
 
-    it("Atualizar agora sem pendência recarrega", async () => {
+    it("Atualizar sem pendência recarrega uma vez e fica Atualizando…, com o ícone girando", async () => {
       const c = montarCenario();
       await montar(c.aviso);
       await act(() => c.aviso.conferir());
-      await clicar(botao("atualizar-versao"));
+      await clicar(definido(botao("atualizar-versao")));
+      expect(c.recarregar).toHaveBeenCalledTimes(1);
+
+      const atualizar = definido(botao("atualizar-versao"));
+      expect(atualizar.textContent).toBe("Atualizando…");
+      expect(atualizar.disabled).toBe(true);
+      expect(atualizar.getAttribute("aria-busy")).toBe("true");
+      expect(
+        atualizar.querySelector(".aviso-de-versao-girando"),
+      ).not.toBeNull();
+      expect(botao("fechar-aviso-de-versao")?.disabled).toBe(true);
+
+      // Um segundo pedido (duplo clique, atalho) não recarrega de novo.
+      expect(c.aviso.atualizarAgora()).toBe(false);
       expect(c.recarregar).toHaveBeenCalledTimes(1);
     });
 
-    it("Atualizar agora com alteração não salva pede para salvar e não recarrega", async () => {
+    it("Atualizar com alteração não salva pede para salvar e não recarrega", async () => {
       let pendente = true;
       const c = montarCenario({ temPendencia: () => pendente });
       await montar(c.aviso);
       await act(() => c.aviso.conferir());
-      await clicar(botao("atualizar-versao"));
+      await clicar(definido(botao("atualizar-versao")));
       expect(c.recarregar).not.toHaveBeenCalled();
-      expect(faixa()?.textContent).toContain(AVISO_DE_PENDENCIA);
+      expect(cartao()?.textContent).toContain(AVISO_DE_PENDENCIA);
+      expect(
+        elemento
+          .querySelector(".aviso-de-versao-pendencia")
+          ?.getAttribute("role"),
+      ).toBe("alert");
+      expect(botao("atualizar-versao")?.textContent).toBe("Atualizar");
 
       pendente = false;
-      await clicar(botao("atualizar-versao"));
+      await clicar(definido(botao("atualizar-versao")));
       expect(c.recarregar).toHaveBeenCalledTimes(1);
+      expect(cartao()?.textContent).not.toContain(AVISO_DE_PENDENCIA);
     });
 
     it("a guarda de saída com pergunta pode cancelar a recarga", () => {
@@ -7108,6 +7143,7 @@ bloco("componentes/aviso-de-versao", () => {
       });
       expect(aviso.atualizarAgora()).toBe(false);
       expect(recarregar).not.toHaveBeenCalled();
+      expect(aviso.obter().atualizando).toBe(false);
     });
   });
 
@@ -7141,10 +7177,16 @@ bloco("componentes/aviso-de-versao", () => {
         );
         await vi.waitFor(() => expect(c.aviso.obter().telaAntiga).toBe(true));
       });
-      const faixa = elemento.querySelector(".aviso-de-versao");
-      expect(faixa?.textContent).toContain("Atualize para continuar");
-      expect(faixa?.getAttribute("data-tone")).toBe("warning");
-      expect(faixa?.getAttribute("role")).toBe("alert");
+      const cartao = elemento.querySelector(".aviso-de-versao");
+      expect(cartao?.textContent).toContain("Atualize para continuar");
+      expect(cartao?.textContent).toContain(
+        "Esta tela é de uma versão anterior do Yeendé.",
+      );
+      expect(cartao?.getAttribute("data-tone")).toBe("warning");
+      expect(cartao?.getAttribute("role")).toBe("alert");
+      expect(
+        elemento.querySelector('[data-acao="atualizar-versao"]')?.textContent,
+      ).toBe("Atualizar");
       expect(
         elemento.querySelector('[data-acao="fechar-aviso-de-versao"]'),
       ).toBeNull();

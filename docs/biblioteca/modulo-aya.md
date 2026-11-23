@@ -52,8 +52,8 @@ quando o app abre). Substitui os antigos `arara-guide.js`, `arara-speaking-effec
 - "Não aparece o botão": `aya/permissoes-da-aya.ts`, pelo perfil.
 - "Não ajudou" e "não entendi" guardam a pergunta sem dado pessoal (`aya/perguntas-sem-resposta.ts`);
   o administrador global copia a lista pelo painel.
-- O que a Aya diz em cada página: `aya/aya-paginas.ts`. Chamado ao suporte (Gmail, com alternativa
-  `mailto:`): `aya/chamado-da-aya.ts`. Respostas: `aya/busca-da-aya.ts`.
+- O que a Aya diz em cada página: `aya/aya-paginas.ts`. Chamado ao suporte (só o Gmail no cartão, desde
+  02/10/2026; o `mailto:` segue montado, sem botão): `aya/chamado-da-aya.ts`. Respostas: `aya/busca-da-aya.ts`.
 - Borda (qual vale ao soltar, setas, posição guardada): `aya/borda-da-aya.ts`; o deslocamento de quem
   está escondida fica em `aya.css`.
 - Estados da mascote (prioridade, movimento reduzido, comemorações desligadas, tempos sorteados):
