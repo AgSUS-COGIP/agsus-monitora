@@ -283,6 +283,12 @@
   margin: 0;
 }
 
+.ui-erro-do-modulo__codigo {
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
 /* ── Campo (rótulo em cima, controle embaixo) ──────────────────────── */
 
 .ui-campo {

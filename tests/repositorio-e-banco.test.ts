@@ -39,6 +39,7 @@ import {
   SOLTOS_PERMITIDOS,
 } from "../scripts/check-lib-sem-arquivo-solto.mjs";
 import { definicoes, resolver, valorDe } from "./apoio/tokens-de-camada.ts";
+import { limparTextoDoErro } from "../src/lib/seguranca/registro-de-erros.ts";
 
 bloco("aba-mapa-no-banco", () => {
   /*
@@ -1533,6 +1534,432 @@ bloco("tokens-do-acabamento", () => {
       expect(resolver(valorDe("--z-modal"))).toBe(
         resolver(valorDe("--z-overlay")),
       );
+    });
+  });
+});
+
+bloco("registro-de-erros-no-banco", () => {
+  /*
+    A migration 20261123150000 (registro dos erros do navegador, ainda não
+    aplicada: está em supabase/migrations/) num Postgres de verdade (PGlite).
+    Imitações: os papéis, a sessão (auth.uid() lê teste.uid ou, como o
+    Supabase, request.jwt.claims), o administrador global
+    (FC_ADMIN_GLOBAL_ATIVO lê teste.admin) e as áreas. Dados fictícios.
+  */
+  const ler = (caminho: string) =>
+    readFileSync(caminho, "utf8").replace(/\r\n/g, "\n");
+  const NOME = "20261123150000_registro_de_erros_da_aplicacao.sql";
+  const MIGRATION = ler(`supabase/migrations/${NOME}`);
+  const ROLLBACK = ler(`supabase/rollback/${NOME}`);
+  const ENSAIO = ler(`supabase/ensaios/${NOME}`);
+
+  const PESSOA = "11111111-1111-4111-8111-111111111111";
+  const ADMIN = "22222222-2222-4222-8222-222222222222";
+
+  const INFRAESTRUTURA = `
+create role anon;
+create role authenticated;
+create role service_role;
+create schema private;
+create schema auth;
+create function auth.uid() returns uuid language sql stable as $$
+  select coalesce(
+    nullif(current_setting('teste.uid', true), ''),
+    nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')::uuid
+$$;
+create function private."FC_ADMIN_GLOBAL_ATIVO"(p_usuario uuid) returns boolean
+language sql stable as $$
+  select p_usuario is not null and p_usuario::text = coalesce(current_setting('teste.admin', true), '')
+$$;
+create table public."TB_AREA" ("CO_AREA" text primary key);
+insert into public."TB_AREA" values ('saude-indigena'), ('sede'), ('projetos');
+`;
+
+  const bancoAntes = moldeDeBanco(async () => {
+    const db = await PGlite.create();
+    await db.exec(INFRAESTRUTURA);
+    return db;
+  });
+  const bancoMigrado = moldeDeBanco(async () => {
+    const db = await PGlite.create();
+    await db.exec(INFRAESTRUTURA);
+    await db.exec(MIGRATION);
+    return db;
+  });
+
+  async function como(db: PGlite, uid: string | null, admin = "") {
+    await db.query(
+      `select set_config('teste.uid', $1, false), set_config('teste.admin', $2, false)`,
+      [uid ?? "", admin],
+    );
+  }
+
+  type Resposta = {
+    registrado: boolean;
+    motivo?: string;
+    referencia?: string;
+  };
+  type Pedido = {
+    referencia?: string;
+    tipo?: string;
+    mensagem?: string;
+    rota?: string | null;
+    contexto?: unknown;
+    versao?: string | null;
+    area?: string | null;
+    status?: number | null;
+  };
+  async function registrar(db: PGlite, p: Pedido = {}): Promise<Resposta> {
+    const { rows } = await db.query<{ r: Resposta }>(
+      `select public.registrar_erro_da_aplicacao($1, $2, $3, $4, $5::jsonb, $6, $7, $8) as r`,
+      [
+        p.referencia ?? "3f2a9c1b-0000-4000-8000-000000000001",
+        p.tipo ?? "CLIENTE",
+        p.mensagem ?? "Cannot read properties of undefined",
+        p.rota === undefined ? "/sede/editais" : p.rota,
+        JSON.stringify(p.contexto ?? {}),
+        p.versao === undefined ? "abc123" : p.versao,
+        p.area === undefined ? "sede" : p.area,
+        p.status === undefined ? null : p.status,
+      ],
+    );
+    const r = rows[0]?.r;
+    if (!r) throw new Error("sem resposta");
+    return r;
+  }
+  async function codigoDoErro(promessa: Promise<unknown>): Promise<string> {
+    try {
+      await promessa;
+    } catch (erro) {
+      return String((erro as { code?: unknown }).code ?? "");
+    }
+    return "sem erro";
+  }
+  const linhas = async (db: PGlite) =>
+    (
+      await db.query<Record<string, unknown>>(
+        `select "CO_REFERENCIA", "TP_ERRO", "DS_MENSAGEM", "DS_ROTA", "DS_CONTEXTO",
+                "CO_VERSAO_BUILD", "CO_AREA", "NU_STATUS_HTTP", "CO_USUARIO"
+           from public."TL_ERRO_APLICACAO" order by "DT_REGISTRO", "CO_REFERENCIA"`,
+      )
+    ).rows;
+
+  beforeAll(() => Promise.all([bancoAntes(), bancoMigrado()]), 60_000);
+
+  describe("a limpeza do banco é a do navegador", () => {
+    const CASOS: Array<[string, number]> = [
+      ["Falhou para maria.souza@exemplo.org.br agora", 500],
+      ["CPF 123.456.789-09 e 12345678909 na mensagem", 500],
+      ["Authorization: Bearer abc.DEF-123_x~y+z/w= ok", 500],
+      ["bearer   tok", 500],
+      ["token eyJhbGciOi.eyJzdWIiOiIx.c2lnbmF0dXJh fim", 500],
+      ["ligue (61) 99999-1234 ou 61 3333-4444", 500],
+      ["edital 01/2026 cargo 1234 código 98765", 500],
+      ["linha\u0001com\u0007controle\nE quebra de linha", 500],
+      ["   espaços nas pontas   ", 500],
+      ["id a0000000-0000-0000-0000-0000000000a1", 500],
+      ["ação com acentuação e emoji 🙂 no meio do texto", 20],
+      ["x".repeat(600), 500],
+    ];
+
+    it("cada caso sai igual no SQL e no TypeScript", async () => {
+      const db = await bancoMigrado();
+      for (const [texto, limite] of CASOS) {
+        const { rows } = await db.query<{ t: string }>(
+          `select private."FC_LIMPAR_TEXTO_ERRO"($1, $2) as t`,
+          [texto, limite],
+        );
+        expect(rows[0]?.t, texto).toBe(limparTextoDoErro(texto, limite));
+      }
+    });
+
+    it("não sobra e-mail, CPF, telefone, token nem número longo", async () => {
+      const db = await bancoMigrado();
+      const { rows } = await db.query<{ t: string }>(
+        `select private."FC_LIMPAR_TEXTO_ERRO"($1, 500) as t`,
+        [
+          "pessoa@exemplo.org 123.456.789-09 (61) 99999-1234 Bearer segredo eyJa.eyJb 1234567",
+        ],
+      );
+      expect(rows[0]?.t).toBe(
+        "[e-mail] [número] [número] Bearer [token] [token] [número]",
+      );
+    });
+  });
+
+  describe("registrar_erro_da_aplicacao", () => {
+    it("grava limpo: mensagem, rota sem consulta, contexto filtrado; o id, nunca o e-mail", async () => {
+      const db = await bancoMigrado();
+      await como(db, PESSOA);
+      const r = await registrar(db, {
+        referencia: "3F2A9C1B-AAAA-4000-8000-000000000001",
+        tipo: "banco",
+        mensagem: "Erro de maria@exemplo.org com CPF 123.456.789-09",
+        rota: "/sede/aprovados?busca=Maria+Souza#linha-3",
+        contexto: {
+          origem: "promessa",
+          linha: 12,
+          online: true,
+          pilha: "at f (Bearer abc.def) 98765",
+          cpf: 12345678909,
+          "Chave-Ruim": "x",
+          objeto: { a: 1 },
+        },
+        status: 503,
+      });
+      expect(r).toEqual({
+        registrado: true,
+        referencia: "3f2a9c1b-aaaa-4000-8000-000000000001",
+      });
+      expect(await linhas(db)).toEqual([
+        {
+          CO_REFERENCIA: "3f2a9c1b-aaaa-4000-8000-000000000001",
+          TP_ERRO: "BANCO",
+          DS_MENSAGEM: "Erro de [e-mail] com CPF [número]",
+          DS_ROTA: "/sede/aprovados",
+          DS_CONTEXTO: {
+            origem: "promessa",
+            linha: 12,
+            online: true,
+            pilha: "at f (Bearer [token]) [número]",
+          },
+          CO_VERSAO_BUILD: "abc123",
+          CO_AREA: "sede",
+          NU_STATUS_HTTP: 503,
+          CO_USUARIO: PESSOA,
+        },
+      ]);
+    });
+
+    it("tipo, versão, área e status fora do domínio viram DESCONHECIDO ou nulo; tamanhos cortados", async () => {
+      const db = await bancoMigrado();
+      await como(db, PESSOA);
+      await registrar(db, {
+        tipo: "OUTRO",
+        mensagem: "m".repeat(900),
+        rota: `/${"r".repeat(400)}`,
+        versao: "versão com espaço",
+        area: "inexistente",
+        status: 42,
+      });
+      const [linha] = await linhas(db);
+      expect(linha?.TP_ERRO).toBe("DESCONHECIDO");
+      expect(String(linha?.DS_MENSAGEM)).toHaveLength(500);
+      expect(String(linha?.DS_ROTA)).toHaveLength(200);
+      expect(linha?.CO_VERSAO_BUILD).toBeNull();
+      expect(linha?.CO_AREA).toBeNull();
+      expect(linha?.NU_STATUS_HTTP).toBeNull();
+    });
+
+    it("sem sessão recusa (28000); referência fora do padrão recusa (22023)", async () => {
+      const db = await bancoMigrado();
+      await como(db, null);
+      expect(await codigoDoErro(registrar(db))).toBe("28000");
+      await como(db, PESSOA);
+      expect(
+        await codigoDoErro(registrar(db, { referencia: "<script>" })),
+      ).toBe("22023");
+      expect(await linhas(db)).toEqual([]);
+    });
+
+    it("o mesmo erro da mesma pessoa em 30 s não grava de novo e devolve a referência do primeiro", async () => {
+      const db = await bancoMigrado();
+      await como(db, PESSOA);
+      await registrar(db, { referencia: "aaaaaaaa-0001" });
+      expect(await registrar(db, { referencia: "aaaaaaaa-0002" })).toEqual({
+        registrado: false,
+        motivo: "repetido",
+        referencia: "aaaaaaaa-0001",
+      });
+      // Outra mensagem, ou outra pessoa, grava.
+      expect(
+        (
+          await registrar(db, {
+            referencia: "aaaaaaaa-0003",
+            mensagem: "outro",
+          })
+        ).registrado,
+      ).toBe(true);
+      await como(db, ADMIN);
+      expect(
+        (await registrar(db, { referencia: "aaaaaaaa-0004" })).registrado,
+      ).toBe(true);
+      expect(await linhas(db)).toHaveLength(3);
+    });
+
+    it("passa a ignorar depois de 30 registros da pessoa no último minuto, sem erro", async () => {
+      const db = await bancoMigrado();
+      await como(db, PESSOA);
+      for (let i = 0; i < 30; i += 1)
+        expect(
+          (
+            await registrar(db, {
+              referencia: `bbbbbbbb-${String(i).padStart(4, "0")}`,
+              mensagem: `erro ${String.fromCharCode(97 + (i % 26))}${i}`,
+            })
+          ).registrado,
+        ).toBe(true);
+      expect(
+        await registrar(db, {
+          referencia: "bbbbbbbb-9999",
+          mensagem: "mais um",
+        }),
+      ).toEqual({ registrado: false, motivo: "limite" });
+      // A conta é por pessoa.
+      await como(db, ADMIN);
+      expect(
+        (
+          await registrar(db, {
+            referencia: "bbbbbbbb-8888",
+            mensagem: "mais um",
+          })
+        ).registrado,
+      ).toBe(true);
+      // Passado o minuto, volta a gravar.
+      await db.query(
+        `update public."TL_ERRO_APLICACAO" set "DT_REGISTRO" = now() - interval '2 minutes'`,
+      );
+      await como(db, PESSOA);
+      expect(
+        (
+          await registrar(db, {
+            referencia: "bbbbbbbb-7777",
+            mensagem: "mais um",
+          })
+        ).registrado,
+      ).toBe(true);
+    });
+
+    it("apaga aos poucos o que passou de 180 dias", async () => {
+      const db = await bancoMigrado();
+      await db.query(
+        `insert into public."TL_ERRO_APLICACAO" ("CO_REFERENCIA", "TP_ERRO", "DS_MENSAGEM", "CO_USUARIO", "DT_REGISTRO")
+         select 'velho-' || lpad(g::text, 4, '0'), 'CLIENTE', 'antigo', $1, now() - interval '200 days'
+           from generate_series(1, 60) g`,
+        [PESSOA],
+      );
+      await como(db, PESSOA);
+      await registrar(db, { referencia: "cccccccc-0001" });
+      const contar = async () =>
+        (
+          await db.query<{ n: number }>(
+            `select count(*)::int as n from public."TL_ERRO_APLICACAO" where "DS_MENSAGEM" = 'antigo'`,
+          )
+        ).rows[0]?.n;
+      expect(await contar()).toBe(10);
+      await registrar(db, { referencia: "cccccccc-0002", mensagem: "outro" });
+      expect(await contar()).toBe(0);
+    });
+  });
+
+  describe("ninguém lê direto; a leitura é só do administrador global", () => {
+    it("RLS ligada e authenticated/anon sem privilégio na tabela", async () => {
+      const db = await bancoMigrado();
+      const { rows } = await db.query<{
+        rls: boolean;
+        anon: boolean;
+        autenticado: boolean;
+      }>(
+        `select c.relrowsecurity as rls,
+                has_table_privilege('anon', c.oid, 'select,insert,update,delete') as anon,
+                has_table_privilege('authenticated', c.oid, 'select,insert,update,delete') as autenticado
+           from pg_class c where c.oid = 'public."TL_ERRO_APLICACAO"'::regclass`,
+      );
+      expect(rows[0]).toEqual({ rls: true, anon: false, autenticado: false });
+      await db.exec(`grant usage on schema public to authenticated`);
+      await db.exec(`set role authenticated`);
+      expect(
+        await codigoDoErro(
+          db.query(`select * from public."TL_ERRO_APLICACAO"`),
+        ),
+      ).toBe("42501");
+      await db.exec(`reset role`);
+    });
+
+    it("quem não é administrador global recebe 42501; o administrador lê e acha pelo começo da referência", async () => {
+      const db = await bancoMigrado();
+      await como(db, PESSOA);
+      await registrar(db, {
+        referencia: "3f2a9c1b-0000-4000-8000-00000000000a",
+      });
+      await registrar(db, {
+        referencia: "77777777-0000-4000-8000-00000000000b",
+        tipo: "REDE",
+        mensagem: "Failed to fetch",
+      });
+      expect(
+        await codigoDoErro(
+          db.query(`select public.listar_erros_da_aplicacao()`),
+        ),
+      ).toBe("42501");
+      await como(db, null);
+      expect(
+        await codigoDoErro(
+          db.query(`select public.listar_erros_da_aplicacao()`),
+        ),
+      ).toBe("28000");
+
+      await como(db, ADMIN, ADMIN);
+      type Item = { referencia: string; tipo: string; usuario: string };
+      const listar = async (referencia: string | null, tipo: string | null) =>
+        (
+          await db.query<{ r: Item[] }>(
+            `select public.listar_erros_da_aplicacao($1, $2) as r`,
+            [referencia, tipo],
+          )
+        ).rows[0]?.r ?? [];
+      expect(await listar(null, null)).toHaveLength(2);
+      const achados = await listar("3F2A9C1B", null);
+      expect(achados.map((i) => i.referencia)).toEqual([
+        "3f2a9c1b-0000-4000-8000-00000000000a",
+      ]);
+      expect(achados[0]?.usuario).toBe(PESSOA);
+      expect(JSON.stringify(achados)).not.toMatch(/@/);
+      expect((await listar(null, "rede")).map((i) => i.tipo)).toEqual(["REDE"]);
+      expect(
+        await codigoDoErro(
+          db.query(`select public.listar_erros_da_aplicacao('3f2a%')`),
+        ),
+      ).toBe("22023");
+    });
+  });
+
+  describe("ensaio e rollback", () => {
+    it("o ensaio traz o corpo da migration sem mudança, roda e desfaz", async () => {
+      const corpo = /^begin;\n([\s\S]*)^commit;\n/m.exec(MIGRATION)?.[1];
+      expect(corpo).toBeTruthy();
+      expect(ENSAIO).toContain(String(corpo));
+      expect(ENSAIO.trimEnd().endsWith("rollback;")).toBe(true);
+      const db = await bancoAntes();
+      await db.exec(ENSAIO);
+      const { rows } = await db.query<{ t: string | null }>(
+        `select to_regclass('public."TL_ERRO_APLICACAO"')::text as t`,
+      );
+      expect(rows[0]?.t).toBeNull();
+    });
+
+    it("o rollback volta ao banco de antes e recusa rodar sem a migration", async () => {
+      const objetos = async (db: PGlite) =>
+        (
+          await db.query<{ nome: string }>(
+            `select n.nspname || '.' || p.proname as nome from pg_proc p
+               join pg_namespace n on n.oid = p.pronamespace
+              where n.nspname in ('public', 'private')
+             union all
+             select 'tabela ' || c.relname from pg_class c
+               join pg_namespace n on n.oid = c.relnamespace
+              where n.nspname = 'public' and c.relkind = 'r'
+             order by 1`,
+          )
+        ).rows.map((r) => r.nome);
+      const antes = await bancoAntes();
+      const deHoje = await objetos(antes);
+      expect(await codigoDoErro(antes.exec(ROLLBACK))).toBe("P0001");
+
+      const db = await bancoMigrado();
+      expect(await objetos(db)).not.toEqual(deHoje);
+      await db.exec(ROLLBACK);
+      expect(await objetos(db)).toEqual(deHoje);
     });
   });
 });

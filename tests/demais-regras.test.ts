@@ -1,5 +1,19 @@
 // @vitest-environment node
 import { bloco } from "./apoio/bloco.ts";
+import {
+  arquivoDoErro,
+  chaveDaRepeticao,
+  criarJanelaDaRepeticao,
+  criarReferenciaDoErro,
+  ehRuido,
+  JANELA_DA_REPETICAO_MS,
+  lerErro,
+  limparTextoDoErro,
+  montarPedidoDoRegistro,
+  referenciaCurta,
+  rotaDoErro,
+  tipoDoErro,
+} from "../src/lib/seguranca/registro-de-erros.ts";
 import * as alcanceDaSelecaoNs from "../src/lib/base/alcance-da-selecao.ts";
 import {
   itensDoMes,
@@ -7761,5 +7775,189 @@ bloco("lib/minimapa", () => {
     expect(contornoDoDsei([contorno], { k: "YANOMAMI" })).toBe(contorno);
     expect(contornoDoDsei([contorno], { k: "XINGU" })).toBeNull();
     expect(contornoDoDsei([contorno], null)).toBeNull();
+  });
+});
+
+bloco("lib/registro-de-erros", () => {
+  /*
+    A regra do registro dos erros do navegador (src/lib/seguranca/registro-de-erros.ts):
+    referência, limpeza, tipo, janela de 30 s e o pedido à RPC. A paridade da
+    limpeza com o banco está no bloco `registro-de-erros-no-banco`.
+  */
+  describe("referência", () => {
+    it("usa crypto.randomUUID, em minúsculas", () => {
+      expect(
+        criarReferenciaDoErro({
+          randomUUID: () => "3F2A9C1B-0000-4000-8000-000000000001",
+        }),
+      ).toBe("3f2a9c1b-0000-4000-8000-000000000001");
+    });
+
+    it("sem randomUUID, monta um UUID v4 com getRandomValues; sem nada, com o relógio", () => {
+      const comBytes = criarReferenciaDoErro({
+        getRandomValues: <T extends Uint8Array>(lista: T) => {
+          lista.fill(0xab);
+          return lista;
+        },
+      });
+      expect(comBytes).toMatch(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+      );
+      const semNada = criarReferenciaDoErro({});
+      expect(semNada).toMatch(/^[0-9a-f-]{36}$/);
+      expect(criarReferenciaDoErro({})).not.toBe(semNada);
+    });
+
+    it("a curta é o começo, sem hífen, em maiúsculas", () => {
+      expect(referenciaCurta("3f2a9c1b-0000-4000-8000-000000000001")).toBe(
+        "3F2A9C1B",
+      );
+    });
+  });
+
+  describe("limpeza", () => {
+    it("tira e-mail, CPF, telefone, token e sequência de 5+ dígitos", () => {
+      expect(
+        limparTextoDoErro(
+          "pessoa@exemplo.org 123.456.789-09 (61) 99999-1234 Bearer abc.def eyJa.eyJb 1234567 e 1234",
+        ),
+      ).toBe(
+        "[e-mail] [número] [número] Bearer [token] [token] [número] e 1234",
+      );
+    });
+
+    it("corta no limite e aceita qualquer coisa", () => {
+      expect(limparTextoDoErro("abcdef", 3)).toBe("abc");
+      expect(limparTextoDoErro(undefined)).toBe("");
+      expect(limparTextoDoErro(12345678)).toBe("[número]");
+    });
+
+    it("rota sem consulta nem âncora; arquivo sem origem", () => {
+      expect(rotaDoErro("/sede/aprovados?busca=Maria#x")).toBe(
+        "/sede/aprovados",
+      );
+      expect(
+        arquivoDoErro("https://yeende.vercel.app/assets/index-abc.js?v=1"),
+      ).toBe("/assets/index-abc.js");
+      expect(arquivoDoErro("")).toBe("");
+    });
+  });
+
+  describe("tipo", () => {
+    it("REDE sem conexão ou falha de rede; SERVIDOR 5xx; BANCO com código; CLIENTE; DESCONHECIDO", () => {
+      const erro = new TypeError("x");
+      expect(tipoDoErro(lerErro(erro), false)).toBe("REDE");
+      expect(tipoDoErro(lerErro(new TypeError("Failed to fetch")), true)).toBe(
+        "REDE",
+      );
+      expect(tipoDoErro(lerErro({ message: "x", status: 502 }), true)).toBe(
+        "SERVIDOR",
+      );
+      expect(
+        tipoDoErro(lerErro({ message: "x", code: "PGRST116" }), true),
+      ).toBe("BANCO");
+      expect(tipoDoErro(lerErro({ message: "x", code: "42501" }), true)).toBe(
+        "BANCO",
+      );
+      expect(tipoDoErro(lerErro(erro), true)).toBe("CLIENTE");
+      expect(tipoDoErro(lerErro("texto solto"), true)).toBe("DESCONHECIDO");
+    });
+  });
+
+  describe("janela de 30 s", () => {
+    it("o mesmo erro dentro da janela devolve a referência do primeiro; depois, vai de novo", () => {
+      const repetido = criarJanelaDaRepeticao();
+      expect(repetido("a", 0, "r1")).toBeNull();
+      expect(repetido("a", JANELA_DA_REPETICAO_MS - 1, "r2")).toBe("r1");
+      expect(repetido("b", 10, "r3")).toBeNull();
+      expect(repetido("a", JANELA_DA_REPETICAO_MS, "r4")).toBeNull();
+      expect(repetido("a", JANELA_DA_REPETICAO_MS + 1, "r5")).toBe("r4");
+    });
+  });
+
+  describe("pedido à RPC", () => {
+    it("monta os argumentos limpos, com contexto curto e sem origem nos endereços", () => {
+      const erro = new Error("Falhou para pessoa@exemplo.org");
+      erro.stack =
+        "Error: Falhou para pessoa@exemplo.org\n    at f (https://yeende.vercel.app/assets/a.js:1:2)";
+      const pedido = montarPedidoDoRegistro(
+        {
+          erro,
+          origem: "janela",
+          rota: "/sede/editais?busca=Fulano",
+          online: true,
+          arquivo: "https://yeende.vercel.app/assets/a.js",
+          linha: 1,
+          coluna: 2,
+          versao: "abc123",
+          area: "sede",
+        },
+        "ref-0001",
+      );
+      expect(pedido).toEqual({
+        p_referencia: "ref-0001",
+        p_tipo: "CLIENTE",
+        p_mensagem: "Falhou para [e-mail]",
+        p_rota: "/sede/editais",
+        p_contexto: {
+          origem: "janela",
+          online: true,
+          arquivo: "/assets/a.js",
+          linha: 1,
+          coluna: 2,
+          nome: "Error",
+          pilha: "Error: Falhou para [e-mail]\nat f (/assets/a.js:1:2)",
+        },
+        p_versao: "abc123",
+        p_area: "sede",
+        p_status: null,
+      });
+      expect(chaveDaRepeticao(pedido)).toBe(
+        "CLIENTE|/sede/editais|Falhou para [e-mail]|",
+      );
+    });
+
+    it("versão e área fora do formato vão nulas; sem mensagem, usa a do evento", () => {
+      const pedido = montarPedidoDoRegistro(
+        {
+          erro: null,
+          origem: "janela",
+          mensagem: "Uncaught boom",
+          rota: "/",
+          online: true,
+          versao: "com espaço",
+          area: "Área",
+          linha: 10_000_000,
+        },
+        "ref-0002",
+      );
+      expect(pedido.p_mensagem).toBe("Uncaught boom");
+      expect(pedido.p_versao).toBeNull();
+      expect(pedido.p_area).toBeNull();
+      expect(pedido.p_contexto.linha).toBeUndefined();
+    });
+
+    it("ruído não vai: extensão do navegador, Script error. e ResizeObserver", () => {
+      const base = { origem: "janela", rota: "/", online: true };
+      expect(
+        ehRuido({
+          ...base,
+          erro: null,
+          arquivo: "chrome-extension://abc/x.js",
+        }),
+      ).toBe(true);
+      expect(ehRuido({ ...base, erro: null, mensagem: "Script error." })).toBe(
+        true,
+      );
+      expect(
+        ehRuido({
+          ...base,
+          erro: new Error(
+            "ResizeObserver loop completed with undelivered notifications.",
+          ),
+        }),
+      ).toBe(true);
+      expect(ehRuido({ ...base, erro: new Error("de verdade") })).toBe(false);
+    });
   });
 });

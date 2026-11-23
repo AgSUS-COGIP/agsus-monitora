@@ -98,6 +98,11 @@ import {
 import { createRoot, type Root } from "react-dom/client";
 import { ErrorBoundary } from "../src/app/ErrorBoundary.tsx";
 import {
+  criarRegistroDeErros,
+  type DependenciasDoRegistro,
+  MAXIMO_DE_ENVIOS_POR_PAGINA,
+} from "../src/app/registro-de-erros.ts";
+import {
   criarMoldura,
   type Moldura,
   CHAVE_DA_BARRA_RECOLHIDA,
@@ -1670,6 +1675,10 @@ bloco("app/error-boundary", () => {
         String(chamada[0]).includes("[Yeendé] Erro ao desenhar o teste"),
       );
       expect(nosso?.[1]?.message).toBe("falhou o render");
+      // O código curto do registro, para a pessoa passar ao suporte.
+      expect(
+        aviso?.querySelector(".ui-erro-do-modulo__codigo")?.textContent,
+      ).toMatch(/^Código do erro: [0-9A-F]{8}$/);
     });
 
     it("“Tentar de novo” remonta os filhos do zero", async () => {
@@ -1689,6 +1698,157 @@ bloco("app/error-boundary", () => {
       expect(document.getElementById("raiz")?.textContent).toBe("voltou");
       expect(montagens).toBeGreaterThan(0);
     });
+  });
+});
+
+bloco("app/registro-de-erros", () => {
+  /*
+    O registro dos erros do navegador (src/app/registro-de-erros.ts) com as
+    dependências simuladas: escuta error/unhandledrejection, só manda com
+    sessão, não repete em 30 s, para de mandar depois de PGRST202 (migration
+    ainda não aplicada) e nunca lança.
+  */
+  type Envio = Parameters<DependenciasDoRegistro["enviar"]>[0];
+
+  function montar(mudancas: Partial<DependenciasDoRegistro> = {}) {
+    const enviados: Envio[] = [];
+    let agora = 1_000;
+    let n = 0;
+    const deps: DependenciasDoRegistro = {
+      enviar: async (pedido) => {
+        enviados.push(pedido);
+        return { error: null };
+      },
+      temSessao: async () => true,
+      agora: () => agora,
+      online: () => true,
+      rota: () => "/sede/editais",
+      area: () => "sede",
+      versao: "abc123",
+      novaReferencia: () => `ref-${String((n += 1)).padStart(4, "0")}`,
+      ...mudancas,
+    };
+    const registro = criarRegistroDeErros(deps);
+    return {
+      registro,
+      enviados,
+      andar: (ms: number) => {
+        agora += ms;
+      },
+    };
+  }
+  const esperar = () => new Promise((r) => setTimeout(r, 0));
+
+  it("escuta error e unhandledrejection da janela e desliga", async () => {
+    const { registro, enviados } = montar();
+    const janela = new EventTarget();
+    const desligar = registro.ouvir(janela);
+    const evento = new ErrorEvent("error", {
+      error: new Error("quebrou para pessoa@exemplo.org"),
+      message: "Uncaught Error",
+      filename: "https://yeende.vercel.app/assets/a.js",
+      lineno: 3,
+      colno: 9,
+    });
+    janela.dispatchEvent(evento);
+    const rejeicao = new Event("unhandledrejection");
+    Object.defineProperty(rejeicao, "reason", {
+      value: { message: "permissão", code: "42501" },
+    });
+    janela.dispatchEvent(rejeicao);
+    await esperar();
+    expect(enviados.map((p) => [p.p_tipo, p.p_mensagem])).toEqual([
+      ["CLIENTE", "quebrou para [e-mail]"],
+      ["BANCO", "permissão"],
+    ]);
+    expect(enviados[0]?.p_contexto).toMatchObject({
+      origem: "janela",
+      arquivo: "/assets/a.js",
+      linha: 3,
+      coluna: 9,
+    });
+    expect(enviados[0]).toMatchObject({
+      p_rota: "/sede/editais",
+      p_area: "sede",
+      p_versao: "abc123",
+    });
+
+    desligar();
+    janela.dispatchEvent(
+      new ErrorEvent("error", { error: new Error("depois") }),
+    );
+    await esperar();
+    expect(enviados).toHaveLength(2);
+  });
+
+  it("o mesmo erro em 30 s não vai de novo e devolve a referência do primeiro", async () => {
+    const { registro, enviados, andar } = montar();
+    const primeiro = registro.registrarErro({
+      erro: new Error("x"),
+      origem: "tela",
+    });
+    andar(29_000);
+    expect(
+      registro.registrarErro({ erro: new Error("x"), origem: "tela" }),
+    ).toBe(primeiro);
+    andar(1_000);
+    expect(
+      registro.registrarErro({ erro: new Error("x"), origem: "tela" }),
+    ).not.toBe(primeiro);
+    await esperar();
+    expect(enviados).toHaveLength(2);
+  });
+
+  it("sem sessão não manda, mas devolve a referência", async () => {
+    const { registro, enviados } = montar({ temSessao: async () => false });
+    expect(
+      registro.registrarErro({ erro: new Error("x"), origem: "tela" }),
+    ).toBe("ref-0001");
+    await esperar();
+    expect(enviados).toEqual([]);
+  });
+
+  it("depois de PGRST202 para de mandar naquela página, em silêncio", async () => {
+    const pedidos: Envio[] = [];
+    const { registro } = montar({
+      enviar: async (pedido) => {
+        pedidos.push(pedido);
+        return { error: { code: "PGRST202" } };
+      },
+    });
+    registro.registrarErro({ erro: new Error("a"), origem: "tela" });
+    await esperar();
+    registro.registrarErro({ erro: new Error("b"), origem: "tela" });
+    registro.registrarErro({ erro: new Error("c"), origem: "tela" });
+    await esperar();
+    expect(pedidos.map((p) => p.p_mensagem)).toEqual(["a"]);
+  });
+
+  it("nunca lança, nem com o envio quebrando; no máximo 50 envios por página", async () => {
+    let tentativas = 0;
+    const { registro } = montar({
+      enviar: async () => {
+        tentativas += 1;
+        throw new Error("rede caiu");
+      },
+    });
+    for (let i = 0; i < MAXIMO_DE_ENVIOS_POR_PAGINA + 10; i += 1)
+      expect(() =>
+        registro.registrarErro({ erro: new Error(`e${i}`), origem: "tela" }),
+      ).not.toThrow();
+    await esperar();
+    expect(tentativas).toBe(MAXIMO_DE_ENVIOS_POR_PAGINA);
+  });
+
+  it("ruído (extensão do navegador) não vai", async () => {
+    const { registro, enviados } = montar();
+    registro.registrarErro({
+      erro: null,
+      origem: "janela",
+      arquivo: "chrome-extension://abc/x.js",
+    });
+    await esperar();
+    expect(enviados).toEqual([]);
   });
 });
 
