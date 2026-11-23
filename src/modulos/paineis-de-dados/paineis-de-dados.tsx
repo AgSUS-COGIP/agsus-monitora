@@ -22,7 +22,7 @@ import { formatNumberBR } from "../../lib/base/formatters";
 import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitoramento.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
-import { TelaNaUrl, usarLojaNaUrl } from "../../app/usar-filtros-na-url.ts";
+import { usarLojaNaUrl } from "../../app/usar-filtros-na-url.ts";
 import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
 import {
   ehIdDoRelatorio,
@@ -85,6 +85,9 @@ import type {
   (src/modulos/visao-geral/montador-de-relatorio.tsx) com todos os editais da
   área, sem os filtros da Visão geral.
 */
+
+/** A view da tela (rota em src/lib/navegacao/rotas.ts; o caminho é `relatorios`). */
+const VIEW_DOS_RELATORIOS = "paineis-de-dados";
 
 /** O relatório aberto no endereço (`?relatorio=<id>`); sem ele, o catálogo. */
 const ESQUEMA_DO_RELATORIO: EsquemaDosFiltros<"relatorio"> = Object.freeze({
@@ -663,7 +666,8 @@ export function TelaDePaineisDeDados({
   /*
     O relatório aberto mora no endereço: abrir um cartão é entrada nova no
     histórico (o voltar do navegador volta aos cartões); link com
-    `?relatorio=<id>` abre direto nele.
+    `?relatorio=<id>` abre direto nele. A tela vai por `tela` (não por
+    <TelaNaUrl>): o hook está neste componente, acima de qualquer Provider.
   */
   const mudarNoEndereco = usarLojaNaUrl(
     ESQUEMA_DO_RELATORIO,
@@ -674,6 +678,7 @@ export function TelaDePaineisDeDados({
         ? estado.abrir(relatorio)
         : estado.voltarAoCatalogo());
     },
+    { tela: VIEW_DOS_RELATORIOS },
   );
 
   const leitura = e.relatorios[e.ativo];
@@ -681,52 +686,48 @@ export function TelaDePaineisDeDados({
     ? Object.values(e.relatorios).some((l) => l.situacao === "carregando")
     : leitura.situacao === "carregando";
   return (
-    <TelaNaUrl.Provider value="paineis-de-dados">
-      <div className="ui-tela paineis-tela">
-        <TopoDoPainel
-          status={e.noCatalogo ? "" : textoDaSincronizacao(leitura)}
-          aoAtualizar={() => void estado.sincronizar()}
-          atualizarDesativado={!e.area || lendo}
-          rotuloDaAtualizacao="Sincronizar"
+    <div className="ui-tela paineis-tela">
+      <TopoDoPainel
+        status={e.noCatalogo ? "" : textoDaSincronizacao(leitura)}
+        aoAtualizar={() => void estado.sincronizar()}
+        atualizarDesativado={!e.area || lendo}
+        rotuloDaAtualizacao="Sincronizar"
+      >
+        <button
+          type="button"
+          className="btn secondary"
+          data-acao="montar-relatorio"
+          disabled={!e.area}
+          onClick={() =>
+            setMontando(recorteDaAreaInteira(e.area, relatorio.linhasDaArea()))
+          }
         >
-          <button
-            type="button"
-            className="btn secondary"
-            data-acao="montar-relatorio"
-            disabled={!e.area}
-            onClick={() =>
-              setMontando(
-                recorteDaAreaInteira(e.area, relatorio.linhasDaArea()),
-              )
-            }
-          >
-            <i className="fa-solid fa-file-lines" aria-hidden="true" /> Montar
-            relatório
-          </button>
-        </TopoDoPainel>
-        {e.noCatalogo ? (
-          <CatalogoDosRelatorios
+          <i className="fa-solid fa-file-lines" aria-hidden="true" /> Montar
+          relatório
+        </button>
+      </TopoDoPainel>
+      {e.noCatalogo ? (
+        <CatalogoDosRelatorios
+          estado={estado}
+          aoAbrir={(id) => mudarNoEndereco({ relatorio: id })}
+        />
+      ) : (
+        <>
+          <Relatorio
             estado={estado}
-            aoAbrir={(id) => mudarNoEndereco({ relatorio: id })}
+            aoVoltar={() => mudarNoEndereco({ relatorio: "" })}
           />
-        ) : (
-          <>
-            <Relatorio
-              estado={estado}
-              aoVoltar={() => mudarNoEndereco({ relatorio: "" })}
-            />
-            <GavetaDeFontes estado={estado} />
-          </>
-        )}
-        {montando ? (
-          <MontadorDosPaineis
-            recorte={montando}
-            apoio={relatorio}
-            aoFechar={() => setMontando(null)}
-          />
-        ) : null}
-      </div>
-    </TelaNaUrl.Provider>
+          <GavetaDeFontes estado={estado} />
+        </>
+      )}
+      {montando ? (
+        <MontadorDosPaineis
+          recorte={montando}
+          apoio={relatorio}
+          aoFechar={() => setMontando(null)}
+        />
+      ) : null}
+    </div>
   );
 }
 

@@ -5320,6 +5320,38 @@ bloco("modulos/paineis-de-dados", () => {
       ).toBe(true);
     });
 
+    it("abrir escreve ?relatorio= no endereço (entrada nova) e voltar tira", async () => {
+      window.history.replaceState(null, "", "/sede/relatorios");
+      try {
+        await montar({}, {}, { abrir: null });
+        const antes = window.history.length;
+        await clicar(botaoEmCartao("aprovados", "Abrir"));
+        await esperar();
+        expect(window.location.pathname + window.location.search).toBe(
+          "/sede/relatorios?relatorio=aprovados",
+        );
+        expect(window.history.length).toBe(antes + 1);
+        await clicar(caixa?.querySelector("[data-acao='voltar-ao-catalogo']"));
+        await esperar();
+        expect(window.location.search).toBe("");
+        // O voltar do navegador com ?relatorio= abre o relatório de novo.
+        await act(async () => {
+          window.history.pushState(
+            null,
+            "",
+            "/sede/relatorios?relatorio=editais-por-cargo",
+          );
+          window.dispatchEvent(new PopStateEvent("popstate"));
+        });
+        await esperar();
+        expect(caixa?.querySelector(".relatorios-voltar h2")?.textContent).toBe(
+          "Editais por cargo",
+        );
+      } finally {
+        window.history.replaceState(null, "", "/");
+      }
+    });
+
     it("o relatório aberto vai no endereço e o caminho antigo continua valendo", () => {
       expect(ehIdDoRelatorio("aprovados")).toBe(true);
       expect(ehIdDoRelatorio("painel-x")).toBe(false);
