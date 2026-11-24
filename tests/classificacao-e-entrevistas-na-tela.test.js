@@ -57,6 +57,7 @@ import { ordemDoSorteio } from "../src/lib/classificacao/sorteio.ts";
 import { retratoDaClassificacao } from "../src/lib/classificacao/dados-do-estado.ts";
 import { montarRegrasDoEdital } from "./componentes/montar-regras-do-edital.ts";
 import { montarTela } from "./montar-tela.ts";
+import { pedirFiltro } from "../src/app/pedido-de-filtro.ts";
 import { registrarTelas } from "../src/app/registro-das-telas.ts";
 import { Blob as BlobDoNode } from "node:buffer";
 import {
@@ -3112,6 +3113,142 @@ bloco("modulos/classificacao", () => {
         "A lista vigente mudou desde o pedido",
       );
       expect(chamadas(supabase, "aplicar_casamento_da_lista")).toEqual([]);
+    });
+
+    it("num passo só: publica como lista de aprovados e marca o resultado final", async () => {
+      const supabase = comCasamento({
+        publicar_lista_classificacao: ({ p_lista }) => ({
+          id: p_lista,
+          tipo: "FINAL",
+          versao_regra: 2,
+          hash: "f".repeat(64),
+          gerada_em: "2026-10-02T13:00:00Z",
+          pendencias: 0,
+          publicada: true,
+        }),
+      });
+      await montar(supabase);
+      await abrirEdital();
+      await clicar(secao.querySelector("[data-acao='gerar']"));
+      await esperar();
+      // Quem pode publicar como lista não vê o "Marcar como publicada".
+      expect(secao.querySelector("[data-acao='publicar']")).toBeNull();
+      await clicar(secao.querySelector("[data-acao='publicar-aprovados']"));
+      await esperar();
+      await digitar(
+        document.querySelector("#classificacaoPublicarMotivo"),
+        "Resultado após os recursos",
+      );
+      await clicar(
+        document.querySelector("[data-acao='confirmar-publicacao-aprovados']"),
+      );
+      await esperar();
+      const nomes = supabase.rpc.mock.calls.map(([n]) => n);
+      expect(nomes.indexOf("publicar_lista_classificacao")).toBeGreaterThan(
+        nomes.indexOf("aplicar_casamento_da_lista"),
+      );
+      expect(chamadas(supabase, "publicar_lista_classificacao")).toEqual([
+        { p_lista: "l1" },
+      ]);
+      expect(toast).toHaveBeenCalledWith(
+        "Lista de aprovados publicada: 3 candidato(s).",
+        "success",
+      );
+      expect(secao.querySelector("[data-geracao='l1']").textContent).toContain(
+        "· publicada",
+      );
+    });
+
+    it("quem só pode marcar continua com 'Marcar como publicada' e a frase", async () => {
+      const supabase = comCasamento({
+        obter_publicacao_lista_aprovados: () => ({
+          ...structuredClone(VIGENTE),
+          pode_publicar: false,
+          pode_substituir: false,
+        }),
+      });
+      await montar(supabase);
+      await abrirEdital();
+      await clicar(secao.querySelector("[data-acao='gerar']"));
+      await esperar();
+      expect(secao.querySelector("[data-acao='publicar']")).not.toBeNull();
+      expect(
+        secao.querySelector("[data-acao='publicar-aprovados']"),
+      ).toBeNull();
+      expect(secao.querySelector("[data-so-marca]").textContent).toBe(
+        "A lista de aprovados é publicada por quem cuida da Lista de aprovados.",
+      );
+    });
+
+    const FINAL_PUBLICADO = {
+      id: "l9",
+      tipo: "FINAL",
+      versao_regra: 2,
+      hash: "b".repeat(64),
+      gerada_em: "2026-11-17T13:00:00Z",
+      pendencias: 0,
+      publicada: true,
+    };
+    const comFinalPublicado = (vigente, extra = {}) =>
+      comCasamento({
+        obter_classificacao_do_edital: () => ({
+          ...structuredClone(EDITAL),
+          listas: [structuredClone(FINAL_PUBLICADO)],
+        }),
+        obter_publicacao_lista_aprovados: () => ({
+          ...structuredClone(VIGENTE),
+          vigente,
+        }),
+        ...extra,
+      });
+
+    it("publicado e fora da Lista de aprovados: destaque com o botão", async () => {
+      await montar(comFinalPublicado(null));
+      await abrirEdital();
+      const destaque = secao.querySelector(".classificacao-fora-da-lista");
+      expect(destaque.textContent).toContain(
+        "Publicado, mas ainda não está na Lista de aprovados.",
+      );
+      expect(
+        destaque.querySelector("[data-acao='publicar-aprovados']"),
+      ).not.toBeNull();
+      // O botão fica só no destaque, sem repetir na linha das ações.
+      expect(
+        secao.querySelectorAll("[data-acao='publicar-aprovados']"),
+      ).toHaveLength(1);
+      expect(secao.querySelector("[data-acao='publicar']")).toBeNull();
+    });
+
+    it("a lista vigente veio deste resultado final: sem botão, a linha diz", async () => {
+      await montar(
+        comFinalPublicado({
+          ...structuredClone(VIGENTE.vigente),
+          origem: "CLASSIFICACAO",
+          lista_classificacao_id: "l9",
+        }),
+      );
+      await abrirEdital();
+      expect(secao.querySelector(".classificacao-fora-da-lista")).toBeNull();
+      expect(
+        secao.querySelector("[data-acao='publicar-aprovados']"),
+      ).toBeNull();
+      expect(secao.querySelector("[data-geracao='l9']").textContent).toContain(
+        "· publicada · na Lista de aprovados",
+      );
+    });
+
+    it("o atalho da Lista de aprovados abre a lista pedida", async () => {
+      await montar(comFinalPublicado(null));
+      pedirFiltro("classificacao", {
+        editalId: "e83",
+        tipoDeLista: "PRELIMINAR",
+      });
+      await abrirEdital();
+      expect(
+        secao
+          .querySelector(".classificacao-tipos [data-valor='PRELIMINAR']")
+          .getAttribute("aria-checked"),
+      ).toBe("true");
     });
 
     it("leitor não vê o botão de publicar", async () => {

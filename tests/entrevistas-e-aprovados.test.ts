@@ -83,6 +83,10 @@ import {
   opcoesDeEdital,
 } from "../src/lib/aprovados/lista-aprovados-rules.ts";
 import { compararNumeroDoEdital } from "../src/lib/editais/numero-do-edital.ts";
+import {
+  passoDoResultadoFinal,
+  resultadosFinaisForaDaLista,
+} from "../src/lib/aprovados/resultado-final-na-lista.ts";
 import { type CandidatoDasRegrasDeAprovados } from "../src/lib/aprovados/tipos-das-regras-de-aprovados.ts";
 import { type CandidatoDaConvocacao } from "../src/lib/aprovados/tipos-da-lista-de-convocacao.ts";
 import { dadosDaAgenda } from "../src/lib/entrevistas/dados-da-agenda.ts";
@@ -2074,7 +2078,19 @@ bloco("lib/dados-da-publicacao-de-aprovados", () => {
       expect(situacaoDaPublicacao({ vigente: null })).toEqual({
         vigente: null,
         pode_substituir: true,
+        pode_publicar: true,
       });
+      // Quem pode publicar como lista e de que resultado final veio a vigente.
+      const lida = situacaoDaPublicacao({
+        pode_substituir: true,
+        pode_publicar: false,
+        vigente: { ...vigente, lista_classificacao_id: "f1" },
+      });
+      expect(lida.pode_publicar).toBe(false);
+      expect(lida.vigente?.lista_classificacao_id).toBe("f1");
+      expect(
+        situacaoDaPublicacao({ vigente }).vigente?.lista_classificacao_id,
+      ).toBeNull();
       // pode_substituir vem do banco (20261030090000); sem ele, quem barra é o banco.
       expect(
         situacaoDaPublicacao({ vigente: null, pode_substituir: false })
@@ -3426,6 +3442,182 @@ bloco("lib/publicacao-de-aprovados", () => {
           { origem: "XLSX" },
         ]),
       ).toBe("Listas: 1 publicada da Classificação · 2 manuais (planilha)");
+    });
+  });
+});
+
+bloco("lib/resultado-final-na-lista", () => {
+  const FINAL = { id: "f2", publicada: false };
+  const situacao = (
+    pode_publicar: boolean,
+    lista_classificacao_id: string | null = null,
+  ) => ({ pode_publicar, lista_classificacao_id });
+
+  describe("o passo do resultado final na Classificação", () => {
+    it("quem pode publicar como lista tem um botão só", () => {
+      expect(
+        passoDoResultadoFinal({
+          lista: FINAL,
+          podeEditar: true,
+          situacao: situacao(true),
+        }),
+      ).toMatchObject({ comoLista: true, marcar: false, foraDaLista: false });
+    });
+    it("quem só pode marcar continua com Publicar e a frase", () => {
+      expect(
+        passoDoResultadoFinal({
+          lista: FINAL,
+          podeEditar: true,
+          situacao: situacao(false),
+        }),
+      ).toMatchObject({ comoLista: false, marcar: true, soMarca: true });
+    });
+    it("publicado e fora da lista: destaque, com o botão para quem pode", () => {
+      const publicada = { ...FINAL, publicada: true };
+      expect(
+        passoDoResultadoFinal({
+          lista: publicada,
+          podeEditar: true,
+          situacao: situacao(true, "f1"),
+        }),
+      ).toMatchObject({ foraDaLista: true, comoLista: true, marcar: false });
+      expect(
+        passoDoResultadoFinal({
+          lista: publicada,
+          podeEditar: true,
+          situacao: situacao(false),
+        }),
+      ).toMatchObject({ foraDaLista: true, comoLista: false, marcar: false });
+      // Quem só lê vê o destaque, sem botão.
+      expect(
+        passoDoResultadoFinal({
+          lista: publicada,
+          podeEditar: false,
+          situacao: situacao(false),
+        }),
+      ).toMatchObject({ foraDaLista: true, comoLista: false, soMarca: false });
+    });
+    it("a lista vigente veio dele: nada a publicar como lista", () => {
+      expect(
+        passoDoResultadoFinal({
+          lista: { ...FINAL, publicada: true },
+          podeEditar: true,
+          situacao: situacao(true, "f2"),
+        }),
+      ).toMatchObject({ naLista: true, comoLista: false, marcar: false });
+      // Virou lista sem ficar marcado: sobra só o Publicar.
+      expect(
+        passoDoResultadoFinal({
+          lista: FINAL,
+          podeEditar: true,
+          situacao: situacao(true, "f2"),
+        }),
+      ).toMatchObject({ naLista: true, comoLista: false, marcar: true });
+    });
+    it("lendo a situação, o botão espera; sem ela, os dois de antes", () => {
+      expect(
+        passoDoResultadoFinal({
+          lista: FINAL,
+          podeEditar: true,
+          situacao: undefined,
+        }),
+      ).toMatchObject({ carregando: true, comoLista: true, marcar: false });
+      expect(
+        passoDoResultadoFinal({
+          lista: FINAL,
+          podeEditar: true,
+          situacao: null,
+        }),
+      ).toMatchObject({ comoLista: true, marcar: true, foraDaLista: false });
+      expect(
+        passoDoResultadoFinal({
+          lista: null,
+          podeEditar: true,
+          situacao: null,
+        }),
+      ).toMatchObject({ comoLista: false, marcar: false });
+    });
+  });
+
+  describe("os editais com resultado final fora da Lista de aprovados", () => {
+    const edital = (
+      id: string,
+      numero: string,
+      ultima: Record<string, unknown> | null,
+      extra: Record<string, unknown> = {},
+    ) => ({
+      id,
+      edital: numero,
+      unidade: "Unidade",
+      ativo: true,
+      treinamento: false,
+      ultima_lista: ultima,
+      ...extra,
+    });
+    const final = (publicada: boolean, em = "2026-11-17T12:00:00Z") => ({
+      tipo: "FINAL",
+      em,
+      publicada,
+    });
+
+    it("publicado sem lista, ou com a planilha, entra no aviso", () => {
+      expect(
+        resultadosFinaisForaDaLista(
+          [
+            edital("e114", "114/2026", final(true)),
+            edital("e93", "93/2026", final(true)),
+            edital("e10", "10/2026", final(true)),
+          ],
+          [{ edital_id: "e10", origem: "XLSX", lista_classificacao_id: null }],
+        ).map((e) => e.edital),
+      ).toEqual(["114/2026", "93/2026", "10/2026"]);
+    });
+    it("o que não é resultado final publicado fica fora", () => {
+      expect(
+        resultadosFinaisForaDaLista(
+          [
+            edital("a", "1/2026", final(false)),
+            edital("b", "2/2026", {
+              tipo: "PRELIMINAR",
+              em: "2026-11-24T12:00:00Z",
+              publicada: true,
+            }),
+            edital("c", "3/2026", null),
+            edital("d", "4/2026", final(true), { treinamento: true }),
+            edital("e", "5/2026", final(true), { ativo: false }),
+          ],
+          [],
+        ),
+      ).toEqual([]);
+    });
+    it("lista vinda da Classificação depois da geração veio dele; antes, não", () => {
+      const listas = [
+        {
+          edital_id: "e1",
+          origem: "CLASSIFICACAO",
+          lista_classificacao_id: "f1",
+          importado_em: "2026-11-18T09:00:00Z",
+        },
+        {
+          edital_id: "e2",
+          origem: "CLASSIFICACAO",
+          lista_classificacao_id: "f0",
+          importado_em: "2026-11-10T09:00:00Z",
+        },
+      ];
+      expect(
+        resultadosFinaisForaDaLista(
+          [
+            edital("e1", "1/2026", final(true)),
+            edital("e2", "2/2026", final(true)),
+          ],
+          listas,
+        ),
+      ).toEqual([{ id: "e2", edital: "2/2026", unidade: "Unidade" }]);
+    });
+    it("dados que não vieram não viram aviso", () => {
+      expect(resultadosFinaisForaDaLista(null, null)).toEqual([]);
+      expect(resultadosFinaisForaDaLista([null, "x", {}], [null])).toEqual([]);
     });
   });
 });

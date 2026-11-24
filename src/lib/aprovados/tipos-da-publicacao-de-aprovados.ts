@@ -30,12 +30,16 @@ export interface ListaVigenteDaPublicacao {
   lista_id: string;
   origem: string;
   importado_em: string | null;
+  /** A lista de classificação (resultado final) de que veio; null na planilha. */
+  lista_classificacao_id: string | null;
   candidatos: CandidatoAnterior[];
 }
 export interface SituacaoDaPublicacao {
   vigente: ListaVigenteDaPublicacao | null;
   /** Pode substituir a lista vigente (admin da Importação, ou o edital nunca teve lista). */
   pode_substituir: boolean;
+  /** Pode publicar como lista de aprovados: Classificação editor e pode substituir. */
+  pode_publicar: boolean;
 }
 export interface ResultadoDaPublicacao {
   candidatos: number;

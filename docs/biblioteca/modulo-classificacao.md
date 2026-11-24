@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-19
+atualizado: 2026-11-24
 ---
 
 # Módulo: Classificação
@@ -82,6 +82,20 @@ ou sem as RPCs no banco, vale a regra; outra falha (rede, banco) vira `erroDaCon
   (`TB_LISTA_APROVADO` com `TP_ORIGEM` = `CLASSIFICACAO`), levando status, matrícula, sub judice e
   anexos de quem já estava na lista. Mostra o que muda em relação à lista vigente (entram, saem,
   mudam de posição, preservados, sub judice mantidos) e a revisão de quem não casou.
+- **Um passo só no resultado final** (24/11/2026; o 93/2026 foi marcado como publicado e não
+  apareceu na Lista de aprovados): "Marcar como publicada" (`publicar_lista_classificacao`) só
+  registra quem e quando; não cria lista. No FINAL, a tela lê `obter_publicacao_lista_aprovados`
+  (`pode_publicar` e `vigente.lista_classificacao_id`) e decide pelo `passoDoResultadoFinal`
+  (`src/lib/aprovados/resultado-final-na-lista.ts`): quem pode publicar como lista vê só esse
+  botão, e ao confirmar o resultado final também fica marcado (`publicarComoListaDeAprovados` com
+  o `registro`; se a marcação falhar, a lista já está publicada e o aviso manda usar "Marcar como
+  publicada"); quem só edita a Classificação (sem poder substituir a lista vigente) vê "Marcar como
+  publicada" e a frase de quem publica a lista; FINAL publicado e fora da lista vigente ganha o
+  destaque "Publicado, mas ainda não está na Lista de aprovados." (com o botão para quem pode); a
+  lista vigente vinda dele some com o botão e a linha da geração diz "· na Lista de aprovados". Sem
+  a leitura (falha), ficam os dois botões de antes e o banco confere. As outras listas seguem só com
+  "Marcar como publicada". O pedido de filtro `tipoDeLista` (`pedirFiltro`) abre as Listas nesse
+  tipo: é o atalho do aviso da Lista de aprovados.
 - Casamento das pessoas, resumo e candidatos do retrato em `src/lib/aprovados/publicacao-de-aprovados.ts`; o
   banco confere os vínculos e grava `TH_PUBLICACAO_APROVADO`
   (`20261005160000_lista_de_aprovados_da_classificacao.sql`). A Lista de aprovados mostra a origem
