@@ -29,10 +29,11 @@ import { rpcsDaAuditoria } from "./fixtures/auditoria-visual/dados.js";
   (scripts/resumir-auditoria-visual.mjs). Só roda com AUDITORIA=1: são ~450
   aberturas de página e o resultado é para ler, não para passar ou falhar.
 
-  Os blocos do fim são travas, ligadas no CI pelos lotes 3 (tabelas) e 4
-  (alvos de toque) do plano de correção: nenhuma tela passa de 375 nem de
-  320px, nenhum alvo de toque tem menos de 44 × 44px, e nenhuma palavra curta
-  da tabela quebra no meio a 1280px.
+  Os blocos do fim são travas, ligadas no CI pelos lotes 2 a 5 do plano de
+  correção: nenhuma tela passa de 375 nem de 320px, nenhum alvo de toque tem
+  menos de 44 × 44px, nenhuma palavra curta da tabela quebra no meio a 1280px,
+  e, a 1280px, nenhuma peça feita à mão, fonte, peso ou cor fora da norma nem
+  indicador sozinho na última linha.
   Relatório e plano: docs/_arquivo/auditoria-responsividade-e-harmonia-2026-11-23.md.
 */
 
@@ -484,5 +485,64 @@ test.describe("grade da página e topo da tela", () => {
         largas.length,
         `largas: ${largas.join(" | ")}`,
       ).toBeLessThanOrEqual(1);
+    });
+});
+
+/*
+  As travas do lote 5 do plano (cartões, indicadores, gavetas e modais), a
+  1280px: na tela e nas camadas, nenhum componente feito à mão onde existe o
+  de src/ui/, nenhuma fonte ou peso fora da escala, nenhuma cor fora de token
+  sem marcação (a prévia da cor configurada leva `data-cor-configurada`) e
+  nenhuma grade de indicadores com um item sozinho na última linha.
+*/
+function achadosDoLote5({ achados }) {
+  const naTela = (a) => a.regiao !== "moldura";
+  const descrever = (lista) =>
+    lista.filter(naTela).map((a) => `${a.el} ${a.valor ?? a.tipo ?? ""}`);
+  return {
+    feitoAMao: descrever(achados.feitoAMao),
+    fonte: descrever(achados.fonte),
+    peso: descrever(achados.peso),
+    cor: descrever(
+      achados.cor.filter((a) => !a.derivada && !a.barra && !a.configurada),
+    ),
+    indicadorSozinho: descrever(achados.indicadorSozinho),
+  };
+}
+
+test.describe("componentes de src/ui/ e indicadores a 1280px", () => {
+  test.beforeEach(async ({ request }) => {
+    test.skip(
+      !(await buildSimulado(request)),
+      `Compile com VITE_SUPABASE_URL=${SUPABASE} para rodar este teste.`,
+    );
+  });
+
+  const casos = [
+    ...TELAS.map((t) => ({ ...t, estado: "cheia" })),
+    ...CAMADAS.filter((c) => !c.larguras || c.larguras.includes(1280)),
+  ];
+  for (const caso of casos)
+    test(`${caso.tela} ${caso.estado}: sem peça feita à mão nem indicador sozinho`, async ({
+      browser,
+    }) => {
+      const aberta = await abrir(browser, {
+        caminho: caso.caminho,
+        estado: "cheia",
+        largura: 1280,
+        tema: "claro",
+      });
+      if (caso.abrir) await caso.abrir(aberta.page);
+      await aberta.page.mouse.move(1, 1);
+      await aberta.page.waitForTimeout(300);
+      const medicao = await aberta.page.evaluate(medirTela, { toque: false });
+      await aberta.contexto.close();
+      expect(achadosDoLote5(medicao)).toEqual({
+        feitoAMao: [],
+        fonte: [],
+        peso: [],
+        cor: [],
+        indicadorSozinho: [],
+      });
     });
 });

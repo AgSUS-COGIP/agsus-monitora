@@ -59,53 +59,21 @@
 }
 
 /*
-  A legenda dos tipos é o filtro de tipo, nas três vistas. Mesmo desenho dos
-  itens de "Fases" da Visão geral (visao-geral.css): botão sem fundo, contorno
-  quando marcado, fundo ao passar o mouse. Desligado: esmaecido e riscado, para
-  o estado não depender só do contorno.
+  A legenda dos tipos é o filtro de tipo, nas três vistas: chips de src/ui/
+  (`ui-chip`, com aria-pressed), o mesmo das fases da Visão geral. Desligado:
+  esmaecido e riscado, para o estado não depender só do contorno.
 */
 .cal-legenda {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--space-2);
   padding-bottom: var(--space-3);
   border-bottom: 1px solid var(--border-subtle);
-}
-.cal-legenda-item {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1-5);
-  min-height: 32px;
-  padding: 0 var(--space-2);
-  border: 1px solid transparent;
-  border-radius: var(--radius-md);
-  background: transparent;
-  color: var(--text-secondary);
-  font: inherit;
-  font-size: var(--text-caption);
-  cursor: pointer;
-}
-.cal-legenda-item:hover {
-  background: var(--surface-hover);
-}
-.cal-legenda-item[aria-pressed="true"] {
-  border-color: var(--focus-ring);
-  color: var(--text-primary);
 }
 .cal-legenda-item[aria-pressed="false"] {
   text-decoration: line-through;
   opacity: 0.6;
-}
-.cal-legenda-item:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-/* No toque, o item da legenda (o filtro de tipo) tem o alvo de 44px. */
-@media (pointer: coarse) {
-  .cal-legenda-item {
-    min-height: 44px;
-  }
 }
 .cal-legenda-item i {
   width: 10px;
@@ -141,7 +109,10 @@
   min-height: 120px;
 }
 
-/* A célula é um botão: o dia inteiro é a área de clique que abre o popup. */
+/*
+  A célula é um card clicável de src/ui/ (`ui-card ui-card-clicavel`): o dia
+  inteiro é a área de clique que abre o popup. Aqui, só o layout do dia.
+*/
 .cal-celula {
   display: flex;
   flex-direction: column;
@@ -150,32 +121,12 @@
   min-width: 0;
   min-height: 120px;
   padding: var(--space-1-5) var(--space-2);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  background: var(--surface-card);
-  color: var(--text-primary);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition:
-    border-color var(--motion-fast) var(--ease-standard),
-    background var(--motion-fast) var(--ease-standard);
-}
-.cal-celula:hover {
-  border-color: var(--border-control);
-  background: var(--surface-hover);
 }
 .cal-celula.vazio,
 .cal-celula.vazio:hover {
   border-color: var(--border-subtle);
   background: var(--surface-card);
   cursor: default;
-}
-.cal-celula.fora-do-mes {
-  background: var(--surface-raised);
-}
-.cal-celula.fora-do-mes .cal-numero {
-  color: var(--text-secondary);
 }
 .cal-celula.hoje {
   border-color: var(--brand-primary);
@@ -186,10 +137,6 @@
   background: var(--state-info-soft);
   outline: 1px solid var(--brand-primary);
   outline-offset: -2px;
-}
-.cal-celula:focus-visible {
-  outline: 2px solid var(--brand-primary);
-  outline-offset: 1px;
 }
 /* Skeleton: a célula sem número nem contagem, que não se clica. */
 .cal-celula-esqueleto {

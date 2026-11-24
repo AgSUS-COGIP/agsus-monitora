@@ -217,40 +217,11 @@
   max-height: 360px;
   overflow-y: auto;
 }
+/* As fases são chips de src/ui/ (`ui-chip`, aria-pressed quando filtram). */
 .visao-geral-fases-chips {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
-}
-.visao-geral-fase-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: 36px;
-  padding: 0 var(--space-3);
-  border: 1px solid transparent;
-  border-radius: var(--radius-pill);
-  background: var(--color-bg-selected);
-  color: var(--color-text-brand);
-  font: inherit;
-  font-size: var(--text-body-sm);
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-}
-.visao-geral-fase-chip:hover {
-  background: var(--color-action-secondary-hover);
-}
-.visao-geral-fase-chip[aria-pressed="true"] {
-  border-color: var(--focus-ring);
-}
-.visao-geral-fase-chip:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
-}
-@media (pointer: coarse) {
-  .visao-geral-fase-chip {
-    min-height: 44px;
-  }
 }
 .visao-geral-encerrados {
   margin: 0;

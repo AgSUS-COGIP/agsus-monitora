@@ -40,6 +40,7 @@ export function medirTela({ toque, limiteDeOrigens = 60 }) {
     espaco: [],
     cor: [],
     feitoAMao: [],
+    indicadorSozinho: [],
   };
 
   const assinatura = (el) => {
@@ -368,6 +369,8 @@ export function medirTela({ toque, limiteDeOrigens = 60 }) {
   /* A cor da barra lateral vem de Configurações → Aparência (exceção aceita). */
   const corDaBarra = (el) =>
     el.closest("#sidebar, .sidebar, aside.nav, nav#nav") !== null;
+  /* A prévia que mostra a cor que a pessoa configura (data-cor-configurada). */
+  const corConfigurada = (el) => el.closest("[data-cor-configurada]") !== null;
   const conferirCor = (el, prop, valor) => {
     if (!valor || transparente(valor) || coresDeToken.has(valor)) return;
     achados.cor.push({
@@ -377,6 +380,7 @@ export function medirTela({ toque, limiteDeOrigens = 60 }) {
       valor,
       derivada: perto(valor),
       barra: corDaBarra(el),
+      configurada: corConfigurada(el),
     });
   };
   for (const el of todos) {
@@ -477,6 +481,33 @@ export function medirTela({ toque, limiteDeOrigens = 60 }) {
         el: assinatura(el),
         regiao: regiao(el),
         caminho: caminho(el),
+      });
+  }
+
+  /*
+    8. Indicador sozinho na última linha da grade de Kpi (8 itens em 7 + 1):
+    um item só, que deixa buraco ao lado. O que ocupa a linha inteira (o
+    último ímpar em duas colunas) não conta.
+  */
+  for (const grade of document.querySelectorAll(".ui-kpis")) {
+    const itens = [...grade.children].filter((el) => caixa(el).width > 0);
+    const linhas = new Map();
+    for (const el of itens) {
+      const topo = Math.round(caixa(el).top);
+      linhas.set(topo, [...(linhas.get(topo) || []), el]);
+    }
+    const porLinha = [...linhas.values()];
+    const ultima = porLinha.at(-1);
+    if (
+      porLinha.length > 1 &&
+      ultima.length === 1 &&
+      caixa(ultima[0]).width < caixa(grade).width * 0.9
+    )
+      achados.indicadorSozinho.push({
+        el: assinatura(grade),
+        regiao: regiao(grade),
+        caminho: caminho(grade),
+        valor: porLinha.map((linha) => linha.length).join(" + "),
       });
   }
 

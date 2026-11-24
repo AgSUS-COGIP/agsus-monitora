@@ -40,15 +40,11 @@
   align-items: start;
 }
 
+/* Cada bloco é um `ui-card`; aqui, só a coluna do conteúdo. */
 .pagina-do-edital-bloco {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  min-width: 0;
-  padding: var(--space-4);
-  background: var(--color-bg-raised);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-lg);
 }
 
 .pagina-do-edital-bloco h3 {

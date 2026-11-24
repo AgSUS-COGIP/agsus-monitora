@@ -249,7 +249,7 @@ export function ImportarAnexos({
     <section
       id="anexosDoEdital"
       data-tour="editais-anexos"
-      className="cronograma-copy-box anexos-box ui-campo-largo"
+      className="ui-secao anexos-box ui-campo-largo"
     >
       <strong className="cronograma-copy-heading">Anexos do edital</strong>
       <div className="cronograma-copy-controls">

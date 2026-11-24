@@ -63,7 +63,14 @@ import {
   assinarDadosDoMonitoramento,
   obterDadosDoMonitoramento,
 } from "../../componentes/dados-do-monitoramento.ts";
-import { Aviso, Campo, FecharModal, Modal } from "../../ui/index.ts";
+import {
+  Aviso,
+  Campo,
+  FecharModal,
+  GradeDeKv,
+  Kv,
+  Modal,
+} from "../../ui/index.ts";
 import { EditorDeCronograma } from "./editor-de-cronograma.tsx";
 import { ResponsaveisDoEdital } from "./responsaveis-do-edital.tsx";
 import { CriticoDoEdital } from "./critico-do-edital.tsx";
@@ -892,19 +899,18 @@ export function ModalDoEdital({
           </div>
 
           <div className="subsection">Indicadores automáticos</div>
-          <div className="readonly-metrics ui-campo-largo">
+          <GradeDeKv className="editais-indicadores ui-campo-largo">
             {INDICADORES.map(([chave, rotulo, coluna]) => (
-              <div key={chave} className="metric-readonly">
-                <span>{rotulo}</span>
-                <b id={chave}>{numeroDoFunil(linha?.[coluna])}</b>
-              </div>
+              <Kv key={chave} rotulo={rotulo}>
+                <span id={chave}>{numeroDoFunil(linha?.[coluna])}</span>
+              </Kv>
             ))}
             {fonteDoFunil ? (
               <small id="mAutoFonte" className="ui-campo-largo">
                 {fonteDoFunil}
               </small>
             ) : null}
-          </div>
+          </GradeDeKv>
 
           <ImportarAnexos
             estado={estado}

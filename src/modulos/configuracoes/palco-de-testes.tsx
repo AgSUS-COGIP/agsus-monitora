@@ -179,7 +179,7 @@ export function PalcoDeTestes({
     });
   return (
     <section
-      className="comemoracoes-palco"
+      className="ui-card comemoracoes-palco"
       aria-labelledby="comemoracoesPalcoTitulo"
       data-tour="config-comemoracoes-palco"
     >
@@ -201,11 +201,7 @@ export function PalcoDeTestes({
             role="radio"
             aria-checked={efeito === nome}
             data-efeito={nome}
-            className={
-              efeito === nome
-                ? "comemoracoes-efeito is-ativo"
-                : "comemoracoes-efeito"
-            }
+            className="ui-card ui-card-clicavel comemoracoes-efeito"
             onClick={() => setEfeito(nome)}
           >
             <Icone nome={ICONES_DOS_EFEITOS[nome]} tamanho={22} />

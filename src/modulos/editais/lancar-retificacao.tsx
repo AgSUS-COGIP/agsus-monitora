@@ -189,7 +189,7 @@ export function LancarRetificacao({
   return (
     <section
       id="retificacaoPdf"
-      className="cronograma-copy-box retificacao-box"
+      className="ui-secao retificacao-box"
       aria-labelledby="retificacaoPdfTitulo"
     >
       <div className="cronograma-bulk-head">

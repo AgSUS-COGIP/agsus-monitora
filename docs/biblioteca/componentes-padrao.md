@@ -1,7 +1,7 @@
 ---
 tipo: referencia
 area: front
-atualizado: 2026-11-23
+atualizado: 2026-11-24
 ---
 
 # Componentes padrão (`src/ui/`)
@@ -28,7 +28,7 @@ API completa (uma linha por componente) está em [docs/arquitetura-react.md](../
 | Grupo            | Componentes                                                                                                                                                                                                       |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Topo e filtros   | `TopoDoPainel`, `MaisAcoes`, `PainelDeFiltros`, `ChipsDeFiltro`/`ChipDeFiltro`, `MaisOpcoes`, `LinhaDoRecorte`/`MarcasDoRecorte`                                                                                  |
-| Indicadores      | `Kpi` (card de 78px; com `aoClicar` vira filtro), `GradeDeKpis`, `FaixaDeSituacao`, `ListaDePendencias`                                                                                                           |
+| Indicadores      | `Kpi` (card de 78px; com `aoClicar` vira filtro), `GradeDeKpis` (sem indicador sozinho na última linha), `FaixaDeSituacao`, `ListaDePendencias`                                                                   |
 | Gráficos         | `CardDeGrafico`, `Grafico` (Chart.js criado uma vez), `paletaDosGraficos` (cores dos tokens)                                                                                                                      |
 | Listas e tabelas | `TabelaInfinita` (50 por vez, avisa `agsus:content-updated`), `CardDaLista` + `TabelaDaLista`, `BarraDaLista`, `usarCargaContinua` + `MaisDaCarga`                                                                |
 | Camadas          | `Gaveta`, `TopoDaGaveta`, `Modal` (portal, Esc, foco preso), `Popover`, `MenuDeAcoes`, `usarNavegacaoDaLista` (Anterior/Próximo da ficha)                                                                         |
@@ -127,7 +127,18 @@ disso; só o CSS troca, os ids continuam). No `TopoDoPainel`, a principal entra 
 (Novo edital, Novo recurso, Sub judice), sempre por último; sem ela, a principal é o Atualizar.
 O `MaisOpcoes` é outra peça: os filtros adicionais, em qualquer largura.
 
-Peças de layout só em CSS: `.ui-tela`, `.ui-card`, `.ui-titulo`, `.ui-linha-de-cards`,
+Grade de indicadores sem órfão: a `.ui-kpis` conta os filhos (`:has`, de 4 a 10) e põe todos numa
+linha quando cabem com 140px cada; senão, a metade por linha (8 viram 4 + 4, 7 viram 4 + 3); se nem
+a metade cabe, 2 por linha. Só CSS, em `ui.css`; tela que fixa as próprias colunas continua
+vencendo. A auditoria visual mede ("Indicador sozinho na última linha") e o CI trava a 1280px.
+
+Chip que liga e desliga um filtro é o `.ui-chip` com `aria-pressed` (contorno quando ligado): as
+fases da Visão geral e os tipos do Cronograma (este, desligado, fica riscado). Card que é um botão
+inteiro é `.ui-card.ui-card-clicavel` (DS 11.6: hover, foco em volta, escolhido por
+`aria-checked`/`aria-pressed` com a borda da marca): os dias do Cronograma e os efeitos de
+Comemorações.
+
+Peças de layout só em CSS: `.ui-tela`, `.ui-card`, `.ui-card-clicavel`, `.ui-titulo`, `.ui-linha-de-cards`,
 `.ui-pilha`, `.ui-grade-de-campos`, `.ui-acoes`, `.ui-barra-de-salvar`, `.ui-gaveta-*`,
 `.ui-texto-principal`/`.ui-texto-secundario`, `.ui-secao-texto`/`.ui-secao-vazio`, `.ui-esqueleto`,
 `.btn.small`/`.btn.danger` dentro de `.ui-tela`/`.ui-gaveta`, `.btn.ghost` e `.btn.perigo`.
