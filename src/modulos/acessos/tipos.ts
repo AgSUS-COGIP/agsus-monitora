@@ -75,6 +75,17 @@ export type PedidoPendente = {
   cargo_outro?: string | null;
   reativacao?: boolean;
   grupo_anterior?: string | null;
+  /** ACESSO (entrada) ou, do pedido de mais acesso, MODULO, AREA ou GRUPO (20261124210000). */
+  tipo?: string | null;
+  recurso?: string | null;
+  nivel?: string | null;
+  grupo_solicitado?: string | null;
+  grupo_solicitado_nome?: string | null;
+  /** O que a pessoa tem hoje (pedido de mais acesso). */
+  grupo_atual?: string | null;
+  grupo_atual_nome?: string | null;
+  nivel_atual?: string | null;
+  areas_atuais?: string[] | null;
 };
 
 /** Linha de listar_unidades_por_area. */

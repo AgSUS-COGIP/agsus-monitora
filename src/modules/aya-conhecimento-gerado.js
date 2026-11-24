@@ -6476,10 +6476,32 @@ export const VERBETES_AYA = Object.freeze([
       "quais areas eu vejo",
     ],
     resposta:
-      'Clique na sua foto, no canto de cima, e em "Meus acessos". A gaveta mostra o seu grupo, as suas áreas, a sua coordenação (quando houver) e, em cada módulo, o seu nível: Leitor, Editor, Administrador ou Sem acesso. É o nível que vale para você, com as exceções individuais já somadas ao grupo. É só leitura: quem muda o acesso é um administrador (ou o coordenador da sua coordenação) em Configurações › Acessos, nunca a própria pessoa. O acesso é lido quando você entra: se acabou de mudar, recarregue a página para ver o novo.',
+      'Clique na sua foto, no canto de cima, e em "Meus acessos". A gaveta mostra o seu grupo, as suas áreas, a sua coordenação (quando houver) e, em cada módulo, o seu nível: Leitor, Editor, Administrador ou Sem acesso. É o nível que vale para você, com as exceções individuais já somadas ao grupo. A gaveta só mostra: para ter mais, use "Pedir mais acesso" (logo abaixo, ou no mesmo menu), que vai para quem gerencia acessos; ninguém muda o próprio acesso. O acesso é lido quando você entra: se acabou de mudar, recarregue a página para ver o novo.',
     fato: "",
     fonte:
       "src/lib/acessos/meus-acessos.ts; src/app/casca/meus-acessos.tsx; src/app/casca/topo.tsx",
+  },
+  {
+    arquivo: "regras-dos-acessos.md",
+    titulo: "Pedir mais acesso",
+    perguntas: [
+      "como peco mais acesso",
+      "ampliar meu acesso",
+      "aumentar meu acesso",
+      "quero acesso a outra aba",
+      "quero ser editor de um modulo",
+      "outro modulo com mais acesso",
+      "pedir outra area",
+      "pedir outro grupo",
+      "como mudo meu perfil",
+      "como mudar de grupo",
+      "quero outro nivel",
+    ],
+    resposta:
+      'Clique na sua foto, no canto de cima, e em "Pedir mais acesso" (ou, em "Meus acessos", no botão do fim da gaveta). Escolha o que pedir: um módulo com um nível acima do seu (Leitor, Editor ou Administrador, conforme o módulo aceita), outra área (quem está numa coordenação não pede área: ela vem da coordenação) ou outro grupo; e escreva a justificativa (20 a 2.000 caracteres, com pelo menos 3 palavras). Fica um pedido por vez: enquanto ele aguarda, a gaveta mostra "Aguardando aprovação" e você pode cancelar. Quando alguém decide, a gaveta mostra "Aprovado" ou "Recusado" com o motivo. Aprovado, recarregue a página para o acesso novo valer. O administrador global não pede, porque já tem tudo. Nome, e-mail e foto vêm da conta Google e não se mudam por aqui.',
+    fato: "",
+    fonte:
+      "src/lib/acessos/pedido-de-mais-acesso.ts; src/app/casca/meus-acessos.tsx; supabase/migrations/20261124210000_ampliar_pedido_de_acesso.sql",
   },
   {
     arquivo: "regras-dos-acessos.md",
@@ -6510,10 +6532,10 @@ export const VERBETES_AYA = Object.freeze([
       "quem aprova os pedidos",
     ],
     resposta:
-      'Os pedidos ficam em Acessos › Usuários › Pendentes, com área, cargo, unidade ou lotação e justificativa. O administrador global vê todos; o coordenador vê os da coordenação dele e aprova nela, com grupo dentro do teto. O cargo pedido sugere o grupo (Avaliador da análise curricular → Avaliador; Gestor de processo seletivo → Gestor; Contratação → Contratador; Coordenação → Coordenador; Jurídico → Jurídico; os demais → Usuário), e a área do pedido vem marcada; quem aprova pode trocar os dois. Recusar pede um motivo da lista (ou "Outro", descrito) e a pessoa vê esse motivo quando entrar de novo, podendo corrigir e pedir outra vez.',
+      'Os pedidos ficam em Acessos › Usuários › Pendentes, com área, cargo, unidade ou lotação e justificativa. O administrador global vê todos; o coordenador vê os da coordenação dele e aprova nela, com grupo dentro do teto. O cargo pedido sugere o grupo (Avaliador da análise curricular → Avaliador; Gestor de processo seletivo → Gestor; Contratação → Contratador; Coordenação → Coordenador; Jurídico → Jurídico; os demais → Usuário), e a área do pedido vem marcada; quem aprova pode trocar os dois. Recusar pede um motivo da lista (ou "Outro", descrito) e a pessoa vê esse motivo quando entrar de novo, podendo corrigir e pedir outra vez. O pedido de mais acesso (de quem já tem conta, com o selo "Mais acesso") mostra o que a pessoa pediu ao lado do que tem hoje; aprovar concede exatamente aquilo (o nível no módulo, a área ou o grupo), sem escolher grupo nem áreas, e fica registrado quem aprovou. O coordenador aprova os da coordenação dele dentro do próprio teto (nunca Gestão de acessos nem área); ninguém vê nem aprova o próprio pedido.',
     fato: "",
     fonte:
-      "src/modulos/acessos/solicitacoes.tsx; src/lib/acessos/solicitacao-de-acesso.ts",
+      "src/modulos/acessos/solicitacoes.tsx; src/lib/acessos/solicitacao-de-acesso.ts; src/lib/acessos/pedido-de-mais-acesso.ts",
     abrir: "config:acessos",
   },
   {

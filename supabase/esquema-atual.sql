@@ -1327,6 +1327,135 @@ $_$;
 COMMENT ON FUNCTION private."FC_APLICAR_FONTES_DO_PAINEL"(p_area text, p_relatorio text, p_linhas jsonb) IS 'Troca, nas linhas de um relatório dos Painéis, o valor de cada coluna com fonte escolhida na área (TB_FONTE_COLUNA_PAINEL) pelo da visão do schema painel, juntada pela chave do grão. Só usa nomes achados no catálogo (FC_OPCOES_DE_FONTE_DO_PAINEL); fonte indisponível ou chave repetida esvaziam as células e avisam. Devolve { linhas, fontes, avisos }.';
 
 --
+-- Name: FC_APROVAR_AMPLIACAO_ACESSO(uuid, text); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_APROVAR_AMPLIACAO_ACESSO"(p_solicitacao_id uuid, p_observacao_admin text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+  v_gestor text := private."FC_EXIGIR_GESTOR_DE_ACESSOS"();
+  v_uid uuid := (select auth.uid());
+  v_req public."TB_SOLICITACAO_ACESSO";
+  v_alvo public."TB_PERFIL_USUARIO";
+  v_observacao text := nullif(btrim(coalesce(p_observacao_admin, '')), '');
+  v_motivo text;
+  v_anterior text;
+  v_concedido jsonb;
+begin
+  select * into v_req from public."TB_SOLICITACAO_ACESSO" where id = p_solicitacao_id for update;
+  if v_req.id is null then raise exception 'Solicitação de acesso não encontrada'; end if;
+  if v_req.status <> 'pendente' then raise exception 'Solicitação já avaliada (status atual: %)', v_req.status; end if;
+  if v_req."TP_SOLICITACAO" not in ('MODULO', 'AREA', 'GRUPO') then
+    raise exception 'Não é um pedido de mais acesso';
+  end if;
+  if v_req.user_id = v_uid or lower(v_req.email) = lower(coalesce((select auth.jwt() ->> 'email'), '')) then
+    raise exception 'Outra pessoa deve aprovar o seu pedido' using errcode = '42501';
+  end if;
+
+  select * into v_alvo from public."TB_PERFIL_USUARIO" u
+   where u.ativo and ((v_req.user_id is not null and u.user_id = v_req.user_id) or lower(u.email) = lower(v_req.email))
+   order by case when u.user_id = v_req.user_id then 0 else 1 end, u.updated_at desc
+   limit 1
+   for update;
+  if v_alvo.id is null then
+    raise exception 'A conta desta pessoa não está ativa: recuse o pedido' using errcode = '22023';
+  end if;
+  -- As regras de quem muda quem (a própria conta, a coordenação, outro administrador).
+  perform private."FC_EXIGIR_GESTAO_DO_USUARIO"(v_alvo);
+  if v_gestor = 'coordenador' and v_req."CO_COORDENACAO" is distinct from private."FC_COORDENACAO_USUARIO"() then
+    raise exception 'Solicitação de outra coordenação' using errcode = '42501';
+  end if;
+  if exists (select 1 from public."TB_GRUPO_ACESSO" a where a."CO_GRUPO_ACESSO" = v_alvo.perfil and a."ST_ADMIN_GLOBAL") then
+    raise exception 'O administrador global já tem acesso a tudo: recuse o pedido' using errcode = '22023';
+  end if;
+  v_motivo := coalesce(v_observacao, 'Pedido de mais acesso aprovado');
+
+  if v_req."TP_SOLICITACAO" = 'MODULO' then
+    if v_gestor = 'coordenador' then
+      if v_req."NO_RECURSO" = 'acessos' then
+        raise exception 'Só o administrador concede Acessos' using errcode = '42501';
+      end if;
+      if private."FC_RANK_NIVEL"(v_req."TP_NIVEL") > private."FC_RANK_NIVEL"(private."FC_TETO_DO_GESTOR"(v_req."NO_RECURSO")) then
+        raise exception 'Você não pode conceder mais do que o seu próprio nível em %', v_req."NO_RECURSO" using errcode = '42501';
+      end if;
+    end if;
+    v_anterior := private."FC_NIVEL_EFETIVO"(v_alvo.id, v_alvo.perfil, v_req."NO_RECURSO");
+    if private."FC_RANK_NIVEL"(v_anterior) >= private."FC_RANK_NIVEL"(v_req."TP_NIVEL") then
+      raise exception 'A pessoa já tem esse nível (ou mais): recuse o pedido' using errcode = '22023';
+    end if;
+    insert into public."TB_PERMISSAO_RECURSO" (perfil_usuario_id, recurso, nivel, updated_by)
+    values (v_alvo.id, v_req."NO_RECURSO", v_req."TP_NIVEL", v_uid)
+    on conflict (perfil_usuario_id, recurso) do update
+      set nivel = excluded.nivel, revisao = "TB_PERMISSAO_RECURSO".revisao + 1, updated_at = now(), updated_by = excluded.updated_by;
+    insert into public."TH_PERMISSAO_RECURSO"(perfil_usuario_id, recurso, nivel_anterior, nivel_novo, alterado_por, motivo)
+    values (v_alvo.id, v_req."NO_RECURSO", v_anterior, v_req."TP_NIVEL", v_uid, v_motivo);
+    v_concedido := jsonb_build_object('recurso', v_req."NO_RECURSO", 'nivel', v_req."TP_NIVEL");
+
+  elsif v_req."TP_SOLICITACAO" = 'AREA' then
+    if v_gestor <> 'admin' then
+      raise exception 'Só o administrador muda as áreas de alguém' using errcode = '42501';
+    end if;
+    if v_alvo."CO_COORDENACAO" is not null then
+      raise exception 'A área desta pessoa vem da coordenação: recuse o pedido ou mude a coordenação' using errcode = '22023';
+    end if;
+    if v_req."CO_AREA" = any (coalesce(private."FC_AREAS_DO_PERFIL"(v_alvo.id), '{}')) then
+      raise exception 'A pessoa já tem esta área: recuse o pedido' using errcode = '22023';
+    end if;
+    insert into public."RL_PERFIL_USUARIO_AREA"("CO_PERFIL_USUARIO", "CO_AREA") values (v_alvo.id, v_req."CO_AREA");
+    insert into public."TH_PERMISSAO_RECURSO"(perfil_usuario_id, recurso, nivel_anterior, nivel_novo, alterado_por, motivo)
+    values (v_alvo.id, 'area:' || v_req."CO_AREA", 'sem_acesso', 'leitor', v_uid, v_motivo);
+    v_concedido := jsonb_build_object('area', v_req."CO_AREA");
+
+  else
+    if not exists (select 1 from public."TB_GRUPO_ACESSO" a where a."CO_GRUPO_ACESSO" = v_req.perfil_solicitado and not a."ST_ADMIN_GLOBAL") then
+      raise exception 'Grupo inválido: %', v_req.perfil_solicitado;
+    end if;
+    if not private."FC_GRUPO_CABE_NO_TETO"(v_req.perfil_solicitado) then
+      raise exception 'O grupo % dá mais acesso do que você tem', v_req.perfil_solicitado using errcode = '42501';
+    end if;
+    if v_alvo.perfil = v_req.perfil_solicitado then
+      raise exception 'A pessoa já está neste grupo: recuse o pedido' using errcode = '22023';
+    end if;
+    v_anterior := v_alvo.perfil;
+    update public."TB_PERFIL_USUARIO"
+       set perfil = v_req.perfil_solicitado, p_config = false, p_admin = false, updated_at = now()
+     where id = v_alvo.id;
+    insert into public."TH_PERMISSAO_RECURSO"(perfil_usuario_id, recurso, nivel_anterior, nivel_novo, alterado_por, motivo)
+    values (v_alvo.id, '#grupo', v_anterior, v_req.perfil_solicitado, v_uid, v_motivo);
+    v_concedido := jsonb_build_object('grupo', v_req.perfil_solicitado);
+  end if;
+
+  -- As travas da matriz (salvar_matriz_acessos): ninguém fica sem área nem gerencia acessos sem coordenação.
+  if cardinality(coalesce(private."FC_AREAS_DO_PERFIL"(v_alvo.id), '{}')) = 0 then
+    raise exception 'A pessoa ficaria sem nenhuma área e não veria nada no sistema.' using errcode = '23514';
+  end if;
+  if v_alvo."CO_COORDENACAO" is null
+     and exists (select 1 from public."TB_PERFIL_USUARIO" u
+                   join public."TB_GRUPO_ACESSO" g on g."CO_GRUPO_ACESSO" = u.perfil
+                  where u.id = v_alvo.id and not g."ST_ADMIN_GLOBAL"
+                    and private."FC_RANK_NIVEL"(private."FC_NIVEL_EFETIVO"(u.id, u.perfil, 'acessos')) >= private."FC_RANK_NIVEL"('editor')) then
+    raise exception 'A pessoa gerenciaria acessos sem coordenação. Escolha a coordenação dela antes, em Usuários.' using errcode = '23514';
+  end if;
+
+  update public."TB_SOLICITACAO_ACESSO"
+     set status = 'aprovado', avaliado_por = v_uid, avaliado_em = now(),
+         observacao_admin = v_observacao, updated_at = now()
+   where id = v_req.id;
+
+  return jsonb_build_object('ok', true, 'perfil_usuario_id', v_alvo.id, 'tipo', v_req."TP_SOLICITACAO",
+                            'concedido', v_concedido);
+end;
+$$;
+
+--
+-- Name: FUNCTION "FC_APROVAR_AMPLIACAO_ACESSO"(p_solicitacao_id uuid, p_observacao_admin text); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_APROVAR_AMPLIACAO_ACESSO"(p_solicitacao_id uuid, p_observacao_admin text) IS 'Aprova o pedido de mais acesso (chamada por aprovar_solicitacao_acesso): concede exatamente o pedido (nível do módulo como permissão individual, a área ou o grupo), nas regras e no teto de salvar_matriz_acessos; ninguém aprova o próprio. Registra quem aprovou no pedido e em TH_PERMISSAO_RECURSO.';
+
+--
 -- Name: FC_AREAS_DO_PERFIL(uuid); Type: FUNCTION; Schema: private; Owner: -
 --
 
@@ -14732,6 +14861,114 @@ $_$;
 COMMENT ON FUNCTION private."FC_REFERENCIA_DO_CASO"(p_modulo text, p_conferencia text, p_tipo text, p_referencia text, p_analise uuid, p_area text, p_edital uuid) IS 'Resolve a referência de um caso de aviso (aprovado, entrevista, lista, ajuste, vaga) com a permissão do módulo de quem chama sobre o REGISTRO (FC_PODE_VER_AVISO com a área e o edital dele): nome, código, edital, vaga, situação, datas, nota. resolucao = ok, removido (não existe mais) ou sem_acesso (sem nenhum dado). Sem tipo gravado, deduz pelo código da conferência. Sem CPF.';
 
 --
+-- Name: FC_REGISTRAR_AMPLIACAO_ACESSO(public."TB_PERFIL_USUARIO", text, text, text, text, text, text); Type: FUNCTION; Schema: private; Owner: -
+--
+
+CREATE FUNCTION private."FC_REGISTRAR_AMPLIACAO_ACESSO"(p_perfil public."TB_PERFIL_USUARIO", p_tipo text, p_area text, p_recurso text, p_nivel text, p_grupo text, p_justificativa text) RETURNS jsonb
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+declare
+  v_uid uuid := (select auth.uid());
+  v_email text := lower(coalesce((select auth.jwt() ->> 'email'), p_perfil.email, ''));
+  v_tipo text := upper(nullif(btrim(coalesce(p_tipo, '')), ''));
+  v_area text := nullif(btrim(coalesce(p_area, '')), '');
+  v_recurso text := nullif(btrim(coalesce(p_recurso, '')), '');
+  v_nivel text := nullif(btrim(coalesce(p_nivel, '')), '');
+  v_grupo text := nullif(btrim(coalesce(p_grupo, '')), '');
+  v_justificativa text := btrim(coalesce(p_justificativa, ''));
+  v_justificativa_limpa text := btrim(regexp_replace(coalesce(p_justificativa, ''), '\s+', ' ', 'g'));
+  v_atual text;
+  v_id uuid;
+begin
+  if exists (select 1 from public."TB_GRUPO_ACESSO" a
+              where a."CO_GRUPO_ACESSO" = p_perfil.perfil and a."ST_ADMIN_GLOBAL") then
+    raise exception 'O administrador global já tem acesso a tudo.' using errcode = '22023';
+  end if;
+  if v_tipo is null or v_tipo not in ('MODULO', 'AREA', 'GRUPO') then
+    raise exception 'Escolha o que pedir: um módulo com um nível, outra área ou outro grupo.' using errcode = '22023';
+  end if;
+  if length(v_justificativa_limpa) not between 20 and 2000
+     or not private."FC_MOTIVO_PARECE_TEXTO"(v_justificativa_limpa, 3) then
+    raise exception 'Explique por que precisa do acesso: de 20 a 2.000 caracteres, com pelo menos 3 palavras.' using errcode = '22023';
+  end if;
+
+  if v_tipo = 'MODULO' then
+    if v_recurso is null or v_recurso <> all (private."FC_RECURSOS_MODULO"()) then
+      raise exception 'Módulo inválido: %', coalesce(v_recurso, '(vazio)') using errcode = '22023';
+    end if;
+    if v_nivel is null or v_nivel not in ('leitor', 'editor', 'admin') then
+      raise exception 'Escolha o nível: Leitor, Editor ou Administrador.' using errcode = '22023';
+    end if;
+    if v_recurso = 'configuracoes' and v_nivel = 'leitor' then
+      raise exception 'Configurações exige Editor ou Administrador.' using errcode = '22023';
+    end if;
+    if v_recurso in ('acessos', 'recursos_parecer') and v_nivel <> 'editor' then
+      raise exception 'Este módulo só tem o nível Editor.' using errcode = '22023';
+    end if;
+    if v_recurso = 'chat' and v_nivel <> 'leitor' then
+      raise exception 'Este módulo só tem o nível Leitor.' using errcode = '22023';
+    end if;
+    v_atual := private."FC_NIVEL_EFETIVO"(p_perfil.id, p_perfil.perfil, v_recurso);
+    if private."FC_RANK_NIVEL"(v_atual) >= private."FC_RANK_NIVEL"(v_nivel) then
+      raise exception 'Você já tem esse nível (ou mais) neste módulo.' using errcode = '22023';
+    end if;
+    v_area := null; v_grupo := null;
+  elsif v_tipo = 'AREA' then
+    if v_area is null or not exists (select 1 from public."TB_AREA" a where a."CO_AREA" = v_area) then
+      raise exception 'Área inválida: %', coalesce(v_area, '(vazia)') using errcode = '22023';
+    end if;
+    if p_perfil."CO_COORDENACAO" is not null then
+      raise exception 'Sua área vem da sua coordenação. Para outra área, fale com o administrador.' using errcode = '22023';
+    end if;
+    if v_area = any (coalesce(private."FC_AREAS_DO_PERFIL"(p_perfil.id), '{}')) then
+      raise exception 'Você já tem acesso a esta área.' using errcode = '22023';
+    end if;
+    v_recurso := null; v_nivel := null; v_grupo := null;
+  else
+    if v_grupo is null or not exists (select 1 from public."TB_GRUPO_ACESSO" a where a."CO_GRUPO_ACESSO" = v_grupo) then
+      raise exception 'Grupo inválido: %', coalesce(v_grupo, '(vazio)') using errcode = '22023';
+    end if;
+    if exists (select 1 from public."TB_GRUPO_ACESSO" a where a."CO_GRUPO_ACESSO" = v_grupo and a."ST_ADMIN_GLOBAL") then
+      raise exception 'O grupo de administrador global não se pede por aqui.' using errcode = '22023';
+    end if;
+    if v_grupo = p_perfil.perfil then
+      raise exception 'Você já está neste grupo.' using errcode = '22023';
+    end if;
+    v_area := null; v_recurso := null; v_nivel := null;
+  end if;
+
+  -- Um pedido pendente por pessoa: enviar de novo troca o pendente.
+  update public."TB_SOLICITACAO_ACESSO"
+     set "TP_SOLICITACAO" = v_tipo, "NO_RECURSO" = v_recurso, "TP_NIVEL" = v_nivel, "CO_AREA" = v_area,
+         perfil_solicitado = coalesce(v_grupo, p_perfil.perfil),
+         "CO_COORDENACAO" = p_perfil."CO_COORDENACAO",
+         "CO_CARGO_SOLICITADO" = null, "DS_CARGO_OUTRO" = null, setor = null,
+         nome = coalesce(nullif(btrim(p_perfil.nome), ''), nome), justificativa = v_justificativa,
+         updated_at = now()
+   where user_id = v_uid and status = 'pendente'
+  returning id into v_id;
+  if v_id is not null then
+    return jsonb_build_object('ok', true, 'id', v_id, 'status', 'pendente', 'tipo', v_tipo, 'atualizado', true);
+  end if;
+
+  insert into public."TB_SOLICITACAO_ACESSO" (user_id, email, nome, justificativa, perfil_solicitado, status,
+                                              "CO_COORDENACAO", "CO_AREA", "TP_SOLICITACAO", "NO_RECURSO", "TP_NIVEL")
+  values (v_uid, v_email, coalesce(nullif(btrim(p_perfil.nome), ''), v_email), v_justificativa,
+          coalesce(v_grupo, p_perfil.perfil), 'pendente',
+          p_perfil."CO_COORDENACAO", v_area, v_tipo, v_recurso, v_nivel)
+  returning id into v_id;
+  return jsonb_build_object('ok', true, 'id', v_id, 'status', 'pendente', 'tipo', v_tipo, 'atualizado', false);
+end;
+$$;
+
+--
+-- Name: FUNCTION "FC_REGISTRAR_AMPLIACAO_ACESSO"(p_perfil public."TB_PERFIL_USUARIO", p_tipo text, p_area text, p_recurso text, p_nivel text, p_grupo text, p_justificativa text); Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON FUNCTION private."FC_REGISTRAR_AMPLIACAO_ACESSO"(p_perfil public."TB_PERFIL_USUARIO", p_tipo text, p_area text, p_recurso text, p_nivel text, p_grupo text, p_justificativa text) IS 'Pedido de mais acesso de quem já tem perfil ativo (chamada por registrar_solicitacao_acesso): MODULO (nível acima do atual, nas regras da matriz), AREA (sem coordenação, área que ainda não tem) ou GRUPO (outro, menos administrador global). Um pendente por pessoa. Nunca concede acesso.';
+
+--
 -- Name: FC_REGISTRAR_LISTA_CLASSIFICACAO(uuid, text, integer, jsonb); Type: FUNCTION; Schema: private; Owner: -
 --
 
@@ -20906,6 +21143,10 @@ begin
   select * into v_req from public."TB_SOLICITACAO_ACESSO" where id = p_solicitacao_id for update;
   if v_req.id is null then raise exception 'Solicitação de acesso não encontrada'; end if;
   if v_req.status <> 'pendente' then raise exception 'Solicitação já avaliada (status atual: %)', v_req.status; end if;
+  -- Pedido de mais acesso (20261124210000): concede só o que foi pedido; grupo, coordenação e áreas daqui não valem.
+  if v_req."TP_SOLICITACAO" <> 'ACESSO' then
+    return private."FC_APROVAR_AMPLIACAO_ACESSO"(v_req.id, p_observacao_admin);
+  end if;
   if not exists (select 1 from public."TB_GRUPO_ACESSO" a where a."CO_GRUPO_ACESSO" = p_grupo) then
     raise exception 'Grupo inválido: %', p_grupo;
   end if;
@@ -20989,6 +21230,12 @@ begin
   return jsonb_build_object('ok', true, 'perfil_usuario_id', v_perfil_id, 'grupo', p_grupo, 'coordenacao', v_coordenacao);
 end;
 $$;
+
+--
+-- Name: FUNCTION aprovar_solicitacao_acesso(p_solicitacao_id uuid, p_grupo text, p_coordenacao text, p_areas text[], p_observacao_admin text); Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON FUNCTION public.aprovar_solicitacao_acesso(p_solicitacao_id uuid, p_grupo text, p_coordenacao text, p_areas text[], p_observacao_admin text) IS 'Aprova o pedido de acesso: o de entrada cria ou reativa o perfil com o grupo, a coordenação ou as áreas escolhidos; o de mais acesso (MODULO, AREA, GRUPO; 20261124210000) concede só o que foi pedido (private."FC_APROVAR_AMPLIACAO_ACESSO") e ignora p_grupo, p_coordenacao e p_areas.';
 
 --
 -- Name: arquivar_anexo_recurso(uuid, text); Type: FUNCTION; Schema: public; Owner: -
@@ -32357,7 +32604,15 @@ begin
       select jsonb_agg(jsonb_build_object('codigo', c."CO_COORDENACAO", 'nome', c."NO_COORDENACAO", 'area', c."CO_AREA")
                        order by c."NO_COORDENACAO")
         from public."TB_COORDENACAO" c
-       where c."ST_ATIVO"), '[]'::jsonb));
+       where c."ST_ATIVO"), '[]'::jsonb),
+    -- Pedir mais acesso (20261124210000): os grupos, só para quem já tem perfil ativo.
+    'grupos', case when (select p.id from private.current_profile() p) is null then '[]'::jsonb
+                   else coalesce((
+                     select jsonb_agg(jsonb_build_object('codigo', g."CO_GRUPO_ACESSO", 'nome', g."NO_GRUPO_ACESSO",
+                                                         'descricao', g."DS_GRUPO_ACESSO")
+                                      order by g."NU_ORDEM", g."NO_GRUPO_ACESSO")
+                       from public."TB_GRUPO_ACESSO" g
+                      where not g."ST_ADMIN_GLOBAL"), '[]'::jsonb) end);
 end;
 $$;
 
@@ -32365,7 +32620,7 @@ $$;
 -- Name: FUNCTION listar_opcoes_da_solicitacao_acesso(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.listar_opcoes_da_solicitacao_acesso() IS 'Opções da tela de solicitação de acesso (autenticado, mesmo sem perfil): áreas, unidades (DSEI/CASAI de TD_UNIDADE; projetos de TA_UNIDADE_AREA) e coordenações ativas.';
+COMMENT ON FUNCTION public.listar_opcoes_da_solicitacao_acesso() IS 'Opções da tela de solicitação de acesso (autenticado, mesmo sem perfil): áreas, unidades (DSEI/CASAI de TD_UNIDADE; projetos de TA_UNIDADE_AREA) e coordenações ativas; com perfil ativo, também os grupos que se podem pedir (sem o de administrador global).';
 
 --
 -- Name: listar_pendencias_coordenada_mapa_projetos(); Type: FUNCTION; Schema: public; Owner: -
@@ -33142,7 +33397,7 @@ begin
       'justificativa', s.justificativa, 'status', s.status, 'created_at', s.created_at,
       'updated_at', s.updated_at,
       'observacao_admin', s.observacao_admin, 'coordenacao', s."CO_COORDENACAO",
-      'coordenacao_nome', c."NO_COORDENACAO", 'area', coalesce(s."CO_AREA", c."CO_AREA"),
+      'coordenacao_nome', c."NO_COORDENACAO", 'area', ar."CO_AREA",
       'area_nome', ar."NO_AREA",
       'cargo', s."CO_CARGO_SOLICITADO",
       'cargo_rotulo', private."FC_CARGO_SOLICITACAO_ACESSO"(null, s."CO_CARGO_SOLICITADO"),
@@ -33151,15 +33406,29 @@ begin
       'desativada_em', h.alterado_em,
       'desativada_por', h.autor,
       'motivo_desativacao', h.motivo,
-      'grupo_anterior', p.perfil
+      'grupo_anterior', p.perfil,
+      'tipo', s."TP_SOLICITACAO",
+      'recurso', s."NO_RECURSO",
+      'nivel', s."TP_NIVEL",
+      'grupo_solicitado', case when s."TP_SOLICITACAO" = 'GRUPO' then s.perfil_solicitado end,
+      'grupo_solicitado_nome', case when s."TP_SOLICITACAO" = 'GRUPO' then gs."NO_GRUPO_ACESSO" end,
+      'grupo_atual', atual.perfil,
+      'grupo_atual_nome', ga."NO_GRUPO_ACESSO",
+      'nivel_atual', case when s."TP_SOLICITACAO" = 'MODULO' and atual.id is not null
+                          then private."FC_NIVEL_EFETIVO"(atual.id, atual.perfil, s."NO_RECURSO") end,
+      'areas_atuais', case when s."TP_SOLICITACAO" <> 'ACESSO' and atual.id is not null
+                           then to_jsonb(private."FC_AREAS_DO_PERFIL"(atual.id)) end
     ) order by s.created_at)
       from public."TB_SOLICITACAO_ACESSO" s
       left join public."TB_COORDENACAO" c on c."CO_COORDENACAO" = s."CO_COORDENACAO"
-      left join public."TB_AREA" ar on ar."CO_AREA" = coalesce(s."CO_AREA", c."CO_AREA")
+      -- No pedido de entrada, a área do pedido ou a da coordenação; no de mais acesso, só a pedida.
+      left join public."TB_AREA" ar on ar."CO_AREA" = case when s."TP_SOLICITACAO" = 'ACESSO'
+                                                          then coalesce(s."CO_AREA", c."CO_AREA") else s."CO_AREA" end
+      left join public."TB_GRUPO_ACESSO" gs on gs."CO_GRUPO_ACESSO" = s.perfil_solicitado
       -- Pedido de quem tem conta desativada = pedido de reativação (com o histórico).
       left join lateral (
         select u.id, u.perfil from public."TB_PERFIL_USUARIO" u
-         where not u.ativo
+         where not u.ativo and s."TP_SOLICITACAO" = 'ACESSO'
            and ((s.user_id is not null and u.user_id = s.user_id) or lower(u.email) = lower(s.email))
          order by u.updated_at desc limit 1) p on true
       left join lateral (
@@ -33168,8 +33437,17 @@ begin
           from public."TH_PERMISSAO_RECURSO" t
          where p.id is not null and t.perfil_usuario_id = p.id and t.recurso = '#conta'
          order by t.alterado_em desc limit 1) h on true
+      -- Pedido de mais acesso: o perfil ativo de hoje.
+      left join lateral (
+        select u.id, u.perfil from public."TB_PERFIL_USUARIO" u
+         where u.ativo and s."TP_SOLICITACAO" <> 'ACESSO'
+           and ((s.user_id is not null and u.user_id = s.user_id) or lower(u.email) = lower(s.email))
+         order by u.updated_at desc limit 1) atual on true
+      left join public."TB_GRUPO_ACESSO" ga on ga."CO_GRUPO_ACESSO" = atual.perfil
      where s.status = coalesce(nullif(btrim(p_status), ''), 'pendente')
        and (v_gestor = 'admin' or s."CO_COORDENACAO" = private."FC_COORDENACAO_USUARIO"())
+       -- Ninguém aprova o próprio acesso.
+       and s.user_id is distinct from (select auth.uid())
      limit 200), '[]'::jsonb);
 end;
 $$;
@@ -33178,7 +33456,7 @@ $$;
 -- Name: FUNCTION listar_solicitacoes_acesso(p_status text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.listar_solicitacoes_acesso(p_status text) IS 'Pedidos de acesso (admin global: todos; coordenador: os da própria coordenação), com área, cargo, lotação (setor), justificativa e dados da reativação.';
+COMMENT ON FUNCTION public.listar_solicitacoes_acesso(p_status text) IS 'Pedidos de acesso (admin global: todos; coordenador: os da própria coordenação), sem os de quem está olhando, com área, cargo, lotação (setor), justificativa e dados da reativação; no pedido de mais acesso, o tipo, o módulo e o nível ou o grupo pedidos e o que a pessoa tem hoje.';
 
 --
 -- Name: listar_unidades_por_area(); Type: FUNCTION; Schema: public; Owner: -
@@ -36000,12 +36278,18 @@ CREATE FUNCTION public.obter_minha_solicitacao_acesso() RETURNS jsonb
                             'cargo', s."CO_CARGO_SOLICITADO",
                             'cargo_rotulo', private."FC_CARGO_SOLICITACAO_ACESSO"(null, s."CO_CARGO_SOLICITADO"),
                             'cargo_outro', s."DS_CARGO_OUTRO",
-                            'motivo_recusa', s."CO_MOTIVO_RECUSA")
+                            'motivo_recusa', s."CO_MOTIVO_RECUSA",
+                            'tipo', s."TP_SOLICITACAO", 'recurso', s."NO_RECURSO", 'nivel', s."TP_NIVEL",
+                            'grupo_solicitado', case when s."TP_SOLICITACAO" = 'GRUPO' then s.perfil_solicitado end,
+                            'grupo_solicitado_nome', case when s."TP_SOLICITACAO" = 'GRUPO' then g."NO_GRUPO_ACESSO" end)
     from public."TB_SOLICITACAO_ACESSO" s
     left join public."TB_COORDENACAO" c on c."CO_COORDENACAO" = s."CO_COORDENACAO"
     left join public."TB_AREA" a on a."CO_AREA" = s."CO_AREA"
-   where s.user_id = (select auth.uid())
-      or lower(s.email) = lower(coalesce((select auth.jwt() ->> 'email'), '-'))
+    left join public."TB_GRUPO_ACESSO" g on g."CO_GRUPO_ACESSO" = s.perfil_solicitado
+   where (s.user_id = (select auth.uid())
+          or lower(s.email) = lower(coalesce((select auth.jwt() ->> 'email'), '-')))
+     -- Com perfil ativo, só o pedido de mais acesso; sem perfil, só o de entrada (20261124210000).
+     and (s."TP_SOLICITACAO" <> 'ACESSO') = ((select p.id from private.current_profile() p) is not null)
    order by (s.status = 'pendente') desc, s.created_at desc
    limit 1;
 $$;
@@ -36014,7 +36298,7 @@ $$;
 -- Name: FUNCTION obter_minha_solicitacao_acesso(); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.obter_minha_solicitacao_acesso() IS 'Último pedido de acesso de quem está autenticado, com área, cargo, lotação (setor), coordenação e motivo da recusa.';
+COMMENT ON FUNCTION public.obter_minha_solicitacao_acesso() IS 'Último pedido de acesso de quem está autenticado, com área, cargo, lotação (setor), coordenação e motivo da recusa. Com perfil ativo, o último pedido de mais acesso (tipo, módulo, nível, grupo pedido); sem perfil, o último pedido de entrada.';
 
 --
 -- Name: obter_modelo_espelho_nota(uuid); Type: FUNCTION; Schema: public; Owner: -
@@ -40164,10 +40448,10 @@ $$;
 COMMENT ON FUNCTION public.registrar_presenca_monitora(p_current_view text) IS 'Sinal de presença do MONITORA (Pessoas online); copia a foto do Google do login para TB_PERFIL_USUARIO.google_avatar_url quando ela mudou e devolve a versão do catálogo de abas (versao_do_catalogo), para a tela reler o menu só quando ele muda.';
 
 --
--- Name: registrar_solicitacao_acesso(text, text, text, text, text, text, text); Type: FUNCTION; Schema: public; Owner: -
+-- Name: registrar_solicitacao_acesso(text, text, text, text, text, text, text, text, text, text, text); Type: FUNCTION; Schema: public; Owner: -
 --
 
-CREATE FUNCTION public.registrar_solicitacao_acesso(p_nome text, p_area text DEFAULT NULL::text, p_cargo text DEFAULT NULL::text, p_cargo_outro text DEFAULT NULL::text, p_lotacao text DEFAULT NULL::text, p_justificativa text DEFAULT NULL::text, p_coordenacao text DEFAULT NULL::text) RETURNS jsonb
+CREATE FUNCTION public.registrar_solicitacao_acesso(p_nome text, p_area text DEFAULT NULL::text, p_cargo text DEFAULT NULL::text, p_cargo_outro text DEFAULT NULL::text, p_lotacao text DEFAULT NULL::text, p_justificativa text DEFAULT NULL::text, p_coordenacao text DEFAULT NULL::text, p_tipo text DEFAULT NULL::text, p_recurso text DEFAULT NULL::text, p_nivel text DEFAULT NULL::text, p_grupo text DEFAULT NULL::text) RETURNS jsonb
     LANGUAGE plpgsql SECURITY DEFINER
     SET search_path TO ''
     AS $$
@@ -40182,10 +40466,21 @@ declare
   v_justificativa text := btrim(coalesce(p_justificativa, ''));
   v_justificativa_limpa text := btrim(regexp_replace(coalesce(p_justificativa, ''), '\s+', ' ', 'g'));
   v_coordenacao text := nullif(btrim(coalesce(p_coordenacao, '')), '');
+  v_perfil public."TB_PERFIL_USUARIO";
   v_reativacao boolean;
   v_id uuid;
 begin
   if v_uid is null or v_email = '' then raise exception 'Usuário não autenticado' using errcode = '42501'; end if;
+
+  -- Quem já tem acesso ativo pede mais acesso (20261124210000).
+  v_perfil := private.current_profile();
+  if v_perfil.id is not null then
+    return private."FC_REGISTRAR_AMPLIACAO_ACESSO"(v_perfil, p_tipo, p_area, p_recurso, p_nivel, p_grupo, p_justificativa);
+  end if;
+  if upper(coalesce(nullif(btrim(p_tipo), ''), 'ACESSO')) <> 'ACESSO' then
+    raise exception 'Pedir mais acesso é para quem já tem acesso ativo.' using errcode = '42501';
+  end if;
+
   if length(v_nome) not between 2 and 120 then
     raise exception 'Informe seu nome completo (2 a 120 caracteres).' using errcode = '22023';
   end if;
@@ -40237,11 +40532,14 @@ begin
     raise exception 'Coordenação inválida para a área escolhida.' using errcode = '22023';
   end if;
 
-  -- Pedido pendente: editar (a pessoa corrige o que pediu enquanto aguarda).
+  -- Pedido pendente: editar (a pessoa corrige o que pediu enquanto aguarda). Um pedido de mais
+  -- acesso que sobrou de uma conta desativada vira o pedido de entrada.
   update public."TB_SOLICITACAO_ACESSO"
      set nome = v_nome, setor = v_lotacao, justificativa = v_justificativa,
          "CO_AREA" = v_area, "CO_CARGO_SOLICITADO" = v_cargo, "DS_CARGO_OUTRO" = v_cargo_outro,
-         "CO_COORDENACAO" = v_coordenacao, updated_at = now()
+         "CO_COORDENACAO" = v_coordenacao,
+         "TP_SOLICITACAO" = 'ACESSO', "NO_RECURSO" = null, "TP_NIVEL" = null, perfil_solicitado = 'usuario',
+         updated_at = now()
    where user_id = v_uid and status = 'pendente'
   returning id into v_id;
   if v_id is not null then
@@ -40258,10 +40556,10 @@ end;
 $$;
 
 --
--- Name: FUNCTION registrar_solicitacao_acesso(p_nome text, p_area text, p_cargo text, p_cargo_outro text, p_lotacao text, p_justificativa text, p_coordenacao text); Type: COMMENT; Schema: public; Owner: -
+-- Name: FUNCTION registrar_solicitacao_acesso(p_nome text, p_area text, p_cargo text, p_cargo_outro text, p_lotacao text, p_justificativa text, p_coordenacao text, p_tipo text, p_recurso text, p_nivel text, p_grupo text); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.registrar_solicitacao_acesso(p_nome text, p_area text, p_cargo text, p_cargo_outro text, p_lotacao text, p_justificativa text, p_coordenacao text) IS 'Registra o pedido de acesso de quem está autenticado (área, cargo da lista, lotação, justificativa com 3 palavras) ou, com pedido pendente, o atualiza. Conta desativada (reativação): área opcional. Nunca concede acesso.';
+COMMENT ON FUNCTION public.registrar_solicitacao_acesso(p_nome text, p_area text, p_cargo text, p_cargo_outro text, p_lotacao text, p_justificativa text, p_coordenacao text, p_tipo text, p_recurso text, p_nivel text, p_grupo text) IS 'Registra o pedido de acesso de quem está autenticado (área, cargo da lista, lotação, justificativa com 3 palavras) ou, com pedido pendente, o atualiza. Conta desativada (reativação): área opcional. Com perfil ativo, registra o pedido de mais acesso (p_tipo MODULO, AREA ou GRUPO; private."FC_REGISTRAR_AMPLIACAO_ACESSO"). Nunca concede acesso.';
 
 --
 -- Name: registrar_uso_liberacao_congelamento(uuid, text); Type: FUNCTION; Schema: public; Owner: -
@@ -57367,6 +57665,16 @@ CREATE TABLE public."TB_SOLICITACAO_ACESSO" (
     "CO_CARGO_SOLICITADO" text,
     "DS_CARGO_OUTRO" text,
     "CO_MOTIVO_RECUSA" text,
+    "TP_SOLICITACAO" text DEFAULT 'ACESSO'::text NOT NULL,
+    "NO_RECURSO" text,
+    "TP_NIVEL" text,
+    CONSTRAINT "CK_SOLICACESSO_AMPLIACAO" CHECK (
+CASE "TP_SOLICITACAO"
+    WHEN 'MODULO'::text THEN (("NO_RECURSO" IS NOT NULL) AND ("TP_NIVEL" = ANY (ARRAY['leitor'::text, 'editor'::text, 'admin'::text])) AND ("CO_AREA" IS NULL) AND ("CO_CARGO_SOLICITADO" IS NULL))
+    WHEN 'AREA'::text THEN (("CO_AREA" IS NOT NULL) AND ("NO_RECURSO" IS NULL) AND ("TP_NIVEL" IS NULL) AND ("CO_CARGO_SOLICITADO" IS NULL))
+    WHEN 'GRUPO'::text THEN (("NO_RECURSO" IS NULL) AND ("TP_NIVEL" IS NULL) AND ("CO_AREA" IS NULL) AND ("CO_CARGO_SOLICITADO" IS NULL))
+    ELSE (("NO_RECURSO" IS NULL) AND ("TP_NIVEL" IS NULL))
+END),
     CONSTRAINT "CK_SOLICACESSO_CARGO" CHECK ((("CO_CARGO_SOLICITADO" IS NULL) OR (("CO_AREA" IS NOT NULL) AND ("CO_CARGO_SOLICITADO" = ANY (ARRAY['AVALIADOR'::text, 'GESTOR'::text, 'CONTRATACAO'::text, 'COORDENACAO_DSEI'::text, 'COORDENACAO_PROJETO'::text, 'COORDENACAO_SEDE'::text, 'JURIDICO'::text, 'APOIO'::text, 'CONSULTA'::text, 'OUTRO'::text]))))),
     CONSTRAINT "CK_SOLICACESSO_CARGOOUTRO" CHECK (
 CASE
@@ -57374,6 +57682,7 @@ CASE
     ELSE ("DS_CARGO_OUTRO" IS NULL)
 END),
     CONSTRAINT "CK_SOLICACESSO_MOTIVORECUSA" CHECK ((("CO_MOTIVO_RECUSA" IS NULL) OR ((status = 'recusado'::text) AND ("CO_MOTIVO_RECUSA" = ANY (ARRAY['FORA_DO_PUBLICO'::text, 'VINCULO_NAO_CONFIRMADO'::text, 'AREA_OU_LOTACAO'::text, 'JA_TEM_ACESSO'::text, 'JUSTIFICATIVA_INSUFICIENTE'::text, 'OUTRO'::text]))))),
+    CONSTRAINT "CK_SOLICACESSO_TIPO" CHECK (("TP_SOLICITACAO" = ANY (ARRAY['ACESSO'::text, 'MODULO'::text, 'AREA'::text, 'GRUPO'::text]))),
     CONSTRAINT solicitacoes_acesso_status_check CHECK ((status = ANY (ARRAY['pendente'::text, 'aprovado'::text, 'recusado'::text, 'cancelado'::text])))
 );
 
@@ -57381,7 +57690,7 @@ END),
 -- Name: TABLE "TB_SOLICITACAO_ACESSO"; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON TABLE public."TB_SOLICITACAO_ACESSO" IS 'Pedidos de acesso ao MONITORA de quem entrou com Google e não tem perfil ativo (só por aprovação). Status: pendente, aprovado, recusado, cancelado.';
+COMMENT ON TABLE public."TB_SOLICITACAO_ACESSO" IS 'Pedidos de acesso ao Yeendé, só por aprovação: de quem entrou com Google e não tem perfil ativo (TP_SOLICITACAO = ACESSO) e de quem já tem e pede mais (MODULO, AREA, GRUPO; 20261124210000). Status: pendente, aprovado, recusado, cancelado.';
 
 --
 -- Name: COLUMN "TB_SOLICITACAO_ACESSO".setor; Type: COMMENT; Schema: public; Owner: -
@@ -57418,6 +57727,24 @@ COMMENT ON COLUMN public."TB_SOLICITACAO_ACESSO"."DS_CARGO_OUTRO" IS 'Descriçã
 --
 
 COMMENT ON COLUMN public."TB_SOLICITACAO_ACESSO"."CO_MOTIVO_RECUSA" IS 'Motivo da recusa (private."FC_MOTIVO_RECUSA_SOLICITACAO"); o texto legível fica em observacao_admin.';
+
+--
+-- Name: COLUMN "TB_SOLICITACAO_ACESSO"."TP_SOLICITACAO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_SOLICITACAO_ACESSO"."TP_SOLICITACAO" IS 'Tipo do pedido: ACESSO (entrada de quem não tem perfil ativo, ou reativação) ou, de quem já tem acesso (pedir mais acesso), MODULO (um nível num módulo), AREA (outra área, em CO_AREA) ou GRUPO (outro grupo, em perfil_solicitado).';
+
+--
+-- Name: COLUMN "TB_SOLICITACAO_ACESSO"."NO_RECURSO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_SOLICITACAO_ACESSO"."NO_RECURSO" IS 'Módulo pedido (TP_SOLICITACAO = MODULO): um de private."FC_RECURSOS_MODULO"(), como em TA_GRUPO_ACESSO_RECURSO."NO_RECURSO".';
+
+--
+-- Name: COLUMN "TB_SOLICITACAO_ACESSO"."TP_NIVEL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TB_SOLICITACAO_ACESSO"."TP_NIVEL" IS 'Nível pedido no módulo (TP_SOLICITACAO = MODULO): leitor, editor ou admin.';
 
 --
 -- Name: TB_SUGESTAO_FICHA; Type: TABLE; Schema: public; Owner: -
@@ -75118,6 +75445,12 @@ REVOKE ALL ON FUNCTION private."FC_APLICAR_COORDENADA_MAPA"(p_alvo jsonb, p_lati
 REVOKE ALL ON FUNCTION private."FC_APLICAR_FONTES_DO_PAINEL"(p_area text, p_relatorio text, p_linhas jsonb) FROM PUBLIC;
 
 --
+-- Name: FUNCTION "FC_APROVAR_AMPLIACAO_ACESSO"(p_solicitacao_id uuid, p_observacao_admin text); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_APROVAR_AMPLIACAO_ACESSO"(p_solicitacao_id uuid, p_observacao_admin text) FROM PUBLIC;
+
+--
 -- Name: FUNCTION "FC_AREAS_DO_PERFIL"(p_perfil_usuario uuid); Type: ACL; Schema: private; Owner: -
 --
 
@@ -76737,6 +77070,12 @@ REVOKE ALL ON FUNCTION private."FC_RECUSA_CONCLUIR_EDITAL"(p_status text, p_esta
 --
 
 REVOKE ALL ON FUNCTION private."FC_REFERENCIA_DO_CASO"(p_modulo text, p_conferencia text, p_tipo text, p_referencia text, p_analise uuid, p_area text, p_edital uuid) FROM PUBLIC;
+
+--
+-- Name: FUNCTION "FC_REGISTRAR_AMPLIACAO_ACESSO"(p_perfil public."TB_PERFIL_USUARIO", p_tipo text, p_area text, p_recurso text, p_nivel text, p_grupo text, p_justificativa text); Type: ACL; Schema: private; Owner: -
+--
+
+REVOKE ALL ON FUNCTION private."FC_REGISTRAR_AMPLIACAO_ACESSO"(p_perfil public."TB_PERFIL_USUARIO", p_tipo text, p_area text, p_recurso text, p_nivel text, p_grupo text, p_justificativa text) FROM PUBLIC;
 
 --
 -- Name: FUNCTION "FC_REGISTRAR_LISTA_CLASSIFICACAO"(p_edital uuid, p_tipo text, p_versao integer, p_resultado jsonb); Type: ACL; Schema: private; Owner: -
@@ -79676,11 +80015,11 @@ REVOKE ALL ON FUNCTION public.registrar_presenca_monitora(p_current_view text) F
 GRANT ALL ON FUNCTION public.registrar_presenca_monitora(p_current_view text) TO authenticated;
 
 --
--- Name: FUNCTION registrar_solicitacao_acesso(p_nome text, p_area text, p_cargo text, p_cargo_outro text, p_lotacao text, p_justificativa text, p_coordenacao text); Type: ACL; Schema: public; Owner: -
+-- Name: FUNCTION registrar_solicitacao_acesso(p_nome text, p_area text, p_cargo text, p_cargo_outro text, p_lotacao text, p_justificativa text, p_coordenacao text, p_tipo text, p_recurso text, p_nivel text, p_grupo text); Type: ACL; Schema: public; Owner: -
 --
 
-REVOKE ALL ON FUNCTION public.registrar_solicitacao_acesso(p_nome text, p_area text, p_cargo text, p_cargo_outro text, p_lotacao text, p_justificativa text, p_coordenacao text) FROM PUBLIC;
-GRANT ALL ON FUNCTION public.registrar_solicitacao_acesso(p_nome text, p_area text, p_cargo text, p_cargo_outro text, p_lotacao text, p_justificativa text, p_coordenacao text) TO authenticated;
+REVOKE ALL ON FUNCTION public.registrar_solicitacao_acesso(p_nome text, p_area text, p_cargo text, p_cargo_outro text, p_lotacao text, p_justificativa text, p_coordenacao text, p_tipo text, p_recurso text, p_nivel text, p_grupo text) FROM PUBLIC;
+GRANT ALL ON FUNCTION public.registrar_solicitacao_acesso(p_nome text, p_area text, p_cargo text, p_cargo_outro text, p_lotacao text, p_justificativa text, p_coordenacao text, p_tipo text, p_recurso text, p_nivel text, p_grupo text) TO authenticated;
 
 --
 -- Name: FUNCTION registrar_uso_liberacao_congelamento(p_liberacao uuid, p_execucao text); Type: ACL; Schema: public; Owner: -

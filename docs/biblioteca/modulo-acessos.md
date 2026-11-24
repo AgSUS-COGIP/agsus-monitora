@@ -59,7 +59,7 @@ formulários sobrevivem à troca de aba.
   (`private."FC_EXIGIR_GESTOR_DE_ACESSOS"`). Quem aprova escolhe o grupo (sugerido pelo cargo,
   `grupoSugeridoDoPedido`) e a coordenação ou as áreas. Recusa com motivo da lista fixa
   (`MOTIVOS_DE_RECUSA`; "Outro" pede descrição), que a pessoa vê ao entrar de novo. Pedido de conta
-  desativada é de REATIVAÇÃO.
+  desativada é de REATIVAÇÃO. Pedido de mais acesso (de quem já tem conta) só se aprova ou recusa.
 - `contas-desativadas.tsx` — quem, quando, por quem e por quê; "Reativar" com motivo; na entrada
   seguinte, "Bem-vindo(a) de volta" (`src/modules/comemoracao-do-acesso.ts`).
 - `estado.ts` — matriz, rascunho, solicitações, gaveta e ações (uma por vez); sem React. O rascunho
@@ -77,13 +77,28 @@ aparecem em vez de "Sem acesso" em tudo. Regra em `src/lib/acessos/meus-acessos.
 `src/app/casca/meus-acessos.tsx`. Guardas: `tests/demais-regras.test.ts` (bloco
 `lib/meus-acessos`) e `tests/casca-sessao-e-interface-na-tela.test.ts` (bloco `app/meus-acessos`).
 
+**Pedir mais acesso** (item do mesmo menu, ou o botão no fim da gaveta): quem já tem conta pede um
+módulo com um nível acima do seu, outra área (sem coordenação; com ela, a área vem da coordenação) ou
+outro grupo (nunca o de administrador global), com a justificativa do pedido de entrada. Não é
+fluxo paralelo: é o mesmo `TB_SOLICITACAO_ACESSO` e as mesmas RPCs, com `"TP_SOLICITACAO"`
+(ACESSO, MODULO, AREA, GRUPO; migration `20261124210000`, **pendente**). Um pedido por vez; a
+gaveta mostra o último (aguardando, que se cancela; aprovado; recusado com o motivo). Em
+Pendentes ele vem com o selo "Mais acesso", o que pediu ao lado do que tem hoje e só Recusar e
+Aprovar: o banco concede exatamente o pedido (permissão individual, área ou grupo), com o teto do
+coordenador e as travas da matriz, e registra quem aprovou (`avaliado_por` e
+`TH_PERMISSAO_RECURSO`); ninguém vê nem aprova o próprio. O administrador global não pede. Regras
+em `src/lib/acessos/pedido-de-mais-acesso.ts`, estado em `src/app/casca/pedido-de-mais-acesso.ts`.
+Guardas: blocos `lib/pedido-de-mais-acesso` e `app/pedido-de-mais-acesso` (`demais-regras`),
+`app/pedir-mais-acesso` (na tela), "Pendentes: pedido de mais acesso" (`modulos/acessos`) e
+`pedido-de-mais-acesso-no-banco` (`repositorio-e-banco`, PGlite).
+
 ## Regras puras e banco
 
 `src/lib/acessos/matriz-de-acessos.ts` (rascunho; grupo × individual), `acessos/meus-acessos.ts`
 (a gaveta do menu da conta), `acessos/teto-de-acessos.ts` (teto do
 coordenador), `acessos/grupos-e-coordenacoes.ts`, `acessos/ver-como.ts`, `acessos/solicitacao-de-acesso.ts` (pedido por
 área: listas, situação, validação, recusa; ver `src/app/entrada/`). Banco nas migrations
-`20260929121000`–`121300`, `190000`–`190200`, `20261021140000` e `20261022140100`; só as RPCs gravam
+`20260929121000`–`121300`, `190000`–`190200`, `20261021140000`, `20261022140100` e `20261124210000` (pendente: pedido de mais acesso); só as RPCs gravam
 o pedido.
 
 ## Relacionadas
