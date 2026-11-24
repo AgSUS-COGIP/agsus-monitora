@@ -6,10 +6,11 @@ import {
   ETAPA_PADRAO_DA_REATIVACAO,
   MOTIVO_MAXIMO,
   acaoDeReativarNaLinha,
-  avisoDaValidadeNaReativacao,
   bloqueioDaReativacao,
   cronogramaDaReativacao,
   errosDaReativacao,
+  listaNaReativacao,
+  listaVigenteDoEdital,
   semErros,
   textoDaReativacao,
 } from "../../lib/editais/reativar-edital.ts";
@@ -17,7 +18,9 @@ import type {
   CronogramaDaReativacao,
   DadosDaReativacao,
   LinhaParaReativar,
+  ListaDoEdital,
 } from "../../lib/editais/reativar-edital.ts";
+import { canImportApprovedList } from "../../lib/acessos/access-roles.ts";
 import {
   Aviso,
   Campo,
@@ -36,13 +39,18 @@ import type { DadosParaReativarEdital } from "./estado.ts";
   Abre lendo o cronograma gravado: com status excepcional, cálculo manual ou
   sem cronograma, mostra o porquê e leva ao formulário. O cancelado nem lê:
   cancelamento é status excepcional, e o caminho é o formulário.
+
+  Junto, lê a lista de aprovados vigente (`listar_listas_aprovados`): inativa,
+  o modal avisa que ela volta a ficar ativa ou, sem Editor em Importação, quem
+  pode ativá-la.
 */
 
 /** O que o modal usa do estado da página (`estado.ts`). */
 export interface EstadoDaReativacao {
   assinar(ouvinte: () => void): () => unknown;
-  obter(): { salvando: boolean };
+  obter(): { salvando: boolean; perfil: unknown };
   lerCronograma(id: unknown): Promise<unknown>;
+  lerListasAprovados(): Promise<unknown>;
   reativarEdital(dados: DadosParaReativarEdital): Promise<boolean>;
   abrirEdital(id?: unknown): void;
   fecharModal(): unknown;
@@ -93,8 +101,28 @@ export function ReativarEdital({
     atividade: ETAPA_PADRAO_DA_REATIVACAO,
   });
   const [tentou, setTentou] = useState(false);
+  /* A lista vigente: `undefined` enquanto não chegou; "nao-lida" sem acesso. */
+  const [lista, setLista] = useState<ListaDoEdital | null | "nao-lida">();
+  const perfil = useSyncExternalStore(
+    estado.assinar,
+    () => estado.obter().perfil,
+  );
 
   const id = linha?.id;
+  useEffect(() => {
+    if (acao !== "reativar") return undefined;
+    let vivo = true;
+    estado
+      .lerListasAprovados()
+      .then((linhas) => vivo && setLista(listaVigenteDoEdital(linhas, id)))
+      .catch((erro: unknown) => {
+        console.warn("Não foi possível ler a lista de aprovados:", erro);
+        if (vivo) setLista("nao-lida");
+      });
+    return () => {
+      vivo = false;
+    };
+  }, [estado, id, acao]);
   useEffect(() => {
     if (acao !== "reativar") return undefined;
     let vivo = true;
@@ -231,7 +259,16 @@ export function ReativarEdital({
 
   const erros = errosDaReativacao(dados, cronograma.etapas, agora());
   const visiveis = tentou ? erros : {};
-  const validade = avisoDaValidadeNaReativacao(cronograma, agora());
+  const daLista =
+    lista === undefined
+      ? null
+      : listaNaReativacao({
+          lista,
+          podeAtivar: canImportApprovedList(perfil),
+          validade: cronograma.validade,
+          dataFim: dados.dataFim,
+          agora: agora(),
+        });
   const mudar = (campo: keyof DadosDaReativacao) => (valor: string) =>
     setDados((atual) => ({ ...atual, [campo]: valor }));
 
@@ -287,7 +324,11 @@ export function ReativarEdital({
         </Campo>
       </div>
       <Aviso>{textoDaReativacao(dados, agora())}</Aviso>
-      {validade ? <Aviso tom="warning">{validade}</Aviso> : null}
+      {daLista ? (
+        <Aviso tom={daLista.tipo === "ativar" ? "info" : "warning"}>
+          <span data-lista-na-reativacao={daLista.tipo}>{daLista.texto}</span>
+        </Aviso>
+      ) : null}
       <div className="ui-acoes">
         <FecharModal className="btn secondary" disabled={salvando}>
           Cancelar

@@ -28,7 +28,12 @@ export interface AcaoDoAprovado {
   id: IdDaAcaoDoAprovado;
   rotulo: string;
   desabilitado?: boolean;
+  /** No item apagado: como destravar (a segunda linha do item). */
+  dica?: string;
 }
+
+/** O caminho para destravar o status da lista inativa (Listas do edital, "Aplicar situação"). */
+export const DICA_DA_LISTA_INATIVA = "Ative a lista em Listas do edital";
 
 export interface AcoesDaLinhaDoAprovado {
   principal: AcaoDoAprovado;
@@ -68,6 +73,7 @@ export function acoesDaLinhaDoAprovado(
       id: "status",
       rotulo: `Mudar status (${bloqueio})`,
       desabilitado: true,
+      ...(bloqueio === "lista inativa" ? { dica: DICA_DA_LISTA_INATIVA } : {}),
     });
   if (anexos > 0)
     outras.push({ id: "anexos", rotulo: `Ver anexos (${anexos})` });

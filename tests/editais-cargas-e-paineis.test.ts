@@ -19,12 +19,13 @@ import { editalParaSalvar } from "../src/lib/editais/editais-do-nucleo.ts";
 import {
   ETAPA_PADRAO_DA_REATIVACAO,
   acaoDeReativarNaLinha,
-  avisoDaValidadeNaReativacao,
   bloqueioDaReativacao,
   cronogramaDaReativacao,
   editalParaReativar,
   errosDaReativacao,
   etapasComReativacao,
+  listaNaReativacao,
+  listaVigenteDoEdital,
   motivoDaReativacao,
   semErros,
   textoDaReativacao,
@@ -7251,26 +7252,81 @@ bloco("lib/reativar-edital", () => {
     );
   });
 
-  it("avisa quando a validade da lista já venceu; vigente ou sem prazo, não", () => {
-    // Fim 10/06/2025 + 1 ano = 10/06/2026, antes de 23/11/2026: venceu.
-    expect(avisoDaValidadeNaReativacao(lido(), AGORA)).toBe(
-      "A validade da lista de aprovados venceu em 10/06/2026. Reativar o edital não reativa a lista.",
-    );
+  it("acha a lista vigente do edital nas linhas de listar_listas_aprovados", () => {
+    const linhas = [
+      { lista_id: "l-outra", edital_id: "ed-99", ativo: true },
+      { lista_id: "l-15", edital_id: "ed-15", ativo: false },
+    ];
+    expect(listaVigenteDoEdital(linhas, "ed-15")).toEqual({
+      id: "l-15",
+      ativa: false,
+    });
+    expect(listaVigenteDoEdital(linhas, "ed-1")).toBeNull();
+    expect(listaVigenteDoEdital({ erro: true }, "ed-15")).toBeNull();
+    expect(listaVigenteDoEdital([{ edital_id: "ed-15" }], "ed-15")).toBeNull();
+  });
+
+  it("a lista inativa volta a ficar ativa com a nova validade; sem Importação, diz quem ativa", () => {
+    const validade = lido().validade;
+    const inativa = { id: "l-15", ativa: false };
+    // Fim novo 31/01/2027 + 1 ano: validade até 31/01/2028.
     expect(
-      avisoDaValidadeNaReativacao(lido({ nu_anos_validade: 2 }), AGORA),
-    ).toBeNull();
+      listaNaReativacao({
+        lista: inativa,
+        podeAtivar: true,
+        validade,
+        dataFim: "2027-01-31",
+        agora: AGORA,
+      }),
+    ).toEqual({
+      tipo: "ativar",
+      texto:
+        "A lista de aprovados, hoje inativa, volta a ficar ativa, com validade até 31/01/2028.",
+    });
+    // Sem data ainda, ou sem a validade lida: sem a data da validade.
     expect(
-      avisoDaValidadeNaReativacao(
-        lido({ nu_anos_validade: 0, nu_meses_validade: 0 }),
-        AGORA,
+      listaNaReativacao({
+        lista: inativa,
+        podeAtivar: true,
+        validade,
+        dataFim: "",
+        agora: AGORA,
+      })?.texto,
+    ).toBe("A lista de aprovados, hoje inativa, volta a ficar ativa.");
+    expect(
+      listaNaReativacao({
+        lista: inativa,
+        podeAtivar: false,
+        validade,
+        dataFim: "2027-01-31",
+        agora: AGORA,
+      }),
+    ).toMatchObject({
+      tipo: "sem-permissao",
+      texto: expect.stringContaining(
+        "quem a ativa é quem tem nível Editor em Importação e convocação, ou o administrador global",
       ),
-    ).toBeNull();
+    });
     expect(
-      avisoDaValidadeNaReativacao(
-        cronogramaDaReativacao({ etapas: ETAPAS_DO_BANCO }),
-        AGORA,
-      ),
-    ).toBeNull();
+      listaNaReativacao({
+        lista: "nao-lida",
+        podeAtivar: false,
+        validade,
+        dataFim: "2027-01-31",
+        agora: AGORA,
+      })?.tipo,
+    ).toBe("nao-lida");
+    // Lista ativa ou nenhuma lista: nada a dizer.
+    for (const lista of [{ id: "l-15", ativa: true }, null])
+      expect(
+        listaNaReativacao({
+          lista,
+          podeAtivar: true,
+          validade,
+          dataFim: "2027-01-31",
+          agora: AGORA,
+        }),
+      ).toBeNull();
   });
 
   it("diz em uma frase o que vai acontecer", () => {

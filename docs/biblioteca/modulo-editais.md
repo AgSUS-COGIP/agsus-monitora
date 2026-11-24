@@ -37,8 +37,12 @@ Tabela, alertas, formulário e linha do tempo. A tela é `nucleo.tsx`; o estado 
   Os avisos do cronograma não perguntam de novo. Com o automático, o status volta a "Em
   andamento", `data_fim` vira a nova data e a tabela vai para os Ativos. Não reativa: status
   excepcional (o cancelado nem lê o cronograma), cálculo manual, sem cronograma ou não concluído
-  pelas datas; os três primeiros levam ao formulário. Validade vencida: só o aviso (lista inativa
-  fica inativa; `FC_INATIVAR_LISTAS_VENCIDAS` só inativa).
+  pelas datas; os três primeiros levam ao formulário. Lista de aprovados: o modal lê
+  `listar_listas_aprovados`; a vigente inativa (a validade a inativou, e
+  `FC_INATIVAR_LISTAS_VENCIDAS` só inativa) volta a ficar ativa depois de gravar, por
+  `definir_lista_aprovados_ativa(p_lista_id, true)` (a do "Aplicar situação"; confere a nova
+  validade e exige Editor em Importação ou admin global). O modal avisa antes; sem Importação,
+  diz quem ativa e não chama. Falha na ativação não desfaz a reativação: o aviso sai em amarelo.
 - Cadastro do edital e do cronograma; importa cronograma e quadro de vagas do PDF de anexos.
 - **Vagas ligadas ao quadro** (`vinculos-do-quadro.tsx`, `src/lib/editais/vinculos-do-quadro.ts`,
   migration `20261118120000`): no quadro salvo, a fila do vínculo de cada vaga com código com a

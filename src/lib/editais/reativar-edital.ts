@@ -10,8 +10,9 @@
   Não se reativa por aqui: o edital com status excepcional (Cancelado,
   Suspenso, Paralisado: tira-se no formulário), o de cálculo manual (o status
   é o digitado; a etapa nova não o mudaria) e o que o cronograma não dá como
-  concluído. A validade da lista de aprovados segue a regra dela
-  (`validade-do-edital.ts`): lista já inativada continua inativa.
+  concluído. A lista de aprovados vigente que a validade inativou volta a
+  ficar ativa depois de gravar (`definir_lista_aprovados_ativa`, só para quem
+  edita a Importação), se a nova validade permitir (`listaNaReativacao`).
 
   Sem DOM nem banco: a tela é `src/modulos/editais/reativar-edital.tsx`, a
   gravação é `estado.reativarEdital` (`src/modulos/editais/estado.ts`).
@@ -32,11 +33,7 @@ import {
   ANO_MAXIMO,
   dataPlausivel,
 } from "../cronograma/datas-do-cronograma.ts";
-import {
-  editalParaSalvar,
-  formularioDoEdital,
-  periodoDoCronograma,
-} from "./editais-do-nucleo.ts";
+import { editalParaSalvar, formularioDoEdital } from "./editais-do-nucleo.ts";
 import type {
   CronogramaParaSalvar,
   LinhaDeEditalDoNucleo,
@@ -273,19 +270,83 @@ export function editalParaReativar(
   return editalParaSalvar(formulario, unidade, comEtapa, previa, area);
 }
 
+/** A lista de aprovados vigente do edital (de `listar_listas_aprovados`). */
+export interface ListaDoEdital {
+  id: string;
+  ativa: boolean;
+}
+
 /**
- * O aviso da validade, quando a lista de aprovados já venceu pela data de
- * encerramento atual: reativar não a traz de volta. `null` sem prazo, sem
- * validade lida ou ainda vigente.
+ * A lista vigente do edital nas linhas de `listar_listas_aprovados` (uma por
+ * edital: só as vigentes vêm). `null` sem lista; resposta sem forma, também.
  */
-export function avisoDaValidadeNaReativacao(
-  cronograma: CronogramaDaReativacao,
-  agora: Date = new Date(),
-): string | null {
-  const fim = periodoDoCronograma(cronograma.etapas)?.fim ?? null;
-  const prazo = prazoDaValidade(cronograma.validade, fim, agora);
-  if (prazo.tipo !== "vencido") return null;
-  return `A validade da lista de aprovados venceu em ${dataCurta(prazo.vencimento)}. Reativar o edital não reativa a lista.`;
+export function listaVigenteDoEdital(
+  linhas: unknown,
+  editalId: unknown,
+): ListaDoEdital | null {
+  if (!Array.isArray(linhas)) return null;
+  const alvo = txt(editalId);
+  for (const linha of linhas as unknown[]) {
+    const l = (linha ?? {}) as Record<string, unknown>;
+    if (alvo && txt(l.edital_id) === alvo && txt(l.lista_id))
+      return { id: txt(l.lista_id), ativa: l.ativo === true };
+  }
+  return null;
+}
+
+/** O que acontece com a lista de aprovados ao reativar (o aviso do modal). */
+export type ListaNaReativacao =
+  | { tipo: "ativar"; texto: string }
+  | { tipo: "sem-permissao"; texto: string }
+  | { tipo: "nao-lida"; texto: string };
+
+const QUEM_ATIVA =
+  "quem tem nível Editor em Importação e convocação, ou o administrador global, em Lista de aprovados › Listas do edital";
+
+/**
+ * A lista vigente inativa (vencida e inativada por
+ * `FC_INATIVAR_LISTAS_VENCIDAS`) volta a ficar ativa depois de gravar o
+ * cronograma, por `definir_lista_aprovados_ativa` — que exige Editor em
+ * Importação (ou admin global) e confere a validade com a nova data de fim.
+ * `lista`: a vigente, `null` sem lista ou "nao-lida" (sem acesso às listas).
+ * `null` quando não há nada a dizer (sem lista ou lista já ativa).
+ */
+export function listaNaReativacao({
+  lista,
+  podeAtivar,
+  validade,
+  dataFim,
+  agora = new Date(),
+}: {
+  lista: ListaDoEdital | null | "nao-lida";
+  podeAtivar: boolean;
+  validade: ValidadeDoFormulario;
+  dataFim: string;
+  agora?: Date;
+}): ListaNaReativacao | null {
+  if (lista === "nao-lida")
+    return {
+      tipo: "nao-lida",
+      texto: `Se a lista de aprovados estiver inativa, ela continua assim: quem a ativa é ${QUEM_ATIVA}.`,
+    };
+  if (!lista || lista.ativa) return null;
+  if (!podeAtivar)
+    return {
+      tipo: "sem-permissao",
+      texto: `A lista de aprovados está inativa e continua assim: quem a ativa é ${QUEM_ATIVA}.`,
+    };
+  const data = txt(dataFim).slice(0, 10);
+  const prazo = /^\d{4}-\d{2}-\d{2}$/.test(data)
+    ? prazoDaValidade(validade, data, agora)
+    : null;
+  const ate =
+    prazo?.tipo === "vigente"
+      ? `, com validade até ${dataCurta(prazo.vencimento)}`
+      : "";
+  return {
+    tipo: "ativar",
+    texto: `A lista de aprovados, hoje inativa, volta a ficar ativa${ate}.`,
+  };
 }
 
 /** O que vai acontecer, em uma frase, para o modal. */

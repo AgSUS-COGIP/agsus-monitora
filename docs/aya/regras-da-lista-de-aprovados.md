@@ -21,7 +21,7 @@ publicada do resultado final da Classificação; `src/lib/aprovados/publicacao-d
 ## Lista inativa
 
 **perguntas:** o que acontece com uma lista inativa | lista inativa | listas inativas | ativar lista | inativar lista
-**resposta:** Listas inativas continuam consultáveis, mas seus candidatos não podem ser alterados, nem receber anexos. Na aba Aprovados (e no Resumo por cargo e status, em Relatórios), elas ficam no "Histórico", junto com as listas de editais cancelados ou desativados: a vista "Ativos", a que abre, mostra a lista de trabalho (as listas ativas, inclusive as de edital já concluído, que estão em convocação), e os indicadores, os filtros e a exportação contam só a vista escolhida. Ativar ou inativar a lista é de quem pode importar (Editor em Importação, como o grupo Gestor); substituir ou remover o XLSX de uma lista existente é do Administrador em Importação.
+**resposta:** Listas inativas continuam consultáveis, mas seus candidatos não podem ser alterados, nem receber anexos. Na aba Aprovados (e no Resumo por cargo e status, em Relatórios), elas ficam no "Histórico", junto com as listas de editais cancelados ou desativados: a vista "Ativos", a que abre, mostra a lista de trabalho (as listas ativas, inclusive as de edital já concluído, que estão em convocação), e os indicadores, os filtros e a exportação contam só a vista escolhida. Ativar ou inativar a lista é de quem pode importar (Editor em Importação, como o grupo Gestor), em Listas do edital ("Aplicar situação"); a lista que a validade inativou só volta com a validade em dia (prorrogue o edital ou use "Reativar edital", em Editais). Substituir ou remover o XLSX de uma lista existente é do Administrador em Importação.
 **fonte:** src/lib/aprovados/lista-aprovados-rules.ts; src/lib/acessos/access-roles.ts
 
 ## Importar a lista
@@ -170,7 +170,7 @@ publicada do resultado final da Classificação; `src/lib/aprovados/publicacao-d
 ## Cadeado no status do candidato
 
 **perguntas:** cadeado no status | por que aparece um cadeado | mudar status apagado | nao consigo mudar o status | status travado | voltar para sem status | desfazer status do candidato
-**resposta:** Para quem tem Editor em Aprovados, "Mudar status" aparece apagado no "⋯" da linha, com o motivo, quando a lista é inativa ("lista inativa") ou quando o status já foi definido e só o Administrador em Aprovados pode mudá-lo ("status já definido: só o admin altera"), inclusive para voltar a "Sem status". A exceção é o Convocado: o Editor o leva para Contratado, Desistente ou Documentação Rejeitada pelo botão "Mudar status" da linha. Sem Editor em Aprovados, a linha mostra só "Abrir". Peça a mudança a quem tem Administrador em Aprovados.
+**resposta:** Para quem tem Editor em Aprovados, "Mudar status" aparece apagado no "⋯" da linha, com o motivo, quando a lista é inativa ("lista inativa", com a dica "Ative a lista em Listas do edital") ou quando o status já foi definido e só o Administrador em Aprovados pode mudá-lo ("status já definido: só o admin altera"), inclusive para voltar a "Sem status". A exceção é o Convocado: o Editor o leva para Contratado, Desistente ou Documentação Rejeitada pelo botão "Mudar status" da linha. Sem Editor em Aprovados, a linha mostra só "Abrir". Peça a mudança a quem tem Administrador em Aprovados.
 **fonte:** src/modulos/aprovados/partes.tsx (AcaoDeStatus); src/lib/aprovados/lista-aprovados-rules.ts; src/lib/acessos/access-roles.ts
 **abrir:** approved
 

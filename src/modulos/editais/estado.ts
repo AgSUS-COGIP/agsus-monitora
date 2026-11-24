@@ -171,6 +171,7 @@ const RPC_GRAVAR_VINCULO = "gravar_vinculo_do_quadro";
 const RPC_ATUALIZAR_VINCULOS = "atualizar_vinculos_do_quadro";
 const RPC_REINICIAR_TREINAMENTO = "reiniciar_edital_treinamento";
 const RPC_LISTAS_APROVADOS = "listar_listas_aprovados";
+const RPC_ATIVAR_LISTA = "definir_lista_aprovados_ativa";
 export const EVENTO_CRONOGRAMA_SALVO = "agsus:nucleo-cronograma-saved";
 
 const txt = (valor: unknown) => String(valor ?? "").trim();
@@ -652,12 +653,52 @@ export function criarEstadoDoNucleo({
     }
   }
 
+  /** As listas de aprovados vigentes (`listar_listas_aprovados`), sem tratar a forma. */
+  async function lerListasAprovados(): Promise<unknown> {
+    if (!supabase) throw new Error("Supabase indisponível.");
+    await exigirSessao(supabase);
+    const { data, error } = await supabase.rpc(RPC_LISTAS_APROVADOS);
+    if (error) throw error;
+    return data;
+  }
+
+  /*
+    Depois de reativar: a lista vigente inativa do edital volta a ficar
+    ativa. Devolve o complemento do aviso ("" sem lista inativa).
+  */
+  async function ativarListaInativa(
+    editalId: unknown,
+    vigente: (
+      linhas: unknown,
+      id: unknown,
+    ) => { id: string; ativa: boolean } | null,
+  ): Promise<string> {
+    try {
+      const lista = vigente(await lerListasAprovados(), editalId);
+      if (!lista || lista.ativa) return "";
+      const { error } = await supabase!.rpc(RPC_ATIVAR_LISTA, {
+        p_lista_id: lista.id,
+        p_ativo: true,
+      });
+      if (error) throw error;
+      return " A lista de aprovados voltou a ficar ativa.";
+    } catch (erro) {
+      return ` A lista de aprovados não foi ativada: ${(erro as ErroLido)?.message || erro}. Ative a lista em Listas do edital.`;
+    }
+  }
+
   /**
    * Reativa o edital concluído pelo cronograma: relê o cronograma (o que
    * estiver gravado agora), acrescenta a etapa de hoje até a data de fim e
    * grava pela mesma RPC do formulário, com o motivo no histórico. Os avisos
    * do cronograma (data fora do ano do edital, por exemplo) não perguntam: a
    * pessoa já confirmou no modal. Erro de validação não chega ao banco.
+   *
+   * Gravado o cronograma, a lista de aprovados vigente que estiver inativa
+   * (a validade a inativou) volta a ficar ativa, para quem edita a
+   * Importação: `definir_lista_aprovados_ativa`, a mesma do "Aplicar
+   * situação" das Listas do edital, que confere a nova validade. Falhar aí
+   * não desfaz a reativação: avisa.
    */
   async function reativarEdital({
     linha,
@@ -682,6 +723,7 @@ export function criarEstadoDoNucleo({
         editalParaReativar,
         errosDaReativacao,
         etapasComReativacao,
+        listaVigenteDoEdital,
         motivoDaReativacao,
         semErros,
       } = await import("../../lib/editais/reativar-edital.ts");
@@ -714,6 +756,9 @@ export function criarEstadoDoNucleo({
       if (error) throw error;
       if (!(data as ConfirmacaoDoBanco)?.ok)
         throw new Error("O Supabase não confirmou a reativação.");
+      const avisoDaLista = canImportApprovedList(perfil())
+        ? await ativarListaInativa(linha.id, listaVigenteDoEdital)
+        : "";
       publicar({ modal: null });
       document.dispatchEvent(
         new CustomEvent(EVENTO_CRONOGRAMA_SALVO, {
@@ -721,9 +766,10 @@ export function criarEstadoDoNucleo({
         }),
       );
       await aoSalvar();
-      toast(
-        `${txt(linha.edital) || "Edital"} reativado: em andamento até ${dataFim.split("-").reverse().join("/")}.`,
-      );
+      const mensagem = `${txt(linha.edital) || "Edital"} reativado: em andamento até ${dataFim.split("-").reverse().join("/")}.${avisoDaLista}`;
+      if (avisoDaLista.includes("não foi ativada")) toast(mensagem, "warn");
+      else toast(mensagem);
+      if (avisoDaLista) void carregarAprovados();
       return true;
     } catch (erro) {
       toast(
@@ -803,6 +849,7 @@ export function criarEstadoDoNucleo({
     moverEdital,
     reiniciarTreinamento,
     reativarEdital,
+    lerListasAprovados,
     desligar() {
       assinaturaDoAuth?.data?.subscription?.unsubscribe?.();
       document.removeEventListener(EVENTO_CRONOGRAMA_SALVO, invalidarResumo);
