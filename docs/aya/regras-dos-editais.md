@@ -41,6 +41,14 @@ migrations `20260928120000_edital_novo_sem_motivo.sql`, `20260928220000_edital_n
 **fonte:** src/modulos/editais/encerrados-do-cronograma.tsx; src/lib/editais/encerrados-do-cronograma.ts; migration 20261119120000_concluir_editais_com_cronograma_encerrado.sql
 **abrir:** nucleo
 
+## Como reativar um edital
+
+**perguntas:** como reativar um edital | reativar edital | reabrir edital | edital concluido voltar | voltar edital para ativos | tirar edital do historico | convocacao de remanescentes | estender o cronograma | edital concluido por engano | reativar edital cancelado
+**resposta:** Em Editais, na aba Histórico, o ⋯ da linha de um edital concluído tem "Reativar edital", para quem tem nível Editor em Editais ou em Cronograma. O modal pede o motivo (de 10 a 500 caracteres, sem CPF nem e-mail), a nova data de fim (depois de hoje) e o nome da etapa ("Convocação de remanescentes", se ninguém mudar). Ao confirmar, a etapa entra no fim do cronograma, de hoje até a data informada, pelo mesmo salvar do formulário: com o cálculo automático, o status volta a "Em andamento", a data de encerramento do edital passa a ser a nova data e o edital sai do Histórico e volta para Ativos. A reativação fica no histórico do cronograma do edital ("Reativação do edital: " e o motivo), com quem fez e quando. Não se reativa por aqui: o edital cancelado (o cancelamento é status excepcional; tire o status excepcional no formulário do edital, em Editar), o edital com o cálculo manual (o status é o digitado; ligue o cálculo automático ou mude o status no formulário) e o edital sem cronograma. A lista de aprovados segue a regra de validade: se a validade já venceu, o modal avisa, e a lista que ficou inativa continua inativa — reativar o edital não reativa a lista. Para estender uma etapa que já existe em vez de acrescentar outra, use o formulário do edital.
+**fato:** Reativar acrescenta uma etapa de hoje até a nova data de fim; cancelado e cálculo manual se resolvem no formulário; a lista de aprovados vencida não volta.
+**fonte:** src/modulos/editais/reativar-edital.tsx; src/lib/editais/reativar-edital.ts; src/modulos/editais/estado.ts (reativarEdital)
+**abrir:** nucleo
+
 ## Status excepcional
 
 **perguntas:** status excepcional | suspenso | paralisado | edital cancelado | como suspender um edital

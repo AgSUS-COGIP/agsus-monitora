@@ -7,7 +7,11 @@
 
   A separação e a contagem são src/lib/base/ativos-e-historico.ts.
 */
-import { ehEditalEncerrado } from "../visao-geral/indicadores-do-monitoramento.ts";
+import {
+  ehCancelado,
+  ehConcluido,
+  ehEditalEncerrado,
+} from "../visao-geral/indicadores-do-monitoramento.ts";
 import { tomDoStatusDoEdital } from "./editais-do-nucleo.ts";
 
 export interface EditalComSituacao {
@@ -19,6 +23,22 @@ export interface EditalComSituacao {
 /** O edital vai para o Histórico (o contrário de editalVigente)? */
 export const editalDoHistorico = (edital: EditalComSituacao): boolean =>
   edital.ativo === false || ehEditalEncerrado(edital);
+
+/**
+ * "Reativar edital" no "⋯" da linha (Editais, Histórico): "reativar" no
+ * concluído, "cancelado" no cancelado (o modal explica que é no formulário) e
+ * `null` nos outros (ativos e desativados). A regra da reativação, sob
+ * demanda, é `reativar-edital.ts`.
+ */
+export function acaoDeReativarNaLinha(
+  edital:
+    { readonly ativo?: unknown; readonly status?: unknown } | null | undefined,
+): "reativar" | "cancelado" | null {
+  if (!edital || edital.ativo === false) return null;
+  if (ehCancelado(edital)) return "cancelado";
+  if (ehConcluido(edital)) return "reativar";
+  return null;
+}
 
 /** A situação que a contagem mostra: o status, ou "Desativado". */
 export const situacaoDoEdital = (edital: EditalComSituacao): string =>
