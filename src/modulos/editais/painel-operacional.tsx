@@ -22,6 +22,8 @@ export interface PropriedadesDoPainelOperacional {
   estado: EstadoDoPainelOperacional;
   /** O estado com o resumo já recortado pela área. */
   nucleo: Pick<EstadoDoNucleo, "resumo" | "statusDoResumo" | "filtro">;
+  /** O indicador clicado (para a tabela ir à vista em que ele conta). */
+  aoEscolher?: (chave: string) => void;
 }
 
 /*
@@ -51,6 +53,7 @@ const ESQUELETO = indicadoresDoResumo([]);
 
 export function PainelOperacional({
   estado,
+  aoEscolher,
   nucleo,
 }: PropriedadesDoPainelOperacional) {
   const { resumo, statusDoResumo, filtro } = nucleo;
@@ -106,10 +109,12 @@ export function PainelOperacional({
             aoClicar={
               carregando
                 ? undefined
-                : () =>
+                : () => {
                     estado.filtrarPor(
                       filtro === cartao.key ? "todos" : cartao.key,
-                    )
+                    );
+                    aoEscolher?.(cartao.key);
+                  }
             }
           />
         ))}

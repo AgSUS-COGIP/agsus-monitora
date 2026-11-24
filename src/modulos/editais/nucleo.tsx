@@ -31,6 +31,7 @@ import {
   formatarNumero,
   indexarResumo,
   passaNoFiltroOperacional,
+  vistaDoIndicador,
   resumoDasLinhas,
   resumoDoEdital,
   tomDoRisco,
@@ -544,14 +545,19 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
       situacao: situacaoDoEdital,
     });
   /*
-    Os cartões "Editais ativos" e "Editais inativos" do painel levam à vista
-    deles; trocar a vista tira o filtro de situação que a contradiz.
+    Os indicadores contam ativos e inativos: o filtro de um indicador leva a
+    tabela à vista em que ela mostra o mesmo número (vistaDoIndicador:
+    "Editais ativos" e "Editais inativos" às suas abas; os demais a Todos).
+    Vale para o clique no cartão (aoEscolher, também no "Total de editais",
+    que não filtra) e para o filtro pedido por outra tela. Trocar a vista
+    tira o filtro de situação que a contradiz.
   */
   const { aoMudar: mudarVista } = ativosEHistorico;
   useEffect(() => {
-    if (nucleo.filtro === "inativos") mudarVista("historico");
-    else if (nucleo.filtro === "ativos") mudarVista("ativos");
+    if (nucleo.filtro !== "todos") mudarVista(vistaDoIndicador(nucleo.filtro));
   }, [nucleo.filtro, mudarVista]);
+  const aoEscolherIndicador = (chave: string) =>
+    mudarVista(vistaDoIndicador(chave));
   const aoMudarVista = (vista: VistaDaLista) => {
     if (
       (vista === "ativos" && nucleo.filtro === "inativos") ||
@@ -682,7 +688,11 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
         ) : null}
       </TopoDoPainel>
 
-      <PainelOperacional estado={estado} nucleo={nucleo} />
+      <PainelOperacional
+        estado={estado}
+        nucleo={nucleo}
+        aoEscolher={aoEscolherIndicador}
+      />
 
       <TabelaInfinita
         tour="editais-tabela"
@@ -711,6 +721,8 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
           <AtivosEHistorico
             {...ativosEHistorico}
             aoMudar={aoMudarVista}
+            todas={todosOsEditais.length}
+            rotulos={{ todas: "Todos" }}
             rotulo="Editais"
             tomDaSituacao={tomDaSituacaoDoEdital}
             tour="editais-ativos-e-historico"

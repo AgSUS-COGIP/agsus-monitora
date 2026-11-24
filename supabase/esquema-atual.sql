@@ -45588,6 +45588,40 @@ COMMENT ON CONSTRAINT "CK_MENSAGEM_STAPAGADA" ON arquivo."TB_MENSAGEM" IS 'Flag 
 COMMENT ON CONSTRAINT "CK_MENSAGEM_STENCAMINHADA" ON arquivo."TB_MENSAGEM" IS 'Flag S/N.';
 
 --
+-- Name: TB_OBSERVACAO_CRONOGRAMA_ANTES; Type: TABLE; Schema: arquivo; Owner: -
+--
+
+CREATE TABLE arquivo."TB_OBSERVACAO_CRONOGRAMA_ANTES" (
+    "CO_ETAPA" uuid NOT NULL,
+    "DS_OBSERVACAO" text NOT NULL,
+    "DT_COPIA" timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
+-- Name: TABLE "TB_OBSERVACAO_CRONOGRAMA_ANTES"; Type: COMMENT; Schema: arquivo; Owner: -
+--
+
+COMMENT ON TABLE arquivo."TB_OBSERVACAO_CRONOGRAMA_ANTES" IS 'Observações das etapas do cronograma antes de tirar "Codex" do texto (migration 20261124150000). Só para o rollback; fora da Data API.';
+
+--
+-- Name: COLUMN "TB_OBSERVACAO_CRONOGRAMA_ANTES"."CO_ETAPA"; Type: COMMENT; Schema: arquivo; Owner: -
+--
+
+COMMENT ON COLUMN arquivo."TB_OBSERVACAO_CRONOGRAMA_ANTES"."CO_ETAPA" IS 'A etapa (TB_CRONOGRAMA_MONIT_INDIG.id).';
+
+--
+-- Name: COLUMN "TB_OBSERVACAO_CRONOGRAMA_ANTES"."DS_OBSERVACAO"; Type: COMMENT; Schema: arquivo; Owner: -
+--
+
+COMMENT ON COLUMN arquivo."TB_OBSERVACAO_CRONOGRAMA_ANTES"."DS_OBSERVACAO" IS 'A observação como estava antes da troca.';
+
+--
+-- Name: COLUMN "TB_OBSERVACAO_CRONOGRAMA_ANTES"."DT_COPIA"; Type: COMMENT; Schema: arquivo; Owner: -
+--
+
+COMMENT ON COLUMN arquivo."TB_OBSERVACAO_CRONOGRAMA_ANTES"."DT_COPIA" IS 'Quando a cópia foi feita.';
+
+--
 -- Name: TB_RETENCAO_CHAT; Type: TABLE; Schema: arquivo; Owner: -
 --
 
@@ -63124,6 +63158,13 @@ ALTER TABLE ONLY public."TM_ANALISE_CURRICULAR" ALTER COLUMN id SET DEFAULT next
 --
 
 ALTER TABLE ONLY public."TM_DASHBOARD_MONIT_INDIG" ALTER COLUMN id SET DEFAULT nextval('public.monitoramento_indigena_dashboard_staging_id_seq'::regclass);
+
+--
+-- Name: TB_OBSERVACAO_CRONOGRAMA_ANTES PK_OBSERVACAO_CRONOGRAMA_ANTES; Type: CONSTRAINT; Schema: arquivo; Owner: -
+--
+
+ALTER TABLE ONLY arquivo."TB_OBSERVACAO_CRONOGRAMA_ANTES"
+    ADD CONSTRAINT "PK_OBSERVACAO_CRONOGRAMA_ANTES" PRIMARY KEY ("CO_ETAPA");
 
 --
 -- Name: RL_CONVERSA_PARTICIPANTE PK_RL_CONVERSA_PARTICIPANTE; Type: CONSTRAINT; Schema: arquivo; Owner: -
