@@ -81,7 +81,8 @@ Navegador de mês: `NavegadorDeMes` — ‹ anterior, › próximo (só ícone, 
 
 Ativos e Histórico: `AtivosEHistorico` + `usarAtivosEHistorico(itens, { chave, ehHistorico,
 situacao })` deixam a lista de trabalho só com o que está em curso e o resto a um clique, com a
-contagem no rótulo ("Ativos 12", "Histórico 30") e por situação ("Em andamento 12 · Suspenso 1",
+contagem no rótulo ("Ativos 12", "Histórico 30"; com `todas`, a terceira opção, e `rotulos` para
+outros nomes, como "Listas ativas" e "Inativas" na Lista de aprovados) e por situação ("Em andamento 12 · Suspenso 1",
 selos com ponto: a cor só complementa). A vista volta no F5 (sessão). Lógica em
 `src/lib/base/ativos-e-historico.ts`; a regra dos editais (concluído, cancelado ou desativado vai
 para o Histórico) em `src/lib/editais/editais-ativos.ts`. Usado em Editais, nas entradas da
@@ -107,13 +108,14 @@ rodapé da lista (`TabelaDaLista` `exportacao`, ao lado de "Mostrando N de M") o
 partir do mesmo retrato (título, colunas e linhas); `baixarArquivo` entrega.
 
 O cabeçalho do app (`header.top`, `src/app/casca/topo.tsx` e `topo.css`) é uma linha só: à
-esquerda o ☰ e a marca (só com a barra em gaveta, até 900px), a área e, fora das telas das áreas, o
-título; no meio o campo da busca global; à direita o sininho do resumo do dia, a Aya e a foto com o
-menu da conta (nome, e-mail, perfil, Pessoas online, Atualizar dados, Tela cheia, no painel do
-Popover). Toda ação é `.btn.ghost.ui-botao-icone.topo-acao`, com a mesma caixa (`--topo-acao`:
-40px no mouse, 44px no toque). No celular (até 640px) ficam só o ☰, a marca, o sininho e a foto.
-Nas telas das áreas o título é o da tela (`CabecalhoDaTela`) e o do cabeçalho fica só para o leitor
-de tela (`data-compacto`). Embaixo do cabeçalho da tela, numa linha, `etapas` recebe a faixa das
+esquerda o ☰ e a marca (só com a barra em gaveta, até 900px) e, fora das telas das áreas, o título;
+no meio o campo da busca global; à direita o sininho do resumo do dia e a foto com o menu da conta
+(nome, e-mail, perfil, Pessoas online, Atualizar dados, Tela cheia, no painel do Popover). Toda ação
+é `.btn.ghost.ui-botao-icone.topo-acao`, com a mesma caixa (`--topo-acao`: 40px no mouse, 44px no
+toque). No celular (até 640px) ficam só o ☰, a marca, o sininho e a foto. Nas telas das áreas o
+título é o da tela (`CabecalhoDaTela`) e o do cabeçalho fica só para o leitor de tela
+(`data-compacto`); acima de 900px a esquerda fica vazia e a busca abre a linha. Nada se repete no
+cabeçalho: a área já está no título da tela e no seletor da barra, e a Aya tem a arara. Embaixo do cabeçalho da tela, numa linha, `etapas` recebe a faixa das
 etapas do edital ([[modulo-pagina-do-edital]], "Fluxo entre as etapas").
 
 Ações do topo da tela: abaixo de 768px, só a principal fica à vista; as outras vão para "Mais

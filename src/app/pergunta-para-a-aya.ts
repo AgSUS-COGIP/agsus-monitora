@@ -28,20 +28,7 @@ export function perguntarParaAAya(
   for (const ouvinte of ouvintes) ouvinte();
 }
 
-/**
-  Só abre a Aya, sem pergunta: o botão da Aya no cabeçalho
-  (src/app/casca/topo.tsx). Ela pega o pedido como uma pergunta vazia.
-*/
-export function abrirAAya(agora: number = Date.now()): void {
-  pedido = { pergunta: "", em: agora };
-  versao += 1;
-  for (const ouvinte of ouvintes) ouvinte();
-}
-
-/**
-  A pergunta pendente (e ela some): `""` quando o pedido é só abrir, `null`
-  se não há pedido ou passou da validade.
-*/
+/** A pergunta pendente (e ela some), ou `null` se não há ou passou da validade. */
 export function consumirPerguntaParaAAya(
   agora: number = Date.now(),
 ): string | null {
@@ -57,17 +44,14 @@ function assinar(ouvinte: () => void) {
 }
 const obterVersao = () => versao;
 
-/**
-  Na Aya: a cada pedido novo (ou o pendente ao montar), `responder(pergunta)`
-  uma vez; `""` é só abrir.
-*/
+/** Na Aya: a cada pergunta nova (ou a pendente ao montar), `responder(pergunta)` uma vez. */
 export function usarPerguntaParaAAya(
   responder: (pergunta: string) => void,
 ): void {
   const atual = useSyncExternalStore(assinar, obterVersao, obterVersao);
   useEffect(() => {
     const pergunta = consumirPerguntaParaAAya();
-    if (pergunta !== null) responder(pergunta);
+    if (pergunta) responder(pergunta);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `responder` muda a cada desenho; só a pergunta nova dispara.
   }, [atual]);
 }

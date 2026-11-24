@@ -4387,7 +4387,9 @@ bloco("modulos/acessos", () => {
       vi.useFakeTimers();
       try {
         await digitar(
-          document.querySelector('.acessos-busca input[type="search"]'),
+          document.querySelector(
+            '.acessos-filtros .ui-barra-busca input[type="search"]',
+          ),
           "caio",
         );
         await act(async () => vi.advanceTimersByTime(350));

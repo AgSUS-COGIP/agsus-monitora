@@ -10,7 +10,7 @@ import {
   editalEscolhido,
   sufixoDeTreinamento,
 } from "../../lib/editais/edital-de-treinamento.ts";
-import { Aviso } from "../../ui/index.ts";
+import { Aviso, Campo } from "../../ui/index.ts";
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import {
   contarPorSituacao,
@@ -115,8 +115,7 @@ export function usarSeletorDoEdital({
       aria-label="Edital"
       data-tour="entrevistas-conduzir-edital"
     >
-      <label className="entrevistas-seletor-campo">
-        <span className="entrevistas-seletor-rotulo">Edital</span>
+      <Campo rotulo="Edital">
         <select
           id="entrevistasEdital"
           data-tour="entrevistas-conduzir-seletor-edital"
@@ -173,7 +172,7 @@ export function usarSeletorDoEdital({
             </optgroup>
           ) : null}
         </select>
-      </label>
+      </Campo>
       <SeloDeTreinamento edital={escolhido} className={undefined} />
       {e.editalId && e.previsao && !e.carregandoEdital ? (
         <span
@@ -233,8 +232,7 @@ export function usarSeletorDoEdital({
               });
           }}
         >
-          <label>
-            Etapa de entrevista
+          <Campo rotulo="Etapa de entrevista">
             <select
               value={situacao}
               onChange={(ev) => setSituacao(ev.target.value as typeof situacao)}
@@ -243,9 +241,8 @@ export function usarSeletorDoEdital({
               <option value="PREVISTA">Prevista no edital</option>
               <option value="NAO_PREVISTA">Não prevista no edital</option>
             </select>
-          </label>
-          <label>
-            Justificativa (conferir o edital oficial)
+          </Campo>
+          <Campo rotulo="Justificativa (conferir o edital oficial)">
             <textarea
               value={motivo}
               onChange={(ev) => setMotivo(ev.target.value)}
@@ -253,7 +250,7 @@ export function usarSeletorDoEdital({
               maxLength={500}
               required
             />
-          </label>
+          </Campo>
           <button
             type="submit"
             className="btn primary small"

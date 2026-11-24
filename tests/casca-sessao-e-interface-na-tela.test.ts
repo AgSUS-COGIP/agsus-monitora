@@ -253,7 +253,6 @@ import {
   EVENTO_ABRIR_A_BUSCA,
   EVENTO_ESCOLHA_DA_BUSCA,
 } from "../src/lib/navegacao/busca-global.ts";
-import { consumirPerguntaParaAAya } from "../src/app/pergunta-para-a-aya.ts";
 import { consumirPedidoDeFiltro } from "../src/app/pedido-de-filtro.ts";
 import { abrirTelaDoEdital } from "../src/app/abrir-tela-do-edital.ts";
 import { etapaDoFluxo } from "../src/lib/navegacao/fluxo-das-etapas.ts";
@@ -830,15 +829,14 @@ bloco("app/casca", () => {
       ).toBe(false);
     });
 
-    it("à esquerda a área, no meio a busca, à direita a Aya e a conta, com a mesma caixa", () => {
+    it("sem nada repetido: nem a área (está no título da tela) nem a Aya (está na arara)", () => {
       const topo = topoNa("dashboard");
       expect(topo.querySelector(".title-row .topo-marca")).not.toBeNull();
       expect(topo.children[1]?.classList).toContain("topo-busca");
+      expect(topo.querySelector(".topo-area")).toBeNull();
+      expect(topo.querySelector('[aria-label="Abrir a Aya"]')).toBeNull();
       const acoes = [...topo.querySelectorAll(".actions > *")];
-      expect(acoes.map((a) => a.className)).toEqual([
-        "btn ghost ui-botao-icone topo-acao topo-aya",
-        "top-user-menu",
-      ]);
+      expect(acoes.map((a) => a.className)).toEqual(["top-user-menu"]);
       expect(topo.querySelector("#topUserMenu > summary")?.classList).toContain(
         "topo-acao",
       );
@@ -853,7 +851,7 @@ bloco("app/casca", () => {
       );
     });
 
-    it("o campo de busca abre a busca global, e o botão da Aya pede a Aya", () => {
+    it("o campo de busca abre a busca global", () => {
       const topo = topoNa("dashboard");
       const pedidos: string[] = [];
       const ouvir = () => pedidos.push("busca");
@@ -863,17 +861,23 @@ bloco("app/casca", () => {
       );
       document.removeEventListener(EVENTO_ABRIR_A_BUSCA, ouvir);
       expect(pedidos).toEqual(["busca"]);
-      act(() => definido(topo.querySelector<HTMLElement>(".topo-aya")).click());
-      expect(consumirPerguntaParaAAya()).toBe("");
-      expect(consumirPerguntaParaAAya()).toBeNull();
     });
 
-    it("no celular ficam o ☰, a marca, o sininho e a foto; a busca, a Aya e a área saem", () => {
+    it("nas telas das áreas, acima de 900px, a busca abre a linha", () => {
+      const css = readFileSync("src/app/casca/topo.css", "utf8");
+      const largo = css.slice(css.indexOf("@media (min-width: 901px)"));
+      expect(largo).toMatch(
+        /\.top\[data-compacto\] \.title-row \{\s*display: contents;/,
+      );
+      expect(largo).toMatch(
+        /\.top\[data-compacto\] \.topo-busca \{\s*justify-self: start;/,
+      );
+    });
+
+    it("no celular ficam o ☰, a marca, o sininho e a foto; a busca sai", () => {
       const css = readFileSync("src/app/casca/topo.css", "utf8");
       const celular = css.slice(css.indexOf("@media (max-width: 640px)"));
-      expect(celular).toMatch(
-        /\.top \.topo-busca,\s*\.top \.topo-aya,\s*\.topo-area \{\s*display: none;/,
-      );
+      expect(celular).toMatch(/\.top \.topo-busca \{\s*display: none;/);
       expect(css).toMatch(
         /@media \(max-width: 900px\)[\s\S]*?\.topo-marca \{\s*display: inline-flex;/,
       );

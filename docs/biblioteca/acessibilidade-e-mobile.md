@@ -72,9 +72,11 @@ tocada.
 | Tabelas            | completas              | rolagem horizontal, 1ª coluna fixa        | rolagem horizontal ou lista de itens |
 | Modais e gavetas   | centralizado / 480px   | centralizado / 480px                      | tela cheia ou folha inferior         |
 
-- Toque (`pointer: coarse`): controles com no mínimo 44 × 44px. Nas telas de `src/ui/`, a regra
-  está no fim de `ui.css` (botões, segmentados, chips, busca e selects); os controles do mapa,
-  em `map-base-layer-switcher.css` e `indigenous-territories-layer.css`.
+- Toque (`pointer: coarse`): controles com no mínimo 44 × 44px, em qualquer tela (React ou
+  legado). A regra está no fim de `ui.css` (botões, botão só com ícone, abas, segmentados, chips,
+  campos, busca e selects); a caixa de marcar tem o rótulo em volta como alvo; os controles do
+  mapa, em `map-base-layer-switcher.css` e `indigenous-territories-layer.css`. A trava está em
+  `tests/auditoria-visual.spec.js` (nenhum alvo < 44px a 375px).
 - Sem rolagem horizontal da página em 320px de largura e com zoom de 200% (WCAG 1.4.10); tabelas e
   gráficos rolam dentro do próprio contêiner. Nunca desabilitar o zoom.
 

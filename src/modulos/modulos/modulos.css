@@ -113,6 +113,10 @@
   font-size: var(--text-body-sm);
   cursor: pointer;
 }
+.modulos-beta input,
+.modulos-comemoracoes input {
+  margin: 0;
+}
 
 /* Mensagem e previsão, quando em manutenção. */
 .modulos-manutencao {

@@ -1126,7 +1126,7 @@ bloco("componentes/lista-aprovados", () => {
         linha.querySelector(".approved-name strong")?.textContent === nome,
     );
   // Ativos e Histórico: o controle acima dos filtros.
-  const vistaDosAprovados = (valor: "ativos" | "historico") =>
+  const vistaDosAprovados = (valor: "ativos" | "historico" | "todas") =>
     achar(`[data-tour="aprovados-ativos-e-historico"] [data-valor="${valor}"]`);
   const verHistorico = () => clicar(vistaDosAprovados("historico"));
   /*
@@ -3045,8 +3045,9 @@ bloco("componentes/lista-aprovados", () => {
   describe("Ativos e Histórico", () => {
     it("Ativos é a lista de trabalho; o Histórico tem a lista inativa, a um clique", async () => {
       await montar();
-      expect(vistaDosAprovados("ativos").textContent).toBe("Ativos1");
-      expect(vistaDosAprovados("historico").textContent).toBe("Histórico1");
+      expect(vistaDosAprovados("ativos").textContent).toBe("Listas ativas1");
+      expect(vistaDosAprovados("historico").textContent).toBe("Inativas1");
+      expect(vistaDosAprovados("todas").textContent).toBe("Todas2");
       expect(vistaDosAprovados("ativos").getAttribute("aria-checked")).toBe(
         "true",
       );
@@ -3090,6 +3091,55 @@ bloco("componentes/lista-aprovados", () => {
         achar('[data-tour="aprovados-ativos-e-historico"] .ui-ativos-situacoes')
           .textContent,
       ).toContain("Cancelado");
+    });
+
+    it("Todas junta as duas listas, com os indicadores do recorte; o recorte vai para o endereço", async () => {
+      history.replaceState(null, "", "/saude-indigena/aprovados");
+      try {
+        await montar();
+        await clicar(vistaDosAprovados("todas"));
+        expect(vistaDosAprovados("todas").getAttribute("aria-checked")).toBe(
+          "true",
+        );
+        expect(nomes().sort()).toEqual([
+          "Ana Ribeiro",
+          "Bruno Lima",
+          "Carla Souza",
+          "Diego Alves",
+        ]);
+        expect($("approvedKpiTotal").textContent).toBe("4");
+        expect(opcoesDoFiltro("approvedFilterEdital")).toEqual([
+          "04/2025 · CASAI São Paulo",
+          "03/2025 · DSEI Manaus",
+        ]);
+        expect(location.search).toBe("?listas=todas");
+        await clicar(vistaDosAprovados("historico"));
+        expect(location.search).toBe("?listas=inativas");
+        await clicar(vistaDosAprovados("ativos"));
+        expect(location.search).toBe("");
+      } finally {
+        history.replaceState(null, "", "/");
+      }
+    });
+
+    it("o link com ?listas=inativas abre nas inativas", async () => {
+      history.replaceState(
+        null,
+        "",
+        "/saude-indigena/aprovados?listas=inativas",
+      );
+      try {
+        await montar();
+        await vi.waitFor(() =>
+          expect(
+            vistaDosAprovados("historico").getAttribute("aria-checked"),
+          ).toBe("true"),
+        );
+        expect(nomes()).toEqual(["Diego Alves"]);
+        expect($("approvedKpiTotal").textContent).toBe("1");
+      } finally {
+        history.replaceState(null, "", "/");
+      }
     });
 
     it("o pedido de um edital do Histórico (faixa das etapas, Visão geral) abre o Histórico nele", async () => {

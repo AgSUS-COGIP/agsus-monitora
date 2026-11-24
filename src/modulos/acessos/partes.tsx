@@ -54,7 +54,7 @@ export function ListaMestre({
   return (
     <nav className="acessos-mestre" aria-label={rotulo}>
       <div className="acessos-mestre-topo">
-        <label className="acessos-busca">
+        <label className="ui-barra-busca">
           <Icone nome="search" tamanho={16} />
           <span className="sr-only">
             Pesquisar {rotulo.toLocaleLowerCase("pt-BR")}

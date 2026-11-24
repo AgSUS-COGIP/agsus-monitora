@@ -33,6 +33,7 @@ import { rotuloDoNivel } from "../../lib/acessos/permissoes-recursos.ts";
 import {
   Aviso,
   BotaoDeAcao,
+  Campo,
   classes,
   LinhasEsqueleto,
   Segmentado,
@@ -480,7 +481,7 @@ function CampoDeBusca({
   aoMudar: (valor: string) => void;
 }) {
   return (
-    <label className="acessos-busca">
+    <label className="ui-barra-busca">
       <Icone nome="search" tamanho={16} />
       <span className="sr-only">Pesquisar pessoas</span>
       <input
@@ -539,41 +540,43 @@ function Ativos({
     <>
       <div className="acessos-filtros" data-tour="acessos-filtros">
         {campoDeBusca}
-        <select
-          aria-label="Filtrar por grupo"
-          value={atual.filtroGrupo}
-          onChange={(e) =>
-            void estado.carregarMatriz({
-              filtroGrupo: e.target.value,
-              offset: 0,
-            })
-          }
-        >
-          <option value="">Todos os grupos</option>
-          {(matriz?.grupos || []).map((g) => (
-            <option key={g.codigo} value={g.codigo}>
-              {g.nome}
-            </option>
-          ))}
-        </select>
-        {comCoordenacao ? (
+        <Campo rotulo="Grupo">
           <select
-            aria-label="Filtrar por coordenação"
-            value={atual.filtroCoordenacao}
+            value={atual.filtroGrupo}
             onChange={(e) =>
               void estado.carregarMatriz({
-                filtroCoordenacao: e.target.value,
+                filtroGrupo: e.target.value,
                 offset: 0,
               })
             }
           >
-            <option value="">Todas as coordenações</option>
-            <option value="__sem__">Sem coordenação</option>
-            <OpcoesDeCoordenacao
-              coordenacoes={matriz?.coordenacoes || []}
-              areas={matriz?.areas || []}
-            />
+            <option value="">Todos os grupos</option>
+            {(matriz?.grupos || []).map((g) => (
+              <option key={g.codigo} value={g.codigo}>
+                {g.nome}
+              </option>
+            ))}
           </select>
+        </Campo>
+        {comCoordenacao ? (
+          <Campo rotulo="Coordenação">
+            <select
+              value={atual.filtroCoordenacao}
+              onChange={(e) =>
+                void estado.carregarMatriz({
+                  filtroCoordenacao: e.target.value,
+                  offset: 0,
+                })
+              }
+            >
+              <option value="">Todas as coordenações</option>
+              <option value="__sem__">Sem coordenação</option>
+              <OpcoesDeCoordenacao
+                coordenacoes={matriz?.coordenacoes || []}
+                areas={matriz?.areas || []}
+              />
+            </select>
+          </Campo>
         ) : null}
         {filtrando ? (
           <button

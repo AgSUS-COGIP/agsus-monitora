@@ -8,6 +8,8 @@ import type {
 } from "./tipos-do-estado.ts";
 import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
 import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
+import { usarLojaNaUrl } from "../../app/usar-filtros-na-url.ts";
+import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
 import { filtrosDosAprovados } from "../../lib/aya/filtro-da-aya.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import {
@@ -299,6 +301,32 @@ function ModalAberto({
 /* Sem a peça das pendências (testes antigos, uso avulso): uma vazia, sem banco. */
 const PENDENCIAS_SEM_BANCO = criarEstadoDasPendencias();
 
+/*
+  O recorte das listas no endereço (?listas=inativas, ?listas=todas; sem o
+  parâmetro, as ativas): o link copiado abre no mesmo recorte.
+*/
+const LISTAS_NA_URL: Readonly<Record<VistaDaLista, string>> = Object.freeze({
+  ativos: "ativas",
+  historico: "inativas",
+  todas: "todas",
+});
+/* Como no painel de Análises (Ativo, Inativo, Todos), com o nome das listas. */
+const ROTULOS_DAS_LISTAS = Object.freeze({
+  ativos: "Listas ativas",
+  historico: "Inativas",
+  todas: "Todas",
+});
+const vistaDaUrl = (valor: string): VistaDaLista =>
+  (Object.keys(LISTAS_NA_URL) as VistaDaLista[]).find(
+    (vista) => LISTAS_NA_URL[vista] === valor,
+  ) ?? "ativos";
+const RECORTE_NA_URL: EsquemaDosFiltros<"listas"> = Object.freeze({
+  listas: {
+    padrao: "ativas",
+    aceita: (valor: string) => Object.values(LISTAS_NA_URL).includes(valor),
+  },
+});
+
 export function ListaAprovados({
   estado,
   pendencias = PENDENCIAS_SEM_BANCO,
@@ -384,11 +412,20 @@ export function ListaAprovados({
   }
 
   // Trocar de vista recomeça os filtros e a busca.
-  function mudarVista(nova: VistaDaLista) {
+  function aplicarVista(nova: VistaDaLista) {
     if (nova === vista) return;
     recorte.mudarVista(nova);
     setBusca("");
   }
+  // A vista no endereço: o link abre no recorte; voltar/avançar o devolve.
+  const mudarNaUrl = usarLojaNaUrl(
+    RECORTE_NA_URL,
+    { listas: LISTAS_NA_URL[vista] },
+    (valores) => aplicarVista(vistaDaUrl(valores.listas ?? "")),
+    { tela: "approved", pronta: carregado },
+  );
+  const mudarVista = (nova: VistaDaLista) =>
+    mudarNaUrl({ listas: LISTAS_NA_URL[nova] });
 
   /*
     Avisos que viraram pendências abrem a aba Pendências no edital;
@@ -519,10 +556,12 @@ export function ListaAprovados({
         <AtivosEHistorico
           vista={vista}
           aoMudar={mudarVista}
-          ativos={separados.ativos.editais}
-          historico={separados.historico.editais}
+          ativos={separados.ativos.listas.length}
+          historico={separados.historico.listas.length}
+          todas={separados.todas.listas.length}
+          rotulos={ROTULOS_DAS_LISTAS}
           situacoes={separados[vista].situacoes}
-          rotulo="Editais da lista de aprovados"
+          rotulo="Listas de aprovados"
           tomDaSituacao={tomDaSituacaoDoEdital}
           className="aprovados-ativos-e-historico"
           tour="aprovados-ativos-e-historico"

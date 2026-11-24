@@ -1325,8 +1325,7 @@
   font-weight: var(--font-weight-medium);
 }
 
-.comemoracoes-efeito:focus-visible,
-.comemoracoes-chip:focus-within {
+.comemoracoes-efeito:focus-visible {
   outline: 2px solid var(--brand-primary);
   outline-offset: 2px;
 }
@@ -1405,7 +1404,7 @@
   padding: var(--space-2) var(--space-3);
 }
 
-.comemoracoes-marco[data-ligado="false"] .comemoracoes-chip,
+.comemoracoes-marco[data-ligado="false"] .comemoracoes-marco__linha > .ui-campo,
 .comemoracoes-marco[data-ligado="false"] .comemoracoes-intensidade {
   opacity: 0.45;
 }
@@ -1435,33 +1434,6 @@
 .comemoracoes-chave small {
   color: var(--text-secondary);
   font-size: var(--text-caption);
-}
-
-/* O chip do efeito: ícone + select sem moldura. */
-.comemoracoes-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: 0 var(--space-2);
-  border-radius: var(--radius-full);
-  background: var(--state-info-soft);
-  color: var(--brand-primary);
-}
-
-.comemoracoes-chip select {
-  min-height: 28px;
-  padding: 0 var(--space-1);
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-size: var(--text-body-sm);
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-}
-
-.comemoracoes-chip select:focus {
-  outline: none;
 }
 
 .comemoracoes-intensidade .ui-segmentado-opcao {
@@ -1496,6 +1468,7 @@
 }
 
 .comemoracoes-caixa input {
+  margin: 0;
   accent-color: var(--brand-primary);
 }
 
@@ -1529,7 +1502,7 @@
   .comemoracoes-chave {
     grid-area: chave;
   }
-  .comemoracoes-chip {
+  .comemoracoes-marco__linha > .ui-campo {
     grid-area: chip;
     justify-self: start;
     max-width: 100%;
