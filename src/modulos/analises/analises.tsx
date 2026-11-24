@@ -368,6 +368,8 @@ function TelaDaArea({
       ),
     );
   const recarregar = () => void estado.carregar(area);
+  const semDados =
+    !carregado && Boolean(e.erroAoCarregar || e.semSessao || e.semAcesso);
   const aberto = e.gaveta ? linhas.find((l) => l.__chave === e.gaveta) : null;
 
   return (
@@ -389,67 +391,77 @@ function TelaDaArea({
 
       <AvisoDaTela e={e} demora={demora} aoTentarDeNovo={recarregar} />
 
-      <Filtros
-        escopo={escopo}
-        aoEscopo={(valor) => void estado.trocarEscopo(valor)}
-        filtros={filtros}
-        opcoes={opcoes}
-        busca={buscaDigitada}
-        aoBuscar={buscar}
-        aoMudar={mudarFiltro}
-        aoLimpar={limparTudo}
-        podeLimpar={podeLimpar}
-        carregado={carregado}
-        comMunicipio={temMunicipio(linhas, area)}
-        periodo={periodo}
-        aoPeriodo={setPeriodo}
-        chips={chips}
-      />
-      <Indicadores kpis={kpis} carregado={carregado} kpi={kpi} aoKpi={setKpi} />
-      <RitmoDaAnalise
-        editais={e.ritmo}
-        linhas={e.carregado ? e.linhas : null}
-        conferidoEm={e.conferidoEm}
-      />
-      <LinhaDoRecorte
-        texto={descricaoDoRecorte({
-          escopo,
-          filtros,
-          kpi,
-          responsavel,
-          periodo,
-        })}
-        buscaNaPagina={filtros.busca}
-      >
-        {comData ? (
-          <ChipsDeFiltro>
-            <ChipDeFiltro rotulo="Data" aoTirar={tirarData}>
-              {rotuloDoPeriodo(periodo)}
-            </ChipDeFiltro>
-          </ChipsDeFiltro>
-        ) : null}
-        {carregado ? <MarcasDoRecorte marcas={marcas} /> : null}
-      </LinhaDoRecorte>
-      <Graficos
-        linhas={recorte}
-        linhasPorData={recorteSemData}
-        pendencias={pendencias}
-        carregado={carregado}
-        responsavel={responsavel}
-        aoResponsavel={setResponsavel}
-        periodo={periodo}
-        aoClicarNoDia={clicarNoDia}
-        escuro={escuro}
-      />
-      <TabelaDeAnalises
-        linhas={recorte}
-        total={linhas.length}
-        carregado={carregado}
-        area={area}
-        busca={buscaDaFila}
-        aoBuscar={setBuscaDaFila}
-        aoAbrir={estado.abrirDetalhe}
-      />
+      {/* Sem dados por erro, sessão ou acesso: o aviso fica no lugar dos blocos. */}
+      {semDados ? null : (
+        <>
+          <Filtros
+            escopo={escopo}
+            aoEscopo={(valor) => void estado.trocarEscopo(valor)}
+            filtros={filtros}
+            opcoes={opcoes}
+            busca={buscaDigitada}
+            aoBuscar={buscar}
+            aoMudar={mudarFiltro}
+            aoLimpar={limparTudo}
+            podeLimpar={podeLimpar}
+            carregado={carregado}
+            comMunicipio={temMunicipio(linhas, area)}
+            periodo={periodo}
+            aoPeriodo={setPeriodo}
+            chips={chips}
+          />
+          <Indicadores
+            kpis={kpis}
+            carregado={carregado}
+            kpi={kpi}
+            aoKpi={setKpi}
+          />
+          <RitmoDaAnalise
+            editais={e.ritmo}
+            linhas={e.carregado ? e.linhas : null}
+            conferidoEm={e.conferidoEm}
+          />
+          <LinhaDoRecorte
+            texto={descricaoDoRecorte({
+              escopo,
+              filtros,
+              kpi,
+              responsavel,
+              periodo,
+            })}
+            buscaNaPagina={filtros.busca}
+          >
+            {comData ? (
+              <ChipsDeFiltro>
+                <ChipDeFiltro rotulo="Data" aoTirar={tirarData}>
+                  {rotuloDoPeriodo(periodo)}
+                </ChipDeFiltro>
+              </ChipsDeFiltro>
+            ) : null}
+            {carregado ? <MarcasDoRecorte marcas={marcas} /> : null}
+          </LinhaDoRecorte>
+          <Graficos
+            linhas={recorte}
+            linhasPorData={recorteSemData}
+            pendencias={pendencias}
+            carregado={carregado}
+            responsavel={responsavel}
+            aoResponsavel={setResponsavel}
+            periodo={periodo}
+            aoClicarNoDia={clicarNoDia}
+            escuro={escuro}
+          />
+          <TabelaDeAnalises
+            linhas={recorte}
+            total={linhas.length}
+            carregado={carregado}
+            area={area}
+            busca={buscaDaFila}
+            aoBuscar={setBuscaDaFila}
+            aoAbrir={estado.abrirDetalhe}
+          />
+        </>
+      )}
 
       {aberto ? (
         <GavetaDaAnalise

@@ -617,7 +617,7 @@ function Ativos({
 
       <div
         className={classes(
-          "acessos-tabela",
+          "ui-tabela-rolagem acessos-tabela",
           !porModulo && "acessos-tabela-simples",
         )}
         data-mobile-table="scroll"

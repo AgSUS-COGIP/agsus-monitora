@@ -1405,17 +1405,22 @@ tr:hover td {
   z-index: var(--z-sticky);
   background: var(--card);
   border-bottom: 1px solid var(--line);
-  padding: 16px 18px;
+  padding: var(--space-4) var(--space-5);
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--space-3);
   align-items: center;
 }
+/* Título do modal (Design System 4.2 e 11.11): h3, 18/26px, peso 600. */
 .modal-head h3 {
   margin: 0;
+  color: var(--text-primary);
+  font-size: var(--text-h3);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-h3);
 }
 .modal-body {
-  padding: 18px;
+  padding: var(--space-5);
 }
 
 body.system-fullscreen-mode .external-frame,

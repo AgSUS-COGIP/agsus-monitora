@@ -276,12 +276,16 @@ bloco("barras-fixas-no-celular", () => {
       expect(bloco(ler("src/ui/ui.css"), ".ui-barra-de-salvar")).toContain(
         "bottom: 0;",
       );
+      // A de Configurações é a mesma `.ui-barra-de-salvar`, sem `bottom` próprio.
       expect(
         bloco(
           ler("src/modulos/configuracoes/configuracoes.css"),
           ".config-barra",
         ),
-      ).toContain("bottom: var(--space-4);");
+      ).not.toContain("bottom:");
+      expect(ler("src/modulos/configuracoes/configuracoes.tsx")).toContain(
+        'className="ui-barra-de-salvar config-barra"',
+      );
       expect(
         bloco(
           ler("src/styles/connectivity-status.css"),

@@ -450,7 +450,7 @@ function Assistente({
               <button
                 key={tipo}
                 type="button"
-                className="comemoracoes-efeito"
+                className="ui-card ui-card-clicavel comemoracoes-efeito"
                 data-tipo={tipo}
                 onClick={() =>
                   mudar({

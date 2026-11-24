@@ -101,34 +101,21 @@
 
 /* ── Barra de salvar (configuracoes.tsx, <BarraDeSalvar>) ─────────────── */
 /*
-  Colada no pé da página (sticky), no fluxo: ocupa o próprio espaço depois
-  das seções, sem reserva no `.config-layout`. O `.config-rodape` não gera
-  caixa, para a barra colar ao longo da página inteira, não só dele.
-  O texto mora em .config-barra__texto: a regra de `span` dele não alcança o
-  ícone, que é um tile centralizado.
+  É a `.ui-barra-de-salvar` de src/ui/ (sticky no pé, no fluxo: ocupa o próprio
+  espaço depois das seções, sem reserva no `.config-layout`). O `.config-rodape`
+  não gera caixa, para a barra colar ao longo da página inteira, não só dele.
+  Aqui, só o que é desta barra: a situação à esquerda, o botão à direita e fora
+  do canto da arara da Aya (--aya-reserva). O texto mora em
+  .config-barra__texto: a regra de `span` dele não alcança o ícone.
 */
 .config-rodape {
   display: contents;
 }
 
 .config-barra {
-  position: sticky;
-  bottom: var(--space-4);
-  z-index: calc(var(--z-header) - 1);
-  display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-4);
-  margin-top: var(--space-6);
-  /* "Salvar alterações" fora do canto da arara da Aya (--aya-reserva). */
-  padding: var(--space-2) calc(var(--space-3) + var(--aya-reserva, 0px))
-    var(--space-2) var(--space-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-xl);
-  background: color-mix(in srgb, var(--surface-card) 96%, transparent);
-  color: var(--text-primary);
-  box-shadow: var(--shadow-overlay);
-  backdrop-filter: blur(12px);
+  padding-right: calc(var(--space-3) + var(--aya-reserva, 0px));
 }
 
 .config-barra__situacao {
@@ -205,17 +192,7 @@
 }
 
 .config-barra__salvar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
   min-width: 154px;
-  min-height: 40px;
-}
-
-.config-barra__salvar:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 /* ── Seções: campos à esquerda, prévia fixa à direita ────────────────── */
@@ -437,6 +414,9 @@
 .previa-inicio__kpis.ui-kpis {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-2);
+}
+.previa-inicio__kpis > :last-child:nth-child(odd) {
+  grid-column: 1 / -1;
 }
 
 /* Tela de acesso: o cartão sobre a arte de fundo */
@@ -1239,14 +1219,10 @@
   outline-offset: 2px;
 }
 
-/* Palco: o destaque do topo. */
+/* Palco: o destaque do topo (um `ui-card`). */
 .comemoracoes-palco {
   display: grid;
   gap: var(--space-3);
-  padding: var(--space-4);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-xl);
-  background: var(--surface-raised);
 }
 
 .comemoracoes-palco__titulo,
@@ -1297,37 +1273,25 @@
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 }
 
+/* Cada efeito (e cada tipo do assistente) é um card clicável de src/ui/. */
 .comemoracoes-efeito {
   display: grid;
   justify-items: center;
   gap: var(--space-1);
   min-height: 64px;
   padding: var(--space-2);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  background: var(--surface-card);
   color: var(--text-secondary);
-  font: inherit;
   font-size: var(--text-caption);
   text-align: center;
-  cursor: pointer;
 }
 
-.comemoracoes-efeito:hover {
-  border-color: var(--brand-primary);
+.comemoracoes-efeito:hover,
+.comemoracoes-efeito[aria-checked="true"] {
   color: var(--text-primary);
 }
 
-.comemoracoes-efeito.is-ativo {
-  border-color: var(--brand-primary);
-  background: var(--state-info-soft);
-  color: var(--brand-primary);
+.comemoracoes-efeito[aria-checked="true"] {
   font-weight: var(--font-weight-medium);
-}
-
-.comemoracoes-efeito:focus-visible {
-  outline: 2px solid var(--brand-primary);
-  outline-offset: 2px;
 }
 
 .comemoracoes-palco__controles {

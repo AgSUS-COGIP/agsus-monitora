@@ -210,8 +210,10 @@ export function AvisoDeContraste({
   if (!avaliacao) return null;
   return (
     <div className="config-contraste ui-campo-largo">
+      {/* A cor que a pessoa configura: exceção à regra de cor por token. */}
       <div
         className="config-contraste__previa"
+        data-cor-configurada=""
         style={{ background: avaliacao.cor, color: avaliacao.corDoTexto }}
       >
         <strong>{DEFAULT_ACCESS_BRANDING.greeting}</strong>
@@ -294,6 +296,7 @@ export function PreviaDoAcesso({ estado }: { estado: EstadoDasConfiguracoes }) {
               ? "previa-acesso__cartao previa-acesso__cartao--vidro"
               : "previa-acesso__cartao"
           }
+          data-cor-configurada=""
           style={
             {
               "--cor-do-cartao": cor,
