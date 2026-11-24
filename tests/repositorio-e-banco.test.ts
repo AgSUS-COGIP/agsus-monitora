@@ -338,6 +338,85 @@ bloco("cronograma-sem-codex-no-banco", () => {
   });
 });
 
+bloco("vagas-imediatas-do-fgv-no-banco", () => {
+  /*
+    A migration 20261124230000 troca as 10.000 vagas imediatas de cada vaga do FGV 2025
+    (e o padrão de 10.000) pelas do quadro do edital, 130 no total. Aplicada em 24/11/2026:
+    o arquivo, como entrou no banco, está em tests/fixtures/sql-do-banco/ (o rollback e o
+    ensaio saíram com ela; a cópia de antes ficou em arquivo."TB_VAGA_IMEDIATA_FGV_ANTES").
+  */
+  const NOME = "20261124230000_vagas_imediatas_do_fgv_pelo_quadro.sql";
+  const migration = () =>
+    readFileSync(`tests/fixtures/sql-do-banco/${NOME}`, "utf8").replace(
+      /\r\n/g,
+      "\n",
+    );
+  const EDITAL = "65f6f52a-615d-4072-a784-fca9e0f34454";
+  const VAGAS = [
+    "ANALISTA DE GESTÃO - AGSUS - ADMINISTRATIVO",
+    "ANALISTA DE GESTÃO - AGSUS - ADVOGADO",
+    "ANALISTA DE GESTÃO - AGSUS - ARQUITETO",
+    "ANALISTA DE GESTÃO - AGSUS - COMUNICAÇÃO SOCIAL",
+    "ANALISTA DE GESTÃO - AGSUS - CONTABILIDADE",
+    "ANALISTA DE GESTÃO - AGSUS - DESIGNER GRÁFICO",
+    "ANALISTA DE GESTÃO - AGSUS - ENFERMEIRO DO TRABALHO",
+    "ANALISTA DE GESTÃO - AGSUS - ENGENHARIA CIVIL",
+    "ANALISTA DE GESTÃO - AGSUS - ENGENHARIA DE SEGURANÇA NO TRABALHO",
+    "ANALISTA DE GESTÃO - AGSUS - ENGENHARIA ELÉTRICA",
+    "ANALISTA DE GESTÃO - AGSUS - MEDICINA DO TRABALHO",
+    "ANALISTA DE GESTÃO - AGSUS - PSICOLOGIA",
+    "ANALISTA DE GESTÃO - AGSUS - SAÚDE PÚBLICA",
+    "ANALISTA DE GESTÃO - AGSUS - TECNOLOGIA DA INFORMAÇÃO",
+    "AUXILIAR DE GESTÃO - AGSUS - AUXILIAR DE GESTÃO",
+  ];
+
+  const banco = moldeDeBanco(async () => {
+    const db = await PGlite.create();
+    await db.exec(`
+      create schema arquivo;
+      create table public."TB_VAGA_IMEDIATA" ("CO_EDITAL" text not null, "CO_VAGA" text not null,
+        "QT_VAGA_IMEDIATA" integer not null default 0, "DT_ATUALIZACAO" timestamptz not null default now(),
+        primary key ("CO_EDITAL", "CO_VAGA"));
+      create table public."TB_CONVOCACAO_EDITAL" ("CO_EDITAL" text primary key,
+        "QT_PADRAO_IMEDIATA" integer not null default 0, "DT_ATUALIZACAO" timestamptz not null default now());
+      insert into public."TB_CONVOCACAO_EDITAL" values ('${EDITAL}', 10000, now()), ('outro', 10000, now());
+      ${VAGAS.map((v) => `insert into public."TB_VAGA_IMEDIATA" values ('${EDITAL}', '${v}', 10000, now());`).join("\n")}
+      insert into public."TB_VAGA_IMEDIATA" values ('outro', 'X', 10000, now());
+    `);
+    return db;
+  });
+
+  async function vagas(db: PGlite, edital: string) {
+    const { rows } = await db.query<{ soma: number; padrao: number }>(
+      `select (select sum("QT_VAGA_IMEDIATA")::int from public."TB_VAGA_IMEDIATA" where "CO_EDITAL" = $1) as soma,
+              (select "QT_PADRAO_IMEDIATA" from public."TB_CONVOCACAO_EDITAL" where "CO_EDITAL" = $1) as padrao`,
+      [edital],
+    );
+    return rows[0];
+  }
+
+  describe("migration 20261124230000: vagas imediatas do FGV pelo quadro", () => {
+    it("o FGV passa a 130 vagas imediatas e padrão 0; outro edital não muda", async () => {
+      const db = await banco();
+      await db.exec(migration());
+      expect(await vagas(db, EDITAL)).toEqual({ soma: 130, padrao: 0 });
+      expect(await vagas(db, "outro")).toEqual({ soma: 10000, padrao: 10000 });
+      const { rows } = await db.query<{ n: number }>(
+        'select count(*)::int as n from arquivo."TB_VAGA_IMEDIATA_FGV_ANTES"',
+      );
+      expect(rows[0]?.n).toBe(15);
+    });
+
+    it("já aplicada (ou mudada pela tela), para na guarda sem gravar", async () => {
+      const db = await banco();
+      await db.exec(migration());
+      await expect(db.exec(migration())).rejects.toThrow(/não é a esperada/);
+      await db.exec("rollback");
+      expect(await vagas(db, EDITAL)).toEqual({ soma: 130, padrao: 0 });
+    });
+  });
+});
+
 bloco("actions-por-sha", () => {
   /*
   Auditoria de 09/11/2026 (QA-01): Action de terceiro referenciada por tag
