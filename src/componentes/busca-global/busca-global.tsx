@@ -6,7 +6,6 @@ import type { ResultadoDaBusca, OpcoesDaBusca } from "./tipos.ts";
 
   O que o legado fazia e continua aqui:
   - Ctrl+K / Cmd+K em qualquer tela abre (só com usuário conectado) e, aberta, fecha.
-    O campo do cabeçalho abre pelo EVENTO_ABRIR_A_BUSCA.
   - Esc e o botão "Esc" fecham (o clique no fundo não, como em todo modal); a rolagem da página trava enquanto está aberta.
   - Ao abrir: campo vazio e com foco, nada listado. Cada letra filtra de novo e
     desmarca a escolha.
@@ -27,7 +26,6 @@ import { useEffect, useId, useRef, useState } from "react";
 import {
   buscarLinhas,
   ehAtalhoDaBusca,
-  EVENTO_ABRIR_A_BUSCA,
   EVENTO_ESCOLHA_DA_BUSCA,
   partesRealcadas,
   proximoIndice,
@@ -215,16 +213,8 @@ export function BuscaGlobal({ estaConectado, aoEscolher }: OpcoesDaBusca) {
       evento.preventDefault();
       setAberta((atual) => (atual ? false : Boolean(estaConectado())));
     }
-    // O campo do cabeçalho só abre (aberta, o modal cobre o campo).
-    function aoPedir() {
-      if (estaConectado()) setAberta(true);
-    }
     document.addEventListener("keydown", aoTeclar);
-    document.addEventListener(EVENTO_ABRIR_A_BUSCA, aoPedir);
-    return () => {
-      document.removeEventListener("keydown", aoTeclar);
-      document.removeEventListener(EVENTO_ABRIR_A_BUSCA, aoPedir);
-    };
+    return () => document.removeEventListener("keydown", aoTeclar);
   }, [estaConectado]);
 
   if (!aberta) return null;

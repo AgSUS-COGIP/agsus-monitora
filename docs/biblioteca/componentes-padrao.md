@@ -108,14 +108,17 @@ rodapé da lista (`TabelaDaLista` `exportacao`, ao lado de "Mostrando N de M") o
 partir do mesmo retrato (título, colunas e linhas); `baixarArquivo` entrega.
 
 O cabeçalho do app (`header.top`, `src/app/casca/topo.tsx` e `topo.css`) é uma linha só: à
-esquerda o ☰ e a marca (só com a barra em gaveta, até 900px) e, fora das telas das áreas, o título;
-no meio o campo da busca global; à direita o sininho do resumo do dia e a foto com o menu da conta
-(nome, e-mail, perfil, Pessoas online, Atualizar dados, Tela cheia, no painel do Popover). Toda ação
-é `.btn.ghost.ui-botao-icone.topo-acao`, com a mesma caixa (`--topo-acao`: 40px no mouse, 44px no
-toque). No celular (até 640px) ficam só o ☰, a marca, o sininho e a foto. Nas telas das áreas o
-título é o da tela (`CabecalhoDaTela`) e o do cabeçalho fica só para o leitor de tela
-(`data-compacto`); acima de 900px a esquerda fica vazia e a busca abre a linha. Nada se repete no
-cabeçalho: a área já está no título da tela e no seletor da barra, e a Aya tem a arara. Embaixo do cabeçalho da tela, numa linha, `etapas` recebe a faixa das
+esquerda o ☰ e a marca (só com a barra em gaveta, até 900px, e fora das telas das áreas) e o nome
+da tela, "● Área › Tela"; à direita o sininho do resumo do dia e a foto com o menu da conta (nome,
+e-mail, perfil, Pessoas online, Atualizar dados, Tela cheia, no painel do Popover). Toda ação é
+`.btn.ghost.ui-botao-icone.topo-acao`, com a mesma caixa (`--topo-acao`: 40px no mouse, 44px no
+toque). No celular (até 640px) ficam o ☰, o nome da tela (a área pequena em cima), o sininho e a
+foto. A busca global abre pelo Ctrl+K. O nome da tela vem do `CabecalhoDaTela`: na tela aberta de
+uma área (`DestinoDoTituloDaTela`, dado por `src/app/telas.tsx`), a trilha e o título vão por
+portal para o cabeçalho do app e o conteúdo começa pelas ações e indicadores; sem ações, o
+cabeçalho da tela nem aparece no conteúdo. Fora disso (Configurações, telas soltas), o nome fica na
+tela. O h1 da página (`#pageTitle`) segue no cabeçalho do app, só para o leitor de tela.
+Embaixo do cabeçalho da tela, numa linha, `etapas` recebe a faixa das
 etapas do edital ([[modulo-pagina-do-edital]], "Fluxo entre as etapas").
 
 Ações do topo da tela: abaixo de 768px, só a principal fica à vista; as outras vão para "Mais

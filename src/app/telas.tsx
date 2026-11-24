@@ -45,8 +45,18 @@ import { criarVisaoGeral } from "../modulos/visao-geral/visao-geral.tsx";
 import { criarNucleo } from "../modulos/editais/nucleo.tsx";
 import { SECOES } from "../modulos/configuracoes/secoes.ts";
 import { ContextoDaPaginaDeConfiguracoes } from "../modulos/configuracoes/pagina.ts";
-import { CabecalhoDaTela } from "../ui/cabecalho-da-tela.tsx";
+import {
+  CabecalhoDaTela,
+  DestinoDoTituloDaTela,
+} from "../ui/cabecalho-da-tela.tsx";
+import type { DestinoDoTitulo } from "../ui/cabecalho-da-tela.tsx";
 import { telaDaRota } from "../lib/navegacao/rotas.ts";
+import { nomeDaArea } from "../lib/navegacao/menu-lateral.ts";
+import {
+  assinarDadosDoMonitoramento,
+  obterDadosDoMonitoramento,
+} from "../componentes/dados-do-monitoramento.ts";
+import { usarDestinoDoTitulo } from "./casca/destino-do-titulo.ts";
 
 /*
   As telas do app como rotas: a navegação (src/app/navegacao.ts) diz qual
@@ -494,20 +504,31 @@ function usarTelasMontadas(view: string, aviso: string) {
     (telaNaHora(tela) || visitadas.has(tela) || telaCriada(tela));
 }
 
-/* As telas com cabeçalho próprio já usam CabecalhoDaTela; as demais recebem o mesmo padrão aqui. */
+/*
+  As telas sem cabeçalho próprio recebem aqui o nome da tela (o da rota). Na
+  tela aberta, ele vai para o cabeçalho do app (DestinoDoTituloDaTela), e o
+  conteúdo começa direto pelas ações e indicadores da tela.
+*/
 function CabecalhoDaPagina({ view }: { view: ViewDeTela }) {
-  const navegacao = usarEstadoDaNavegacao();
   const tela = telaDaRota(view);
   if (!tela || tela.tituloNaTela) return null;
-  const atual = navegacao.view === view;
-  const titulo = atual ? navegacao.titulo || tela.titulo : tela.titulo;
-  return (
-    <CabecalhoDaTela
-      className="ui-cabecalho-da-pagina"
-      trilha=""
-      titulo={titulo}
-      descricao={atual ? navegacao.subtitulo : null}
-    />
+  return <CabecalhoDaTela trilha="" titulo={tela.titulo} />;
+}
+
+const areaAtual = () => obterDadosDoMonitoramento().areaAtual;
+
+/* Onde vai o título da tela aberta: no cabeçalho do app, com a área como trilha. */
+function usarDestinoDaTelaAberta(): DestinoDoTitulo | null {
+  const elemento = usarDestinoDoTitulo();
+  const area = useSyncExternalStore(
+    assinarDadosDoMonitoramento,
+    areaAtual,
+    areaAtual,
+  );
+  const trilhaPadrao = nomeDaArea(area) ?? "";
+  return useMemo(
+    () => (elemento ? { elemento, trilhaPadrao } : null),
+    [elemento, trilhaPadrao],
   );
 }
 
@@ -522,6 +543,7 @@ export function Telas() {
   const montada = (tela: ViewDeTela) => appAberto && montadas(tela);
   const aberta = (tela: string) => view === tela && !aviso;
   const semAcesso = appAberto && aviso === "sem-acesso";
+  const destino = usarDestinoDaTelaAberta();
   return (
     <>
       <FaixaDeManutencao />
@@ -533,10 +555,12 @@ export function Telas() {
             className={classeDaPagina(aberta(tela))}
           >
             {montada(tela) ? (
-              <>
+              <DestinoDoTituloDaTela.Provider
+                value={aberta(tela) && telaDaRota(tela) ? destino : null}
+              >
                 <CabecalhoDaPagina view={tela} />
                 <ConteudoDaTela view={tela} />
-              </>
+              </DestinoDoTituloDaTela.Provider>
             ) : null}
           </section>
         ))}

@@ -61,7 +61,7 @@
 .visao-geral-acoes {
   flex-wrap: wrap;
 }
-/* Celular: as três ações numa linha, divididas por igual, e a hora acima delas. */
+/* Celular: Filtros, Atualizar e "Mais ações" (exportar e Relatórios) numa linha, divididos por igual, e a hora acima. */
 @media (max-width: 640px) {
   .visao-geral-acoes {
     display: grid;
