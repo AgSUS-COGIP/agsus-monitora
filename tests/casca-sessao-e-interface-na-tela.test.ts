@@ -40,6 +40,7 @@ import { DURACAO_MS } from "../src/app/casca/notificacoes.tsx";
 import { Casca } from "../src/app/casca/casca.tsx";
 import { Topo } from "../src/app/casca/topo.tsx";
 import { GavetaDosMeusAcessos } from "../src/app/casca/meus-acessos.tsx";
+import { criarPedidoDeMaisAcesso } from "../src/app/casca/pedido-de-mais-acesso.ts";
 import { ContextoDoApp, type PecasDoApp } from "../src/app/contexto-do-app.ts";
 import {
   ESTADO_INICIAL_DA_NAVEGACAO,
@@ -13771,5 +13772,194 @@ bloco("app/meus-acessos", () => {
       ).click(),
     );
     expect(document.querySelector('[role="dialog"]')).toBeNull();
+  });
+});
+
+bloco("app/pedir-mais-acesso", () => {
+  /* "Pedir mais acesso" na gaveta Meus acessos: o último pedido, o formulário e o cancelamento. */
+  let desenho: { desmontar: () => void } | null = null;
+  afterEach(() => {
+    act(() => desenho?.desmontar());
+    desenho = null;
+    document.body.innerHTML = "";
+  });
+
+  const BIA = {
+    ativo: true,
+    grupo: { codigo: "usuario", nome: "Usuário" },
+    areas: ["sede"],
+    coordenacao: null,
+    permissoes: { dashboard: "leitor", nucleo: "leitor" },
+  } as const;
+  const JUSTIFICATIVA = "Preciso editar o cronograma dos editais da unidade.";
+  type Resposta = { data: unknown; error: { message?: string } | null };
+
+  function montar(
+    perfil: Parameters<typeof GavetaDosMeusAcessos>[0]["perfil"],
+    respostas: Record<string, () => Resposta>,
+    pedir = false,
+  ) {
+    const chamadas: [string, Record<string, unknown> | undefined][] = [];
+    const cliente = {
+      rpc: (nome: string, argumentos?: Record<string, unknown>) => {
+        chamadas.push([nome, argumentos]);
+        return Promise.resolve(
+          respostas[nome]?.() ?? { data: null, error: null },
+        );
+      },
+    };
+    const pedido = criarPedidoDeMaisAcesso({ cliente: () => cliente });
+    document.body.innerHTML = '<div id="raiz"></div>';
+    desenho = desenharNoTeste(
+      definido(document.getElementById("raiz")),
+      createElement(GavetaDosMeusAcessos, {
+        perfil,
+        pedido,
+        pedir,
+        aoFechar: () => {},
+      }),
+      { sincrono: true },
+    );
+    return { chamadas };
+  }
+  const secao = () =>
+    definido(document.querySelector<HTMLElement>('[data-section="pedido"]'));
+  const botao = (texto: string) =>
+    [...document.querySelectorAll<HTMLButtonElement>("button")].find(
+      (b) => b.textContent?.trim() === texto,
+    );
+  const campo = (rotulo: string) => {
+    const label = [...secao().querySelectorAll("label")].find(
+      (l) => l.textContent?.replace("*", "").trim() === rotulo,
+    );
+    return document.getElementById(definido(label).htmlFor);
+  };
+  const OPCOES = () => ({
+    data: { grupos: [{ codigo: "edital_gestor", nome: "Gestor" }] },
+    error: null,
+  });
+
+  it("sem pedido: 'Pedir mais acesso' abre o formulário, que valida e envia o módulo com o nível", async () => {
+    let pedido: unknown = null;
+    const { chamadas } = montar(BIA, {
+      obter_minha_solicitacao_acesso: () => ({ data: pedido, error: null }),
+      listar_opcoes_da_solicitacao_acesso: OPCOES,
+      registrar_solicitacao_acesso: () => {
+        pedido = {
+          tipo: "MODULO",
+          recurso: "calendario",
+          nivel: "editor",
+          status: "pendente",
+          created_at: "2026-11-24T13:00:00Z",
+        };
+        return { data: { ok: true }, error: null };
+      },
+    });
+    await esperar();
+    expect(secao().querySelector("form")).toBeNull();
+    await clicar(botao("Pedir mais acesso"));
+    const tipos = [...secao().querySelectorAll('[role="radio"]')].map((r) =>
+      r.textContent?.trim(),
+    );
+    expect(tipos).toEqual(["Módulo", "Área", "Grupo"]);
+    await clicar(botao("Enviar pedido"));
+    expect(secao().textContent).toContain("Escolha o módulo.");
+    expect(chamadas.some(([n]) => n === "registrar_solicitacao_acesso")).toBe(
+      false,
+    );
+    await escolher(campo("Módulo"), "calendario");
+    const niveis = [...(campo("Nível") as HTMLSelectElement).options].map(
+      (o) => o.textContent,
+    );
+    expect(niveis).toEqual(["Escolha", "Leitor", "Editor", "Administrador"]);
+    await escolher(campo("Nível"), "editor");
+    await digitar(campo("Justificativa"), JUSTIFICATIVA);
+    await clicar(botao("Enviar pedido"));
+    await esperar();
+    expect(
+      chamadas.find(([n]) => n === "registrar_solicitacao_acesso")?.[1],
+    ).toMatchObject({
+      p_tipo: "MODULO",
+      p_recurso: "calendario",
+      p_nivel: "editor",
+      p_justificativa: JUSTIFICATIVA,
+    });
+    expect(secao().querySelector("form")).toBeNull();
+    expect(secao().textContent).toContain("Aguardando aprovação");
+    expect(secao().textContent).toContain("Cronograma: Editor");
+    expect(secao().textContent).toContain("Enviado em 24/11");
+    // Com pedido pendente, não se pede outro: cancela-se.
+    expect(botao("Pedir mais acesso")).toBeUndefined();
+    expect(botao("Cancelar pedido")).toBeDefined();
+  });
+
+  it("pendente se cancela; recusado mostra o motivo e deixa pedir de novo", async () => {
+    let status = "pendente";
+    const { chamadas } = montar(BIA, {
+      obter_minha_solicitacao_acesso: () => ({
+        data: {
+          tipo: "AREA",
+          area: "projetos",
+          status,
+          avaliado_em: "2026-11-25T13:00:00Z",
+          observacao_admin: "Justificativa insuficiente",
+        },
+        error: null,
+      }),
+      listar_opcoes_da_solicitacao_acesso: OPCOES,
+      cancelar_minha_solicitacao_acesso: () => {
+        status = "recusado";
+        return { data: { ok: true }, error: null };
+      },
+    });
+    await esperar();
+    expect(secao().textContent).toContain("Área Projetos");
+    await clicar(botao("Cancelar pedido"));
+    await esperar();
+    expect(chamadas.map(([n]) => n)).toContain(
+      "cancelar_minha_solicitacao_acesso",
+    );
+    expect(secao().textContent).toContain("Recusado");
+    expect(secao().textContent).toContain("Motivo: Justificativa insuficiente");
+    expect(botao("Pedir mais acesso")).toBeDefined();
+  });
+
+  it("'Pedir mais acesso' do menu abre já no formulário; com coordenação, Área não aparece", async () => {
+    montar(
+      {
+        ...BIA,
+        coordenacao: { codigo: "c", nome: "Coordenação", area: "sede" },
+      },
+      {
+        obter_minha_solicitacao_acesso: () => ({ data: null, error: null }),
+        listar_opcoes_da_solicitacao_acesso: OPCOES,
+      },
+      true,
+    );
+    await esperar();
+    expect(secao().querySelector("form")).not.toBeNull();
+    expect(
+      [...secao().querySelectorAll('[role="radio"]')].map((r) =>
+        r.textContent?.trim(),
+      ),
+    ).toEqual(["Módulo", "Grupo"]);
+  });
+
+  it("administrador global não vê a seção; erro na leitura oferece tentar de novo", async () => {
+    montar({ ...BIA, admin_global: true }, {});
+    await esperar();
+    expect(document.querySelector('[data-section="pedido"]')).toBeNull();
+    act(() => desenho?.desmontar());
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    montar(BIA, {
+      obter_minha_solicitacao_acesso: () => ({
+        data: null,
+        error: { message: "falhou" },
+      }),
+    });
+    await esperar();
+    expect(secao().textContent).toContain(
+      "Não foi possível carregar o seu pedido",
+    );
   });
 });

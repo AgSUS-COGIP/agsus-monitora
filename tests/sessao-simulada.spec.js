@@ -349,6 +349,64 @@ test.describe("sessão simulada", () => {
     expect(erros).toEqual([]);
   });
 
+  /* "Pedir mais acesso" (src/app/casca/meus-acessos.tsx), com as RPCs do pedido simuladas. */
+  test('"Pedir mais acesso" no menu da conta abre o formulário, envia o módulo com o nível e mostra o pedido aguardando', async ({
+    page,
+  }) => {
+    let pedido = null;
+    let argumentos = null;
+    const erros = await abrirComSessao(page, {
+      contexto: contextoDaGestora(),
+      rpcs: {
+        obter_minha_solicitacao_acesso: () => ({ json: pedido }),
+        listar_opcoes_da_solicitacao_acesso: {
+          areas: [],
+          unidades: [],
+          coordenacoes: [],
+          grupos: [{ codigo: "coordenador", nome: "Coordenador" }],
+        },
+        registrar_solicitacao_acesso: (rota) => {
+          argumentos = rota.request().postDataJSON();
+          pedido = {
+            id: "p1",
+            tipo: "MODULO",
+            recurso: argumentos.p_recurso,
+            nivel: argumentos.p_nivel,
+            status: "pendente",
+            created_at: "2026-11-24T13:00:00Z",
+          };
+          return { json: { ok: true, status: "pendente" } };
+        },
+      },
+    });
+    await page.goto("/sede/cronograma", { waitUntil: "domcontentloaded" });
+    await expect(titulo(page)).toHaveText("Cronograma");
+
+    await page.locator("#topUserMenu > summary").click();
+    await page.getByRole("button", { name: "Pedir mais acesso" }).click();
+    const gaveta = page.getByRole("dialog", { name: "Meus acessos" });
+    const formulario = gaveta.getByRole("form", { name: "Pedir mais acesso" });
+    await expect(formulario).toBeVisible();
+    await formulario.getByLabel("Módulo").selectOption("aprovados");
+    await formulario.getByLabel("Nível").selectOption("editor");
+    await formulario
+      .getByLabel("Justificativa")
+      .fill("Preciso conferir e editar a lista de aprovados da SEDE.");
+    await formulario.getByRole("button", { name: "Enviar pedido" }).click();
+
+    await expect(gaveta.getByText("Aguardando aprovação")).toBeVisible();
+    await expect(gaveta.getByText("Lista de aprovados: Editor")).toBeVisible();
+    expect(argumentos).toMatchObject({
+      p_tipo: "MODULO",
+      p_recurso: "aprovados",
+      p_nivel: "editor",
+    });
+    await expect(
+      gaveta.getByRole("button", { name: "Cancelar pedido" }),
+    ).toBeVisible();
+    expect(erros).toEqual([]);
+  });
+
   test("sem perfil, vai para a solicitação de acesso e não abre o sistema", async ({
     page,
   }) => {

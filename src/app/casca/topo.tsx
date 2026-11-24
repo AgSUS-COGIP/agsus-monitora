@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { MouseEvent } from "react";
 import { chamarAcaoDaCasca, fecharMenuDaConta } from "./acoes.ts";
-import { GavetaDosMeusAcessosDoApp } from "./meus-acessos.tsx";
+import { GavetaDosMeusAcessosDoApp, usarPerfilDoApp } from "./meus-acessos.tsx";
+import { podePedirMaisAcesso } from "../../lib/acessos/pedido-de-mais-acesso.ts";
 import { usarEstadoDaNavegacao } from "../contexto-do-app.ts";
 import { telaDaRota } from "../../lib/navegacao/rotas.ts";
 import { definirDestinoDoTitulo } from "./destino-do-titulo.ts";
@@ -25,8 +26,8 @@ import "./topo.css";
                    `.topo-tela-destino`) e o título da página em Aviso e
                    Administração;
     à direita   -> o sininho do resumo do dia e a foto com o menu da conta
-                   (Pessoas online, Meus acessos, Atualizar dados, Tela
-                   cheia).
+                   (Pessoas online, Meus acessos, Pedir mais acesso,
+                   Atualizar dados, Tela cheia).
 
   Nada repetido: o nome da tela só aparece aqui (o conteúdo começa pelas
   ações e indicadores), a área só na trilha e no seletor da barra lateral, a
@@ -109,7 +110,9 @@ function aoClicar(
 }
 
 function MenuDaConta() {
-  const [meusAcessos, setMeusAcessos] = useState(false);
+  // "ver" (Meus acessos) ou "pedir" (a mesma gaveta, já no formulário).
+  const [meusAcessos, setMeusAcessos] = useState<"" | "ver" | "pedir">("");
+  const pedir = podePedirMaisAcesso(usarPerfilDoApp());
   return (
     <>
       <details id="topUserMenu" className="top-user-menu">
@@ -148,12 +151,24 @@ function MenuDaConta() {
               type="button"
               onClick={(evento) => {
                 fecharMenuDaConta(evento.currentTarget);
-                setMeusAcessos(true);
+                setMeusAcessos("ver");
               }}
             >
               <i className="fa-solid fa-id-card" aria-hidden="true"></i>{" "}
               <span>Meus acessos</span>
             </button>
+            {pedir ? (
+              <button
+                type="button"
+                onClick={(evento) => {
+                  fecharMenuDaConta(evento.currentTarget);
+                  setMeusAcessos("pedir");
+                }}
+              >
+                <i className="fa-solid fa-paper-plane" aria-hidden="true"></i>{" "}
+                <span>Pedir mais acesso</span>
+              </button>
+            ) : null}
             <button type="button" onClick={aoClicar("acao", "refreshData")}>
               <i className="fa-solid fa-rotate-right" aria-hidden="true"></i>{" "}
               <span id="refreshActionText">Atualizar dados</span>
@@ -170,7 +185,10 @@ function MenuDaConta() {
       </details>
       {/* "Meus acessos": a gaveta, por portal (src/app/casca/meus-acessos.tsx). */}
       {meusAcessos ? (
-        <GavetaDosMeusAcessosDoApp aoFechar={() => setMeusAcessos(false)} />
+        <GavetaDosMeusAcessosDoApp
+          pedir={meusAcessos === "pedir"}
+          aoFechar={() => setMeusAcessos("")}
+        />
       ) : null}
     </>
   );
