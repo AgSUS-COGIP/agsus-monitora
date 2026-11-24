@@ -101,6 +101,12 @@
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
+/* No toque, o item da legenda (o filtro de tipo) tem o alvo de 44px. */
+@media (pointer: coarse) {
+  .cal-legenda-item {
+    min-height: 44px;
+  }
+}
 .cal-legenda-item i {
   width: 10px;
   height: 10px;
@@ -295,15 +301,15 @@
   justify-content: space-between;
   gap: var(--space-2);
 }
-.cal-cabecalho select {
-  max-width: 100%;
-  min-height: 36px;
-  padding: 0 var(--space-2);
-  border: 1px solid var(--border-control);
-  border-radius: var(--radius-md);
-  background: var(--surface-card);
-  color: var(--text-primary);
-  font-size: var(--text-body-sm);
+/* Linha do tempo: título em cima; o Campo do edital e o botão dividem a linha de baixo. */
+.cal-cabecalho-da-linha {
+  align-items: end;
+}
+.cal-cabecalho-da-linha > .ui-titulo {
+  flex-basis: 100%;
+}
+.cal-cabecalho-da-linha > .ui-campo {
+  flex: 1 1 240px;
 }
 .cal-item-esqueleto {
   height: 44px;

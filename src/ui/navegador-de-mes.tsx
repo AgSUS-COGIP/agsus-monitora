@@ -64,7 +64,7 @@ export function NavegadorDeMes({
           id={ids.anterior}
           data-tour={tours.anterior}
           data-acao="mes-anterior"
-          className="btn secondary small"
+          className="btn secondary small icon"
           type="button"
           aria-label={rotuloAnterior}
           title={rotuloAnterior}
@@ -77,7 +77,7 @@ export function NavegadorDeMes({
           id={ids.seguinte}
           data-tour={tours.seguinte}
           data-acao="mes-seguinte"
-          className="btn secondary small"
+          className="btn secondary small icon"
           type="button"
           aria-label={rotuloSeguinte}
           title={rotuloSeguinte}

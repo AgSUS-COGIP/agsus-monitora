@@ -633,22 +633,21 @@ export function CalendarioEditais({
           aria-labelledby="calTimelineTitulo"
         >
           <div
-            className="cal-cabecalho"
+            className="cal-cabecalho cal-cabecalho-da-linha"
             data-tour="cronograma-edital-da-linha-do-tempo"
           >
             <h2 className="ui-titulo" id="calTimelineTitulo">
               Linha do tempo do edital
             </h2>
-            <label className="sr-only" htmlFor="calTimelineEdital">
-              Edital da linha do tempo
-            </label>
-            <Seletor
-              id="calTimelineEdital"
-              vazio="Selecione um edital"
-              opcoes={opcoesDeEdital(editaisVisiveis)}
-              valor={editalDaLinha}
-              aoMudar={setEditalEscolhido}
-            />
+            <Campo rotulo="Edital" idDoControle="calTimelineEdital">
+              <Seletor
+                id="calTimelineEdital"
+                vazio="Selecione um edital"
+                opcoes={opcoesDeEdital(editaisVisiveis)}
+                valor={editalDaLinha}
+                aoMudar={setEditalEscolhido}
+              />
+            </Campo>
             {linhaDoEditalDaLinha ? (
               <button
                 type="button"

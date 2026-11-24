@@ -44,17 +44,16 @@ export interface PedidoDeTeste {
 export type Testar = (pedido: PedidoDeTeste) => void;
 
 /** O ícone (Lucide) de cada efeito: nos botões do palco e nos chips dos marcos. */
-export const ICONES_DOS_EFEITOS: Readonly<Record<Efeito, string>> =
-  Object.freeze({
-    fogos: "sparkles",
-    confete: "party-popper",
-    serpentina: "ribbon",
-    estrelas: "star",
-    coracoes: "heart",
-    baloes: "balloon",
-    aya: "bird",
-    combinado: "wand-sparkles",
-  });
+const ICONES_DOS_EFEITOS: Readonly<Record<Efeito, string>> = Object.freeze({
+  fogos: "sparkles",
+  confete: "party-popper",
+  serpentina: "ribbon",
+  estrelas: "star",
+  coracoes: "heart",
+  baloes: "balloon",
+  aya: "bird",
+  combinado: "wand-sparkles",
+});
 
 export const OPCOES_DE_INTENSIDADE = (
   Object.keys(ROTULOS_DOS_NIVEIS) as Intensidade[]

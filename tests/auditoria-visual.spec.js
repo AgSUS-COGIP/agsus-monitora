@@ -29,10 +29,10 @@ import { rpcsDaAuditoria } from "./fixtures/auditoria-visual/dados.js";
   (scripts/resumir-auditoria-visual.mjs). Só roda com AUDITORIA=1: são ~450
   aberturas de página e o resultado é para ler, não para passar ou falhar.
 
-  Os blocos do fim são travas, ligadas no CI pelo lote 3 do plano de correção
-  (tabelas): nenhuma tela passa de 375 nem de 320px, nenhum alvo de toque
-  dentro de tabela tem menos de 44px, e nenhuma palavra curta da tabela quebra
-  no meio a 1280px.
+  Os blocos do fim são travas, ligadas no CI pelos lotes 3 (tabelas) e 4
+  (alvos de toque) do plano de correção: nenhuma tela passa de 375 nem de
+  320px, nenhum alvo de toque tem menos de 44 × 44px, e nenhuma palavra curta
+  da tabela quebra no meio a 1280px.
   Relatório e plano: docs/_arquivo/auditoria-responsividade-e-harmonia-2026-11-23.md.
 */
 
@@ -318,9 +318,9 @@ test.describe("auditoria visual", () => {
 });
 
 /*
-  As travas do lote 3 do plano (tabelas), no CI: nenhuma tela passa de 375 nem
-  de 320px (WCAG 1.4.10; a tabela rola dentro da própria caixa), e nenhum alvo
-  de toque dentro de tabela tem menos de 44px.
+  As travas dos lotes 3 e 4 do plano, no CI: nenhuma tela passa de 375 nem de
+  320px (WCAG 1.4.10; a tabela rola dentro da própria caixa), e nenhum alvo de
+  toque, na tela ou na moldura, tem menos de 44 × 44px (Design System, 16).
 */
 test.describe("sem rolagem horizontal a 375 e 320px", () => {
   test.beforeEach(async ({ request }) => {
@@ -348,10 +348,9 @@ test.describe("sem rolagem horizontal a 375 e 320px", () => {
           achados.rolagem,
           `passa de ${largura}px: ${achados.rolagem?.culpados.map((c) => c.caminho).join("; ")}`,
         ).toBeNull();
-        const pequenos = achados.toque.filter((a) => a.naTabela);
         expect(
-          pequenos,
-          `alvo < 44px na tabela: ${pequenos.map((a) => `${a.caminho} (${a.tamanho})`).join("; ")}`,
+          achados.toque,
+          `alvo < 44px: ${achados.toque.map((a) => `${a.caminho} (${a.tamanho})`).join("; ")}`,
         ).toEqual([]);
       });
 });

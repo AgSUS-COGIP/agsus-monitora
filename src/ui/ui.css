@@ -852,9 +852,9 @@ th[aria-sort="descending"] .ui-ordenar i {
     var(--surface-card);
 }
 /*
-  Toque: os alvos dentro da tabela (o link do número do edital, o "⋯" e o
-  botão só com ícone) tinham 24 a 40px no celular. Com ponteiro grosso,
-  44 × 44px (Design System, seção 16); no mouse, nada muda.
+  Toque: o link da célula (o número do edital) tinha 24px no celular. Com
+  ponteiro grosso, 44 × 44px (Design System, seção 16); no mouse, nada muda.
+  O "⋯" e o botão só com ícone seguem a regra de toque do fim deste arquivo.
 */
 @media (pointer: coarse) {
   :is(td, th) a.link {
@@ -862,14 +862,6 @@ th[aria-sort="descending"] .ui-ordenar i {
     align-items: center;
     min-width: 44px;
     min-height: 44px;
-  }
-  td .ui-menu-reticencias {
-    width: 44px;
-    height: 44px;
-  }
-  /* O botão só com ícone da célula (o aviso da Lista de aprovados em Editais). */
-  td .btn.icon {
-    min-width: 44px;
   }
 }
 .ui-tabela-rolagem td.ui-tabela-erro {
@@ -1901,7 +1893,7 @@ th[aria-sort="descending"] .ui-ordenar i {
   min-width: 0;
   margin: 0;
 }
-.ui-barra-busca > i {
+.ui-barra-busca > :is(i, .icone) {
   position: absolute;
   left: var(--space-3);
   color: var(--text-secondary);
@@ -2346,6 +2338,9 @@ button.ui-faixa-item:hover {
   gap: var(--space-2);
   cursor: pointer;
 }
+.ui-barra-de-selecao__pagina input {
+  margin: 0;
+}
 .ui-barra-de-selecao__alcance:empty {
   display: none;
 }
@@ -2471,28 +2466,35 @@ button.ui-faixa-item:hover {
 }
 
 /*
-  Toque (Design System, seção 16): com ponteiro grosso, os controles das telas
-  têm no mínimo 44px. Antes, Mais filtros, Limpar tudo, Colunas, Carregar mais,
-  os segmentados, o "Tabela" dos gráficos e os botões do mapa tinham 28–32px
-  no celular. No mouse,
-  nada muda. `.ui-tela-da-selecao .btn.small` entra na lista para vencer a
-  regra mais específica da Seleção.
+  Toque (Design System, seção 16): com ponteiro grosso, os controles têm no
+  mínimo 44 × 44px em qualquer tela, React ou legado (Editais, Cronograma e
+  Configurações ficavam de fora quando a regra valia só dentro de `.ui-tela`).
+  No mouse, nada muda. `.ui-tela-da-selecao .btn.small` entra na lista para
+  vencer a regra mais específica da Seleção.
 */
 @media (pointer: coarse) {
-  :is(.ui-tela, .ui-gaveta, .modal, .mapa-si)
-    :is(
-      .btn,
-      .btn.small,
-      .ui-tela-da-selecao .btn.small,
-      .ui-segmentado-opcao,
-      .ui-cabecalho-acoes .ui-segmentado-opcao,
-      .ui-lista-selecao .btn,
-      .ui-chip,
-      .ui-grafico-alternar,
-      .ui-selo-do-filtro-do-grafico,
-      .ui-tabela-busca,
-      select
-    ) {
+  :is(
+    .btn,
+    .btn.small,
+    .ui-tela-da-selecao .btn.small,
+    .ui-segmentado-opcao,
+    .ui-cabecalho-acoes .ui-segmentado-opcao,
+    .ui-lista-selecao .btn,
+    .ui-aba,
+    .ui-chip,
+    .ui-grafico-alternar,
+    .ui-selo-do-filtro-do-grafico,
+    .ui-tabela-busca,
+    input:not(:where([type="checkbox"], [type="radio"])),
+    select
+  ) {
+    min-height: 44px;
+  }
+  :is(.btn.icon, .btn.contorno, .ui-botao-icone) {
+    min-width: 44px;
+  }
+  /* A caixa de marcar e a de opção ficam no tamanho natural: o alvo é o rótulo em volta. */
+  label:has(> input:is([type="checkbox"], [type="radio"])) {
     min-height: 44px;
   }
   :is(.ui-menu-reticencias, .ui-gaveta-fechar) {

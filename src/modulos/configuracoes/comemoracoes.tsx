@@ -41,7 +41,6 @@ import { exemploDoMarco } from "../../lib/comemoracao/exemplos-das-comemoracoes.
 import { Aviso, Campo, Segmentado } from "../../ui/index.ts";
 import { Icone } from "../../componentes/icone.tsx";
 import {
-  ICONES_DOS_EFEITOS,
   OPCOES_DE_INTENSIDADE,
   PalcoDeTestes,
   type PedidoDeTeste,
@@ -234,8 +233,7 @@ function LinhaDoMarco({
         </label>
         {soAviso ? null : (
           <>
-            <label className="comemoracoes-chip" title="Efeito">
-              <Icone nome={ICONES_DOS_EFEITOS[opcoes.efeito]} tamanho={14} />
+            <Campo rotulo="Efeito">
               <select
                 id={`${prefixo}-efeito`}
                 aria-label={`Efeito: ${nome}`}
@@ -251,7 +249,7 @@ function LinhaDoMarco({
                   </option>
                 ))}
               </select>
-            </label>
+            </Campo>
             <Segmentado
               rotulo={`Intensidade: ${nome}`}
               className="comemoracoes-intensidade"
