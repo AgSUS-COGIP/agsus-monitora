@@ -1,12 +1,31 @@
 # Regras do sistema
 
-O que vale em todas as telas: Pessoas online, atualização do sistema e busca global. Fontes:
+O que vale em todas as telas: entrar e sair, Pessoas online, atualização do sistema e busca
+global. Fontes: `src/app/sessao.ts`, `src/lib/sessao/entrada-direta.ts`,
 `src/lib/sessao/online-presence.ts`, `src/app/presenca.ts`,
 `supabase/migrations/20261005151618_presenca_para_gestor.sql` (admin global e Gestor ativos),
 `supabase/migrations/20261005200000_foto_do_google_no_perfil.sql` (foto do perfil),
 `src/app/navegacao.ts` (`navigate`), `src/componentes/pessoas-online/`,
 `src/modules/pwa-lifecycle.ts`, `sw.js`, `src/app/aviso-de-versao.ts`, `src/lib/navegacao/busca-global.ts` e
 `src/componentes/busca-global/busca-global.tsx`.
+
+## Entrar direto
+
+**perguntas:** por que entro direto | entrei direto | entrou sozinho | entrada automatica | login automatico | entrando como | nao pediu a conta google | entrar sem escolher a conta
+**resposta:** O navegador lembra o e-mail da última conta Google que entrou no Yeendé e o manda ao Google como sugestão: com essa conta já aberta no computador, o Google devolve sem pedir a escolha de conta. Ao abrir o Yeendé sem sessão, o botão mostra "Entrando como" e o e-mail e o sistema entra sozinho, uma vez por aba; se der errado, fica a tela de entrada de sempre. Depois de Sair, ele não entra sozinho: a próxima entrada é pelo botão, que já leva o e-mail como sugestão. Só o e-mail fica guardado, neste navegador.
+**fonte:** src/lib/sessao/entrada-direta.ts; src/app/sessao.ts; src/app/entrada/entrada.tsx
+
+## Usar outra conta
+
+**perguntas:** como uso outra conta | usar outra conta | trocar de conta | entrar com outra conta | outra conta google | mudar de conta
+**resposta:** Na tela de entrada, "Usar outra conta" fica abaixo do botão do Google sempre que o navegador lembra uma conta, inclusive enquanto aparece "Entrando como". Ele esquece o e-mail lembrado e abre a escolha de conta do Google; a conta escolhida passa a ser a lembrada. Na tela de pedido de acesso, o "Usar outra conta" faz o mesmo.
+**fonte:** src/lib/sessao/entrada-direta.ts; src/app/entrada/entrada.tsx; src/app/entrada/solicitacao-de-acesso.tsx
+
+## Sair
+
+**perguntas:** o que acontece ao sair | botao sair | sair do yeende | sair desconecta os outros computadores | sair em um navegador
+**resposta:** Sair encerra a sessão só neste navegador: o Yeendé aberto em outro computador ou navegador continua conectado. Saem também as cópias guardadas no aparelho, e a tela volta ao início. O e-mail da conta continua lembrado como sugestão, mas o Yeendé não entra mais sozinho até a próxima entrada pelo botão.
+**fonte:** src/app/sessao.ts; src/lib/sessao/entrada-direta.ts
 
 ## Pessoas online
 

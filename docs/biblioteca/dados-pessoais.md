@@ -1,7 +1,7 @@
 ---
 tipo: regra
 area: seguranca
-atualizado: 2026-11-23
+atualizado: 2026-11-24
 ---
 
 # Dados pessoais (LGPD)
@@ -50,6 +50,9 @@ do que o banco mandou, para abrir na hora e para consultar sem rede.
   exige rede.
 - A cópia da sessão (banco `agsus-monitora`, `src/lib/sessao/copia-da-sessao.ts`) não leva dado de candidato e
   segue com 7 dias.
+- O e-mail da última conta que entrou (`localStorage`, `yeende_ultima_conta_v1`) fica no navegador
+  da própria pessoa, para entrar direto; sai em "Usar outra conta" e não vai para URL do Yeendé, log
+  nem telemetria, só ao Google como `login_hint` ([[seguranca]], "Entrar direto e Sair").
 
 ## Nos robôs e jobs
 

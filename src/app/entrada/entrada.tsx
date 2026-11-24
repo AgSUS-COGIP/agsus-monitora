@@ -4,7 +4,13 @@ import {
   ACCESS_INSTRUCTION,
   normalizeAccessLogoUrl,
 } from "../../lib/entrada/access-branding.ts";
-import { FASES, TEXTO_DO_BOTAO, TEXTO_DO_BOTAO_OCUPADO } from "../sessao.ts";
+import {
+  FASES,
+  TEXTO_DO_BOTAO,
+  TEXTO_DO_BOTAO_OCUPADO,
+  textoDaEntradaAutomatica,
+  type OpcoesDoLogin,
+} from "../sessao.ts";
 import {
   IconeDeEscudo,
   IconeDoYeende,
@@ -55,13 +61,17 @@ export type EstadoDaSessaoNaEntrada = {
   erroDeConfiguracao: string;
   mensagem: { texto: string; tom: string };
   configuracao: { googleAtivo: boolean; textoDoBotao: string };
+  /** O e-mail da última conta deste navegador ("" ou ausente = nenhuma). */
+  contaLembrada?: string;
+  /** Entrando sozinha com a conta lembrada. */
+  entradaAutomatica?: boolean;
 };
 
 /** O que a tela de entrada usa da sessão (`sessaoDoApp`, de sessao.ts). */
 export type SessaoDaEntrada = {
   obter: () => EstadoDaSessaoNaEntrada;
   assinar: (ouvinte: () => void) => () => unknown;
-  entrarComGoogle: () => unknown;
+  entrarComGoogle: (opcoes?: OpcoesDoLogin) => unknown;
   tentarDeNovo: () => unknown;
   limparSessao: () => unknown;
 };
@@ -168,9 +178,15 @@ export function TelaDeEntrada({ sessao, marca, pedido }: PropsDaTelaDeEntrada) {
   const { configuracao, mensagem } = estado;
   const semAcesso = estado.fase === FASES.SEM_ACESSO;
   const falhou = estado.fase === FASES.FALHA_NA_ENTRADA;
-  const textoDoBotao = estado.entrando
-    ? TEXTO_DO_BOTAO_OCUPADO
-    : configuracao.textoDoBotao || identidade.textoDoBotao || TEXTO_DO_BOTAO;
+  const contaLembrada = estado.contaLembrada || "";
+  const textoDoBotao =
+    estado.entradaAutomatica && contaLembrada
+      ? textoDaEntradaAutomatica(contaLembrada)
+      : estado.entrando
+        ? TEXTO_DO_BOTAO_OCUPADO
+        : configuracao.textoDoBotao ||
+          identidade.textoDoBotao ||
+          TEXTO_DO_BOTAO;
   const textoConhecido =
     identidade.resolvida ||
     Boolean(configuracao.textoDoBotao) ||
@@ -249,7 +265,9 @@ export function TelaDeEntrada({ sessao, marca, pedido }: PropsDaTelaDeEntrada) {
               onClick={() => void sessao.entrarComGoogle()}
             >
               <MarcaDoGoogle />
-              <span id="googleLoginText">{textoDoBotao}</span>
+              <span id="googleLoginText" title={textoDoBotao}>
+                {textoDoBotao}
+              </span>
             </button>
           ) : (
             /* Google desligado: o lugar do botão fica, vazio (sem salto). */
@@ -258,6 +276,23 @@ export function TelaDeEntrada({ sessao, marca, pedido }: PropsDaTelaDeEntrada) {
               aria-hidden="true"
             />
           )}
+          {configuracao.googleAtivo && contaLembrada ? (
+            /*
+              Fora do fluxo (no espaço acima do rodapé): o cartão não muda de
+              altura com ou sem conta lembrada.
+            */
+            <button
+              id="usarOutraContaBtn"
+              type="button"
+              className="login-outra-conta"
+              disabled={estado.entrando && !estado.entradaAutomatica}
+              onClick={() =>
+                void sessao.entrarComGoogle({ escolherConta: true })
+              }
+            >
+              Usar outra conta
+            </button>
+          ) : null}
         </div>
         <p className="login-instituicao" id="loginInstituicao">
           <IconeDeEscudo />

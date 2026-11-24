@@ -1,7 +1,7 @@
 ---
 tipo: regra
 area: seguranca
-atualizado: 2026-11-23
+atualizado: 2026-11-24
 ---
 
 # Segurança
@@ -31,9 +31,38 @@ convite ou por solicitação aprovada por um administrador, que define grupo e p
   `entrada/access-branding-publico.ts`; a da barra lateral, em `src/componentes/barra-lateral/marca.ts`.
 - `src/auth/callback.ts` (de `auth/callback.html`) — o retorno do OAuth. O login volta para
   `<endereço>/auth/callback.html`, que precisa estar nas **Redirect URLs** do Supabase.
+- `src/lib/sessao/entrada-direta.ts` — entrar direto com a conta já aberta (abaixo).
 - `src/lib/sessao/env.ts` — leitura de variáveis; nunca chave escrita no código.
 - `src/lib/base/versao-do-sistema.ts` — o sinal de "tela antiga" (PGRST202 / "recarregue a página") no
   fetch do cliente.
+
+### Entrar direto e Sair
+
+- **Sem `prompt` forçado.** O Google só mostra a escolha de conta ou o consentimento quando
+  precisa. Nada de `prompt=consent` nem `max_age=0` no fluxo de todo dia: o `consent` só serve para
+  o Google mandar o refresh token do provedor (`provider_refresh_token`, com `access_type=offline`,
+  conforme a documentação de login Google do Supabase), que o Yeendé não usa; a sessão do Supabase
+  se renova com o token dela. O `max_age=0` pedia a senha a cada entrada no celular.
+- **Conta lembrada.** Ao entrar (depois da checagem de domínio), o navegador guarda só o e-mail da
+  conta e se a pessoa saiu depois (`localStorage`, `yeende_ultima_conta_v1`). Ele vai ao Google
+  como `login_hint`, com o `hd` das configurações (menos quando contradiz o domínio do e-mail);
+  com a conta aberta, o Google devolve sem tela. O e-mail não vai para URL do Yeendé, log nem
+  telemetria; sai do navegador só no pedido de login (Supabase → Google).
+- **Entrada automática.** Com conta lembrada, sem sessão, sem mensagem na tela e sem "Sair" depois,
+  a tela mostra "Entrando como <e-mail>…" no botão, espera 1,2 s e vai ao Google por
+  redirecionamento (popup sem clique é bloqueado). **Uma vez por aba** (`sessionStorage`,
+  `yeende_entrada_automatica_v1`; sem `sessionStorage`, não tenta): falhou ou voltou com
+  `?auth_error=`, fica a tela normal, sem laço. "Usar outra conta" (na entrada e no pedido de
+  acesso) cancela a espera, esquece o e-mail e pede `prompt=select_account`.
+- **Sair só neste navegador** (`signOut({ scope: "local" })`, botão Sair e "Sair" do pedido de
+  acesso), com a auditoria e o Realtime antes (`antesDeSair`). O e-mail continua como sugestão, mas
+  sem entrada automática até a próxima entrada. O link de recuperação de senha continua derrubando
+  todas as sessões (`local: false`); domínio recusado e expiração por inatividade saem só neste
+  navegador; a conta desativada é barrada pelo banco em qualquer navegador (perfil inativo).
+- O retorno continua só em `/auth/callback.html`, com PKCE, nos dois caminhos (popup e
+  redirecionamento).
+- Testes: blocos `lib/sessao/entrada-direta`, `app/sessao` (describe "entrar direto") e
+  `app/entrada` em `tests/casca-sessao-e-interface-na-tela.test.ts`.
 
 Regras da sessão:
 
