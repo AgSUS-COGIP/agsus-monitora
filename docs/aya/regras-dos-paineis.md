@@ -42,6 +42,13 @@ leitura paginada) e `20261123180000_aba_paineis_vira_relatorios.sql` (o nome Rel
 **fonte:** src/lib/paineis/catalogo-dos-relatorios.ts; src/modulos/paineis-de-dados/gerar-relatorio.ts; src/lib/paineis/relatorio-da-diretoria.ts
 **abrir:** paineis-de-dados
 
+## Gráficos no relatório
+
+**perguntas:** grafico no relatorio | relatorio com graficos | montar relatorio com grafico | grafico no pdf | grafico no excel | vagas por unidade | editais por fase | contratacoes por mes | situacao dos aprovados | previa do grafico | carregar previa
+**resposta:** No montador de relatório (cartão "Montar relatório", em Relatórios), o grupo Gráficos tem quatro caixas: Vagas × contratadas por unidade (barras por DSEI ou unidade, com o preenchimento das vagas imediatas), Editais por fase (os editais em andamento de Inscrições a Resultado, como o "Em andamento, por fase" da Visão geral), Contratações por mês (linha com as admissões conciliadas com o RH dos aprovados contratados) e Situação dos aprovados (barras empilhadas por edital com Contratado, Convocado, Desistente e Reserva, que é quem ainda não tem status). Os gráficos seguem o mesmo recorte do relatório. Ao marcar um gráfico, a miniatura aparece logo abaixo; os dois dos aprovados só aparecem para quem tem acesso à Lista de aprovados, e a miniatura deles carrega no botão "Carregar prévia", porque a leitura dos aprovados fica registrada com o nome de quem pediu (a geração reaproveita essa leitura no mesmo formato). No PDF, cada gráfico sai como imagem, depois dos números, com o título em cima e a fonte embaixo. No Excel, cada gráfico vira uma aba com a tabela dos números dele: a planilha gerada pelo Yeendé não desenha gráfico, e o desenho fica no PDF. O CSV não leva gráficos.
+**fonte:** src/lib/paineis/graficos-do-relatorio.ts; src/modulos/paineis-de-dados/graficos-do-relatorio.tsx; src/modulos/paineis-de-dados/montador-de-relatorio.tsx
+**abrir:** paineis-de-dados
+
 ## Ver em Relatórios
 
 **perguntas:** ver em relatorios | botao ver em relatorios | sumiu a aba do resumo | atalho para relatorios

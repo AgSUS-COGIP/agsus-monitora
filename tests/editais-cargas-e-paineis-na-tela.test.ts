@@ -6168,6 +6168,97 @@ bloco("modulos/paineis-de-dados", () => {
       expect(window.location.search).toBe("");
     });
 
+    it("o grupo Gráficos: os dos aprovados só com o recurso, e a miniatura ao marcar", async () => {
+      const graficos = () =>
+        [
+          ...(montador()?.querySelectorAll(
+            ".relatorios-montador-graficos label",
+          ) ?? []),
+        ].map((l) => l.textContent?.trim());
+      const marcar = (rotulo: string) =>
+        clicar(
+          [
+            ...(montador()?.querySelectorAll<HTMLLabelElement>(
+              ".relatorios-montador-graficos label",
+            ) ?? []),
+          ]
+            .find((l) => l.textContent?.trim() === rotulo)
+            ?.querySelector("input"),
+        );
+      window.history.replaceState(null, "", "/saude-indigena/relatorios");
+      await montar(
+        {},
+        {
+          linhasDaArea: () => [{ ...linha("e1", "01/2099"), fase: "Recursos" }],
+        },
+        { abrir: null },
+      );
+      await clicar(botaoEmCartao("montar-relatorio", "Montar"));
+      await esperar();
+      expect(graficos()).toEqual([
+        "Vagas × contratadas por unidade",
+        "Editais por fase",
+      ]);
+      expect(
+        montador()?.querySelector(".relatorios-montador-previa"),
+      ).toBeNull();
+      await marcar("Editais por fase");
+      const miniatura = montador()?.querySelector(
+        "figure[data-grafico='editais-por-fase']",
+      );
+      expect(miniatura?.querySelector("figcaption")?.textContent).toBe(
+        "Editais em andamento, por fase",
+      );
+      expect(miniatura?.querySelector("canvas[role=img]")).not.toBeNull();
+      // Desmarcar o único gráfico vale (o grupo pode ficar vazio).
+      await marcar("Editais por fase");
+      expect(
+        montador()?.querySelector(".relatorios-montador-previa"),
+      ).toBeNull();
+    });
+
+    it("com o recurso aprovados, os gráficos deles carregam a prévia só no botão", async () => {
+      window.history.replaceState(null, "", "/saude-indigena/relatorios");
+      await montar(
+        {},
+        {
+          linhasDaArea: () => [linha("e1", "01/2099")],
+          obterPerfil: () => ({ permissoes: { aprovados: "leitor" } }),
+          aprovados: () => new Promise<never>(() => {}),
+        },
+        { abrir: null },
+      );
+      await clicar(botaoEmCartao("montar-relatorio", "Montar"));
+      await esperar();
+      const rotulos = [
+        ...(montador()?.querySelectorAll<HTMLLabelElement>(
+          ".relatorios-montador-graficos label",
+        ) ?? []),
+      ];
+      expect(rotulos.map((l) => l.textContent?.trim())).toEqual([
+        "Vagas × contratadas por unidade",
+        "Editais por fase",
+        "Contratações por mês",
+        "Situação dos aprovados",
+      ]);
+      await clicar(rotulos[3]?.querySelector("input"));
+      const miniatura = montador()?.querySelector(
+        "figure[data-grafico='situacao-dos-aprovados']",
+      );
+      expect(miniatura?.querySelector("button")?.textContent).toBe(
+        "Carregar prévia",
+      );
+      expect(montador()?.textContent).toContain(
+        "O download dos aprovados fica registrado com o seu nome.",
+      );
+      // Sem banco, a leitura falha e a mensagem aparece.
+      await clicar(miniatura?.querySelector("button"));
+      await esperar();
+      expect(
+        montador()?.querySelector(".relatorios-montador-erro")?.textContent,
+      ).toBe("Sem conexão com o banco.");
+    });
+
     it("vindo da Visão geral (origem=visao-geral), o montador leva o recorte dela", async () => {
       window.history.replaceState(
         null,

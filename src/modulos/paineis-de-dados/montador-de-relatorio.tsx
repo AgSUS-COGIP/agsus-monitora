@@ -9,11 +9,19 @@ import type {
   RecorteDoRelatorio,
 } from "../../lib/paineis/relatorio-da-visao-geral.ts";
 import type { ClienteDoRelatorio } from "./dados-da-diretoria.ts";
-import { useEffect, useRef, useState } from "react";
+import type { AprovadosLidos } from "./gerar-relatorio.ts";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FecharModal, Modal, Segmentado } from "../../ui/index.ts";
 import { baixarArquivo } from "../../ui/botoes-de-exportacao.tsx";
 import { CHAVE_DO_CABECALHO } from "../../lib/base/cabecalho-dos-documentos.ts";
 import { nomeDaArea } from "../../lib/navegacao/menu-lateral.ts";
+import { usarTemaEscuro } from "../../app/tema.ts";
+import {
+  dadosDosGraficos,
+  GRAFICOS_DO_RELATORIO,
+  graficosPermitidos,
+  precisaDosAprovados,
+} from "../../lib/paineis/graficos-do-relatorio.ts";
 import {
   csvDaVisaoGeral,
   nomeDoCsv,
@@ -28,15 +36,20 @@ import {
   SECOES_DO_RELATORIO,
   secoesPermitidas,
 } from "../../lib/paineis/relatorio-da-visao-geral.ts";
+import { baixarAprovadosDaDiretoria } from "./dados-da-diretoria.ts";
 import { gerarRelatorio, mensagemDaFalha } from "./gerar-relatorio.ts";
+import { MiniaturaDoGrafico } from "./graficos-do-relatorio.tsx";
 
 /*
   O MONTADOR DE RELATÓRIO (cartão "Montar relatório" de Relatórios, grupo
   Editais): um modelo pronto ou a escolha de quem gera — as seções, as
-  colunas da tabela dos editais e o formato (PDF, Excel ou CSV). Sai do
+  colunas da tabela dos editais, os gráficos (com a miniatura de cada um) e
+  o formato (PDF, Excel ou CSV). Sai do
   recorte recebido: a área inteira ou, vindo do "Ver em Relatórios" da Visão
   geral, a Visão geral como estava (filtros, busca e atalho). A última
-  escolha fica guardada neste navegador. O arquivo é gerado em
+  escolha fica guardada neste navegador. Os gráficos dos aprovados leem a
+  RPC que registra o download: a miniatura deles só carrega no botão, e a
+  geração reaproveita essa leitura no mesmo formato. O arquivo é gerado em
   ./gerar-relatorio.ts (a mesma geração do cartão da diretoria); a lógica do
   conteúdo está em src/lib/paineis/relatorio-da-visao-geral.ts.
 */
@@ -66,12 +79,15 @@ function Marcar<T extends string>({
   marcados,
   aoMudar,
   desabilitado,
+  minimo = 1,
 }: {
   titulo: string;
   itens: readonly { id: T; rotulo: string }[];
   marcados: readonly T[];
   aoMudar: (proximos: T[]) => void;
   desabilitado?: boolean;
+  /** Quantos ficam marcados no mínimo (0: pode desmarcar todos). */
+  minimo?: number;
 }) {
   const todos = itens.map((i) => i.id);
   return (
@@ -83,7 +99,7 @@ function Marcar<T extends string>({
             type="checkbox"
             checked={marcados.includes(item.id)}
             onChange={() =>
-              aoMudar(alternarNaEscolha(todos, marcados, item.id))
+              aoMudar(alternarNaEscolha(todos, marcados, item.id, minimo))
             }
           />
           {item.rotulo}
@@ -119,6 +135,9 @@ export function MontadorDeRelatorio({
   const [escolhaAoAbrir] = useState(escolha);
   const [gerando, setGerando] = useState(false);
   const [erro, setErro] = useState("");
+  const [lidos, setLidos] = useState<AprovadosLidos | null>(null);
+  const [lendo, setLendo] = useState(false);
+  const escuro = usarTemaEscuro();
   const aberto = useRef(true);
   useEffect(() => {
     aberto.current = true;
@@ -134,6 +153,52 @@ export function MontadorDeRelatorio({
   const semEditais = !escolha.secoes.includes("editais");
   const permitidas = secoesPermitidas(podeAprovados);
   const secoes = escolha.secoes.filter((s) => permitidas.includes(s));
+  const podeGraficos = graficosPermitidos(podeAprovados);
+  const graficos = escolha.graficos.filter((g) => podeGraficos.includes(g));
+  const chaveDosGraficos = graficos.join();
+  const editais = useMemo(
+    () => e.filtradas.map((l) => String(l.id ?? "")).filter(Boolean),
+    [e.filtradas],
+  );
+  const aprovadosDaPrevia =
+    lidos &&
+    lidos.editais.length === editais.length &&
+    lidos.editais.every((id, i) => id === editais[i])
+      ? lidos.exportacao.aprovados
+      : null;
+  const previas = useMemo(
+    () =>
+      dadosDosGraficos({
+        graficos: chaveDosGraficos
+          ? (chaveDosGraficos.split(",") as typeof graficos)
+          : [],
+        linhas: e.filtradas,
+        aprovados: aprovadosDaPrevia,
+      }),
+    [chaveDosGraficos, e.filtradas, aprovadosDaPrevia],
+  );
+  const semPrevia = GRAFICOS_DO_RELATORIO.filter(
+    (g) => g.comAprovados && graficos.includes(g.id) && !aprovadosDaPrevia,
+  );
+
+  async function carregarPrevia() {
+    setErro("");
+    setLendo(true);
+    try {
+      const exportacao = await baixarAprovadosDaDiretoria(
+        supabase,
+        e.area,
+        escolha.formato,
+        editais,
+      );
+      if (aberto.current)
+        setLidos({ formato: escolha.formato, editais, exportacao });
+    } catch (falha) {
+      if (aberto.current) setErro(mensagemDaFalha(falha));
+    } finally {
+      if (aberto.current) setLendo(false);
+    }
+  }
 
   async function gerar() {
     setErro("");
@@ -152,7 +217,7 @@ export function MontadorDeRelatorio({
     setGerando(true);
     try {
       const { arquivo, nome } = await gerarRelatorio({
-        escolha: { ...escolha, secoes },
+        escolha: { ...escolha, secoes, graficos },
         recorte: e,
         textos,
         cabecalho: String(
@@ -162,6 +227,7 @@ export function MontadorDeRelatorio({
         agora: agora(),
         supabase,
         podeAprovados,
+        aprovadosLidos: lidos,
       });
       if (!aberto.current) return;
       baixarArquivo(arquivo, nome);
@@ -221,7 +287,8 @@ export function MontadorDeRelatorio({
         />
         {csv ? (
           <p className="relatorios-montador-nota">
-            O CSV leva todas as colunas da tabela, sem as seções.
+            O CSV leva todas as colunas da tabela, sem as seções nem os
+            gráficos.
           </p>
         ) : (
           <div className="relatorios-montador-escolhas">
@@ -245,7 +312,59 @@ export function MontadorDeRelatorio({
             />
           </div>
         )}
-        {!csv && secoes.includes("aprovados") ? (
+        {csv ? null : (
+          <div className="relatorios-montador-graficos">
+            <Marcar
+              titulo="Gráficos"
+              itens={GRAFICOS_DO_RELATORIO.filter((g) =>
+                podeGraficos.includes(g.id),
+              )}
+              marcados={graficos}
+              aoMudar={(graficos) => mudar({ graficos })}
+              minimo={0}
+            />
+            {graficos.length ? (
+              <div
+                className="relatorios-montador-previa"
+                role="group"
+                aria-label="Prévia dos gráficos"
+              >
+                {graficos.map((id) => {
+                  const dados = previas.find((d) => d.id === id);
+                  if (dados)
+                    return (
+                      <MiniaturaDoGrafico
+                        key={id}
+                        dados={dados}
+                        escuro={escuro}
+                      />
+                    );
+                  const grafico = semPrevia.find((g) => g.id === id);
+                  return grafico ? (
+                    <figure
+                      key={id}
+                      className="relatorios-montador-miniatura"
+                      data-grafico={id}
+                    >
+                      <figcaption>{grafico.rotulo}</figcaption>
+                      <button
+                        type="button"
+                        className="btn secondary relatorios-montador-carregar"
+                        disabled={lendo || !editais.length}
+                        aria-busy={lendo ? "true" : "false"}
+                        onClick={() => void carregarPrevia()}
+                      >
+                        {lendo ? "Carregando…" : "Carregar prévia"}
+                      </button>
+                    </figure>
+                  ) : null;
+                })}
+              </div>
+            ) : null}
+          </div>
+        )}
+        {!csv &&
+        (secoes.includes("aprovados") || precisaDosAprovados(graficos)) ? (
           <p className="relatorios-montador-nota">
             O download dos aprovados fica registrado com o seu nome.
           </p>

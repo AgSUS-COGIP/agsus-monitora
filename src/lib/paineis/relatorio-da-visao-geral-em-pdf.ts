@@ -7,14 +7,18 @@ import type {
   ConteudoDoRelatorio,
   TabelaDoRelatorio,
 } from "./relatorio-da-visao-geral.ts";
+import type { DadosDoGrafico } from "./graficos-do-relatorio.ts";
 import { textoParaOPdf } from "../avaliacao-documental/espelho-em-pdf.ts";
 import { CABECALHO_PADRAO } from "../base/cabecalho-dos-documentos.ts";
+import { graficoVazio, tabelaDoGrafico } from "./graficos-do-relatorio.ts";
 
 /*
   O PDF do montador de relatório da Visão geral (A4 deitado): o timbrado
   (logo e cabeçalho de Configurações › Marca), o título, a identificação do
-  recorte, os números em caixas e as tabelas, com o cabeçalho repetido a cada
-  página. Rodapé em toda página: área, emissão e "Página N de M". Um documento
+  recorte, os números em caixas, os gráficos (a imagem desenhada no
+  navegador, src/modulos/paineis-de-dados/graficos-do-relatorio.tsx, com o
+  título em cima e a fonte embaixo; sem a imagem, a tabela dos números) e as
+  tabelas, com o cabeçalho repetido a cada página. Rodapé em toda página: área, emissão e "Página N de M". Um documento
   desenhado, não a impressão da tela: sem botões, filtros nem mapa cortado.
   O conteúdo vem pronto de relatorio-da-visao-geral.ts.
 */
@@ -32,6 +36,13 @@ const FIO: [number, number, number] = [210, 214, 220];
 const FUNDO_DO_CABECALHO: [number, number, number] = [232, 238, 245];
 const FUNDO_ZEBRA: [number, number, number] = [247, 249, 251];
 
+/** A imagem PNG de um gráfico; largura e altura em pixels (só a proporção conta). */
+export interface ImagemDoGrafico {
+  bytes: Uint8Array;
+  largura: number;
+  altura: number;
+}
+
 export async function pdfDoRelatorio(
   conteudo: ConteudoDoRelatorio,
   { jsPDF }: Pick<BibliotecasDoPdf, "jsPDF">,
@@ -39,7 +50,11 @@ export async function pdfDoRelatorio(
     cabecalho = CABECALHO_PADRAO,
     logo = null,
     comprimir = true,
-  }: MarcaDoPdf = {},
+    imagens = [],
+  }: MarcaDoPdf & {
+    /** Uma por gráfico de `conteudo.graficos`, na mesma ordem (null: sem imagem). */
+    imagens?: readonly (ImagemDoGrafico | null)[];
+  } = {},
 ): Promise<Uint8Array<ArrayBuffer>> {
   const doc: TipoJsPdf = new jsPDF({
     unit: "pt",
@@ -297,6 +312,94 @@ export async function pdfDoRelatorio(
     });
     y += 16;
   };
+
+  // Os gráficos: título, a imagem na largura útil (menor se passar de meia página) e a fonte.
+  const desenharGrafico = (dados: DadosDoGrafico, i: number) => {
+    const imagem = imagens[i];
+    const vazio = graficoVazio(dados);
+    if (!vazio && !imagem) {
+      // Sem a imagem (o navegador não desenhou): os números do gráfico em tabela.
+      const tabela = tabelaDoGrafico(dados);
+      desenharTabela({
+        titulo: dados.titulo,
+        colunas: tabela.colunas.map((rotulo, n) => ({
+          rotulo,
+          direita: n > 0,
+          peso: n === 0 ? 40 : 14,
+        })),
+        linhas: tabela.linhas.map((l) =>
+          l.map((v) => (typeof v === "number" ? v.toLocaleString("pt-BR") : v)),
+        ),
+        vazio: dados.vazio,
+      });
+      y -= 12;
+      fonte(7, "normal", CINZA);
+      for (const linha of doc.splitTextToSize(
+        textoParaOPdf(dados.fonte),
+        util,
+      ) as string[]) {
+        if (y + 9 > fundo) novaPagina();
+        doc.text(linha, MARGEM.lados, y, { baseline: "top" });
+        y += 9;
+      }
+      y += 14;
+      return;
+    }
+    /*
+      No máximo meia página (dois gráficos por folha); as barras deitadas com
+      muitos itens (até 40 unidades) podem ir à página cheia, senão os nomes
+      ficam ilegíveis.
+    */
+    const comprido = dados.deitado && dados.rotulos.length > 12;
+    const alturaUtil = (fundo - MARGEM.topo) / (comprido ? 1 : 2) - 40;
+    let w = util;
+    let h = imagem ? (util * imagem.altura) / imagem.largura : 0;
+    if (h > alturaUtil) {
+      w = (w * alturaUtil) / h;
+      h = alturaUtil;
+    }
+    fonte(7);
+    const fonteDoGrafico = doc.splitTextToSize(
+      textoParaOPdf(dados.fonte),
+      util,
+    ) as string[];
+    const total = 15 + (vazio ? 14 : h + 4) + fonteDoGrafico.length * 9;
+    if (y + total > fundo) novaPagina();
+    fonte(11, "bold", AZUL);
+    doc.text(textoParaOPdf(dados.titulo), MARGEM.lados, y, { baseline: "top" });
+    y += 15;
+    if (vazio || !imagem) {
+      fonte(TAMANHO, "normal", CINZA);
+      doc.text(textoParaOPdf(dados.vazio), MARGEM.lados, y, {
+        baseline: "top",
+      });
+      y += 14;
+    } else {
+      try {
+        doc.addImage(
+          imagem.bytes,
+          "PNG",
+          MARGEM.lados + (util - w) / 2,
+          y,
+          w,
+          h,
+          undefined,
+          "FAST",
+        );
+      } catch {
+        // Imagem ilegível: fica o título e a fonte.
+      }
+      y += h + 4;
+    }
+    fonte(7, "normal", CINZA);
+    for (const linha of fonteDoGrafico) {
+      doc.text(linha, MARGEM.lados, y, { baseline: "top" });
+      y += 9;
+    }
+    y += 14;
+  };
+  conteudo.graficos.forEach(desenharGrafico);
+
   conteudo.tabelas.forEach(desenharTabela);
 
   // O rodapé de cada página, já sabendo quantas são.
