@@ -71,7 +71,10 @@ central-de-convocacoes.tsx  bloco Convocações no topo da aba Convocação (#58
                             com Conduzir entrevistas ligada na área, `usarConducaoLigada`):
                             a convocação da entrevista, só leitura, que o controlador de Conduzir
                             entrevistas entrega (`convocacaoParaLeitura`, a loja de lá, sem estado
-                            próprio); a tela baixa só ao escolher essa visão
+                            próprio); a tela baixa só ao escolher essa visão. Abaixo da lista, a
+                            agenda dos convocados do edital, só leitura (`AgendaDoEdital`, a mesma
+                            do passo 4 de Preparar; sem agenda, estado vazio), com "Editar na
+                            Classificação › Agenda" só para quem vê a Classificação
 aba-convocacao.tsx          KPIs (A convocar, Convocados…), escolha para a carta, "Escolher os a
                             convocar", Exportar CSV, uma tabela por vaga
 partes.tsx                  selo de status, nome que abre a gaveta, ações, paginação, CampoEditavel

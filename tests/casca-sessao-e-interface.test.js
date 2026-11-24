@@ -170,6 +170,7 @@ import {
 } from "../src/lib/acessos/grupos-e-coordenacoes.ts";
 import { linkInterno } from "../src/lib/navegacao/link-interno.ts";
 import { irParaTela } from "../src/app/ir-para-tela.ts";
+import { criarPedidoDeVisao } from "../src/lib/navegacao/pedido-de-visao.ts";
 import {
   getLoadingStage,
   isGenericLoadingCopy,
@@ -2387,8 +2388,27 @@ bloco("ir-para-tela", () => {
         { view: "https://exemplo.invalid" },
         { view: "chat" },
         { view: "classificacao", edital: { id: "83/2026" } },
+        { view: "classificacao", visao: "Agenda" },
+        { view: "classificacao", visao: "agenda?x=1" },
       ])
         expect(linkInterno(ruim)).toBeNull();
+    });
+
+    it("leva a visão da tela de destino (a Agenda da Classificação)", () => {
+      expect(linkInterno({ view: "classificacao", visao: " agenda " })).toEqual(
+        { view: "classificacao", visao: "agenda" },
+      );
+      expect(
+        linkInterno({
+          view: "classificacao",
+          edital: { id: EDITAL, titulo: "" },
+          visao: "agenda",
+        }),
+      ).toEqual({
+        view: "classificacao",
+        edital: { id: EDITAL, titulo: "" },
+        visao: "agenda",
+      });
     });
   });
 
@@ -2409,6 +2429,28 @@ bloco("ir-para-tela", () => {
       }
     });
 
+    it("com visão, ela vai junto (a tela abre nela)", () => {
+      const janela = { navigate: vi.fn() };
+      expect(
+        irParaTela(
+          {
+            view: "classificacao",
+            edital: { id: EDITAL, titulo: "" },
+            visao: "agenda",
+          },
+          janela,
+        ),
+      ).toBe(true);
+      expect(janela.navigate).toHaveBeenLastCalledWith("classificacao", {
+        edital: EDITAL,
+        visao: "agenda",
+      });
+      irParaTela({ view: "classificacao", visao: "agenda" }, janela);
+      expect(janela.navigate).toHaveBeenLastCalledWith("classificacao", {
+        visao: "agenda",
+      });
+    });
+
     it("sem edital, só a tela", () => {
       const janela = { navigate: vi.fn() };
       expect(irParaTela({ view: "recursos" }, janela)).toBe(true);
@@ -2422,6 +2464,36 @@ bloco("ir-para-tela", () => {
       );
       expect(janela.navigate).not.toHaveBeenCalled();
       expect(irParaTela({ view: "recursos" }, {})).toBe(false);
+    });
+  });
+
+  describe("criarPedidoDeVisao", () => {
+    it("guarda a visão aceita até a tela consumir, e avisa quem assina", () => {
+      const pedido = criarPedidoDeVisao((v) =>
+        ["listas", "agenda"].includes(v),
+      );
+      const ouvinte = vi.fn();
+      const sair = pedido.assinar(ouvinte);
+      expect(pedido.obter()).toBe("");
+      expect(pedido.pedir(" agenda ")).toBe(true);
+      expect(pedido.obter()).toBe("agenda");
+      expect(ouvinte).toHaveBeenCalledTimes(1);
+      // O mesmo pedido de novo não avisa outra vez.
+      pedido.pedir("agenda");
+      expect(ouvinte).toHaveBeenCalledTimes(1);
+      pedido.consumir();
+      expect(pedido.obter()).toBe("");
+      expect(ouvinte).toHaveBeenCalledTimes(2);
+      sair();
+      pedido.pedir("listas");
+      expect(ouvinte).toHaveBeenCalledTimes(2);
+    });
+
+    it("recusa a visão que a tela não tem (e o vazio)", () => {
+      const pedido = criarPedidoDeVisao((v) => v === "agenda");
+      expect(pedido.pedir("preparar")).toBe(false);
+      expect(pedido.pedir("")).toBe(false);
+      expect(pedido.obter()).toBe("");
     });
   });
 });

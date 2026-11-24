@@ -5,6 +5,7 @@ import {
   gruposDaConvocacao,
 } from "../../lib/entrevistas/convocacao-da-entrevista.ts";
 import { Aviso, Campo, Carregando } from "../../ui/index.ts";
+import { AgendaDoEdital } from "./agenda-do-edital.tsx";
 import { ListaDeConvocacao } from "./conducao.tsx";
 import { rotuloDoEditalParaConduzir } from "./seletor-do-edital.tsx";
 import type { EstadoDaConducaoComAcoes } from "./tipos.ts";
@@ -19,17 +20,24 @@ import type { EstadoDaConducaoComAcoes } from "./tipos.ts";
 
   Convocar e desconvocar continuam em Conduzir entrevistas › Preparar ›
   Convocação, aonde "Convocar em Conduzir entrevistas" leva.
+
+  Abaixo da lista, a agenda dos convocados (a mesma do passo 4 de Preparar,
+  `e.agenda` da loja), só leitura; editar é na Classificação › Agenda, e o
+  botão só vem para quem vê a Classificação (`podeEditarAgenda`).
 */
 
 export function ConvocacaoParaLeitura({
   conducao,
   aoAbrirNaConducao,
   acoes,
+  podeEditarAgenda = false,
 }: {
   conducao: EstadoDaConducaoComAcoes;
   aoAbrirNaConducao: () => void;
   /** Botões de quem desenha (a central), na mesma linha do "Convocar em…". */
   acoes?: ReactNode;
+  /** Mostra "Editar na Classificação › Agenda" (quem vê a Classificação). */
+  podeEditarAgenda?: boolean;
 }) {
   const e = useSyncExternalStore(conducao.assinar, conducao.obter);
   const { editais } = e;
@@ -112,6 +120,28 @@ export function ConvocacaoParaLeitura({
           salvando={false}
           ocupado={false}
         />
+      ) : null}
+      {dados ? (
+        <section
+          className="central-convocacoes-agenda"
+          aria-labelledby="centralConvocacoesAgendaTitulo"
+          data-bloco="agenda-da-central"
+        >
+          <h4
+            className="central-convocacoes-subtitulo"
+            id="centralConvocacoesAgendaTitulo"
+          >
+            Agenda das entrevistas
+          </h4>
+          <AgendaDoEdital
+            key={`agenda-${dados.edital?.id}`}
+            e={e}
+            dados={dados}
+            editar={
+              podeEditarAgenda ? "Editar na Classificação › Agenda" : null
+            }
+          />
+        </section>
       ) : null}
     </div>
   );

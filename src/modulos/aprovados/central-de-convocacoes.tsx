@@ -28,7 +28,13 @@ const TIPOS_DE_CONVOCACAO = [
 */
 type LeituraDasEntrevistas =
   | { tipo: "carregando" }
-  | { tipo: "pronta"; desenhar: (acoes?: ReactNode) => ReactNode }
+  | {
+      tipo: "pronta";
+      desenhar: (
+        acoes?: ReactNode,
+        opcoes?: { podeEditarAgenda?: boolean },
+      ) => ReactNode;
+    }
   | { tipo: "erro"; mensagem: string };
 
 function usarConvocacaoDasEntrevistas(ligada: boolean): LeituraDasEntrevistas {
@@ -132,7 +138,11 @@ export function CentralDeConvocacoes({
       {visao === "entrevista" ? (
         <>
           {leitura.tipo === "carregando" ? <Carregando /> : null}
-          {leitura.tipo === "pronta" ? leitura.desenhar(classificacao) : null}
+          {leitura.tipo === "pronta"
+            ? leitura.desenhar(classificacao, {
+                podeEditarAgenda: podeClassificacao,
+              })
+            : null}
           {leitura.tipo === "erro" ? (
             <>
               <Aviso tom="danger">{leitura.mensagem}</Aviso>

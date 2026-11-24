@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-17
+atualizado: 2026-11-24
 ---
 
 # Módulo: Entrevistas
@@ -36,7 +36,9 @@ contagem por situação no rótulo.
   vez (marco "vaga pronta" em `marcos.ts`).
 - **Preparar** (`preparar.tsx`, `src/lib/entrevistas/passos-do-preparar.ts`): o topo com "N de 4 passos
   prontos", o período e as regras; a trilha dos passos Roteiro, Banca, Convocação e Agenda e o passo
-  escolhido, com o que falta; os **roteiros** da área ficam no passo 1 (a configuração do gestor,
+  escolhido, com o que falta; o passo 4 é a agenda só leitura (`agenda-do-edital.tsx`, a mesma da
+  Central de convocações), com o atalho que abre a Classificação já na aba Agenda
+  (`?visao=agenda`); os **roteiros** da área ficam no passo 1 (a configuração do gestor,
   como Regra e Equipe na Avaliação documental), com versões e o que falta
   (`src/lib/entrevistas/pendencias-do-roteiro.ts`).
 - O edital fica no cabeçalho (`seletor-do-edital.tsx`, com "mostrar também os concluídos" para o
@@ -68,7 +70,8 @@ barras, o parecer e "X de Y notas"; o parecer em texto pronto sai de
   (`obter_classificacao_do_edital`, só para ver) e o atalho para gerar na Classificação.
   `ListaDeConvocacao` (`conducao.tsx`) sem `aoConvocar` é só leitura: é como a Central de convocações
   (Lista de aprovados › Convocação › Para entrevistas) a mostra, por `convocacaoParaLeitura` do
-  controlador (`convocacao-para-leitura.tsx`), com a mesma loja e o mesmo edital aberto.
+  controlador (`convocacao-para-leitura.tsx`), com a mesma loja e o mesmo edital aberto; abaixo da
+  lista, a agenda dos convocados (`e.agenda` da loja), também só leitura.
 - Vagas imediatas e regra de convocação não se configuram aqui: o resumo "Regras da entrevista"
   (`resumo-das-regras.tsx`, topo de Preparar) mostra as da Classificação em linguagem simples, com a
   tabelinha por vaga e, em "Ver detalhes", de onde vêm as vagas e o botão para onde se mudam

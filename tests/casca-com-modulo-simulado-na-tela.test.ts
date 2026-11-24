@@ -1922,7 +1922,24 @@ bloco("componentes/central-de-convocacoes-para-entrevistas", () => {
     ],
   });
 
-  function bancoFalso() {
+  /* Edital com id de verdade (uuid): o "Ir para…" só navega com ele. */
+  const EDITAL_UUID = "0b7c9a52-2d55-4c4e-9f7a-1c3d5e7f9a1b";
+  const AGENDA = {
+    itens: [
+      {
+        analise_id: "a1",
+        data: "2026-12-02",
+        inicio: "09:00:00",
+        fim: "09:30:00",
+        banca: 1,
+      },
+    ],
+  };
+
+  function bancoFalso({
+    agenda = null as unknown,
+    primeiro = "E1",
+  }: { agenda?: unknown; primeiro?: string } = {}) {
     const chamadas: { nome: string; argumentos?: Record<string, unknown> }[] =
       [];
     const respostas: Record<string, (a?: Record<string, unknown>) => unknown> =
@@ -1930,7 +1947,7 @@ bloco("componentes/central-de-convocacoes-para-entrevistas", () => {
         listar_editais_entrevista: () => ({
           admin_global: false,
           editais: [
-            { id: "E1", edital: "E1/2026", unidade: "CASAI Brasília" },
+            { id: primeiro, edital: "E1/2026", unidade: "CASAI Brasília" },
             { id: "E2", edital: "E2/2026", unidade: "CASAI Manaus" },
           ],
         }),
@@ -1940,7 +1957,7 @@ bloco("componentes/central-de-convocacoes-para-entrevistas", () => {
           motivo: null,
           pode_alterar: false,
         }),
-        obter_agenda_entrevista: () => null,
+        obter_agenda_entrevista: () => agenda,
       };
     const cliente: ClienteDaConducao = {
       rpc: (nome, argumentos) => {
@@ -1970,8 +1987,10 @@ bloco("componentes/central-de-convocacoes-para-entrevistas", () => {
     tipo = "entrevista" as TipoDaCentralDeConvocacoes,
     podeEntrevistas = true,
     podeClassificacao = true,
+    agenda = null as unknown,
+    primeiro = "E1",
   } = {}) {
-    const { cliente, chamadas } = bancoFalso();
+    const { cliente, chamadas } = bancoFalso({ agenda, primeiro });
     const criar = vi.fn(() =>
       criarConducaoDeEntrevistas({
         supabase: cliente,
@@ -2047,7 +2066,65 @@ bloco("componentes/central-de-convocacoes-para-entrevistas", () => {
       expect(botoes(elemento)).toEqual([
         "Convocar em Conduzir entrevistas",
         "Abrir listas da Classificação",
+        "Editar na Classificação › Agenda",
       ]);
+    });
+
+    it("abaixo da lista, a agenda dos convocados do edital, só leitura", async () => {
+      const { elemento } = await montar({ agenda: AGENDA });
+      await esperar();
+      await escolher(elemento.querySelector("select"), "E1");
+      await esperar();
+      const agenda = elemento.querySelector("[data-bloco='agenda-da-central']");
+      expect(agenda?.querySelector("h4")?.textContent).toBe(
+        "Agenda das entrevistas",
+      );
+      // Depois da lista de convocação, no mesmo bloco.
+      const lista = elemento.querySelector(".entrevistas-convocacao");
+      expect(
+        lista &&
+          agenda &&
+          lista.compareDocumentPosition(agenda) &
+            Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      const linhas = [...(agenda?.querySelectorAll("tbody tr") ?? [])].map(
+        (tr) => tr.textContent?.replace(/\s+/g, " ").trim(),
+      );
+      expect(linhas).toEqual(["09:00–09:30AnaV11"]);
+      expect(agenda?.querySelectorAll("input, select")).toHaveLength(0);
+    });
+
+    it("edital sem agenda salva: estado vazio, não erro", async () => {
+      const { elemento } = await montar();
+      await esperar();
+      await escolher(elemento.querySelector("select"), "E1");
+      await esperar();
+      const agenda = elemento.querySelector("[data-bloco='agenda-da-central']");
+      expect(agenda?.textContent).toContain(
+        "Nenhum horário salvo para este edital.",
+      );
+      expect(agenda?.querySelector(".ui-aviso")).toBeNull();
+    });
+
+    it("'Editar na Classificação › Agenda' abre a Classificação na aba Agenda, no edital", async () => {
+      const navigate = vi.fn();
+      Object.assign(window, { navigate });
+      const { elemento } = await montar({
+        agenda: AGENDA,
+        primeiro: EDITAL_UUID,
+      });
+      await esperar();
+      await escolher(elemento.querySelector("select"), EDITAL_UUID);
+      await esperar();
+      await clicar(
+        [...elemento.querySelectorAll("button")].find(
+          (b) => b.textContent?.trim() === "Editar na Classificação › Agenda",
+        ),
+      );
+      expect(navigate).toHaveBeenCalledWith("classificacao", {
+        edital: EDITAL_UUID,
+        visao: "agenda",
+      });
     });
 
     it("o edital escolhido é o de Conduzir entrevistas (a mesma loja)", async () => {
@@ -2079,10 +2156,22 @@ bloco("componentes/central-de-convocacoes-para-entrevistas", () => {
       });
     });
 
-    it("sem acesso à Classificação, não oferece as listas dela", async () => {
-      const { elemento } = await montar({ podeClassificacao: false });
+    it("sem acesso à Classificação, não oferece as listas dela nem editar a agenda", async () => {
+      const { elemento } = await montar({
+        podeClassificacao: false,
+        agenda: AGENDA,
+      });
+      await esperar();
+      await escolher(elemento.querySelector("select"), "E1");
       await esperar();
       expect(botoes(elemento)).not.toContain("Abrir listas da Classificação");
+      expect(botoes(elemento)).not.toContain(
+        "Editar na Classificação › Agenda",
+      );
+      // A agenda continua à vista, só leitura.
+      expect(
+        elemento.querySelector("[data-bloco='agenda-da-central'] tbody tr"),
+      ).not.toBeNull();
     });
 
     it("não baixa Conduzir entrevistas na contratação nem sem acesso às entrevistas", async () => {

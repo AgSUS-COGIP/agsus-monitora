@@ -6207,6 +6207,14 @@ bloco("modulos/conduzir-entrevistas", async () => {
       expect(agenda.textContent).toContain(
         "Nenhum horário salvo para este edital.",
       );
+      // O atalho abre a Classificação já na aba Agenda (?visao=agenda).
+      const montarAgenda = agenda.querySelector(
+        '[data-ir-para="classificacao"]',
+      );
+      expect(montarAgenda.textContent.trim()).toBe(
+        "Montar a agenda na Classificação",
+      );
+      expect(montarAgenda.dataset.visao).toBe("agenda");
       const banca = await abrirPasso("banca");
       expect(banca.textContent).toContain("Banca 1");
       expect(banca.textContent).toContain("Avalia todas as competências");

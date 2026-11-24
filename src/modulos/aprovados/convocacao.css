@@ -840,6 +840,18 @@
 .central-convocacoes-edital select {
   width: 100%;
 }
+/* A agenda dos convocados, abaixo da lista (só leitura; entrevistas.css desenha as tabelas). */
+.central-convocacoes-agenda {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+}
+.central-convocacoes-subtitulo {
+  margin: 0;
+  font-size: var(--text-h4);
+}
 .central-convocacoes-modo-entrevista > :not(.central-convocacoes) {
   display: none;
 }

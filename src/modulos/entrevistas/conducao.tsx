@@ -87,10 +87,13 @@ const dataEHora = (iso?: string | null) => {
 export function BotaoIrPara({
   view,
   edital,
+  visao,
   children,
 }: {
   view: OrigemDaVaga["view"];
   edital?: DadosDoEdital["edital"];
+  /** A aba da tela de destino (a Agenda da Classificação). */
+  visao?: string;
   children: ReactNode;
 }) {
   return (
@@ -98,12 +101,14 @@ export function BotaoIrPara({
       type="button"
       className="btn secondary small"
       data-ir-para={view}
+      {...(visao ? { "data-visao": visao } : {})}
       onClick={() =>
         irParaTela({
           view,
           ...(view === "classificacao" && edital?.id
             ? { edital: { id: edital.id, titulo: edital.edital || "" } }
             : {}),
+          ...(visao ? { visao } : {}),
         })
       }
     >

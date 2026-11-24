@@ -4,7 +4,8 @@
   troca é a da navegação (`window.navigate`, que confere a permissão da
   página e avisa). Com edital, ele vai junto no endereço
   (`/<área>/classificacao/<edital>`), e a rota abre a tela já nele
-  (`abrirEdital`, src/app/telas.tsx) depois de carregá-la.
+  (`abrirEdital`, src/app/telas.tsx) depois de carregá-la. Com visão, a tela
+  abre nela (`abrirVisao`: a Classificação na Agenda).
 */
 import { linkInterno } from "../lib/navegacao/link-interno.ts";
 import type { ExtrasDaNavegacao } from "./navegacao.ts";
@@ -20,8 +21,11 @@ export function irParaTela(
 ): boolean {
   const link = linkInterno(entrada);
   if (!link || typeof janela?.navigate !== "function") return false;
-  const edital = link.edital?.id;
-  if (edital) janela.navigate(link.view, { edital });
+  const extras = {
+    ...(link.edital?.id ? { edital: link.edital.id } : {}),
+    ...(link.visao ? { visao: link.visao } : {}),
+  };
+  if (Object.keys(extras).length) janela.navigate(link.view, extras);
   else janela.navigate(link.view);
   return true;
 }
