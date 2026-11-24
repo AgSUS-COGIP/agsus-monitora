@@ -46023,6 +46023,54 @@ COMMENT ON COLUMN arquivo."TB_STATUS_PRESENCA_CHAT"."DT_ATUALIZACAO" IS 'Quando 
 COMMENT ON CONSTRAINT "CK_STATUSPRESENCA_TPSTATUS" ON arquivo."TB_STATUS_PRESENCA_CHAT" IS 'Status válidos.';
 
 --
+-- Name: TB_VAGA_IMEDIATA_FGV_ANTES; Type: TABLE; Schema: arquivo; Owner: -
+--
+
+CREATE TABLE arquivo."TB_VAGA_IMEDIATA_FGV_ANTES" (
+    "CO_EDITAL" text NOT NULL,
+    "CO_VAGA" text NOT NULL,
+    "QT_VAGA_IMEDIATA" integer NOT NULL,
+    "QT_PADRAO_IMEDIATA" integer NOT NULL,
+    "DT_COPIA" timestamp with time zone DEFAULT now() NOT NULL
+);
+
+--
+-- Name: TABLE "TB_VAGA_IMEDIATA_FGV_ANTES"; Type: COMMENT; Schema: arquivo; Owner: -
+--
+
+COMMENT ON TABLE arquivo."TB_VAGA_IMEDIATA_FGV_ANTES" IS 'Vagas imediatas da convocação do FGV 2025 antes de seguir o quadro do edital (migration 20261124230000). Só para o rollback; fora da Data API.';
+
+--
+-- Name: COLUMN "TB_VAGA_IMEDIATA_FGV_ANTES"."CO_EDITAL"; Type: COMMENT; Schema: arquivo; Owner: -
+--
+
+COMMENT ON COLUMN arquivo."TB_VAGA_IMEDIATA_FGV_ANTES"."CO_EDITAL" IS 'O edital (TB_MONITORAMENTO_INDIGENA.id).';
+
+--
+-- Name: COLUMN "TB_VAGA_IMEDIATA_FGV_ANTES"."CO_VAGA"; Type: COMMENT; Schema: arquivo; Owner: -
+--
+
+COMMENT ON COLUMN arquivo."TB_VAGA_IMEDIATA_FGV_ANTES"."CO_VAGA" IS 'A vaga (TB_VAGA_IMEDIATA.CO_VAGA).';
+
+--
+-- Name: COLUMN "TB_VAGA_IMEDIATA_FGV_ANTES"."QT_VAGA_IMEDIATA"; Type: COMMENT; Schema: arquivo; Owner: -
+--
+
+COMMENT ON COLUMN arquivo."TB_VAGA_IMEDIATA_FGV_ANTES"."QT_VAGA_IMEDIATA" IS 'As vagas imediatas da vaga antes da troca.';
+
+--
+-- Name: COLUMN "TB_VAGA_IMEDIATA_FGV_ANTES"."QT_PADRAO_IMEDIATA"; Type: COMMENT; Schema: arquivo; Owner: -
+--
+
+COMMENT ON COLUMN arquivo."TB_VAGA_IMEDIATA_FGV_ANTES"."QT_PADRAO_IMEDIATA" IS 'O padrão do edital (TB_CONVOCACAO_EDITAL) antes da troca.';
+
+--
+-- Name: COLUMN "TB_VAGA_IMEDIATA_FGV_ANTES"."DT_COPIA"; Type: COMMENT; Schema: arquivo; Owner: -
+--
+
+COMMENT ON COLUMN arquivo."TB_VAGA_IMEDIATA_FGV_ANTES"."DT_COPIA" IS 'Quando a cópia foi feita.';
+
+--
 -- Name: TH_LIMPEZA_CHAT; Type: TABLE; Schema: arquivo; Owner: -
 --
 
@@ -63622,6 +63670,13 @@ ALTER TABLE ONLY arquivo."TL_EXPURGO_ANEXO_CHAT"
 --
 
 COMMENT ON CONSTRAINT "PK_TL_EXPURGO_ANEXO_CHAT" ON arquivo."TL_EXPURGO_ANEXO_CHAT" IS 'Uma linha por execução.';
+
+--
+-- Name: TB_VAGA_IMEDIATA_FGV_ANTES PK_VAGA_IMEDIATA_FGV_ANTES; Type: CONSTRAINT; Schema: arquivo; Owner: -
+--
+
+ALTER TABLE ONLY arquivo."TB_VAGA_IMEDIATA_FGV_ANTES"
+    ADD CONSTRAINT "PK_VAGA_IMEDIATA_FGV_ANTES" PRIMARY KEY ("CO_EDITAL", "CO_VAGA");
 
 --
 -- Name: TB_CONVERSA UK_CONVERSA_CHAVEDIRETA; Type: CONSTRAINT; Schema: arquivo; Owner: -
