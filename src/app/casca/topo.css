@@ -290,6 +290,19 @@
 
 /* ── Larguras ────────────────────────────────────────────────────────────── */
 
+/* O padding lateral é o da página (.content, app.css), nas mesmas larguras. */
+@media (max-width: 1023px) {
+  .top {
+    padding-inline: var(--space-6);
+  }
+}
+
+@media (max-width: 767px) {
+  .top {
+    padding-inline: var(--space-4);
+  }
+}
+
 /*
   Telas das áreas acima de 900px: sem ☰, sem marca e com o título só para o
   leitor de tela, a esquerda fica vazia. A linha do título sai da grade
@@ -319,7 +332,6 @@
   .top {
     z-index: calc(var(--z-header) + 20);
     grid-template-columns: fit-content(50%) minmax(0, 1fr) max-content;
-    padding-inline: var(--space-6);
   }
 
   .top .topo-busca {
@@ -336,7 +348,6 @@
   .top {
     grid-template-columns: minmax(0, 1fr) max-content;
     gap: var(--space-2);
-    padding-inline: var(--space-4);
   }
 
   .top .topo-busca {

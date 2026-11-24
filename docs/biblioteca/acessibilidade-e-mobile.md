@@ -53,6 +53,10 @@ Não basta diminuir os componentes: reorganize a tela.
   `src/componentes/barra-lateral/usar-ambiente.ts`) e as tabelas viram cartões
 - **1220px** — desktop estreito
 
+A grade da página e o cabeçalho seguem os da norma: padding lateral de 16px abaixo de 768px, 24px
+até 1023px e 32px a partir de 1024px (`.content` em `app.css`, `.top` em `topo.css`), e as ações
+do topo da tela recolhem em "Mais ações" abaixo de 768px ([[componentes-padrao]]).
+
 Os valores antigos (560, 680, 700, 720, 820, 1180) migram para o mais próximo quando a regra for
 tocada.
 

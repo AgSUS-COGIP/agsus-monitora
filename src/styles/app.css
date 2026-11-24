@@ -901,8 +901,24 @@ body.external-clean #externalReturnBar {
   }
 }
 
+/*
+  A grade da página (Design System, seção 16): o padding lateral é 16px no
+  celular, 24px no tablet (768–1023px) e 32px a partir de 1024px, o mesmo do
+  cabeçalho do app (src/app/casca/topo.css). É o único respiro lateral: `.main`
+  não soma o seu.
+*/
 .content {
-  padding: 14px 10px 34px;
+  padding: var(--space-4) var(--space-4) var(--space-8);
+}
+@media (min-width: 768px) {
+  .content {
+    padding-inline: var(--space-6);
+  }
+}
+@media (min-width: 1024px) {
+  .content {
+    padding-inline: var(--space-8);
+  }
 }
 .card {
   background: var(--card);

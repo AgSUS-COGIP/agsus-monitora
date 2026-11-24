@@ -341,6 +341,7 @@ import {
   LinhaDoRecorte,
   LinhasEsqueleto,
   ListaDePendencias,
+  MaisAcoes,
   MaisOpcoes,
   MarcasDoRecorte,
   PainelDeFiltros,
@@ -12178,6 +12179,103 @@ bloco("ui/ui", () => {
       expect($(".ui-topo-titulo")?.nextElementSibling?.className).toBe(
         "ui-topo-acoes",
       );
+    });
+
+    it("sem principal, o Atualizar fica fora do Mais ações; o resto entra nele", async () => {
+      await montarNoApp(
+        h(
+          TopoDoPainel,
+          {
+            status: "",
+            aoAtualizar: () => {},
+            exportacao: { excel: () => {} },
+          },
+          h("button", { id: "extra" }, "Extra"),
+        ),
+      );
+      const lista = definido($(".ui-mais-acoes-lista"));
+      expect(
+        $('[data-acao="atualizar"]')?.closest(".ui-mais-acoes"),
+      ).toBeNull();
+      expect(
+        lista.querySelector('[data-acao="exportar-excel"]'),
+      ).not.toBeNull();
+      expect(lista.querySelector("#extra")).not.toBeNull();
+    });
+
+    it("com principal, ela fica por último e fora do Mais ações, e o Atualizar entra nele", async () => {
+      await montarNoApp(
+        h(TopoDoPainel, {
+          status: "",
+          aoAtualizar: () => {},
+          principal: h("button", { id: "novo", className: "btn" }, "Novo"),
+        }),
+      );
+      const acoes = definido($(".ui-topo-acoes"));
+      expect(acoes.lastElementChild?.id).toBe("novo");
+      expect($("#novo")?.closest(".ui-mais-acoes")).toBeNull();
+      expect(
+        $('[data-acao="atualizar"]')?.closest(".ui-mais-acoes-lista"),
+      ).not.toBeNull();
+    });
+  });
+
+  describe("MaisAcoes", () => {
+    const botao = () => definido($<HTMLElement>('[data-acao="mais-acoes"]'));
+    const aberto = () => $(".ui-mais-acoes")?.hasAttribute("data-aberto");
+
+    it("abre com o foco na primeira ação; Esc fecha e devolve o foco ao botão", async () => {
+      await montarNoApp(
+        h(
+          MaisAcoes,
+          null,
+          h("button", { id: "um", className: "btn" }, "Um"),
+          h("button", { id: "dois", className: "btn" }, "Dois"),
+        ),
+      );
+      expect(botao().textContent?.trim()).toBe("Mais ações");
+      expect(botao().getAttribute("aria-expanded")).toBe("false");
+      expect(botao().getAttribute("aria-controls")).toBe(
+        $(".ui-mais-acoes-lista")?.id,
+      );
+      await clicar(botao());
+      expect(aberto()).toBe(true);
+      expect(botao().getAttribute("aria-expanded")).toBe("true");
+      expect(document.activeElement?.id).toBe("um");
+      await act(async () => {
+        definido($("#um")).dispatchEvent(
+          new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+        );
+      });
+      expect(aberto()).toBe(false);
+      expect(document.activeElement).toBe(botao());
+    });
+
+    it("escolher uma ação ou clicar fora fecha a lista", async () => {
+      const escolher = vi.fn();
+      await montarNoApp(
+        h(
+          "div",
+          null,
+          h("p", { id: "fora" }, "fora"),
+          h(
+            MaisAcoes,
+            null,
+            h("button", { id: "um", onClick: escolher }, "Um"),
+          ),
+        ),
+      );
+      await clicar(botao());
+      await clicar($("#um"));
+      expect(escolher).toHaveBeenCalledTimes(1);
+      expect(aberto()).toBe(false);
+      await clicar(botao());
+      await act(async () => {
+        definido($("#fora")).dispatchEvent(
+          new MouseEvent("mousedown", { bubbles: true }),
+        );
+      });
+      expect(aberto()).toBe(false);
     });
   });
 

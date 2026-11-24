@@ -104,6 +104,16 @@ const CAMADAS = [
     },
   },
   {
+    tela: "aprovados",
+    estado: "mais-acoes",
+    caminho: "/sede/aprovados",
+    larguras: [375],
+    abrir: async (page) => {
+      await page.locator("[data-acao='mais-acoes']:visible").click();
+      await expect(page.locator(".ui-mais-acoes-lista:visible")).toBeVisible();
+    },
+  },
+  {
     tela: "visao-geral",
     estado: "menu",
     caminho: "/sede/visao-geral",
@@ -403,5 +413,76 @@ test.describe("palavra inteira nas tabelas a 1280px", () => {
       const quebradas = await aberta.page.evaluate(palavrasQuebradas);
       await aberta.contexto.close();
       expect(quebradas, `quebradas: ${quebradas.join(", ")}`).toEqual([]);
+    });
+});
+
+/*
+  As travas do lote 2 do plano (grade da página e cabeçalho da tela): o
+  padding lateral da página é 16, 24 e 32px (celular, tablet, desktop), e no
+  celular o topo da tela mostra uma ação larga (40% da página ou mais), no
+  máximo; as outras ficam em "Mais ações" (MaisAcoes, src/ui/).
+*/
+function acoesLargasNoTopo() {
+  const pagina = document.querySelector(".content .page.active");
+  if (!pagina) return [];
+  const largura = pagina.getBoundingClientRect().width;
+  const topos = pagina.querySelectorAll(
+    ":is(.ui-topo, .ui-cabecalho-da-tela, .visao-geral-acoes)",
+  );
+  return [...topos].flatMap((topo) =>
+    [...topo.querySelectorAll(".btn:not([data-acao='mais-acoes'])")]
+      .filter((botao) => {
+        const caixa = botao.getBoundingClientRect();
+        return caixa.height > 0 && caixa.width >= largura * 0.4;
+      })
+      .map((botao) =>
+        (botao.innerText || botao.getAttribute("aria-label") || "").trim(),
+      ),
+  );
+}
+
+test.describe("grade da página e topo da tela", () => {
+  test.beforeEach(async ({ request }) => {
+    test.skip(
+      !(await buildSimulado(request)),
+      `Compile com VITE_SUPABASE_URL=${SUPABASE} para rodar este teste.`,
+    );
+  });
+
+  for (const [largura, esperado] of [
+    [375, "16px"],
+    [768, "24px"],
+    [1280, "32px"],
+  ])
+    test(`padding lateral da página em ${largura}px`, async ({ browser }) => {
+      const aberta = await abrir(browser, {
+        caminho: "/sede/editais",
+        estado: "cheia",
+        largura,
+        tema: "claro",
+      });
+      const conteudo = aberta.page.locator(".content");
+      await expect(conteudo).toHaveCSS("padding-left", esperado);
+      await expect(conteudo).toHaveCSS("padding-right", esperado);
+      await aberta.contexto.close();
+    });
+
+  for (const { tela, caminho } of TELAS)
+    test(`${tela}: no máximo uma ação de largura cheia no topo a 375px`, async ({
+      browser,
+    }) => {
+      const aberta = await abrir(browser, {
+        caminho,
+        estado: "cheia",
+        largura: 375,
+        tema: "claro",
+      });
+      await aberta.page.waitForTimeout(300);
+      const largas = await aberta.page.evaluate(acoesLargasNoTopo);
+      await aberta.contexto.close();
+      expect(
+        largas.length,
+        `largas: ${largas.join(" | ")}`,
+      ).toBeLessThanOrEqual(1);
     });
 });

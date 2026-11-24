@@ -450,7 +450,9 @@ bloco("modulos/analises", async () => {
         /^Atualizado em 30\/09, \d{2}:\d{2}$/,
       );
       expect(
-        [...topo.querySelectorAll("button")].map((b) => b.textContent.trim()),
+        [...topo.querySelectorAll("button:not([data-acao='mais-acoes'])")].map(
+          (b) => b.textContent.trim(),
+        ),
       ).toEqual(["Atualizar", "Exportar em Excel"]);
       expect(document.querySelectorAll(".status-discreto")).toHaveLength(1);
       for (const texto of [
@@ -2306,9 +2308,11 @@ bloco("modulos/entrevistas", async () => {
       // Conduzir entrevistas é outra entrada do menu: o painel não tem visões.
       expect(topo.querySelector(".entrevistas-visoes")).toBeNull();
       expect(
-        [...topo.querySelectorAll(".ui-topo-acoes button")].map((b) =>
-          b.textContent.trim(),
-        ),
+        [
+          ...topo.querySelectorAll(
+            ".ui-topo-acoes button:not([data-acao='mais-acoes'])",
+          ),
+        ].map((b) => b.textContent.trim()),
       ).toEqual(["Atualizar", "Exportar em Excel", "Salvar em PDF"]);
       expect(topo.querySelector('[aria-label*="tema"]')).toBeNull();
       expect(topo.querySelector('[aria-label*="tela cheia"]')).toBeNull();
@@ -2885,7 +2889,9 @@ bloco("modulos/recursos", async () => {
       expect(topo.querySelector("h1, h2")).toBeNull();
       expect(status().textContent).toMatch(/^Atualizado em 20\/09\/2026/);
       expect(
-        [...topo.querySelectorAll("button")].map((b) => b.textContent.trim()),
+        [...topo.querySelectorAll("button:not([data-acao='mais-acoes'])")].map(
+          (b) => b.textContent.trim(),
+        ),
       ).toEqual([
         "Atualizar",
         "Exportar em Excel",
@@ -3710,7 +3716,9 @@ bloco("modulos/recursos", async () => {
       await montar(supabaseFalso(), { modo: "analise" });
       const topo = secao.querySelector("header.ui-topo");
       expect(
-        [...topo.querySelectorAll("button")].map((b) => b.textContent.trim()),
+        [...topo.querySelectorAll("button:not([data-acao='mais-acoes'])")].map(
+          (b) => b.textContent.trim(),
+        ),
       ).toEqual(["Atualizar", "Ver no painel", "Novo recurso"]);
       expect(secao.querySelector(".recursos-kpis")).toBeNull();
       expect(secao.querySelector("canvas")).toBeNull();
@@ -5541,9 +5549,11 @@ bloco("modulos/selecao", async () => {
       const topo = secao.querySelector("header.ui-topo");
       expect(topo.querySelector("h1, h2")).toBeNull();
       expect(
-        [...topo.querySelectorAll(".ui-topo-acoes button")].map((b) =>
-          b.textContent.trim(),
-        ),
+        [
+          ...topo.querySelectorAll(
+            ".ui-topo-acoes button:not([data-acao='mais-acoes'])",
+          ),
+        ].map((b) => b.textContent.trim()),
       ).toEqual(["Atualizar", "Exportar em Excel", "Salvar em PDF"]);
       expect(topo.querySelector('[aria-label*="tema"]')).toBeNull();
       expect(topo.querySelector('[aria-label*="tela cheia"]')).toBeNull();

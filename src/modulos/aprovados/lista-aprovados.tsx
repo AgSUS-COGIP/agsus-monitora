@@ -477,13 +477,47 @@ export function ListaAprovados({
         atualizarDesativado={
           Boolean(dados.acao) || (!carregado && !erroAoCarregar)
         }
+        principal={
+          /*
+            O contador e o sub judice falam da lista de aprovados. Deixá-los
+            visíveis na outra aba prometeria uma ação que não pertence àquela
+            tabela. No celular, o sub judice é a ação que fica à vista.
+          */
+          <>
+            <span
+              id="approvedCount"
+              className="approved-contagem"
+              hidden={aba !== "aprovados"}
+            >
+              {carregado
+                ? plural(filtrados.length, "candidato", "candidatos")
+                : erroAoCarregar
+                  ? "Sem dados"
+                  : "Carregando…"}
+            </span>
+            {podeSubJudice ? (
+              <button
+                id="approvedAddSubJudiceBtn"
+                data-tour="aprovados-sub-judice"
+                className="btn green"
+                type="button"
+                hidden={aba !== "aprovados"}
+                disabled={!temListaAtiva}
+                title={
+                  temListaAtiva
+                    ? "Incluir candidato sub judice ou registrar decisão sobre candidato já aprovado"
+                    : "É necessário ter uma lista ativa"
+                }
+                onClick={estado.abrirSubJudice}
+              >
+                <i className="fa-solid fa-gavel" aria-hidden="true" /> Sub
+                judice
+              </button>
+            ) : null}
+          </>
+        }
       >
         <SeloDeAvisos modulo="aprovados" />
-        {/*
-          O contador e o botão de sub judice falam da lista de aprovados.
-          Deixá-los visíveis na outra aba prometeria uma ação que não
-          pertence àquela tabela.
-        */}
         <div
           className={classes(
             "approved-head-actions",
@@ -491,13 +525,6 @@ export function ListaAprovados({
           )}
           id="approvedHeadActions"
         >
-          <span id="approvedCount" className="approved-contagem">
-            {carregado
-              ? plural(filtrados.length, "candidato", "candidatos")
-              : erroAoCarregar
-                ? "Sem dados"
-                : "Carregando…"}
-          </span>
           <button
             id="approvedExportBtn"
             data-tour="aprovados-exportar"
@@ -514,23 +541,6 @@ export function ListaAprovados({
             perfil={perfil}
             rotulo="Resumo por cargo e status em Relatórios"
           />
-          {podeSubJudice ? (
-            <button
-              id="approvedAddSubJudiceBtn"
-              data-tour="aprovados-sub-judice"
-              className="btn green"
-              type="button"
-              disabled={!temListaAtiva}
-              title={
-                temListaAtiva
-                  ? "Incluir candidato sub judice ou registrar decisão sobre candidato já aprovado"
-                  : "É necessário ter uma lista ativa"
-              }
-              onClick={estado.abrirSubJudice}
-            >
-              <i className="fa-solid fa-gavel" aria-hidden="true" /> Sub judice
-            </button>
-          ) : null}
         </div>
       </TopoDoPainel>
       {aba === "aprovados" && editais.length === 1 ? (

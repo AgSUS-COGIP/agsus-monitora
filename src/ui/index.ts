@@ -104,6 +104,8 @@ export type {
   Pendencia,
   PropriedadesDaListaDePendencias,
 } from "./lista-de-pendencias.tsx";
+export { MaisAcoes } from "./mais-acoes.tsx";
+export type { PropriedadesDeMaisAcoes } from "./mais-acoes.tsx";
 export { MaisOpcoes } from "./mais-opcoes.tsx";
 export type { PropriedadesDeMaisOpcoes } from "./mais-opcoes.tsx";
 export { MenuDeAcoes } from "./menu-de-acoes.tsx";

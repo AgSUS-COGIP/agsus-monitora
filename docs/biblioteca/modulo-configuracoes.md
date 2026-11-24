@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-17
+atualizado: 2026-11-23
 ---
 
 # Módulo: Configurações
@@ -14,10 +14,12 @@ própria têm nota sua ([[modulo-acessos]], [[robos-e-agenda]], [[modulo-paineis
 
 ## Moldura
 
-- `configuracoes.tsx` — a moldura (rota `config`).
+- `configuracoes.tsx` — a moldura (rota `config`): o título da seção no `CabecalhoDaTela`, como
+  nas outras telas, e a barra de salvar colada no pé da página (`sticky`, por portal no
+  `.config-rodape` de `src/app/telas.tsx`), que reserva o próprio espaço.
 - `secoes.ts` — a lista das seções; cada uma é rota desenhada pela página em `src/app/telas.tsx`
   (seção com tela própria registrada como `secao:<id>`).
-- `estado.ts` — estado com a publicação versionada (barra fixa de publicar, com motivo e histórico em
+- `estado.ts` — estado com a publicação versionada (barra de salvar, com motivo e histórico em
   `TH_CONFIGURACAO`). Detalhe no topo de cada arquivo e em
   [docs/arquitetura-react.md](../arquitetura-react.md). A barra, o Ctrl+S e o "Alterações não
   salvas" só valem nas seções da moldura, que têm campos (`SECOES_COM_BARRA_DE_SALVAR`); as de tela
@@ -35,7 +37,7 @@ seção que configura: `comemoracoes.tsx` (catálogo de marcos, personalizados, 
 `src/lib/comemoracao/catalogo-de-comemoracoes.ts`. A frase fica só no aviso; fila zerada, vaga pronta e
 os personalizados são só o aviso (sem efeito, intensidade, duração nem som).
 
-- **Persistência.** Chave `comemoracoes_marcos` de `TB_CONFIGURACAO`, publicada pela barra fixa
+- **Persistência.** Chave `comemoracoes_marcos` de `TB_CONFIGURACAO`, publicada pela barra de salvar
   (`salvar_configuracoes_e_paineis_v2`, com motivo e `TH_CONFIGURACAO`; restaurar versão volta os
   marcos). Sem migration. Vazio = padrão; o JSON guarda só o que difere. A revisão mostra cada campo
   mudado (`alteracoesDasComemoracoes`), não o JSON.

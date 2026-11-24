@@ -19,6 +19,7 @@ import { Icone } from "../../componentes/icone.tsx";
 import {
   Aviso,
   BlocosEsqueleto,
+  CabecalhoDaTela,
   Campo,
   classes,
   ErroAoCarregar,
@@ -56,10 +57,11 @@ interface ComEstado {
 /*
   A moldura de Configurações em React, a mesma para todas as seções:
 
-    Cabeçalho       ícone, nome e descrição da seção aberta (o mesmo ícone do
-                    menu lateral), o aviso de alteração não salva e o resumo
-                    da validação
-    Barra fixa      situação e "Salvar alterações" (e o Ctrl+S, no estado);
+    Cabeçalho       o nome da seção aberta no CabecalhoDaTela de src/ui/ (o
+                    mesmo das outras telas), o aviso de alteração não salva e
+                    o resumo da validação
+    Barra de salvar situação e "Salvar alterações" (e o Ctrl+S, no estado),
+                    colada no pé da página (por portal no `.config-rodape`);
                     só nas seções com campos da barra (`temBarraDeSalvar`):
                     some em Acessos, Módulos e abas, Status das atualizações
                     e Automação
@@ -93,27 +95,22 @@ function Cabecalho({ estado }: ComEstado) {
   const comSalvar = temBarraDeSalvar(secao.id);
   const erros = atual.errosDaValidacao;
   return (
-    <header
-      className="config-cabecalho"
-      data-secao={secao.id}
-      data-tour="config-cabecalho"
-    >
-      <div className="config-cabecalho__linha">
-        <span className="config-cabecalho__icone" aria-hidden="true">
-          <Icone nome={secao.iconeDoMenu} tamanho={18} />
-        </span>
-        <div className="config-cabecalho__texto">
-          <h2>{secao.rotulo}</h2>
-        </div>
+    <>
+      <CabecalhoDaTela
+        className="ui-cabecalho-da-pagina"
+        trilha=""
+        titulo={secao.rotulo}
+        tour="config-cabecalho"
+      >
         {/* Comemorações: a preferência deste navegador fica no título. */}
         {secao.id === "comemoracoes" ? <InterruptorPessoal /> : null}
         {comSalvar && estado.temAlteracoes() ? (
-          <span className="config-cabecalho__pendente">
-            <span className="config-cabecalho__ponto" aria-hidden="true" />
+          <span className="config-pendente">
+            <span className="config-pendente__ponto" aria-hidden="true" />
             Alterações não salvas
           </span>
         ) : null}
-      </div>
+      </CabecalhoDaTela>
       {comSalvar && erros.length ? (
         <Aviso tom="danger" papel="alert" className="config-validation-summary">
           <strong>
@@ -126,7 +123,7 @@ function Cabecalho({ estado }: ComEstado) {
           </ul>
         </Aviso>
       ) : null}
-    </header>
+    </>
   );
 }
 
@@ -672,14 +669,17 @@ function Configuracoes({
   estado,
   imagens,
   alvos,
+  rodape,
 }: PropsDaSecaoNoPortal & {
   /** O corpo de cada seção (alvo do portal), por id; null se não existe. */
   alvos: Partial<Record<string, Element | null>>;
+  /** O pé da página (alvo da barra de salvar); null se não existe. */
+  rodape: Element | null;
 }) {
   return (
     <>
       <Cabecalho estado={estado} />
-      <BarraDeSalvar estado={estado} />
+      {rodape ? createPortal(<BarraDeSalvar estado={estado} />, rodape) : null}
       <Dialogos estado={estado} />
       {SECOES_NO_PORTAL.map(([secao, Secao]) =>
         alvos[secao]
@@ -709,7 +709,9 @@ function Configuracoes({
   página existe.
 */
 function ConfiguracoesNaPagina({ estado, imagens }: PropsDaSecaoNoPortal) {
-  const { pagina, corpos } = useContext(ContextoDaPaginaDeConfiguracoes);
+  const { pagina, corpos, rodape } = useContext(
+    ContextoDaPaginaDeConfiguracoes,
+  );
   const { secao } = usarEstadoDaNavegacao();
   useEffect(() => {
     if (secao) estado.definirSecao(secao);
@@ -718,7 +720,14 @@ function ConfiguracoesNaPagina({ estado, imagens }: PropsDaSecaoNoPortal) {
     () => (pagina ? estado.instalar(pagina) : undefined),
     [estado, pagina],
   );
-  return <Configuracoes estado={estado} imagens={imagens} alvos={corpos} />;
+  return (
+    <Configuracoes
+      estado={estado}
+      imagens={imagens}
+      alvos={corpos}
+      rodape={rodape}
+    />
+  );
 }
 
 /**

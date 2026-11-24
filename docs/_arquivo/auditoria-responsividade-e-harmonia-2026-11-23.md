@@ -237,6 +237,22 @@ peso 600 e marcador.
 
 ### Lote 2 — Grade da página e cabeçalho da tela
 
+**Feito em 23/11/2026.** Na auditoria seguinte: `.content` com 16/24/32px de padding lateral
+a 375, 768 e 1280px (era 10px nas três); 0 espaço fora da escala em `.content`,
+`.config-layout`, `.ui-cabecalho-acoes` e `.status-discreto` (eram 600, 48, 10 e 36 achados
+nas 150 medições da tela cheia, claro e escuro); nenhuma tela com mais de uma ação larga no topo a 375px (eram 7: Editais,
+Aprovados, Análises, Painel de recursos, Recursos, Seleção e Painel de entrevistas). As travas
+do padding e do topo rodam no CI (`tests/auditoria-visual.spec.js`), e a auditoria mede o menu
+"Mais ações" aberto (camada `mais-acoes` de Aprovados).
+
+- `.main` não soma respiro lateral no celular (saíram os 12/8px com `!important`); o cabeçalho
+  do app (`topo.css`) usa as mesmas larguras (767 e 1023px) que a página.
+- `MaisAcoes` (`src/ui/`) e `principal` no `TopoDoPainel`: no celular ficam a principal e
+  "⋯ Mais ações". As margens automáticas de `.ui-cabecalho-acoes` e `.status-discreto` viraram
+  `flex: 1 1 auto`.
+- Configurações: título no `CabecalhoDaTela`; a barra de salvar é `sticky` no pé da página
+  (por portal no `.config-rodape`), sem a reserva de 92/128px.
+
 - `.content` com 16px (< 768), 24px (768–1023) e 32px (≥ 1024) de padding lateral, por token;
   `.config-layout` sem os 92/128px (a barra de salvar reserva o espaço pelo próprio componente).
 - Configurações com o mesmo `CabecalhoDaTela` das outras telas.

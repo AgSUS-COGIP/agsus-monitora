@@ -33,6 +33,20 @@
 .approved-head-actions.hidden {
   display: none;
 }
+/*
+  Celular: em "Mais ações", Exportar e Ver em Relatórios um embaixo do outro;
+  o contador sai do topo (é o mesmo número da aba Aprovados), para o Sub
+  judice e o "Mais ações" caberem numa linha.
+*/
+@media (max-width: 767px) {
+  .ui-mais-acoes-lista .approved-head-actions {
+    display: grid;
+    gap: var(--space-2);
+  }
+  .ui-topo-acoes > .approved-contagem {
+    display: none;
+  }
+}
 .approved-contagem {
   display: inline-flex;
   align-items: center;
@@ -446,9 +460,6 @@ table.mobile-card-table td.approved-actions {
   filter: brightness(0.95);
 }
 @media (max-width: 700px) {
-  .approved-head-actions {
-    justify-content: space-between;
-  }
   .approved-modal-actions {
     flex-wrap: wrap;
   }
