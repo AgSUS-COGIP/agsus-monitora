@@ -155,6 +155,13 @@ test.describe("sessão simulada", () => {
     await expect(topo.locator(".topo-busca")).toHaveCount(0);
     for (const acao of [menu, sininho, foto])
       expect(await caixa(acao)).toBe("44×44");
+    // Nada passa da borda: exportar e Relatórios ficam em "Mais ações".
+    await expect(
+      page.locator("#page-dashboard .ui-mais-acoes-botao"),
+    ).toBeVisible();
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(375);
     expect(erros).toEqual([]);
     await contexto.close();
   });

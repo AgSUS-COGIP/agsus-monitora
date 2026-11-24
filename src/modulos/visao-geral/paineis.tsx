@@ -54,6 +54,7 @@ import {
 } from "../../ui/index.ts";
 import { useState } from "react";
 import { BotoesDeExportacao } from "../../ui/botoes-de-exportacao.tsx";
+import { MaisAcoes } from "../../ui/mais-acoes.tsx";
 import { VerEmRelatorios } from "../../componentes/ver-em-relatorios.tsx";
 
 /*
@@ -189,18 +190,21 @@ export function Cabecalho({
         >
           <i className="fa-solid fa-rotate" aria-hidden="true" /> Atualizar
         </button>
-        <BotoesDeExportacao
-          desativado={!e.carregado || !e.filtradas.length}
-          excel={() => aoExportar("excel")}
-          pdf={() => aoExportar("pdf")}
-        />
-        <VerEmRelatorios
-          relatorio="montar-relatorio"
-          origem="visao-geral"
-          perfil={perfil}
-          rotulo="Montar relatório com este recorte em Relatórios"
-          desativado={!e.carregado || !e.filtradas.length}
-        />
+        {/* No celular (abaixo de 768px), exportar e Relatórios ficam em "Mais ações". */}
+        <MaisAcoes>
+          <BotoesDeExportacao
+            desativado={!e.carregado || !e.filtradas.length}
+            excel={() => aoExportar("excel")}
+            pdf={() => aoExportar("pdf")}
+          />
+          <VerEmRelatorios
+            relatorio="montar-relatorio"
+            origem="visao-geral"
+            perfil={perfil}
+            rotulo="Montar relatório com este recorte em Relatórios"
+            desativado={!e.carregado || !e.filtradas.length}
+          />
+        </MaisAcoes>
       </div>
     </header>
   );
