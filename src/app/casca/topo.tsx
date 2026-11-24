@@ -2,7 +2,7 @@ import type { MouseEvent } from "react";
 import { chamarAcaoDaCasca, fecharMenuDaConta } from "./acoes.ts";
 import { usarEstadoDaNavegacao } from "../contexto-do-app.ts";
 import { telaDaRota } from "../../lib/navegacao/rotas.ts";
-import { EVENTO_ABRIR_A_BUSCA } from "../../lib/navegacao/busca-global.ts";
+import { definirDestinoDoTitulo } from "./destino-do-titulo.ts";
 import { usarLogoDaMarca } from "../../componentes/barra-lateral/barra-lateral.tsx";
 import { Icone } from "../../componentes/icone.tsx";
 import { SininhoDoResumo } from "../../modulos/resumo-do-dia/resumo-do-dia.tsx";
@@ -15,32 +15,32 @@ import {
 import "./topo.css";
 
 /*
-  O cabeçalho do app (`header.top`), numa linha só, em três partes:
+  O cabeçalho do app (`header.top`), numa linha só, em duas partes:
 
-    à esquerda  -> o ☰ e a marca (só com a barra em gaveta, até 900px) e,
-                   fora das telas das áreas, o título da página;
-    no meio     -> o campo da busca global (abre a mesma busca do Ctrl+K); nas
-                   telas das áreas, sem nada à esquerda, ele vai para o começo;
+    à esquerda  -> o ☰ e a marca (só com a barra em gaveta, até 900px) e o
+                   nome da tela: "● Área › Tela" nas telas das áreas
+                   (`CabecalhoDaTela` o põe ali, por portal, no
+                   `.topo-tela-destino`) e o título da página em Aviso e
+                   Administração;
     à direita   -> o sininho do resumo do dia e a foto com o menu da conta
                    (Pessoas online, Atualizar dados, Tela cheia).
 
-  Nada repetido: a área já está no título ou no subtítulo de cada tela
-  (`CabecalhoDaTela`) e no seletor da barra lateral, e a Aya tem a arara.
+  Nada repetido: o nome da tela só aparece aqui (o conteúdo começa pelas
+  ações e indicadores), a área só na trilha e no seletor da barra lateral, a
+  Aya na arara e a busca global no Ctrl+K.
 
   As ações da direita e o ☰ são `.btn.ghost.ui-botao-icone` com a mesma caixa
-  (`.topo-acao`, topo.css). No celular (até 640px) ficam só o ☰, a marca, o
-  sininho e a foto: a busca segue no Ctrl+K.
+  (`.topo-acao`, topo.css). No celular (até 640px) ficam o ☰, o nome da tela
+  (ou a marca, fora das áreas), o sininho e a foto.
 
-  Nas telas das áreas, o título fica no conteúdo (`CabecalhoDaTela`, pelo
-  módulo ou por src/app/telas.tsx); o daqui fica só para o leitor de tela e
-  a faixa leva `data-compacto`. Aviso e Administração mantêm o título aqui.
-
-  O título vem da navegação (src/app/navegacao.ts), pelo contexto da raiz. Nome, e-mail e perfil são escritos de fora
-  (`src/app/perfil.ts`) e a foto por `google-profile-photo.ts`, nos ids de
-  sempre. Pessoas online e os selos do edital (`pecas.tsx`) leem o estado do
-  sistema pelo contexto da raiz; o ☰ (`#globalSidebarToggle`) é da barra
-  lateral e entra por portal no `.title-row` até 900px
-  (`alca-de-recolher.tsx`).
+  Nas telas das áreas, o h1 da página (`#pageTitle`) fica só para o leitor de
+  tela e a faixa leva `data-compacto`. O título vem da navegação
+  (src/app/navegacao.ts), pelo contexto da raiz. Nome, e-mail e perfil são
+  escritos de fora (`src/app/perfil.ts`) e a foto por
+  `google-profile-photo.ts`, nos ids de sempre. Pessoas online e os selos do
+  edital (`pecas.tsx`) leem o estado do sistema pelo contexto da raiz; o ☰
+  (`#globalSidebarToggle`) é da barra lateral e entra por portal no
+  `.title-row` até 900px (`alca-de-recolher.tsx`).
 */
 export function Topo() {
   const naTela = usarTituloNaTela();
@@ -48,9 +48,9 @@ export function Topo() {
     <header className="top" data-compacto={naTela ? "" : undefined}>
       <div className="title-row">
         <MarcaDoTopo />
+        <span className="topo-tela-destino" ref={definirDestinoDoTitulo} />
         <TituloDaPagina naTela={naTela} />
       </div>
-      <BuscaDoTopo />
       <div className="actions">
         {/* Resumo do dia do responsável (src/modulos/resumo-do-dia/) */}
         <SininhoDoResumo />
@@ -60,7 +60,7 @@ export function Topo() {
   );
 }
 
-/* Toda tela das áreas tem o cabeçalho padrão no conteúdo. Aviso e Administração mantêm o da casca. */
+/* Nas telas das áreas o nome vem do CabecalhoDaTela. Aviso e Administração mantêm o título da casca. */
 function usarTituloNaTela() {
   const { view, aviso } = usarEstadoDaNavegacao();
   return !aviso && Boolean(telaDaRota(view));
@@ -77,7 +77,7 @@ function MarcaDoTopo() {
   );
 }
 
-/* Nas telas com título próprio (`tituloNaTela`), o daqui fica só para o leitor de tela. */
+/* Nas telas das áreas, o h1 daqui fica só para o leitor de tela. */
 function TituloDaPagina({ naTela }: { naTela: boolean }) {
   const { titulo, subtitulo } = usarEstadoDaNavegacao();
   return (
@@ -85,27 +85,6 @@ function TituloDaPagina({ naTela }: { naTela: boolean }) {
       <h1 id="pageTitle">{titulo}</h1>
       <p id="pageSubtitle">{subtitulo}</p>
     </div>
-  );
-}
-
-/* Parece um campo, mas é o botão que abre a busca global (src/componentes/busca-global/). */
-function BuscaDoTopo() {
-  return (
-    <button
-      type="button"
-      className="btn ghost topo-busca"
-      aria-haspopup="dialog"
-      aria-keyshortcuts="Control+K Meta+K"
-      onClick={() =>
-        document.dispatchEvent(new CustomEvent(EVENTO_ABRIR_A_BUSCA))
-      }
-    >
-      <Icone nome="search" tamanho={16} />
-      <span className="topo-busca__texto">Buscar editais</span>
-      <kbd className="topo-busca__atalho" aria-hidden="true">
-        Ctrl K
-      </kbd>
-    </button>
   );
 }
 

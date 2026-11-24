@@ -249,10 +249,9 @@ import {
   EVENTO_PEDACO_QUE_SUMIU,
   EVENTO_TELA_ANTIGA,
 } from "../src/lib/base/versao-do-sistema.ts";
-import {
-  EVENTO_ABRIR_A_BUSCA,
-  EVENTO_ESCOLHA_DA_BUSCA,
-} from "../src/lib/navegacao/busca-global.ts";
+import { EVENTO_ESCOLHA_DA_BUSCA } from "../src/lib/navegacao/busca-global.ts";
+import { definirDestinoDoTitulo } from "../src/app/casca/destino-do-titulo.ts";
+import { DestinoDoTituloDaTela } from "../src/ui/cabecalho-da-tela.tsx";
 import { consumirPedidoDeFiltro } from "../src/app/pedido-de-filtro.ts";
 import { abrirTelaDoEdital } from "../src/app/abrir-tela-do-edital.ts";
 import { etapaDoFluxo } from "../src/lib/navegacao/fluxo-das-etapas.ts";
@@ -829,10 +828,17 @@ bloco("app/casca", () => {
       ).toBe(false);
     });
 
-    it("sem nada repetido: nem a área (está no título da tela) nem a Aya (está na arara)", () => {
+    it("sem nada repetido: só o nome da tela à esquerda e a conta à direita", () => {
       const topo = topoNa("dashboard");
+      expect([...topo.children].map((filho) => filho.className)).toEqual([
+        "title-row",
+        "actions",
+      ]);
       expect(topo.querySelector(".title-row .topo-marca")).not.toBeNull();
-      expect(topo.children[1]?.classList).toContain("topo-busca");
+      expect(
+        topo.querySelector(".title-row .topo-tela-destino"),
+      ).not.toBeNull();
+      expect(topo.querySelector(".topo-busca")).toBeNull();
       expect(topo.querySelector(".topo-area")).toBeNull();
       expect(topo.querySelector('[aria-label="Abrir a Aya"]')).toBeNull();
       const acoes = [...topo.querySelectorAll(".actions > *")];
@@ -851,35 +857,48 @@ bloco("app/casca", () => {
       );
     });
 
-    it("o campo de busca abre a busca global", () => {
-      const topo = topoNa("dashboard");
-      const pedidos: string[] = [];
-      const ouvir = () => pedidos.push("busca");
-      document.addEventListener(EVENTO_ABRIR_A_BUSCA, ouvir);
-      act(() =>
-        definido(topo.querySelector<HTMLElement>(".topo-busca")).click(),
+    it('o CabecalhoDaTela põe "● Área › Tela" no cabeçalho e não repete o nome no conteúdo', () => {
+      const topo = topoNa("nucleo");
+      const elemento = definido(
+        topo.querySelector<HTMLElement>(".topo-tela-destino"),
       );
-      document.removeEventListener(EVENTO_ABRIR_A_BUSCA, ouvir);
-      expect(pedidos).toEqual(["busca"]);
+      const conteudo = document.createElement("div");
+      document.body.append(conteudo);
+      const tela = desenharNoTeste(
+        conteudo,
+        createElement(
+          DestinoDoTituloDaTela.Provider,
+          { value: { elemento, trilhaPadrao: "SEDE" } },
+          createElement(CabecalhoDaTela, { trilha: "", titulo: "Editais" }),
+          createElement(
+            CabecalhoDaTela,
+            { trilha: "SEDE / Edital", titulo: "05/2025" },
+            createElement("button", { type: "button" }, "Exportar"),
+          ),
+        ),
+        { sincrono: true },
+      );
+      const nomes = [...topo.querySelectorAll(".topo-tela")].map(
+        (nome) => nome.textContent,
+      );
+      expect(nomes).toEqual(["SEDE›Editais", "SEDE / Edital›05/2025"]);
+      // Sem ações, o cabeçalho da tela nem aparece; com ações, fica só com elas.
+      expect(conteudo.querySelectorAll(".ui-cabecalho-da-tela")).toHaveLength(
+        1,
+      );
+      expect(conteudo.querySelector(".ui-cabecalho-titulo")).toBeNull();
+      expect(conteudo.textContent).toBe("Exportar");
+      act(() => tela.desmontar());
+      expect(topo.querySelector(".topo-tela")).toBeNull();
+      conteudo.remove();
     });
 
-    it("nas telas das áreas, acima de 900px, a busca abre a linha", () => {
-      const css = readFileSync("src/app/casca/topo.css", "utf8");
-      const largo = css.slice(css.indexOf("@media (min-width: 901px)"));
-      expect(largo).toMatch(
-        /\.top\[data-compacto\] \.title-row \{\s*display: contents;/,
-      );
-      expect(largo).toMatch(
-        /\.top\[data-compacto\] \.topo-busca \{\s*justify-self: start;/,
-      );
-    });
-
-    it("no celular ficam o ☰, a marca, o sininho e a foto; a busca sai", () => {
+    it("no celular o nome da tela fica em duas linhas e toma o lugar da marca", () => {
       const css = readFileSync("src/app/casca/topo.css", "utf8");
       const celular = css.slice(css.indexOf("@media (max-width: 640px)"));
-      expect(celular).toMatch(/\.top \.topo-busca \{\s*display: none;/);
+      expect(celular).toMatch(/\.topo-tela \{\s*flex-direction: column;/);
       expect(css).toMatch(
-        /@media \(max-width: 900px\)[\s\S]*?\.topo-marca \{\s*display: inline-flex;/,
+        /@media \(max-width: 900px\)[\s\S]*?\.top:not\(\[data-compacto\]\) \.topo-marca \{\s*display: inline-flex;/,
       );
     });
   });
@@ -2621,25 +2640,37 @@ bloco("app/navegacao", () => {
   });
 
   describe("troca de tela", () => {
-    it("usa o cabeçalho padrão nas telas do menu sem duplicar o dos módulos", () => {
+    it("o nome da tela aberta vai para o cabeçalho do app, com a área na trilha", () => {
+      const destino = document.createElement("span");
+      document.body.append(destino);
+      act(() => definirDestinoDoTitulo(destino));
+      try {
+        const { navegacao } = criar();
+        entrar(navegacao);
+        for (const view of ["dashboard", "nucleo", "calendario", "recursos"]) {
+          navegacao.irPara(view);
+          const pagina = definido($("page-" + view));
+          expect(pagina.querySelector(".ui-cabecalho-da-tela")).toBeNull();
+          expect(destino.querySelectorAll(".topo-tela")).toHaveLength(1);
+          expect(destino.querySelector(".topo-tela__titulo")?.textContent).toBe(
+            TELAS_DAS_AREAS.find((tela) => tela.view === view)?.titulo,
+          );
+          expect(destino.querySelector(".topo-tela__trilha")?.textContent).toBe(
+            "Saúde Indígena",
+          );
+        }
+      } finally {
+        act(() => definirDestinoDoTitulo(null));
+      }
+    });
+
+    it("sem o cabeçalho do app (telas soltas), o nome fica na própria tela", () => {
       const { navegacao } = criar();
       entrar(navegacao);
-      for (const view of ["dashboard", "nucleo", "calendario", "recursos"]) {
-        navegacao.irPara(view);
-        const pagina = definido($("page-" + view));
-        expect(pagina.querySelectorAll(".ui-cabecalho-da-pagina")).toHaveLength(
-          1,
-        );
-        expect(pagina.querySelector(".ui-cabecalho-titulo")?.textContent).toBe(
-          navegacao.obter().titulo ||
-            TELAS_DAS_AREAS.find((tela) => tela.view === view)?.titulo,
-        );
-        expect(pagina.querySelector(".ui-cabecalho-trilha")).toBeNull();
-      }
-      navegacao.irPara("classificacao");
+      navegacao.irPara("nucleo");
       expect(
-        $("page-classificacao")?.querySelector(".ui-cabecalho-da-pagina"),
-      ).toBeNull();
+        $("page-nucleo")?.querySelector(".ui-cabecalho-titulo")?.textContent,
+      ).toBe("Editais");
     });
 
     it("deixa só a página pedida ativa, com título, menu, endereço e render da tela", () => {
@@ -7541,21 +7572,6 @@ bloco("componentes/busca-global", async () => {
       conectado = false;
       await ctrlK();
       expect(dialogo()).toBeNull();
-    });
-
-    it("o campo do cabeçalho abre pelo evento, só com usuário conectado, e não fecha", async () => {
-      const pedir = () =>
-        act(async () => {
-          document.dispatchEvent(new CustomEvent(EVENTO_ABRIR_A_BUSCA));
-        });
-      conectado = false;
-      await pedir();
-      expect(dialogo()).toBeNull();
-      conectado = true;
-      await pedir();
-      expect(dialogo()).not.toBeNull();
-      await pedir();
-      expect(dialogo()).not.toBeNull();
     });
 
     it("Esc e o botão Esc fecham; o clique no fundo não", async () => {

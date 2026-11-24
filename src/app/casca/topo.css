@@ -3,10 +3,10 @@
   nielsen-shell-ux.css e mobile-app.css, com `!important` no tema escuro; agora
   mora só aqui e só com tokens (os tokens já trocam no tema escuro).
 
-  Três colunas: à esquerda o ☰, a marca e o título; no meio a busca; à
-  direita as ações. Nas telas das áreas (`data-compacto`, título no conteúdo)
-  e acima de 900px, a esquerda fica vazia e a busca vai para o começo. Toda ação é `.btn.ghost.ui-botao-icone.topo-acao`, com a
-  mesma caixa: `--topo-acao`, 40px no mouse e 44px no toque.
+  Duas colunas: à esquerda o ☰, a marca e o nome da tela ("● Área › Tela",
+  `.topo-tela`, posto pelo CabecalhoDaTela); à direita as ações. Toda ação é
+  `.btn.ghost.ui-botao-icone.topo-acao`, com a mesma caixa: `--topo-acao`,
+  40px no mouse e 44px no toque.
 
   Entra pelo topo.tsx, depois de ui.css: vence `.btn.ghost` e
   `.ui-botao-icone` no empate. O padding lateral segue o da página no Design
@@ -19,10 +19,7 @@
   z-index: var(--z-header);
   isolation: isolate;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(12rem, 28rem) minmax(
-      max-content,
-      1fr
-    );
+  grid-template-columns: minmax(0, 1fr) max-content;
   align-items: center;
   gap: var(--space-4);
   padding: var(--space-2) var(--space-8);
@@ -37,7 +34,7 @@
   }
 }
 
-/* ── À esquerda: ☰, marca e título ───────────────────────────────────────── */
+/* ── À esquerda: ☰, marca e nome da tela ─────────────────────────────────── */
 
 .title-row {
   display: flex;
@@ -104,52 +101,47 @@
   font-weight: 400;
 }
 
-/* ── No meio: o campo da busca global ────────────────────────────────────── */
+/* O nome da tela das áreas: a trilha pequena, na cor da área, e o nome. */
+.topo-tela-destino {
+  display: contents;
+}
 
-.top .topo-busca {
-  justify-self: center;
-  width: 100%;
-  min-height: var(--topo-acao);
-  justify-content: flex-start;
+.topo-tela {
+  display: flex;
+  align-items: baseline;
   gap: var(--space-2);
-  padding: 0 var(--space-3);
-  border: 1px solid var(--border-subtle);
-  background: var(--surface-card);
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.topo-tela__trilha {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  flex: none;
   color: var(--text-secondary);
-  font-size: var(--text-base);
-  font-weight: 400;
+  font-size: var(--text-label);
 }
 
-.top .topo-busca:hover:not(:disabled) {
-  border-color: var(--border-control);
-  background: var(--surface-card);
-  color: var(--text-primary);
+.topo-tela__ponto {
+  width: var(--space-2);
+  height: var(--space-2);
+  flex: none;
+  border-radius: var(--radius-full);
+  background: var(--cor-da-area, currentColor);
 }
 
-.topo-busca__texto {
-  flex: 1;
+.topo-tela__separador {
+  color: var(--text-muted);
+}
+
+.topo-tela__titulo {
   min-width: 0;
   overflow: hidden;
-  text-align: left;
+  color: var(--text-primary);
+  font-size: var(--text-h3);
+  font-weight: 600;
   text-overflow: ellipsis;
-}
-
-.topo-busca__atalho {
-  padding: 0 var(--space-1-5);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  background: var(--surface-raised);
-  color: var(--text-secondary);
-  font-family: inherit;
-  font-size: var(--text-caption);
-  line-height: 1.6;
-}
-
-/* No toque não há teclado à vista: o atalho sai. */
-@media (pointer: coarse) {
-  .topo-busca__atalho {
-    display: none;
-  }
 }
 
 /* ── À direita: o sininho e a foto com o menu da conta ───────────────────── */
@@ -303,55 +295,42 @@
   }
 }
 
-/*
-  Telas das áreas acima de 900px: sem ☰, sem marca e com o título só para o
-  leitor de tela, a esquerda fica vazia. A linha do título sai da grade
-  (o título já é `sr-only`, fora do fluxo) e a busca abre a linha.
-*/
-@media (min-width: 901px) {
-  .top[data-compacto] {
-    grid-template-columns: minmax(12rem, 28rem) minmax(0, 1fr) max-content;
-  }
-
-  .top[data-compacto] .title-row {
-    display: contents;
-  }
-
-  .top[data-compacto] .topo-busca {
-    justify-self: start;
-  }
-
-  .top[data-compacto] .actions {
-    grid-column: 3;
-  }
-}
-
 /* Barra em gaveta: o ☰ e a marca entram; o cabeçalho sobe acima do conteúdo. */
 @media (max-width: 900px) {
-  /* A esquerda (☰ e marca) cabe inteira, até a metade; a busca fica com o resto. */
   .top {
     z-index: calc(var(--z-header) + 20);
-    grid-template-columns: fit-content(50%) minmax(0, 1fr) max-content;
   }
 
-  .top .topo-busca {
-    max-width: 28rem;
-  }
-
-  .topo-marca {
+  /* Fora das áreas, a marca; nas telas das áreas, o nome da tela no lugar dela. */
+  .top:not([data-compacto]) .topo-marca {
     display: inline-flex;
   }
 }
 
-/* Celular: só o ☰, a marca, o sininho e a foto. A busca segue no Ctrl+K. */
+/* Celular: o ☰, o nome da tela (a área em cima, pequena), o sininho e a foto. */
 @media (max-width: 640px) {
   .top {
-    grid-template-columns: minmax(0, 1fr) max-content;
     gap: var(--space-2);
   }
 
-  .top .topo-busca {
+  .topo-tela {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+    line-height: 1.2;
+  }
+
+  .topo-tela__trilha {
+    font-size: var(--text-caption);
+  }
+
+  .topo-tela__separador {
     display: none;
+  }
+
+  .topo-tela__titulo {
+    max-width: 100%;
+    font-size: var(--text-h4);
   }
 
   /* O título fica para o leitor de tela (o mesmo padrão de `.sr-only`). */

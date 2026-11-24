@@ -29,7 +29,7 @@ O que vale em todas as telas: Pessoas online, atualização do sistema e busca g
 ## Busca global
 
 **perguntas:** busca global | ctrl k | como buscar um edital | atalho de busca
-**resposta:** Ctrl+K (ou Cmd+K) abre a busca global, com usuário conectado; no computador, o campo "Buscar editais" no meio do topo também. Ela procura em edital, unidade, etapa, status, UF, risco, ciclo, responsável e observações e mostra até 12 resultados. Escolher um resultado limpa os filtros, filtra a unidade e o edital, abre o painel e destaca a linha na tabela; sem permissão, aparece um aviso. Quem não é administrador global só encontra editais das suas áreas.
+**resposta:** Ctrl+K (ou Cmd+K) abre a busca global, com usuário conectado. Ela procura em edital, unidade, etapa, status, UF, risco, ciclo, responsável e observações e mostra até 12 resultados. Escolher um resultado limpa os filtros, filtra a unidade e o edital, abre o painel e destaca a linha na tabela; sem permissão, aparece um aviso. Quem não é administrador global só encontra editais das suas áreas.
 **fonte:** src/lib/navegacao/busca-global.ts; src/componentes/busca-global/busca-global.tsx; src/lib/editais/responsavel-do-edital.ts
 
 ## Foto do perfil

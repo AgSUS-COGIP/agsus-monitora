@@ -71,8 +71,7 @@ Busca nos editais do monitoramento, filha da raiz React. Pasta `src/componentes/
 (`busca-global.tsx`: painel, atalhos, seleção por teclado e mouse, realce e montagem; contratos em
 `tipos.ts`); regras puras em `src/lib/navegacao/busca-global.ts`.
 
-- Ctrl+K ou Cmd+K abre a busca com sessão conectada; o campo "Buscar editais" no meio do
-  cabeçalho também (evento `EVENTO_ABRIR_A_BUSCA`; some no celular, onde fica o atalho). Pesquisa
+- Ctrl+K ou Cmd+K abre a busca com sessão conectada (o cabeçalho não tem campo de busca). Pesquisa
   os nove campos do monitoramento, em todas as áreas, sem diferenciar maiúsculas e acentos; mantém
   a ordem da fonte e para em 12.
 - O campo começa vazio; setas e Enter escolhem, Esc e o botão Esc fecham (o fundo não, como em todo modal); o modal mantém e devolve o foco.
