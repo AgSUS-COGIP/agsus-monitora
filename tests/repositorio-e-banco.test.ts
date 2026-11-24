@@ -40,6 +40,24 @@ import {
 } from "../scripts/check-lib-sem-arquivo-solto.mjs";
 import { definicoes, resolver, valorDe } from "./apoio/tokens-de-camada.ts";
 import { limparTextoDoErro } from "../src/lib/seguranca/registro-de-erros.ts";
+import {
+  ADMIN,
+  ANA,
+  BIA,
+  CAIO,
+  COORDENADOR,
+  DANI,
+  JUSTIFICATIVA,
+  bancoDeHoje as bancoDoPedidoDeAcesso,
+  ensaio as ensaioDoPedido,
+  entrar as entrarNoPedido,
+  erroDe as erroDoPedido,
+  funcaoDoRetrato,
+  migration as migrationDoPedido,
+  rollback as rollbackDoPedido,
+  rpc as rpcDoPedido,
+  type Banco as BancoDoPedido,
+} from "./apoio/banco-do-pedido-de-acesso.ts";
 
 bloco("aba-mapa-no-banco", () => {
   /*
@@ -2097,6 +2115,528 @@ insert into public."TB_AREA" values ('saude-indigena'), ('sede'), ('projetos');
           db.query(`select public.listar_erros_da_aplicacao('3f2a%')`),
         ),
       ).toBe("22023");
+    });
+  });
+});
+
+bloco("pedido-de-mais-acesso-no-banco", () => {
+  /*
+    A migration 20261124210000 (pendente) amplia o pedido de acesso para quem
+    já tem conta: módulo com nível, outra área ou outro grupo. Num Postgres de
+    verdade (PGlite), com as tabelas, as RPCs e as funções de permissão do
+    retrato (tests/apoio/banco-do-pedido-de-acesso.ts). Confere o pedido, quem
+    aprova o quê (admin, coordenador e teto), o que a aprovação concede e
+    registra, o caminho de entrada que não muda, o rollback e o ensaio.
+  */
+  const entrar = entrarNoPedido;
+  const rpc = rpcDoPedido;
+  const erroDe = erroDoPedido;
+  type Pedido = {
+    id: string;
+    status: string;
+    tipo: string;
+    recurso: string | null;
+    nivel: string | null;
+    area: string | null;
+    grupo_solicitado: string | null;
+    observacao_admin: string | null;
+  } | null;
+  type Linha = Record<string, unknown>;
+  type Registro = { id: string; atualizado: boolean };
+
+  async function migrado(): Promise<BancoDoPedido> {
+    const db = await bancoDoPedidoDeAcesso();
+    await db.exec(migrationDoPedido());
+    return db;
+  }
+  const pedir = (db: BancoDoPedido, args: Record<string, unknown>) =>
+    rpc<Registro>(db, "registrar_solicitacao_acesso", {
+      p_nome: "",
+      p_justificativa: JUSTIFICATIVA,
+      ...args,
+    });
+  const meuPedido = (db: BancoDoPedido) =>
+    rpc<Pedido>(db, "obter_minha_solicitacao_acesso");
+  const listar = (db: BancoDoPedido) =>
+    rpc<Linha[]>(db, "listar_solicitacoes_acesso");
+  const aprovar = (db: BancoDoPedido, id: string, extra: Linha = {}) =>
+    rpc(db, "aprovar_solicitacao_acesso", {
+      p_solicitacao_id: id,
+      p_grupo: null,
+      ...extra,
+    });
+  async function nivelEfetivo(
+    db: BancoDoPedido,
+    idDoPerfil: string,
+    recurso: string,
+  ) {
+    const { rows } = await db.query<{ n: string }>(
+      `select private."FC_NIVEL_EFETIVO"(u.id, u.perfil, $2) as n from public."TB_PERFIL_USUARIO" u where u.id = $1`,
+      [idDoPerfil, recurso],
+    );
+    return rows[0]?.n;
+  }
+  async function perfil(db: BancoDoPedido, id: string) {
+    const { rows } = await db.query<{
+      perfil: string;
+      coordenacao: string | null;
+      areas: string[];
+    }>(
+      `select u.perfil, u."CO_COORDENACAO" as coordenacao, private."FC_AREAS_DO_PERFIL"(u.id) as areas
+         from public."TB_PERFIL_USUARIO" u where u.id = $1`,
+      [id],
+    );
+    return rows[0];
+  }
+  async function historico(db: BancoDoPedido, id: string) {
+    const { rows } = await db.query<Linha>(
+      `select recurso, nivel_anterior as anterior, nivel_novo as novo, alterado_por::text as por, motivo
+         from public."TH_PERMISSAO_RECURSO" where perfil_usuario_id = $1 order by id`,
+      [id],
+    );
+    return rows;
+  }
+
+  describe("arquivos", () => {
+    it("o ensaio roda o corpo da migration sem mudança e termina em rollback", () => {
+      const m = migrationDoPedido();
+      const corpo = m.slice(
+        m.indexOf("\nbegin;\n") + "\nbegin;\n".length,
+        m.lastIndexOf("\ncommit;"),
+      );
+      const e = ensaioDoPedido();
+      expect(e).toContain(corpo);
+      expect(e.trimEnd().endsWith("rollback;")).toBe(true);
+      expect(e).not.toMatch(/^commit;/m);
+    });
+
+    it("o rollback volta as quatro RPCs com o corpo do retrato, letra por letra", () => {
+      const r = rollbackDoPedido();
+      for (const nome of [
+        "public.registrar_solicitacao_acesso",
+        "public.aprovar_solicitacao_acesso",
+        "public.obter_minha_solicitacao_acesso",
+        "public.listar_solicitacoes_acesso",
+      ]) {
+        const corpo = funcaoDoRetrato(nome).replace(/^CREATE FUNCTION /, "");
+        expect(r, nome).toContain(corpo);
+      }
+    });
+
+    it("o pedido de entrada aprovado segue o corpo de hoje (só entra a ida para o pedido de mais acesso)", () => {
+      const hoje = funcaoDoRetrato("public.aprovar_solicitacao_acesso");
+      const m = migrationDoPedido();
+      const de = m.indexOf(
+        "create or replace function public.aprovar_solicitacao_acesso",
+      );
+      const nova = m.slice(m.indexOf("declare", de), m.indexOf("\n$$;", de));
+      const ida =
+        /\n {2}-- Pedido de mais acesso \(20261124210000\)[^\n]*\n {2}if v_req\."TP_SOLICITACAO" <> 'ACESSO' then\n[^\n]*\n {2}end if;/;
+      expect(nova).toMatch(ida);
+      expect(hoje).toContain(nova.replace(ida, ""));
+    });
+  });
+
+  describe("migration aplicada", () => {
+    it("aplica no banco de hoje (o md5 dos corpos bate) e não aplica de novo", async () => {
+      const db = await migrado();
+      expect(await erroDe(db.exec(migrationDoPedido()))).toMatch(/já aplicada/);
+    });
+
+    it("só authenticated chama a RPC nova; as internas ficam fechadas", async () => {
+      const db = await migrado();
+      const { rows } = await db.query<Record<string, boolean>>(`select
+        has_function_privilege('authenticated', 'public.registrar_solicitacao_acesso(text,text,text,text,text,text,text,text,text,text,text)', 'execute') as autenticado,
+        has_function_privilege('anon', 'public.registrar_solicitacao_acesso(text,text,text,text,text,text,text,text,text,text,text)', 'execute') as anonimo,
+        has_function_privilege('authenticated', 'private."FC_APROVAR_AMPLIACAO_ACESSO"(uuid, text)', 'execute') as aprovar_interno`);
+      expect(rows[0]).toEqual({
+        autenticado: true,
+        anonimo: false,
+        aprovar_interno: false,
+      });
+    });
+  });
+
+  describe("quem não tem conta: o pedido de entrada não muda", () => {
+    it("registra com os argumentos de hoje, vê o pedido e é aprovado como antes", async () => {
+      const db = await migrado();
+      await entrar(db, DANI);
+      await rpc(db, "registrar_solicitacao_acesso", {
+        p_nome: "Dani Teste",
+        p_area: "sede",
+        p_cargo: "APOIO",
+        p_lotacao: "Diretoria",
+        p_justificativa: JUSTIFICATIVA,
+      });
+      const pedido = await meuPedido(db);
+      expect(pedido).toMatchObject({
+        status: "pendente",
+        tipo: "ACESSO",
+        recurso: null,
+      });
+      expect(
+        await erroDe(
+          pedir(db, {
+            p_tipo: "MODULO",
+            p_recurso: "nucleo",
+            p_nivel: "editor",
+          }),
+        ),
+      ).toMatch(/quem já tem acesso ativo/);
+      await entrar(db, ADMIN);
+      await rpc(db, "aprovar_solicitacao_acesso", {
+        p_solicitacao_id: pedido!.id,
+        p_grupo: "usuario",
+        p_areas: ["sede"],
+      });
+      const { rows } = await db.query<{ perfil: string }>(
+        `select perfil from public."TB_PERFIL_USUARIO" where user_id = $1`,
+        [DANI.uid],
+      );
+      expect(rows).toEqual([{ perfil: "usuario" }]);
+    });
+
+    it("conta desativada não vê o pedido de mais acesso que sobrou; a reativação o converte", async () => {
+      const db = await migrado();
+      await db.query(
+        `update public."TB_PERFIL_USUARIO" set ativo = true where id = $1`,
+        [CAIO.perfil],
+      );
+      await entrar(db, CAIO);
+      await pedir(db, {
+        p_tipo: "MODULO",
+        p_recurso: "calendario",
+        p_nivel: "leitor",
+      });
+      await db.query(
+        `update public."TB_PERFIL_USUARIO" set ativo = false where id = $1`,
+        [CAIO.perfil],
+      );
+      expect(await meuPedido(db)).toBeNull();
+      await rpc(db, "registrar_solicitacao_acesso", {
+        p_nome: "Caio Teste",
+        p_justificativa: JUSTIFICATIVA,
+      });
+      expect(await meuPedido(db)).toMatchObject({
+        status: "pendente",
+        tipo: "ACESSO",
+        recurso: null,
+        nivel: null,
+      });
+    });
+  });
+
+  describe("quem tem conta pede mais acesso", () => {
+    it("módulo com nível: fica pendente, aparece na gaveta e pode ser trocado por outro pedido", async () => {
+      const db = await migrado();
+      await entrar(db, BIA);
+      const r = await pedir(db, {
+        p_tipo: "MODULO",
+        p_recurso: "calendario",
+        p_nivel: "editor",
+      });
+      expect(r).toMatchObject({
+        ok: true,
+        status: "pendente",
+        tipo: "MODULO",
+        atualizado: false,
+      });
+      expect(await meuPedido(db)).toMatchObject({
+        tipo: "MODULO",
+        recurso: "calendario",
+        nivel: "editor",
+        status: "pendente",
+      });
+      const troca = await pedir(db, { p_tipo: "AREA", p_area: "projetos" });
+      expect(troca).toMatchObject({ atualizado: true, id: r.id });
+      expect(await meuPedido(db)).toMatchObject({
+        tipo: "AREA",
+        area: "projetos",
+        recurso: null,
+        nivel: null,
+      });
+      await rpc(db, "cancelar_minha_solicitacao_acesso");
+      expect(await meuPedido(db)).toMatchObject({ status: "cancelado" });
+    });
+
+    it("recusa o que não faz sentido pedir", async () => {
+      const db = await migrado();
+      await entrar(db, BIA);
+      const casos: [Record<string, unknown>, RegExp][] = [
+        [{}, /Escolha o que pedir/],
+        [
+          { p_tipo: "MODULO", p_recurso: "nucleo", p_nivel: "leitor" },
+          /já tem esse nível/,
+        ],
+        [
+          { p_tipo: "MODULO", p_recurso: "inventado", p_nivel: "editor" },
+          /Módulo inválido/,
+        ],
+        [
+          { p_tipo: "MODULO", p_recurso: "configuracoes", p_nivel: "leitor" },
+          /Configurações exige/,
+        ],
+        [
+          { p_tipo: "MODULO", p_recurso: "acessos", p_nivel: "admin" },
+          /só tem o nível Editor/,
+        ],
+        [{ p_tipo: "AREA", p_area: "sede" }, /já tem acesso a esta área/],
+        [
+          { p_tipo: "GRUPO", p_grupo: "admin_global" },
+          /administrador global não se pede/,
+        ],
+        [{ p_tipo: "GRUPO", p_grupo: "usuario" }, /já está neste grupo/],
+        [
+          {
+            p_tipo: "MODULO",
+            p_recurso: "calendario",
+            p_nivel: "editor",
+            p_justificativa: "quero",
+          },
+          /20 a 2\.000/,
+        ],
+      ];
+      for (const [args, erro] of casos)
+        expect(await erroDe(pedir(db, args)), JSON.stringify(args)).toMatch(
+          erro,
+        );
+      await entrar(db, ANA);
+      expect(
+        await erroDe(pedir(db, { p_tipo: "AREA", p_area: "projetos" })),
+      ).toMatch(/vem da sua coordenação/);
+      await entrar(db, ADMIN);
+      expect(
+        await erroDe(
+          pedir(db, {
+            p_tipo: "MODULO",
+            p_recurso: "nucleo",
+            p_nivel: "admin",
+          }),
+        ),
+      ).toMatch(/administrador global já tem acesso a tudo/);
+    });
+  });
+
+  describe("quem aprova e o que a aprovação concede", () => {
+    it("admin aprova a área: só ela entra, com quem aprovou no pedido e no histórico", async () => {
+      const db = await migrado();
+      await entrar(db, BIA);
+      const { id } = await pedir(db, { p_tipo: "AREA", p_area: "projetos" });
+      await entrar(db, COORDENADOR);
+      expect(await listar(db)).toEqual([]);
+      await entrar(db, ADMIN);
+      const lista = await listar(db);
+      expect(lista).toHaveLength(1);
+      expect(lista[0]).toMatchObject({
+        tipo: "AREA",
+        area: "projetos",
+        grupo_atual: "usuario",
+        areas_atuais: ["sede"],
+        reativacao: false,
+      });
+      // p_grupo, p_coordenacao e p_areas não valem para o pedido de mais acesso.
+      await aprovar(db, id, {
+        p_grupo: "admin_global",
+        p_areas: ["saude-indigena"],
+      });
+      expect(await perfil(db, BIA.perfil)).toEqual({
+        perfil: "usuario",
+        coordenacao: null,
+        areas: ["sede", "projetos"],
+      });
+      expect(await historico(db, BIA.perfil)).toEqual([
+        {
+          recurso: "area:projetos",
+          anterior: "sem_acesso",
+          novo: "leitor",
+          por: ADMIN.uid,
+          motivo: "Pedido de mais acesso aprovado",
+        },
+      ]);
+      const { rows } = await db.query<Linha>(
+        `select status, avaliado_por::text as por, avaliado_em is not null as em from public."TB_SOLICITACAO_ACESSO" where id = $1`,
+        [id],
+      );
+      expect(rows[0]).toEqual({ status: "aprovado", por: ADMIN.uid, em: true });
+      await entrar(db, BIA);
+      expect(await meuPedido(db)).toMatchObject({
+        status: "aprovado",
+        tipo: "AREA",
+      });
+    });
+
+    it("coordenador aprova módulo e grupo da própria coordenação, dentro do teto", async () => {
+      const db = await migrado();
+      await entrar(db, ANA);
+      let { id } = await pedir(db, {
+        p_tipo: "MODULO",
+        p_recurso: "calendario",
+        p_nivel: "editor",
+      });
+      await entrar(db, COORDENADOR);
+      const lista = await listar(db);
+      expect(lista.map((l) => l.id)).toEqual([id]);
+      expect(lista[0]).toMatchObject({
+        nivel_atual: "sem_acesso",
+        recurso: "calendario",
+        nivel: "editor",
+      });
+      await aprovar(db, id, { p_observacao_admin: "Conferido com a chefia" });
+      expect(await nivelEfetivo(db, ANA.perfil, "calendario")).toBe("editor");
+      expect((await historico(db, ANA.perfil)).at(-1)).toEqual({
+        recurso: "calendario",
+        anterior: "sem_acesso",
+        novo: "editor",
+        por: COORDENADOR.uid,
+        motivo: "Conferido com a chefia",
+      });
+
+      await entrar(db, ANA);
+      ({ id } = await pedir(db, {
+        p_tipo: "MODULO",
+        p_recurso: "nucleo",
+        p_nivel: "admin",
+      }));
+      await entrar(db, COORDENADOR);
+      expect(await erroDe(aprovar(db, id))).toMatch(
+        /mais do que o seu próprio nível/,
+      );
+      await entrar(db, ADMIN);
+      await aprovar(db, id);
+      expect(await nivelEfetivo(db, ANA.perfil, "nucleo")).toBe("admin");
+
+      await entrar(db, ANA);
+      ({ id } = await pedir(db, { p_tipo: "GRUPO", p_grupo: "superior" }));
+      await entrar(db, COORDENADOR);
+      expect(await erroDe(aprovar(db, id))).toMatch(
+        /dá mais acesso do que você tem/,
+      );
+      await entrar(db, ANA);
+      ({ id } = await pedir(db, { p_tipo: "GRUPO", p_grupo: "edital_gestor" }));
+      await entrar(db, COORDENADOR);
+      await aprovar(db, id);
+      expect(await perfil(db, ANA.perfil)).toEqual({
+        perfil: "edital_gestor",
+        coordenacao: "coord-sede",
+        areas: ["sede"],
+      });
+
+      await entrar(db, ANA);
+      ({ id } = await pedir(db, {
+        p_tipo: "MODULO",
+        p_recurso: "acessos",
+        p_nivel: "editor",
+      }));
+      await entrar(db, COORDENADOR);
+      expect(await erroDe(aprovar(db, id))).toMatch(
+        /Só o administrador concede Acessos/,
+      );
+    });
+
+    it("ninguém aprova o próprio pedido, nem o vê na lista", async () => {
+      const db = await migrado();
+      await entrar(db, COORDENADOR);
+      const { id } = await pedir(db, {
+        p_tipo: "MODULO",
+        p_recurso: "calendario",
+        p_nivel: "admin",
+      });
+      expect(await listar(db)).toEqual([]);
+      expect(await erroDe(aprovar(db, id))).toMatch(
+        /Outra pessoa deve aprovar/,
+      );
+      await entrar(db, ADMIN);
+      expect((await listar(db)).map((l) => l.id)).toEqual([id]);
+    });
+
+    it("as travas da matriz: Gestão de acessos sem coordenação não passa, e nada muda", async () => {
+      const db = await migrado();
+      await entrar(db, BIA);
+      const { id } = await pedir(db, {
+        p_tipo: "MODULO",
+        p_recurso: "acessos",
+        p_nivel: "editor",
+      });
+      await entrar(db, ADMIN);
+      expect(await erroDe(aprovar(db, id))).toMatch(
+        /gerenciaria acessos sem coordenação/,
+      );
+      expect(await nivelEfetivo(db, BIA.perfil, "acessos")).toBe("sem_acesso");
+      expect(await historico(db, BIA.perfil)).toEqual([]);
+    });
+
+    it("recusar: a pessoa vê o motivo na gaveta", async () => {
+      const db = await migrado();
+      await entrar(db, BIA);
+      const { id } = await pedir(db, {
+        p_tipo: "GRUPO",
+        p_grupo: "edital_gestor",
+      });
+      await entrar(db, ADMIN);
+      await rpc(db, "recusar_solicitacao_acesso", {
+        p_solicitacao_id: id,
+        p_motivo: "JUSTIFICATIVA_INSUFICIENTE",
+      });
+      await entrar(db, BIA);
+      expect(await meuPedido(db)).toMatchObject({
+        status: "recusado",
+        tipo: "GRUPO",
+        grupo_solicitado: "edital_gestor",
+        observacao_admin: "Justificativa insuficiente",
+      });
+      expect((await perfil(db, BIA.perfil))?.perfil).toBe("usuario");
+    });
+  });
+
+  describe("rollback e ensaio", () => {
+    it("com pedido de mais acesso pendente, o rollback não desfaz nada", async () => {
+      const db = await migrado();
+      await entrar(db, BIA);
+      await pedir(db, { p_tipo: "AREA", p_area: "projetos" });
+      expect(await erroDe(db.exec(rollbackDoPedido()))).toMatch(/pendente/);
+      await db.exec("rollback");
+      expect(await meuPedido(db)).toMatchObject({
+        tipo: "AREA",
+        status: "pendente",
+      });
+    });
+
+    it("volta as funções e a tabela de hoje, guarda o tipo dos pedidos decididos e aceita a migration de novo", async () => {
+      const db = await migrado();
+      await entrar(db, BIA);
+      const { id } = await pedir(db, { p_tipo: "AREA", p_area: "projetos" });
+      await entrar(db, ADMIN);
+      await aprovar(db, id);
+      await db.exec(rollbackDoPedido());
+      const { rows: colunas } = await db.query(
+        `select 1 from information_schema.columns where table_name = 'TB_SOLICITACAO_ACESSO' and column_name in ('TP_SOLICITACAO', 'NO_RECURSO', 'TP_NIVEL')`,
+      );
+      expect(colunas).toEqual([]);
+      const { rows: guardados } = await db.query(
+        `select "TP_SOLICITACAO" as tipo, "CO_AREA" as area from arquivo."TB_SOLICITACAO_AMPLIACAO_ANTES"`,
+      );
+      expect(guardados).toEqual([{ tipo: "AREA", area: "projetos" }]);
+      // O que foi concedido fica.
+      expect((await perfil(db, BIA.perfil))?.areas).toEqual([
+        "sede",
+        "projetos",
+      ]);
+      const { rows: funcoes } = await db.query<{ n: number }>(
+        `select count(*)::int as n from pg_proc where proname in ('FC_APROVAR_AMPLIACAO_ACESSO', 'FC_REGISTRAR_AMPLIACAO_ACESSO')
+            or (proname = 'registrar_solicitacao_acesso' and pronargs <> 7)`,
+      );
+      expect(funcoes[0]?.n).toBe(0);
+      // Os corpos de hoje: a guarda da migration (md5) aceita aplicar de novo.
+      await db.exec(migrationDoPedido());
+    });
+
+    it("o ensaio roda, confere e não grava nada", async () => {
+      const db = await bancoDoPedidoDeAcesso();
+      await db.exec(ensaioDoPedido());
+      const { rows } = await db.query(
+        `select 1 from information_schema.columns where table_name = 'TB_SOLICITACAO_ACESSO' and column_name = 'TP_SOLICITACAO'`,
+      );
+      expect(rows).toEqual([]);
     });
   });
 });

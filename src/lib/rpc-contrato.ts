@@ -89,7 +89,7 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     argumentos: ["p_status"],
     critica: true,
     resumo:
-      "Solicitações de acesso com área, cargo, lotação e justificativa: todas (admin) ou da coordenação (coordenador).",
+      "Solicitações de acesso com área, cargo, lotação e justificativa (e, no pedido de mais acesso, o tipo, o pedido e o que a pessoa tem hoje): todas (admin) ou da coordenação (coordenador), sem as de quem olha.",
   },
   salvar_grupo_acesso: {
     argumentos: ["p_grupo", "p_motivo"],
@@ -133,10 +133,14 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
       "p_lotacao",
       "p_justificativa",
       "p_coordenacao",
+      "p_tipo",
+      "p_recurso",
+      "p_nivel",
+      "p_grupo",
     ],
     critica: true,
     resumo:
-      "Registra o pedido de acesso por área (cargo da lista, lotação, justificativa) ou edita o pendente. Nunca concede acesso.",
+      "Registra o pedido de acesso por área (cargo da lista, lotação, justificativa) ou edita o pendente; com perfil ativo, o pedido de mais acesso (p_tipo MODULO, AREA ou GRUPO). Nunca concede acesso.",
   },
   cancelar_minha_solicitacao_acesso: {
     argumentos: [],
@@ -166,7 +170,7 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     argumentos: [],
     critica: false,
     resumo:
-      "Último pedido de acesso de quem está autenticado (o pendente primeiro), com área, cargo e motivo da recusa.",
+      "Último pedido de quem está autenticado (o pendente primeiro): sem perfil, o de entrada (área, cargo, motivo da recusa); com perfil ativo, o de mais acesso (tipo, módulo, nível, grupo).",
   },
   minha_conta_desativada: {
     argumentos: [],
@@ -260,7 +264,7 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     ],
     critica: true,
     resumo:
-      "Aprova solicitação definindo grupo e coordenação (ou áreas). Admin ou coordenador da coordenação pedida.",
+      "Aprova solicitação definindo grupo e coordenação (ou áreas); o pedido de mais acesso concede só o que foi pedido. Admin ou coordenador da coordenação pedida, dentro do teto.",
   },
   recusar_solicitacao_acesso: {
     argumentos: ["p_solicitacao_id", "p_motivo", "p_complemento"],
