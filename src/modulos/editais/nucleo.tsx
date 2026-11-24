@@ -764,8 +764,10 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
         agora={agora}
         linhas={linhas}
         area={area}
-        // Reativado, o edital está nos Ativos: a tabela vai com ele.
-        aoReativar={() => aoMudarVista("ativos")}
+        // Reativado, o edital sai do Histórico: a tabela vai com ele aos Ativos (em Todos, fica).
+        aoReativar={() => {
+          if (ativosEHistorico.vista === "historico") aoMudarVista("ativos");
+        }}
       />
     </div>
   );
