@@ -11,6 +11,12 @@ import {
   rotuloDoCargo,
   validarRecusa,
 } from "../../lib/acessos/solicitacao-de-acesso.ts";
+import {
+  ehPedidoDeMaisAcesso,
+  oQueFoiPedido,
+  oQueTemHoje,
+} from "../../lib/acessos/pedido-de-mais-acesso.ts";
+import { rotuloDaArea } from "../../lib/acessos/meus-acessos.ts";
 import { MultiSelectBusca } from "../../componentes/multi-select-busca.tsx";
 import {
   Aviso,
@@ -49,6 +55,11 @@ import { CabecalhoDaGaveta } from "./partes.tsx";
   Pedido de quem tem conta desativada é de REATIVAÇÃO: selo, quando/por
   quem/por que foi desativada e o grupo de antes já escolhido. Aprovar
   reativa a conta.
+
+  Pedido de MAIS ACESSO (de quem já tem conta, pela gaveta Meus acessos;
+  migration 20261124210000): selo, o que pediu ao lado do que tem hoje, o
+  grupo e a coordenação (ou as áreas) de hoje, só leitura. Aprovar concede
+  exatamente o pedido (o banco ignora grupo, coordenação e áreas).
 */
 
 type Grupo = GrupoDeAcesso;
@@ -348,6 +359,76 @@ function Pedido({
   );
 }
 
+function PedidoDeMaisAcesso({
+  estado,
+  solicitacao,
+  aoRecusar,
+}: {
+  estado: EstadoDosAcessos;
+  solicitacao: PedidoPendente;
+  aoRecusar: () => void;
+}) {
+  const nome = solicitacao.nome || solicitacao.email;
+  const dia = diaEMes(solicitacao.created_at);
+  const hoje = oQueTemHoje(solicitacao);
+  const areas = (solicitacao.areas_atuais || []).map(rotuloDaArea).join(", ");
+  return (
+    <tr data-pedido="mais-acesso">
+      <th scope="row">
+        <strong>{nome}</strong>
+        <small>
+          {solicitacao.email}
+          {dia ? ` · ${dia}` : ""}
+        </small>
+        <Selo tom="revisar" className="acessos-selo-reativacao">
+          Mais acesso
+        </Selo>
+      </th>
+      <td>
+        <div className="acessos-pedido">
+          <strong>{oQueFoiPedido(solicitacao)}</strong>
+          {hoje ? <small>{hoje}</small> : null}
+        </div>
+        {solicitacao.justificativa ? (
+          <p
+            className="acessos-justificativa"
+            title={solicitacao.justificativa}
+          >
+            {solicitacao.justificativa}
+          </p>
+        ) : null}
+      </td>
+      <td>{solicitacao.grupo_atual_nome || "—"}</td>
+      <td>{solicitacao.coordenacao_nome || areas || "—"}</td>
+      <td>
+        <span className="ui-acoes">
+          <button
+            type="button"
+            className="btn ghost perigo"
+            onClick={aoRecusar}
+          >
+            Recusar
+          </button>
+          <BotaoDeAcao
+            estado={estado}
+            acao={`aprovar:${solicitacao.id}`}
+            className="btn secondary"
+            onClick={() =>
+              void estado.aprovar(solicitacao, {
+                grupo: "",
+                coordenacao: "",
+                areas: null,
+              })
+            }
+          >
+            Aprovar
+          </BotaoDeAcao>
+        </span>
+      </td>
+    </tr>
+  );
+}
+
 export function Solicitacoes({
   estado,
   atual,
@@ -393,15 +474,24 @@ export function Solicitacoes({
           {carregando || !matriz ? (
             <LinhasEsqueleto colunas={5} linhas={3} />
           ) : solicitacoes.length ? (
-            solicitacoes.map((s) => (
-              <Pedido
-                key={s.id}
-                estado={estado}
-                solicitacao={s}
-                matriz={matriz}
-                aoRecusar={() => setRecusando(s)}
-              />
-            ))
+            solicitacoes.map((s) =>
+              ehPedidoDeMaisAcesso(s) ? (
+                <PedidoDeMaisAcesso
+                  key={s.id}
+                  estado={estado}
+                  solicitacao={s}
+                  aoRecusar={() => setRecusando(s)}
+                />
+              ) : (
+                <Pedido
+                  key={s.id}
+                  estado={estado}
+                  solicitacao={s}
+                  matriz={matriz}
+                  aoRecusar={() => setRecusando(s)}
+                />
+              ),
+            )
           ) : (
             <tr>
               <td colSpan={5} className="acessos-vazio">
