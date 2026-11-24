@@ -53,6 +53,12 @@ desativadas. O acesso ao Yeendé é só por convite. Fontes: `src/modulos/acesso
 **resposta:** No modal da pessoa, a coluna "Como a pessoa vê" monta o menu dela com as mesmas regras da barra lateral; com alteração pendente, mostra o resultado com o selo "Depois de salvar". É só leitura: não é entrar como a pessoa.
 **fonte:** src/lib/acessos/ver-como.ts; src/modulos/acessos/gaveta-do-usuario.tsx
 
+## Meus acessos
+
+**perguntas:** como vejo meus acessos | meus acessos | quais sao meus acessos | qual e o meu grupo | qual meu nivel em cada modulo | o que eu posso fazer nas abas | minhas permissoes | quais areas eu vejo
+**resposta:** Clique na sua foto, no canto de cima, e em "Meus acessos". A gaveta mostra o seu grupo, as suas áreas, a sua coordenação (quando houver) e, em cada módulo, o seu nível: Leitor, Editor, Administrador ou Sem acesso. É o nível que vale para você, com as exceções individuais já somadas ao grupo. É só leitura: quem muda o acesso é um administrador (ou o coordenador da sua coordenação) em Configurações › Acessos, nunca a própria pessoa. O acesso é lido quando você entra: se acabou de mudar, recarregue a página para ver o novo.
+**fonte:** src/lib/acessos/meus-acessos.ts; src/app/casca/meus-acessos.tsx; src/app/casca/topo.tsx
+
 ## Pedidos de acesso
 
 **perguntas:** como funcionam os pedidos de acesso | pedidos de acesso | pedido de acesso | pedir acesso | solicitacao de acesso | pendentes

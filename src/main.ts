@@ -1,4 +1,5 @@
 import { hasSupabaseEnv } from "./lib/sessao/env";
+import type { PerfilDeAcesso } from "./lib/acessos/tipos-dos-acessos.ts";
 // Antes de qualquer rede: pinta a tela de acesso com a marca da visita anterior.
 import "./app/entrada/marca.ts";
 import { installCsvBlobSecurityGuard } from "./lib/seguranca/csv-security";
@@ -119,6 +120,11 @@ montarRaiz({
     estaConectado: () => Boolean(sessaoDoApp.obter().usuario),
     recarregarPaineisExternos,
     moldura,
+    // "Meus acessos", no menu da conta: o perfil do contexto (obter_contexto_monitora).
+    perfil: {
+      obter: () => sessaoDoApp.obter().perfil as PerfilDeAcesso | null,
+      assinar: sessaoDoApp.assinar,
+    },
   },
 });
 

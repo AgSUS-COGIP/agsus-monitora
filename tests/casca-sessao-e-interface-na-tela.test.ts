@@ -39,6 +39,7 @@ import { VISIVEL_DEPOIS_DE_VOLTAR_MS } from "../src/app/casca/aviso-de-conexao.t
 import { DURACAO_MS } from "../src/app/casca/notificacoes.tsx";
 import { Casca } from "../src/app/casca/casca.tsx";
 import { Topo } from "../src/app/casca/topo.tsx";
+import { GavetaDosMeusAcessos } from "../src/app/casca/meus-acessos.tsx";
 import { ContextoDoApp, type PecasDoApp } from "../src/app/contexto-do-app.ts";
 import {
   ESTADO_INICIAL_DA_NAVEGACAO,
@@ -13645,5 +13646,130 @@ bloco("vidro-ajustavel-no-painel-de-acesso", () => {
         DESFOQUE_DO_VIDRO_EM_PX,
       );
     });
+  });
+});
+
+bloco("app/meus-acessos", () => {
+  /* "Meus acessos" no menu da conta: a gaveta só de leitura com o próprio acesso. */
+  let desenho: { desmontar: () => void } | null = null;
+  afterEach(() => {
+    act(() => desenho?.desmontar());
+    desenho = null;
+    document.body.innerHTML = "";
+  });
+
+  const PERFIL = {
+    ativo: true,
+    grupo: { codigo: "edital_gestor", nome: "Gestor" },
+    areas: ["sede", "saude-indigena"],
+    coordenacao: { codigo: "C1", nome: "Coordenação Norte", area: "sede" },
+    permissoes: { dashboard: "leitor", nucleo: "editor", acessos: "editor" },
+  } as const;
+
+  function gaveta(
+    perfil: Parameters<typeof GavetaDosMeusAcessos>[0]["perfil"],
+  ) {
+    document.body.innerHTML = '<div id="raiz"></div>';
+    const aoFechar = vi.fn();
+    desenho = desenharNoTeste(
+      definido(document.getElementById("raiz")),
+      createElement(GavetaDosMeusAcessos, { perfil, aoFechar }),
+      { sincrono: true },
+    );
+    return {
+      aoFechar,
+      dialogo: definido(document.querySelector<HTMLElement>('[role="dialog"]')),
+    };
+  }
+
+  it("mostra o grupo, as áreas, a coordenação e o nível de cada módulo", () => {
+    const { dialogo } = gaveta(PERFIL);
+    expect(dialogo.getAttribute("aria-labelledby")).toBe("meusAcessosTitulo");
+    expect(dialogo.querySelector("h2")?.textContent).toBe("Meus acessos");
+    const pares = Object.fromEntries(
+      [...dialogo.querySelectorAll(".ui-kv")].map((kv) => [
+        kv.querySelector(".ui-kv-rotulo")?.textContent,
+        kv.querySelector(".ui-kv-valor")?.textContent,
+      ]),
+    );
+    expect(pares["Grupo"]).toBe("Gestor");
+    expect(pares["Áreas"]).toBe("Saúde Indígena, SEDE");
+    expect(pares["Coordenação"]).toBe("Coordenação Norte (SEDE)");
+    expect(pares["Visão geral"]).toBe("Leitor");
+    expect(pares["Editais"]).toBe("Editor");
+    expect(pares["Gestão de acessos"]).toBe("Editor");
+    expect(pares["Importação e convocação"]).toBe("Sem acesso");
+    // O nível vem num selo, com o tom do nível.
+    const selo = [...dialogo.querySelectorAll(".ui-kv")]
+      .find((kv) => kv.textContent?.startsWith("Editais"))
+      ?.querySelector(".ui-selo");
+    expect(selo?.getAttribute("data-tom")).toBe("sucesso");
+    // Só leitura: nenhum campo nem botão além do fechar.
+    expect(dialogo.querySelectorAll("input, select, textarea")).toHaveLength(0);
+    expect(
+      [...dialogo.querySelectorAll("button")].map((b) =>
+        b.getAttribute("aria-label"),
+      ),
+    ).toEqual(["Fechar"]);
+  });
+
+  it("sem coordenação, o par some; sem a matriz, diz que os níveis não carregaram", () => {
+    const { dialogo } = gaveta({
+      ativo: true,
+      areas: ["projetos"],
+      permissoes: {},
+    });
+    const coordenacao = [...dialogo.querySelectorAll(".ui-kv")].find(
+      (kv) => kv.querySelector(".ui-kv-rotulo")?.textContent === "Coordenação",
+    );
+    expect(coordenacao?.hasAttribute("data-empty")).toBe(true);
+    expect(dialogo.textContent).toContain(
+      "Os níveis por módulo não carregaram.",
+    );
+  });
+
+  it("sem perfil não inventa acesso", () => {
+    const { dialogo } = gaveta(null);
+    expect(dialogo.textContent).toContain("Os acessos não carregaram.");
+    expect(dialogo.querySelectorAll(".ui-kv")).toHaveLength(0);
+  });
+
+  it("o ✕ fecha", () => {
+    const { dialogo, aoFechar } = gaveta(PERFIL);
+    act(() =>
+      definido(
+        dialogo.querySelector<HTMLButtonElement>('button[aria-label="Fechar"]'),
+      ).click(),
+    );
+    expect(aoFechar).toHaveBeenCalledTimes(1);
+  });
+
+  it('"Meus acessos" no menu da conta fecha o menu e abre a gaveta', () => {
+    document.body.innerHTML = '<div id="raiz"></div>';
+    desenho = desenharNoTeste(
+      definido(document.getElementById("raiz")),
+      createElement(Topo),
+      { sincrono: true },
+    );
+    const menu = definido(document.getElementById("topUserMenu"));
+    menu.setAttribute("open", "");
+    const botoes = [
+      ...menu.querySelectorAll(".top-user-popover-actions button"),
+    ];
+    expect(botoes.map((b) => b.textContent?.trim())).toEqual([
+      "Meus acessos",
+      "Atualizar dados",
+      "Tela cheia",
+    ]);
+    act(() => (botoes[0] as HTMLButtonElement).click());
+    expect(menu.hasAttribute("open")).toBe(false);
+    const dialogo = definido(document.querySelector('[role="dialog"]'));
+    expect(dialogo.querySelector("h2")?.textContent).toBe("Meus acessos");
+    act(() =>
+      definido(
+        dialogo.querySelector<HTMLButtonElement>('button[aria-label="Fechar"]'),
+      ).click(),
+    );
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
   });
 });

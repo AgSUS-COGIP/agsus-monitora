@@ -298,6 +298,57 @@ test.describe("sessão simulada", () => {
     expect(erros).toEqual([]);
   });
 
+  /* "Meus acessos" (src/app/casca/meus-acessos.tsx): do perfil do contexto, sem RPC nova. */
+  const contextoDaGestora = () => ({
+    profile: {
+      ...contextoDoAdmin(["sede", "saude-indigena"]).profile,
+      admin_global: false,
+      role: "edital_gestor",
+      perfil: "edital_gestor",
+      grupo: { codigo: "edital_gestor", nome: "Gestor" },
+      coordenacao: { codigo: "C1", nome: "Coordenação Norte", area: "sede" },
+      permissoes: {
+        dashboard: "leitor",
+        nucleo: "editor",
+        calendario: "leitor",
+      },
+    },
+    panel_ids: [],
+  });
+
+  test('"Meus acessos" no menu da conta abre a gaveta com o grupo, as áreas e o nível por módulo', async ({
+    page,
+  }) => {
+    const erros = await abrirComSessao(page, { contexto: contextoDaGestora() });
+    await page.goto("/sede/cronograma", { waitUntil: "domcontentloaded" });
+    await expect(titulo(page)).toHaveText("Cronograma");
+
+    await page.locator("#topUserMenu > summary").click();
+    await page.getByRole("button", { name: "Meus acessos" }).click();
+    await expect(page.locator("#topUserMenu")).not.toHaveAttribute("open", "");
+    const gaveta = page.getByRole("dialog", { name: "Meus acessos" });
+    await expect(gaveta).toBeVisible();
+    const valor = (rotulo) =>
+      gaveta
+        .locator(".ui-kv")
+        .filter({
+          has: page.locator(".ui-kv-rotulo", {
+            hasText: new RegExp(`^${rotulo}$`),
+          }),
+        })
+        .locator(".ui-kv-valor");
+    await expect(valor("Grupo")).toHaveText("Gestor");
+    await expect(valor("Áreas")).toHaveText("Saúde Indígena, SEDE");
+    await expect(valor("Coordenação")).toHaveText("Coordenação Norte (SEDE)");
+    await expect(valor("Editais")).toHaveText("Editor");
+    await expect(valor("Cronograma")).toHaveText("Leitor");
+    await expect(valor("Gestão de acessos")).toHaveText("Sem acesso");
+
+    await page.keyboard.press("Escape");
+    await expect(gaveta).toBeHidden();
+    expect(erros).toEqual([]);
+  });
+
   test("sem perfil, vai para a solicitação de acesso e não abre o sistema", async ({
     page,
   }) => {

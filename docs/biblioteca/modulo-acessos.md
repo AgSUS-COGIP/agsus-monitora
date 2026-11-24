@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-17
+atualizado: 2026-11-24
 ---
 
 # Módulo: Acessos, perfis e permissões
@@ -67,9 +67,20 @@ formulários sobrevivem à troca de aba.
 - `partes.tsx` (lista mestre, campo de motivo obrigatório em toda gravação, travas da matriz),
   `tipos.ts` (regras e linhas das RPCs em `src/lib/acessos/tipos-dos-acessos.ts`), `acessos.css`.
 
+## Meus acessos (menu da conta)
+
+Clicando na foto, no cabeçalho, "Meus acessos" abre uma gaveta só de leitura com o grupo, as áreas,
+a coordenação e o nível efetivo de cada módulo do catálogo (`RESOURCES`), com as exceções da pessoa
+já somadas. Lê o perfil que `obter_contexto_monitora` entrega ao entrar (sem RPC nova), pela peça
+`perfil` do contexto do app (`src/main.ts`); sem a matriz (contexto antigo), os módulos não
+aparecem em vez de "Sem acesso" em tudo. Regra em `src/lib/acessos/meus-acessos.ts`, gaveta em
+`src/app/casca/meus-acessos.tsx`. Guardas: `tests/demais-regras.test.ts` (bloco
+`lib/meus-acessos`) e `tests/casca-sessao-e-interface-na-tela.test.ts` (bloco `app/meus-acessos`).
+
 ## Regras puras e banco
 
-`src/lib/acessos/matriz-de-acessos.ts` (rascunho; grupo × individual), `acessos/teto-de-acessos.ts` (teto do
+`src/lib/acessos/matriz-de-acessos.ts` (rascunho; grupo × individual), `acessos/meus-acessos.ts`
+(a gaveta do menu da conta), `acessos/teto-de-acessos.ts` (teto do
 coordenador), `acessos/grupos-e-coordenacoes.ts`, `acessos/ver-como.ts`, `acessos/solicitacao-de-acesso.ts` (pedido por
 área: listas, situação, validação, recusa; ver `src/app/entrada/`). Banco nas migrations
 `20260929121000`–`121300`, `190000`–`190200`, `20261021140000` e `20261022140100`; só as RPCs gravam

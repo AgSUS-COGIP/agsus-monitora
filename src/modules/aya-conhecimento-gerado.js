@@ -6413,6 +6413,25 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-dos-acessos.md",
+    titulo: "Meus acessos",
+    perguntas: [
+      "como vejo meus acessos",
+      "meus acessos",
+      "quais sao meus acessos",
+      "qual e o meu grupo",
+      "qual meu nivel em cada modulo",
+      "o que eu posso fazer nas abas",
+      "minhas permissoes",
+      "quais areas eu vejo",
+    ],
+    resposta:
+      'Clique na sua foto, no canto de cima, e em "Meus acessos". A gaveta mostra o seu grupo, as suas áreas, a sua coordenação (quando houver) e, em cada módulo, o seu nível: Leitor, Editor, Administrador ou Sem acesso. É o nível que vale para você, com as exceções individuais já somadas ao grupo. É só leitura: quem muda o acesso é um administrador (ou o coordenador da sua coordenação) em Configurações › Acessos, nunca a própria pessoa. O acesso é lido quando você entra: se acabou de mudar, recarregue a página para ver o novo.',
+    fato: "",
+    fonte:
+      "src/lib/acessos/meus-acessos.ts; src/app/casca/meus-acessos.tsx; src/app/casca/topo.tsx",
+  },
+  {
+    arquivo: "regras-dos-acessos.md",
     titulo: "Pedidos de acesso",
     perguntas: [
       "como funcionam os pedidos de acesso",

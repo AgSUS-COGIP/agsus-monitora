@@ -6,6 +6,7 @@ import type { AvisoDeVersao } from "./aviso-de-versao.ts";
 import type { Moldura } from "./moldura.ts";
 import type { PresencaDoCabecalho } from "../componentes/pessoas-online/pessoas-online.tsx";
 import type { EstadoDoEncerramentoControle } from "../modulos/encerramento-do-edital/estado.ts";
+import type { PerfilDeAcesso } from "../lib/acessos/tipos-dos-acessos.ts";
 
 /*
   O que a raiz do app (src/app/raiz.tsx) entrega a todo o React: a navegação
@@ -50,6 +51,8 @@ export interface PecasDoApp {
   recarregarPaineisExternos?: () => unknown;
   /** Barra, tema, tela cheia e relatório (src/app/moldura.ts); a casca aplica na página. */
   moldura?: Moldura;
+  /** O perfil de quem entrou (obter_contexto_monitora), para "Meus acessos". */
+  perfil?: Assinavel<PerfilDeAcesso | null>;
 }
 
 export interface ContextoDoApp {

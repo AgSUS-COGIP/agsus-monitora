@@ -110,7 +110,8 @@ partir do mesmo retrato (título, colunas e linhas); `baixarArquivo` entrega.
 O cabeçalho do app (`header.top`, `src/app/casca/topo.tsx` e `topo.css`) é uma linha só: à
 esquerda o ☰ e a marca (só com a barra em gaveta, até 900px, e fora das telas das áreas) e o nome
 da tela, "● Área › Tela"; à direita o sininho do resumo do dia e a foto com o menu da conta (nome,
-e-mail, perfil, Pessoas online, Atualizar dados, Tela cheia, no painel do Popover). Toda ação é
+e-mail, perfil, Pessoas online, Meus acessos, Atualizar dados, Tela cheia, no painel do Popover;
+"Meus acessos" abre uma `Gaveta` só de leitura, [[modulo-acessos]]). Toda ação é
 `.btn.ghost.ui-botao-icone.topo-acao`, com a mesma caixa (`--topo-acao`: 40px no mouse, 44px no
 toque). No celular (até 640px) ficam o ☰, o nome da tela (a área pequena em cima), o sininho e a
 foto. A busca global abre pelo Ctrl+K. O nome da tela vem do `CabecalhoDaTela`: na tela aberta de
