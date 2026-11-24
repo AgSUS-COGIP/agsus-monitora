@@ -3237,7 +3237,7 @@ bloco("componentes/nucleo", () => {
   const abrirEdital = async (id: string) =>
     clicar(await acaoDaLinha(id, "editar"));
   /* A vista da tabela: Ativos (o padrão) ou Histórico (concluídos e cancelados). */
-  const vista = (valor: "ativos" | "historico") =>
+  const vista = (valor: "ativos" | "historico" | "todas") =>
     document.querySelector<HTMLElement>(
       `[data-tour="editais-ativos-e-historico"] [data-valor="${valor}"]`,
     );
@@ -3589,8 +3589,9 @@ bloco("componentes/nucleo", () => {
       expect(tarja.getAttribute("role")).toBe("status");
       expect(tarja.textContent).toContain("Sem cronograma");
 
+      // Tirar o filtro deixa a vista em que o indicador contou (Todos).
       await clicar(tarja.querySelector<HTMLElement>(".ui-chip"));
-      expect(linhasDaTabela()).toEqual(["3", "1"]);
+      expect(linhasDaTabela()).toEqual(["2", "3", "1"]);
       expect($("nucleoActiveAlertFilter")).toBeNull();
     });
 
@@ -3646,6 +3647,31 @@ bloco("componentes/nucleo", () => {
       expect(linhasDaTabela()).toEqual(["3"]);
       expect(cartao("ativos")?.getAttribute("aria-pressed")).toBe("false");
       expect($("nucleoActiveAlertFilter")?.textContent).toContain("Alerta");
+    });
+
+    it("o indicador leva a lista à vista em que ela mostra o mesmo número (Todos)", async () => {
+      await montar();
+      // No Histórico, um indicador que conta ativos e inativos leva a Todos.
+      await verHistorico();
+      await clicar(cartao("sem_cronograma"));
+      expect(vista("todas")?.getAttribute("aria-checked")).toBe("true");
+      expect(vista("todas")?.textContent).toBe("Todos3");
+      expect(linhasDaTabela()).toHaveLength(
+        Number(
+          cartao("sem_cronograma")?.querySelector(".ui-kpi-valor")?.textContent,
+        ),
+      );
+      // O Total de editais (que não filtra) também: a lista mostra todos.
+      await clicar(cartao("sem_cronograma"));
+      await verHistorico();
+      await clicar(cartao("todos"));
+      expect(vista("todas")?.getAttribute("aria-checked")).toBe("true");
+      expect(linhasDaTabela()).toHaveLength(
+        Number(cartao("todos")?.querySelector(".ui-kpi-valor")?.textContent),
+      );
+      // "Editais ativos" e "Editais inativos" seguem nas suas abas.
+      await clicar(cartao("inativos"));
+      expect(vista("historico")?.getAttribute("aria-checked")).toBe("true");
     });
 
     it("Ativos e Histórico: a tabela abre nos vigentes, o histórico a um clique, com a contagem por situação", async () => {
