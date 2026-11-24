@@ -49,12 +49,10 @@ import {
   DANI,
   JUSTIFICATIVA,
   bancoDeHoje as bancoDoPedidoDeAcesso,
-  ensaio as ensaioDoPedido,
   entrar as entrarNoPedido,
   erroDe as erroDoPedido,
   funcaoDoRetrato,
   migration as migrationDoPedido,
-  rollback as rollbackDoPedido,
   rpc as rpcDoPedido,
   type Banco as BancoDoPedido,
 } from "./apoio/banco-do-pedido-de-acesso.ts";
@@ -2121,12 +2119,13 @@ insert into public."TB_AREA" values ('saude-indigena'), ('sede'), ('projetos');
 
 bloco("pedido-de-mais-acesso-no-banco", () => {
   /*
-    A migration 20261124210000 (pendente) amplia o pedido de acesso para quem
+    A migration 20261124210000 (aplicada em 24/11/2026) amplia o pedido de acesso para quem
     já tem conta: módulo com nível, outra área ou outro grupo. Num Postgres de
     verdade (PGlite), com as tabelas, as RPCs e as funções de permissão do
     retrato (tests/apoio/banco-do-pedido-de-acesso.ts). Confere o pedido, quem
     aprova o quê (admin, coordenador e teto), o que a aprovação concede e
-    registra, o caminho de entrada que não muda, o rollback e o ensaio.
+    registra e o caminho de entrada que não muda. O rollback e o ensaio saíram
+    com a aplicação; o banco de antes vem dos trechos congelados do retrato.
   */
   const entrar = entrarNoPedido;
   const rpc = rpcDoPedido;
@@ -2198,32 +2197,6 @@ bloco("pedido-de-mais-acesso-no-banco", () => {
   }
 
   describe("arquivos", () => {
-    it("o ensaio roda o corpo da migration sem mudança e termina em rollback", () => {
-      const m = migrationDoPedido();
-      const corpo = m.slice(
-        m.indexOf("\nbegin;\n") + "\nbegin;\n".length,
-        m.lastIndexOf("\ncommit;"),
-      );
-      const e = ensaioDoPedido();
-      expect(e).toContain(corpo);
-      expect(e.trimEnd().endsWith("rollback;")).toBe(true);
-      expect(e).not.toMatch(/^commit;/m);
-    });
-
-    it("o rollback volta as cinco RPCs com o corpo do retrato, letra por letra", () => {
-      const r = rollbackDoPedido();
-      for (const nome of [
-        "public.registrar_solicitacao_acesso",
-        "public.aprovar_solicitacao_acesso",
-        "public.obter_minha_solicitacao_acesso",
-        "public.listar_solicitacoes_acesso",
-        "public.listar_opcoes_da_solicitacao_acesso",
-      ]) {
-        const corpo = funcaoDoRetrato(nome).replace(/^CREATE FUNCTION /, "");
-        expect(r, nome).toContain(corpo);
-      }
-    });
-
     it("o pedido de entrada aprovado segue o corpo de hoje (só entra a ida para o pedido de mais acesso)", () => {
       const hoje = funcaoDoRetrato("public.aprovar_solicitacao_acesso");
       const m = migrationDoPedido();
@@ -2607,58 +2580,6 @@ bloco("pedido-de-mais-acesso-no-banco", () => {
         observacao_admin: "Justificativa insuficiente",
       });
       expect((await perfil(db, BIA.perfil))?.perfil).toBe("usuario");
-    });
-  });
-
-  describe("rollback e ensaio", () => {
-    it("com pedido de mais acesso pendente, o rollback não desfaz nada", async () => {
-      const db = await migrado();
-      await entrar(db, BIA);
-      await pedir(db, { p_tipo: "AREA", p_area: "projetos" });
-      expect(await erroDe(db.exec(rollbackDoPedido()))).toMatch(/pendente/);
-      await db.exec("rollback");
-      expect(await meuPedido(db)).toMatchObject({
-        tipo: "AREA",
-        status: "pendente",
-      });
-    });
-
-    it("volta as funções e a tabela de hoje, guarda o tipo dos pedidos decididos e aceita a migration de novo", async () => {
-      const db = await migrado();
-      await entrar(db, BIA);
-      const { id } = await pedir(db, { p_tipo: "AREA", p_area: "projetos" });
-      await entrar(db, ADMIN);
-      await aprovar(db, id);
-      await db.exec(rollbackDoPedido());
-      const { rows: colunas } = await db.query(
-        `select 1 from information_schema.columns where table_name = 'TB_SOLICITACAO_ACESSO' and column_name in ('TP_SOLICITACAO', 'NO_RECURSO', 'TP_NIVEL')`,
-      );
-      expect(colunas).toEqual([]);
-      const { rows: guardados } = await db.query(
-        `select "TP_SOLICITACAO" as tipo, "CO_AREA" as area from arquivo."TB_SOLICITACAO_AMPLIACAO_ANTES"`,
-      );
-      expect(guardados).toEqual([{ tipo: "AREA", area: "projetos" }]);
-      // O que foi concedido fica.
-      expect((await perfil(db, BIA.perfil))?.areas).toEqual([
-        "sede",
-        "projetos",
-      ]);
-      const { rows: funcoes } = await db.query<{ n: number }>(
-        `select count(*)::int as n from pg_proc where proname in ('FC_APROVAR_AMPLIACAO_ACESSO', 'FC_REGISTRAR_AMPLIACAO_ACESSO')
-            or (proname = 'registrar_solicitacao_acesso' and pronargs <> 7)`,
-      );
-      expect(funcoes[0]?.n).toBe(0);
-      // Os corpos de hoje: a guarda da migration (md5) aceita aplicar de novo.
-      await db.exec(migrationDoPedido());
-    });
-
-    it("o ensaio roda, confere e não grava nada", async () => {
-      const db = await bancoDoPedidoDeAcesso();
-      await db.exec(ensaioDoPedido());
-      const { rows } = await db.query(
-        `select 1 from information_schema.columns where table_name = 'TB_SOLICITACAO_ACESSO' and column_name = 'TP_SOLICITACAO'`,
-      );
-      expect(rows).toEqual([]);
     });
   });
 });

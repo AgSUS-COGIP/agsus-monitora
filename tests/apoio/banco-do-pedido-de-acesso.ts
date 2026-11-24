@@ -2,9 +2,9 @@
   Banco de teste do pedido de mais acesso (migration 20261124210000), num Postgres de verdade
   (PGlite).
 
-  O que é de verdade: a migration (supabase/migrations/, enquanto pendente; depois de aplicada,
-  tests/fixtures/sql-do-banco/), o rollback, o ensaio e, como estão em produção
-  (supabase/esquema-atual.sql): as tabelas do pedido e dos acessos (perfil, grupos e níveis,
+  O que é de verdade: a migration, como entrou no banco em 24/11/2026
+  (tests/fixtures/sql-do-banco/), e, como estavam em produção antes dela (os trechos do retrato
+  daquele dia, tests/fixtures/sql-do-banco/retrato-do-pedido-de-acesso-em-24-11.sql): as tabelas do pedido e dos acessos (perfil, grupos e níveis,
   áreas, coordenações, permissões individuais e o histórico), o índice de um pedido pendente por
   pessoa, as RPCs do pedido (registrar, aprovar, recusar, cancelar, obter a minha, listar) com
   os grants, e as funções de permissão de que elas dependem (is_master, current_profile,
@@ -15,7 +15,7 @@
   de teste.email, auth.role() é authenticated); as listas de DSEI e de projetos (TD_UNIDADE e
   TA_UNIDADE_AREA, só as colunas lidas). Sem as chaves estrangeiras. Dados fictícios.
 */
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 import { moldeDeBanco } from "./molde-de-banco.ts";
 import { lembrarBanco } from "./bancos-abertos.ts";
@@ -26,16 +26,13 @@ export const NOME_DA_MIGRATION = "20261124210000_ampliar_pedido_de_acesso.sql";
 
 const ler = (caminho: string) =>
   readFileSync(caminho, "utf8").replace(/\r\n/g, "\n");
-/* Pendente: em supabase/migrations/; aplicada, guardada sem mudança em tests/fixtures/sql-do-banco/. */
-const CAMINHO_DA_MIGRATION = [
-  `supabase/migrations/${NOME_DA_MIGRATION}`,
-  `tests/fixtures/sql-do-banco/${NOME_DA_MIGRATION}`,
-].find((caminho) => existsSync(caminho));
-export const migration = () => ler(String(CAMINHO_DA_MIGRATION));
-export const rollback = () => ler(`supabase/rollback/${NOME_DA_MIGRATION}`);
-export const ensaio = () => ler(`supabase/ensaios/${NOME_DA_MIGRATION}`);
+export const migration = () =>
+  ler(`tests/fixtures/sql-do-banco/${NOME_DA_MIGRATION}`);
 
-export const RETRATO = ler("supabase/esquema-atual.sql");
+/* O retrato de antes da migration (o atual já a tem aplicada). */
+export const RETRATO = ler(
+  "tests/fixtures/sql-do-banco/retrato-do-pedido-de-acesso-em-24-11.sql",
+);
 
 /** Um bloco do retrato, do começo até o fim dele (executável). */
 function doRetrato(inicio: string, fim: string): string {

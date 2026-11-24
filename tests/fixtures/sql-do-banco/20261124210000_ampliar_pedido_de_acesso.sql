@@ -1,18 +1,83 @@
 /*
-  ENSAIO de 20261124210000_ampliar_pedido_de_acesso: roda a migration inteira dentro de uma transação, confere o resultado
-  e desfaz (rollback). Não grava nada. Rode no SQL Editor antes de aplicar; qualquer
-  conferência que falhe aborta com a mensagem do que deu errado.
+  PEDIR MAIS ACESSO (24/11/2026)
 
-  O trecho entre "MIGRATION" e "CONFERÊNCIAS" é o corpo da migration, sem mudança
-  (tests/repositorio-e-banco.test.ts, bloco `pedido-de-mais-acesso-no-banco`, confere).
+  POR QUE
+  O pedido de acesso (20261021140000) só servia a quem entra sem perfil. Quem
+  já tem conta e precisa de mais (uma aba com outro nível, outra área, outro
+  grupo) pedia por fora, e quem aprova mudava à mão em Configurações › Acessos,
+  sem o pedido nem a justificativa registrados. Agora o mesmo pedido
+  (TB_SOLICITACAO_ACESSO e as mesmas RPCs) serve também a quem já tem acesso,
+  pelo "Meus acessos" do menu da conta. Não é um fluxo paralelo: a aprovação e
+  a recusa continuam em Configurações › Acessos › Pendentes.
+
+  O QUE MUDA
+    TB_SOLICITACAO_ACESSO
+      + "TP_SOLICITACAO" ACESSO (o pedido de entrada, como hoje; padrão das
+        linhas existentes) | MODULO | AREA | GRUPO.
+      + "NO_RECURSO" e "TP_NIVEL": o módulo e o nível pedidos (MODULO).
+        AREA usa "CO_AREA"; GRUPO usa perfil_solicitado (já com FK para
+        TB_GRUPO_ACESSO).
+      + CK_SOLICACESSO_TIPO e CK_SOLICACESSO_AMPLIACAO (o que cada tipo
+        preenche).
+    registrar_solicitacao_acesso: ganha p_tipo, p_recurso, p_nivel e p_grupo
+      (no fim, com padrão nulo; as chamadas de hoje continuam valendo). Sem
+      perfil ativo, faz o que fazia. Com perfil ativo, registra o pedido de
+      mais acesso (private."FC_REGISTRAR_AMPLIACAO_ACESSO"), com a mesma regra
+      da justificativa (20 a 2.000 caracteres, 3 palavras).
+    aprovar_solicitacao_acesso: o pedido de mais acesso concede exatamente o
+      que foi pedido (private."FC_APROVAR_AMPLIACAO_ACESSO"): o nível do
+      módulo (permissão individual), a área ou o grupo; nada mais do perfil
+      muda. Registra quem aprovou no pedido (avaliado_por/avaliado_em) e no
+      histórico (TH_PERMISSAO_RECURSO). O pedido de entrada segue igual.
+    obter_minha_solicitacao_acesso: com perfil ativo, devolve o último pedido
+      de mais acesso; sem perfil, o último pedido de entrada (a tela de
+      entrada não vê pedido de mais acesso que tenha sobrado de uma conta
+      desativada). Devolve também tipo, módulo, nível e grupo pedidos.
+    listar_solicitacoes_acesso: devolve tipo, módulo, nível, grupo pedido e o
+      que a pessoa tem hoje (grupo, nível no módulo, áreas); não lista o
+      pedido de quem está olhando (ninguém aprova o próprio acesso).
+    listar_opcoes_da_solicitacao_acesso: com perfil ativo, devolve também os
+      grupos que se podem pedir (código, nome e descrição; sem o de
+      administrador global), para o formulário de "outro grupo".
+    recusar_solicitacao_acesso e cancelar_minha_solicitacao_acesso: sem
+      mudança (valem para os dois tipos).
+
+  QUEM PEDE
+    Quem tem perfil ativo, menos o administrador global (já tem tudo). Um
+    pedido pendente por pessoa (o índice de hoje); enviar de novo troca o
+    pendente.
+      MODULO: nível acima do que a pessoa tem hoje, nas regras da matriz
+              (Configurações sem Leitor; Gestão de acessos e Parecer jurídico
+              só Editor).
+      AREA:   área que a pessoa ainda não tem; quem tem coordenação não pede
+              área (a área vem da coordenação).
+      GRUPO:  outro grupo, menos o de administrador global.
+
+  QUEM APROVA (as mesmas regras da matriz, salvar_matriz_acessos)
+    Administrador global: todos os pedidos.
+    Coordenador (Gestão de acessos como Editor): os da própria coordenação,
+      dentro do teto dele: módulo até o próprio nível (nunca Gestão de
+      acessos), grupo que cabe no teto; área, não.
+    Ninguém aprova o próprio pedido. Depois de aprovar, a pessoa não pode
+    ficar sem área nem gerenciar acessos sem coordenação (as travas da
+    matriz).
+
+  GUARDAS (nada é aplicado se falhar)
+    - Já aplicada ("TP_SOLICITACAO" existe).
+    - As cinco funções trocadas não são as que esta migration conhece (md5
+      do corpo): alguém as mudou depois; junte as mudanças antes de aplicar.
+
+  DADOS: nenhuma linha muda (as existentes ficam "TP_SOLICITACAO" = ACESSO).
+
+  DEPOIS DE APLICAR: o front da PR "Pedir mais acesso" (gaveta Meus acessos e
+  Pendentes) já pode ir ao ar; antes, o front de hoje segue funcionando.
+
+  Ensaio:   supabase/ensaios/20261124210000_ampliar_pedido_de_acesso.sql
+  Rollback: supabase/rollback/20261124210000_ampliar_pedido_de_acesso.sql
+  Testes:   tests/repositorio-e-banco.test.ts (bloco
+            pedido-de-mais-acesso-no-banco), PGlite.
 */
 begin;
-
-create temp table antes_do_ensaio on commit drop as
-select id, status, "CO_AREA", perfil_solicitado, "CO_COORDENACAO", updated_at
-  from public."TB_SOLICITACAO_ACESSO";
-
--- MIGRATION ------------------------------------------------------------------------------------
 
 set local lock_timeout = '5s';
 
@@ -24,16 +89,17 @@ begin
     raise exception '20261124210000 já aplicada: TB_SOLICITACAO_ACESSO já tem "TP_SOLICITACAO".';
   end if;
   -- As funções abaixo partem das que estão no banco: se outra migration (ou um ajuste à mão)
-  -- as mudou depois, o corpo não bate e nada é aplicado.
-  if md5((select prosrc from pg_proc where oid = to_regprocedure('public.registrar_solicitacao_acesso(text, text, text, text, text, text, text)')))
+  -- as mudou depois, o corpo não bate e nada é aplicado. O \r sai da conta: a de aprovar foi
+  -- gravada com quebras de linha do Windows (CRLF), e o retrato as traz como LF.
+  if md5(replace((select prosrc from pg_proc where oid = to_regprocedure('public.registrar_solicitacao_acesso(text, text, text, text, text, text, text)')), E'\r', ''))
        is distinct from 'dbd7ab01aac795547e007ff58787dede'
-     or md5((select prosrc from pg_proc where oid = to_regprocedure('public.aprovar_solicitacao_acesso(uuid, text, text, text[], text)')))
+     or md5(replace((select prosrc from pg_proc where oid = to_regprocedure('public.aprovar_solicitacao_acesso(uuid, text, text, text[], text)')), E'\r', ''))
        is distinct from '53af7b585c4fcf42edeb68ccb62bd791'
-     or md5((select prosrc from pg_proc where oid = to_regprocedure('public.obter_minha_solicitacao_acesso()')))
+     or md5(replace((select prosrc from pg_proc where oid = to_regprocedure('public.obter_minha_solicitacao_acesso()')), E'\r', ''))
        is distinct from '1394838a42ae9c0ff559a9d260ac5563'
-     or md5((select prosrc from pg_proc where oid = to_regprocedure('public.listar_solicitacoes_acesso(text)')))
+     or md5(replace((select prosrc from pg_proc where oid = to_regprocedure('public.listar_solicitacoes_acesso(text)')), E'\r', ''))
        is distinct from '0ab1dee409d463821d9d2181ce1e0986'
-     or md5((select prosrc from pg_proc where oid = to_regprocedure('public.listar_opcoes_da_solicitacao_acesso()')))
+     or md5(replace((select prosrc from pg_proc where oid = to_regprocedure('public.listar_opcoes_da_solicitacao_acesso()')), E'\r', ''))
        is distinct from '853810f495679a7b966125a89e5aa2ce' then
     raise exception 'registrar_solicitacao_acesso, aprovar_solicitacao_acesso, obter_minha_solicitacao_acesso, listar_solicitacoes_acesso ou listar_opcoes_da_solicitacao_acesso mudou depois do retrato de 24/11/2026: junte as mudanças antes de aplicar.';
   end if;
@@ -676,49 +742,4 @@ $$;
 comment on function public.listar_opcoes_da_solicitacao_acesso() is
   'Opções da tela de solicitação de acesso (autenticado, mesmo sem perfil): áreas, unidades (DSEI/CASAI de TD_UNIDADE; projetos de TA_UNIDADE_AREA) e coordenações ativas; com perfil ativo, também os grupos que se podem pedir (sem o de administrador global).';
 
-
--- CONFERÊNCIAS ---------------------------------------------------------------------------------
-
-do $$
-begin
-  -- Nenhum pedido mudou: todos viram "ACESSO", com o resto igual.
-  if (select count(*) from public."TB_SOLICITACAO_ACESSO") <> (select count(*) from antes_do_ensaio)
-     or exists (select 1 from public."TB_SOLICITACAO_ACESSO" where "TP_SOLICITACAO" <> 'ACESSO'
-                   or "NO_RECURSO" is not null or "TP_NIVEL" is not null)
-     or exists (select 1 from public."TB_SOLICITACAO_ACESSO" s join antes_do_ensaio a using (id)
-                 where (s.status, s."CO_AREA", s.perfil_solicitado, s."CO_COORDENACAO", s.updated_at)
-                       is distinct from (a.status, a."CO_AREA", a.perfil_solicitado, a."CO_COORDENACAO", a.updated_at)) then
-    raise exception 'A migration mudou pedidos que já existiam.';
-  end if;
-  -- As CHECKs novas valem.
-  if (select count(*) from pg_constraint
-       where conrelid = 'public."TB_SOLICITACAO_ACESSO"'::regclass
-         and conname in ('CK_SOLICACESSO_TIPO', 'CK_SOLICACESSO_AMPLIACAO') and convalidated) <> 2 then
-    raise exception 'As CHECKs CK_SOLICACESSO_TIPO e CK_SOLICACESSO_AMPLIACAO não estão lá.';
-  end if;
-  -- A RPC de registrar tem uma assinatura só, a nova, e só authenticated a chama.
-  if (select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-       where n.nspname = 'public' and p.proname = 'registrar_solicitacao_acesso') <> 1
-     or to_regprocedure('public.registrar_solicitacao_acesso(text, text, text, text, text, text, text, text, text, text, text)') is null then
-    raise exception 'registrar_solicitacao_acesso não ficou com a assinatura nova (e só ela).';
-  end if;
-  if not has_function_privilege('authenticated', 'public.registrar_solicitacao_acesso(text, text, text, text, text, text, text, text, text, text, text)', 'execute')
-     or has_function_privilege('anon', 'public.registrar_solicitacao_acesso(text, text, text, text, text, text, text, text, text, text, text)', 'execute') then
-    raise exception 'registrar_solicitacao_acesso: só authenticated pode chamar.';
-  end if;
-  -- As funções internas não são chamáveis de fora.
-  if has_function_privilege('authenticated', 'private."FC_APROVAR_AMPLIACAO_ACESSO"(uuid, text)', 'execute')
-     or has_function_privilege('authenticated', 'private."FC_REGISTRAR_AMPLIACAO_ACESSO"(public."TB_PERFIL_USUARIO", text, text, text, text, text, text)', 'execute') then
-    raise exception 'As funções internas do pedido de mais acesso estão abertas a authenticated.';
-  end if;
-  -- As outras três continuam chamáveis por authenticated.
-  if not has_function_privilege('authenticated', 'public.aprovar_solicitacao_acesso(uuid, text, text, text[], text)', 'execute')
-     or not has_function_privilege('authenticated', 'public.obter_minha_solicitacao_acesso()', 'execute')
-     or not has_function_privilege('authenticated', 'public.listar_solicitacoes_acesso(text)', 'execute') then
-    raise exception 'aprovar, obter_minha ou listar perdeu o EXECUTE de authenticated.';
-  end if;
-  raise notice 'Ensaio de 20261124210000_ampliar_pedido_de_acesso: tudo conferido.';
-end;
-$$;
-
-rollback;
+commit;
