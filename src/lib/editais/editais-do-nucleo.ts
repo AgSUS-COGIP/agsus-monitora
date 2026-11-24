@@ -775,6 +775,20 @@ export function indicadoresDoResumo(
 }
 
 /**
+ * A vista da tabela (Ativos, Histórico ou Todos) em que o indicador conta: os
+ * indicadores somam ativos e inativos, então clicar num deles leva a lista à
+ * vista em que ela mostra o mesmo número ("Editais ativos" e "Editais
+ * inativos" às suas abas; os demais, a Todos).
+ */
+export function vistaDoIndicador(
+  chave: string,
+): "ativos" | "historico" | "todas" {
+  if (chave === "ativos") return "ativos";
+  if (chave === "inativos") return "historico";
+  return "todas";
+}
+
+/**
  * O edital passa no filtro do painel? Sem resumo, só aparece quando não há
  * filtro: não há como saber em que indicador ele cairia.
  */
