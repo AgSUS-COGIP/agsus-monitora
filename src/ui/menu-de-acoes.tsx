@@ -15,7 +15,9 @@ import { classes } from "./classes.ts";
   `compacto`: o "⋯" de uma linha de tabela (AcoesDaLinha) — só o ícone, com
   o `rotulo` como nome acessível; a lista abre presa à janela (fixa, medida
   do botão), para não ser cortada pela rolagem da tabela, e fecha se a
-  página rolar.
+  página ou a tabela rolarem de fato (o botão sai do lugar). Rolagem que não
+  move o botão não fecha: com uma linha só, a caixa da tabela avisava uma
+  rolagem ao abrir e a lista sumia na hora (24/11/2026, Histórico de Editais).
 */
 export interface AcaoDoMenu {
   id: string;
@@ -52,6 +54,7 @@ export function MenuDeAcoes({
   const [posicao, setPosicao] = useState<CSSProperties | null>(null);
   const raiz = useRef<HTMLDivElement>(null);
   const botao = useRef<HTMLButtonElement>(null);
+  const ondeAbriu = useRef<{ top: number; left: number } | null>(null);
   const idDaLista = useId();
 
   const itens = () => [
@@ -67,6 +70,7 @@ export function MenuDeAcoes({
       return;
     }
     const caixa = botao.current.getBoundingClientRect();
+    ondeAbriu.current = { top: caixa.top, left: caixa.left };
     const altura = globalThis.innerHeight || 0;
     const largura = globalThis.innerWidth || 0;
     const esquerda = Math.max(
@@ -98,13 +102,24 @@ export function MenuDeAcoes({
 
   useEffect(() => {
     if (!aberto) return undefined;
-    itens()[0]?.focus();
+    // Sem rolar nada: a lista é fixa e já está à vista.
+    itens()[0]?.focus({ preventScroll: true });
     const foraDoMenu = (ev: MouseEvent) => {
       if (!raiz.current?.contains(ev.target as Node | null)) setAberto(false);
     };
-    // A lista fixa não acompanha a rolagem: fecha (a da própria lista não conta).
+    // A lista fixa não acompanha a rolagem: fecha quando o botão sai do lugar
+    // (a rolagem da própria lista não conta).
     const aoRolar = (ev: Event) => {
-      if (!raiz.current?.contains(ev.target as Node | null)) setAberto(false);
+      if (raiz.current?.contains(ev.target as Node | null)) return;
+      const antes = ondeAbriu.current;
+      const agora = botao.current?.getBoundingClientRect();
+      if (
+        !antes ||
+        !agora ||
+        Math.abs(agora.top - antes.top) > 1 ||
+        Math.abs(agora.left - antes.left) > 1
+      )
+        setAberto(false);
     };
     document.addEventListener("mousedown", foraDoMenu);
     if (compacto) globalThis.addEventListener?.("scroll", aoRolar, true);
