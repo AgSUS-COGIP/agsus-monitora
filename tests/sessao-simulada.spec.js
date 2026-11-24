@@ -150,29 +150,33 @@ test.describe("sessão simulada", () => {
     const foto = topo.locator("#topUserMenu > summary");
     for (const visivel of [menu, topo.locator(".topo-marca"), sininho, foto])
       await expect(visivel).toBeVisible();
-    for (const fora of [".topo-busca", ".topo-aya", ".topo-area"])
-      await expect(topo.locator(fora)).toBeHidden();
+    await expect(topo.locator(".topo-busca")).toBeHidden();
     for (const acao of [menu, sininho, foto])
       expect(await caixa(acao)).toBe("44×44");
     expect(erros).toEqual([]);
     await contexto.close();
   });
 
-  test("no desktop, a área à esquerda, a busca no meio e sininho, Aya e foto com a mesma caixa", async ({
+  test("no desktop, a busca abre a linha e o sininho e a foto têm a mesma caixa, sem área nem Aya repetidas", async ({
     page,
   }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     const erros = await abrirComSessao(page, { rpcs: RESUMO_DE_RESPONSAVEL });
     await page.goto("/sede/visao-geral", { waitUntil: "domcontentloaded" });
     const topo = page.locator("header.top");
-    await expect(topo.locator(".topo-area")).toHaveText(/SEDE/);
     await expect(topo.locator(".topo-marca")).toBeHidden();
+    await expect(topo.locator(".topo-area")).toHaveCount(0);
+    await expect(topo.locator('[aria-label="Abrir a Aya"]')).toHaveCount(0);
     const acoes = [
       topo.locator("#resumoDoDiaSininho"),
-      topo.locator(".topo-aya"),
       topo.locator("#topUserMenu > summary"),
     ];
     for (const acao of acoes) expect(await caixa(acao)).toBe("40×40");
+    // A busca abre a linha: começa junto do padding esquerdo do cabeçalho.
+    const inicioDoTopo = (await topo.boundingBox())?.x ?? 0;
+    const inicioDaBusca =
+      (await topo.locator(".topo-busca").boundingBox())?.x ?? 0;
+    expect(inicioDaBusca - inicioDoTopo).toBeLessThanOrEqual(32);
     await topo.locator(".topo-busca").click();
     await expect(page.locator('[role="dialog"].search-modal')).toBeVisible();
     expect(erros).toEqual([]);

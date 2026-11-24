@@ -3,8 +3,9 @@
   nielsen-shell-ux.css e mobile-app.css, com `!important` no tema escuro; agora
   mora só aqui e só com tokens (os tokens já trocam no tema escuro).
 
-  Três colunas: à esquerda o ☰, a marca, a área e o título; no meio a busca;
-  à direita as ações. Toda ação é `.btn.ghost.ui-botao-icone.topo-acao`, com a
+  Três colunas: à esquerda o ☰, a marca e o título; no meio a busca; à
+  direita as ações. Nas telas das áreas (`data-compacto`, título no conteúdo)
+  e acima de 900px, a esquerda fica vazia e a busca vai para o começo. Toda ação é `.btn.ghost.ui-botao-icone.topo-acao`, com a
   mesma caixa: `--topo-acao`, 40px no mouse e 44px no toque.
 
   Entra pelo topo.tsx, depois de ui.css: vence `.btn.ghost` e
@@ -36,7 +37,7 @@
   }
 }
 
-/* ── À esquerda: ☰, marca, área e título ─────────────────────────────────── */
+/* ── À esquerda: ☰, marca e título ───────────────────────────────────────── */
 
 .title-row {
   display: flex;
@@ -69,27 +70,6 @@
   font-size: var(--text-lg);
   font-weight: 600;
   line-height: 1.2;
-}
-
-.topo-area {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-width: 0;
-  margin: 0;
-  color: var(--text-primary);
-  font-size: var(--text-base);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-/* A cor da área (html[data-area], src/app/moldura.ts) no ponto; o nome fica na cor do texto. */
-.topo-area__ponto {
-  width: var(--space-2);
-  height: var(--space-2);
-  flex: none;
-  border-radius: var(--radius-full);
-  background: var(--cor-da-area, currentColor);
 }
 
 /* O título da casca (Administração e avisos); nas telas das áreas, é `sr-only`. */
@@ -172,7 +152,7 @@
   }
 }
 
-/* ── À direita: sininho, Aya e a foto com o menu da conta ────────────────── */
+/* ── À direita: o sininho e a foto com o menu da conta ───────────────────── */
 
 .actions {
   display: flex;
@@ -310,9 +290,32 @@
 
 /* ── Larguras ────────────────────────────────────────────────────────────── */
 
+/*
+  Telas das áreas acima de 900px: sem ☰, sem marca e com o título só para o
+  leitor de tela, a esquerda fica vazia. A linha do título sai da grade
+  (o título já é `sr-only`, fora do fluxo) e a busca abre a linha.
+*/
+@media (min-width: 901px) {
+  .top[data-compacto] {
+    grid-template-columns: minmax(12rem, 28rem) minmax(0, 1fr) max-content;
+  }
+
+  .top[data-compacto] .title-row {
+    display: contents;
+  }
+
+  .top[data-compacto] .topo-busca {
+    justify-self: start;
+  }
+
+  .top[data-compacto] .actions {
+    grid-column: 3;
+  }
+}
+
 /* Barra em gaveta: o ☰ e a marca entram; o cabeçalho sobe acima do conteúdo. */
 @media (max-width: 900px) {
-  /* A esquerda (☰, marca, área) cabe inteira, até a metade; a busca fica com o resto. */
+  /* A esquerda (☰ e marca) cabe inteira, até a metade; a busca fica com o resto. */
   .top {
     z-index: calc(var(--z-header) + 20);
     grid-template-columns: fit-content(50%) minmax(0, 1fr) max-content;
@@ -326,14 +329,9 @@
   .topo-marca {
     display: inline-flex;
   }
-
-  .topo-marca + .topo-area {
-    padding-left: var(--space-3);
-    border-left: 1px solid var(--border-subtle);
-  }
 }
 
-/* Celular: só o ☰, a marca, o sininho e a foto. A busca segue no Ctrl+K e a Aya na arara. */
+/* Celular: só o ☰, a marca, o sininho e a foto. A busca segue no Ctrl+K. */
 @media (max-width: 640px) {
   .top {
     grid-template-columns: minmax(0, 1fr) max-content;
@@ -341,9 +339,7 @@
     padding-inline: var(--space-4);
   }
 
-  .top .topo-busca,
-  .top .topo-aya,
-  .topo-area {
+  .top .topo-busca {
     display: none;
   }
 
