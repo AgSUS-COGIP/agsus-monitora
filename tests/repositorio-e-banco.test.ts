@@ -2210,13 +2210,14 @@ bloco("pedido-de-mais-acesso-no-banco", () => {
       expect(e).not.toMatch(/^commit;/m);
     });
 
-    it("o rollback volta as quatro RPCs com o corpo do retrato, letra por letra", () => {
+    it("o rollback volta as cinco RPCs com o corpo do retrato, letra por letra", () => {
       const r = rollbackDoPedido();
       for (const nome of [
         "public.registrar_solicitacao_acesso",
         "public.aprovar_solicitacao_acesso",
         "public.obter_minha_solicitacao_acesso",
         "public.listar_solicitacoes_acesso",
+        "public.listar_opcoes_da_solicitacao_acesso",
       ]) {
         const corpo = funcaoDoRetrato(nome).replace(/^CREATE FUNCTION /, "");
         expect(r, nome).toContain(corpo);
@@ -2327,6 +2328,27 @@ bloco("pedido-de-mais-acesso-no-banco", () => {
   });
 
   describe("quem tem conta pede mais acesso", () => {
+    it("as opções trazem os grupos que se podem pedir só para quem tem perfil ativo", async () => {
+      const db = await migrado();
+      type Opcoes = { grupos: { codigo: string }[]; areas: unknown[] };
+      await entrar(db, BIA);
+      const opcoes = await rpc<Opcoes>(
+        db,
+        "listar_opcoes_da_solicitacao_acesso",
+      );
+      expect(opcoes.grupos.map((g) => g.codigo)).toEqual([
+        "usuario",
+        "edital_gestor",
+        "coordenador",
+        "superior",
+      ]);
+      expect(opcoes.areas).toHaveLength(3);
+      await entrar(db, DANI);
+      expect(
+        (await rpc<Opcoes>(db, "listar_opcoes_da_solicitacao_acesso")).grupos,
+      ).toEqual([]);
+    });
+
     it("módulo com nível: fica pendente, aparece na gaveta e pode ser trocado por outro pedido", async () => {
       const db = await migrado();
       await entrar(db, BIA);

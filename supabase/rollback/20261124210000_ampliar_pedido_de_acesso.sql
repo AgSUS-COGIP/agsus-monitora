@@ -4,8 +4,8 @@
   Volta TB_SOLICITACAO_ACESSO e as RPCs do pedido de acesso como estavam antes (corpos e
   comentários copiados do retrato supabase/esquema-atual.sql de 24/11/2026, letra por letra):
     - registrar_solicitacao_acesso volta à assinatura de 7 parâmetros;
-    - aprovar_solicitacao_acesso, obter_minha_solicitacao_acesso e listar_solicitacoes_acesso
-      voltam ao corpo de antes;
+    - aprovar_solicitacao_acesso, obter_minha_solicitacao_acesso, listar_solicitacoes_acesso e
+      listar_opcoes_da_solicitacao_acesso voltam ao corpo de antes;
     - saem private."FC_REGISTRAR_AMPLIACAO_ACESSO" e private."FC_APROVAR_AMPLIACAO_ACESSO";
     - saem CK_SOLICACESSO_TIPO, CK_SOLICACESSO_AMPLIACAO e as colunas "TP_SOLICITACAO",
       "NO_RECURSO" e "TP_NIVEL"; o comentário da tabela volta.
@@ -334,6 +334,41 @@ end;
 $$;
 
 COMMENT ON FUNCTION public.listar_solicitacoes_acesso(p_status text) IS 'Pedidos de acesso (admin global: todos; coordenador: os da própria coordenação), com área, cargo, lotação (setor), justificativa e dados da reativação.';
+
+CREATE OR REPLACE FUNCTION public.listar_opcoes_da_solicitacao_acesso() RETURNS jsonb
+    LANGUAGE plpgsql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+begin
+  if (select auth.uid()) is null then
+    raise exception 'Usuário não autenticado' using errcode = '42501';
+  end if;
+  return jsonb_build_object(
+    'areas', coalesce((
+      select jsonb_agg(jsonb_build_object('codigo', a."CO_AREA", 'nome', a."NO_AREA") order by a."NU_ORDEM")
+        from public."TB_AREA" a), '[]'::jsonb),
+    'unidades', coalesce((
+      select jsonb_agg(u.item order by u.area, u.tipo, u.nome)
+        from (
+          select 'saude-indigena' as area, t.tipo, t.nome_oficial as nome,
+                 jsonb_build_object('area', 'saude-indigena', 'nome', t.nome_oficial, 'sigla', t.sigla, 'tipo', t.tipo) as item
+            from public."TD_UNIDADE" t
+           where t.ativo
+          union all
+          select 'projetos', '', x."NO_UNIDADE",
+                 jsonb_build_object('area', 'projetos', 'nome', x."NO_UNIDADE", 'sigla', null, 'tipo', null)
+            from public."TA_UNIDADE_AREA" x
+           where x."CO_AREA" = 'projetos'
+        ) u), '[]'::jsonb),
+    'coordenacoes', coalesce((
+      select jsonb_agg(jsonb_build_object('codigo', c."CO_COORDENACAO", 'nome', c."NO_COORDENACAO", 'area', c."CO_AREA")
+                       order by c."NO_COORDENACAO")
+        from public."TB_COORDENACAO" c
+       where c."ST_ATIVO"), '[]'::jsonb));
+end;
+$$;
+
+COMMENT ON FUNCTION public.listar_opcoes_da_solicitacao_acesso() IS 'Opções da tela de solicitação de acesso (autenticado, mesmo sem perfil): áreas, unidades (DSEI/CASAI de TD_UNIDADE; projetos de TA_UNIDADE_AREA) e coordenações ativas.';
 
 drop function private."FC_APROVAR_AMPLIACAO_ACESSO"(uuid, text);
 drop function private."FC_REGISTRAR_AMPLIACAO_ACESSO"(public."TB_PERFIL_USUARIO", text, text, text, text, text, text);
