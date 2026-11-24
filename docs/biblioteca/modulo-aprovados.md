@@ -32,6 +32,9 @@ contagem de editais por situação; a vista volta no F5). O filtro de Edital, os
 contagem e a exportação partem da vista; trocar de vista recomeça os filtros. Um pedido de filtro
 (faixa das etapas, Visão geral) de um edital do Histórico abre o Histórico nele. A Convocação, o
 sub judice e os modais seguem com a área inteira. Regra: `src/lib/aprovados/ativos-e-historico-dos-aprovados.ts`.
+Na aba Aprovados, o controle diz **Listas ativas N · Inativas N · Todas N** (contagem de listas,
+como "Ativo / Inativo / Todos" do painel de Análises); Todas junta as duas. O recorte vai para o
+endereço (`?listas=inativas`, `?listas=todas`; sem o parâmetro, as ativas) e o link abre nele.
 
 **Filtros** (os mesmos nas abas Aprovados e Resumo por cargo): Edital, Localidade, Cargo, Modalidade
 e Situação. A **Localidade** (16/11/2026) sai do texto do cargo (`src/lib/aprovados/localidade-da-vaga.ts`: o

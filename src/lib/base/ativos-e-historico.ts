@@ -10,16 +10,18 @@
   (src/ui/ativos-e-historico.tsx).
 */
 
-export type VistaDaLista = "ativos" | "historico";
+/** "todas" junta as duas (a tela que a oferece: a Lista de aprovados). */
+export type VistaDaLista = "ativos" | "historico" | "todas";
 
 export const VISTAS_DA_LISTA: readonly VistaDaLista[] = Object.freeze([
   "ativos",
   "historico",
+  "todas",
 ]);
 
-/** A vista guardada (sessão, endereço): só "historico" muda o padrão. */
+/** A vista guardada (sessão, endereço): o padrão é "ativos". */
 export const vistaDaLista = (valor: unknown): VistaDaLista =>
-  valor === "historico" ? "historico" : "ativos";
+  valor === "historico" || valor === "todas" ? valor : "ativos";
 
 export interface SituacaoContada {
   /** O nome da situação como aparece na tela ("Em andamento"). */

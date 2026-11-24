@@ -36,6 +36,10 @@ export interface PropriedadesDeAtivosEHistorico {
   ativos: number;
   historico: number;
   situacoes: ReadonlyArray<SituacaoContada>;
+  /** Com número, a terceira opção, "Todas" (as duas juntas). */
+  todas?: number;
+  /** Outros nomes das opções ("Listas ativas", "Inativas"). */
+  rotulos?: Partial<Record<VistaDaLista, string>>;
   /** O nome acessível do controle ("Editais"). */
   rotulo?: string;
   /** O tom do `Selo` de cada situação (o padrão é "neutro"). */
@@ -50,6 +54,8 @@ export function AtivosEHistorico({
   ativos,
   historico,
   situacoes,
+  todas,
+  rotulos,
   rotulo = "Lista",
   tomDaSituacao,
   className,
@@ -65,8 +71,25 @@ export function AtivosEHistorico({
         valor={vista}
         aoMudar={aoMudar}
         opcoes={[
-          { valor: "ativos", rotulo: "Ativos", contagem: ativos },
-          { valor: "historico", rotulo: "Histórico", contagem: historico },
+          {
+            valor: "ativos",
+            rotulo: rotulos?.ativos ?? "Ativos",
+            contagem: ativos,
+          },
+          {
+            valor: "historico",
+            rotulo: rotulos?.historico ?? "Histórico",
+            contagem: historico,
+          },
+          ...(todas === undefined
+            ? []
+            : [
+                {
+                  valor: "todas" as const,
+                  rotulo: rotulos?.todas ?? "Todas",
+                  contagem: todas,
+                },
+              ]),
         ]}
       />
       {situacoes.length ? (
@@ -119,7 +142,13 @@ export function usarAtivosEHistorico<T>(
     () => separarAtivosEHistorico(itens, ehHistorico),
     [itens, ehHistorico],
   );
-  const visiveis = vista === "historico" ? separada.historico : separada.ativos;
+  const todos = useMemo(() => [...(itens || [])], [itens]);
+  const visiveis =
+    vista === "todas"
+      ? todos
+      : vista === "historico"
+        ? separada.historico
+        : separada.ativos;
   const situacoes = useMemo(
     () => contarPorSituacao(visiveis, situacao),
     [visiveis, situacao],

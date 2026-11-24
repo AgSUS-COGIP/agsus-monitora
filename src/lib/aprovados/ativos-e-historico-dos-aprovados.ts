@@ -70,12 +70,17 @@ export function separarAprovados<
     return !linha || !(linha.ativo === false || ehCancelado(linha));
   };
 
-  const vista = (ativos: boolean): VistaDosAprovados<L, C> => {
+  // `null`: as duas juntas (Todas).
+  const vista = (ativos: boolean | null): VistaDosAprovados<L, C> => {
     const listasDaVista = (listas || []).filter(
-      (l) => (vigente(l.edital_id) && Boolean(l.ativo)) === ativos,
+      (l) =>
+        ativos === null ||
+        (vigente(l.edital_id) && Boolean(l.ativo)) === ativos,
     );
     const candidatosDaVista = (candidatos || []).filter(
-      (c) => (vigente(c.edital_id) && Boolean(c.lista_ativa)) === ativos,
+      (c) =>
+        ativos === null ||
+        (vigente(c.edital_id) && Boolean(c.lista_ativa)) === ativos,
     );
     const ids = new Set(
       [...listasDaVista, ...candidatosDaVista]
@@ -90,7 +95,7 @@ export function separarAprovados<
       situacoes: contarPorSituacao(editais, situacaoDoEdital),
     };
   };
-  return { ativos: vista(true), historico: vista(false) };
+  return { ativos: vista(true), historico: vista(false), todas: vista(null) };
 }
 
 /**
@@ -115,5 +120,5 @@ export function vistaDoPedido<C extends CandidatoDaVista>(
     );
   if (tem(atual)) return atual;
   const outra: VistaDaLista = atual === "ativos" ? "historico" : "ativos";
-  return tem(outra) ? outra : atual;
+  return tem(outra) ? outra : tem("todas") ? "todas" : atual;
 }
