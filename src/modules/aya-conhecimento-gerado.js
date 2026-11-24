@@ -6543,7 +6543,7 @@ export const VERBETES_AYA = Object.freeze([
       "total de editais",
     ],
     resposta:
-      "Em Editais, edital inativo é o que teve o processo encerrado: status Concluído ou Cancelado — o mesmo sentido do Inativo da Situação do processo nas Análises curriculares. Os demais (Planejado, Em andamento, Suspenso, Paralisado ou sem status) são ativos. Total de editais é a soma dos dois, só da área atual. Clicar em Editais ativos ou Editais inativos mostra só esses na tabela, com o chip Situação; clicar de novo, ou no x do chip, volta a mostrar todos. Edital desligado no banco não aparece na tela.",
+      "Em Editais, edital inativo é o que teve o processo encerrado: status Concluído ou Cancelado — o mesmo sentido do Inativo da Situação do processo nas Análises curriculares. Os demais (Planejado, Em andamento, Suspenso, Paralisado ou sem status) são ativos. Total de editais é a soma dos dois, só da área atual. Os indicadores contam ativos e inativos juntos, e o clique leva a tabela à aba em que ela mostra o mesmo número: Editais ativos à aba Ativos, Editais inativos ao Histórico (com o chip Situação) e os demais, incluindo o Total de editais, à aba Todos. Clicar de novo, ou no x do chip, tira o filtro e a aba fica. Edital desligado no banco não aparece na tela.",
     fato: "",
     fonte:
       "src/lib/editais/editais-do-nucleo.ts; src/modulos/editais/painel-operacional.tsx; docs/historias-de-usuario/editais.md",

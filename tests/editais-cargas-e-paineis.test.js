@@ -183,6 +183,7 @@ import {
   formularioDoEdital,
   indexarResumo,
   indicadoresDoResumo,
+  vistaDoIndicador,
   mapaDeAreasDasUnidades,
   opcoesDeUnidade,
   periodoDoCronograma,
@@ -4196,6 +4197,20 @@ bloco("editais-do-nucleo", () => {
 
   /* Histórias em docs/historias-de-usuario/editais.md. */
   describe("ED-1 — editais ativos e inativos (regra)", () => {
+    it("vistaDoIndicador: ativos e inativos às suas abas; os demais a Todos", () => {
+      expect(vistaDoIndicador("ativos")).toBe("ativos");
+      expect(vistaDoIndicador("inativos")).toBe("historico");
+      for (const chave of [
+        "todos",
+        "andamento",
+        "sem_cronograma",
+        "incompleto",
+        "proxima",
+        "excepcional",
+      ])
+        expect(vistaDoIndicador(chave)).toBe("todas");
+    });
+
     it("ED-1.1 — os cartões Editais ativos e Editais inativos, e o Total de editais é a soma", () => {
       const resumo = [
         { id: "1", status: "Em andamento" },
