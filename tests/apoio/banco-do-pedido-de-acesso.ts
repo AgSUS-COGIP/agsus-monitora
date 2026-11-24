@@ -61,7 +61,7 @@ const grants = (nome: string) =>
   RETRATO.split("\n")
     .filter((linha) =>
       new RegExp(
-        `^(GRANT|REVOKE) .* ON FUNCTION ${nome.replace(/[.$]/g, "\\$&")}\\(`,
+        `^(GRANT|REVOKE) .* ON FUNCTION ${nome.replace(/[.*+?^${}()|[\]\\"]/g, "\\$&")}\\(`,
       ).test(linha),
     )
     .join("\n");

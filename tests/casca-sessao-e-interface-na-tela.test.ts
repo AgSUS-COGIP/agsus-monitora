@@ -13830,7 +13830,7 @@ bloco("app/pedir-mais-acesso", () => {
     );
   const campo = (rotulo: string) => {
     const label = [...secao().querySelectorAll("label")].find(
-      (l) => l.textContent?.replace("*", "").trim() === rotulo,
+      (l) => l.textContent?.replaceAll("*", "").trim() === rotulo,
     );
     return document.getElementById(definido(label).htmlFor);
   };
