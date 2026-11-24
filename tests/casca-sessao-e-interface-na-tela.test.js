@@ -4589,6 +4589,55 @@ bloco("modulos/acessos", () => {
     });
   });
 
+  describe("Pendentes: pedido de mais acesso (20261124210000)", () => {
+    const PEDIDO_DE_MAIS_ACESSO = {
+      id: "s9",
+      nome: "Eva",
+      email: "eva@agenciasus.org.br",
+      tipo: "MODULO",
+      recurso: "calendario",
+      nivel: "editor",
+      coordenacao: "norte",
+      coordenacao_nome: "Norte",
+      grupo_atual: "usuario",
+      grupo_atual_nome: "Usuário",
+      nivel_atual: "leitor",
+      areas_atuais: ["saude-indigena"],
+      justificativa: "Preciso editar o cronograma dos editais da unidade.",
+      created_at: "2026-11-24T10:00:00Z",
+    };
+
+    it("mostra o que pediu ao lado do que tem hoje e aprova sem escolher grupo nem áreas", async () => {
+      const supabase = await montar({
+        perfil: ADMIN,
+        teto: TETO_ADMIN,
+        extra: {
+          listar_solicitacoes_acesso: () => ({
+            data: [PEDIDO_DE_MAIS_ACESSO],
+            error: null,
+          }),
+        },
+      });
+      await clicar(botao("Pendentes (1)"));
+      const linha = document.querySelector('[data-pedido="mais-acesso"]');
+      expect(linha.textContent).toContain("Mais acesso");
+      expect(linha.textContent).toContain("Cronograma: Editor");
+      expect(linha.textContent).toContain("hoje: Leitor");
+      expect(linha.textContent).toContain("Usuário");
+      expect(linha.textContent).toContain("Norte");
+      // Nada de escolher grupo, coordenação ou áreas: concede o pedido.
+      expect(linha.querySelectorAll("select")).toHaveLength(0);
+      await clicar(botao("Aprovar"));
+      const chamada = supabase.rpc.mock.calls.find(
+        ([nome]) => nome === "aprovar_solicitacao_acesso",
+      );
+      expect(chamada[1]).toMatchObject({
+        p_solicitacao_id: "s9",
+        p_areas: null,
+      });
+    });
+  });
+
   describe("Pendentes: pedido por área (20261021140000)", () => {
     const PEDIDO_POR_AREA = {
       id: "s3",

@@ -7,6 +7,22 @@ import {
 } from "../src/lib/acessos/meus-acessos.ts";
 import { RESOURCES } from "../src/lib/acessos/permissoes-recursos.ts";
 import {
+  PEDIDO_VAZIO,
+  areasParaPedir,
+  argumentosDoPedidoDeMaisAcesso,
+  camposComModulo,
+  gruposParaPedir,
+  modulosParaPedir,
+  niveisParaPedir,
+  oQueFoiPedido,
+  oQueTemHoje,
+  podePedirMaisAcesso,
+  situacaoDoPedido,
+  tiposParaPedir,
+  validarPedidoDeMaisAcesso,
+} from "../src/lib/acessos/pedido-de-mais-acesso.ts";
+import { criarPedidoDeMaisAcesso } from "../src/app/casca/pedido-de-mais-acesso.ts";
+import {
   arquivoDoErro,
   chaveDaRepeticao,
   criarJanelaDaRepeticao,
@@ -8562,5 +8578,320 @@ bloco("lib/meus-acessos", () => {
     expect(tomDoNivel("editor")).toBe("aprovado");
     expect(tomDoNivel("leitor")).toBe("revisar");
     expect(tomDoNivel("sem_acesso")).toBe("neutro");
+  });
+});
+
+bloco("lib/pedido-de-mais-acesso", () => {
+  /* "Pedir mais acesso" (gaveta Meus acessos): o que se pode pedir, a validação e a situação. */
+  const BIA = {
+    ativo: true,
+    grupo: { codigo: "usuario", nome: "Usuário" },
+    areas: ["sede"],
+    coordenacao: null,
+    permissoes: {
+      dashboard: "leitor",
+      nucleo: "editor",
+      configuracoes: "sem_acesso",
+      acessos: "sem_acesso",
+      recursos_parecer: "editor",
+    },
+  } as const;
+  const GRUPOS = [
+    { codigo: "usuario", nome: "Usuário" },
+    { codigo: "edital_gestor", nome: "Gestor" },
+  ];
+  const JUSTIFICATIVA =
+    "Preciso editar o cronograma dos editais da minha unidade.";
+
+  it("níveis acima do de hoje, nas regras da matriz", () => {
+    const rotulos = (recurso: string) =>
+      niveisParaPedir(BIA, recurso).map((n) => n.rotulo);
+    expect(rotulos("dashboard")).toEqual(["Editor", "Administrador"]);
+    expect(rotulos("nucleo")).toEqual(["Administrador"]);
+    expect(rotulos("configuracoes")).toEqual(["Editor", "Administrador"]);
+    expect(rotulos("acessos")).toEqual(["Editor"]);
+    // Já no máximo: o módulo some da lista.
+    expect(rotulos("recursos_parecer")).toEqual([]);
+    expect(modulosParaPedir(BIA).map((m) => m.valor)).not.toContain(
+      "recursos_parecer",
+    );
+  });
+
+  it("áreas que ainda não tem; com coordenação, nenhuma; grupos sem o de hoje", () => {
+    expect(areasParaPedir(BIA).map((a) => a.valor)).toEqual([
+      "saude-indigena",
+      "projetos",
+    ]);
+    expect(
+      areasParaPedir({
+        ...BIA,
+        coordenacao: { codigo: "c", nome: "C", area: "sede" },
+      }),
+    ).toEqual([]);
+    expect(gruposParaPedir(BIA, GRUPOS)).toEqual([
+      { valor: "edital_gestor", rotulo: "Gestor" },
+    ]);
+    expect(
+      tiposParaPedir(
+        { ...BIA, coordenacao: { codigo: "c", nome: "C", area: "sede" } },
+        GRUPOS,
+      ).map((t) => t.valor),
+    ).toEqual(["MODULO", "GRUPO"]);
+  });
+
+  it("administrador global não pede; quem tem perfil ativo pede", () => {
+    expect(podePedirMaisAcesso(BIA)).toBe(true);
+    expect(podePedirMaisAcesso({ ...BIA, admin_global: true })).toBe(false);
+    expect(podePedirMaisAcesso({ ...BIA, ativo: false })).toBe(false);
+    expect(podePedirMaisAcesso(null)).toBe(false);
+  });
+
+  it("valida como o banco e monta os argumentos só do tipo escolhido", () => {
+    const modulo = {
+      ...PEDIDO_VAZIO,
+      recurso: "dashboard",
+      nivel: "editor",
+      justificativa: JUSTIFICATIVA,
+    };
+    expect(validarPedidoDeMaisAcesso(modulo, BIA, GRUPOS)).toEqual({});
+    expect(argumentosDoPedidoDeMaisAcesso(modulo)).toEqual({
+      p_nome: "",
+      p_justificativa: JUSTIFICATIVA,
+      p_tipo: "MODULO",
+      p_recurso: "dashboard",
+      p_nivel: "editor",
+      p_area: null,
+      p_grupo: null,
+    });
+    expect(
+      validarPedidoDeMaisAcesso(
+        { ...modulo, nivel: "leitor", justificativa: "quero" },
+        BIA,
+        GRUPOS,
+      ),
+    ).toEqual({
+      nivel: "Escolha o nível.",
+      justificativa: expect.stringContaining("ao menos 20"),
+    });
+    expect(
+      validarPedidoDeMaisAcesso(
+        {
+          ...PEDIDO_VAZIO,
+          tipo: "AREA",
+          area: "sede",
+          justificativa: JUSTIFICATIVA,
+        },
+        BIA,
+      ),
+    ).toEqual({ area: "Escolha a área." });
+    const grupo = {
+      ...PEDIDO_VAZIO,
+      tipo: "GRUPO" as const,
+      grupo: "edital_gestor",
+      recurso: "dashboard",
+      justificativa: JUSTIFICATIVA,
+    };
+    expect(validarPedidoDeMaisAcesso(grupo, BIA, GRUPOS)).toEqual({});
+    expect(argumentosDoPedidoDeMaisAcesso(grupo)).toMatchObject({
+      p_tipo: "GRUPO",
+      p_grupo: "edital_gestor",
+      p_recurso: null,
+      p_nivel: null,
+    });
+  });
+
+  it("trocar de módulo tira o nível que não vale e escolhe o único possível", () => {
+    const campos = { ...PEDIDO_VAZIO, recurso: "dashboard", nivel: "editor" };
+    expect(camposComModulo(campos, BIA, "nucleo")).toMatchObject({
+      recurso: "nucleo",
+      nivel: "admin",
+    });
+    expect(camposComModulo(campos, BIA, "configuracoes")).toMatchObject({
+      nivel: "editor",
+    });
+  });
+
+  it("o pedido em uma frase, ao lado do que a pessoa tem hoje", () => {
+    expect(
+      oQueFoiPedido({ tipo: "MODULO", recurso: "calendario", nivel: "editor" }),
+    ).toBe("Cronograma: Editor");
+    expect(oQueFoiPedido({ tipo: "AREA", area: "projetos" })).toBe(
+      "Área Projetos",
+    );
+    expect(
+      oQueFoiPedido({
+        tipo: "GRUPO",
+        grupo_solicitado: "edital_gestor",
+        grupo_solicitado_nome: "Gestor",
+      }),
+    ).toBe("Grupo Gestor");
+    expect(oQueFoiPedido({ tipo: "ACESSO" })).toBe("");
+    expect(
+      oQueTemHoje({
+        tipo: "MODULO",
+        recurso: "acessos",
+        nivel_atual: "sem_acesso",
+      }),
+    ).toBe("hoje: Sem acesso");
+    expect(oQueTemHoje({ tipo: "AREA", areas_atuais: ["sede"] })).toBe(
+      "hoje: SEDE",
+    );
+    expect(oQueTemHoje({ tipo: "GRUPO", grupo_atual_nome: "Usuário" })).toBe(
+      "hoje: Usuário",
+    );
+  });
+
+  it("a situação: pendente se cancela, recusado traz o motivo, entrada não conta", () => {
+    expect(
+      situacaoDoPedido({
+        tipo: "MODULO",
+        status: "pendente",
+        created_at: "2026-11-24T13:00:00Z",
+      }),
+    ).toMatchObject({
+      tom: "pendente",
+      rotulo: "Aguardando aprovação",
+      quando: "Enviado em 24/11",
+      pendente: true,
+    });
+    expect(
+      situacaoDoPedido({
+        tipo: "AREA",
+        status: "recusado",
+        avaliado_em: "2026-11-25T13:00:00Z",
+        observacao_admin: "Justificativa insuficiente",
+      }),
+    ).toMatchObject({
+      tom: "reprovado",
+      quando: "Recusado em 25/11",
+      motivo: "Justificativa insuficiente",
+      pendente: false,
+    });
+    expect(
+      situacaoDoPedido({ tipo: "GRUPO", status: "aprovado" }),
+    ).toMatchObject({ tom: "aprovado", rotulo: "Aprovado", quando: "" });
+    expect(situacaoDoPedido({ tipo: "ACESSO", status: "pendente" })).toBeNull();
+    expect(situacaoDoPedido(null)).toBeNull();
+  });
+});
+
+bloco("app/pedido-de-mais-acesso", () => {
+  /* O estado do pedido na gaveta Meus acessos, com um cliente falso. */
+  type Chamada = [string, Record<string, unknown> | undefined];
+  function clienteFalso(
+    respostas: Record<
+      string,
+      () => { data: unknown; error: { message?: string; code?: string } | null }
+    >,
+  ) {
+    const chamadas: Chamada[] = [];
+    const cliente = {
+      rpc: (nome: string, argumentos?: Record<string, unknown>) => {
+        chamadas.push([nome, argumentos]);
+        return Promise.resolve(
+          respostas[nome]?.() ?? { data: null, error: null },
+        );
+      },
+    };
+    return { cliente: () => cliente, chamadas };
+  }
+  const PENDENTE = {
+    id: "p1",
+    tipo: "MODULO",
+    recurso: "calendario",
+    nivel: "editor",
+    status: "pendente",
+  };
+
+  it("carrega o último pedido de mais acesso e os grupos; pedido de entrada não conta", async () => {
+    const { cliente } = clienteFalso({
+      obter_minha_solicitacao_acesso: () => ({
+        data: { id: "e1", tipo: "ACESSO", status: "aprovado" },
+        error: null,
+      }),
+      listar_opcoes_da_solicitacao_acesso: () => ({
+        data: { grupos: [{ codigo: "edital_gestor", nome: "Gestor" }] },
+        error: null,
+      }),
+    });
+    const pedido = criarPedidoDeMaisAcesso({ cliente });
+    await pedido.carregar();
+    expect(pedido.obter()).toMatchObject({
+      status: "pronto",
+      pedido: null,
+      grupos: [{ codigo: "edital_gestor", nome: "Gestor" }],
+    });
+  });
+
+  it("envia com o tipo e relê o pedido; o erro do banco vira texto", async () => {
+    let gravado = false;
+    const { cliente, chamadas } = clienteFalso({
+      registrar_solicitacao_acesso: () =>
+        gravado
+          ? {
+              data: null,
+              error: {
+                code: "22023",
+                message: "Você já tem esse nível (ou mais) neste módulo.",
+              },
+            }
+          : ((gravado = true), { data: { ok: true }, error: null }),
+      obter_minha_solicitacao_acesso: () => ({ data: PENDENTE, error: null }),
+    });
+    const pedido = criarPedidoDeMaisAcesso({ cliente });
+    const campos = {
+      ...PEDIDO_VAZIO,
+      recurso: "calendario",
+      nivel: "editor",
+      justificativa: "Preciso editar o cronograma dos editais da unidade.",
+    };
+    expect(await pedido.enviar(campos)).toBe(true);
+    expect(
+      chamadas.find(([n]) => n === "registrar_solicitacao_acesso")?.[1],
+    ).toMatchObject({
+      p_tipo: "MODULO",
+      p_recurso: "calendario",
+      p_nivel: "editor",
+    });
+    expect(pedido.obter().pedido).toEqual(PENDENTE);
+    expect(await pedido.enviar(campos)).toBe(false);
+    expect(pedido.obter()).toMatchObject({
+      enviando: false,
+      erro: "Não foi possível enviar o pedido: Você já tem esse nível (ou mais) neste módulo.",
+    });
+  });
+
+  it("cancela o pendente e relê", async () => {
+    let cancelado = false;
+    const { cliente } = clienteFalso({
+      cancelar_minha_solicitacao_acesso: () => (
+        (cancelado = true),
+        { data: { ok: true }, error: null }
+      ),
+      obter_minha_solicitacao_acesso: () => ({
+        data: { ...PENDENTE, status: cancelado ? "cancelado" : "pendente" },
+        error: null,
+      }),
+    });
+    const pedido = criarPedidoDeMaisAcesso({ cliente });
+    await pedido.carregar();
+    expect(await pedido.cancelar()).toBe(true);
+    expect(pedido.obter().pedido?.status).toBe("cancelado");
+  });
+
+  it("sem cliente ou com erro na leitura, a gaveta mostra o erro", async () => {
+    const semCliente = criarPedidoDeMaisAcesso({ cliente: () => null });
+    await semCliente.carregar();
+    expect(semCliente.obter().status).toBe("erro");
+    const { cliente } = clienteFalso({
+      obter_minha_solicitacao_acesso: () => ({
+        data: null,
+        error: { message: "falhou" },
+      }),
+    });
+    const comErro = criarPedidoDeMaisAcesso({ cliente });
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    await comErro.carregar();
+    expect(comErro.obter().status).toBe("erro");
   });
 });
