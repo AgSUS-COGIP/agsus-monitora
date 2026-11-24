@@ -179,7 +179,7 @@ import { SECOES } from "../src/modulos/configuracoes/secoes.ts";
 import { NOMES_DE_ICONES } from "../src/modules/icones.ts";
 import {
   isMobileOAuthContext,
-  startMobileGoogleOAuth,
+  iniciarOAuthPorRedirecionamento,
 } from "../src/lib/sessao/auth-flow";
 import {
   alteracoesDoRascunho,
@@ -3437,19 +3437,35 @@ bloco("mobile-google-oauth", () => {
       const clearAuthState = vi.fn();
       const removeItem = vi.fn();
 
-      await startMobileGoogleOAuth({
+      await iniciarOAuthPorRedirecionamento({
         client: { auth: { signInWithOAuth } },
         authStorage: { clearAuthState },
         locationRef: new URL("https://yeende.vercel.app/"),
         sessionStorageRef: { removeItem },
+        queryParams: { login_hint: "ana@agenciasus.org.br" },
         timeoutMs: 1000,
       });
 
       expect(clearAuthState).toHaveBeenCalledTimes(1);
       expect(removeItem).toHaveBeenCalledWith("agsus_oauth_callback_ok");
-      expect(signInWithOAuth).toHaveBeenCalledWith(
-        expect.objectContaining({ provider: "google" }),
-      );
+      // O retorno é só o /auth/callback.html (PKCE), e os parâmetros vêm de quem chama.
+      expect(signInWithOAuth).toHaveBeenCalledWith({
+        provider: "google",
+        options: {
+          redirectTo: "https://yeende.vercel.app/auth/callback.html",
+          queryParams: { login_hint: "ana@agenciasus.org.br" },
+        },
+      });
+    });
+
+    it("sem parâmetros, não força consentimento nem nova senha", async () => {
+      const signInWithOAuth = vi.fn().mockResolvedValue({ error: null });
+      await iniciarOAuthPorRedirecionamento({
+        client: { auth: { signInWithOAuth } },
+        locationRef: new URL("https://yeende.vercel.app/"),
+        timeoutMs: 1000,
+      });
+      expect(signInWithOAuth.mock.calls[0][0].options.queryParams).toEqual({});
     });
   });
 });

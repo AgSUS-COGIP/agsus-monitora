@@ -10,6 +10,9 @@
       `?auth_error=`, link de recuperação de senha e a sessão guardada;
     - o login Google: popup no computador, redirecionamento no celular e no
       iPad, a janela fechada sem concluir, o retorno pelo botão Voltar;
+    - entrar direto com a conta já aberta no computador: o e-mail da última
+      conta vai ao Google como `login_hint`, e a tela entra sozinha uma vez
+      por aba (src/lib/sessao/entrada-direta.ts);
     - o domínio permitido, o perfil (`obter_contexto_monitora`, com
       `meu_usuario` de reserva) e a decisão entre abrir o sistema e mostrar o
       pedido de acesso (o sistema não concede acesso automático: quem não tem
@@ -30,8 +33,17 @@ import {
   isUsableSession,
   LOGIN_POPUP_MESSAGE,
   openLoginPopup,
-  startMobileGoogleOAuth,
+  iniciarOAuthPorRedirecionamento,
 } from "../lib/sessao/auth-flow";
+import {
+  deveEntrarSozinho,
+  esquecerConta,
+  lembrarConta,
+  lerUltimaConta,
+  marcarSaidaVoluntaria,
+  parametrosDoGoogle,
+  reservarEntradaAutomatica,
+} from "../lib/sessao/entrada-direta";
 import { DEFAULT_ACCESS_BRANDING } from "../lib/entrada/access-branding.ts";
 import { hasSupabaseEnv } from "../lib/sessao/env";
 import {
@@ -86,6 +98,14 @@ export const FASES = Object.freeze({
 
 export const TEXTO_DO_BOTAO = DEFAULT_ACCESS_BRANDING.buttonText;
 export const TEXTO_DO_BOTAO_OCUPADO = "Entrando no sistema…";
+/** O botão na entrada automática (o e-mail lembrado). */
+export const textoDaEntradaAutomatica = (email: string) =>
+  `Entrando como ${email}…`;
+/**
+ * Quanto a entrada automática espera antes de ir ao Google: o bastante para
+ * ver "Entrando como…" e clicar em "Usar outra conta".
+ */
+export const ESPERA_DA_ENTRADA_AUTOMATICA_MS = 1200;
 
 export const MENSAGENS = Object.freeze({
   escolherConta: "Escolha sua conta institucional na janela do Google.",
@@ -146,6 +166,18 @@ export type EstadoDaSessaoDoApp = {
    * perfil é conferido no banco quando a rede voltar.
    */
   semRede: boolean;
+  /** O e-mail da última conta que entrou neste navegador ("" = nenhuma). */
+  contaLembrada: string;
+  /** A tela está entrando sozinha com a conta lembrada. */
+  entradaAutomatica: boolean;
+};
+
+/** Como o botão pede o login ao Google. */
+export type OpcoesDoLogin = {
+  /** "Usar outra conta": esquece o e-mail e pede a escolha de conta. */
+  escolherConta?: boolean;
+  /** Entrada automática: redirecionamento (popup sem clique é bloqueado). */
+  automatica?: boolean;
 };
 
 /** De onde veio a sessão que está entrando. */
@@ -305,6 +337,14 @@ function sessionStorageDe(janela: Window | null | undefined): Storage | null {
   }
 }
 
+function localStorageDe(janela: Window | null | undefined): Storage | null {
+  try {
+    return janela?.localStorage || null;
+  } catch {
+    return null;
+  }
+}
+
 const esperarPadrao = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -334,6 +374,8 @@ export function criarSessao({
     consultarPedido: true,
     configuracao: configuracaoDaEntrada(),
     semRede: false,
+    contaLembrada: lerUltimaConta(localStorageDe(janela))?.email || "",
+    entradaAutomatica: false,
   };
   const ouvintes = new Set<() => void>();
   let sistema: GanchosDoSistema = {};
@@ -346,6 +388,8 @@ export function criarSessao({
   let usuarioCarregado = "";
   let ultimoSignedIn = 0;
   let carregamento: Promise<void> | null = null;
+  /* Cada entrada automática (ou clique que a cancela) ganha um número novo. */
+  let tentativaAutomatica = 0;
 
   function definir(parcial: Partial<EstadoDaSessaoDoApp>) {
     estado = { ...estado, ...parcial };
@@ -663,6 +707,12 @@ export function criarSessao({
       return;
     }
 
+    // A conta entrou: na próxima vez, o Google a recebe como sugestão.
+    lembrarConta(localStorageDe(janela), sessao!.user?.email);
+    const lembrada = lerUltimaConta(localStorageDe(janela))?.email || "";
+    if (lembrada && estado.contaLembrada !== lembrada)
+      definir({ contaLembrada: lembrada });
+
     /*
       O Supabase emite SIGNED_IN de novo quando a aba volta ao foco ou a
       sessão é sincronizada entre abas: com o sistema aberto para o mesmo
@@ -813,8 +863,10 @@ export function criarSessao({
   // ── Login Google ────────────────────────────────────────────────────────
 
   function liberarBotao(mensagem?: MensagemDaEntrada) {
+    tentativaAutomatica++;
     definir({
       entrando: false,
+      entradaAutomatica: false,
       ...(mensagem ? { mensagem } : {}),
     });
   }
@@ -931,7 +983,12 @@ export function criarSessao({
     }
   }
 
-  async function entrarComGoogle() {
+  async function entrarComGoogle({
+    escolherConta = false,
+    automatica = false,
+  }: OpcoesDoLogin = {}) {
+    // Um clique (ou "Usar outra conta") cancela a entrada automática que espera.
+    if (!automatica) tentativaAutomatica++;
     const client = obterCliente();
     if (!client) {
       definir({ erroDeConfiguracao: MENSAGENS.semConexao });
@@ -942,14 +999,25 @@ export function criarSessao({
       return;
     }
 
-    if (celular()) {
+    if (escolherConta) {
+      esquecerConta(localStorageDe(janela));
+      definir({ contaLembrada: "", entradaAutomatica: false });
+    }
+    const queryParams = parametrosDoGoogle({
+      dicaDeDominio: estado.configuracao.dicaDeDominio,
+      email: estado.contaLembrada,
+      escolherConta,
+    });
+
+    if (automatica || celular()) {
       definir({ entrando: true });
       try {
-        await startMobileGoogleOAuth({
+        await iniciarOAuthPorRedirecionamento({
           client,
           authStorage: armazenamento(),
           locationRef: janela.location,
           sessionStorageRef: sessionStorageDe(janela),
+          queryParams,
         });
       } catch (erro) {
         liberarBotao({
@@ -963,16 +1031,16 @@ export function criarSessao({
     // A janela vazia nasce no próprio clique (antes de qualquer espera) para
     // o navegador não bloqueá-la enquanto a URL segura do Supabase é pedida.
     const popup = openLoginPopup(janela);
-    // Troca de perfil e testes: a sessão local sai antes do OAuth; o
-    // `prompt=select_account` força a escolha de conta no Google.
+    // Troca de perfil e testes: a sessão local sai antes do OAuth.
     await limparAutenticacaoLocal();
     definir({
       entrando: true,
-      mensagem: { texto: MENSAGENS.escolherConta, tom: "warn" },
+      entradaAutomatica: false,
+      // Com o e-mail lembrado, o Google em geral nem mostra a escolha.
+      mensagem: queryParams.login_hint
+        ? SEM_MENSAGEM
+        : { texto: MENSAGENS.escolherConta, tom: "warn" },
     });
-    const queryParams: Record<string, string> = { prompt: "select_account" };
-    if (estado.configuracao.dicaDeDominio)
-      queryParams.hd = estado.configuracao.dicaDeDominio;
     const { data, error } = await client.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -997,6 +1065,40 @@ export function criarSessao({
       popup.location.replace(data.url);
       vigiarPopup(popup);
     }
+  }
+
+  /*
+    Entrada automática: este navegador já entrou antes (há e-mail lembrado),
+    não há sessão nem nada a mostrar e a pessoa não clicou em Sair depois.
+    Uma tentativa por aba: se falhar ou voltar com erro, fica a tela normal.
+    Espera um pouco com "Entrando como <e-mail>…" no botão, para dar tempo de
+    "Usar outra conta", e vai ao Google por redirecionamento.
+  */
+  async function entrarSozinho() {
+    const conta = lerUltimaConta(localStorageDe(janela));
+    if (
+      estado.fase !== FASES.DESLOGADO ||
+      !conta ||
+      !deveEntrarSozinho({
+        conta,
+        googleAtivo: estado.configuracao.googleAtivo,
+        temMensagem: Boolean(
+          estado.mensagem.texto || estado.erroDeConfiguracao,
+        ),
+      }) ||
+      !reservarEntradaAutomatica(sessionStorageDe(janela))
+    )
+      return;
+    const tentativa = ++tentativaAutomatica;
+    definir({
+      contaLembrada: conta.email,
+      entrando: true,
+      entradaAutomatica: true,
+    });
+    await esperar(ESPERA_DA_ENTRADA_AUTOMATICA_MS);
+    if (tentativa !== tentativaAutomatica || estado.fase !== FASES.DESLOGADO)
+      return;
+    await entrarComGoogle({ automatica: true });
   }
 
   // ── Arranque ────────────────────────────────────────────────────────────
@@ -1061,6 +1163,8 @@ export function criarSessao({
     } else if (data?.session) {
       redefinirDeslogado({ texto: MENSAGENS.sessaoIncompleta, tom: "warn" });
     }
+    // Sem esperar: o arranque termina com a tela de acesso desenhada.
+    void entrarSozinho();
   }
 
   // ── Sair e limpar ───────────────────────────────────────────────────────
@@ -1069,6 +1173,8 @@ export function criarSessao({
     Saída voluntária. Declara a causa e pede o `signOut()`; quem transforma o
     app em estado deslogado é o ouvinte de `SIGNED_OUT`. A chamada final é
     rede de segurança: só age se o evento não tiver chegado, sem mensagem.
+    O e-mail lembrado fica (o botão o leva como sugestão), mas a tela não
+    entra mais sozinha até a próxima entrada.
   */
   async function sair() {
     try {
@@ -1077,6 +1183,7 @@ export function criarSessao({
     } catch (erro) {
       console.warn("Falha antes de sair:", erro);
     }
+    marcarSaidaVoluntaria(localStorageDe(janela));
     declararSaida(SAIDA_MANUAL);
     await encerrarNoSupabase();
     aplicarSaida();
@@ -1086,15 +1193,21 @@ export function criarSessao({
   /*
     Pede o signOut e garante que o token sai do navegador mesmo se ele falhar.
     Com o token vencido e a rede fora, a auth-js devolve `{ error }` sem apagar
-    a sessão guardada: a tela diria "deslogado", e quem abrisse o MONITORA
+    a sessão guardada: a tela diria "deslogado", e quem abrisse o Yeendé
     depois, com rede, entraria como a pessoa anterior.
+
+    Só neste navegador (`scope: "local"`): a sessão deste aparelho é revogada
+    no servidor e as dos outros navegadores da pessoa continuam. O link de
+    recuperação de senha segue derrubando todas (`sairComMensagem` com
+    `local: false`); a conta desativada é barrada pelo banco em qualquer
+    navegador (perfil inativo), sem depender de signOut.
   */
   async function encerrarNoSupabase() {
     const client = obterCliente();
     if (!client) return;
     let falhou = false;
     try {
-      const { error } = await client.auth.signOut();
+      const { error } = await client.auth.signOut({ scope: "local" });
       falhou = Boolean(error);
       if (error) console.warn("Falha ao encerrar a sessão no Supabase:", error);
     } catch (erro) {
@@ -1126,8 +1239,9 @@ export function criarSessao({
     redefinirDeslogado({ texto: MENSAGENS.sessaoIncompleta, tom: "warn" });
   }
 
-  /** "Voltar ao login" do pedido de acesso: limpa tudo, inclusive a cópia da sessão. */
+  /** "Sair" do pedido de acesso: limpa tudo, inclusive a cópia da sessão. */
   async function limparSessao() {
+    marcarSaidaVoluntaria(localStorageDe(janela));
     await limparAutenticacaoLocal();
     await chamar("aoLimparSessao");
     declararSaida(SAIDA_MANUAL);

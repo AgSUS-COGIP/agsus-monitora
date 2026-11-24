@@ -446,6 +446,43 @@ body.sidebar-theme-dark .app .side-logo {
   opacity: 0.72;
   transform: none;
 }
+/*
+  "Usar outra conta" (só com conta lembrada neste navegador): link discreto no
+  espaço entre o botão e o rodapé (36px), fora do fluxo, para o cartão ter a
+  mesma altura com ou sem ele. Cor do próprio texto do cartão (vale no painel
+  escuro), alvo de 24px.
+*/
+.login-screen .google-only-login {
+  position: relative;
+}
+.login-screen .login-outra-conta {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-height: 24px;
+  margin: 0;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 24px;
+  white-space: nowrap;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.login-screen .login-outra-conta:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+.login-screen .login-outra-conta:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
 
 /* Shell e navegação lateral */
 /*

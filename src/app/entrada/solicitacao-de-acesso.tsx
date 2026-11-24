@@ -52,7 +52,7 @@ import {
 */
 
 type Sessao = {
-  entrarComGoogle: () => unknown;
+  entrarComGoogle: (opcoes?: { escolherConta?: boolean }) => unknown;
   limparSessao: () => unknown;
 };
 
@@ -585,7 +585,9 @@ export function PaginaDaSolicitacao({
                 id="accessSwitchAccountBtn"
                 type="button"
                 className="btn ghost"
-                onClick={() => void sessao.entrarComGoogle()}
+                onClick={() =>
+                  void sessao.entrarComGoogle({ escolherConta: true })
+                }
               >
                 Usar outra conta
               </button>

@@ -6012,6 +6012,57 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-do-sistema.md",
+    titulo: "Entrar direto",
+    perguntas: [
+      "por que entro direto",
+      "entrei direto",
+      "entrou sozinho",
+      "entrada automatica",
+      "login automatico",
+      "entrando como",
+      "nao pediu a conta google",
+      "entrar sem escolher a conta",
+    ],
+    resposta:
+      'O navegador lembra o e-mail da última conta Google que entrou no Yeendé e o manda ao Google como sugestão: com essa conta já aberta no computador, o Google devolve sem pedir a escolha de conta. Ao abrir o Yeendé sem sessão, o botão mostra "Entrando como" e o e-mail e o sistema entra sozinho, uma vez por aba; se der errado, fica a tela de entrada de sempre. Depois de Sair, ele não entra sozinho: a próxima entrada é pelo botão, que já leva o e-mail como sugestão. Só o e-mail fica guardado, neste navegador.',
+    fato: "",
+    fonte:
+      "src/lib/sessao/entrada-direta.ts; src/app/sessao.ts; src/app/entrada/entrada.tsx",
+  },
+  {
+    arquivo: "regras-do-sistema.md",
+    titulo: "Usar outra conta",
+    perguntas: [
+      "como uso outra conta",
+      "usar outra conta",
+      "trocar de conta",
+      "entrar com outra conta",
+      "outra conta google",
+      "mudar de conta",
+    ],
+    resposta:
+      'Na tela de entrada, "Usar outra conta" fica abaixo do botão do Google sempre que o navegador lembra uma conta, inclusive enquanto aparece "Entrando como". Ele esquece o e-mail lembrado e abre a escolha de conta do Google; a conta escolhida passa a ser a lembrada. Na tela de pedido de acesso, o "Usar outra conta" faz o mesmo.',
+    fato: "",
+    fonte:
+      "src/lib/sessao/entrada-direta.ts; src/app/entrada/entrada.tsx; src/app/entrada/solicitacao-de-acesso.tsx",
+  },
+  {
+    arquivo: "regras-do-sistema.md",
+    titulo: "Sair",
+    perguntas: [
+      "o que acontece ao sair",
+      "botao sair",
+      "sair do yeende",
+      "sair desconecta os outros computadores",
+      "sair em um navegador",
+    ],
+    resposta:
+      "Sair encerra a sessão só neste navegador: o Yeendé aberto em outro computador ou navegador continua conectado. Saem também as cópias guardadas no aparelho, e a tela volta ao início. O e-mail da conta continua lembrado como sugestão, mas o Yeendé não entra mais sozinho até a próxima entrada pelo botão.",
+    fato: "",
+    fonte: "src/app/sessao.ts; src/lib/sessao/entrada-direta.ts",
+  },
+  {
+    arquivo: "regras-do-sistema.md",
     titulo: "Pessoas online",
     perguntas: [
       "o que mostra pessoas online",

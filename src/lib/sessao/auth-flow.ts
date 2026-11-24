@@ -61,9 +61,12 @@ export function openLoginPopup(
 }
 
 /*
-  Login Google no celular e no iPad: redirecionamento de página inteira, sem
-  popup e sem `signOut` antes (só o estado guardado é limpo). Quem chama é a
-  sessão (src/app/sessao.ts) ao clicar em "Entrar".
+  Login Google por redirecionamento de página inteira, sem popup e sem
+  `signOut` antes (só o estado guardado é limpo): no celular e no iPad ao
+  clicar em "Entrar", e em qualquer aparelho na entrada automática (popup sem
+  clique é bloqueado pelo navegador). Quem chama é a sessão
+  (src/app/sessao.ts); os `queryParams` vêm de `parametrosDoGoogle`
+  (src/lib/sessao/entrada-direta.ts).
 */
 const TEMPO_PARA_INICIAR_OAUTH_MS = 8000;
 
@@ -92,17 +95,19 @@ function esgotarEm(ms: number) {
   });
 }
 
-export async function startMobileGoogleOAuth({
+export async function iniciarOAuthPorRedirecionamento({
   client,
   authStorage,
   locationRef = typeof window !== "undefined" ? window.location : null,
   sessionStorageRef = null,
+  queryParams = {},
   timeoutMs = TEMPO_PARA_INICIAR_OAUTH_MS,
 }: {
   client?: Pick<SupabaseClient, "auth"> | null;
   authStorage?: { clearAuthState?: () => void } | null;
   locationRef?: LocalDaPagina | null;
   sessionStorageRef?: Pick<Storage, "removeItem"> | null;
+  queryParams?: Record<string, string>;
   timeoutMs?: number;
 } = {}): Promise<true> {
   if (!client?.auth?.signInWithOAuth) {
@@ -125,10 +130,7 @@ export async function startMobileGoogleOAuth({
       provider: "google",
       options: {
         redirectTo: getOAuthCallbackUrl(locationRef),
-        queryParams: {
-          prompt: "select_account consent",
-          max_age: "0",
-        },
+        queryParams,
       },
     }),
     esgotarEm(Math.max(1000, Number(timeoutMs) || TEMPO_PARA_INICIAR_OAUTH_MS)),

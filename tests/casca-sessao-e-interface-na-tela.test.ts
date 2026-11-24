@@ -83,12 +83,26 @@ import {
   FASES,
   TEXTO_DO_BOTAO,
   TEXTO_DO_BOTAO_OCUPADO,
+  ESPERA_DA_ENTRADA_AUTOMATICA_MS,
   configuracaoDaEntrada,
   MENSAGENS,
   criarSessao,
   nomeDoUsuario,
+  textoDaEntradaAutomatica,
   type GanchosDoSistema,
 } from "../src/app/sessao.ts";
+import {
+  CHAVE_DA_ENTRADA_AUTOMATICA,
+  CHAVE_DA_ULTIMA_CONTA,
+  deveEntrarSozinho,
+  esquecerConta,
+  lembrarConta,
+  lerUltimaConta,
+  marcarSaidaVoluntaria,
+  normalizarEmail,
+  parametrosDoGoogle,
+  reservarEntradaAutomatica,
+} from "../src/lib/sessao/entrada-direta.ts";
 import {
   clicar,
   digitar,
@@ -1563,6 +1577,75 @@ bloco("app/entrada", () => {
       expect($("googleLoginText")?.textContent).toBe(TEXTO_DO_BOTAO_OCUPADO);
       expect($("loginMsg")?.className).toBe("alert warn");
       expect($("loginMsg")?.textContent).toBe("Escolha sua conta.");
+    });
+
+    it("entrada automática: o botão diz a conta, e Usar outra conta fica à mão", async () => {
+      const conta = "ana@agenciasus.org.br";
+      const { sessao } = await montar({
+        sessao: sessaoFalsa({
+          contaLembrada: conta,
+          entrando: true,
+          entradaAutomatica: true,
+        }),
+      });
+      expect($("googleLoginText")?.textContent).toBe(
+        textoDaEntradaAutomatica(conta),
+      );
+      expect(
+        document.querySelector<HTMLButtonElement>("#googleLoginBtn")?.disabled,
+      ).toBe(true);
+      // Sem alerta a mais: a conta vai no próprio botão.
+      expect($("loginMsg")?.className).toContain("hidden");
+      const outra =
+        document.querySelector<HTMLButtonElement>("#usarOutraContaBtn");
+      expect(outra?.textContent).toBe("Usar outra conta");
+      expect(outra?.disabled).toBe(false);
+      await clicar(outra);
+      expect(sessao.entrarComGoogle).toHaveBeenCalledWith({
+        escolherConta: true,
+      });
+    });
+
+    it("conta lembrada depois de Sair: o botão de sempre e Usar outra conta", async () => {
+      await montar({
+        sessao: sessaoFalsa({ contaLembrada: "ana@agenciasus.org.br" }),
+      });
+      expect($("googleLoginText")?.textContent).toBe(TEXTO_DO_BOTAO);
+      expect($("usarOutraContaBtn")).not.toBeNull();
+    });
+
+    it("sem conta lembrada (ou com o Google desligado), sem Usar outra conta", async () => {
+      const { sessao } = await montar();
+      expect($("usarOutraContaBtn")).toBeNull();
+      await act(async () =>
+        sessao.definir({
+          contaLembrada: "ana@agenciasus.org.br",
+          configuracao: configuracaoDaEntrada({ auth_google_enabled: "false" }),
+        }),
+      );
+      expect($("usarOutraContaBtn")).toBeNull();
+    });
+
+    it("Usar outra conta fica fora do fluxo e some com o cartão na primeira visita", async () => {
+      await montar({
+        sessao: sessaoFalsa({ contaLembrada: "ana@agenciasus.org.br" }),
+      });
+      const css = readFileSync("src/styles/platform-shell.css", "utf8");
+      const regra = (seletor: string) => {
+        const inicio = css.indexOf(`${seletor} {`);
+        expect(inicio, seletor).toBeGreaterThan(-1);
+        return css.slice(inicio, css.indexOf("}", inicio));
+      };
+      // O cartão não muda de altura com ou sem conta lembrada.
+      expect(regra(".login-screen .login-outra-conta")).toContain(
+        "position: absolute",
+      );
+      expect(regra(".login-screen .google-only-login")).toContain(
+        "position: relative",
+      );
+      // `marca-esperando` esconde os filhos de #loginScreen: o link vai junto.
+      expect(css).toMatch(/html\.marca-esperando #loginScreen > \*/);
+      expect($("loginScreen")?.contains($("usarOutraContaBtn"))).toBe(true);
     });
 
     it("perfil ilegível: o erro e Tentar de novo, não o pedido de acesso", async () => {
@@ -5360,11 +5443,17 @@ bloco("app/sessao", () => {
     caminho = "/",
     largura = 1280,
     popup = null,
+    local = null,
+    aba = window.sessionStorage,
   }: {
     search?: string;
     caminho?: string;
     largura?: number;
     popup?: PopupFalso | null;
+    /** O `localStorage` (a conta lembrada); `null` = nenhum. */
+    local?: Storage | null;
+    /** O `sessionStorage` (a tentativa da aba); `null` = bloqueado. */
+    aba?: Storage | null;
   } = {}) {
     const ouvintes: Record<string, OuvinteDaJanela> = {};
     return {
@@ -5385,7 +5474,8 @@ bloco("app/sessao", () => {
       open: vi.fn(() => popup),
       setInterval: vi.fn((_vigia: () => unknown, _ms?: number) => 1),
       clearInterval: vi.fn(),
-      sessionStorage: window.sessionStorage,
+      sessionStorage: aba,
+      localStorage: local,
       addEventListener: vi.fn(
         (tipo: string, funcao: OuvinteDaJanela) => (ouvintes[tipo] = funcao),
       ),
@@ -5427,6 +5517,7 @@ bloco("app/sessao", () => {
     temAmbiente?: boolean;
     armazenamento?: { clearAuthState: () => void };
     perfilGuardado?: PerfilGuardado | null;
+    esperar?: (ms: number) => Promise<unknown>;
   }
 
   function montar({
@@ -5437,6 +5528,7 @@ bloco("app/sessao", () => {
     temAmbiente = true,
     armazenamento = { clearAuthState: vi.fn() },
     perfilGuardado = null,
+    esperar = async () => {},
   }: OpcoesDaMontagem = {}) {
     const sessao = criarSessao({
       perfilGuardado: () => perfilGuardado,
@@ -5445,7 +5537,7 @@ bloco("app/sessao", () => {
       janela: comoJanela(janela),
       temAmbiente: () => temAmbiente,
       celular: () => celular,
-      esperar: async () => {},
+      esperar,
     });
     sessao.ligarSistema(sistema);
     return { sessao, cliente, janela, sistema };
@@ -5780,11 +5872,12 @@ bloco("app/sessao", () => {
       return montado;
     }
 
-    it("sair: auditoria antes, signOut, tela de acesso sem mensagem de falha", async () => {
+    it("sair: auditoria antes, signOut só neste navegador, tela de acesso sem mensagem de falha", async () => {
       const { sessao, sistema, cliente } = await conectado();
       await sessao.sair();
       expect(sistema.antesDeSair).toHaveBeenCalled();
-      expect(cliente.auth.signOut).toHaveBeenCalled();
+      expect(cliente.auth.signOut).toHaveBeenCalledWith({ scope: "local" });
+      expect(cliente.auth.signOut).not.toHaveBeenCalledWith();
       expect(sistema.aoSair).toHaveBeenCalledTimes(1);
       const estado = sessao.obter();
       expect(estado.fase).toBe(FASES.DESLOGADO);
@@ -5967,8 +6060,234 @@ bloco("app/sessao", () => {
     });
   });
 
+  describe("entrar direto (conta lembrada)", () => {
+    const CONTA = "ana@agenciasus.org.br";
+    const lembrada = (saiu = false) =>
+      armazenamentoFalso({
+        [CHAVE_DA_ULTIMA_CONTA]: JSON.stringify({ email: CONTA, saiu }),
+      });
+
+    it("entrar lembra só o e-mail, em minúsculas, neste navegador", async () => {
+      const local = armazenamentoFalso();
+      const { sessao } = montar({
+        cliente: clienteFalso({
+          guardada: sessaoDe("u1", "Ana@AgenciaSUS.org.br"),
+        }),
+        janela: janelaFalsa({ local }),
+      });
+      await sessao.iniciar();
+      expect(local.length).toBe(1);
+      expect(lerUltimaConta(local)).toEqual({ email: CONTA, saiu: false });
+      expect(sessao.obter().contaLembrada).toBe(CONTA);
+    });
+
+    it("e-mail fora dos domínios não é lembrado", async () => {
+      const local = armazenamentoFalso();
+      const { sessao } = montar({
+        cliente: clienteFalso({ guardada: sessaoDe("u9", "u9@gmail.com") }),
+        janela: janelaFalsa({ local }),
+      });
+      await sessao.iniciar();
+      expect(local.length).toBe(0);
+      expect(sessao.obter().contaLembrada).toBe("");
+    });
+
+    it("o botão leva o e-mail ao Google (login_hint), sem prompt nem consent", async () => {
+      const popup: PopupFalso = {
+        closed: false,
+        location: { replace: vi.fn() },
+        close: vi.fn(),
+      };
+      const { sessao, cliente } = montar({
+        janela: janelaFalsa({ popup, local: lembrada(true) }),
+      });
+      sessao.definirConfiguracao({
+        auth_google_domain_hint: "agenciasus.org.br",
+      });
+      await sessao.entrarComGoogle();
+      expect(cliente.auth.signInWithOAuth).toHaveBeenCalledWith({
+        provider: "google",
+        options: {
+          redirectTo: "https://monitora.test/auth/callback.html",
+          queryParams: { login_hint: CONTA, hd: "agenciasus.org.br" },
+          skipBrowserRedirect: true,
+        },
+      });
+      // Com a sugestão, o Google em geral nem mostra a escolha de conta.
+      expect(sessao.obter().mensagem.texto).toBe("");
+    });
+
+    it("entra sozinha uma vez por aba: Entrando como…, por redirecionamento", async () => {
+      const aba = armazenamentoFalso();
+      const janela = janelaFalsa({ local: lembrada(), aba });
+      const { sessao, cliente } = montar({ janela });
+      const vistos: boolean[] = [];
+      sessao.assinar(() => vistos.push(sessao.obter().entradaAutomatica));
+      await sessao.iniciar();
+      await proximoCiclo();
+
+      expect(vistos).toContain(true);
+      expect(sessao.obter().contaLembrada).toBe(CONTA);
+      expect(sessao.obter().entrando).toBe(true);
+      expect(janela.open).not.toHaveBeenCalled();
+      expect(cliente.auth.signInWithOAuth).toHaveBeenCalledTimes(1);
+      expect(cliente.auth.signInWithOAuth).toHaveBeenCalledWith({
+        provider: "google",
+        options: {
+          redirectTo: "https://monitora.test/auth/callback.html",
+          queryParams: { login_hint: CONTA },
+        },
+      });
+      expect(aba.getItem(CHAVE_DA_ENTRADA_AUTOMATICA)).toBe("1");
+
+      // A mesma aba de novo (voltou do Google sem sessão, recarregou): tela normal.
+      const outra = montar({ janela: janelaFalsa({ local: lembrada(), aba }) });
+      await outra.sessao.iniciar();
+      await proximoCiclo();
+      expect(outra.cliente.auth.signInWithOAuth).not.toHaveBeenCalled();
+      expect(outra.sessao.obter().entrando).toBe(false);
+      expect(outra.sessao.obter().contaLembrada).toBe(CONTA);
+    });
+
+    it("com sessão guardada, não vai ao Google", async () => {
+      const { sessao, cliente } = montar({
+        cliente: clienteFalso({ guardada: sessaoDe("u1", CONTA) }),
+        janela: janelaFalsa({ local: lembrada(), aba: armazenamentoFalso() }),
+      });
+      await sessao.iniciar();
+      await proximoCiclo();
+      expect(sessao.obter().fase).toBe(FASES.CONECTADO);
+      expect(sessao.obter().entradaAutomatica).toBe(false);
+      expect(cliente.auth.signInWithOAuth).not.toHaveBeenCalled();
+    });
+
+    it("voltou do Google com erro: a mensagem e a tela normal, sem laço", async () => {
+      const { sessao, cliente } = montar({
+        janela: janelaFalsa({
+          search: "?auth_error=oauth_callback",
+          local: lembrada(),
+          aba: armazenamentoFalso(),
+        }),
+      });
+      await sessao.iniciar();
+      await proximoCiclo();
+      expect(cliente.auth.signInWithOAuth).not.toHaveBeenCalled();
+      expect(sessao.obter().mensagem.texto).toBe(MENSAGENS.falhaNoRetorno);
+      expect(sessao.obter().entrando).toBe(false);
+    });
+
+    it("sem sessionStorage (bloqueado) não entra sozinha", async () => {
+      const { sessao, cliente } = montar({
+        janela: janelaFalsa({ local: lembrada(), aba: null }),
+      });
+      await sessao.iniciar();
+      await proximoCiclo();
+      expect(cliente.auth.signInWithOAuth).not.toHaveBeenCalled();
+      expect(sessao.obter().entradaAutomatica).toBe(false);
+    });
+
+    it("Google desligado nas configurações: não entra sozinha", async () => {
+      const sistema = sistemaFalso({
+        carregarConfiguracao: vi.fn(async () =>
+          sessao.definirConfiguracao({ auth_google_enabled: "false" }),
+        ),
+      });
+      const { sessao, cliente } = montar({
+        janela: janelaFalsa({ local: lembrada(), aba: armazenamentoFalso() }),
+        sistema,
+      });
+      await sessao.iniciar();
+      await proximoCiclo();
+      expect(cliente.auth.signInWithOAuth).not.toHaveBeenCalled();
+    });
+
+    it("Usar outra conta durante a espera: cancela, esquece o e-mail e pede a escolha", async () => {
+      let liberar: () => void = () => {};
+      const esperar = vi.fn(
+        () => new Promise<void>((resolve) => (liberar = resolve)),
+      );
+      const local = lembrada();
+      const { sessao, cliente } = montar({
+        janela: janelaFalsa({ local, aba: armazenamentoFalso() }),
+        esperar,
+      });
+      await sessao.iniciar();
+      expect(esperar).toHaveBeenCalledWith(ESPERA_DA_ENTRADA_AUTOMATICA_MS);
+      expect(sessao.obter().entradaAutomatica).toBe(true);
+
+      await sessao.entrarComGoogle({ escolherConta: true });
+      liberar();
+      await proximoCiclo();
+
+      expect(cliente.auth.signInWithOAuth).toHaveBeenCalledTimes(1);
+      expect(cliente.auth.signInWithOAuth).toHaveBeenCalledWith(
+        expect.objectContaining({
+          options: expect.objectContaining({
+            queryParams: { prompt: "select_account" },
+          }),
+        }),
+      );
+      expect(local.getItem(CHAVE_DA_ULTIMA_CONTA)).toBeNull();
+      expect(sessao.obter().contaLembrada).toBe("");
+      expect(sessao.obter().entradaAutomatica).toBe(false);
+    });
+
+    it("Sair: só neste navegador, o e-mail fica e a próxima entrada é pelo botão", async () => {
+      const local = armazenamentoFalso();
+      const conectado = montar({
+        cliente: clienteFalso({ guardada: sessaoDe("u1", CONTA) }),
+        janela: janelaFalsa({ local }),
+      });
+      await conectado.sessao.iniciar();
+      await conectado.sessao.sair();
+      expect(conectado.cliente.auth.signOut).toHaveBeenCalledWith({
+        scope: "local",
+      });
+      expect(lerUltimaConta(local)).toEqual({ email: CONTA, saiu: true });
+
+      // O Yeendé aberto de novo, noutra aba: sem entrada automática.
+      reiniciarEstadoDeSaidaParaTestes();
+      const depois = montar({
+        janela: janelaFalsa({ local, aba: armazenamentoFalso() }),
+      });
+      await depois.sessao.iniciar();
+      await proximoCiclo();
+      expect(depois.cliente.auth.signInWithOAuth).not.toHaveBeenCalled();
+      expect(depois.sessao.obter().contaLembrada).toBe(CONTA);
+
+      // O botão ainda leva o e-mail como sugestão.
+      await depois.sessao.entrarComGoogle();
+      expect(depois.cliente.auth.signInWithOAuth).toHaveBeenCalledWith(
+        expect.objectContaining({
+          options: expect.objectContaining({
+            queryParams: { login_hint: CONTA },
+          }),
+        }),
+      );
+
+      // Entrou de novo: a entrada automática volta a valer.
+      await depois.sessao.entrar(sessaoDe("u1", CONTA), "oauth_popup");
+      expect(lerUltimaConta(local)).toEqual({ email: CONTA, saiu: false });
+    });
+
+    it("Sair do pedido de acesso também tira a entrada automática", async () => {
+      const local = lembrada();
+      const { sessao } = montar({
+        cliente: clienteFalso({
+          guardada: sessaoDe("u1", CONTA),
+          contexto: null,
+        }),
+        janela: janelaFalsa({ local }),
+      });
+      await sessao.iniciar();
+      expect(sessao.obter().fase).toBe(FASES.SEM_ACESSO);
+      await sessao.limparSessao();
+      expect(lerUltimaConta(local)).toEqual({ email: CONTA, saiu: true });
+    });
+  });
+
   describe("login Google", () => {
-    it("no computador: popup no clique, sessão local limpa, escolha de conta", async () => {
+    it("no computador: popup no clique, sessão local limpa, sem forçar a escolha de conta", async () => {
       const popup: PopupFalso = {
         closed: false,
         location: { replace: vi.fn() },
@@ -5987,7 +6306,7 @@ bloco("app/sessao", () => {
         provider: "google",
         options: {
           redirectTo: "https://monitora.test/auth/callback.html",
-          queryParams: { prompt: "select_account", hd: "agenciasus.org.br" },
+          queryParams: { hd: "agenciasus.org.br" },
           skipBrowserRedirect: true,
         },
       });
@@ -6109,7 +6428,7 @@ bloco("app/sessao", () => {
       expect(cliente.auth.signInWithOAuth).toHaveBeenCalledWith(
         expect.objectContaining({
           options: expect.objectContaining({
-            queryParams: { prompt: "select_account consent", max_age: "0" },
+            queryParams: {},
           }),
         }),
       );
@@ -13771,5 +14090,158 @@ bloco("app/meus-acessos", () => {
       ).click(),
     );
     expect(document.querySelector('[role="dialog"]')).toBeNull();
+  });
+});
+
+/* Um armazenamento do navegador de mentira (Map), um por teste. */
+function armazenamentoFalso(inicial: Record<string, string> = {}): Storage {
+  const dados = new Map(Object.entries(inicial));
+  return {
+    get length() {
+      return dados.size;
+    },
+    clear: () => dados.clear(),
+    key: (indice: number) => [...dados.keys()][indice] ?? null,
+    getItem: (chave: string) => dados.get(chave) ?? null,
+    setItem: (chave: string, valor: string) => void dados.set(chave, valor),
+    removeItem: (chave: string) => void dados.delete(chave),
+  };
+}
+
+bloco("lib/sessao/entrada-direta", () => {
+  /*
+    Entrar direto com a conta já aberta (src/lib/sessao/entrada-direta.ts): o
+    e-mail lembrado, a tentativa automática por aba e os parâmetros do Google.
+  */
+  const CONTA = "ana@agenciasus.org.br";
+
+  it("normaliza o e-mail e recusa o que não tem forma de e-mail", () => {
+    expect(normalizarEmail("  Ana@AgenciaSUS.org.br ")).toBe(CONTA);
+    expect(normalizarEmail("ana")).toBe("");
+    expect(normalizarEmail("ana@")).toBe("");
+    expect(normalizarEmail("a b@agenciasus.org.br")).toBe("");
+    expect(normalizarEmail(null)).toBe("");
+  });
+
+  it("lembra, marca a saída e esquece", () => {
+    const local = armazenamentoFalso();
+    expect(lerUltimaConta(local)).toBeNull();
+    lembrarConta(local, "Ana@AgenciaSUS.org.br");
+    expect(lerUltimaConta(local)).toEqual({ email: CONTA, saiu: false });
+    marcarSaidaVoluntaria(local);
+    expect(lerUltimaConta(local)).toEqual({ email: CONTA, saiu: true });
+    lembrarConta(local, CONTA);
+    expect(lerUltimaConta(local)?.saiu).toBe(false);
+    esquecerConta(local);
+    expect(lerUltimaConta(local)).toBeNull();
+    // Sair sem conta lembrada não cria nada.
+    marcarSaidaVoluntaria(local);
+    expect(local.length).toBe(0);
+    // E-mail sem forma não é guardado.
+    lembrarConta(local, "sem-email");
+    expect(local.length).toBe(0);
+  });
+
+  it("guarda só o e-mail e a saída, na chave do Yeendé", () => {
+    const local = armazenamentoFalso();
+    lembrarConta(local, CONTA);
+    expect(local.length).toBe(1);
+    expect(JSON.parse(local.getItem(CHAVE_DA_ULTIMA_CONTA) || "")).toEqual({
+      email: CONTA,
+      saiu: false,
+    });
+  });
+
+  it("lê com tolerância: ilegível ou sem e-mail vira nenhuma conta", () => {
+    for (const bruto of ["{", "null", "[]", '{"email":"x"}', '"texto"'])
+      expect(
+        lerUltimaConta(armazenamentoFalso({ [CHAVE_DA_ULTIMA_CONTA]: bruto })),
+        bruto,
+      ).toBeNull();
+    expect(
+      lerUltimaConta(
+        armazenamentoFalso({
+          [CHAVE_DA_ULTIMA_CONTA]: JSON.stringify({
+            email: CONTA,
+            saiu: "sim",
+          }),
+        }),
+      ),
+    ).toEqual({ email: CONTA, saiu: false });
+  });
+
+  it("armazenamento bloqueado ou ausente nunca lança", () => {
+    const bloqueado: Storage = {
+      ...armazenamentoFalso(),
+      getItem: () => {
+        throw new Error("bloqueado");
+      },
+      setItem: () => {
+        throw new Error("bloqueado");
+      },
+      removeItem: () => {
+        throw new Error("bloqueado");
+      },
+    };
+    for (const armazenamento of [bloqueado, null, undefined]) {
+      expect(lerUltimaConta(armazenamento)).toBeNull();
+      expect(() => lembrarConta(armazenamento, CONTA)).not.toThrow();
+      expect(() => marcarSaidaVoluntaria(armazenamento)).not.toThrow();
+      expect(() => esquecerConta(armazenamento)).not.toThrow();
+      expect(reservarEntradaAutomatica(armazenamento)).toBe(false);
+    }
+  });
+
+  it("uma tentativa automática por aba", () => {
+    const aba = armazenamentoFalso();
+    expect(reservarEntradaAutomatica(aba)).toBe(true);
+    expect(reservarEntradaAutomatica(aba)).toBe(false);
+    expect(aba.getItem(CHAVE_DA_ENTRADA_AUTOMATICA)).toBe("1");
+    // A marca que não fica gravada (cota cheia, aba privada): não tenta.
+    const semGravar: Storage = { ...armazenamentoFalso(), setItem: () => {} };
+    expect(reservarEntradaAutomatica(semGravar)).toBe(false);
+  });
+
+  it("entra sozinha só com conta lembrada, sem Sair, Google ligado e nada na tela", () => {
+    const conta = { email: CONTA, saiu: false };
+    const base = { conta, googleAtivo: true, temMensagem: false };
+    expect(deveEntrarSozinho(base)).toBe(true);
+    expect(deveEntrarSozinho({ ...base, conta: null })).toBe(false);
+    expect(
+      deveEntrarSozinho({ ...base, conta: { ...conta, saiu: true } }),
+    ).toBe(false);
+    expect(deveEntrarSozinho({ ...base, googleAtivo: false })).toBe(false);
+    expect(deveEntrarSozinho({ ...base, temMensagem: true })).toBe(false);
+  });
+
+  it("os parâmetros do Google: login_hint, hd e a escolha de conta", () => {
+    const hd = "agenciasus.org.br";
+    expect(parametrosDoGoogle({})).toEqual({});
+    expect(parametrosDoGoogle({ dicaDeDominio: hd })).toEqual({ hd });
+    expect(parametrosDoGoogle({ dicaDeDominio: hd, email: CONTA })).toEqual({
+      login_hint: CONTA,
+      hd,
+    });
+    // Conta de outro domínio permitido: o hd contradiria a sugestão.
+    expect(
+      parametrosDoGoogle({ dicaDeDominio: hd, email: "bia@agsus.org.br" }),
+    ).toEqual({ login_hint: "bia@agsus.org.br" });
+    // "Usar outra conta": a escolha, sem a sugestão.
+    expect(
+      parametrosDoGoogle({
+        dicaDeDominio: hd,
+        email: CONTA,
+        escolherConta: true,
+      }),
+    ).toEqual({ prompt: "select_account", hd });
+    // Nunca consentimento nem nova senha a cada entrada.
+    const todos = [
+      parametrosDoGoogle({ email: CONTA }),
+      parametrosDoGoogle({ escolherConta: true }),
+    ];
+    for (const parametros of todos) {
+      expect(parametros).not.toHaveProperty("max_age");
+      expect(String(parametros.prompt || "")).not.toContain("consent");
+    }
   });
 });
