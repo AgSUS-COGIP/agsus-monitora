@@ -32,8 +32,10 @@ begin
      or md5((select prosrc from pg_proc where oid = to_regprocedure('public.obter_minha_solicitacao_acesso()')))
        is distinct from '1394838a42ae9c0ff559a9d260ac5563'
      or md5((select prosrc from pg_proc where oid = to_regprocedure('public.listar_solicitacoes_acesso(text)')))
-       is distinct from '0ab1dee409d463821d9d2181ce1e0986' then
-    raise exception 'registrar_solicitacao_acesso, aprovar_solicitacao_acesso, obter_minha_solicitacao_acesso ou listar_solicitacoes_acesso mudou depois do retrato de 24/11/2026: junte as mudanças antes de aplicar.';
+       is distinct from '0ab1dee409d463821d9d2181ce1e0986'
+     or md5((select prosrc from pg_proc where oid = to_regprocedure('public.listar_opcoes_da_solicitacao_acesso()')))
+       is distinct from '853810f495679a7b966125a89e5aa2ce' then
+    raise exception 'registrar_solicitacao_acesso, aprovar_solicitacao_acesso, obter_minha_solicitacao_acesso, listar_solicitacoes_acesso ou listar_opcoes_da_solicitacao_acesso mudou depois do retrato de 24/11/2026: junte as mudanças antes de aplicar.';
   end if;
 end;
 $$;
@@ -627,6 +629,52 @@ $$;
 
 comment on function public.listar_solicitacoes_acesso(text) is
   'Pedidos de acesso (admin global: todos; coordenador: os da própria coordenação), sem os de quem está olhando, com área, cargo, lotação (setor), justificativa e dados da reativação; no pedido de mais acesso, o tipo, o módulo e o nível ou o grupo pedidos e o que a pessoa tem hoje.';
+
+-- 8. listar_opcoes_da_solicitacao_acesso: os grupos que se podem pedir ---------------------------
+create or replace function public.listar_opcoes_da_solicitacao_acesso()
+returns jsonb
+language plpgsql stable security definer
+set search_path = ''
+as $$
+begin
+  if (select auth.uid()) is null then
+    raise exception 'Usuário não autenticado' using errcode = '42501';
+  end if;
+  return jsonb_build_object(
+    'areas', coalesce((
+      select jsonb_agg(jsonb_build_object('codigo', a."CO_AREA", 'nome', a."NO_AREA") order by a."NU_ORDEM")
+        from public."TB_AREA" a), '[]'::jsonb),
+    'unidades', coalesce((
+      select jsonb_agg(u.item order by u.area, u.tipo, u.nome)
+        from (
+          select 'saude-indigena' as area, t.tipo, t.nome_oficial as nome,
+                 jsonb_build_object('area', 'saude-indigena', 'nome', t.nome_oficial, 'sigla', t.sigla, 'tipo', t.tipo) as item
+            from public."TD_UNIDADE" t
+           where t.ativo
+          union all
+          select 'projetos', '', x."NO_UNIDADE",
+                 jsonb_build_object('area', 'projetos', 'nome', x."NO_UNIDADE", 'sigla', null, 'tipo', null)
+            from public."TA_UNIDADE_AREA" x
+           where x."CO_AREA" = 'projetos'
+        ) u), '[]'::jsonb),
+    'coordenacoes', coalesce((
+      select jsonb_agg(jsonb_build_object('codigo', c."CO_COORDENACAO", 'nome', c."NO_COORDENACAO", 'area', c."CO_AREA")
+                       order by c."NO_COORDENACAO")
+        from public."TB_COORDENACAO" c
+       where c."ST_ATIVO"), '[]'::jsonb),
+    -- Pedir mais acesso (20261124210000): os grupos, só para quem já tem perfil ativo.
+    'grupos', case when (select p.id from private.current_profile() p) is null then '[]'::jsonb
+                   else coalesce((
+                     select jsonb_agg(jsonb_build_object('codigo', g."CO_GRUPO_ACESSO", 'nome', g."NO_GRUPO_ACESSO",
+                                                         'descricao', g."DS_GRUPO_ACESSO")
+                                      order by g."NU_ORDEM", g."NO_GRUPO_ACESSO")
+                       from public."TB_GRUPO_ACESSO" g
+                      where not g."ST_ADMIN_GLOBAL"), '[]'::jsonb) end);
+end;
+$$;
+
+comment on function public.listar_opcoes_da_solicitacao_acesso() is
+  'Opções da tela de solicitação de acesso (autenticado, mesmo sem perfil): áreas, unidades (DSEI/CASAI de TD_UNIDADE; projetos de TA_UNIDADE_AREA) e coordenações ativas; com perfil ativo, também os grupos que se podem pedir (sem o de administrador global).';
 
 
 -- CONFERÊNCIAS ---------------------------------------------------------------------------------

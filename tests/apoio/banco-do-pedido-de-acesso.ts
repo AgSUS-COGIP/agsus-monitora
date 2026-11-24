@@ -77,6 +77,7 @@ const RPCS = [
   "public.cancelar_minha_solicitacao_acesso",
   "public.obter_minha_solicitacao_acesso",
   "public.listar_solicitacoes_acesso",
+  "public.listar_opcoes_da_solicitacao_acesso",
 ];
 const FUNCOES_INTERNAS = [
   "private.is_master",
@@ -112,7 +113,7 @@ create function auth.jwt() returns jsonb language sql stable as $$
 $$;
 create function auth.role() returns text language sql stable as $$ select 'authenticated'::text $$;
 
-create table public."TD_UNIDADE" (nome_oficial text primary key, ativo boolean not null default true);
+create table public."TD_UNIDADE" (nome_oficial text primary key, sigla text, tipo text, ativo boolean not null default true);
 create table public."TA_UNIDADE_AREA" ("NO_UNIDADE" text primary key, "CO_AREA" text not null);
 `;
 
