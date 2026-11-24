@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-23
+atualizado: 2026-11-24
 ---
 
 # Módulo: Relatórios (bloco Dados; antes Painéis)
@@ -36,6 +36,19 @@ item Relatórios do bloco **Dados**, abaixo de Processo seletivo (`BLOCO_DE_DADO
     com a Visão geral como estava (filtros, busca e atalho). Fica no endereço; fechar volta aos
     cartões. Era o botão "Montar relatório" do topo e o "Exportar" da Visão geral, que agora
     exporta só a tabela à vista ([[modulo-visao-geral]]).
+  - **Gráficos do montador** (24/11/2026): o grupo "Gráficos" (`escolha.graficos`, pode ficar
+    vazio) com Vagas × contratadas por unidade, Editais por fase, Contratações por mês e Situação
+    dos aprovados, todos do recorte do relatório. As séries são puras
+    (`src/lib/paineis/graficos-do-relatorio.ts`); o desenho Chart.js é um só para a miniatura da
+    prévia e para a imagem do PDF (`graficos-do-relatorio.tsx`: canvas fora da tela, 2x, sem
+    animação, com o valor na ponta da barra; cores dos tokens, e o PDF sempre na paleta clara).
+    No PDF, depois dos números (sem a imagem, a tabela dos números); no Excel, uma aba por
+    gráfico com os números e o aviso de que o gerador de XLSX não desenha gráfico; o CSV não leva.
+    Os dois dos aprovados saem de `exportar_aprovados_da_diretoria` (status e admissão conciliada
+    por pessoa só existem lá), por isso só com o recurso `aprovados` e com o download registrado:
+    a miniatura deles carrega no botão "Carregar prévia", e a geração reaproveita essa leitura no
+    mesmo formato e editais (uma leitura só com a seção Aprovados junto). Situação dos aprovados é
+    por edital (os 25 maiores, o resto numa barra), e Vagas por unidade mostra até 40 unidades.
   - **Relatório da diretoria** (grupo Aprovados): o modelo Diretoria do montador (editais, vagas
     por cargo e aprovados, com a admissão conciliada com o RH), gerado direto do cartão em Excel ou
     PDF (`gerar-relatorio.ts`, a mesma geração do montador). As duas versões da admissão ficam até
@@ -65,7 +78,8 @@ paineis-de-dados.tsx  catálogo (cartões por grupo e tipo), relatório aberto (
 estado.ts             store sem React dos calculados: catálogo ou relatório aberto, página lida por
                       relatório e área, cache em memória, larguras, download, gaveta de fontes
 fontes-dos-dados.tsx  a gaveta "Fontes dos dados" (uma coluna por bloco: Origem, Coluna, Motivo)
-montador-de-relatorio.tsx  o montador (modelo, seções, colunas, formato; a escolha fica no navegador)
+montador-de-relatorio.tsx  o montador (modelo, seções, colunas, gráficos com a prévia, formato; a escolha fica no navegador)
+graficos-do-relatorio.tsx  o desenho dos gráficos do montador: a miniatura e as imagens do PDF
 gerar-relatorio.ts    o PDF/Excel do montador e da diretoria (vagas por cargo e aprovados lidos na hora)
 dados-da-diretoria.ts as RPCs das abas 2 e 3 da diretoria (a 3 registra o download)
 resumo-por-cargo.tsx  o Resumo por cargo e status (filtros, tabela agrupada, gaveta, Exportar)
@@ -74,6 +88,7 @@ paineis-de-dados.css  a alça de largura, o painel do ⓘ, os cartões, a volta,
 
 Regras puras em `src/lib/paineis/catalogo-dos-relatorios.ts` (os cartões, o tipo, o grupo, o resumo e
 a regra de cada um, quem vê o Resumo, os grupos com relatório e o que vale no endereço),
+`graficos-do-relatorio.ts` (as séries dos gráficos do montador e a aba do Excel de cada um),
 `endereco-dos-relatorios.ts` (a busca do atalho, a origem e os editais do endereço; só tipos e
 texto, porque o atalho mora na Visão geral, no pacote de entrada), `relatorio-da-visao-geral.ts` (+ `-em-pdf`), `relatorio-da-diretoria.ts`,
 `resumo-por-cargo-e-status.ts` e `exportacao-do-resumo-por-cargo.ts` (+ `-em-pdf`), todos em
@@ -160,11 +175,12 @@ RPCs no contrato (`src/lib/rpc-contrato.ts`): `ler_relatorio_do_painel`,
 `tests/editais-cargas-e-paineis-na-tela.test.ts` (bloco `modulos/paineis-de-dados`) (catálogo: grupos, data do cálculo, abrir e
 voltar sem reler, exportar do cartão, Sincronizar de todos, falha uma vez, o relatório no endereço e o caminho antigo; tela, permissão, rota, paginação no banco, cache,
 Sincronizar, downloads, gaveta de fontes, largura das colunas e ⓘ; os gerados no navegador: o
-montador no endereço e com o recorte da Visão geral, a diretoria direto do cartão, o Resumo só com
+montador no endereço e com o recorte da Visão geral, o grupo Gráficos com a miniatura e a prévia
+dos aprovados só no botão, a diretoria direto do cartão, o Resumo só com
 o recurso `aprovados` e o atalho com a tela já montada), `tests/entrevistas-e-aprovados-na-tela.test.ts`
 (bloco `componentes/lista-aprovados`, "Resumo por cargo e status (em Relatórios)", sobre o estado da
 Lista), `tests/demais-regras.test.ts` (blocos `lib/relatorio-da-visao-geral` e
-`lib/relatorio-da-diretoria`), `tests/editais-cargas-e-paineis.test.ts` (bloco `relatorios-dos-paineis`)
+`lib/relatorio-da-diretoria` e `lib/graficos-do-relatorio`), `tests/editais-cargas-e-paineis.test.ts` (bloco `relatorios-dos-paineis`)
 (colunas, página lida, arquivos, largura, origem), `tests/editais-cargas-e-paineis.test.ts` (bloco `fontes-dos-paineis`) (leitura das
 fontes, permissão, aba Fontes), `tests/editais-cargas-e-paineis.test.ts` (bloco `fontes-dos-paineis-no-banco`) (o núcleo das fontes em
 PGlite), `tests/editais-cargas-e-paineis.test.ts` (bloco `relatorios-prontos-dos-paineis-no-banco`) (resultado pronto em PGlite: página,

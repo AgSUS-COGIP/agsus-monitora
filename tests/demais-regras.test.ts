@@ -284,6 +284,7 @@ import {
   normalizarVagasPorCargo,
   vagasPeloTexto,
 } from "../src/lib/paineis/relatorio-da-diretoria.ts";
+import type { AprovadoDaDiretoria } from "../src/lib/paineis/relatorio-da-diretoria.ts";
 import {
   conteudoDoRelatorio,
   MODELOS_DO_RELATORIO,
@@ -316,6 +317,21 @@ import {
 import { strFromU8, unzipSync, zipSync } from "fflate";
 import { carregarBibliotecasDoPdf } from "../src/lib/avaliacao-documental/espelho-em-pdf.ts";
 import { pdfDoRelatorio } from "../src/lib/paineis/relatorio-da-visao-geral-em-pdf.ts";
+import {
+  contratacoesPorMes,
+  dadosDosGraficos,
+  editaisPorFase,
+  graficosPermitidos,
+  graficoVazio,
+  normalizarGraficos,
+  planilhaDoGrafico,
+  precisaDosAprovados,
+  rotuloDoMes,
+  situacaoDoAprovado,
+  situacaoDosAprovados,
+  tabelaDoGrafico,
+  vagasPorUnidade,
+} from "../src/lib/paineis/graficos-do-relatorio.ts";
 import { tabelaDaVisaoGeral } from "../src/lib/visao-geral/tabela-para-exportar.ts";
 import {
   type Indicadores,
@@ -5594,6 +5610,7 @@ bloco("lib/relatorio-da-diretoria", () => {
         escolha: {
           secoes: ["cargos", "aprovados"],
           colunas: ["edital"],
+          graficos: [],
           formato: "XLSX",
         },
         porCargo: linhasPorCargo(normalizarVagasPorCargo(bruto), editais),
@@ -5651,6 +5668,7 @@ bloco("lib/relatorio-da-diretoria", () => {
         escolha: {
           secoes: ["cargos", "aprovados"],
           colunas: ["edital"],
+          graficos: [],
           formato: "PDF",
         },
       });
@@ -5760,6 +5778,7 @@ bloco("lib/relatorio-da-visao-geral", () => {
       ).toEqual({
         secoes: ["numeros", "editais"],
         colunas: ["edital", "status"],
+        graficos: [],
         formato: "XLSX",
       });
       expect(normalizarEscolha(null)).toEqual(MODELOS_DO_RELATORIO[0]!.escolha);
@@ -5771,6 +5790,8 @@ bloco("lib/relatorio-da-visao-geral", () => {
       expect(alternarNaEscolha(todos, ["c"], "a")).toEqual(["a", "c"]);
       expect(alternarNaEscolha(todos, ["a", "c"], "a")).toEqual(["c"]);
       expect(alternarNaEscolha(todos, ["c"], "c")).toEqual(["c"]);
+      // Os gráficos podem ficar todos de fora.
+      expect(alternarNaEscolha(todos, ["c"], "c", 0)).toEqual([]);
     });
 
     it("reconhece o modelo pronto; mexeu, vira personalizado", () => {
@@ -5779,6 +5800,12 @@ bloco("lib/relatorio-da-visao-geral", () => {
       expect(modeloDaEscolha({ ...diretoria.escolha, formato: "PDF" })).toBe(
         "",
       );
+      expect(
+        modeloDaEscolha({
+          ...diretoria.escolha,
+          graficos: ["editais-por-fase"],
+        }),
+      ).toBe("");
     });
 
     it("o modelo da diretoria: número, DSEI, vagas, divulgação, encerramento e ciclo", () => {
@@ -5833,6 +5860,7 @@ bloco("lib/relatorio-da-visao-geral", () => {
       const soTabela = conteudo({
         secoes: ["editais"],
         colunas: ["edital", "ciclo"],
+        graficos: [],
         formato: "PDF",
       });
       expect(soTabela.numeros).toBeNull();
@@ -5956,6 +5984,302 @@ bloco("lib/relatorio-da-visao-geral", () => {
       expect(sistema).not.toContain("exportPDF");
       const topo = readFileSync("src/app/casca/topo.tsx", "utf8");
       expect(topo).not.toContain("Montar relatório");
+    });
+  });
+});
+
+bloco("lib/graficos-do-relatorio", () => {
+  /*
+  OS GRÁFICOS DO MONTADOR DE RELATÓRIO (24/11/2026): vagas × contratadas por
+  unidade, editais por fase, contratações por mês e situação dos aprovados,
+  todos do recorte do relatório; no PDF como imagem (sem ela, a tabela dos
+  números), no Excel como uma aba com os números. Dados fictícios.
+*/
+
+  function linha(parcial: Partial<LinhaDaVisaoGeral>): LinhaDaVisaoGeral {
+    return {
+      fase: "Concluído",
+      atencao: [],
+      pos_resultado: [],
+      desistentes: 0,
+      aprovados: null,
+      cadastro_reserva: null,
+      primeira_admissao: null,
+      ultima_admissao: null,
+      admissoes: 0,
+      ...parcial,
+    };
+  }
+
+  const LINHAS = [
+    linha({
+      id: "e1",
+      edital: "01/2099",
+      unidade: "DSEI Alfa",
+      vagas_total: 10,
+      contratados: 12,
+      fase: "Inscrições",
+    }),
+    linha({
+      id: "e2",
+      edital: "02/2099",
+      unidade: "DSEI Beta",
+      vagas_total: 4,
+      contratados: 1,
+      fase: "Recursos",
+    }),
+    linha({
+      id: "e3",
+      edital: "03/2099",
+      unidade: "DSEI Alfa",
+      vagas_total: 6,
+      contratados: 3,
+      fase: "Inscrições",
+    }),
+    linha({
+      id: "e4",
+      edital: "04/2099",
+      unidade: "",
+      vagas_total: 2,
+      contratados: 0,
+      fase: "Cronograma encerrado",
+    }),
+  ];
+
+  const aprovado = (
+    monitoramentoId: string,
+    status: string,
+    admissao = "",
+  ): AprovadoDaDiretoria => ({
+    monitoramentoId,
+    cargo: "Cargo",
+    nota: null,
+    classificacao: null,
+    nome: "Pessoa",
+    status,
+    matricula: "",
+    admissao,
+  });
+
+  const APROVADOS = [
+    aprovado("e1", "Contratado", "2099-01-10"),
+    aprovado("e1", "Contratado", "2099-03-02"),
+    aprovado("e1", "Migração", "2099-03-20"),
+    aprovado("e1", "Contratado"),
+    aprovado("e1", "Convocado"),
+    aprovado("e2", "Desistente"),
+    aprovado("e2", ""),
+    aprovado("e2", "Contratado em outra lista", "2099-02-01"),
+    // Fora do recorte: não conta.
+    aprovado("x9", "Contratado", "2099-02-15"),
+  ];
+
+  describe("a escolha", () => {
+    it("os gráficos dos aprovados só com o recurso; normaliza na ordem da lista", () => {
+      expect(graficosPermitidos(false)).toEqual([
+        "vagas-por-unidade",
+        "editais-por-fase",
+      ]);
+      expect(graficosPermitidos(true)).toHaveLength(4);
+      expect(
+        normalizarGraficos([
+          "situacao-dos-aprovados",
+          "x",
+          "vagas-por-unidade",
+        ]),
+      ).toEqual(["vagas-por-unidade", "situacao-dos-aprovados"]);
+      expect(normalizarGraficos(undefined)).toEqual([]);
+      expect(precisaDosAprovados(["editais-por-fase"])).toBe(false);
+      expect(precisaDosAprovados(["contratacoes-por-mes"])).toBe(true);
+    });
+  });
+
+  describe("as séries", () => {
+    it("vagas × contratadas por unidade: soma por unidade, contratadas dentro das vagas, preenchimento", () => {
+      const dados = vagasPorUnidade(LINHAS);
+      expect(dados.rotulos).toEqual(["DSEI Alfa", "DSEI Beta", "Sem unidade"]);
+      expect(dados.series[0]!.valores).toEqual([16, 4, 2]);
+      // 10 de 12 no e1 (acima das vagas não conta) + 3 no e3.
+      expect(dados.series[1]!.valores).toEqual([13, 1, 0]);
+      expect(dados.extras![0]!.valores).toEqual([81, 25, 0]);
+      expect(dados.fonte).toContain(
+        "14 de 22 vagas imediatas contratadas (64%)",
+      );
+    });
+
+    it("muitas unidades: as maiores ficam e o resto vira uma barra", () => {
+      const muitas = Array.from({ length: 5 }, (_, i) =>
+        linha({
+          id: `u${i}`,
+          unidade: `U${i}`,
+          vagas_total: i + 1,
+          contratados: 0,
+        }),
+      );
+      const dados = vagasPorUnidade(muitas, 3);
+      expect(dados.rotulos).toEqual(["U4", "U3", "Outras 3 unidades"]);
+      expect(dados.series[0]!.valores).toEqual([5, 4, 6]);
+    });
+
+    it("editais por fase: Inscrições a Resultado sempre; encerrados fora", () => {
+      const dados = editaisPorFase(LINHAS);
+      expect(dados.rotulos).toEqual([
+        "Inscrições",
+        "Análise curricular",
+        "Recursos",
+        "Entrevistas",
+        "Resultado",
+      ]);
+      expect(dados.series[0]!.valores).toEqual([2, 0, 1, 0, 0]);
+      expect(dados.fonte).toContain("3 de 4 editais em andamento");
+      const comContratacao = editaisPorFase([
+        linha({ id: "c", fase: "Contratação" }),
+      ]);
+      expect(comContratacao.rotulos.at(-1)).toBe("Contratação");
+    });
+
+    it("contratações por mês: só contratados do recorte, meses sem buraco, sem data à parte", () => {
+      const dados = contratacoesPorMes(APROVADOS, LINHAS);
+      expect(dados.rotulos).toEqual(["jan/99", "fev/99", "mar/99"]);
+      expect(dados.series[0]!.valores).toEqual([1, 0, 2]);
+      expect(dados.fonte).toContain("3 admissões; 1 contratado sem data");
+      expect(rotuloDoMes("2026-12")).toBe("dez/26");
+      expect(graficoVazio(contratacoesPorMes([], LINHAS))).toBe(true);
+    });
+
+    it("situação dos aprovados: por edital, na ordem do recorte, Outra situação só quando há", () => {
+      expect(situacaoDoAprovado("Migração")).toBe("Contratado");
+      expect(situacaoDoAprovado("")).toBe("Reserva");
+      expect(situacaoDoAprovado("Documentação Rejeitada")).toBe(
+        "Outra situação",
+      );
+      const dados = situacaoDosAprovados(APROVADOS, LINHAS);
+      expect(dados.rotulos).toEqual(["01/2099", "02/2099"]);
+      expect(
+        Object.fromEntries(dados.series.map((s) => [s.rotulo, s.valores])),
+      ).toEqual({
+        Contratado: [4, 0],
+        Convocado: [1, 0],
+        Desistente: [0, 1],
+        Reserva: [0, 1],
+        "Outra situação": [0, 1],
+      });
+      const semOutra = situacaoDosAprovados(APROVADOS.slice(0, 5), LINHAS);
+      expect(semOutra.series.map((s) => s.rotulo)).not.toContain(
+        "Outra situação",
+      );
+    });
+
+    it("todos: na ordem escolhida; os dos aprovados só com eles", () => {
+      const ids = (aprovados: readonly AprovadoDaDiretoria[] | null) =>
+        dadosDosGraficos({
+          graficos: ["situacao-dos-aprovados", "editais-por-fase"],
+          linhas: LINHAS,
+          aprovados,
+        }).map((d) => d.id);
+      expect(ids(APROVADOS)).toEqual([
+        "editais-por-fase",
+        "situacao-dos-aprovados",
+      ]);
+      expect(ids(null)).toEqual(["editais-por-fase"]);
+    });
+  });
+
+  describe("os arquivos", () => {
+    it("Excel: uma aba por gráfico com o aviso, a fonte e os números", () => {
+      const dados = vagasPorUnidade(LINHAS);
+      expect(tabelaDoGrafico(dados).colunas).toEqual([
+        "Unidade",
+        "Vagas imediatas",
+        "Contratadas",
+        "Preenchimento (%)",
+      ]);
+      const aba = planilhaDoGrafico(dados);
+      expect(aba.nome.length).toBeLessThanOrEqual(31);
+      expect(aba.nome).toBe("Gráfico - Vagas por unidade");
+      expect(String(aba.linhas[1]![0])).toContain("não desenha gráfico");
+      expect(aba.linhas[4]).toEqual([
+        "Unidade",
+        "Vagas imediatas",
+        "Contratadas",
+        "Preenchimento (%)",
+      ]);
+      expect(aba.linhas[5]).toEqual(["DSEI Alfa", 16, 13, 81]);
+    });
+
+    it("o relatório leva os gráficos: abas depois do Resumo e o registro do download dos aprovados", () => {
+      const conteudo = conteudoDoRelatorio({
+        escolha: {
+          secoes: ["numeros"],
+          colunas: ["edital"],
+          graficos: ["vagas-por-unidade", "contratacoes-por-mes"],
+          formato: "XLSX",
+        },
+        linhas: LINHAS,
+        filtros: filtrosVazios(),
+        area: "saude-indigena",
+        rotuloDaArea: "Saúde Indígena",
+        indicadores: indicadoresDaVisaoGeral(LINHAS),
+        aprovadosDosGraficos: { aprovados: APROVADOS, registro: "reg-1" },
+        agora: new Date("2099-11-13T15:00:00Z"),
+      });
+      expect(conteudo.graficos.map((g) => g.id)).toEqual([
+        "vagas-por-unidade",
+        "contratacoes-por-mes",
+      ]);
+      expect(Object.fromEntries(conteudo.identificacao)).toMatchObject({
+        "Registro do download": "reg-1",
+      });
+      expect(planilhasDoRelatorio(conteudo).map((p) => p.nome)).toEqual([
+        "Resumo",
+        "Gráfico - Vagas por unidade",
+        "Gráfico - Contratações por mês",
+      ]);
+    });
+
+    it("PDF: sem a imagem, o gráfico sai como tabela; com ela, a imagem e a fonte", async () => {
+      const escolha = {
+        secoes: ["numeros"] as const,
+        colunas: ["edital"] as const,
+        graficos: ["vagas-por-unidade"] as const,
+        formato: "PDF" as const,
+      };
+      const conteudo = conteudoDoRelatorio({
+        escolha: {
+          ...escolha,
+          secoes: [...escolha.secoes],
+          colunas: [...escolha.colunas],
+          graficos: [...escolha.graficos],
+        },
+        linhas: LINHAS,
+        filtros: filtrosVazios(),
+        area: "saude-indigena",
+        rotuloDaArea: "Saúde Indígena",
+        indicadores: indicadoresDaVisaoGeral(LINHAS),
+        agora: new Date("2099-11-13T15:00:00Z"),
+      });
+      const libs = await carregarBibliotecasDoPdf();
+      const semImagem = new TextDecoder("latin1").decode(
+        await pdfDoRelatorio(conteudo, libs, { comprimir: false }),
+      );
+      for (const trecho of ["Vagas imediatas", "DSEI Alfa", "Fonte"])
+        expect(semImagem).toContain(trecho);
+      // Um PNG de 1×1 no lugar do desenho.
+      const png = Uint8Array.from(
+        atob(
+          "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==",
+        ),
+        (c) => c.charCodeAt(0),
+      );
+      const comImagem = new TextDecoder("latin1").decode(
+        await pdfDoRelatorio(conteudo, libs, {
+          comprimir: false,
+          imagens: [{ bytes: png, largura: 1100, altura: 400 }],
+        }),
+      );
+      expect(comImagem).toContain("/Subtype /Image");
+      expect(comImagem).toContain("Fonte: monitoramento");
+      expect(comImagem).not.toContain("(DSEI Alfa)");
     });
   });
 });
