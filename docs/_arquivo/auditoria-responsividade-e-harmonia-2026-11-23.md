@@ -307,6 +307,30 @@ e `.ui-tabela-busca`.
 
 ### Lote 5 — Cartões, indicadores, gavetas e modais
 
+**Feito em 24/11/2026.** Na auditoria seguinte (466 medições): 0 componente feito à mão na tela e
+na camada (eram 18 na rodada antes do lote, 26 no diagnóstico), 0 fonte e 0 peso fora da escala
+(era o título do modal do edital), 0 cor fora de token (as 6 das prévias levam
+`data-cor-configurada` e ficam fora da conta), 0 "passa do pai" no modal de Editais (eram 9) e
+nenhuma grade de indicadores com item sozinho, em nenhuma largura. A auditoria passou a medir
+"Indicador sozinho na última linha", e a trava do CI (`tests/auditoria-visual.spec.js`,
+"componentes de src/ui/ e indicadores a 1280px") cobre as 25 telas e as camadas.
+
+- Configurações: a barra é a `.ui-barra-de-salvar` (`config-barra` só põe a situação à esquerda e
+  o recuo da Aya).
+- Cronograma: o dia é `ui-card ui-card-clicavel` (card clicável novo em `ui.css`, DS 11.6) e a
+  legenda é `ui-chip` com `aria-pressed`; as fases da Visão geral também. Comemorações (palco e
+  efeitos) e a página do edital sobre `ui-card`.
+- Modal do edital: `.modal-head h3` com o título da norma (18/26px, 600) para todos os modais
+  legados; os indicadores automáticos e o resumo do cronograma em `Kv`; as caixas do editor em
+  `ui-secao` e `ui-acoes`; a tabela das etapas na `.ui-tabela-rolagem`; o editor numa coluna
+  `minmax(0, 1fr)`. A tabela de Acessos também na `.ui-tabela-rolagem`.
+- `GradeDeKpis` sem órfão: só CSS (`:has` conta 4 a 10 filhos): todos numa linha quando cabem,
+  senão a metade por linha (8 em 4 + 4), senão 2; em duas colunas, o último ímpar ocupa a linha.
+- Análises no erro (ou sem sessão ou acesso): só o aviso, sem filtros, indicadores, gráficos e
+  tabela em esqueleto.
+- Ficou fora: o recuo da Aya na barra de salvar (padding de 108px, fora da escala por desenho) e o
+  resumo da linha do tempo do edital (`nucleo-timeline-summary`), que a auditoria não abre.
+
 - Configurações: `.config-barra` vira a barra de salvar de `src/ui/` (`ui-barra-de-salvar`).
 - Cronograma: `cal-celula` e `cal-legenda-item` como componentes da norma (célula e chip);
   Comemorações (`comemoracoes-efeito`, `comemoracoes-palco`), página do edital

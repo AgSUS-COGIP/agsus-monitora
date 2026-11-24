@@ -11,9 +11,21 @@ import type {
   PlanilhaDaClassificacao,
 } from "../classificacao/tipos-dos-documentos.ts";
 import type { ZiparComCompressao } from "../aprovados/exportacao/exportacao-da-lista-de-aprovados.ts";
-import type { LinhaPorCargo } from "./relatorio-da-diretoria.ts";
+import type {
+  AprovadoDaDiretoria,
+  LinhaPorCargo,
+} from "./relatorio-da-diretoria.ts";
+import type {
+  DadosDoGrafico,
+  GraficoDoRelatorio,
+} from "./graficos-do-relatorio.ts";
 import { arquivosDoXlsx } from "../classificacao/exportacao.ts";
 import { hojeEmBrasilia } from "../cronograma/cronograma-do-edital.ts";
+import {
+  dadosDosGraficos,
+  normalizarGraficos,
+  planilhaDoGrafico,
+} from "./graficos-do-relatorio.ts";
 import {
   contratacoesAlemDasVagas,
   contratadasImediatas,
@@ -37,7 +49,8 @@ import {
   você consegue montar o relatório do jeito que quiser")
 
   Quem gera escolhe as seções, as colunas da tabela dos editais e o formato
-  (PDF ou Excel), ou parte de um modelo pronto. Tudo sai do recorte da tela
+  (PDF ou Excel), e pode juntar gráficos (graficos-do-relatorio.ts), ou
+  parte de um modelo pronto. Tudo sai do recorte da tela
   (área, filtros, busca e atalho). Aqui, sem DOM: a escolha normalizada, o
   conteúdo (textos prontos) e as planilhas do Excel. As seções "Vagas por
   cargo" e "Aprovados" (abas 2 e 3 do relatório da diretoria) vêm do banco na
@@ -78,6 +91,8 @@ export const FORMATOS_DO_RELATORIO: readonly {
 export interface EscolhaDoRelatorio {
   secoes: readonly SecaoDoRelatorio[];
   colunas: readonly ColunaDaTabela[];
+  /** O grupo "Gráficos" (pode ficar vazio); o CSV não leva. */
+  graficos: readonly GraficoDoRelatorio[];
   formato: FormatoDoRelatorio;
 }
 
@@ -106,6 +121,7 @@ export const MODELOS_DO_RELATORIO: readonly {
         "vagas_ociosas",
         "status",
       ],
+      graficos: [],
       formato: "PDF",
     },
   },
@@ -115,6 +131,7 @@ export const MODELOS_DO_RELATORIO: readonly {
     escolha: {
       secoes: ["numeros", "editais", "atencao"],
       colunas: COLUNAS_INICIAIS.filter((c) => c !== "atencao"),
+      graficos: [],
       formato: "PDF",
     },
   },
@@ -132,6 +149,7 @@ export const MODELOS_DO_RELATORIO: readonly {
         "data_fim",
         "ciclo",
       ],
+      graficos: [],
       formato: "XLSX",
     },
   },
@@ -158,6 +176,7 @@ export function normalizarEscolha(bruto: unknown): EscolhaDoRelatorio {
   return {
     secoes: secoes.length ? secoes : padrao.secoes,
     colunas: colunas.length ? colunas : padrao.colunas,
+    graficos: normalizarGraficos(origem.graficos),
     formato:
       origem.formato === "XLSX" || origem.formato === "CSV"
         ? origem.formato
@@ -165,16 +184,20 @@ export function normalizarEscolha(bruto: unknown): EscolhaDoRelatorio {
   };
 }
 
-/** Marca ou desmarca um item, mantendo a ordem da lista completa e ao menos um. */
+/**
+ * Marca ou desmarca um item, mantendo a ordem da lista completa e ao menos
+ * `minimo` (1 nas seções e colunas; 0 nos gráficos, que podem ficar de fora).
+ */
 export function alternarNaEscolha<T extends string>(
   todos: readonly T[],
   atuais: readonly T[],
   item: T,
+  minimo = 1,
 ): T[] {
   const proximos = atuais.includes(item)
     ? atuais.filter((x) => x !== item)
     : todos.filter((x) => x === item || atuais.includes(x));
-  return proximos.length ? proximos : [...atuais];
+  return proximos.length >= minimo ? proximos : [...atuais];
 }
 
 /** O modelo pronto igual à escolha (para a lista marcar), ou "" (personalizado). */
@@ -186,6 +209,7 @@ export function modeloDaEscolha(escolha: EscolhaDoRelatorio): string {
       (m) =>
         igual(m.escolha.secoes, escolha.secoes) &&
         igual(m.escolha.colunas, escolha.colunas) &&
+        igual(m.escolha.graficos, escolha.graficos) &&
         m.escolha.formato === escolha.formato,
     )?.id || ""
   );
@@ -296,6 +320,8 @@ export interface ConteudoDoRelatorio {
   geradoEm: string;
   identificacao: readonly (readonly [string, string])[];
   numeros: readonly (readonly [string, string])[] | null;
+  /** Os gráficos escolhidos (no PDF, depois dos números; no Excel, uma aba cada). */
+  graficos: readonly DadosDoGrafico[];
   tabelas: readonly TabelaDoRelatorio[];
 }
 
@@ -337,6 +363,7 @@ export function conteudoDoRelatorio({
   agora = new Date(),
   porCargo = null,
   aprovados = null,
+  aprovadosDosGraficos = null,
 }: {
   escolha: EscolhaDoRelatorio;
   linhas: readonly LinhaDaVisaoGeral[];
@@ -356,6 +383,11 @@ export function conteudoDoRelatorio({
     linhas: readonly (readonly string[])[];
     registro: string;
   } | null;
+  /** Os aprovados dos gráficos que saem deles e o registro do download. */
+  aprovadosDosGraficos?: {
+    aprovados: readonly AprovadoDaDiretoria[];
+    registro: string;
+  } | null;
 }): ConteudoDoRelatorio {
   const resumo = resumoDoRelatorio({ filtros, busca, atalho, linhas });
   const geradoEm = agora.toLocaleString("pt-BR", {
@@ -373,8 +405,24 @@ export function conteudoDoRelatorio({
     ["Gerado em", geradoEm],
   ];
   if (txt(quem)) identificacao.push(["Gerado por", txt(quem)]);
+  const graficos = dadosDosGraficos({
+    graficos: escolha.graficos,
+    linhas,
+    aprovados: aprovadosDosGraficos?.aprovados ?? null,
+  });
+  const registros = new Set<string>();
   if (aprovados && escolha.secoes.includes("aprovados"))
-    identificacao.push(["Registro do download", aprovados.registro]);
+    registros.add(aprovados.registro);
+  if (
+    aprovadosDosGraficos &&
+    graficos.some(
+      (g) =>
+        g.id === "contratacoes-por-mes" || g.id === "situacao-dos-aprovados",
+    )
+  )
+    registros.add(aprovadosDosGraficos.registro);
+  for (const registro of registros)
+    identificacao.push(["Registro do download", registro]);
 
   const VALOR: Record<string, number> = {
     kpi_vagas_label: indicadores.vagas,
@@ -481,13 +529,14 @@ export function conteudoDoRelatorio({
     geradoEm,
     identificacao,
     numeros,
+    graficos,
     tabelas,
   };
 }
 
 // ── Excel ───────────────────────────────────────────────────────────────
 
-/** As planilhas do Excel: "Resumo" (identificação e números) e uma por tabela. */
+/** As planilhas do Excel: "Resumo" (identificação e números), uma por gráfico e uma por tabela. */
 export function planilhasDoRelatorio(
   conteudo: ConteudoDoRelatorio,
 ): PlanilhaDaClassificacao[] {
@@ -509,6 +558,7 @@ export function planilhasDoRelatorio(
   };
   return [
     { nome: "Resumo", linhas: resumo, larguras: [28, 80] },
+    ...conteudo.graficos.map(planilhaDoGrafico),
     ...conteudo.tabelas.map((t) => ({
       nome: t.titulo.slice(0, 31),
       linhas: [

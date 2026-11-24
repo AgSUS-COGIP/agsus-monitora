@@ -46,6 +46,10 @@
 .encerramento .ui-kpis {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
+/* Três numa linha: o último não se estica como na grade de duas do celular. */
+.encerramento .ui-kpis > :last-child {
+  grid-column: auto;
+}
 .encerramento-obrigado {
   margin: 0;
   text-align: center;

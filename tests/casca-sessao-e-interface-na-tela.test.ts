@@ -11199,7 +11199,7 @@ bloco("ui/familia-da-selecao", () => {
       expect($("[role='menu']")).toBeNull();
     });
 
-    it("a lista fixa fecha quando a página rola; sem nada, nada é desenhado", async () => {
+    it("a lista fixa fecha quando a rolagem move o botão, não por rolar à toa; sem nada, nada é desenhado", async () => {
       await montar(
         h(MenuDeAcoes, {
           compacto: true,
@@ -11207,8 +11207,18 @@ bloco("ui/familia-da-selecao", () => {
           acoes: [{ id: "a", rotulo: "A", aoEscolher: () => {} }],
         }),
       );
-      await clicar($("[data-acao='abrir-menu']"));
+      const botao = definido($<HTMLElement>("[data-acao='abrir-menu']"));
+      let topo = 300;
+      botao.getBoundingClientRect = () =>
+        ({ top: topo, left: 900, right: 932, bottom: topo + 32 }) as DOMRect;
+      await clicar(botao);
       expect($("[role='menu']")).not.toBeNull();
+      // A caixa da tabela avisa uma rolagem ao abrir, sem mover o botão: fica aberta.
+      await act(async () => {
+        document.dispatchEvent(new Event("scroll"));
+      });
+      expect($("[role='menu']")).not.toBeNull();
+      topo = 240;
       await act(async () => {
         document.dispatchEvent(new Event("scroll"));
       });

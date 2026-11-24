@@ -1,7 +1,7 @@
 ---
 tipo: regra
 area: front
-atualizado: 2026-11-17
+atualizado: 2026-11-24
 ---
 
 # Design e tokens
@@ -126,11 +126,12 @@ de `tokens.css`. Fora do escopo do DS: mantido, sem investir.
 
 Decisões do responsável (25/09/2026); não "corrigir" para o DS.
 
-| Exceção                                    | Como fica                                                                                                                                   |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| KPIs em card (DS 11.7 pede faixa sem card) | `Kpi` de `src/ui/`: card compacto de ~78px no padrão do DS 11.6 (borda sutil, sem sombra), em todas as telas                                |
-| Blocos da tela em card                     | filtros, tabela, mapa e blocos em card (DS 11.6, sem sombra), sem card dentro de card; 12px entre os blocos, não os 48px de seção do DS 5.2 |
-| Cor da barra lateral                       | a de Configurações → Aparência (`ui_sidebar_background_color`), não o `--color-sidebar-bg` oficial                                          |
+| Exceção                                    | Como fica                                                                                                                                                             |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| KPIs em card (DS 11.7 pede faixa sem card) | `Kpi` de `src/ui/`: card compacto de ~78px no padrão do DS 11.6 (borda sutil, sem sombra), em todas as telas                                                          |
+| Blocos da tela em card                     | filtros, tabela, mapa e blocos em card (DS 11.6, sem sombra), sem card dentro de card; 12px entre os blocos, não os 48px de seção do DS 5.2                           |
+| Cor da barra lateral                       | a de Configurações → Aparência (`ui_sidebar_background_color`), não o `--color-sidebar-bg` oficial                                                                    |
+| Prévias de cor configurada                 | o elemento que mostra a cor escolhida pela pessoa (cartão da Tela de acesso, aviso de contraste) leva `data-cor-configurada`; a auditoria visual não conta a cor dele |
 
 ## Componentes
 

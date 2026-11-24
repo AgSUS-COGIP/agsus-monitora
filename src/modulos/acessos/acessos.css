@@ -98,7 +98,11 @@ td.acessos-vazio {
   font-variant-numeric: tabular-nums;
 }
 
-/* ── Tabela leve (design.md 11.4) ─────────────────────────────────────────── */
+/*
+  ── Tabela leve (design.md 11.4) ───────────────────────────────────────────
+  A caixa é a `.ui-tabela-rolagem` de src/ui/ (borda, primeira coluna fixa e
+  sinal de rolagem); aqui, a altura, os cabeçalhos presos e as células.
+*/
 .acessos-tabela {
   isolation: isolate;
   max-width: 100%;
@@ -107,6 +111,7 @@ td.acessos-vazio {
 }
 .acessos-tabela table {
   width: 100%;
+  min-width: 0;
   border-collapse: separate;
   border-spacing: 0;
   font-variant-numeric: tabular-nums;

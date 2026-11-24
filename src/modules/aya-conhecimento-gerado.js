@@ -4072,7 +4072,7 @@ export const VERBETES_AYA = Object.freeze([
       "aprovados com data de admissao",
     ],
     resposta:
-      'O montador de relatório fica em Relatórios (menu Dados), no cartão "Montar relatório" do grupo Editais, com todos os editais da área, sem filtros. Na Visão geral, o botão "Ver em Relatórios" abre o mesmo montador com o que está na tela (área, filtros, busca e atalho); os botões "Exportar em Excel" e "Salvar em PDF" da Visão geral baixam só a tabela como está. O modelo Diretoria também sai direto do cartão "Relatório da diretoria", em Relatórios. Escolha um modelo pronto (Resumo rápido, Completo ou Diretoria) ou monte o seu: marque as seções (resumo em números, tabela dos editais, vagas por cargo, aprovados, editais que pedem atenção), as colunas da tabela e o formato. O modelo Diretoria sai em Excel com três abas: Editais (número, unidade, vagas, divulgação, encerramento e ciclo), Vagas por cargo (cada vaga do edital com as vagas imediatas, os inscritos e os aprovados; as vagas imediatas vêm do quadro de vagas do edital ou do texto da vaga, e ficam "—" quando nenhum dos dois tem o número) e Aprovados (edital, cargo, nota, classificação, nome, status, matrícula e data de admissão conciliada com o RH). A seção Aprovados só aparece para quem tem acesso à Lista de aprovados, e cada download fica registrado com o nome de quem baixou. No PDF, acima de 3 mil aprovados, o Yeendé pede o Excel ou um recorte menor. O PDF sai como um documento, com o timbrado da AgSUS, os números, as tabelas e "Página X de Y"; o Excel sai com uma aba por seção; o CSV leva todas as colunas da tabela, como antes. Pelo "Ver em Relatórios" da Visão geral, o relatório sai do que estava na tela; pelo cartão, sai da área inteira. A última escolha fica guardada neste navegador.',
+      'O montador de relatório fica em Relatórios (menu Dados), no cartão "Montar relatório" do grupo Editais, com todos os editais da área, sem filtros. Na Visão geral, o botão "Ver em Relatórios" abre o mesmo montador com o que está na tela (área, filtros, busca e atalho); os botões "Exportar em Excel" e "Salvar em PDF" da Visão geral baixam só a tabela como está. O modelo Diretoria também sai direto do cartão "Relatório da diretoria", em Relatórios. Escolha um modelo pronto (Resumo rápido, Completo ou Diretoria) ou monte o seu: marque as seções (resumo em números, tabela dos editais, vagas por cargo, aprovados, editais que pedem atenção), as colunas da tabela, os gráficos e o formato. O modelo Diretoria sai em Excel com três abas: Editais (número, unidade, vagas, divulgação, encerramento e ciclo), Vagas por cargo (cada vaga do edital com as vagas imediatas, os inscritos e os aprovados; as vagas imediatas vêm do quadro de vagas do edital ou do texto da vaga, e ficam "—" quando nenhum dos dois tem o número) e Aprovados (edital, cargo, nota, classificação, nome, status, matrícula e data de admissão conciliada com o RH). A seção Aprovados só aparece para quem tem acesso à Lista de aprovados, e cada download fica registrado com o nome de quem baixou. No PDF, acima de 3 mil aprovados, o Yeendé pede o Excel ou um recorte menor. O PDF sai como um documento, com o timbrado da AgSUS, os números, as tabelas e "Página X de Y"; o Excel sai com uma aba por seção; o CSV leva todas as colunas da tabela, como antes. Pelo "Ver em Relatórios" da Visão geral, o relatório sai do que estava na tela; pelo cartão, sai da área inteira. A última escolha fica guardada neste navegador.',
     fato: "",
     fonte:
       "src/modulos/paineis-de-dados/montador-de-relatorio.tsx; src/lib/paineis/relatorio-da-visao-geral.ts",
@@ -7218,6 +7218,29 @@ export const VERBETES_AYA = Object.freeze([
     fato: "",
     fonte:
       "src/lib/paineis/catalogo-dos-relatorios.ts; src/modulos/paineis-de-dados/gerar-relatorio.ts; src/lib/paineis/relatorio-da-diretoria.ts",
+    abrir: "paineis-de-dados",
+  },
+  {
+    arquivo: "regras-dos-paineis.md",
+    titulo: "Gráficos no relatório",
+    perguntas: [
+      "grafico no relatorio",
+      "relatorio com graficos",
+      "montar relatorio com grafico",
+      "grafico no pdf",
+      "grafico no excel",
+      "vagas por unidade",
+      "editais por fase",
+      "contratacoes por mes",
+      "situacao dos aprovados",
+      "previa do grafico",
+      "carregar previa",
+    ],
+    resposta:
+      'No montador de relatório (cartão "Montar relatório", em Relatórios), o grupo Gráficos tem quatro caixas: Vagas × contratadas por unidade (barras por DSEI ou unidade, com o preenchimento das vagas imediatas), Editais por fase (os editais em andamento de Inscrições a Resultado, como o "Em andamento, por fase" da Visão geral), Contratações por mês (linha com as admissões conciliadas com o RH dos aprovados contratados) e Situação dos aprovados (barras empilhadas por edital com Contratado, Convocado, Desistente e Reserva, que é quem ainda não tem status). Os gráficos seguem o mesmo recorte do relatório. Ao marcar um gráfico, a miniatura aparece logo abaixo; os dois dos aprovados só aparecem para quem tem acesso à Lista de aprovados, e a miniatura deles carrega no botão "Carregar prévia", porque a leitura dos aprovados fica registrada com o nome de quem pediu (a geração reaproveita essa leitura no mesmo formato). No PDF, cada gráfico sai como imagem, depois dos números, com o título em cima e a fonte embaixo. No Excel, cada gráfico vira uma aba com a tabela dos números dele: a planilha gerada pelo Yeendé não desenha gráfico, e o desenho fica no PDF. O CSV não leva gráficos.',
+    fato: "",
+    fonte:
+      "src/lib/paineis/graficos-do-relatorio.ts; src/modulos/paineis-de-dados/graficos-do-relatorio.tsx; src/modulos/paineis-de-dados/montador-de-relatorio.tsx",
     abrir: "paineis-de-dados",
   },
   {

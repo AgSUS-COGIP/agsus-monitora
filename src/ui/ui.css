@@ -469,17 +469,117 @@
 .ui-chip:hover {
   background: color-mix(in srgb, var(--state-info) 12%, var(--state-info-soft));
 }
+/* Chip que liga e desliga um filtro (fases da Visão geral, tipos do Cronograma). */
+.ui-chip[aria-pressed="true"] {
+  box-shadow: inset 0 0 0 1px var(--focus-ring);
+}
+.ui-chip:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/*
+  Card clicável (Design System 11.6): o card inteiro é o botão — um dia do
+  Cronograma, um efeito de Comemorações. Hover em fundo de hover, foco em volta
+  do card, escolhido (aria-checked/aria-pressed) com a borda da marca.
+*/
+.ui-card-clicavel {
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--motion-fast) var(--ease-standard),
+    background var(--motion-fast) var(--ease-standard);
+}
+.ui-card-clicavel:hover {
+  border-color: var(--border-control);
+  background: var(--surface-hover);
+}
+.ui-card-clicavel:is([aria-checked="true"], [aria-pressed="true"]) {
+  border-color: var(--brand-primary);
+  background: var(--state-info-soft);
+}
+.ui-card-clicavel:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
 
 /* ── Kpi: card compacto de ~78px (exceção ao Design System 11.7: docs/biblioteca/design-e-tokens.md) ───────────── */
 
 /* Linhas de altura igual: um rótulo que quebra não deixa um card mais alto. */
-/* 140px: os 8 indicadores de Editais cabem numa linha no notebook (1366px),
-   sem um cartão sozinho na segunda. */
 .ui-kpis {
+  --kpis-minimo: 140px;
+  --kpis-vao: var(--space-3);
+  --kpis-coluna: var(--kpis-minimo);
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(var(--kpis-coluna), 1fr));
   grid-auto-rows: 1fr;
-  gap: var(--space-3);
+  gap: var(--kpis-vao);
+}
+/*
+  Sem indicador sozinho na última linha: com N indicadores (4 a 10), a grade
+  põe os N numa linha quando cabem com 140px cada; senão, a metade (para cima)
+  por linha (8 viram 4 + 4, 7 viram 4 + 3); e, se nem a metade cabe, 2 por
+  linha. É uma conta só de CSS sobre a largura da grade (100%): o
+  `* 1000` transforma "cabe ou não cabe" num degrau, e o `- 1px` garante o
+  número exato de colunas do auto-fit. O `:where` não soma especificidade,
+  para as telas que fixam as próprias colunas continuarem vencendo.
+*/
+.ui-kpis:where(:has(> :nth-child(4):last-child)) {
+  --kpis-n: 4;
+  --kpis-meia: 2;
+}
+.ui-kpis:where(:has(> :nth-child(5):last-child)) {
+  --kpis-n: 5;
+  --kpis-meia: 3;
+}
+.ui-kpis:where(:has(> :nth-child(6):last-child)) {
+  --kpis-n: 6;
+  --kpis-meia: 3;
+}
+.ui-kpis:where(:has(> :nth-child(7):last-child)) {
+  --kpis-n: 7;
+  --kpis-meia: 4;
+}
+.ui-kpis:where(:has(> :nth-child(8):last-child)) {
+  --kpis-n: 8;
+  --kpis-meia: 4;
+}
+.ui-kpis:where(:has(> :nth-child(9):last-child)) {
+  --kpis-n: 9;
+  --kpis-meia: 5;
+}
+.ui-kpis:where(:has(> :nth-child(10):last-child)) {
+  --kpis-n: 10;
+  --kpis-meia: 5;
+}
+.ui-kpis:where(
+  :has(> :nth-child(4):last-child),
+  :has(> :nth-child(5):last-child),
+  :has(> :nth-child(6):last-child),
+  :has(> :nth-child(7):last-child),
+  :has(> :nth-child(8):last-child),
+  :has(> :nth-child(9):last-child),
+  :has(> :nth-child(10):last-child)
+) {
+  --kpis-cabem-todos: calc(
+    var(--kpis-n) * var(--kpis-minimo) + (var(--kpis-n) - 1) * var(--kpis-vao)
+  );
+  --kpis-cabe-a-metade: calc(
+    var(--kpis-meia) * var(--kpis-minimo) + (var(--kpis-meia) - 1) *
+      var(--kpis-vao)
+  );
+  --kpis-coluna: max(
+    min(
+      calc((100% + var(--kpis-vao)) / var(--kpis-meia) - var(--kpis-vao) - 1px),
+      max(var(--kpis-minimo), calc((var(--kpis-cabem-todos) - 100%) * 1000))
+    ),
+    min(
+      calc((100% + var(--kpis-vao)) / 2 - var(--kpis-vao) - 1px),
+      calc((var(--kpis-cabe-a-metade) - 100%) * 1000)
+    )
+  );
 }
 /*
   Os tons dos indicadores vêm da paleta do rio (tokens.css): info no rio,
@@ -1677,6 +1777,10 @@ th[aria-sort="descending"] .ui-ordenar i {
   }
   .ui-kpis {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /* Em duas colunas, o último de uma conta ímpar ocupa a linha (sem buraco). */
+  .ui-kpis > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
   }
   /*
     Topo no celular (13/11/2026): a hora da carga numa linha e os botões

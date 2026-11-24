@@ -102,32 +102,11 @@
   color: var(--text-secondary);
   cursor: not-allowed;
 }
-.editais-formulario .readonly-metrics {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: var(--space-2);
+/* Indicadores automáticos: pares rótulo/valor de src/ui/ (GradeDeKv e Kv). */
+.editais-formulario .editais-indicadores {
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
 }
-.editais-formulario .metric-readonly {
-  min-height: 0;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  background: var(--surface-card);
-}
-.editais-formulario .metric-readonly span {
-  display: block;
-  color: var(--text-secondary);
-  font-size: var(--text-caption);
-  font-weight: var(--font-weight-medium);
-  letter-spacing: 0;
-  text-transform: none;
-}
-.editais-formulario .metric-readonly b {
-  display: block;
-  margin-top: var(--space-1);
-  color: var(--text-primary);
-  font-size: var(--text-metric-sm);
-  font-weight: var(--font-weight-semibold);
+.editais-indicadores .ui-kv-valor {
   font-variant-numeric: tabular-nums;
 }
 .editais-formulario-rodape {
@@ -234,8 +213,10 @@
 
 /* ── Editor de cronograma ───────────────────────────────────────────── */
 
+/* Uma coluna que não cresce além do modal: o que é largo (a tabela) rola dentro. */
 .cronograma-editor {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
   margin-top: var(--space-2);
   padding: var(--space-4);
@@ -246,6 +227,7 @@
 }
 .cronograma-heading {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
@@ -277,19 +259,12 @@
   height: 17px;
   accent-color: var(--brand-primary);
 }
-.cronograma-status-preview {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-2);
-}
-.cronograma-status-preview > div,
 .nucleo-timeline-summary > div {
   padding: var(--space-3);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   background: var(--surface-raised);
 }
-.cronograma-status-preview span,
 .nucleo-timeline-summary span {
   display: block;
   margin-bottom: var(--space-1);
@@ -297,41 +272,17 @@
   font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
 }
-.cronograma-status-preview strong,
 .nucleo-timeline-summary strong {
   display: block;
   color: var(--text-primary);
   font-size: var(--text-body-sm);
   line-height: var(--leading-body-sm);
 }
-.cronograma-manual-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  border: 1px dashed var(--border-control);
-  border-radius: var(--radius-lg);
-  background: var(--surface-raised);
-}
-.cronograma-manual-actions .btn {
-  margin: 0;
-}
 .cronograma-recommended-badge {
   margin-left: var(--space-2);
 }
 
-/* Caixas de ferramenta: copiar cronograma, anexos (PDF), colar datas. */
-.cronograma-copy-box,
-.cronograma-bulk-dates {
-  display: grid;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--border-subtle);
-  border-left: 3px solid var(--state-info);
-  border-radius: var(--radius-lg);
-  background: var(--state-info-soft);
-}
+/* Caixas de ferramenta (copiar cronograma, anexos, retificação, colar datas): `ui-secao`. */
 .cronograma-bulk-dates[hidden] {
   display: none;
 }
@@ -429,30 +380,12 @@
   padding-left: var(--space-5);
 }
 
-.cronograma-table-wrap {
-  overflow: auto;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-}
-.cronograma-table {
+/* A tabela das etapas é a `.ui-tabela-rolagem` de src/ui/; aqui, só a largura e o "#". */
+.cronograma-table-wrap .cronograma-table {
   width: 100%;
   min-width: 760px;
-  border-collapse: collapse;
-}
-.cronograma-table th {
-  padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--border-subtle);
-  background: var(--surface-raised);
-  color: var(--text-secondary);
-  font-size: var(--text-caption);
-  font-weight: var(--font-weight-medium);
-  letter-spacing: 0;
-  text-align: left;
-  text-transform: none;
 }
 .cronograma-table td {
-  padding: var(--space-2) var(--space-3);
-  border-top: 1px solid var(--border-subtle);
   vertical-align: middle;
 }
 .cronograma-table td:first-child {
@@ -505,15 +438,6 @@
   display: none;
 }
 
-.cronograma-governance,
-.cronograma-history-section {
-  display: grid;
-  gap: var(--space-3);
-  padding: var(--space-4);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  background: var(--surface-raised);
-}
 .cronograma-governance-heading,
 .cronograma-history-heading strong {
   color: var(--text-primary);

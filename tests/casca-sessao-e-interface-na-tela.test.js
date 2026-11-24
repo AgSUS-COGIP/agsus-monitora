@@ -3138,7 +3138,7 @@ bloco("layout-no-celular", () => {
       ],
       [
         "src/modulos/configuracoes/configuracoes.css",
-        /\.config-barra\s*\{[^}]*padding:[^;]*var\(--aya-reserva/,
+        /\.config-barra\s*\{[^}]*padding-right:[^;]*var\(--aya-reserva/,
       ],
     ])("%s recua da arara", (arquivo, regra) => {
       expect(css(arquivo)).toMatch(regra);

@@ -24,6 +24,7 @@ import {
   Aviso,
   Campo,
   ErroAoCarregar,
+  Kv,
   LinhasEsqueleto,
   Selo,
 } from "../../ui/index.ts";
@@ -196,7 +197,7 @@ function CopiaDeCronograma({
   }
 
   return (
-    <section id="cronogramaCopyBox" className="cronograma-copy-box">
+    <section id="cronogramaCopyBox" className="ui-secao">
       <strong className="cronograma-copy-heading">
         Copiar cronograma de outro edital
       </strong>
@@ -317,7 +318,7 @@ function LoteDeDatas({
   return (
     <section
       id="cronogramaBulkDates"
-      className="cronograma-bulk-dates"
+      className="ui-secao cronograma-bulk-dates"
       hidden={!aberto}
     >
       <div className="cronograma-bulk-head">
@@ -370,7 +371,7 @@ function HistoricoDoCronograma({
   historico: RegistroDoHistoricoDoCronograma[];
 }) {
   return (
-    <section className="cronograma-history-section">
+    <section className="ui-secao">
       <div className="cronograma-history-heading">
         <strong>Histórico do cronograma</strong>
         <span id="cronogramaHistoryCount">
@@ -525,26 +526,22 @@ export function EditorDeCronograma({
         </label>
       </div>
 
-      <div className="cronograma-status-preview" id="cronogramaPreview">
-        <div>
-          <span>Status calculado</span>
-          <strong id="cronogramaStatusPreview">{previa.status}</strong>
-        </div>
-        <div>
-          <span>Etapa calculada</span>
-          <strong id="cronogramaEtapaPreview">{previa.etapa}</strong>
-        </div>
-        <div>
-          <span>Próxima atividade</span>
-          <strong id="cronogramaProximaPreview">{previa.proxima}</strong>
-        </div>
-        <div>
-          <span>Progresso</span>
-          <strong id="cronogramaPercentualPreview">{previa.percentual}%</strong>
-        </div>
+      <div className="ui-kv-grade" id="cronogramaPreview">
+        <Kv rotulo="Status calculado">
+          <span id="cronogramaStatusPreview">{previa.status}</span>
+        </Kv>
+        <Kv rotulo="Etapa calculada">
+          <span id="cronogramaEtapaPreview">{previa.etapa}</span>
+        </Kv>
+        <Kv rotulo="Próxima atividade">
+          <span id="cronogramaProximaPreview">{previa.proxima}</span>
+        </Kv>
+        <Kv rotulo="Progresso">
+          <span id="cronogramaPercentualPreview">{previa.percentual}%</span>
+        </Kv>
       </div>
 
-      <div className="cronograma-actions-box cronograma-manual-actions">
+      <div className="ui-acoes">
         <button
           id="cronogramaAddRow"
           type="button"
@@ -632,7 +629,7 @@ export function EditorDeCronograma({
         aoAplicar={aplicarLote}
       />
 
-      <div className="cronograma-table-wrap" ref={tabela}>
+      <div className="ui-tabela-rolagem cronograma-table-wrap" ref={tabela}>
         <table className="cronograma-table">
           <thead>
             <tr>
@@ -786,7 +783,7 @@ export function EditorDeCronograma({
         </div>
       </div>
 
-      <section className="cronograma-governance">
+      <section className="ui-secao cronograma-governance">
         <strong className="cronograma-governance-heading">
           Registro da alteração
         </strong>

@@ -150,7 +150,7 @@ function Bloco({
   children: ReactNode;
 }) {
   return (
-    <section className="pagina-do-edital-bloco" aria-labelledby={id}>
+    <section className="ui-card pagina-do-edital-bloco" aria-labelledby={id}>
       <div className="pagina-do-edital-titulo-do-bloco">
         <h3 id={id}>{titulo}</h3>
         {extra ? <span>{extra}</span> : null}

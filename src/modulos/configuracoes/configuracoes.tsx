@@ -164,7 +164,11 @@ function BarraDeSalvar({ estado }: ComEstado) {
   const alterado = estado.temAlteracoes();
   const situacao = situacaoDaBarra(atual, alterado);
   return (
-    <div className="config-barra" aria-live="polite" data-tour="config-barra">
+    <div
+      className="ui-barra-de-salvar config-barra"
+      aria-live="polite"
+      data-tour="config-barra"
+    >
       <div className="config-barra__situacao">
         <span
           className={`config-barra__icone config-barra__icone--${situacao.tom}`}

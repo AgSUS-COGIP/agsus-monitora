@@ -211,7 +211,7 @@ textarea,
     margin: 0 !important;
     border-radius: var(--radius-xl) var(--radius-xl) 0 0 !important;
     overflow-y: auto;
-    padding-bottom: calc(18px + var(--mobile-safe-bottom)) !important;
+    padding-bottom: calc(var(--space-4) + var(--mobile-safe-bottom)) !important;
   }
 
   .toast-box,

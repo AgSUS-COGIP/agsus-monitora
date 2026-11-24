@@ -96,7 +96,7 @@ export function LegendaDosTipos({
           <button
             key={tipo.id}
             type="button"
-            className="cal-legenda-item"
+            className="ui-chip cal-legenda-item"
             data-cor={tipo.cor}
             data-tipo={tipo.id}
             aria-pressed={ligado}
@@ -188,7 +188,7 @@ function CelulaDoMes({
     <button
       type="button"
       className={classes(
-        "cal-celula",
+        "ui-card ui-card-clicavel cal-celula",
         celula.hoje && "hoje",
         aberto && "selecionado",
         !celula.total && "vazio",
@@ -264,7 +264,10 @@ export function GradeEsqueleto() {
       </div>
       <div className="cal-dias cal-dias-esqueleto" aria-hidden="true">
         {Array.from({ length: 35 }, (_, indice) => (
-          <span key={indice} className="cal-celula cal-celula-esqueleto">
+          <span
+            key={indice}
+            className="ui-card cal-celula cal-celula-esqueleto"
+          >
             <span className="ui-esqueleto cal-numero-esqueleto" />
           </span>
         ))}

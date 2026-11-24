@@ -35,6 +35,7 @@ const TIPOS = {
   espaco: "Espaçamento fora da escala",
   cor: "Cor que não é token",
   feitoAMao: "Componente feito à mão",
+  indicadorSozinho: "Indicador sozinho na última linha",
 };
 
 const chaveDoAchado = (tipo, a) => {
@@ -60,7 +61,7 @@ const chaveDoAchado = (tipo, a) => {
 /* O que conta em cada tipo (o resto vai para notas, não para o ranking). */
 const conta = (tipo, a) => {
   if (tipo === "reticencias") return !a.intencional;
-  if (tipo === "cor") return !a.derivada && !a.barra;
+  if (tipo === "cor") return !a.derivada && !a.barra && !a.configurada;
   return true;
 };
 
@@ -86,6 +87,7 @@ const errosDaPagina = [];
 const notas = {
   corDerivada: new Set(),
   corDaBarra: new Set(),
+  corConfigurada: new Set(),
   reticenciasComTitle: new Set(),
 };
 /* O que mora na moldura: se repete em todas as telas e se corrige uma vez. */
@@ -147,6 +149,7 @@ for (const m of medicoes) {
       const chave = chaveDoAchado(tipo, a);
       if (tipo === "cor" && a.derivada) notas.corDerivada.add(chave);
       if (tipo === "cor" && a.barra) notas.corDaBarra.add(chave);
+      if (tipo === "cor" && a.configurada) notas.corConfigurada.add(chave);
       if (tipo === "reticencias" && a.intencional)
         notas.reticenciasComTitle.add(chave);
       if (!conta(tipo, a)) continue;
@@ -195,6 +198,7 @@ const PESO = {
   espaco: 0.5,
   cor: 1,
   feitoAMao: 1,
+  indicadorSozinho: 1,
 };
 
 const ranking = [...porTela.entries()]
@@ -270,7 +274,7 @@ md(
 );
 md();
 md(
-  `Fora da conta: ${notas.corDerivada.size} cores derivadas de token (color-mix, até 8 de diferença por canal), ${notas.corDaBarra.size} da barra lateral (cor configurada) e ${notas.reticenciasComTitle.size} reticências com \`title\`.`,
+  `Fora da conta: ${notas.corDerivada.size} cores derivadas de token (color-mix, até 8 de diferença por canal), ${notas.corDaBarra.size} da barra lateral (cor configurada), ${notas.corConfigurada.size} das prévias de cor configurada (\`data-cor-configurada\`) e ${notas.reticenciasComTitle.size} reticências com \`title\`.`,
 );
 md();
 md(`## Moldura (barra lateral, cabeçalho, avisos: vale para todas as telas)`);
@@ -293,14 +297,14 @@ md(
 );
 md();
 md(
-  `| # | Tela | Pontos | Rolagem (medições) | Passa do pai | Cortado | Reticências | Toque | Fonte | Peso | Espaço | Cor | À mão |`,
+  `| # | Tela | Pontos | Rolagem (medições) | Passa do pai | Cortado | Reticências | Toque | Fonte | Peso | Espaço | Cor | À mão | Kpi sozinho |`,
 );
 md(
-  `| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |`,
+  `| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |`,
 );
 ranking.forEach((r, i) =>
   md(
-    `| ${i + 1} | ${r.tela} | ${r.pontos} | ${r.rolagem}${r.larguraMaxima ? ` (até ${r.larguraMaxima}px)` : ""} | ${r.transbordaPai} | ${r.cortado} | ${r.reticencias} | ${r.toque} | ${r.fonte} | ${r.peso} | ${r.espaco} | ${r.cor} | ${r.feitoAMao} |`,
+    `| ${i + 1} | ${r.tela} | ${r.pontos} | ${r.rolagem}${r.larguraMaxima ? ` (até ${r.larguraMaxima}px)` : ""} | ${r.transbordaPai} | ${r.cortado} | ${r.reticencias} | ${r.toque} | ${r.fonte} | ${r.peso} | ${r.espaco} | ${r.cor} | ${r.feitoAMao} | ${r.indicadorSozinho} |`,
   ),
 );
 md();
