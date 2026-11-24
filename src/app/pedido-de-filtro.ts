@@ -29,6 +29,8 @@ export type FiltroDoPedido = {
   pendencias?: boolean;
   /** O código da vaga que segue entre as etapas (src/lib/navegacao/fluxo-das-etapas.ts). */
   vaga?: string;
+  /** Classificação › Listas: a lista que abre ("FINAL", do aviso da Lista de aprovados). */
+  tipoDeLista?: string;
   /** Relatórios: o relatório que abre (src/componentes/ver-em-relatorios.tsx). */
   relatorio?: string;
   /** Relatórios: o recorte do montador ("visao-geral"). */

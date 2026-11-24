@@ -2943,10 +2943,30 @@ export const VERBETES_AYA = Object.freeze([
       "a classificacao alimenta a lista de aprovados",
     ],
     resposta:
-      'No Yeendé, o resultado final da Classificação é a fonte da Lista de aprovados. Em "Resultado final", o Editor de Classificação gera a lista e clica em "Publicar como lista de aprovados": a confirmação mostra, em relação à lista de aprovados vigente, quantos entram, saem e mudam de posição e o que é preservado (status, matrícula, sub judice, anexos); quem não foi reconhecido aparece para revisão. A lista nova entra em vigor com posição, nota, modalidade, vaga e situação (dentro das vagas ou cadastro reserva) de cada candidato; a anterior fica no histórico. "Marcar como publicada" continua sendo só o registro da publicação no SEI.',
-    fato: 'No Yeendé, o resultado final da Classificação vira a lista de aprovados pelo botão "Publicar como lista de aprovados".',
+      'No Yeendé, o resultado final da Classificação é a fonte da Lista de aprovados. Em "Resultado final", quem pode publicar como lista gera a lista e clica em "Publicar como lista de aprovados" — um passo só: a confirmação mostra, em relação à lista de aprovados vigente, quantos entram, saem e mudam de posição e o que é preservado (status, matrícula, sub judice, anexos); quem não foi reconhecido aparece para revisão. Ao confirmar, a lista nova entra em vigor com posição, nota, modalidade, vaga e situação (dentro das vagas ou cadastro reserva) de cada candidato, a anterior fica no histórico e o resultado final fica marcado como publicado. Depois disso, a linha da geração diz "publicada · na Lista de aprovados". Quem pode publicar como lista: Editor de Classificação no edital; se o edital já tem lista de aprovados, também é preciso poder substituí-la (Administrador em Importação e convocação, ou o administrador global).',
+    fato: 'No Yeendé, o resultado final da Classificação vira a lista de aprovados pelo botão "Publicar como lista de aprovados", que também o marca como publicado.',
     fonte:
-      "src/modulos/classificacao/publicar-aprovados.tsx; src/lib/aprovados/publicacao-de-aprovados.ts; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql",
+      "src/modulos/classificacao/publicar-aprovados.tsx; src/lib/aprovados/resultado-final-na-lista.ts; src/lib/aprovados/publicacao-de-aprovados.ts; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql",
+    abrir: "classificacao",
+  },
+  {
+    arquivo: "regras-da-classificacao.md",
+    titulo: "Diferença entre publicar e publicar como lista de aprovados",
+    perguntas: [
+      "diferenca entre publicar e publicar como lista de aprovados",
+      "marcar como publicada e publicar como lista de aprovados",
+      "publiquei o resultado final e nao apareceu na lista de aprovados",
+      "marquei como publicada e a lista de aprovados nao mudou",
+      "so marcar a lista",
+      "achei que era so marcar a lista",
+      "publicado mas ainda nao esta na lista de aprovados",
+      "a lista de aprovados e publicada por quem cuida da lista de aprovados",
+    ],
+    resposta:
+      'São duas coisas. "Marcar como publicada" só registra que a lista foi publicada no SEI (quem e quando); não mexe na Lista de aprovados. "Publicar como lista de aprovados" faz do resultado final a lista de aprovados vigente do edital e já o marca como publicado. Nas listas de avaliação documental, convocação para entrevista e resultado da entrevista existe só o "Marcar como publicada". No Resultado final, quem pode publicar como lista vê só "Publicar como lista de aprovados"; quem edita a Classificação mas não pode substituir a lista de aprovados do edital vê "Marcar como publicada" e a frase "A lista de aprovados é publicada por quem cuida da Lista de aprovados." — a lista de aprovados fica então com o Administrador em Importação e convocação (ou o administrador global), que publica pelo mesmo botão. Resultado final já marcado como publicado e que ainda não virou a lista de aprovados aparece em destaque: "Publicado, mas ainda não está na Lista de aprovados.", com o botão para quem pode.',
+    fato: 'No Yeendé, "Marcar como publicada" não cria a lista de aprovados; só "Publicar como lista de aprovados" cria.',
+    fonte:
+      "src/modulos/classificacao/listas.tsx; src/lib/aprovados/resultado-final-na-lista.ts; supabase/esquema-atual.sql (publicar_lista_classificacao, obter_publicacao_lista_aprovados)",
     abrir: "classificacao",
   },
   {
@@ -2962,7 +2982,7 @@ export const VERBETES_AYA = Object.freeze([
       "publicar como lista de aprovados nao aparece",
     ],
     resposta:
-      '"Gerar", "Marcar como publicada" e "Publicar como lista de aprovados" só aparecem para quem tem Editor em Classificação, com a área e o edital; "Gerar" fica desabilitado enquanto o edital não tem regra salva. Copiar para o SEI, Como fica no SEI, Baixar DOCX, PDF e XLSX ficam desabilitados até existir uma lista gerada naquela etapa: gere primeiro. "Marcar como publicada" e "Publicar como lista de aprovados" ficam desabilitados enquanto houver empate esperando sorteio ou decisão, e "Publicar como lista de aprovados" só existe na lista Resultado final.',
+      '"Gerar", "Marcar como publicada" e "Publicar como lista de aprovados" só aparecem para quem tem Editor em Classificação, com a área e o edital; "Gerar" fica desabilitado enquanto o edital não tem regra salva. Copiar para o SEI, Como fica no SEI, Baixar DOCX, PDF e XLSX ficam desabilitados até existir uma lista gerada naquela etapa: gere primeiro. "Marcar como publicada" e "Publicar como lista de aprovados" ficam desabilitados enquanto houver empate esperando sorteio ou decisão. "Publicar como lista de aprovados" só existe na lista Resultado final, e só para quem pode publicar a lista de aprovados do edital (quem não pode vê "Marcar como publicada"); some quando a lista de aprovados vigente já veio daquele resultado final.',
     fato: "",
     fonte:
       "src/modulos/classificacao/listas.tsx; src/lib/acessos/access-roles.ts (canEditClassificacao)",
@@ -3225,7 +3245,7 @@ export const VERBETES_AYA = Object.freeze([
       "lista de aprovados pela classificacao",
     ],
     resposta:
-      'Na Classificação, abra o edital, vá ao "Resultado final", gere a lista e clique em "Publicar como lista de aprovados" (Editor de Classificação, na área do edital; lista com empate pendente não publica, e só o resultado final mais recente). A confirmação compara com a lista vigente: quantos entram, saem, mudam de posição, quantos têm status ou sub judice preservados e quantos sub judice são mantidos. Publicar cria a nova lista vigente do edital; a anterior fica inativa no histórico, sem apagar nada. Pelo modal "Listas do edital" da Lista de aprovados, "Publicar da Classificação" leva à Classificação no edital.',
+      'Na Classificação, abra o edital, vá ao "Resultado final", gere a lista e clique em "Publicar como lista de aprovados" (Editor de Classificação, na área do edital; se o edital já tem lista de aprovados, também Administrador em Importação e convocação; lista com empate pendente não publica, e só o resultado final mais recente). É um passo só: o resultado final também fica marcado como publicado. A confirmação compara com a lista vigente: quantos entram, saem, mudam de posição, quantos têm status ou sub judice preservados e quantos sub judice são mantidos. Publicar cria a nova lista vigente do edital; a anterior fica inativa no histórico, sem apagar nada. Pelo modal "Listas do edital" da Lista de aprovados, "Publicar da Classificação" leva à Classificação no edital.',
     fato: "",
     fonte:
       "src/modulos/classificacao/publicar-aprovados.tsx; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql",
@@ -3535,12 +3555,17 @@ export const VERBETES_AYA = Object.freeze([
       "lista de aprovados vazia",
       "edital nao aparece na lista de aprovados",
       "nao tem lista de aprovados",
+      "por que o edital nao aparece na lista de aprovados",
+      "publiquei o resultado final e o edital nao aparece",
+      "edital analisado no sistema nao aparece na lista de aprovados",
+      "resultado final publicado e ainda fora da lista de aprovados",
+      "aviso no topo da lista de aprovados",
     ],
     resposta:
-      'A Lista de aprovados mostra a lista vigente de cada edital da área atual (e do recorte da sua coordenação). Edital sem lista ainda não teve o resultado final publicado da Classificação nem planilha importada: publique em Classificação › Resultado final ("Publicar como lista de aprovados") ou, em edital sem análise no sistema, importe o XLSX (Editor em Importação e convocação). As listas anteriores ficam inativas, para consulta, no modal "Listas do edital".',
+      'A Lista de aprovados mostra a lista vigente de cada edital da área atual (e do recorte da sua coordenação). Edital sem lista ainda não teve o resultado final publicado como lista de aprovados nem planilha importada. Marcar o resultado final como publicado na Classificação ("Marcar como publicada") não basta: só registra a publicação no SEI. Quem cria a lista é "Publicar como lista de aprovados", em Classificação › Listas › Resultado final; edital ainda no resultado preliminar precisa antes gerar o resultado final. Em edital sem análise no sistema, importe o XLSX (Editor em Importação e convocação). Para quem vê a Classificação, o aviso no topo da Lista de aprovados traz os editais da área com o resultado final publicado na Classificação e ainda fora da Lista de aprovados (sem lista, com a lista da planilha ou com a lista de um resultado final anterior); cada atalho abre o Resultado final daquele edital. O aviso conta o edital cuja última lista gerada é o resultado final publicado. As listas anteriores ficam inativas, para consulta, no modal "Listas do edital".',
     fato: "",
     fonte:
-      "src/lib/aprovados/publicacao-de-aprovados.ts; src/modulos/aprovados/modal-listas-do-edital.tsx; src/lib/acessos/access-roles.ts",
+      "src/lib/aprovados/publicacao-de-aprovados.ts; src/lib/aprovados/resultado-final-na-lista.ts; src/modulos/aprovados/resultados-fora-da-lista.tsx; src/modulos/aprovados/modal-listas-do-edital.tsx; src/lib/acessos/access-roles.ts",
     abrir: "approved",
   },
   {

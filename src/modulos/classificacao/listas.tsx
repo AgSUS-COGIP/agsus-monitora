@@ -62,6 +62,10 @@ import { DocumentoDoSei } from "./documento.tsx";
 import { HoraDeNascimento } from "./hora-de-nascimento.tsx";
 import { ModalDePublicacaoDeAprovados } from "./publicar-aprovados.tsx";
 import {
+  passoDoResultadoFinal,
+  type ListaDeAprovadosDoEdital,
+} from "../../lib/aprovados/resultado-final-na-lista.ts";
+import {
   BUSCAR_NESTA_TABELA,
   AcoesDaLinha,
   Aviso,
@@ -95,7 +99,10 @@ import { CarregandoConteudo } from "../../ui/index.ts";
   hash); "Exportar" sai de uma lista registrada (PDF pela impressão, DOCX,
   XLSX). O empate que espera sorteio ou decisão abre o registro aqui.
   No resultado final, "Publicar como lista de aprovados" faz dele a lista de
-  aprovados vigente do edital (publicar-aprovados.tsx).
+  aprovados vigente do edital e o marca como publicado, num passo só
+  (publicar-aprovados.tsx); quem não pode publicar como lista só marca. O
+  resultado final publicado que não virou lista fica em destaque
+  (src/lib/aprovados/resultado-final-na-lista.ts).
   Nota alterada por ajuste aprovado em recurso: selo "Recurso nº X" na linha
   e a frase na explicação; lista gerada antes de um ajuste aprovado (ou do
   cancelamento de um aprovado): aviso para gerar de novo.
@@ -999,6 +1006,63 @@ Usar esta geração assim mesmo?`,
     if (novo) aoGerado(novo);
   }
 
+  /*
+    O resultado final e a Lista de aprovados: quem pode publicar como lista e
+    de que resultado final veio a lista vigente (relida depois de publicar).
+  */
+  const [releitura, setReleitura] = useState(0);
+  const [lidaDaLista, setLidaDaLista] = useState<{
+    chave: string;
+    situacao: ListaDeAprovadosDoEdital | null;
+  } | null>(null);
+  const chaveDaLista =
+    tipo === "FINAL" && idDaUltima
+      ? `${e.editalId}|${idDaUltima}|${releitura}`
+      : "";
+  useEffect(() => {
+    if (!chaveDaLista) return undefined;
+    let vivo = true;
+    void estado.lerListaDeAprovadosDoEdital().then((situacao) => {
+      if (vivo) setLidaDaLista({ chave: chaveDaLista, situacao });
+    });
+    return () => {
+      vivo = false;
+    };
+  }, [estado, chaveDaLista]);
+  const passo =
+    tipo === "FINAL"
+      ? passoDoResultadoFinal({
+          lista: ultima,
+          podeEditar: e.podeEditar,
+          situacao:
+            lidaDaLista?.chave === chaveDaLista
+              ? lidaDaLista.situacao
+              : undefined,
+        })
+      : null;
+  const marcar = passo
+    ? passo.marcar
+    : Boolean(e.podeEditar && ultima && !ultima.publicada);
+  const travaDaPublicacao = (ultima?.pendencias ?? 0) > 0 || Boolean(defasada);
+  const publicarComoLista = (primario: boolean) => (
+    <button
+      type="button"
+      className={primario ? "btn" : "btn secondary"}
+      data-acao="publicar-aprovados"
+      data-tour="classificacao-publicar-aprovados"
+      disabled={travaDaPublicacao || Boolean(publicando) || passo?.carregando}
+      onClick={abrirPublicacaoDeAprovados}
+    >
+      <i className="fa-solid fa-user-check" aria-hidden="true" /> Publicar como
+      lista de aprovados
+    </button>
+  );
+  const quemPublicaALista = (
+    <p className="status-discreto" data-so-marca>
+      A lista de aprovados é publicada por quem cuida da Lista de aprovados.
+    </p>
+  );
+
   return (
     <section
       className="ui-card classificacao-acoes"
@@ -1120,36 +1184,20 @@ Usar esta geração assim mesmo?`,
             Agenda das entrevistas
           </button>
         ) : null}
-        {e.podeEditar && ultima && !ultima.publicada ? (
+        {marcar ? (
           <button
             type="button"
             className="btn secondary"
             data-acao="publicar"
-            disabled={
-              (ultima.pendencias ?? 0) > 0 || Boolean(defasada) || marcando
-            }
+            disabled={travaDaPublicacao || marcando}
             onClick={marcarComoPublicada}
           >
             {marcando ? "Publicando…" : "Marcar como publicada"}
           </button>
         ) : null}
-        {tipo === "FINAL" && e.podeEditar && ultima ? (
-          <button
-            type="button"
-            className="btn secondary"
-            data-acao="publicar-aprovados"
-            data-tour="classificacao-publicar-aprovados"
-            disabled={
-              (ultima.pendencias ?? 0) > 0 ||
-              Boolean(defasada) ||
-              Boolean(publicando)
-            }
-            onClick={abrirPublicacaoDeAprovados}
-          >
-            <i className="fa-solid fa-user-check" aria-hidden="true" /> Publicar
-            como lista de aprovados
-          </button>
-        ) : null}
+        {passo?.comoLista && !passo.foraDaLista
+          ? publicarComoLista(false)
+          : null}
         {desempate
           ? [
               ["xlsx", "Relatório de desempate (XLSX)"],
@@ -1182,7 +1230,25 @@ Usar esta geração assim mesmo?`,
           {rotuloDaVersaoNaLista(dados?.regra?.versoes, ultima.versao_regra)} ·
           SHA-256 {String(ultima.hash || "").slice(0, 12)}…
           {ultima.publicada ? " · publicada" : ""}
+          {passo?.naLista ? " · na Lista de aprovados" : ""}
         </p>
+      ) : null}
+      {passo?.soMarca && !passo.foraDaLista && marcar
+        ? quemPublicaALista
+        : null}
+      {passo?.foraDaLista ? (
+        <Aviso
+          tom="warning"
+          papel="status"
+          className="classificacao-fora-da-lista"
+        >
+          <p>Publicado, mas ainda não está na Lista de aprovados.</p>
+          {passo.comoLista
+            ? publicarComoLista(true)
+            : passo.soMarca
+              ? quemPublicaALista
+              : null}
+        </Aviso>
       ) : null}
       {defasada && !ultima?.publicada ? (
         <Aviso tom="warning" papel="status" className="classificacao-defasada">
@@ -1261,6 +1327,10 @@ Usar esta geração assim mesmo?`,
           resultado={resultado}
           analises={analises}
           aoFechar={() => setPublicando(null)}
+          aoPublicado={(marcada) => {
+            if (marcada) aoCarregarRegistro({ ...publicando, ...marcada });
+            setReleitura((n) => n + 1);
+          }}
         />
       ) : null}
       {documento?.retrato ? (
@@ -1354,6 +1424,10 @@ export function Listas({
     "classificacao",
     Boolean(resultado),
     (pedido) => {
+      // A Lista de aprovados abre direto no resultado final do edital.
+      const pedida = pedido.tipoDeLista;
+      if (pedida && TIPOS_DE_LISTA.some(([valor]) => valor === pedida))
+        setEscolhido(pedida as TipoDeLista);
       const vaga = pedido.vaga;
       if (vaga && resultado?.vagas.some((v) => v.chave === vaga))
         setRecorte((atual) => ({ ...atual, vaga }));

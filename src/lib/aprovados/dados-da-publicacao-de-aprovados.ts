@@ -51,7 +51,10 @@ export function situacaoDaPublicacao(valor: unknown): SituacaoDaPublicacao {
   const dados = registroObrigatorio(valor);
   // Antes de 20261030090000 o banco não dizia: quem barra é o banco.
   const pode_substituir = booleano(dados.pode_substituir) !== false;
-  if (dados.vigente === null) return { vigente: null, pode_substituir };
+  // Sem pode_publicar (banco antigo), vale o pode_substituir: o banco confere.
+  const pode_publicar = booleano(dados.pode_publicar) ?? pode_substituir;
+  if (dados.vigente === null)
+    return { vigente: null, pode_substituir, pode_publicar };
   const vigente = registroObrigatorio(dados.vigente);
   const vistos = new Set<string>();
   // Sem p_com_candidatos, o banco não manda os candidatos (null).
@@ -80,9 +83,11 @@ export function situacaoDaPublicacao(valor: unknown): SituacaoDaPublicacao {
       lista_id: identificador(vigente.lista_id),
       origem: texto(vigente.origem) ?? "",
       importado_em: texto(vigente.importado_em),
+      lista_classificacao_id: texto(vigente.lista_classificacao_id),
       candidatos,
     },
     pode_substituir,
+    pode_publicar,
   };
 }
 

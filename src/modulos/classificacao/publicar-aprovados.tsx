@@ -22,6 +22,8 @@ type Props = {
   resultado: ResultadoDaClassificacao | null;
   analises: ReadonlyMap<string, { vaga?: unknown; cargo?: unknown }>;
   aoFechar: () => void;
+  /** Publicou: a lista de aprovados mudou (e o resultado final marcado, se foi). */
+  aoPublicado?: (marcada: ListaRegistrada | null) => void;
 };
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -43,7 +45,8 @@ import { Aviso, FecharModal, GradeDeKpis, Kpi, Modal } from "../../ui/index.ts";
   saem e mudam de posição, e quem saiu com dados e precisa de revisão — ali dá
   para dizer quem é a mesma pessoa; "Recalcular" pede o casamento de novo com a
   revisão. A mesma permissão do XLSX: lista já cadastrada só quem pode
-  substituir; lista com status pede o motivo.
+  substituir; lista com status pede o motivo. Um passo só: ao confirmar, o
+  resultado final ainda não publicado fica marcado como publicado.
 */
 
 function rotuloDoNovo(n: QuemEntra) {
@@ -160,6 +163,7 @@ export function ModalDePublicacaoDeAprovados({
   registro,
   resultado: calculado,
   aoFechar,
+  aoPublicado,
 }: Props) {
   const [preparo, setPreparo] = useState<Preparo | null>(null);
   const [pedidoDeManuais, setPedidoDeManuais] = useState<
@@ -222,9 +226,12 @@ export function ModalDePublicacaoDeAprovados({
     const r = await estado.publicarComoListaDeAprovados({
       pedidoId: casamento.pedido_id,
       motivo: exigeMotivo ? motivo : "",
+      registro,
     });
     setEnviando(false);
-    if (r) setPublicado(r);
+    if (!r) return;
+    setPublicado(r);
+    aoPublicado?.(r.marcada);
   }
 
   const n = casamento ? numerosDoCasamento(casamento) : null;

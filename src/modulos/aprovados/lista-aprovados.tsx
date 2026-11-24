@@ -57,6 +57,10 @@ import { ModalDaCarta } from "./carta-de-convocacao/modal-da-carta.tsx";
 import { ModelosDaCarta } from "./carta-de-convocacao/modelos-da-carta.tsx";
 import { plural } from "./partes.tsx";
 import { SeloDeAvisos } from "../conferencias/avisos-de-conferencia.tsx";
+import {
+  ResultadosForaDaLista,
+  type ClienteDoAvisoDeResultados,
+} from "./resultados-fora-da-lista.tsx";
 import { AbaPendencias, usarPendencias } from "./pendencias/aba-pendencias.tsx";
 import {
   criarEstadoDasPendencias,
@@ -331,10 +335,13 @@ export function ListaAprovados({
   estado,
   pendencias = PENDENCIAS_SEM_BANCO,
   hoje = hojeEmBrasilia,
+  supabase = null,
 }: {
   estado: EstadoDosAprovados;
   pendencias?: EstadoDasPendencias;
   hoje?: () => string;
+  /** Só para o aviso dos resultados finais fora da lista (listar_editais_classificacao). */
+  supabase?: ClienteDoAvisoDeResultados | null;
 }) {
   const dados = useSyncExternalStore(estado.assinar, estado.obter);
   const dadosDasPendencias = usarPendencias(pendencias);
@@ -543,6 +550,14 @@ export function ListaAprovados({
           />
         </div>
       </TopoDoPainel>
+      {carregado ? (
+        <ResultadosForaDaLista
+          supabase={supabase}
+          area={String(area || "")}
+          listas={dados.listas}
+          carregadoEm={dados.carregadoEm}
+        />
+      ) : null}
       {aba === "aprovados" && editais.length === 1 ? (
         <FluxoDasEtapas
           view="approved"
@@ -694,7 +709,13 @@ export function criarListaAprovados({
     estado,
     pendencias,
     nome: "a lista de aprovados",
-    conteudo: <ListaAprovados estado={estado} pendencias={pendencias} />,
+    conteudo: (
+      <ListaAprovados
+        estado={estado}
+        pendencias={pendencias}
+        supabase={supabase}
+      />
+    ),
     render: () => estado.garantirCarregado(),
     openImportModal: (editalId: string, rotulo = "") =>
       estado.abrirListasDoEdital(editalId, rotulo),

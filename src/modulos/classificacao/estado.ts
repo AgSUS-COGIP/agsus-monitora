@@ -19,6 +19,8 @@ import {
   situacaoDaPublicacao,
   resultadoDaPublicacao,
 } from "../../lib/aprovados/dados-da-publicacao-de-aprovados.ts";
+import type { ResultadoDaPublicacao } from "../../lib/aprovados/tipos-da-publicacao-de-aprovados.ts";
+import type { ListaDeAprovadosDoEdital } from "../../lib/aprovados/resultado-final-na-lista.ts";
 import {
   objeto,
   textoDaClassificacao,
@@ -884,15 +886,77 @@ export function criarEstadoDaClassificacao({
     }
   }
 
-  /* Aplica o plano da prévia: o resultado final vira a lista de aprovados vigente. */
+  /*
+    A lista de aprovados do edital vista do resultado final: quem pode
+    publicar como lista e de que resultado final veio a vigente
+    (src/lib/aprovados/resultado-final-na-lista.ts). null se a leitura falhou.
+  */
+  async function lerListaDeAprovadosDoEdital(): Promise<ListaDeAprovadosDoEdital | null> {
+    const edital = estado.editalId;
+    if (!edital) return null;
+    try {
+      const situacao = situacaoDaPublicacao(
+        await rpc(RPC_OBTER_PUBLICACAO, {
+          p_edital: edital,
+          p_com_candidatos: false,
+        }),
+      );
+      return {
+        pode_publicar: situacao.pode_publicar,
+        lista_classificacao_id:
+          situacao.vigente?.lista_classificacao_id ?? null,
+      };
+    } catch (erro) {
+      console.info("Lista de aprovados do edital não lida:", erro);
+      return null;
+    }
+  }
+
+  /*
+    Marca o resultado final como publicado depois de ele virar a lista de
+    aprovados (um passo só). Falhou: a lista de aprovados já está publicada e
+    o "Publicar" continua na tela.
+  */
+  async function marcarDepoisDaLista(registrado: ListaRegistrada) {
+    const edital = estado.editalId;
+    try {
+      const marcada = listaRegistrada(
+        await rpc(RPC_PUBLICAR_LISTA, { p_lista: registrado.id }),
+      );
+      if (!marcada) throw new Error("Registro de lista inválido.");
+      mudarDados(edital, (d) => ({
+        ...d,
+        listas: (d.listas || []).map((l) =>
+          l.id === registrado.id ? marcada : l,
+        ),
+      }));
+      return marcada;
+    } catch (erro) {
+      toast(
+        `A lista de aprovados foi publicada, mas o resultado final não ficou marcado como publicado: ${mensagemDoBanco(erro)} Use "Marcar como publicada".`,
+        "warning",
+      );
+      return null;
+    }
+  }
+
+  /*
+    Aplica o plano da prévia: o resultado final vira a lista de aprovados
+    vigente e, com `registro` ainda não publicado, fica marcado como publicado.
+  */
   async function publicarComoListaDeAprovados({
     pedidoId,
     motivo = "",
+    registro = null,
   }: {
     pedidoId: string;
     /** Sobrescrever lista com status exige motivo (20261030090000). */
     motivo?: string;
-  }) {
+    /** O resultado final publicado como lista (marcado como publicado depois). */
+    registro?: ListaRegistrada | null;
+  }): Promise<
+    (ResultadoDaPublicacao & { marcada: ListaRegistrada | null }) | null
+  > {
     const minhaGeracao = geracao;
     try {
       const resposta = await rpc(RPC_APLICAR_CASAMENTO, {
@@ -910,11 +974,16 @@ export function criarEstadoDaClassificacao({
         );
         return null;
       }
+      const marcada =
+        registro && registro.publicada !== true
+          ? await marcarDepoisDaLista(registro)
+          : null;
+      if (minhaGeracao !== geracao) return null;
       toast(
         `Lista de aprovados publicada: ${resultado?.candidatos ?? 0} candidato(s).`,
         "success",
       );
-      return resultado;
+      return { ...resultado, marcada };
     } catch (erro) {
       if (minhaGeracao !== geracao) return null;
       toast(
@@ -1192,6 +1261,7 @@ export function criarEstadoDaClassificacao({
     renomearVersao,
     gerarLista,
     publicarLista,
+    lerListaDeAprovadosDoEdital,
     obterLista,
     registrarDesempate,
     salvarHoraDeNascimento,

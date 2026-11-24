@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-23
+atualizado: 2026-11-24
 ---
 
 # Módulo: Lista de aprovados
@@ -37,6 +37,18 @@ Na aba Aprovados, o controle diz **Listas ativas N · Inativas N · Todas N** (c
 como "Ativo / Inativo / Todos" do painel de Análises); Todas junta as duas. O recorte vai para o
 endereço (`?listas=inativas`, `?listas=todas`; sem o parâmetro, as ativas) e o link abre nele.
 
+**Resultado final fora da lista** (24/11/2026): no topo, um aviso discreto
+(`resultados-fora-da-lista.tsx`) lista os editais da área com o resultado final publicado na
+Classificação e sem lista de aprovados vinda dele (sem lista, lista da planilha ou de um resultado
+final anterior), com um atalho por edital para Classificação › Listas › Resultado final
+(`pedirFiltro` com `tipoDeLista: "FINAL"` e o edital no endereço). Os editais vêm de
+`listar_editais_classificacao` (uma leitura por carga; sem acesso à Classificação, sem aviso) e as
+listas, das vigentes da abertura; a regra é `resultadosFinaisForaDaLista`
+(`src/lib/aprovados/resultado-final-na-lista.ts`). Limite: a RPC devolve só a última lista gerada
+de cada edital, então só conta o edital cuja última geração é o resultado final publicado; lista
+da Classificação publicada depois dessa geração veio dele (o banco só publica o FINAL mais
+recente). Não é o selo de avisos de conferência (esse é do job diário e chegaria um dia depois).
+
 **Filtros** (os mesmos nas abas Aprovados e Resumo por cargo): Edital, Localidade, Cargo, Modalidade
 e Situação. A **Localidade** (16/11/2026) sai do texto do cargo (`src/lib/aprovados/localidade-da-vaga.ts`: o
 trecho com UF depois de barra, Polo, PB, CASAI, Distrital, Regional, Abrangência, Sede… ou nome de
@@ -68,6 +80,7 @@ status-em-lote.tsx          "Mudar status" da seleção da aba Aprovados (status
 gaveta-do-candidato.tsx     dados, status e cartas emitidas
 modal-listas-do-edital.tsx  origem, importar XLSX, publicar da Classificação; "Lista de convocação"
                             só resume, com "Editar nas Regras do edital"
+resultados-fora-da-lista.tsx o aviso dos resultados finais publicados fora da Lista de aprovados
 previa-da-substituicao.tsx  prévia de "Substituir XLSX": casamento do job Python e o motivo
 chamada-para-contratacao.tsx ResumoDaChamada e EditorDaChamada (Regras do edital, Chamada)
 formulario-de-convocacao.tsx, editor-de-modelo.tsx, previa-da-convocacao.tsx  configuração da
@@ -208,6 +221,7 @@ convocação, anexos, convocações e pendências; erro por parte em `erros.<par
 `tests/entrevistas-e-aprovados.test.ts` (bloco `lib/historicos-dos-aprovados`), `tests/demais-regras.test.ts` (bloco `lib/importacao-xlsx-de-aprovados`),
 `tests/entrevistas-e-aprovados.test.ts` (bloco `lib/exportacao-da-lista-de-aprovados`), `tests/entrevistas-e-aprovados.test.ts` (bloco `exportacao-de-aprovados-no-banco`),
 `tests/entrevistas-e-aprovados.test.ts` (bloco `lib/resumo-por-cargo-e-status`), `tests/entrevistas-e-aprovados.test.ts` (bloco `lib/exportacao-do-resumo-por-cargo`),
+`tests/entrevistas-e-aprovados.test.ts` (bloco `lib/resultado-final-na-lista`),
 `tests/editais-cargas-e-paineis.test.ts` (bloco `exportacao-do-resumo-migration`),
 `tests/entrevistas-e-aprovados.test.js` (bloco `lista-convocacao-rules`), `tests/entrevistas-e-aprovados.test.js` (bloco `lista-aprovados-filtros-multiplos`),
 `tests/tipos/modais-dos-aprovados.tsx`.

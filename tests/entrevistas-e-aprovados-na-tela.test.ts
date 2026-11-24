@@ -50,7 +50,10 @@ import { LEI_15142_ESPALHADA } from "./modelos-de-convocacao-antigos.ts";
 import { type ReferenciaDoModelo } from "../src/lib/aprovados/carta-de-convocacao/tipos-da-configuracao-de-convocacao.ts";
 import { clienteDosAprovados } from "./clientes-falsos.ts";
 import { registrarTelas } from "../src/app/registro-das-telas.ts";
-import { pedirFiltro } from "../src/app/pedido-de-filtro.js";
+import {
+  consumirPedidoDeFiltro,
+  pedirFiltro,
+} from "../src/app/pedido-de-filtro.js";
 import {
   ESPACO_EM_BRANCO,
   MODELO_PADRAO,
@@ -888,6 +891,8 @@ bloco("componentes/lista-aprovados", () => {
     anexos?: readonly unknown[];
     erros?: Readonly<Record<string, string>>;
     porArea?: boolean;
+    /** O que listar_editais_classificacao devolve (o aviso dos resultados finais). */
+    editaisDaClassificacao?: readonly object[];
   }
 
   function supabaseFalso({
@@ -896,6 +901,7 @@ bloco("componentes/lista-aprovados", () => {
     anexos = [],
     erros = {},
     porArea = true,
+    editaisDaClassificacao,
   }: OpcoesDoBancoFalso = {}) {
     /*
     O que o banco tem: a versão dos dados muda a cada escrita (como a
@@ -911,6 +917,8 @@ bloco("componentes/lista-aprovados", () => {
       if (erro) return { data: null, error: { message: erro } };
       if (nome === "listar_listas_aprovados")
         return { data: listas, error: null };
+      if (nome === "listar_editais_classificacao" && editaisDaClassificacao)
+        return { data: { editais: editaisDaClassificacao }, error: null };
       if (nome === "listar_anexos_candidatos_aprovados")
         return { data: anexos, error: null };
       if (nome === "registrar_anexo_candidato_aprovado")
@@ -1173,6 +1181,99 @@ bloco("componentes/lista-aprovados", () => {
       definido($(filtro).closest(".multi-select")),
     ).map((opcao) => opcao.textContent);
 
+  describe("resultado final publicado e fora da lista", () => {
+    const E93 = "93939393-0000-4000-8000-000000000093";
+    const E114 = "11411411-0000-4000-8000-000000000114";
+    const final = (publicada: boolean) => ({
+      tipo: "FINAL",
+      em: "2026-11-17T12:00:00Z",
+      publicada,
+    });
+    const edital = (id: string, numero: string, publicada: boolean) => ({
+      id,
+      edital: `Edital nº ${numero}`,
+      unidade: "DSEI Teste",
+      ativo: true,
+      treinamento: false,
+      ultima_lista: final(publicada),
+    });
+    const aviso = () => document.querySelector(".aprovados-resultados-fora");
+
+    it("avisa o edital com resultado final publicado e sem lista; o atalho abre o resultado final", async () => {
+      const supabase = supabaseFalso({
+        editaisDaClassificacao: [
+          edital(E93, "93/2026", true),
+          // Resultado final ainda não publicado: fora do aviso.
+          edital(E114, "114/2026", false),
+        ],
+      });
+      await montar({ supabase });
+      expect(supabase.rpc).toHaveBeenCalledWith(
+        "listar_editais_classificacao",
+        { p_area: "saude-indigena" },
+      );
+      expect(aviso()?.textContent).toContain(
+        "O resultado final do 93/2026 foi publicado na Classificação e ainda não está na Lista de aprovados.",
+      );
+      window.navigate = vi.fn();
+      await clicar(achar("[data-acao='abrir-resultado-final']"));
+      expect(window.navigate).toHaveBeenCalledWith("classificacao", {
+        edital: E93,
+      });
+      expect(consumirPedidoDeFiltro("classificacao")).toEqual({
+        editalId: E93,
+        tipoDeLista: "FINAL",
+      });
+      delete window.navigate;
+    });
+
+    it("vários editais: um atalho por edital, pelo número", async () => {
+      await montar({
+        supabase: supabaseFalso({
+          editaisDaClassificacao: [
+            edital(E93, "93/2026", true),
+            edital(E114, "114/2026", true),
+          ],
+        }),
+      });
+      expect(aviso()?.textContent).toContain(
+        "Resultado final publicado na Classificação e ainda fora da Lista de aprovados:",
+      );
+      expect(
+        [
+          ...document.querySelectorAll(
+            ".aprovados-resultados-fora [data-acao='abrir-resultado-final']",
+          ),
+        ].map((b) => b.textContent),
+      ).toEqual(["114/2026", "93/2026"]);
+    });
+
+    it("lista vinda do resultado final ou sem acesso à Classificação: sem aviso", async () => {
+      await montar({
+        supabase: supabaseFalso({
+          listas: [
+            {
+              ...LISTA_ATIVA,
+              edital_id: E93,
+              origem: "CLASSIFICACAO",
+              lista_classificacao_id: "f93",
+              importado_em: "2026-11-18T10:00:00Z",
+            },
+          ],
+          editaisDaClassificacao: [edital(E93, "93/2026", true)],
+        }),
+      });
+      expect(aviso()).toBeNull();
+      await montar({
+        supabase: supabaseFalso({
+          erros: { listar_editais_classificacao: "Sem permissão" },
+        }),
+      });
+      expect(aviso()).toBeNull();
+      expect(document.getElementById("approvedCount")).not.toBeNull();
+    });
+  });
+
   describe("topo e visões", () => {
     it("as visões são abas (tablist) com o visual do controle segmentado, no topo", async () => {
       await montar();
@@ -1303,8 +1404,10 @@ bloco("componentes/lista-aprovados", () => {
     it("busca a abertura inteira numa chamada só (abrir_lista_aprovados)", async () => {
       const supabase = supabaseFalso();
       await montar({ supabase });
+      // Fora a leitura dos editais da Classificação (o aviso dos resultados finais).
       expect(supabase.rpc.mock.calls.map(([nome]) => nome)).toEqual([
         "abrir_lista_aprovados",
+        "listar_editais_classificacao",
       ]);
       expect(supabase.rpc).toHaveBeenCalledWith("abrir_lista_aprovados", {
         p_area: "saude-indigena",
@@ -5287,8 +5390,10 @@ bloco("componentes/pendencias-do-edital", () => {
       expect($("approvedPendenciasSelo").textContent).toBe("3");
       await clicar($("approvedTabPendencias"));
       expect(cartoes()).toHaveLength(3);
+      // As pendências vêm na abertura; a outra leitura é a do aviso dos resultados finais.
       expect(supabase.rpc.mock.calls.map(([nome]) => nome)).toEqual([
         "abrir_lista_aprovados",
+        "listar_editais_classificacao",
       ]);
     });
 
