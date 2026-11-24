@@ -251,6 +251,93 @@ bloco("aba-relatorios-no-banco", () => {
   });
 });
 
+bloco("cronograma-sem-codex-no-banco", () => {
+  /*
+    A migration 20261124150000 tira "Conferido por Codex, a pedido de …" das
+    observações das etapas do cronograma, num Postgres de verdade (PGlite),
+    com os formatos encontrados no banco em 24/11/2026: com vírgulas, sem
+    vírgulas, com a fonte por extenso (que tem outra data no meio) e um texto
+    sem Codex, que não muda. Aplicada em 24/11/2026 (506 etapas de 33
+    editais): o arquivo, como entrou no banco, está em tests/fixtures/sql-do-banco/
+    (o rollback e o ensaio saíram com ela; a cópia dos textos de antes ficou em
+    arquivo."TB_OBSERVACAO_CRONOGRAMA_ANTES").
+  */
+  const ler = (caminho: string) =>
+    readFileSync(caminho, "utf8").replace(/\r\n/g, "\n");
+  const NOME = "20261124150000_observacao_do_cronograma_sem_codex.sql";
+  const migration = () => ler(`tests/fixtures/sql-do-banco/${NOME}`);
+
+  const URL =
+    "https://www.agenciasus.org.br/trabalhe-na-agsus/saude-indigena/vagas-dsei-xavante/edital-no-15-2025/retificacao.pdf";
+  const HOJE: Record<string, string | null> = {
+    "00000000-0000-0000-0000-000000000001": `Conferido por Codex, a pedido de Pessoa Teste, em 17/11/2026. Fonte: ${URL} | Datas publicadas: 15/08/2025 057824) SEI AGSUS.001`,
+    "00000000-0000-0000-0000-000000000002":
+      "Conferido por Codex a pedido de Pessoa Teste em 17/11/2026. Fonte: Anexo I retificado em 01/09/2026; página oficial e edital atualizado até 10/09/2026.",
+    "00000000-0000-0000-0000-000000000003":
+      "Conferido por Codex a pedido de Pessoa Teste em 17/11/2026.",
+    "00000000-0000-0000-0000-000000000004": "Etapa ajustada pela UGP.",
+    "00000000-0000-0000-0000-000000000005": null,
+  };
+  const DEPOIS: Record<string, string | null> = {
+    "00000000-0000-0000-0000-000000000001": `Conferido em 17/11/2026. Fonte: ${URL} | Datas publicadas: 15/08/2025 057824) SEI AGSUS.001`,
+    "00000000-0000-0000-0000-000000000002":
+      "Conferido em 17/11/2026. Fonte: Anexo I retificado em 01/09/2026; página oficial e edital atualizado até 10/09/2026.",
+    "00000000-0000-0000-0000-000000000003": "Conferido em 17/11/2026.",
+    "00000000-0000-0000-0000-000000000004": "Etapa ajustada pela UGP.",
+    "00000000-0000-0000-0000-000000000005": null,
+  };
+  const texto = (v: string | null) =>
+    v === null ? "null" : `'${v.replace(/'/g, "''")}'`;
+
+  const banco = moldeDeBanco(async () => {
+    const db = await PGlite.create();
+    await db.exec(`
+      create schema arquivo;
+      create table public."TB_CRONOGRAMA_MONIT_INDIG" (id uuid primary key, observacao text);
+      ${Object.entries(HOJE)
+        .map(
+          ([id, obs]) =>
+            `insert into public."TB_CRONOGRAMA_MONIT_INDIG" values ('${id}', ${texto(obs)});`,
+        )
+        .join("\n")}
+    `);
+    return db;
+  });
+
+  async function observacoes(db: PGlite) {
+    const { rows } = await db.query<{ id: string; observacao: string | null }>(
+      'select id::text, observacao from public."TB_CRONOGRAMA_MONIT_INDIG" order by id',
+    );
+    return Object.fromEntries(rows.map((r) => [r.id, r.observacao]));
+  }
+
+  describe("migration 20261124150000: observação do cronograma sem Codex", () => {
+    it("troca só o começo, guarda o texto de antes e é idempotente", async () => {
+      const db = await banco();
+      await db.exec(migration());
+      expect(await observacoes(db)).toEqual(DEPOIS);
+      const { rows } = await db.query<{ n: number }>(
+        'select count(*)::int as n from arquivo."TB_OBSERVACAO_CRONOGRAMA_ANTES"',
+      );
+      expect(rows[0]?.n).toBe(3);
+      await db.exec(migration());
+      expect(await observacoes(db)).toEqual(DEPOIS);
+    });
+
+    it("formato que a troca não cobre: nada é gravado", async () => {
+      const db = await banco();
+      await db.exec(
+        `insert into public."TB_CRONOGRAMA_MONIT_INDIG" values ('00000000-0000-0000-0000-000000000009', 'Revisado com o Codex.')`,
+      );
+      await expect(db.exec(migration())).rejects.toThrow(/Codex/);
+      await db.exec("rollback");
+      expect(
+        (await observacoes(db))["00000000-0000-0000-0000-000000000001"],
+      ).toBe(HOJE["00000000-0000-0000-0000-000000000001"]);
+    });
+  });
+});
+
 bloco("actions-por-sha", () => {
   /*
   Auditoria de 09/11/2026 (QA-01): Action de terceiro referenciada por tag
