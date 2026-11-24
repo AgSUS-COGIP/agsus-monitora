@@ -1,6 +1,12 @@
 // @vitest-environment node
 import { bloco } from "./apoio/bloco.ts";
 import {
+  montarMeusAcessos,
+  rotuloDaArea,
+  tomDoNivel,
+} from "../src/lib/acessos/meus-acessos.ts";
+import { RESOURCES } from "../src/lib/acessos/permissoes-recursos.ts";
+import {
   arquivoDoErro,
   chaveDaRepeticao,
   criarJanelaDaRepeticao,
@@ -8475,5 +8481,86 @@ bloco("lib/registro-de-erros", () => {
       ).toBe(true);
       expect(ehRuido({ ...base, erro: new Error("de verdade") })).toBe(false);
     });
+  });
+});
+
+bloco("lib/meus-acessos", () => {
+  /* "Meus acessos" do menu da conta: o perfil do contexto vira a lista legível. */
+  const GESTORA = {
+    ativo: true,
+    grupo: { codigo: "edital_gestor", nome: "Gestor" },
+    areas: ["projetos", "saude-indigena", "projetos"],
+    coordenacao: {
+      codigo: "C1",
+      nome: "Coordenação Norte",
+      area: "saude-indigena",
+    },
+    permissoes: {
+      dashboard: "leitor",
+      nucleo: "editor",
+      acessos: "editor",
+      configuracoes: "admin",
+      importacao: "sem_acesso",
+    },
+  } as const;
+
+  it("mostra o grupo, as áreas na ordem do sistema e a coordenação com a área", () => {
+    const acessos = montarMeusAcessos(GESTORA);
+    expect(acessos?.grupo).toBe("Gestor");
+    expect(acessos?.areas).toEqual(["Saúde Indígena", "Projetos"]);
+    expect(acessos?.coordenacao).toBe("Coordenação Norte (Saúde Indígena)");
+    expect(acessos?.adminGlobal).toBe(false);
+  });
+
+  it("lista todo módulo do catálogo, na ordem dele, com o nível legível", () => {
+    const acessos = montarMeusAcessos(GESTORA);
+    expect(acessos?.modulos.map((m) => m.recurso)).toEqual(
+      RESOURCES.map(([recurso]) => recurso),
+    );
+    const nivel = (recurso: string) =>
+      acessos?.modulos.find((m) => m.recurso === recurso)?.rotuloDoNivel;
+    expect(nivel("dashboard")).toBe("Leitor");
+    expect(nivel("nucleo")).toBe("Editor");
+    expect(nivel("configuracoes")).toBe("Administrador");
+    expect(nivel("importacao")).toBe("Sem acesso");
+    // Ausente não vira acesso.
+    expect(nivel("aprovados")).toBe("Sem acesso");
+    expect(acessos?.comAcesso).toBe(4);
+  });
+
+  it("sem a matriz (contexto antigo) não diz 'Sem acesso' em tudo: os módulos ficam de fora", () => {
+    const acessos = montarMeusAcessos({ ativo: true, permissoes: {} });
+    expect(acessos?.modulos).toEqual([]);
+    expect(acessos?.grupo).toBe("Usuário");
+    expect(acessos?.areas).toEqual([]);
+    expect(acessos?.coordenacao).toBe("");
+  });
+
+  it("sem perfil ou com perfil desativado não há o que mostrar", () => {
+    expect(montarMeusAcessos(null)).toBeNull();
+    expect(
+      montarMeusAcessos({ ativo: false, permissoes: { nucleo: "admin" } }),
+    ).toBeNull();
+  });
+
+  it("coordenação sem área e área desconhecida ficam pelo nome que vieram", () => {
+    const acessos = montarMeusAcessos({
+      ativo: true,
+      admin_global: true,
+      grupo: { nome: "Administrador global" },
+      areas: ["nova-area", "sede"],
+      coordenacao: { codigo: "C2", nome: "Diretoria", area: null },
+    });
+    expect(acessos?.adminGlobal).toBe(true);
+    expect(acessos?.areas).toEqual(["SEDE", "nova-area"]);
+    expect(acessos?.coordenacao).toBe("Diretoria");
+    expect(rotuloDaArea("projetos")).toBe("Projetos");
+  });
+
+  it("o selo do nível: editar e administrar em verde, ler em azul, sem acesso neutro", () => {
+    expect(tomDoNivel("admin")).toBe("aprovado");
+    expect(tomDoNivel("editor")).toBe("aprovado");
+    expect(tomDoNivel("leitor")).toBe("revisar");
+    expect(tomDoNivel("sem_acesso")).toBe("neutro");
   });
 });

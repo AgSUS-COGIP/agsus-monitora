@@ -1,5 +1,7 @@
+import { useState } from "react";
 import type { MouseEvent } from "react";
 import { chamarAcaoDaCasca, fecharMenuDaConta } from "./acoes.ts";
+import { GavetaDosMeusAcessosDoApp } from "./meus-acessos.tsx";
 import { usarEstadoDaNavegacao } from "../contexto-do-app.ts";
 import { telaDaRota } from "../../lib/navegacao/rotas.ts";
 import { definirDestinoDoTitulo } from "./destino-do-titulo.ts";
@@ -23,7 +25,8 @@ import "./topo.css";
                    `.topo-tela-destino`) e o título da página em Aviso e
                    Administração;
     à direita   -> o sininho do resumo do dia e a foto com o menu da conta
-                   (Pessoas online, Atualizar dados, Tela cheia).
+                   (Pessoas online, Meus acessos, Atualizar dados, Tela
+                   cheia).
 
   Nada repetido: o nome da tela só aparece aqui (o conteúdo começa pelas
   ações e indicadores), a área só na trilha e no seletor da barra lateral, a
@@ -106,47 +109,69 @@ function aoClicar(
 }
 
 function MenuDaConta() {
+  const [meusAcessos, setMeusAcessos] = useState(false);
   return (
-    <details id="topUserMenu" className="top-user-menu">
-      <summary
-        className="btn ghost ui-botao-icone topo-acao top-user-button"
-        aria-label="Abrir informações da conta"
-        title="Conta"
-      >
-        <span id="topUserAvatar" className="top-user-avatar" aria-hidden="true">
-          <Icone nome="user-round" tamanho={18} />
-        </span>
-        {/* Selo do edital no avatar (React: src/modulos/encerramento-do-edital/) */}
-        <span id="seloNoAvatarApp" className="selo-no-avatar">
-          <SeloNoAvatarDoApp />
-        </span>
-      </summary>
-      <div className="top-user-popover ui-popover-painel" data-lado="direita">
-        <strong id="topUserPopoverName">-</strong>{" "}
-        <small id="userEmail">-</small> <span id="topUserPopoverProfile"></span>
-        {/* Selos de editais (React: src/modulos/encerramento-do-edital/) */}
-        <div id="selosDoEditalApp">
-          <SelosDoEditalDoApp />
-        </div>
-        {/* Pessoas online (React: src/componentes/pessoas-online/) */}
-        <div id="pessoasOnlineApp" className="pessoas-online-app">
-          <PessoasOnlineDoApp />
-        </div>
-        {/* Ações da conta. Tema e Sair ficam no rodapé da barra lateral. */}
-        <div className="top-user-popover-actions">
-          <button type="button" onClick={aoClicar("acao", "refreshData")}>
-            <i className="fa-solid fa-rotate-right" aria-hidden="true"></i>{" "}
-            <span id="refreshActionText">Atualizar dados</span>
-          </button>
-          <button
-            type="button"
-            onClick={aoClicar("fechar", "toggleBrowserFullscreen")}
+    <>
+      <details id="topUserMenu" className="top-user-menu">
+        <summary
+          className="btn ghost ui-botao-icone topo-acao top-user-button"
+          aria-label="Abrir informações da conta"
+          title="Conta"
+        >
+          <span
+            id="topUserAvatar"
+            className="top-user-avatar"
+            aria-hidden="true"
           >
-            <IconeDaTelaCheia />{" "}
-            <span id="fullscreenActionText">Tela cheia</span>
-          </button>
+            <Icone nome="user-round" tamanho={18} />
+          </span>
+          {/* Selo do edital no avatar (React: src/modulos/encerramento-do-edital/) */}
+          <span id="seloNoAvatarApp" className="selo-no-avatar">
+            <SeloNoAvatarDoApp />
+          </span>
+        </summary>
+        <div className="top-user-popover ui-popover-painel" data-lado="direita">
+          <strong id="topUserPopoverName">-</strong>{" "}
+          <small id="userEmail">-</small>{" "}
+          <span id="topUserPopoverProfile"></span>
+          {/* Selos de editais (React: src/modulos/encerramento-do-edital/) */}
+          <div id="selosDoEditalApp">
+            <SelosDoEditalDoApp />
+          </div>
+          {/* Pessoas online (React: src/componentes/pessoas-online/) */}
+          <div id="pessoasOnlineApp" className="pessoas-online-app">
+            <PessoasOnlineDoApp />
+          </div>
+          {/* Ações da conta. Tema e Sair ficam no rodapé da barra lateral. */}
+          <div className="top-user-popover-actions">
+            <button
+              type="button"
+              onClick={(evento) => {
+                fecharMenuDaConta(evento.currentTarget);
+                setMeusAcessos(true);
+              }}
+            >
+              <i className="fa-solid fa-id-card" aria-hidden="true"></i>{" "}
+              <span>Meus acessos</span>
+            </button>
+            <button type="button" onClick={aoClicar("acao", "refreshData")}>
+              <i className="fa-solid fa-rotate-right" aria-hidden="true"></i>{" "}
+              <span id="refreshActionText">Atualizar dados</span>
+            </button>
+            <button
+              type="button"
+              onClick={aoClicar("fechar", "toggleBrowserFullscreen")}
+            >
+              <IconeDaTelaCheia />{" "}
+              <span id="fullscreenActionText">Tela cheia</span>
+            </button>
+          </div>
         </div>
-      </div>
-    </details>
+      </details>
+      {/* "Meus acessos": a gaveta, por portal (src/app/casca/meus-acessos.tsx). */}
+      {meusAcessos ? (
+        <GavetaDosMeusAcessosDoApp aoFechar={() => setMeusAcessos(false)} />
+      ) : null}
+    </>
   );
 }

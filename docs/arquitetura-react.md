@@ -424,7 +424,7 @@ claro e escuro) e o DOM do `#appScreen` com posição e tamanho de cada elemento
 
 ```
 casca.tsx            <Casca> (memo, sem props): barra lateral, cabeçalho e <Telas>; portal da raiz em #appScreen
-topo.tsx             header.top: título (da navegação), menu da conta com Pessoas online dentro (o ☰ é da barra lateral)
+topo.tsx             header.top: título (da navegação), menu da conta com Pessoas online e Meus acessos (meus-acessos.tsx) dentro (o ☰ é da barra lateral)
 ../telas.tsx         .content: as <section class="page"> (TELAS_DA_CASCA, rotas), quadro externo, Configurações
 acoes.ts             os botões chamam window.refreshData, toggleSidebar… na hora do clique (como os onclick)
 ```
