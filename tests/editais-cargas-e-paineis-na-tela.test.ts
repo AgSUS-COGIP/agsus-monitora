@@ -2812,6 +2812,428 @@ bloco("componentes/nucleo-treinamento", () => {
   });
 });
 
+bloco("componentes/nucleo-reativar-edital", () => {
+  /*
+    Reativar edital: no "⋯" da linha do Histórico, só para quem edita
+    editais. O modal lê o cronograma, pede motivo, nova data de fim e o nome
+    da etapa, e grava pela mesma RPC do formulário
+    (`salvar_monitoramento_com_cronograma_v2`), com o motivo no histórico.
+    Cancelado e cálculo manual só explicam. "Agora" é 24/11/2026.
+  */
+  const AGORA = new Date("2026-11-24T15:00:00Z");
+
+  beforeAll(() => import("../src/modulos/editais/reativar-edital.tsx"));
+
+  const LINHAS = () => [
+    {
+      id: "ativo",
+      unidade: "DSEI Fictício Norte",
+      edital: "40/2026",
+      status: "Em andamento",
+      etapa: "Entrevistas",
+      risco: "Baixo",
+      vagas_total: 5,
+    },
+    {
+      id: "concluido",
+      unidade: "DSEI Fictício Sul",
+      edital: "15/2025",
+      id_unidade: "U15",
+      sigla_unidade: "DSEI-FS",
+      tipo_unidade: "DSEI",
+      uf: "MT",
+      responsavel: "USI",
+      status: "Concluído",
+      etapa: "Resultado final do Processo Seletivo",
+      risco: "Baixo",
+      vagas_total: 12,
+      data_inicio: "2025-03-01",
+      data_fim: "2025-06-10",
+      CO_AREA: "saude-indigena",
+    },
+    {
+      id: "cancelado",
+      unidade: "DSEI Fictício Leste",
+      edital: "16/2025",
+      status: "Cancelado",
+      etapa: "Cancelado",
+      risco: "Baixo",
+      vagas_total: 3,
+    },
+  ];
+
+  const ETAPAS = [
+    {
+      ordem: 1,
+      atividade: "Publicação do Edital",
+      data_inicio: "2025-03-01",
+      data_fim: "2025-03-01",
+    },
+    {
+      ordem: 2,
+      atividade: "Resultado final do Processo Seletivo",
+      data_inicio: "2025-06-10",
+      data_fim: "2025-06-10",
+    },
+  ];
+
+  function supabaseFalso({
+    manual = false,
+    listaAtiva = false,
+    listasComErro = false,
+    ativarComErro = false,
+  }: {
+    manual?: boolean;
+    listaAtiva?: boolean;
+    listasComErro?: boolean;
+    ativarComErro?: boolean;
+  } = {}) {
+    return {
+      auth: authFalso("x"),
+      rpc: vi.fn(
+        async (nome: string, _argumentos?: Record<string, unknown>) => {
+          if (nome === "get_nucleo_cronograma_resumo")
+            return { data: [], error: null };
+          if (nome === "listar_listas_aprovados")
+            return listasComErro
+              ? {
+                  data: null,
+                  error: { message: "Sem permissão para este recurso" },
+                }
+              : {
+                  data: [
+                    {
+                      lista_id: "lista-15",
+                      edital_id: "concluido",
+                      ativo: listaAtiva,
+                    },
+                  ],
+                  error: null,
+                };
+          if (nome === "definir_lista_aprovados_ativa")
+            return ativarComErro
+              ? {
+                  data: null,
+                  error: {
+                    message: "O prazo de validade do processo seletivo venceu",
+                  },
+                }
+              : { data: { ok: true }, error: null };
+          if (nome === "get_monitoramento_cronograma")
+            return {
+              data: {
+                monitoramento: {
+                  cronograma_automatico: !manual,
+                  nu_anos_validade: 1,
+                  nu_meses_validade: 0,
+                  st_prorrogado: false,
+                },
+                etapas: ETAPAS,
+                historico: [],
+              },
+              error: null,
+            };
+          if (nome === "salvar_monitoramento_com_cronograma_v2")
+            return {
+              data: { ok: true, registro: { id: "concluido" } },
+              error: null,
+            };
+          return { data: null, error: { message: `RPC inesperada: ${nome}` } };
+        },
+      ),
+    };
+  }
+
+  type ControladorDoNucleo = ReturnType<typeof criarNucleo> & {
+    raiz: Root | null;
+  };
+  let controlador: ControladorDoNucleo | null = null;
+
+  const EDITOR = { perfil: "edital_gestor" };
+  const LEITOR = { perfil: "leitor" };
+
+  async function montar({
+    perfil = EDITOR,
+    supabase = supabaseFalso(),
+  }: { perfil?: unknown; supabase?: ReturnType<typeof supabaseFalso> } = {}) {
+    document.body.innerHTML = `<section id="page-nucleo" class="page active"></section>`;
+    const toast = vi.fn();
+    const aoSalvar = vi.fn(async () => {});
+    const confirmar = vi.fn(() => true);
+    await act(async () => {
+      controlador = montarTela<
+        OpcoesDaPaginaDoNucleo,
+        ReturnType<typeof criarNucleo>
+      >(criarNucleo, "page-nucleo", {
+        secao: document.getElementById("page-nucleo"),
+        supabase,
+        toast,
+        loader: () => {},
+        getProfile: () => perfil,
+        confirmar,
+        aoSalvar,
+        agora: () => AGORA,
+      });
+    });
+    await act(async () => {
+      publicarUnidadesDoCatalogo([]);
+      publicarLinhasDoMonitoramento(LINHAS());
+    });
+    await esperar(() => definido(controlador).render());
+    return { supabase, toast, aoSalvar, confirmar };
+  }
+
+  beforeEach(() => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    window.localStorage.clear();
+  });
+
+  afterEach(async () => {
+    await act(async () => controlador?.raiz?.unmount());
+    controlador?.estado.desligar();
+    controlador = null;
+    await act(async () => redefinirDadosDoMonitoramento());
+    document.body.innerHTML = "";
+    vi.restoreAllMocks();
+  });
+
+  const linha = (id: string) =>
+    document.querySelector<HTMLElement>(
+      `#nucleoRows tr[data-record-id="${id}"]`,
+    );
+  const vista = (valor: "ativos" | "historico") =>
+    document.querySelector<HTMLElement>(
+      `[data-tour="editais-ativos-e-historico"] [data-valor="${valor}"]`,
+    );
+  /* "Reativar edital" fica no "⋯" da linha (AcoesDaLinha). */
+  const botaoReativar = async (id: string) => {
+    const menu = linha(id)?.querySelector<HTMLElement>(
+      '[aria-label^="Mais ações de"]',
+    );
+    if (menu && menu.getAttribute("aria-expanded") !== "true")
+      await clicar(menu);
+    return linha(id)?.querySelector<HTMLElement>(
+      '[data-acao="reativar-edital"]',
+    );
+  };
+  const modal = () => document.getElementById("reativarEdital");
+  const chamadas = (supabase: ReturnType<typeof supabaseFalso>, nome: string) =>
+    supabase.rpc.mock.calls.filter(([n]) => n === nome);
+
+  it("só quem edita editais vê 'Reativar edital', e só nos editais do Histórico", async () => {
+    await montar({ perfil: LEITOR });
+    await clicar(vista("historico"));
+    await esperar(() => linha("concluido"));
+    expect(await botaoReativar("concluido")).toBeFalsy();
+    await act(async () => controlador?.raiz?.unmount());
+    controlador?.estado.desligar();
+    await act(async () => redefinirDadosDoMonitoramento());
+
+    await montar({ perfil: EDITOR });
+    await esperar(() => linha("ativo"));
+    expect(await botaoReativar("ativo")).toBeFalsy();
+    await clicar(vista("historico"));
+    await esperar(() => linha("concluido"));
+    expect(await botaoReativar("concluido")).toBeTruthy();
+    expect(await botaoReativar("cancelado")).toBeTruthy();
+  });
+
+  it("reativa: pede motivo e data futura, grava a etapa nova pela RPC do formulário e volta aos Ativos", async () => {
+    const { supabase, toast, aoSalvar, confirmar } = await montar();
+    await clicar(vista("historico"));
+    await esperar(() => linha("concluido"));
+    await clicar(await botaoReativar("concluido"));
+    await esperar(() => document.getElementById("reativarMotivo"));
+    expect(modal()?.textContent).toContain("Reativar edital 15/2025");
+    expect(
+      document.querySelector<HTMLInputElement>("#reativarEtapa")?.value,
+    ).toBe("Convocação de remanescentes");
+    expect(
+      document.querySelector<HTMLInputElement>("#reativarDataFim")?.min,
+    ).toBe("2026-11-25");
+    // A lista vigente está inativa (a validade a inativou): volta a ficar ativa.
+    await esperar(() => modal()?.querySelector("[data-lista-na-reativacao]"));
+    expect(
+      modal()?.querySelector('[data-lista-na-reativacao="ativar"]')
+        ?.textContent,
+    ).toBe("A lista de aprovados, hoje inativa, volta a ficar ativa.");
+
+    // Sem motivo nem data: os erros aparecem e nada vai ao banco.
+    await clicar(modal()?.querySelector('[data-acao="confirmar-reativacao"]'));
+    expect(modal()?.textContent).toContain("Informe o motivo");
+    expect(modal()?.textContent).toContain("Informe a nova data de fim.");
+    expect(
+      chamadas(supabase, "salvar_monitoramento_com_cronograma_v2"),
+    ).toHaveLength(0);
+
+    await digitar(
+      document.getElementById("reativarMotivo"),
+      "Convocar os remanescentes da lista",
+    );
+    await digitar(document.getElementById("reativarDataFim"), "2027-01-31");
+    expect(modal()?.textContent).toContain(
+      'O edital volta para Ativos, com status "Em andamento" até 31/01/2027.',
+    );
+    expect(modal()?.textContent).toContain(
+      "volta a ficar ativa, com validade até 31/01/2028.",
+    );
+    await clicar(modal()?.querySelector('[data-acao="confirmar-reativacao"]'));
+    await esperar(
+      () => chamadas(supabase, "salvar_monitoramento_com_cronograma_v2").length,
+    );
+    const [, argumentos] = definido(
+      chamadas(supabase, "salvar_monitoramento_com_cronograma_v2")[0],
+    );
+    const { p_payload, p_cronograma, p_motivo, p_numero_errata } =
+      definido(argumentos);
+    expect(p_motivo).toBe(
+      "Reativação do edital: Convocar os remanescentes da lista",
+    );
+    expect(p_numero_errata).toBeNull();
+    expect(p_payload).toMatchObject({
+      id: "concluido",
+      edital: "15/2025",
+      unidade: "DSEI Fictício Sul",
+      id_unidade: "U15",
+      uf: "MT",
+      status: "Em andamento",
+      etapa: "Convocação de remanescentes",
+      data_fim: "2027-01-31",
+      cronograma_automatico: true,
+      co_area: "saude-indigena",
+    });
+    expect(p_cronograma).toHaveLength(3);
+    expect(definido((p_cronograma as unknown[])[2])).toMatchObject({
+      ordem: 3,
+      atividade: "Convocação de remanescentes",
+      data_inicio: "2026-11-24",
+      data_fim: "2027-01-31",
+    });
+    // Os avisos do cronograma (data fora do ano do edital) não perguntam de novo.
+    expect(confirmar).not.toHaveBeenCalled();
+    await esperar(() => aoSalvar.mock.calls.length > 0);
+    // Depois de gravar o cronograma, a lista vigente volta a ficar ativa.
+    expect(supabase.rpc).toHaveBeenCalledWith("definir_lista_aprovados_ativa", {
+      p_lista_id: "lista-15",
+      p_ativo: true,
+    });
+    const nomes = supabase.rpc.mock.calls.map(([n]) => n);
+    expect(nomes.lastIndexOf("definir_lista_aprovados_ativa")).toBeGreaterThan(
+      nomes.indexOf("salvar_monitoramento_com_cronograma_v2"),
+    );
+    expect(toast).toHaveBeenCalledWith(
+      "15/2025 reativado: em andamento até 31/01/2027. A lista de aprovados voltou a ficar ativa.",
+    );
+    await esperar(() => !modal());
+    expect(vista("ativos")?.getAttribute("aria-checked")).toBe("true");
+  });
+
+  it("edital cancelado: a ação explica que é no formulário e não lê nem grava nada", async () => {
+    const { supabase } = await montar();
+    await clicar(vista("historico"));
+    await esperar(() => linha("cancelado"));
+    await clicar(await botaoReativar("cancelado"));
+    await esperar(() => modal());
+    expect(modal()?.textContent).toContain("tire o status excepcional");
+    expect(
+      modal()?.querySelector('[data-acao="abrir-formulario"]'),
+    ).toBeTruthy();
+    expect(document.getElementById("reativarMotivo")).toBeNull();
+    expect(chamadas(supabase, "get_monitoramento_cronograma")).toHaveLength(0);
+    expect(
+      chamadas(supabase, "salvar_monitoramento_com_cronograma_v2"),
+    ).toHaveLength(0);
+  });
+
+  /* Preenche o modal do 15/2025 e confirma. */
+  async function reativarO15() {
+    await clicar(vista("historico"));
+    await esperar(() => linha("concluido"));
+    await clicar(await botaoReativar("concluido"));
+    await esperar(() => document.getElementById("reativarMotivo"));
+    await digitar(
+      document.getElementById("reativarMotivo"),
+      "Convocar os remanescentes da lista",
+    );
+    await digitar(document.getElementById("reativarDataFim"), "2027-01-31");
+  }
+
+  it("sem Editor em Importação: o modal diz quem ativa a lista, e ela não é ativada", async () => {
+    const { supabase, toast, aoSalvar } = await montar({
+      perfil: { permissoes: { nucleo: "editor", aprovados: "leitor" } },
+    });
+    await reativarO15();
+    await esperar(() =>
+      modal()?.querySelector('[data-lista-na-reativacao="sem-permissao"]'),
+    );
+    expect(modal()?.textContent).toContain(
+      "quem a ativa é quem tem nível Editor em Importação e convocação, ou o administrador global, em Lista de aprovados › Listas do edital.",
+    );
+    await clicar(modal()?.querySelector('[data-acao="confirmar-reativacao"]'));
+    await esperar(() => aoSalvar.mock.calls.length > 0);
+    expect(chamadas(supabase, "definir_lista_aprovados_ativa")).toHaveLength(0);
+    expect(toast).toHaveBeenCalledWith(
+      "15/2025 reativado: em andamento até 31/01/2027.",
+    );
+  });
+
+  it("lista já ativa: nada a dizer nem a ativar", async () => {
+    const { supabase, aoSalvar } = await montar({
+      supabase: supabaseFalso({ listaAtiva: true }),
+    });
+    await reativarO15();
+    await esperar(() => chamadas(supabase, "listar_listas_aprovados").length);
+    expect(modal()?.querySelector("[data-lista-na-reativacao]")).toBeNull();
+    await clicar(modal()?.querySelector('[data-acao="confirmar-reativacao"]'));
+    await esperar(() => aoSalvar.mock.calls.length > 0);
+    expect(chamadas(supabase, "definir_lista_aprovados_ativa")).toHaveLength(0);
+  });
+
+  it("listas sem acesso: o modal avisa quem ativa; a ativação que falha não desfaz a reativação", async () => {
+    const semAcesso = await montar({
+      supabase: supabaseFalso({ listasComErro: true }),
+    });
+    await reativarO15();
+    await esperar(() =>
+      modal()?.querySelector('[data-lista-na-reativacao="nao-lida"]'),
+    );
+    expect(
+      chamadas(semAcesso.supabase, "definir_lista_aprovados_ativa"),
+    ).toHaveLength(0);
+    await act(async () => controlador?.raiz?.unmount());
+    controlador?.estado.desligar();
+    await act(async () => redefinirDadosDoMonitoramento());
+
+    const { toast, aoSalvar } = await montar({
+      supabase: supabaseFalso({ ativarComErro: true }),
+    });
+    await reativarO15();
+    await clicar(modal()?.querySelector('[data-acao="confirmar-reativacao"]'));
+    await esperar(() => aoSalvar.mock.calls.length > 0);
+    expect(toast).toHaveBeenCalledWith(
+      "15/2025 reativado: em andamento até 31/01/2027. A lista de aprovados não foi ativada: O prazo de validade do processo seletivo venceu. Ative a lista em Listas do edital.",
+      "warn",
+    );
+  });
+
+  it("cálculo manual: explica que o status é digitado e leva ao formulário", async () => {
+    const { supabase } = await montar({
+      supabase: supabaseFalso({ manual: true }),
+    });
+    await clicar(vista("historico"));
+    await esperar(() => linha("concluido"));
+    await clicar(await botaoReativar("concluido"));
+    await esperar(() => modal()?.textContent?.includes("cálculo manual"));
+    expect(document.getElementById("reativarMotivo")).toBeNull();
+    expect(
+      modal()?.querySelector('[data-acao="abrir-formulario"]'),
+    ).toBeTruthy();
+    expect(
+      chamadas(supabase, "salvar_monitoramento_com_cronograma_v2"),
+    ).toHaveLength(0);
+  });
+});
+
 bloco("componentes/nucleo", () => {
   /*
   A página "Editais" (Equipe Núcleo) em React: a tabela com as linhas que o

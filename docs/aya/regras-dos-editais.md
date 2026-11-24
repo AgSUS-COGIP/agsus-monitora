@@ -41,6 +41,14 @@ migrations `20260928120000_edital_novo_sem_motivo.sql`, `20260928220000_edital_n
 **fonte:** src/modulos/editais/encerrados-do-cronograma.tsx; src/lib/editais/encerrados-do-cronograma.ts; migration 20261119120000_concluir_editais_com_cronograma_encerrado.sql
 **abrir:** nucleo
 
+## Como reativar um edital
+
+**perguntas:** como reativar um edital | reativar edital | reabrir edital | edital concluido voltar | voltar edital para ativos | tirar edital do historico | convocacao de remanescentes | estender o cronograma | edital concluido por engano | reativar edital cancelado
+**resposta:** Em Editais, na aba Histórico, o ⋯ da linha de um edital concluído tem "Reativar edital", para quem tem nível Editor em Editais ou em Cronograma. O modal pede o motivo (de 10 a 500 caracteres, sem CPF nem e-mail), a nova data de fim (depois de hoje) e o nome da etapa ("Convocação de remanescentes", se ninguém mudar). Ao confirmar, a etapa entra no fim do cronograma, de hoje até a data informada, pelo mesmo salvar do formulário: com o cálculo automático, o status volta a "Em andamento", a data de encerramento do edital passa a ser a nova data e o edital sai do Histórico e volta para Ativos. A reativação fica no histórico do cronograma do edital ("Reativação do edital: " e o motivo), com quem fez e quando. Não se reativa por aqui: o edital cancelado (o cancelamento é status excepcional; tire o status excepcional no formulário do edital, em Editar), o edital com o cálculo manual (o status é o digitado; ligue o cálculo automático ou mude o status no formulário) e o edital sem cronograma. Se a lista de aprovados vigente ficou inativa porque a validade venceu, ela volta a ficar ativa ao reativar, depois de gravar o cronograma, com a validade contada da nova data de fim; o modal avisa antes ("volta a ficar ativa, com validade até …"). Isso é para quem tem Editor em Importação e convocação (ou o administrador global); sem essa permissão, o modal diz que a lista continua inativa e quem pode ativá-la, em Lista de aprovados › Listas do edital. Se a ativação falhar, o edital continua reativado e o aviso diz para ativar a lista em Listas do edital. Para estender uma etapa que já existe em vez de acrescentar outra, use o formulário do edital.
+**fato:** Reativar acrescenta uma etapa de hoje até a nova data de fim e ativa de novo a lista de aprovados vencida (para quem edita a Importação); cancelado e cálculo manual se resolvem no formulário.
+**fonte:** src/modulos/editais/reativar-edital.tsx; src/lib/editais/reativar-edital.ts; src/modulos/editais/estado.ts (reativarEdital)
+**abrir:** nucleo
+
 ## Status excepcional
 
 **perguntas:** status excepcional | suspenso | paralisado | edital cancelado | como suspender um edital
@@ -108,7 +116,7 @@ migrations `20260928120000_edital_novo_sem_motivo.sql`, `20260928220000_edital_n
 ## Validade do processo seletivo
 
 **perguntas:** validade do processo seletivo | validade do edital | prazo de validade | edital prorrogado | prorrogacao do edital | quando a lista de aprovados vence | lista vencida | lista de aprovados inativa sozinha
-**resposta:** No formulário do edital, em "Validade do processo seletivo", informe os anos (0 a 10), os meses (0 a 11) e se o prazo foi prorrogado. O prazo conta da data de encerramento do edital: o último dia de validade é essa data mais os anos e meses, em dobro quando prorrogado (quando o mês de chegada não tem o dia, vale o último dia dele: 31/01 mais um mês dá 28/02 ou 29/02). Com 0 anos e 0 meses a lista não vence. O formulário mostra o prazo calculado. Passado o último dia (no horário de Brasília), a lista de aprovados vigente do edital fica inativa: na hora, ao salvar o edital, e todo dia logo depois da meia-noite. Para reativá-la, prorrogue o edital ou aumente o prazo.
+**resposta:** No formulário do edital, em "Validade do processo seletivo", informe os anos (0 a 10), os meses (0 a 11) e se o prazo foi prorrogado. O prazo conta da data de encerramento do edital: o último dia de validade é essa data mais os anos e meses, em dobro quando prorrogado (quando o mês de chegada não tem o dia, vale o último dia dele: 31/01 mais um mês dá 28/02 ou 29/02). Com 0 anos e 0 meses a lista não vence. O formulário mostra o prazo calculado. Passado o último dia (no horário de Brasília), a lista de aprovados vigente do edital fica inativa: na hora, ao salvar o edital, e todo dia logo depois da meia-noite. Prorrogar o edital ou aumentar o prazo não a ativa sozinho: depois disso, ative a lista em Lista de aprovados › Listas do edital ("Aplicar situação"). "Reativar edital", no Histórico de Editais, já faz as duas coisas.
 **fonte:** src/lib/editais/validade-do-edital.ts; src/modulos/editais/modal-do-edital.tsx
 **abrir:** nucleo
 

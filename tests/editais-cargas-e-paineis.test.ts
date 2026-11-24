@@ -17,6 +17,20 @@ import {
 } from "../src/lib/editais/ciclo-do-edital.ts";
 import { editalParaSalvar } from "../src/lib/editais/editais-do-nucleo.ts";
 import {
+  ETAPA_PADRAO_DA_REATIVACAO,
+  acaoDeReativarNaLinha,
+  bloqueioDaReativacao,
+  cronogramaDaReativacao,
+  editalParaReativar,
+  errosDaReativacao,
+  etapasComReativacao,
+  listaNaReativacao,
+  listaVigenteDoEdital,
+  motivoDaReativacao,
+  semErros,
+  textoDaReativacao,
+} from "../src/lib/editais/reativar-edital.ts";
+import {
   acompanhamentoDaResposta,
   COLUNAS_DA_TABELA,
   COLUNAS_INICIAIS,
@@ -7028,5 +7042,299 @@ bloco("lib/pagina-do-edital", () => {
       expect(quadro.fila.vagasDoEdital).toBe("PENDENTE_INTEGRACAO");
       expect(quadroDaPagina(null)).toMatchObject({ linhas: [], origem: null });
     });
+  });
+});
+
+bloco("lib/reativar-edital", () => {
+  /*
+    Reativar edital (Editais, Histórico): a etapa nova de hoje até a data de
+    fim, a validação, quem pode ser reativado e o payload da mesma RPC do
+    formulário. "Agora" é 24/11/2026 às 02:00 UTC — ainda 23/11 em Brasília.
+  */
+  const AGORA = new Date("2026-11-24T02:00:00Z");
+  const ETAPAS_DO_BANCO = [
+    {
+      ordem: 1,
+      atividade: "Publicação do Edital",
+      data_inicio: "2025-03-01",
+      data_fim: "2025-03-01",
+    },
+    {
+      ordem: 2,
+      atividade: "Resultado final do Processo Seletivo",
+      data_inicio: "2025-06-10",
+      data_fim: "2025-06-10",
+    },
+  ];
+  const lido = (monitoramento: Record<string, unknown> = {}) =>
+    cronogramaDaReativacao({
+      monitoramento: {
+        cronograma_automatico: true,
+        nu_anos_validade: 1,
+        nu_meses_validade: 0,
+        st_prorrogado: false,
+        ...monitoramento,
+      },
+      etapas: ETAPAS_DO_BANCO,
+    });
+  const LINHA = {
+    id: "ed-15",
+    edital: "15/2025",
+    unidade: "DSEI Fictício",
+    id_unidade: "U9",
+    sigla_unidade: "DSEI-FIC",
+    tipo_unidade: "DSEI",
+    uf: "MT",
+    responsavel: "USI",
+    processo: "25000.000000/2025-00",
+    vagas_total: 12,
+    status: "Concluído",
+    etapa: "Resultado final do Processo Seletivo",
+    risco: "Baixo",
+    link_edital: "https://exemplo.invalid/edital.pdf",
+    data_inicio: "2025-03-01",
+    data_fim: "2025-06-10",
+    CO_AREA: "saude-indigena",
+  };
+  const DADOS = {
+    motivo: "Convocar os remanescentes da lista",
+    dataFim: "2027-01-31",
+    atividade: ETAPA_PADRAO_DA_REATIVACAO,
+  };
+
+  it("o ⋯ oferece a ação no concluído e no cancelado, nunca no ativo ou desativado", () => {
+    expect(acaoDeReativarNaLinha({ status: "Concluído" })).toBe("reativar");
+    expect(acaoDeReativarNaLinha({ status: "Cancelado" })).toBe("cancelado");
+    expect(acaoDeReativarNaLinha({ status: "Em andamento" })).toBeNull();
+    expect(
+      acaoDeReativarNaLinha({ status: "Concluído", ativo: false }),
+    ).toBeNull();
+    expect(acaoDeReativarNaLinha(null)).toBeNull();
+  });
+
+  it("só reativa o concluído pelo cronograma, com cálculo automático e sem status excepcional", () => {
+    expect(bloqueioDaReativacao(lido(), AGORA)).toBeNull();
+    expect(
+      bloqueioDaReativacao(
+        lido({
+          status_override: "Cancelado",
+          status_override_motivo: "x",
+          status_override_data: "2025-07-01",
+        }),
+        AGORA,
+      ),
+    ).toMatchObject({ motivo: "excepcional", peloFormulario: true });
+    expect(
+      bloqueioDaReativacao(lido({ cronograma_automatico: false }), AGORA),
+    ).toMatchObject({ motivo: "manual", peloFormulario: true });
+    expect(
+      bloqueioDaReativacao(cronogramaDaReativacao({ etapas: [] }), AGORA),
+    ).toMatchObject({ motivo: "sem-cronograma" });
+    const andando = cronogramaDaReativacao({
+      etapas: [
+        ...ETAPAS_DO_BANCO,
+        {
+          atividade: "Etapa nova",
+          data_inicio: "2026-11-01",
+          data_fim: "2026-12-31",
+        },
+      ],
+    });
+    expect(bloqueioDaReativacao(andando, AGORA)).toMatchObject({
+      motivo: "nao-concluido",
+      peloFormulario: false,
+    });
+  });
+
+  it("exige motivo de 10 a 500, data depois de hoje em Brasília e nome de etapa que não se repete", () => {
+    const etapas = lido().etapas;
+    expect(semErros(errosDaReativacao(DADOS, etapas, AGORA))).toBe(true);
+    expect(
+      errosDaReativacao({ ...DADOS, motivo: " curto " }, etapas, AGORA).motivo,
+    ).toContain("de 10 a 500");
+    expect(
+      errosDaReativacao({ ...DADOS, motivo: "x".repeat(501) }, etapas, AGORA)
+        .motivo,
+    ).toBeTruthy();
+    expect(
+      errosDaReativacao({ ...DADOS, dataFim: "" }, etapas, AGORA).dataFim,
+    ).toBe("Informe a nova data de fim.");
+    // 23/11 é hoje em Brasília (02:00 UTC do dia 24): hoje não é futuro; amanhã é.
+    expect(
+      errosDaReativacao({ ...DADOS, dataFim: "2026-11-23" }, etapas, AGORA)
+        .dataFim,
+    ).toBe("A data de fim precisa ser depois de hoje.");
+    expect(
+      errosDaReativacao({ ...DADOS, dataFim: "2026-11-24" }, etapas, AGORA)
+        .dataFim,
+    ).toBeUndefined();
+    expect(
+      errosDaReativacao({ ...DADOS, dataFim: "2202-01-01" }, etapas, AGORA)
+        .dataFim,
+    ).toContain("ano até 2100");
+    expect(
+      errosDaReativacao({ ...DADOS, atividade: "   " }, etapas, AGORA)
+        .atividade,
+    ).toBe("Informe o nome da etapa.");
+    expect(
+      errosDaReativacao(
+        { ...DADOS, atividade: "publicação  do edital" },
+        etapas,
+        AGORA,
+      ).atividade,
+    ).toContain("Já existe uma etapa");
+  });
+
+  it("a etapa nova vai de hoje (Brasília) até a data de fim, no fim do cronograma", () => {
+    const etapas = etapasComReativacao(
+      lido().etapas,
+      { atividade: "  Convocação   de remanescentes ", dataFim: "2027-01-31" },
+      AGORA,
+    );
+    expect(etapas).toHaveLength(3);
+    expect(etapas[2]).toMatchObject({
+      ordem: 3,
+      atividade: "Convocação de remanescentes",
+      data_inicio: "2026-11-23",
+      data_fim: "2027-01-31",
+      origem: "MANUAL",
+    });
+    expect(etapas.map((e) => e.ordem)).toEqual([1, 2, 3]);
+  });
+
+  it("o payload é o edital gravado com o cronograma novo: Em andamento até a data de fim", () => {
+    const cronograma = lido();
+    const etapas = etapasComReativacao(cronograma.etapas, DADOS, AGORA);
+    const edital = editalParaReativar(
+      LINHA,
+      cronograma,
+      etapas,
+      "saude-indigena",
+      AGORA,
+    );
+    expect(edital).toMatchObject({
+      id: "ed-15",
+      edital: "15/2025",
+      unidade: "DSEI Fictício",
+      id_unidade: "U9",
+      sigla_unidade: "DSEI-FIC",
+      tipo_unidade: "DSEI",
+      uf: "MT",
+      processo: "25000.000000/2025-00",
+      vagas_total: 12,
+      link_edital: "https://exemplo.invalid/edital.pdf",
+      status: "Em andamento",
+      etapa: "Convocação de remanescentes",
+      data_inicio: "2025-03-01",
+      data_fim: "2027-01-31",
+      cronograma_automatico: true,
+      status_override: null,
+      nu_anos_validade: 1,
+      nu_meses_validade: 0,
+      st_prorrogado: false,
+      co_area: "saude-indigena",
+    });
+    // Sem a validade no banco (RPC antiga), nada dela vai: o gravado fica.
+    const semValidade = editalParaReativar(
+      LINHA,
+      cronogramaDaReativacao({ etapas: ETAPAS_DO_BANCO }),
+      etapas,
+      "saude-indigena",
+      AGORA,
+    );
+    expect(semValidade).not.toHaveProperty("nu_anos_validade");
+    expect(semValidade).not.toHaveProperty("st_prorrogado");
+  });
+
+  it("o motivo vai ao histórico dizendo que foi uma reativação", () => {
+    expect(motivoDaReativacao("  Convocar remanescentes ")).toBe(
+      "Reativação do edital: Convocar remanescentes",
+    );
+  });
+
+  it("acha a lista vigente do edital nas linhas de listar_listas_aprovados", () => {
+    const linhas = [
+      { lista_id: "l-outra", edital_id: "ed-99", ativo: true },
+      { lista_id: "l-15", edital_id: "ed-15", ativo: false },
+    ];
+    expect(listaVigenteDoEdital(linhas, "ed-15")).toEqual({
+      id: "l-15",
+      ativa: false,
+    });
+    expect(listaVigenteDoEdital(linhas, "ed-1")).toBeNull();
+    expect(listaVigenteDoEdital({ erro: true }, "ed-15")).toBeNull();
+    expect(listaVigenteDoEdital([{ edital_id: "ed-15" }], "ed-15")).toBeNull();
+  });
+
+  it("a lista inativa volta a ficar ativa com a nova validade; sem Importação, diz quem ativa", () => {
+    const validade = lido().validade;
+    const inativa = { id: "l-15", ativa: false };
+    // Fim novo 31/01/2027 + 1 ano: validade até 31/01/2028.
+    expect(
+      listaNaReativacao({
+        lista: inativa,
+        podeAtivar: true,
+        validade,
+        dataFim: "2027-01-31",
+        agora: AGORA,
+      }),
+    ).toEqual({
+      tipo: "ativar",
+      texto:
+        "A lista de aprovados, hoje inativa, volta a ficar ativa, com validade até 31/01/2028.",
+    });
+    // Sem data ainda, ou sem a validade lida: sem a data da validade.
+    expect(
+      listaNaReativacao({
+        lista: inativa,
+        podeAtivar: true,
+        validade,
+        dataFim: "",
+        agora: AGORA,
+      })?.texto,
+    ).toBe("A lista de aprovados, hoje inativa, volta a ficar ativa.");
+    expect(
+      listaNaReativacao({
+        lista: inativa,
+        podeAtivar: false,
+        validade,
+        dataFim: "2027-01-31",
+        agora: AGORA,
+      }),
+    ).toMatchObject({
+      tipo: "sem-permissao",
+      texto: expect.stringContaining(
+        "quem a ativa é quem tem nível Editor em Importação e convocação, ou o administrador global",
+      ),
+    });
+    expect(
+      listaNaReativacao({
+        lista: "nao-lida",
+        podeAtivar: false,
+        validade,
+        dataFim: "2027-01-31",
+        agora: AGORA,
+      })?.tipo,
+    ).toBe("nao-lida");
+    // Lista ativa ou nenhuma lista: nada a dizer.
+    for (const lista of [{ id: "l-15", ativa: true }, null])
+      expect(
+        listaNaReativacao({
+          lista,
+          podeAtivar: true,
+          validade,
+          dataFim: "2027-01-31",
+          agora: AGORA,
+        }),
+      ).toBeNull();
+  });
+
+  it("diz em uma frase o que vai acontecer", () => {
+    expect(textoDaReativacao(DADOS, AGORA)).toBe(
+      'O edital volta para Ativos, com status "Em andamento" até 31/01/2027. A etapa "Convocação de remanescentes" entra no cronograma a partir de hoje (23/11/2026), e o motivo fica no histórico do edital.',
+    );
+    expect(textoDaReativacao({ atividade: "", dataFim: "" }, AGORA)).toContain(
+      "até a data informada",
+    );
   });
 });

@@ -184,14 +184,26 @@ function AcoesDoAprovado({
       }}
       outras={outras.map((acao) => ({
         id: acao.id,
+        // O item apagado diz como destravar, numa segunda linha (lista inativa).
         rotulo:
-          acao.id === "remove-subjudice" && removendo
-            ? "Removendo…"
-            : acao.rotulo,
+          acao.id === "remove-subjudice" && removendo ? (
+            "Removendo…"
+          ) : acao.dica ? (
+            <span>
+              {acao.rotulo}
+              <span className="ui-texto-secundario">{acao.dica}</span>
+            </span>
+          ) : (
+            acao.rotulo
+          ),
         desabilitado:
           acao.desabilitado ||
           (acao.id === "remove-subjudice" && Boolean(emCurso)),
-        dados: { "data-approved-action": acao.id, "data-candidate-id": id },
+        dados: {
+          "data-approved-action": acao.id,
+          "data-candidate-id": id,
+          ...(acao.dica ? { title: acao.dica } : {}),
+        },
         aoEscolher: fazer[acao.id],
       }))}
     />

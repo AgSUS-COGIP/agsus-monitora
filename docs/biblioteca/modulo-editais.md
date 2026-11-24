@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-19
+atualizado: 2026-11-24
 ---
 
 # Módulo: Editais (cadastro, regras e encerramento)
@@ -23,9 +23,26 @@ Tabela, alertas, formulário e linha do tempo. A tela é `nucleo.tsx`; o estado 
 - A tabela abre nos **Ativos**; concluídos, cancelados e desativados ficam no **Histórico**, a um
   clique ao lado da busca, com a contagem por situação (`AtivosEHistorico`, [[componentes-padrao]]).
 - **Ações da linha** (`AcoesDaLinha`): "Abrir" (a página do edital) à vista; no "⋯", Editar, Lista
-  de aprovados, Regras do edital, Ver cronograma e Reiniciar treinamento (só admin, no edital de
-  treinamento). A Lista de aprovados com aviso (amarelo: concluído sem aprovados; vermelho:
-  cancelado ou suspenso) sai do "⋯" e fica à vista na linha.
+  de aprovados, Regras do edital, Ver cronograma, Reativar edital (concluído ou cancelado, quem
+  edita editais) e Reiniciar treinamento (só admin, no edital de treinamento). A Lista de
+  aprovados com aviso (amarelo: concluído sem aprovados; vermelho: cancelado ou suspenso) sai do
+  "⋯" e fica à vista na linha.
+- **Reativar edital** (`reativar-edital.tsx`, sob demanda; regra em
+  `src/lib/editais/reativar-edital.ts`; gravação em `estado.reativarEdital`): sem RPC nova. O
+  modal lê o cronograma (`get_monitoramento_cronograma`) e pede motivo (10 a 500), nova data de
+  fim (depois de hoje em Brasília) e o nome da etapa ("Convocação de remanescentes"). Ao
+  confirmar, relê o cronograma, acrescenta a etapa de hoje até a data e grava pela mesma
+  `salvar_monitoramento_com_cronograma_v2` do formulário, com o edital como está na linha e
+  `p_motivo` "Reativação do edital: …" (vai a `TH_CRONOGRAMA_MONIT_INDIG`, com quem e quando).
+  Os avisos do cronograma não perguntam de novo. Com o automático, o status volta a "Em
+  andamento", `data_fim` vira a nova data e a tabela vai para os Ativos. Não reativa: status
+  excepcional (o cancelado nem lê o cronograma), cálculo manual, sem cronograma ou não concluído
+  pelas datas; os três primeiros levam ao formulário. Lista de aprovados: o modal lê
+  `listar_listas_aprovados`; a vigente inativa (a validade a inativou, e
+  `FC_INATIVAR_LISTAS_VENCIDAS` só inativa) volta a ficar ativa depois de gravar, por
+  `definir_lista_aprovados_ativa(p_lista_id, true)` (a do "Aplicar situação"; confere a nova
+  validade e exige Editor em Importação ou admin global). O modal avisa antes; sem Importação,
+  diz quem ativa e não chama. Falha na ativação não desfaz a reativação: o aviso sai em amarelo.
 - Cadastro do edital e do cronograma; importa cronograma e quadro de vagas do PDF de anexos.
 - **Vagas ligadas ao quadro** (`vinculos-do-quadro.tsx`, `src/lib/editais/vinculos-do-quadro.ts`,
   migration `20261118120000`): no quadro salvo, a fila do vínculo de cada vaga com código com a

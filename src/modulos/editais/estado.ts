@@ -24,6 +24,10 @@ import {
   cronogramaParaSalvar,
 } from "../../lib/cronograma/cronograma-do-edital.ts";
 import { lerAnexoNoServidor } from "../../lib/editais/anexos-do-edital.ts";
+import type {
+  DadosDaReativacao,
+  LinhaParaReativar,
+} from "../../lib/editais/reativar-edital.ts";
 import { lerRetificacaoNoServidor } from "../../lib/cronograma/retificacao-do-cronograma.ts";
 import { carregarResumoDoNucleo, createNucleoSummaryStore } from "./resumo.ts";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -47,11 +51,11 @@ export interface ClienteDoNucleo extends ClienteDoResumo {
 }
 
 /**
- * O modal aberto: o formulário do edital (id vazio = novo) ou a linha do
- * tempo (id do monitoramento).
+ * O modal aberto: o formulário do edital (id vazio = novo), a linha do
+ * tempo (id do monitoramento) ou a reativação (id do edital).
  */
 export interface ModalDoNucleo {
-  tipo: "edital" | "linha-do-tempo";
+  tipo: "edital" | "linha-do-tempo" | "reativar";
   id: string;
   /** Muda a cada abertura: é a `key` do componente. */
   abertura: number;
@@ -116,6 +120,13 @@ export interface DadosParaMoverEdital {
   para: string;
 }
 
+/** O que `reativarEdital` recebe do modal: a linha, a área e o que foi preenchido. */
+export interface DadosParaReativarEdital extends DadosDaReativacao {
+  linha: LinhaParaReativar;
+  area: string;
+  agora?: Date;
+}
+
 /** O aviso da tela (toast do app). */
 export type AvisoDoNucleo = (mensagem: string, tom?: string) => void;
 
@@ -160,6 +171,7 @@ const RPC_GRAVAR_VINCULO = "gravar_vinculo_do_quadro";
 const RPC_ATUALIZAR_VINCULOS = "atualizar_vinculos_do_quadro";
 const RPC_REINICIAR_TREINAMENTO = "reiniciar_edital_treinamento";
 const RPC_LISTAS_APROVADOS = "listar_listas_aprovados";
+const RPC_ATIVAR_LISTA = "definir_lista_aprovados_ativa";
 export const EVENTO_CRONOGRAMA_SALVO = "agsus:nucleo-cronograma-saved";
 
 const txt = (valor: unknown) => String(valor ?? "").trim();
@@ -641,6 +653,136 @@ export function criarEstadoDoNucleo({
     }
   }
 
+  /** As listas de aprovados vigentes (`listar_listas_aprovados`), sem tratar a forma. */
+  async function lerListasAprovados(): Promise<unknown> {
+    if (!supabase) throw new Error("Supabase indisponível.");
+    await exigirSessao(supabase);
+    const { data, error } = await supabase.rpc(RPC_LISTAS_APROVADOS);
+    if (error) throw error;
+    return data;
+  }
+
+  /*
+    Depois de reativar: a lista vigente inativa do edital volta a ficar
+    ativa. Devolve o complemento do aviso ("" sem lista inativa).
+  */
+  async function ativarListaInativa(
+    editalId: unknown,
+    vigente: (
+      linhas: unknown,
+      id: unknown,
+    ) => { id: string; ativa: boolean } | null,
+  ): Promise<string> {
+    try {
+      const lista = vigente(await lerListasAprovados(), editalId);
+      if (!lista || lista.ativa) return "";
+      const { error } = await supabase!.rpc(RPC_ATIVAR_LISTA, {
+        p_lista_id: lista.id,
+        p_ativo: true,
+      });
+      if (error) throw error;
+      return " A lista de aprovados voltou a ficar ativa.";
+    } catch (erro) {
+      return ` A lista de aprovados não foi ativada: ${(erro as ErroLido)?.message || erro}. Ative a lista em Listas do edital.`;
+    }
+  }
+
+  /**
+   * Reativa o edital concluído pelo cronograma: relê o cronograma (o que
+   * estiver gravado agora), acrescenta a etapa de hoje até a data de fim e
+   * grava pela mesma RPC do formulário, com o motivo no histórico. Os avisos
+   * do cronograma (data fora do ano do edital, por exemplo) não perguntam: a
+   * pessoa já confirmou no modal. Erro de validação não chega ao banco.
+   *
+   * Gravado o cronograma, a lista de aprovados vigente que estiver inativa
+   * (a validade a inativou) volta a ficar ativa, para quem edita a
+   * Importação: `definir_lista_aprovados_ativa`, a mesma do "Aplicar
+   * situação" das Listas do edital, que confere a nova validade. Falhar aí
+   * não desfaz a reativação: avisa.
+   */
+  async function reativarEdital({
+    linha,
+    area,
+    motivo,
+    dataFim,
+    atividade,
+    agora = new Date(),
+  }: DadosParaReativarEdital): Promise<boolean> {
+    if (estado.salvando) return false;
+    if (!canManageEditais(perfil())) {
+      toast("Sem permissão para reativar editais.", "warn");
+      return false;
+    }
+    publicar({ salvando: true });
+    loader(true, "Editais", "Reativando o edital…", 70);
+    try {
+      // A regra baixa só aqui (o modal já a trouxe): fora do pacote de entrada.
+      const {
+        bloqueioDaReativacao,
+        cronogramaDaReativacao,
+        editalParaReativar,
+        errosDaReativacao,
+        etapasComReativacao,
+        listaVigenteDoEdital,
+        motivoDaReativacao,
+        semErros,
+      } = await import("../../lib/editais/reativar-edital.ts");
+      const cronograma = cronogramaDaReativacao(await lerCronograma(linha.id));
+      const bloqueio = bloqueioDaReativacao(cronograma, agora);
+      if (bloqueio) {
+        toast(bloqueio.texto, "warn");
+        return false;
+      }
+      const dados = { motivo, dataFim, atividade };
+      const erros = errosDaReativacao(dados, cronograma.etapas, agora);
+      if (!semErros(erros)) {
+        toast(Object.values(erros).find(Boolean)!, "warn");
+        return false;
+      }
+      const etapas = etapasComReativacao(cronograma.etapas, dados, agora);
+      const edital = editalParaReativar(linha, cronograma, etapas, area, agora);
+      const historico = motivoDaReativacao(motivo);
+      const analise = analisarCronograma(edital, etapas, historico);
+      if (analise.erros.length) {
+        toast(analise.erros[0]!, "warn");
+        return false;
+      }
+      const { data, error } = await supabase!.rpc(RPC_SALVAR, {
+        p_payload: edital,
+        p_cronograma: cronogramaParaSalvar(etapas),
+        p_motivo: historico,
+        p_numero_errata: null,
+      });
+      if (error) throw error;
+      if (!(data as ConfirmacaoDoBanco)?.ok)
+        throw new Error("O Supabase não confirmou a reativação.");
+      const avisoDaLista = canImportApprovedList(perfil())
+        ? await ativarListaInativa(linha.id, listaVigenteDoEdital)
+        : "";
+      publicar({ modal: null });
+      document.dispatchEvent(
+        new CustomEvent(EVENTO_CRONOGRAMA_SALVO, {
+          detail: { id: linha.id, data },
+        }),
+      );
+      await aoSalvar();
+      const mensagem = `${txt(linha.edital) || "Edital"} reativado: em andamento até ${dataFim.split("-").reverse().join("/")}.${avisoDaLista}`;
+      if (avisoDaLista.includes("não foi ativada")) toast(mensagem, "warn");
+      else toast(mensagem);
+      if (avisoDaLista) void carregarAprovados();
+      return true;
+    } catch (erro) {
+      toast(
+        `Erro ao reativar o edital: ${(erro as ErroLido)?.message || erro}`,
+        "error",
+      );
+      return false;
+    } finally {
+      loader(false);
+      publicar({ salvando: false });
+    }
+  }
+
   // ── Modais ─────────────────────────────────────────────────────────────
 
   function abrir(modal: Omit<ModalDoNucleo, "abertura">) {
@@ -677,6 +819,17 @@ export function criarEstadoDoNucleo({
     abrirEdital,
     abrirLinhaDoTempo: (id: unknown) =>
       abrir({ tipo: "linha-do-tempo", id: txt(id) }),
+    /* Reativar edital (Histórico): só quem edita editais, como o formulário. */
+    abrirReativacao(id: unknown) {
+      if (!canManageEditais(perfil())) {
+        toast(
+          "Seu perfil pode consultar Editais, mas não reativar editais.",
+          "warn",
+        );
+        return;
+      }
+      abrir({ tipo: "reativar", id: txt(id) });
+    },
     /*
       O cliente das RPCs das Regras do edital (as etapas chamam direto). A
       página abre pela navegação, com o edital e a etapa no endereço
@@ -695,6 +848,8 @@ export function criarEstadoDoNucleo({
     salvarEdital,
     moverEdital,
     reiniciarTreinamento,
+    reativarEdital,
+    lerListasAprovados,
     desligar() {
       assinaturaDoAuth?.data?.subscription?.unsubscribe?.();
       document.removeEventListener(EVENTO_CRONOGRAMA_SALVO, invalidarResumo);

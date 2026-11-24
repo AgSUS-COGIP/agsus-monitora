@@ -20,7 +20,8 @@ candidatos: mudar um status redesenha ambas; decidir uma pendência recarrega a 
 (`cargoDaVaga`, o primeiro trecho do texto), Lotação (`localidadeDoCargo`) e Edital com a unidade,
 todas ordenáveis. As ações da linha são uma principal com nome ("Mudar status" ou "Abrir") e o
 "⋯ Mais ações de <nome>" (`src/lib/aprovados/acoes-da-linha-dos-aprovados.ts`, `AcoesDaLinha`), com
-"Ver na Classificação" do edital. A gaveta do candidato tem a seção Origem (edital, unidade, a
+"Ver na Classificação" do edital; na lista inativa, o "Mudar status" apagado leva a dica "Ative a
+lista em Listas do edital" (segunda linha do item e `title`). A gaveta do candidato tem a seção Origem (edital, unidade, a
 lista importada e a data, e "Ver nota e classificação na Classificação").
 
 **Ativos e Histórico** (19/11/2026, abas Aprovados e Resumo por cargo): a lista de trabalho

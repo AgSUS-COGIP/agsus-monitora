@@ -1625,7 +1625,16 @@ bloco("componentes/lista-aprovados", () => {
       const status = await acaoDaLinha("Diego Alves", "status");
       expect(status?.getAttribute("role")).toBe("menuitem");
       expect(status?.disabled).toBe(true);
-      expect(status?.textContent).toBe("Mudar status (lista inativa)");
+      // O item apagado diz como destravar: ativar a lista nas Listas do edital.
+      expect(status?.textContent).toBe(
+        "Mudar status (lista inativa)Ative a lista em Listas do edital",
+      );
+      expect(status?.querySelector(".ui-texto-secundario")?.textContent).toBe(
+        "Ative a lista em Listas do edital",
+      );
+      expect(status?.getAttribute("title")).toBe(
+        "Ative a lista em Listas do edital",
+      );
       expect(
         achar(".ui-acoes-da-linha > button", linhaDe("Diego Alves"))
           .textContent,

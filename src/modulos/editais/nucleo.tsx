@@ -49,12 +49,14 @@ import {
   usarAtivosEHistorico,
 } from "../../ui/index.ts";
 import {
+  acaoDeReativarNaLinha,
   editalDoHistorico,
   situacaoDoEdital,
   tomDaSituacaoDoEdital,
 } from "../../lib/editais/editais-ativos.ts";
 import type { VistaDaLista } from "../../lib/base/ativos-e-historico.ts";
 import { avisoDaListaDoEdital } from "../../lib/editais/aprovados-por-edital.ts";
+import { areaDaLinha } from "../../componentes/dados-do-monitoramento.ts";
 import {
   ORDEM_PADRAO_DOS_EDITAIS,
   ordenarEditais,
@@ -239,6 +241,8 @@ function LinhaDoEdital({
   const podeEditar = canManageEditais(perfil);
   const podeListas = canImportApprovedList(perfil);
   const podeReiniciar = isAdminGlobal(perfil) && ehEditalDeTreinamento(linha);
+  // Concluído ou cancelado (Histórico): o modal reativa ou explica por que não.
+  const podeReativar = podeEditar && acaoDeReativarNaLinha(linha) !== null;
   const navegacao = usarNavegacao();
   const [confirmando, setConfirmando] = useState(false);
   const salvando = useSyncExternalStore(
@@ -409,6 +413,18 @@ function LinhaDoEdital({
                       },
                     ]
                   : []),
+                ...(podeReativar
+                  ? [
+                      {
+                        id: "reativar",
+                        rotulo: "Reativar edital",
+                        icone: "fa-rotate-left",
+                        desabilitado: salvando,
+                        dados: { "data-acao": "reativar-edital" },
+                        aoEscolher: () => estado.abrirReativacao(linha.id),
+                      },
+                    ]
+                  : []),
                 ...(podeReiniciar
                   ? [
                       {
@@ -435,6 +451,15 @@ function LinhaDoEdital({
   Novo/Editar. Versão nova publicada com a página aberta: recarrega em vez de
   quebrar.
 */
+/* Reativar edital: o modal (e a regra dele) só baixa no clique. */
+const ReativarEdital = lazy(
+  importarComRecarga(() =>
+    import("./reativar-edital.tsx").then((modulo) => ({
+      default: modulo.ReativarEdital,
+    })),
+  ),
+);
+
 const ModalDoEdital = lazy(
   importarComRecarga(() =>
     import("./modal-do-edital.tsx").then((modulo) => ({
@@ -447,7 +472,31 @@ function ModalAberto({
   estado,
   modal,
   agora,
-}: PropriedadesDoNucleo & { modal: ModalDoNucleo | null }) {
+  linhas,
+  area,
+  aoReativar,
+}: PropriedadesDoNucleo & {
+  modal: ModalDoNucleo | null;
+  linhas: readonly LinhaDoMonitoramento[];
+  /** A área do menu: a do edital, se a linha não disser. */
+  area: string;
+  aoReativar: () => void;
+}) {
+  if (modal?.tipo === "reativar") {
+    const linha = linhas.find((l) => String(l.id) === modal.id) ?? null;
+    return (
+      <Suspense fallback={null}>
+        <ReativarEdital
+          key={modal.abertura}
+          estado={estado}
+          linha={linha}
+          area={areaDaLinha(linha) || area}
+          agora={agora}
+          aoReativar={aoReativar}
+        />
+      </Suspense>
+    );
+  }
   if (modal?.tipo === "edital")
     return (
       <Suspense fallback={null}>
@@ -709,7 +758,17 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
         }
       />
 
-      <ModalAberto estado={estado} modal={nucleo.modal} agora={agora} />
+      <ModalAberto
+        estado={estado}
+        modal={nucleo.modal}
+        agora={agora}
+        linhas={linhas}
+        area={area}
+        // Reativado, o edital sai do Histórico: a tabela vai com ele aos Ativos (em Todos, fica).
+        aoReativar={() => {
+          if (ativosEHistorico.vista === "historico") aoMudarVista("ativos");
+        }}
+      />
     </div>
   );
 }
