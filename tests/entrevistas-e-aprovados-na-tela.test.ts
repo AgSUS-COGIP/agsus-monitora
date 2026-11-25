@@ -1304,6 +1304,81 @@ bloco("componentes/lista-aprovados", () => {
       ).toMatch(/^Atualizado em /);
     });
 
+    /* O tipo escolhido na Central de convocações ("contratacao" ou "entrevista"). */
+    const tipoDaCentral = () =>
+      document
+        .querySelector(
+          "[data-tour='central-convocacoes'] [role='radio'][aria-checked='true']",
+        )
+        ?.getAttribute("data-valor");
+
+    it("a aba e o tipo da central vão para o endereço; o link abre nelas", async () => {
+      history.replaceState(null, "", "/saude-indigena/aprovados?listas=todas");
+      try {
+        await montar();
+        await clicar($("approvedTabConvocacao"));
+        expect(location.search).toBe("?listas=todas&aba=convocacao");
+        await clicar(
+          achar("[data-tour='central-convocacoes'] [data-valor='entrevista']"),
+        );
+        expect(location.search).toBe(
+          "?listas=todas&aba=convocacao&tipo=entrevista",
+        );
+        await clicar($("approvedTabAprovados"));
+        expect($("approvedTabAprovados").getAttribute("aria-selected")).toBe(
+          "true",
+        );
+        expect(new URLSearchParams(location.search).get("aba")).toBeNull();
+
+        history.replaceState(
+          null,
+          "",
+          "/saude-indigena/aprovados?aba=convocacao&tipo=entrevista",
+        );
+        await montar();
+        expect($("approvedTabConvocacao").getAttribute("aria-selected")).toBe(
+          "true",
+        );
+        expect(tipoDaCentral()).toBe("entrevista");
+      } finally {
+        history.replaceState(null, "", "/");
+      }
+    });
+
+    it("endereço com aba ou tipo que não existe abre no padrão", async () => {
+      history.replaceState(
+        null,
+        "",
+        "/saude-indigena/aprovados?aba=outra&tipo=qualquer",
+      );
+      try {
+        await montar();
+        expect($("approvedTabAprovados").getAttribute("aria-selected")).toBe(
+          "true",
+        );
+        await clicar($("approvedTabConvocacao"));
+        expect(tipoDaCentral()).toBe("contratacao");
+      } finally {
+        history.replaceState(null, "", "/");
+      }
+    });
+
+    it("o pedido do 'Ver em Convocações' abre a Convocação em Para entrevistas, com a tela já montada", async () => {
+      await montar();
+      expect($("approvedTabAprovados").getAttribute("aria-selected")).toBe(
+        "true",
+      );
+      await act(async () =>
+        pedirFiltro("approved", { convocacao: "entrevista", editalId: "10" }),
+      );
+      await vi.waitFor(() =>
+        expect($("approvedTabConvocacao").getAttribute("aria-selected")).toBe(
+          "true",
+        ),
+      );
+      expect(tipoDaCentral()).toBe("entrevista");
+    });
+
     it("KPIs no Kpi compacto de src/ui, nas duas abas", async () => {
       await montar();
       for (const painel of [

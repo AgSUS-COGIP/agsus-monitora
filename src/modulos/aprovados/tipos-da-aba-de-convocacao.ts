@@ -1,4 +1,6 @@
 import type { CandidatoDaTabelaDeAprovados } from "./tipos-da-aba-de-aprovados.ts";
+import type { TipoDaCentralDeConvocacoes } from "../../lib/aprovados/central-de-convocacoes.ts";
+import type { EditalPedidoDaCentral } from "./central-de-convocacoes.tsx";
 import type {
   CandidatoDaConvocacao,
   GrupoDaConvocacao,
@@ -61,4 +63,9 @@ export interface PropsDaAbaDaConvocacao {
   convocacoes?: ConvocacoesDaTabela;
   carregado: boolean;
   erroAoCarregar: string | boolean;
+  /** O tipo da Central de convocações (na URL: `?tipo=entrevista`). */
+  tipo: TipoDaCentralDeConvocacoes;
+  aoMudarTipo: (tipo: TipoDaCentralDeConvocacoes) => void;
+  /** O edital do atalho "Ver em Convocações", para "Para entrevistas". */
+  editalPedido?: EditalPedidoDaCentral | null;
 }

@@ -1,5 +1,12 @@
 // @vitest-environment node
 import { bloco } from "./apoio/bloco.ts";
+import {
+  buscaDaCentralDasEntrevistas,
+  ehAbaDosAprovados,
+  ehTipoDaCentral,
+  podeAbrirCentralDasEntrevistas,
+  podeVerEntrevistasNaCentral,
+} from "../src/lib/aprovados/central-de-convocacoes.ts";
 import { describe, expect, it, beforeAll, beforeEach, vi } from "vitest";
 import {
   bancasDoPerfil,
@@ -182,6 +189,57 @@ import {
   statusDoLotePara,
   textoDaConfirmacaoDoLote,
 } from "../src/lib/aprovados/status-em-lote-dos-aprovados.ts";
+
+bloco("lib/aprovados/central-de-convocacoes", () => {
+  /* A Central de convocações (#581) no endereço e quem a vê. */
+  describe("central de convocações", () => {
+    it("aceita só as abas e os tipos que existem", () => {
+      expect(
+        ["aprovados", "convocacao", "pendencias", "outra", ""].map(
+          ehAbaDosAprovados,
+        ),
+      ).toEqual([true, true, true, false, false]);
+      expect(
+        ["contratacao", "entrevista", "Entrevista"].map(ehTipoDaCentral),
+      ).toEqual([true, true, false]);
+    });
+
+    it("a busca do atalho põe aba e tipo e mantém os outros filtros", () => {
+      expect(buscaDaCentralDasEntrevistas("")).toBe(
+        "aba=convocacao&tipo=entrevista",
+      );
+      expect(
+        buscaDaCentralDasEntrevistas("listas=inativas&aba=pendencias"),
+      ).toBe("listas=inativas&aba=convocacao&tipo=entrevista");
+    });
+
+    it("Para entrevistas pede as Entrevistas e Conduzir ligada; o atalho, também a Lista de aprovados", () => {
+      expect(
+        podeVerEntrevistasNaCentral({
+          verEntrevistas: true,
+          conducaoLigada: true,
+        }),
+      ).toBe(true);
+      expect(
+        podeVerEntrevistasNaCentral({
+          verEntrevistas: true,
+          conducaoLigada: false,
+        }),
+      ).toBe(false);
+      const tudo = {
+        verAprovados: true,
+        aprovadosLigada: true,
+        verEntrevistas: true,
+        conducaoLigada: true,
+      };
+      expect(podeAbrirCentralDasEntrevistas(tudo)).toBe(true);
+      for (const falta of Object.keys(tudo))
+        expect(
+          podeAbrirCentralDasEntrevistas({ ...tudo, [falta]: false }),
+        ).toBe(false);
+    });
+  });
+});
 
 bloco("conducao-para-o-campo", () => {
   /*

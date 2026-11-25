@@ -2,13 +2,19 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { irParaTela } from "../../app/ir-para-tela.ts";
 import { carregarTela } from "../../app/registro-das-telas.ts";
-import { situacaoDoSistema } from "../../app/situacao-do-sistema.ts";
-import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
-import { paginaDesligada } from "../../lib/navegacao/pagina-desligada.ts";
-import { abasDoMenu, catalogoDoBanco } from "../../modules/catalogo-de-abas.ts";
+import type { ControladoresDasTelas } from "../../app/registro-das-telas.ts";
+import { usarPaginaLigada } from "../../componentes/usar-pagina-ligada.ts";
+import type { TipoDaCentralDeConvocacoes } from "../../lib/aprovados/central-de-convocacoes.ts";
 import { Aviso, Carregando, Segmentado } from "../../ui/index.ts";
 
-export type TipoDaCentralDeConvocacoes = "entrevista" | "contratacao";
+export type { TipoDaCentralDeConvocacoes };
+
+/**
+ * O edital que o atalho "Ver em Convocações" pediu (Classificação ›
+ * Listas, Conduzir › Preparar): abre na loja de Conduzir uma vez. `vez`
+ * distingue dois pedidos do mesmo edital.
+ */
+export type EditalPedidoDaCentral = { id: string; vez: number };
 
 /* As duas convocações, no controle segmentado do design system (`Segmentado`, src/ui/). */
 const TIPOS_DE_CONVOCACAO = [
@@ -26,14 +32,14 @@ const TIPOS_DE_CONVOCACAO = [
   entrevistas"; `render()` é o da abertura dela (área atual, editais e o
   edital aberto ou lembrado), repetido a cada vez que se volta a esta visão.
 */
+type ControladorDaConducao = ControladoresDasTelas["conduzir-entrevistas"];
 type LeituraDasEntrevistas =
   | { tipo: "carregando" }
   | {
       tipo: "pronta";
-      desenhar: (
-        acoes?: ReactNode,
-        opcoes?: { podeEditarAgenda?: boolean },
-      ) => ReactNode;
+      controlador: ControladorDaConducao;
+      /** O `render()` desta abertura (editais e o edital lembrado). */
+      aberta: Promise<unknown>;
     }
   | { tipo: "erro"; mensagem: string };
 
@@ -47,11 +53,8 @@ function usarConvocacaoDasEntrevistas(ligada: boolean): LeituraDasEntrevistas {
     carregarTela("conduzir-entrevistas").then(
       (controlador) => {
         if (!viva) return;
-        setLeitura({
-          tipo: "pronta",
-          desenhar: controlador.convocacaoParaLeitura,
-        });
-        void Promise.resolve(controlador.render()).catch(() => {});
+        const aberta = Promise.resolve(controlador.render()).catch(() => {});
+        setLeitura({ tipo: "pronta", controlador, aberta });
       },
       (erro: unknown) => {
         if (!viva) return;
@@ -76,14 +79,34 @@ function usarConvocacaoDasEntrevistas(ligada: boolean): LeituraDasEntrevistas {
   menu. Quem desenha a central junta isto à permissão (`podeEntrevistas`).
 */
 export function usarConducaoLigada(): boolean {
-  const { area } = usarAreaAtual();
-  return !paginaDesligada({
-    abas: abasDoMenu(),
-    doBanco: catalogoDoBanco(),
-    situacao: situacaoDoSistema(),
-    view: "conduzir-entrevistas",
-    area,
-  });
+  return usarPaginaLigada("conduzir-entrevistas");
+}
+
+/*
+  O edital pedido pelo atalho abre na loja de Conduzir depois do `render()`
+  (que abre o lembrado), só se estiver na lista de lá e não for o aberto.
+  Trocar o edital aqui é trocar o de Conduzir entrevistas, como no seletor.
+*/
+function usarEditalPedido(
+  leitura: LeituraDasEntrevistas,
+  pedido: EditalPedidoDaCentral | null,
+) {
+  useEffect(() => {
+    if (leitura.tipo !== "pronta" || !pedido?.id) return undefined;
+    let viva = true;
+    void leitura.aberta.then(() => {
+      if (!viva) return;
+      const { conducao } = leitura.controlador;
+      const { editais, editalId } = conducao.obter();
+      if (editalId === pedido.id) return;
+      if (!editais.lista.some((m) => m.id === pedido.id)) return;
+      conducao.abrirFicha(null);
+      void conducao.abrirEdital(pedido.id);
+    });
+    return () => {
+      viva = false;
+    };
+  }, [leitura, pedido]);
 }
 
 /**
@@ -97,14 +120,17 @@ export function CentralDeConvocacoes({
   aoMudar,
   podeEntrevistas,
   podeClassificacao,
+  editalPedido = null,
 }: {
   tipo: TipoDaCentralDeConvocacoes;
   aoMudar: (tipo: TipoDaCentralDeConvocacoes) => void;
   podeEntrevistas: boolean;
   podeClassificacao: boolean;
+  editalPedido?: EditalPedidoDaCentral | null;
 }) {
   const visao = podeEntrevistas && tipo === "entrevista" ? tipo : "contratacao";
   const leitura = usarConvocacaoDasEntrevistas(visao === "entrevista");
+  usarEditalPedido(leitura, visao === "entrevista" ? editalPedido : null);
   /*
     Sem acesso às entrevistas (ou com Conduzir entrevistas desligada na área)
     só existe a convocação para contratação: nada a escolher, e um cartão só
@@ -139,7 +165,7 @@ export function CentralDeConvocacoes({
         <>
           {leitura.tipo === "carregando" ? <Carregando /> : null}
           {leitura.tipo === "pronta"
-            ? leitura.desenhar(classificacao, {
+            ? leitura.controlador.convocacaoParaLeitura(classificacao, {
                 podeEditarAgenda: podeClassificacao,
               })
             : null}

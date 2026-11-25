@@ -32,6 +32,9 @@ import {
 import { criarEstadoDosModulos } from "../src/modulos/modulos/estado.ts";
 import { createSafeAuthStorage } from "../src/modules/auth-storage.ts";
 import { act, createElement, StrictMode } from "react";
+import { ContextoDoApp } from "../src/app/contexto-do-app.ts";
+import { ESTADO_INICIAL_DA_NAVEGACAO } from "../src/app/navegacao.ts";
+import { consumirPedidoDeFiltro } from "../src/app/pedido-de-filtro.ts";
 import { createRoot } from "react-dom/client";
 import { AvisoDeContraste } from "../src/modulos/configuracoes/partes.tsx";
 import {
@@ -4844,6 +4847,34 @@ bloco("modulos/acessos", () => {
   });
 });
 
+/*
+  A tela com o perfil de quem entrou no contexto do app (`pecas.perfil`, como
+  src/main.ts entrega): o "Ver em Convocações" lê o perfil dali.
+*/
+function comPerfilDoApp(criar, perfil) {
+  const navegacao = {
+    obter: () => ESTADO_INICIAL_DA_NAVEGACAO,
+    assinar: () => () => {},
+    esquecerEditalEVisao: () => {},
+    abrirRegrasDoEdital: () => false,
+    fecharRegrasDoEdital: () => {},
+    voltarDaPaginaDoEdital: () => false,
+    irParaInicio: () => {},
+  };
+  const pecas = { perfil: { obter: () => perfil, assinar: () => () => {} } };
+  return (opcoes) => {
+    const controlador = criar(opcoes);
+    return {
+      ...controlador,
+      conteudo: createElement(
+        ContextoDoApp.Provider,
+        { value: { navegacao, avisar: () => {}, pecas } },
+        controlador.conteudo,
+      ),
+    };
+  };
+}
+
 bloco("modulos/agenda-das-entrevistas", () => {
   /*
   A agenda das entrevistas na Classificação (visão "Agenda",
@@ -5066,13 +5097,17 @@ bloco("modulos/agenda-das-entrevistas", () => {
   const baixar = vi.fn();
   const copiar = vi.fn(async () => "html");
 
-  async function montar(supabase) {
+  async function montar(supabase, perfilDoApp) {
     secao = document.createElement("section");
     secao.id = "page-classificacao";
     secao.className = "page active";
     document.body.append(secao);
+    const criar =
+      perfilDoApp === undefined
+        ? criarClassificacao
+        : comPerfilDoApp(criarClassificacao, perfilDoApp);
     await act(async () => {
-      painel = montarTela(criarClassificacao, "page-classificacao", {
+      painel = montarTela(criar, "page-classificacao", {
         supabase,
         toast,
         baixar,
@@ -5123,6 +5158,48 @@ bloco("modulos/agenda-das-entrevistas", () => {
   });
 
   describe("agenda das entrevistas na Classificação", () => {
+    it("na lista de convocação, 'Ver em Convocações' leva à central no edital; gerar continua aqui", async () => {
+      const supabase = supabaseFalso();
+      await montar(supabase, {
+        perfil: "usuario",
+        permissoes: { aprovados: "leitor", entrevistas: "leitor" },
+      });
+      const atalho = () =>
+        secao.querySelector("[data-acao='ver-em-convocacoes']");
+      // Só na lista de convocação para entrevista.
+      expect(atalho()).toBeNull();
+      await clicar(
+        secao.querySelector(".classificacao-tipos [data-valor='CONVOCACAO']"),
+      );
+      expect(atalho().textContent.trim()).toBe("Ver em Convocações");
+      expect(secao.querySelector("[data-acao='abrir-agenda']")).not.toBeNull();
+      window.navigate = vi.fn();
+      try {
+        await clicar(atalho());
+        expect(window.navigate).toHaveBeenCalledWith("approved");
+        expect(consumirPedidoDeFiltro("approved")).toEqual({
+          convocacao: "entrevista",
+          editalId: "e83",
+        });
+      } finally {
+        delete window.navigate;
+      }
+    });
+
+    it("sem acesso às Entrevistas, a lista de convocação não leva à central", async () => {
+      await montar(supabaseFalso(), {
+        perfil: "usuario",
+        permissoes: { aprovados: "leitor", entrevistas: "sem_acesso" },
+      });
+      await clicar(
+        secao.querySelector(".classificacao-tipos [data-valor='CONVOCACAO']"),
+      );
+      expect(secao.querySelector("[data-acao='abrir-agenda']")).not.toBeNull();
+      expect(
+        secao.querySelector("[data-acao='ver-em-convocacoes']"),
+      ).toBeNull();
+    });
+
     it("aberta pela navegação com a visão 'agenda' (o 'Editar na Classificação › Agenda' da central), cai na aba Agenda", async () => {
       const supabase = supabaseFalso();
       await montar(supabase);

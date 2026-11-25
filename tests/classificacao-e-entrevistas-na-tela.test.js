@@ -57,7 +57,12 @@ import { ordemDoSorteio } from "../src/lib/classificacao/sorteio.ts";
 import { retratoDaClassificacao } from "../src/lib/classificacao/dados-do-estado.ts";
 import { montarRegrasDoEdital } from "./componentes/montar-regras-do-edital.ts";
 import { montarTela } from "./montar-tela.ts";
-import { pedirFiltro } from "../src/app/pedido-de-filtro.ts";
+import {
+  consumirPedidoDeFiltro,
+  pedirFiltro,
+} from "../src/app/pedido-de-filtro.ts";
+import { ContextoDoApp } from "../src/app/contexto-do-app.ts";
+import { ESTADO_INICIAL_DA_NAVEGACAO } from "../src/app/navegacao.ts";
 import { registrarTelas } from "../src/app/registro-das-telas.ts";
 import { Blob as BlobDoNode } from "node:buffer";
 import {
@@ -68,6 +73,42 @@ import {
 import { aberturaPelasChamadasDeAntes } from "./componentes/abertura-dos-aprovados.ts";
 import { compactarCandidatos } from "./componentes/candidatos-compactos-falsos.ts";
 import { criarEstadoDaListaDeAprovados } from "../src/modulos/aprovados/estado.ts";
+
+/*
+  A tela com o perfil de quem entrou no contexto do app (`pecas.perfil`, como
+  src/main.ts entrega): o "Ver em Convocações" lê o perfil dali.
+*/
+function comPerfilDoApp(criar, perfil) {
+  const navegacao = {
+    obter: () => ESTADO_INICIAL_DA_NAVEGACAO,
+    assinar: () => () => {},
+    esquecerEditalEVisao: () => {},
+    abrirRegrasDoEdital: () => false,
+    fecharRegrasDoEdital: () => {},
+    voltarDaPaginaDoEdital: () => false,
+    irParaInicio: () => {},
+  };
+  const pecas = { perfil: { obter: () => perfil, assinar: () => () => {} } };
+  return (opcoes) => {
+    const controlador = criar(opcoes);
+    return {
+      ...controlador,
+      conteudo: createElement(
+        ContextoDoApp.Provider,
+        { value: { navegacao, avisar: () => {}, pecas } },
+        controlador.conteudo,
+      ),
+    };
+  };
+}
+const PERFIL_COM_CONVOCACOES = {
+  perfil: "usuario",
+  permissoes: {
+    aprovados: "leitor",
+    entrevistas: "editor",
+    classificacao: "leitor",
+  },
+};
 
 bloco("lib/classificacao-documento-sei", () => {
   /*
@@ -4092,7 +4133,12 @@ bloco("modulos/conduzir-entrevistas", async () => {
 
   async function montar(
     supabase,
-    { abrir = true, comemoracoesLigadas = () => true, ...opcoes } = {},
+    {
+      abrir = true,
+      comemoracoesLigadas = () => true,
+      perfilDoApp,
+      ...opcoes
+    } = {},
   ) {
     secao = document.createElement("section");
     secao.id = "page-conduzir-entrevistas";
@@ -4100,7 +4146,9 @@ bloco("modulos/conduzir-entrevistas", async () => {
     document.body.append(secao);
     await act(async () => {
       tela = montarTela(
-        criarConducaoDeEntrevistas,
+        perfilDoApp === undefined
+          ? criarConducaoDeEntrevistas
+          : comPerfilDoApp(criarConducaoDeEntrevistas, perfilDoApp),
         "page-conduzir-entrevistas",
         {
           secao,
@@ -4908,6 +4956,31 @@ bloco("modulos/conduzir-entrevistas", async () => {
       ).toBeNull();
     });
 
+    it("Preparar › Convocação: 'Ver em Convocações' leva à central, no edital; convocar continua aqui", async () => {
+      const supabase = supabaseDaConducao();
+      await montar(supabase, { perfilDoApp: PERFIL_COM_CONVOCACOES });
+      await abrirEdital();
+      const corpo = await abrirPasso("convocacao");
+      const atalho = corpo.querySelector("[data-acao='ver-em-convocacoes']");
+      expect(atalho.textContent.trim()).toBe("Ver em Convocações");
+      expect(atalho.className).toBe("btn secondary small");
+      // Nada sai daqui: as caixas e o "Convocar selecionados" continuam.
+      expect(
+        convocacao().querySelectorAll('input[type="checkbox"]').length,
+      ).toBeGreaterThan(0);
+      window.navigate = vi.fn();
+      try {
+        await clicar(atalho);
+        expect(window.navigate).toHaveBeenCalledWith("approved");
+        expect(consumirPedidoDeFiltro("approved")).toEqual({
+          convocacao: "entrevista",
+          editalId: "m1",
+        });
+      } finally {
+        delete window.navigate;
+      }
+    });
+
     it("salvar o roteiro repassa o desempate antigo sem mudar (a coluna fica no banco)", async () => {
       const supabase = supabaseDaConducao();
       await montar(supabase);
@@ -5069,6 +5142,10 @@ bloco("modulos/conduzir-entrevistas", async () => {
       );
       await abrirPasso("convocacao");
       const passo = convocacao();
+      // Sem o perfil de quem entrou, o atalho para a central não aparece.
+      expect(
+        document.querySelector("[data-acao='ver-em-convocacoes']"),
+      ).toBeNull();
       expect(passo.dataset.fonte).toBe("LISTA");
       expect(passo.textContent).toContain(
         "Lista de convocação da Classificação · gerada em 05/10/2026, 10:30 por Gestora · regra v2",

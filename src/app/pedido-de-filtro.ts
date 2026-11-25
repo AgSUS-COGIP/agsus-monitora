@@ -37,6 +37,8 @@ export type FiltroDoPedido = {
   origem?: string;
   /** Relatórios: os editais do Resumo por cargo e status. */
   editais?: readonly string[];
+  /** Lista de aprovados: a Central de convocações neste tipo ("entrevista"). */
+  convocacao?: string;
 };
 
 interface PedidoGuardado {

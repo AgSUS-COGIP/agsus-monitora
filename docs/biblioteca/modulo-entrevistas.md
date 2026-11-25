@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-24
+atualizado: 2026-11-25
 ---
 
 # Módulo: Entrevistas
@@ -71,7 +71,8 @@ barras, o parecer e "X de Y notas"; o parecer em texto pronto sai de
   `ListaDeConvocacao` (`conducao.tsx`) sem `aoConvocar` é só leitura: é como a Central de convocações
   (Lista de aprovados › Convocação › Para entrevistas) a mostra, por `convocacaoParaLeitura` do
   controlador (`convocacao-para-leitura.tsx`), com a mesma loja e o mesmo edital aberto; abaixo da
-  lista, a agenda dos convocados (`e.agenda` da loja), também só leitura.
+  lista, a agenda dos convocados (`e.agenda` da loja), também só leitura. Preparar › Convocação tem
+  "Ver em Convocações", que leva à central no edital aberto (convocar continua aqui).
 - Vagas imediatas e regra de convocação não se configuram aqui: o resumo "Regras da entrevista"
   (`resumo-das-regras.tsx`, topo de Preparar) mostra as da Classificação em linguagem simples, com a
   tabelinha por vaga e, em "Ver detalhes", de onde vêm as vagas e o botão para onde se mudam
