@@ -1,3 +1,4 @@
+import { VerEmConvocacoes } from "../../componentes/ver-em-convocacoes.tsx";
 import type { FormEvent } from "react";
 import type {
   AguardandoAnalise,
@@ -1183,6 +1184,9 @@ Usar esta geração assim mesmo?`,
             <i className="fa-solid fa-calendar-days" aria-hidden="true" />{" "}
             Agenda das entrevistas
           </button>
+        ) : null}
+        {tipo === "CONVOCACAO" && e.editalId ? (
+          <VerEmConvocacoes edital={e.editalId} />
         ) : null}
         {marcar ? (
           <button

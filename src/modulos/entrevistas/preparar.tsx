@@ -44,6 +44,7 @@ import {
 } from "./editor-da-configuracao.tsx";
 import { ResumoDasRegras, TabelaDasVagas } from "./resumo-das-regras.tsx";
 import { AgendaDoEdital } from "./agenda-do-edital.tsx";
+import { VerEmConvocacoes } from "../../componentes/ver-em-convocacoes.tsx";
 import type { PedidoDeRoteiro } from "./tipos-do-editor-de-roteiro.ts";
 import { VisaoDeRoteiros } from "./roteiros.tsx";
 import type {
@@ -465,6 +466,11 @@ function PrepararDoEdital({
                     </p>
                   ))}
                   <TabelaDasVagas bloco={blocoDaConvocacao} />
+                </div>
+              ) : null}
+              {dados.edital?.id ? (
+                <div className="entrevistas-acoes">
+                  <VerEmConvocacoes edital={dados.edital.id} pequeno />
                 </div>
               ) : null}
               <ListaDeConvocacao

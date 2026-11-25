@@ -48,8 +48,18 @@ import { registrarTelasFalsas } from "./app/telas-no-teste.ts";
 import {
   CentralDeConvocacoes,
   usarConducaoLigada,
+  type EditalPedidoDaCentral,
   type TipoDaCentralDeConvocacoes,
 } from "../src/modulos/aprovados/central-de-convocacoes.tsx";
+import {
+  abrirEmConvocacoes,
+  VerEmConvocacoes,
+} from "../src/componentes/ver-em-convocacoes.tsx";
+import { consumirPedidoDeFiltro } from "../src/app/pedido-de-filtro.ts";
+import {
+  filtrosGuardadosDaTela,
+  guardarFiltrosDaTela,
+} from "../src/app/filtros-no-endereco.ts";
 import { paginaDesligada } from "../src/lib/navegacao/pagina-desligada.ts";
 import { criarConducaoDeEntrevistas } from "../src/modulos/entrevistas/conduzir.tsx";
 import { type ClienteDaConducao } from "../src/modulos/entrevistas/tipos-do-estado-da-conducao.ts";
@@ -1989,6 +1999,7 @@ bloco("componentes/central-de-convocacoes-para-entrevistas", () => {
     podeClassificacao = true,
     agenda = null as unknown,
     primeiro = "E1",
+    editalPedido = null as EditalPedidoDaCentral | null,
   } = {}) {
     const { cliente, chamadas } = bancoFalso({ agenda, primeiro });
     const criar = vi.fn(() =>
@@ -2011,6 +2022,7 @@ bloco("componentes/central-de-convocacoes-para-entrevistas", () => {
           aoMudar: () => {},
           podeEntrevistas,
           podeClassificacao,
+          editalPedido,
         }),
       ),
     );
@@ -2156,6 +2168,34 @@ bloco("componentes/central-de-convocacoes-para-entrevistas", () => {
       });
     });
 
+    it("o edital pedido pelo 'Ver em Convocações' abre na loja de Conduzir", async () => {
+      const { elemento, criar } = await montar({
+        editalPedido: { id: "E2", vez: 1 },
+      });
+      await esperar();
+      await esperar();
+      const controlador = criar.mock.results[0]?.value as ReturnType<
+        typeof criarConducaoDeEntrevistas
+      >;
+      expect(controlador.conducao.obter().editalId).toBe("E2");
+      expect(elemento.querySelector("select")?.value).toBe("E2");
+    });
+
+    it("edital pedido fora da lista de Conduzir: nada abre", async () => {
+      const { criar, chamadas } = await montar({
+        editalPedido: { id: "E9", vez: 1 },
+      });
+      await esperar();
+      await esperar();
+      const controlador = criar.mock.results[0]?.value as ReturnType<
+        typeof criarConducaoDeEntrevistas
+      >;
+      expect(controlador.conducao.obter().editalId).toBe("");
+      expect(
+        chamadas.filter((c) => c.nome === "obter_entrevistas_do_edital"),
+      ).toHaveLength(0);
+    });
+
     it("sem acesso à Classificação, não oferece as listas dela nem editar a agenda", async () => {
       const { elemento } = await montar({
         podeClassificacao: false,
@@ -2243,6 +2283,106 @@ bloco("componentes/central-de-convocacoes-para-entrevistas", () => {
       expect(vi.mocked(paginaDesligada)).toHaveBeenLastCalledWith(
         expect.objectContaining({ view: "conduzir-entrevistas" }),
       );
+    });
+  });
+});
+
+bloco("componentes/ver-em-convocacoes", () => {
+  /*
+  "Ver em Convocações" (#581): das telas de origem (Classificação › Listas,
+  Conduzir › Preparar › Convocação) para a Central de convocações em "Para
+  entrevistas", no mesmo edital. Só aparece para quem veria a central lá.
+*/
+  const COM_TUDO = {
+    perfil: "usuario",
+    permissoes: { aprovados: "leitor", entrevistas: "leitor" },
+  };
+  const SEM_APROVADOS = {
+    perfil: "usuario",
+    permissoes: { aprovados: "sem_acesso", entrevistas: "leitor" },
+  };
+  const SEM_ENTREVISTAS = {
+    perfil: "usuario",
+    permissoes: { aprovados: "leitor", entrevistas: "sem_acesso" },
+  };
+
+  let desmontar: (() => void) | null = null;
+  afterEach(() => {
+    desmontar?.();
+    desmontar = null;
+    document.body.replaceChildren();
+    vi.mocked(paginaDesligada).mockReturnValue(false);
+    consumirPedidoDeFiltro("approved");
+    guardarFiltrosDaTela("approved", "");
+  });
+
+  async function montar(perfil: unknown, irPara = vi.fn()) {
+    const elemento = document.createElement("div");
+    document.body.append(elemento);
+    const desenho = await act(async () =>
+      desenharNoTeste(
+        elemento,
+        createElement(VerEmConvocacoes, { edital: "E1", perfil, irPara }),
+      ),
+    );
+    desmontar = desenho.desmontar;
+    return { botao: elemento.querySelector("button"), irPara };
+  }
+
+  describe("Ver em Convocações", () => {
+    it("aparece para quem vê a Lista de aprovados e as Entrevistas", async () => {
+      const { botao } = await montar(COM_TUDO);
+      expect(botao?.textContent?.trim()).toBe("Ver em Convocações");
+      expect(botao?.className).toBe("btn secondary");
+    });
+
+    it("não aparece sem a Lista de aprovados, sem as Entrevistas ou sem perfil", async () => {
+      for (const perfil of [SEM_APROVADOS, SEM_ENTREVISTAS, null]) {
+        const { botao } = await montar(perfil);
+        expect(botao).toBeNull();
+        desmontar?.();
+        desmontar = null;
+      }
+    });
+
+    it("não aparece com Conduzir entrevistas ou a Lista de aprovados desligada na área", async () => {
+      for (const desligada of ["conduzir-entrevistas", "approved"]) {
+        vi.mocked(paginaDesligada).mockImplementation(
+          ({ view }) => view === desligada,
+        );
+        const { botao } = await montar(COM_TUDO);
+        expect(botao).toBeNull();
+        desmontar?.();
+        desmontar = null;
+      }
+    });
+
+    it("guarda a aba e o tipo da central, pede o edital e abre a Lista de aprovados", async () => {
+      guardarFiltrosDaTela("approved", "listas=inativas");
+      const { botao, irPara } = await montar(COM_TUDO);
+      await clicar(botao);
+      expect(irPara).toHaveBeenCalledWith("approved");
+      expect(filtrosGuardadosDaTela("approved")).toBe(
+        "listas=inativas&aba=convocacao&tipo=entrevista",
+      );
+      expect(consumirPedidoDeFiltro("approved")).toEqual({
+        convocacao: "entrevista",
+        editalId: "E1",
+      });
+    });
+
+    it("sem irPara, navega pelo window.navigate na hora do clique", () => {
+      const navigate = vi.fn();
+      Object.assign(window, { navigate });
+      try {
+        abrirEmConvocacoes("");
+        expect(navigate).toHaveBeenCalledWith("approved");
+        expect(consumirPedidoDeFiltro("approved")).toEqual({
+          convocacao: "entrevista",
+        });
+      } finally {
+        Reflect.deleteProperty(window, "navigate");
+      }
     });
   });
 });

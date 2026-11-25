@@ -8,7 +8,10 @@ import type {
 } from "./tipos-do-estado.ts";
 import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
 import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
-import { usarLojaNaUrl } from "../../app/usar-filtros-na-url.ts";
+import {
+  usarFiltrosNaUrl,
+  usarLojaNaUrl,
+} from "../../app/usar-filtros-na-url.ts";
 import type { EsquemaDosFiltros } from "../../app/filtros-no-endereco.ts";
 import { filtrosDosAprovados } from "../../lib/aya/filtro-da-aya.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
@@ -44,6 +47,13 @@ import { tomDaSituacaoDoEdital } from "../../lib/editais/editais-ativos.ts";
 import { FluxoDasEtapas } from "../../componentes/fluxo-das-etapas.tsx";
 import { AbaAprovados, pelaBusca } from "./aba-aprovados.tsx";
 import { AbaConvocacao } from "./aba-convocacao.tsx";
+import type { EditalPedidoDaCentral } from "./central-de-convocacoes.tsx";
+import {
+  ehAbaDosAprovados,
+  ehTipoDaCentral,
+  type AbaDosAprovados,
+  type TipoDaCentralDeConvocacoes,
+} from "../../lib/aprovados/central-de-convocacoes.ts";
 import {
   FILTROS_INICIAIS,
   usarRecorteDosAprovados,
@@ -91,7 +101,6 @@ import "./carta-de-convocacao/carta.css";
   alguém numa redesenha a outra. Os modais são portais no fim do `body`.
 */
 
-type AbaDosAprovados = "aprovados" | "convocacao" | "pendencias";
 const ABAS: {
   nome: AbaDosAprovados;
   id: string;
@@ -330,6 +339,18 @@ const RECORTE_NA_URL: EsquemaDosFiltros<"listas"> = Object.freeze({
     aceita: (valor: string) => Object.values(LISTAS_NA_URL).includes(valor),
   },
 });
+/*
+  A aba e o tipo da Central de convocações no endereço
+  (?aba=convocacao&tipo=entrevista): o link copiado e o atalho "Ver em
+  Convocações" (src/componentes/ver-em-convocacoes.tsx) abrem no bloco certo.
+  Trocar de aba ou de tipo é entrada nova no histórico; o recorte das listas
+  fica.
+*/
+const ABA_NA_URL: EsquemaDosFiltros<"aba" | "tipo"> = Object.freeze({
+  aba: { padrao: "aprovados", aceita: ehAbaDosAprovados, empilha: true },
+  tipo: { padrao: "contratacao", aceita: ehTipoDaCentral, empilha: true },
+});
+const FICA_NA_TROCA_DE_ABA = Object.freeze(["listas"]);
 
 export function ListaAprovados({
   estado,
@@ -381,7 +402,18 @@ export function ListaAprovados({
     filtrados,
     mudarFiltro,
   } = recorte;
-  const [aba, setAba] = useState<AbaDosAprovados>("aprovados");
+  const [naUrl, mudarAbaNaUrl] = usarFiltrosNaUrl(ABA_NA_URL, {
+    tela: "approved",
+    manter: FICA_NA_TROCA_DE_ABA,
+  });
+  const aba = naUrl.aba as AbaDosAprovados;
+  const tipo = naUrl.tipo as TipoDaCentralDeConvocacoes;
+  const setAba = (nova: AbaDosAprovados) => mudarAbaNaUrl({ aba: nova });
+  const setTipo = (novo: TipoDaCentralDeConvocacoes) =>
+    mudarAbaNaUrl({ tipo: novo });
+  // O edital pedido pelo "Ver em Convocações" (vai à central uma vez).
+  const [editalDaEntrevista, setEditalDaEntrevista] =
+    useState<EditalPedidoDaCentral | null>(null);
   // A busca só da tabela; "Limpar filtros" e o pedido de filtro a limpam.
   const [busca, setBusca] = useState("");
   const [ordem, setOrdem] = useState<OrdemDosAprovados>(SEM_ORDEM);
@@ -437,11 +469,25 @@ export function ListaAprovados({
   /*
     Avisos que viraram pendências abrem a aba Pendências no edital;
     demais avisos abrem a aba Aprovados filtrada pela pessoa; um número da
-    Visão geral abre a aba Aprovados no edital, com o status do número.
+    Visão geral abre a aba Aprovados no edital, com o status do número. O
+    "Ver em Convocações" (Classificação, Conduzir) abre a central em "Para
+    entrevistas", no edital de lá; a navegação já escreveu o endereço.
   */
   usarPedidoDeFiltro("approved", carregado, (pedido) => {
+    if (pedido?.convocacao === "entrevista") {
+      mudarAbaNaUrl(
+        { aba: "convocacao", tipo: "entrevista" },
+        { substituir: true },
+      );
+      if (pedido.editalId)
+        setEditalDaEntrevista((antes) => ({
+          id: String(pedido.editalId),
+          vez: (antes?.vez ?? 0) + 1,
+        }));
+      return;
+    }
     if (pedido?.pendencias) {
-      setAba("pendencias");
+      mudarAbaNaUrl({ aba: "pendencias" }, { substituir: true });
       setEditalDaPendencia(String(pedido.edital || ""));
       return;
     }
@@ -462,7 +508,7 @@ export function ListaAprovados({
         (c) => String(c.candidato_id),
       ),
     );
-    setAba("aprovados");
+    mudarAbaNaUrl({ aba: "aprovados" }, { substituir: true });
     setFiltros({ ...FILTROS_INICIAIS, ...(doEdital || { candidatos: ids }) });
     setBusca("");
   });
@@ -623,6 +669,9 @@ export function ListaAprovados({
         convocacoes={dados.convocacoes}
         carregado={carregado}
         erroAoCarregar={erroAoCarregar}
+        tipo={tipo}
+        aoMudarTipo={setTipo}
+        editalPedido={editalDaEntrevista}
       />
       <AbaPendencias
         ativa={aba === "pendencias"}
