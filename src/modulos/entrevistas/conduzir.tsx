@@ -630,10 +630,14 @@ export function criarConducaoDeEntrevistas({
       entrevistas" abre Preparar no edital que já está aberto (sem `edital`
       na navegação, que voltaria à fila).
     */
-    convocacaoParaLeitura: (acoes?: ReactNode) => (
+    convocacaoParaLeitura: (
+      acoes?: ReactNode,
+      { podeEditarAgenda = false }: { podeEditarAgenda?: boolean } = {},
+    ) => (
       <ConvocacaoParaLeitura
         conducao={conducao}
         acoes={acoes}
+        podeEditarAgenda={podeEditarAgenda}
         aoAbrirNaConducao={() =>
           (globalThis.window as JanelaDoApp | undefined)?.navigate?.(
             "conduzir-entrevistas",

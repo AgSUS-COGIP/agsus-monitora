@@ -5123,6 +5123,33 @@ bloco("modulos/agenda-das-entrevistas", () => {
   });
 
   describe("agenda das entrevistas na Classificação", () => {
+    it("aberta pela navegação com a visão 'agenda' (o 'Editar na Classificação › Agenda' da central), cai na aba Agenda", async () => {
+      const supabase = supabaseFalso();
+      await montar(supabase);
+      expect(
+        secao
+          .querySelector("[data-valor='listas']")
+          .getAttribute("aria-checked"),
+      ).toBe("true");
+      // A navegação chama `abrirVisao` antes do render() de cada abertura.
+      await act(async () => painel.abrirVisao("agenda"));
+      await esperar();
+      expect(
+        secao
+          .querySelector("[data-valor='agenda']")
+          .getAttribute("aria-checked"),
+      ).toBe("true");
+      expect(secao.querySelector(".agenda-regra")).not.toBeNull();
+      // Visão que a tela não tem: nada muda.
+      await act(async () => painel.abrirVisao("preparar"));
+      await esperar();
+      expect(
+        secao
+          .querySelector("[data-valor='agenda']")
+          .getAttribute("aria-checked"),
+      ).toBe("true");
+    });
+
     it("o botão da lista de convocação abre a agenda; a regra é salva como versão nova", async () => {
       const supabase = supabaseFalso();
       await montar(supabase);

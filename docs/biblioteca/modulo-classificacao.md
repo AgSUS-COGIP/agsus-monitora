@@ -110,7 +110,9 @@ ou sem as RPCs no banco, vale a regra; outra falha (rede, banco) vira `erroDaCon
   sobra), ajuste manual com conflito, XLSX; agenda de mais de um mês mostra um mês por vez com o
   `NavegadorDeMes` (abre no mês de hoje ou no mais perto; os sem horário aparecem em todos;
   `src/lib/entrevistas/meses-da-agenda.ts`); o botão "Agenda das entrevistas" da convocação abre esta
-  visão. Store em `estado-da-agenda.ts` (`obter_agenda_entrevista`, `salvar_regra_agenda_entrevista`,
+  visão. De fora, a navegação abre a tela nela com `?visao=agenda` (`abrirVisao` do controlador, por
+  `src/lib/navegacao/pedido-de-visao.ts`): "Editar na Classificação › Agenda" da Central de
+  convocações e o atalho do passo Agenda de Preparar. Store em `estado-da-agenda.ts` (`obter_agenda_entrevista`, `salvar_regra_agenda_entrevista`,
   `salvar_agenda_entrevista`); a agenda salva preenche DATA e HORA do documento da convocação
   (`agendaDoDocumento`) e faz Conduzir entrevistas abrir a fila em Hoje.
 - Motor em `src/lib/entrevistas/agenda-das-entrevistas.ts`; banco em `20261005120000_agenda_das_entrevistas.sql`.

@@ -25,6 +25,10 @@ import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import { SeloDeTreinamento } from "../../componentes/selo-de-treinamento.tsx";
 import { FluxoDasEtapas } from "../../componentes/fluxo-das-etapas.tsx";
 import { classificarEdital } from "../../lib/classificacao/ajustes.ts";
+import {
+  criarPedidoDeVisao,
+  type PedidoDeVisao,
+} from "../../lib/navegacao/pedido-de-visao.ts";
 import { getSupabaseClient } from "../../lib/sessao/supabaseClient";
 import {
   Aviso,
@@ -105,12 +109,18 @@ type PropsDaTela = {
   estado: EstadoDaClassificacao;
   agenda: EstadoDaAgenda;
   confirmar: (mensagem: string) => boolean;
+  /** A visão pedida pela navegação (`?visao=agenda`), aplicada uma vez. */
+  visaoPedida?: PedidoDeVisao | undefined;
 };
+
+/* Sem pedido (testes que montam a tela sem o controlador). */
+const SEM_PEDIDO = criarPedidoDeVisao(() => false);
 
 function TelaDaArea({
   estado,
   agenda,
   confirmar,
+  visaoPedida = SEM_PEDIDO,
   e,
 }: PropsDaTela & { e: SnapshotDaClassificacao }) {
   const [filtrosDaTela, mudarFiltrosDaTela] = usarFiltrosNaUrl(
@@ -131,10 +141,22 @@ function TelaDaArea({
     confirmar(
       "A agenda das entrevistas tem alterações que ainda não foram salvas. Sair mesmo assim?",
     );
-  const setVisao = (aba: string) => {
+  const setVisao = (aba: string, opcoes?: { substituir?: boolean }) => {
     if (aba !== visao && !podeSairDaAgenda()) return;
-    mudarFiltrosDaTela({ aba });
+    mudarFiltrosDaTela({ aba }, opcoes);
   };
+  /*
+    "Editar na Classificação › Agenda" (Central de convocações, Preparar):
+    a navegação já escreveu o endereço; a aba troca a entrada, sem outra.
+  */
+  const pedida = useSyncExternalStore(visaoPedida.assinar, visaoPedida.obter);
+  useEffect(() => {
+    if (!pedida) return;
+    visaoPedida.consumir();
+    setVisao(pedida, { substituir: true });
+    // `setVisao` muda a cada desenho; o que importa é o pedido.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pedida, visaoPedida]);
   // O edital na URL (?edital=): o link copiado abre a Classificação nele.
   const escolherEditalNaUrl = usarEditalNaUrl({
     editalId: e.editalId,
@@ -333,6 +355,7 @@ function TelaDaArea({
 export function TelaDeClassificacao({
   estado,
   agenda,
+  visaoPedida,
   confirmar = (mensagem) => globalThis.confirm?.(mensagem) ?? true,
 }: Omit<PropsDaTela, "confirmar"> & {
   confirmar?: PropsDaTela["confirmar"];
@@ -354,6 +377,7 @@ export function TelaDeClassificacao({
         estado={estado}
         agenda={agenda}
         confirmar={confirmar}
+        visaoPedida={visaoPedida}
         e={e}
       />
     </TelaNaUrl.Provider>
@@ -391,6 +415,9 @@ export function criarClassificacao({
     ...(copiar ? { copiar } : {}),
     ...(carregarLogo ? { carregarLogo } : {}),
   });
+  const visaoPedida = criarPedidoDeVisao((visao) =>
+    VISOES.some((v) => v.valor === visao),
+  );
   return {
     estado,
     agenda,
@@ -399,6 +426,7 @@ export function criarClassificacao({
       <TelaDeClassificacao
         estado={estado}
         agenda={agenda}
+        visaoPedida={visaoPedida}
         {...(confirmar ? { confirmar } : {})}
       />
     ),
@@ -407,5 +435,7 @@ export function criarClassificacao({
     },
     /* O edital do endereço ("Ir para…" com edital), depois da carga. */
     abrirEdital: (edital: string) => estado.escolherEdital(edital),
+    /* ?visao=agenda ("Editar na Classificação › Agenda"): abre nessa aba. */
+    abrirVisao: (visao: string) => visaoPedida.pedir(visao),
   };
 }
