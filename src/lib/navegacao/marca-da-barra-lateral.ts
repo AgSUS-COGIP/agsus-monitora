@@ -10,7 +10,8 @@ import { ACCESS_BACKGROUND_FOLDER } from "../entrada/access-background-storage.t
 
 export const CHAVE_DO_LOGO_DA_BARRA = "ui_sidebar_logo_url";
 export const CHAVE_DA_COR_DA_BARRA = "ui_sidebar_background_color";
-export const LOGO_PADRAO_DA_BARRA = "/assets/agsus-logo.webp";
+/* O símbolo do Yeendé (25/11/2026); a barra o desenha em linha (barra-lateral.tsx). */
+export const LOGO_PADRAO_DA_BARRA = "/icons/yeende.svg";
 export const COR_PADRAO_DA_BARRA = "#ffffff";
 
 export const PASTA_DOS_LOGOS_DA_BARRA = `${ACCESS_BACKGROUND_FOLDER}/sidebar`;

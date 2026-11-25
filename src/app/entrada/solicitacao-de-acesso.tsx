@@ -7,7 +7,13 @@ import {
   useSyncExternalStore,
   type FormEvent,
 } from "react";
-import { Abas, Aviso, Campo, classes } from "../../ui/index.ts";
+import {
+  Abas,
+  Aviso,
+  Campo,
+  classes,
+  SimboloDoYeende,
+} from "../../ui/index.ts";
 import type { EstadoDaMascote } from "../../lib/aya/estado-da-aya.ts";
 import {
   AREAS_DA_SOLICITACAO,
@@ -25,11 +31,7 @@ import {
   SITUACOES,
   type CodigoDaArea,
 } from "../../lib/acessos/solicitacao-de-acesso.ts";
-import {
-  IconeDeEscudo,
-  IconeDoYeende,
-  MarcaDoGoogle,
-} from "./icones-da-entrada.tsx";
+import { IconeDeEscudo, MarcaDoGoogle } from "./icones-da-entrada.tsx";
 import {
   coordenacoesDaArea,
   lotacoesDaArea,
@@ -157,7 +159,7 @@ function Marca({
         </span>
         <span className="solicitacao-divisor" aria-hidden="true" />
         <span className="solicitacao-produto">
-          <IconeDoYeende />
+          <SimboloDoYeende className="login-product-icon" altura={34} />
           <strong>Yeendé</strong>
         </span>
       </div>

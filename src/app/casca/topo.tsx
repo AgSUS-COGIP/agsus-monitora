@@ -6,7 +6,7 @@ import { podePedirMaisAcesso } from "../../lib/acessos/pedido-de-mais-acesso.ts"
 import { usarEstadoDaNavegacao } from "../contexto-do-app.ts";
 import { telaDaRota } from "../../lib/navegacao/rotas.ts";
 import { definirDestinoDoTitulo } from "./destino-do-titulo.ts";
-import { usarLogoDaMarca } from "../../componentes/barra-lateral/barra-lateral.tsx";
+import { LogoDaMarca } from "../../componentes/barra-lateral/barra-lateral.tsx";
 import { Icone } from "../../componentes/icone.tsx";
 import { SininhoDoResumo } from "../../modulos/resumo-do-dia/resumo-do-dia.tsx";
 import {
@@ -72,10 +72,14 @@ function usarTituloNaTela() {
 
 /* A marca, com a barra em gaveta (o CSS a mostra só até 900px; acima, a barra tem a dela). */
 function MarcaDoTopo() {
-  const imagem = usarLogoDaMarca();
   return (
     <span className="topo-marca">
-      <img className="topo-marca__logo" alt="" {...imagem} />
+      <LogoDaMarca
+        className="topo-marca__logo"
+        classeDoSimbolo="topo-marca__simbolo"
+        alt=""
+        altura={24}
+      />
       <strong className="topo-marca__nome">Yeendé</strong>
     </span>
   );

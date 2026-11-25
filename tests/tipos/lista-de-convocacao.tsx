@@ -48,6 +48,8 @@ void (
     modelos={new Map()}
     carregado
     erroAoCarregar={false}
+    tipo="contratacao"
+    aoMudarTipo={() => {}}
   />
 );
 void [extra, nota, csv];

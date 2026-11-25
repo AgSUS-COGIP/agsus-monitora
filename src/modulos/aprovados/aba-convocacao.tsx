@@ -34,8 +34,8 @@ import {
 import {
   CentralDeConvocacoes,
   usarConducaoLigada,
-  type TipoDaCentralDeConvocacoes,
 } from "./central-de-convocacoes.tsx";
+import { podeVerEntrevistasNaCentral } from "../../lib/aprovados/central-de-convocacoes.ts";
 import {
   lerModalidade,
   rotuloDaCategoria,
@@ -392,12 +392,16 @@ export function AbaConvocacao({
   convocacoes = new Map(),
   carregado,
   erroAoCarregar,
+  tipo,
+  aoMudarTipo,
+  editalPedido = null,
 }: PropsDaAbaDaConvocacao) {
-  const [tipoConvocacao, setTipoConvocacao] =
-    useState<TipoDaCentralDeConvocacoes>("contratacao");
   const conducaoLigada = usarConducaoLigada();
-  const podeEntrevistas = canViewEntrevistas(perfil) && conducaoLigada;
-  const visaoDaCentral = podeEntrevistas ? tipoConvocacao : "contratacao";
+  const podeEntrevistas = podeVerEntrevistasNaCentral({
+    verEntrevistas: canViewEntrevistas(perfil),
+    conducaoLigada,
+  });
+  const visaoDaCentral = podeEntrevistas ? tipo : "contratacao";
   const [filtros, setFiltros] = useState(FILTROS_INICIAIS);
   /*
     Os escolhidos para a carta: sobrevivem a trocar de página e de filtro (a
@@ -565,9 +569,10 @@ export function AbaConvocacao({
     >
       <CentralDeConvocacoes
         tipo={visaoDaCentral}
-        aoMudar={setTipoConvocacao}
+        aoMudar={aoMudarTipo}
         podeEntrevistas={podeEntrevistas}
         podeClassificacao={canViewClassificacao(perfil)}
+        editalPedido={editalPedido}
       />
       <GradeDeKpis
         tour="aprovados-convocacao-kpis"

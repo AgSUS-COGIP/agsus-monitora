@@ -1,7 +1,7 @@
 ---
 tipo: regra
 area: front
-atualizado: 2026-11-24
+atualizado: 2026-11-25
 ---
 
 # Design e tokens
@@ -102,6 +102,25 @@ manual (que seguem na marca e nos botões): `--paleta-floresta`, `-folha`, `-rio
   na terracota, destaque na floresta; o indicador ganha um friso de 3px na cor do tom.
 - Contraste calculado sobre `tokens.css` em `tests/repositorio-e-banco.test.ts` (bloco `paleta-do-rio`) (≥ 4,5:1 sobre o suave e
   sobre o card, nos dois temas). Avisos e faixas de estado seguem nos `--state-*`.
+
+## Marca do Yeendé
+
+O símbolo (25/11/2026) é um pássaro de asas em V: asa esquerda `--marca-agsus-amarelo`, asa
+direita `--marca-agsus-verde`, cabeça `--marca-agsus-vermelho` e corpo em `currentColor` (escuro
+sobre fundo claro, claro sobre o escuro, como o nome ao lado). Sem fundo.
+
+- **Na tela:** `SimboloDoYeende` (`src/ui/simbolo-do-yeende.tsx`), SVG em linha e decorativo
+  (`aria-hidden`); o nome "Yeendé" é sempre texto ao lado. Entrada, solicitação de acesso, barra
+  lateral (a logo padrão) e cabeçalho do celular. O cartão provisório do `index.html` repete o
+  mesmo desenho.
+- **Arquivos** (`icons/`): `yeende.svg` (favicon e ícone "any", sem fundo; o corpo troca com o tema
+  do navegador), `yeende-marca.svg` e `yeende-marca-negativa.svg` (símbolo e nome, para fundo claro
+  e escuro; o nome é a Geist contornada). Os PNG do PWA saem de `yeende.svg` com
+  `npm run icones:marca` e têm fundo sólido verde-escuro `#022d20`, o da arte de referência: o iOS
+  não aceita transparência no apple-touch-icon e o "maskable" é recortado pelo sistema. Um teste
+  (`tests/repositorio-e-banco.test.ts`, bloco `marca-do-yeende`) confere que é um desenho só.
+- Documentos oficiais (Word, PDF, carta) levam o logo da AgSUS (`LOGO_DOS_DOCUMENTOS`), não o
+  símbolo: o documento é da Agência.
 
 ## Séries de gráfico e mapa
 

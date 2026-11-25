@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-24
+atualizado: 2026-11-25
 ---
 
 # Módulo: Lista de aprovados
@@ -36,6 +36,17 @@ sub judice e os modais seguem com a área inteira. Regra: `src/lib/aprovados/ati
 Na aba Aprovados, o controle diz **Listas ativas N · Inativas N · Todas N** (contagem de listas,
 como "Ativo / Inativo / Todos" do painel de Análises); Todas junta as duas. O recorte vai para o
 endereço (`?listas=inativas`, `?listas=todas`; sem o parâmetro, as ativas) e o link abre nele.
+A aba e o tipo da Central de convocações também (`?aba=convocacao&tipo=entrevista`; o padrão,
+Aprovados e "Para contratação", não aparece), por `usarFiltrosNaUrl`; trocar de aba mantém o
+recorte das listas. Regras em `src/lib/aprovados/central-de-convocacoes.ts`.
+
+**Ver em Convocações** (#581, 25/11/2026; `src/componentes/ver-em-convocacoes.tsx`): o atalho
+de Classificação › Listas (na lista de convocação) e de Conduzir entrevistas › Preparar ›
+Convocação para a central em "Para entrevistas", no mesmo edital. Como o "Ver em Relatórios": guarda
+a busca da tela (primeira abertura), pede o filtro (`convocacao: "entrevista"` e o `editalId`, que a
+central abre na loja de Conduzir depois do `render()` dela, só se estiver na lista de lá) e navega.
+Não aparece para quem não veria a central ali (Lista de aprovados e Entrevistas, as duas páginas
+ligadas na área). Só leva: gerar continua na Classificação, convocar em Conduzir.
 
 **Resultado final fora da lista** (24/11/2026): no topo, um aviso discreto
 (`resultados-fora-da-lista.tsx`) lista os editais da área com o resultado final publicado na

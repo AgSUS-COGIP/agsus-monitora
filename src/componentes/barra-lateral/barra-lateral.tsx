@@ -1,5 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { LOGO_PADRAO_DA_BARRA } from "../../lib/navegacao/marca-da-barra-lateral.ts";
+import { SimboloDoYeende } from "../../ui/simbolo-do-yeende.tsx";
 import { AlcaDeRecolher, AlcaNoCabecalho } from "./alca-de-recolher.tsx";
 import { assinarBarraLateral, obterEstadoDaBarraLateral } from "./estado.ts";
 import {
@@ -63,12 +64,45 @@ export function usarLogoDaMarca(logo?: string) {
   return usarLogo(logo ?? gravada);
 }
 
-function Marca({ logo }: { logo?: string }) {
+/*
+  A logo padrão é o símbolo do Yeendé (25/11/2026), desenhado em linha
+  (`SimboloDoYeende`): cores do manual e corpo na cor do texto da barra, sem o
+  filtro que deixa branca a logo institucional enviada. Logo enviada em
+  Configurações › Aparência continua `<img>`, com a volta para o símbolo.
+*/
+export function LogoDaMarca({
+  logo,
+  id,
+  className,
+  classeDoSimbolo,
+  alt,
+  altura,
+}: {
+  logo?: string;
+  id?: string;
+  className: string;
+  classeDoSimbolo: string;
+  alt: string;
+  altura: number;
+}) {
   const imagem = usarLogoDaMarca(logo);
+  if (imagem.src === LOGO_PADRAO_DA_BARRA)
+    return <SimboloDoYeende className={classeDoSimbolo} altura={altura} />;
+  return <img id={id} className={className} alt={alt} {...imagem} />;
+}
+
+function Marca({ logo }: { logo?: string }) {
   return (
     <div className="side-brand" data-tour="barra-marca">
       <span className="side-logo-wrap">
-        <img id="sideLogo" className="side-logo" alt="AgSUS" {...imagem} />
+        <LogoDaMarca
+          logo={logo}
+          id="sideLogo"
+          className="side-logo"
+          classeDoSimbolo="side-simbolo"
+          alt="AgSUS"
+          altura={22}
+        />
       </span>
       <span className="side-brand-copy">
         <strong>Yeendé</strong>

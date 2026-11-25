@@ -27,7 +27,7 @@ própria têm nota sua ([[modulo-acessos]], [[robos-e-agenda]], [[modulo-paineis
 - Regras puras: `src/lib/configuracoes/publicacao-de-configuracoes.ts` (chaves de cada seção, comparação com o
   retrato do banco, validação de URL e domínio), `configuracoes/apresentacao-das-configuracoes.ts` (tom da faixa de
   aviso global e endereço de imagem aceito nas prévias), `navegacao/marca-da-barra-lateral.ts` (logo e cor
-  publicadas e em rascunho), `configuracoes/paineis-externos-das-configuracoes.ts`.
+  publicadas e em rascunho; a logo padrão é o símbolo do Yeendé, `/icons/yeende.svg`), `configuracoes/paineis-externos-das-configuracoes.ts`.
 
 ## Comemorações
 

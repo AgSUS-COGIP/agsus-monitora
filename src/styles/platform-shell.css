@@ -237,10 +237,17 @@ html.arte-atrasada .login-screen::after {
 }
 .login-product-icon {
   flex: none;
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 34px;
 }
-/* O símbolo do Yeendé (icones-da-entrada.tsx e index.html): cores do manual da AgSUS. */
+/*
+  O símbolo do Yeendé (src/ui/simbolo-do-yeende.tsx e o cartão do index.html):
+  asas e cabeça nas cores do manual da AgSUS; o corpo acompanha o texto ao lado
+  (escuro no fundo claro, claro no escuro), sem regra própria por tema.
+*/
+.marca-yeende {
+  flex: none;
+}
 .marca-yeende__asa-esquerda {
   fill: var(--marca-agsus-amarelo);
 }
@@ -248,7 +255,7 @@ html.arte-atrasada .login-screen::after {
   fill: var(--marca-agsus-verde);
 }
 .marca-yeende__corpo {
-  fill: var(--marca-agsus-azul-vivo);
+  fill: currentColor;
 }
 .marca-yeende__cabeca {
   fill: var(--marca-agsus-vermelho);
@@ -331,7 +338,8 @@ html.arte-atrasada .login-screen::after {
   escolhida em Configurações e é **independente do tema do app**: dava para ter
   uma barra escura com o tema claro, e aí a logo escura ficava sobre fundo
   escuro. `.side-logo-wrap` não tem fundo próprio: a imagem repousa direto
-  sobre a cor da barra.
+  sobre a cor da barra. O símbolo do Yeendé (a logo padrão, `.side-simbolo`) é
+  SVG em linha e fica fora do filtro: as cores são dele.
 */
 #loginScreen.login-panel-dark #loginLogo,
 #loginScreen.login-panel-dark .login-organization-mark img,
@@ -340,10 +348,6 @@ html[data-theme="dark"] .app .side-logo,
 body.sidebar-theme-dark .app #sideLogo,
 body.sidebar-theme-dark .app .side-logo {
   filter: brightness(0) invert(0.96);
-}
-
-#loginScreen.login-panel-dark .marca-yeende__corpo {
-  fill: var(--text-inverse);
 }
 
 /*
@@ -563,6 +567,10 @@ html[data-theme="dark"] .sidebar {
   width: 32px;
   height: 32px;
   margin: 0;
+}
+/* O símbolo do Yeendé (a logo padrão): o corpo segue a cor do nome. */
+.side-simbolo {
+  color: var(--menu-realce);
 }
 .side-brand-copy {
   min-width: 0;

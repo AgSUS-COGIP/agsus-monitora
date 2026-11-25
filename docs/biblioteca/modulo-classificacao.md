@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-24
+atualizado: 2026-11-25
 ---
 
 # Módulo: Classificação
@@ -46,7 +46,9 @@ os testes: [[classificacao-por-dentro]].
 - A lista `CONVOCACAO` gerada aqui é a única convocação para a entrevista: Conduzir entrevistas ›
   Preparar mostra a última gerada e registra para a ficha só quem está nela
   (`20261005150000_convocacao_unica_da_entrevista.sql`); o retrato guarda, por vaga, as vagas, a
-  origem delas e o limite da convocação (`instantaneoDaLista`).
+  origem delas e o limite da convocação (`instantaneoDaLista`). Ao lado de "Agenda das
+  entrevistas", "Ver em Convocações" abre a Central de convocações da Lista de aprovados no edital
+  ([[modulo-aprovados]]); gerar e publicar continuam aqui.
 - Quem ainda não tem resultado na avaliação documental (ficha Pendente, Em análise ou Revisar;
   `SITUACOES_AGUARDANDO_ANALISE` em `catalogo.ts`) fica em "Aguardando análise" (`aguardando` por
   vaga e nos totais): fora das listas e dos eliminados, fora do documento do SEI, numa planilha à

@@ -9799,7 +9799,7 @@ bloco("componentes/previa-da-barra-lateral", () => {
   ) {
     const lugar = await desenhar(
       createElement(PreviaDaBarraLateral, {
-        logo: "/assets/agsus-logo.webp",
+        logo: "/icons/yeende.svg",
         cor: "#ffffff",
         versao: VERSAO,
         ...props,
@@ -9959,7 +9959,12 @@ bloco("componentes/previa-da-barra-lateral", () => {
       expect(logo()?.getAttribute("src")).toBe("https://cdn.test/logo.png");
 
       await act(async () => definido(logo()).dispatchEvent(new Event("error")));
-      expect(logo()?.getAttribute("src")).toBe("/assets/agsus-logo.webp");
+      expect(logo()).toBeNull();
+      expect(
+        barraDaPrevia(documento).querySelector(
+          ".side-logo-wrap svg.side-simbolo",
+        ),
+      ).not.toBeNull();
     });
 
     it("segue o tema do app, claro ou escuro", async () => {

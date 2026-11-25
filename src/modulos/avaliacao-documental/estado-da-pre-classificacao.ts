@@ -62,10 +62,12 @@ import {
 import { gerarDocxOficial } from "../../lib/classificacao/documento-docx.ts";
 import { ehEditalDeTreinamento } from "../../lib/editais/edital-de-treinamento.ts";
 import { nomeDoArquivo } from "../../lib/classificacao/exportacao.ts";
-import { CABECALHO_PADRAO } from "../../lib/base/cabecalho-dos-documentos.ts";
+import {
+  CABECALHO_PADRAO,
+  LOGO_DOS_DOCUMENTOS,
+} from "../../lib/base/cabecalho-dos-documentos.ts";
 import { MIME_DOCX } from "../../lib/recursos/documento-da-resposta.ts";
 import { comTempoLimite, mensagemDeFalha } from "../../lib/carga/falha-de-rede";
-import { LOGO_PADRAO_DA_BARRA } from "../../lib/navegacao/marca-da-barra-lateral.ts";
 import {
   inputsDoPedido,
   mensagemDoErroDoDisparo,
@@ -790,7 +792,7 @@ export function criarEstadoDaPreClassificacao({
     } catch {
       texto = "";
     }
-    return { cabecalho: texto || CABECALHO_PADRAO, logo: LOGO_PADRAO_DA_BARRA };
+    return { cabecalho: texto || CABECALHO_PADRAO, logo: LOGO_DOS_DOCUMENTOS };
   }
 
   /* DOCX timbrado ou impressão (PDF) de uma lista registrada; lista = todas | eliminados. */

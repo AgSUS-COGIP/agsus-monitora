@@ -32,6 +32,9 @@ import {
 import { criarEstadoDosModulos } from "../src/modulos/modulos/estado.ts";
 import { createSafeAuthStorage } from "../src/modules/auth-storage.ts";
 import { act, createElement, StrictMode } from "react";
+import { ContextoDoApp } from "../src/app/contexto-do-app.ts";
+import { ESTADO_INICIAL_DA_NAVEGACAO } from "../src/app/navegacao.ts";
+import { consumirPedidoDeFiltro } from "../src/app/pedido-de-filtro.ts";
 import { createRoot } from "react-dom/client";
 import { AvisoDeContraste } from "../src/modulos/configuracoes/partes.tsx";
 import {
@@ -114,6 +117,7 @@ import {
 } from "../src/modules/google-profile-photo.ts";
 import {
   FAVICON_PADRAO,
+  ICONE_DA_TELA_DE_INICIO,
   aplicarFaviconDaMarca,
   definirPaginaDaAba,
   definirSistemaDaAba,
@@ -2448,6 +2452,16 @@ bloco("identidade-da-aba", () => {
       expect(await aplicarFaviconDaMarca(FAVICON_PADRAO)).toBe(true);
       expect(hrefs()[0]).toBe(FAVICON_PADRAO);
     });
+
+    /* O iOS não lê SVG no apple-touch-icon e pinta de preto o transparente. */
+    it("com o símbolo padrão, o apple-touch-icon recebe o PNG de fundo sólido", () => {
+      escreverFavicon(FAVICON_PADRAO);
+      expect(hrefs()).toEqual([
+        FAVICON_PADRAO,
+        FAVICON_PADRAO,
+        ICONE_DA_TELA_DE_INICIO,
+      ]);
+    });
   });
 
   describe("como o HTML e o app ficam", () => {
@@ -2458,7 +2472,8 @@ bloco("identidade-da-aba", () => {
     it("o índice não depende mais de host de terceiros para o ícone", () => {
       const cabecalho = semComentarios(html).slice(0, html.indexOf("</head>"));
       expect(cabecalho).not.toContain("postimg");
-      expect(cabecalho).toContain('href="/icons/agsus-monitora.svg"');
+      expect(cabecalho).toContain('href="/icons/yeende.svg"');
+      expect(cabecalho).toContain('href="/icons/yeende-apple-180.png"');
     });
 
     it("traz as três tags, como o SIGAV", () => {
@@ -4844,6 +4859,34 @@ bloco("modulos/acessos", () => {
   });
 });
 
+/*
+  A tela com o perfil de quem entrou no contexto do app (`pecas.perfil`, como
+  src/main.ts entrega): o "Ver em Convocações" lê o perfil dali.
+*/
+function comPerfilDoApp(criar, perfil) {
+  const navegacao = {
+    obter: () => ESTADO_INICIAL_DA_NAVEGACAO,
+    assinar: () => () => {},
+    esquecerEditalEVisao: () => {},
+    abrirRegrasDoEdital: () => false,
+    fecharRegrasDoEdital: () => {},
+    voltarDaPaginaDoEdital: () => false,
+    irParaInicio: () => {},
+  };
+  const pecas = { perfil: { obter: () => perfil, assinar: () => () => {} } };
+  return (opcoes) => {
+    const controlador = criar(opcoes);
+    return {
+      ...controlador,
+      conteudo: createElement(
+        ContextoDoApp.Provider,
+        { value: { navegacao, avisar: () => {}, pecas } },
+        controlador.conteudo,
+      ),
+    };
+  };
+}
+
 bloco("modulos/agenda-das-entrevistas", () => {
   /*
   A agenda das entrevistas na Classificação (visão "Agenda",
@@ -5066,13 +5109,17 @@ bloco("modulos/agenda-das-entrevistas", () => {
   const baixar = vi.fn();
   const copiar = vi.fn(async () => "html");
 
-  async function montar(supabase) {
+  async function montar(supabase, perfilDoApp) {
     secao = document.createElement("section");
     secao.id = "page-classificacao";
     secao.className = "page active";
     document.body.append(secao);
+    const criar =
+      perfilDoApp === undefined
+        ? criarClassificacao
+        : comPerfilDoApp(criarClassificacao, perfilDoApp);
     await act(async () => {
-      painel = montarTela(criarClassificacao, "page-classificacao", {
+      painel = montarTela(criar, "page-classificacao", {
         supabase,
         toast,
         baixar,
@@ -5123,6 +5170,48 @@ bloco("modulos/agenda-das-entrevistas", () => {
   });
 
   describe("agenda das entrevistas na Classificação", () => {
+    it("na lista de convocação, 'Ver em Convocações' leva à central no edital; gerar continua aqui", async () => {
+      const supabase = supabaseFalso();
+      await montar(supabase, {
+        perfil: "usuario",
+        permissoes: { aprovados: "leitor", entrevistas: "leitor" },
+      });
+      const atalho = () =>
+        secao.querySelector("[data-acao='ver-em-convocacoes']");
+      // Só na lista de convocação para entrevista.
+      expect(atalho()).toBeNull();
+      await clicar(
+        secao.querySelector(".classificacao-tipos [data-valor='CONVOCACAO']"),
+      );
+      expect(atalho().textContent.trim()).toBe("Ver em Convocações");
+      expect(secao.querySelector("[data-acao='abrir-agenda']")).not.toBeNull();
+      window.navigate = vi.fn();
+      try {
+        await clicar(atalho());
+        expect(window.navigate).toHaveBeenCalledWith("approved");
+        expect(consumirPedidoDeFiltro("approved")).toEqual({
+          convocacao: "entrevista",
+          editalId: "e83",
+        });
+      } finally {
+        delete window.navigate;
+      }
+    });
+
+    it("sem acesso às Entrevistas, a lista de convocação não leva à central", async () => {
+      await montar(supabaseFalso(), {
+        perfil: "usuario",
+        permissoes: { aprovados: "leitor", entrevistas: "sem_acesso" },
+      });
+      await clicar(
+        secao.querySelector(".classificacao-tipos [data-valor='CONVOCACAO']"),
+      );
+      expect(secao.querySelector("[data-acao='abrir-agenda']")).not.toBeNull();
+      expect(
+        secao.querySelector("[data-acao='ver-em-convocacoes']"),
+      ).toBeNull();
+    });
+
     it("aberta pela navegação com a visão 'agenda' (o 'Editar na Classificação › Agenda' da central), cai na aba Agenda", async () => {
       const supabase = supabaseFalso();
       await montar(supabase);
@@ -7117,7 +7206,7 @@ bloco("modulos/configuracoes-inicio-acesso-aparencia", () => {
         /\/assets\/access-background-default\.svg$/,
       );
       expect(valor("auth_access_background_path")).toBe("");
-      expect(valor("ui_sidebar_logo_url")).toBe("/assets/agsus-logo.webp");
+      expect(valor("ui_sidebar_logo_url")).toBe("/icons/yeende.svg");
       expect(valor("ui_sidebar_background_color")).toBe("#ffffff");
     });
   });
@@ -7498,7 +7587,7 @@ bloco("modulos/configuracoes-inicio-acesso-aparencia", () => {
       expect(sujo()).toBe(true);
       expect(
         secao("aparencia").querySelector(".config-imagem__previa--logo").src,
-      ).toMatch(/\/assets\/agsus-logo\.webp$/);
+      ).toMatch(/\/icons\/yeende\.svg$/);
       // A publicada segue na barra de todo mundo até salvar: não se apaga.
       expect(
         secao("aparencia").querySelector(

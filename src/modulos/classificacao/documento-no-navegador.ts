@@ -4,7 +4,7 @@ import type { LogoDoDocumento } from "../../lib/classificacao/tipos-dos-document
   toca DOM): a área de transferência, o logo em PNG para o .docx e a
   impressão (PDF) da página "Como fica no SEI".
 */
-import { LOGO_PADRAO_DA_BARRA } from "../../lib/navegacao/marca-da-barra-lateral.ts";
+import { LOGO_DOS_DOCUMENTOS } from "../../lib/base/cabecalho-dos-documentos.ts";
 
 /*
   Copia o documento com os dois formatos: text/html (o editor do SEI cola com
@@ -81,7 +81,7 @@ const logosGuardados = new Map<string, Promise<LogoDoDocumento | null>>();
   primeira conversão. Falhou → null (o .docx sai só com o texto do cabeçalho).
 */
 export function logoEmPng(
-  url = LOGO_PADRAO_DA_BARRA,
+  url = LOGO_DOS_DOCUMENTOS,
   { largura = 320 } = {},
 ): Promise<LogoDoDocumento | null> {
   if (!Number.isSafeInteger(largura) || largura < 1)

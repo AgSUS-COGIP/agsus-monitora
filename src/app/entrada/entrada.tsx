@@ -1,5 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { classes } from "../../ui/index.ts";
+import { classes, SimboloDoYeende } from "../../ui/index.ts";
 import {
   ACCESS_INSTRUCTION,
   normalizeAccessLogoUrl,
@@ -11,11 +11,7 @@ import {
   textoDaEntradaAutomatica,
   type OpcoesDoLogin,
 } from "../sessao.ts";
-import {
-  IconeDeEscudo,
-  IconeDoYeende,
-  MarcaDoGoogle,
-} from "./icones-da-entrada.tsx";
+import { IconeDeEscudo, MarcaDoGoogle } from "./icones-da-entrada.tsx";
 import {
   atualizarMarcaUmaVez,
   type EstadoDaMarcaDaEntrada,
@@ -213,7 +209,7 @@ export function TelaDeEntrada({ sessao, marca, pedido }: PropsDaTelaDeEntrada) {
           </div>
           <span className="login-brand-divider" aria-hidden="true" />
           <div className="login-product-mark">
-            <IconeDoYeende />
+            <SimboloDoYeende className="login-product-icon" altura={34} />
             <strong id="loginTitle">Yeendé</strong>
           </div>
         </div>
