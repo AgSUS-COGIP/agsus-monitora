@@ -1402,6 +1402,21 @@ bloco("aya-tours", () => {
       expect(titulos(null)).toContain("Novo recurso");
     });
 
+    it("a aba Convocação começa pela Central de convocações, só para quem vê as Entrevistas", () => {
+      const titulos = (p) =>
+        tourDaPagina({
+          view: "approved",
+          aba: "convocacao",
+          perfil: p,
+        }).passos.map((x) => x.titulo);
+      expect(titulos(LEITOR_DE_TUDO)[0]).toBe("Convocações");
+      expect(
+        titulos(
+          perfil({ ...LEITOR_DE_TUDO.permissoes, entrevistas: "sem_acesso" }),
+        ),
+      ).not.toContain("Convocações");
+    });
+
     it("contador e convite da primeira visita", () => {
       expect(rotuloDoPasso(2, 9)).toBe("Passo 3 de 9");
       expect(convitesFeitos(["recursos", "recursos", 3, null])).toEqual([

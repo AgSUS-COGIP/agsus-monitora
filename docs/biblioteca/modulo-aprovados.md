@@ -46,7 +46,10 @@ Convocação para a central em "Para entrevistas", no mesmo edital. Como o "Ver 
 a busca da tela (primeira abertura), pede o filtro (`convocacao: "entrevista"` e o `editalId`, que a
 central abre na loja de Conduzir depois do `render()` dela, só se estiver na lista de lá) e navega.
 Não aparece para quem não veria a central ali (Lista de aprovados e Entrevistas, as duas páginas
-ligadas na área). Só leva: gerar continua na Classificação, convocar em Conduzir.
+ligadas na área). Só leva: gerar continua na Classificação, convocar em Conduzir. O pedido vale
+sem esperar a lista de aprovados carregar (a central não depende dela). Prova: o spec
+`sessao-simulada` com os quatro perfis a 375px (só Aprovados; + Entrevistas; + Classificação, com o
+atalho do Preparar; Conduzir desligada na área) e o passo "Convocações" do tour da aba.
 
 **Resultado final fora da lista** (24/11/2026): no topo, um aviso discreto
 (`resultados-fora-da-lista.tsx`) lista os editais da área com o resultado final publicado na

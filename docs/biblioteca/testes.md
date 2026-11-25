@@ -1,7 +1,7 @@
 ---
 tipo: regra
 area: testes
-atualizado: 2026-11-18
+atualizado: 2026-11-25
 ---
 
 # Testes
@@ -99,7 +99,7 @@ Os `*.spec.js` de `tests/` rodam no Playwright. O CI roda todos (`npm run test:e
   `PLAYWRIGHT_DIST_PRONTO=1` serve o `dist/` que já existe.
 - **Sem sessão:** `smoke`, `aviso-global`, `contraste-dos-temas`.
 - **`sessao-simulada`:** o app com sessão e o Supabase respondido por `page.route` (rotas, F5,
-  voltar/avançar, áreas, sem perfil). Precisa de build com
+  voltar/avançar, áreas, sem perfil, a Central de convocações com quatro perfis a 375px). Precisa de build com
   `VITE_SUPABASE_URL=https://teste.supabase.co` (o do CI); com outro endereço, é pulado. **Teste
   novo de tela com sessão vai aqui**, simulando as RPCs que ela chama.
 - **`acabamento-capturas`:** as telas da base (Editais, Visão geral, Configurações → Módulos e

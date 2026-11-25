@@ -1379,6 +1379,21 @@ bloco("componentes/lista-aprovados", () => {
       expect(tipoDaCentral()).toBe("entrevista");
     });
 
+    it("o pedido do 'Ver em Convocações' não espera a lista de aprovados carregar", async () => {
+      // A central lê a loja de Conduzir: a carga dos aprovados não a segura.
+      await montar({ carregar: false });
+      await act(async () =>
+        pedirFiltro("approved", { convocacao: "entrevista" }),
+      );
+      await vi.waitFor(() =>
+        expect($("approvedTabConvocacao").getAttribute("aria-selected")).toBe(
+          "true",
+        ),
+      );
+      // E o pedido foi consumido aqui, sem ficar para a carga.
+      expect(consumirPedidoDeFiltro("approved")).toBeNull();
+    });
+
     it("KPIs no Kpi compacto de src/ui, nas duas abas", async () => {
       await montar();
       for (const painel of [

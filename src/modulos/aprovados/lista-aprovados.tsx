@@ -7,7 +7,10 @@ import type {
   ListaDeAprovados,
 } from "./tipos-do-estado.ts";
 import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
-import { usarPedidoDeFiltro } from "../../app/pedido-de-filtro.ts";
+import {
+  usarPedidoDeFiltro,
+  type FiltroDoPedido,
+} from "../../app/pedido-de-filtro.ts";
 import {
   usarFiltrosNaUrl,
   usarLojaNaUrl,
@@ -351,6 +354,10 @@ const ABA_NA_URL: EsquemaDosFiltros<"aba" | "tipo"> = Object.freeze({
   tipo: { padrao: "contratacao", aceita: ehTipoDaCentral, empilha: true },
 });
 const FICA_NA_TROCA_DE_ABA = Object.freeze(["listas"]);
+/* O pedido do "Ver em Convocações" e os demais (constantes: `aceita` é dependência do efeito). */
+const DA_CENTRAL = (pedido: FiltroDoPedido) =>
+  pedido.convocacao === "entrevista";
+const FORA_DA_CENTRAL = (pedido: FiltroDoPedido) => !DA_CENTRAL(pedido);
 
 export function ListaAprovados({
   estado,
@@ -467,14 +474,14 @@ export function ListaAprovados({
     mudarNaUrl({ listas: LISTAS_NA_URL[nova] });
 
   /*
-    Avisos que viraram pendências abrem a aba Pendências no edital;
-    demais avisos abrem a aba Aprovados filtrada pela pessoa; um número da
-    Visão geral abre a aba Aprovados no edital, com o status do número. O
-    "Ver em Convocações" (Classificação, Conduzir) abre a central em "Para
-    entrevistas", no edital de lá; a navegação já escreveu o endereço.
+    O "Ver em Convocações" (Classificação, Conduzir) abre a central em "Para
+    entrevistas", no edital de lá; a navegação já escreveu o endereço. Não
+    espera a lista de aprovados carregar: a central lê a loja de Conduzir.
   */
-  usarPedidoDeFiltro("approved", carregado, (pedido) => {
-    if (pedido?.convocacao === "entrevista") {
+  usarPedidoDeFiltro(
+    "approved",
+    true,
+    (pedido) => {
       mudarAbaNaUrl(
         { aba: "convocacao", tipo: "entrevista" },
         { substituir: true },
@@ -484,34 +491,46 @@ export function ListaAprovados({
           id: String(pedido.editalId),
           vez: (antes?.vez ?? 0) + 1,
         }));
-      return;
-    }
-    if (pedido?.pendencias) {
-      mudarAbaNaUrl({ aba: "pendencias" }, { substituir: true });
-      setEditalDaPendencia(String(pedido.edital || ""));
-      return;
-    }
-    const ids = (pedido?.candidatos || []).map(String).filter(Boolean);
-    const doEdital = ids.length
-      ? null
-      : filtrosDosAprovados(
-          pedido,
-          opcoesDeTodos.map((o) => ({ valor: o.value, rotulo: o.label })),
-        );
-    if (!ids.length && !doEdital) return;
-    // O edital (ou a pessoa) pedido pode estar no Histórico: abre a vista dele.
-    setVista(
-      vistaDoPedido(
-        separados,
-        vista,
-        { editalIds: doEdital?.editalId, candidatoIds: ids },
-        (c) => String(c.candidato_id),
-      ),
-    );
-    mudarAbaNaUrl({ aba: "aprovados" }, { substituir: true });
-    setFiltros({ ...FILTROS_INICIAIS, ...(doEdital || { candidatos: ids }) });
-    setBusca("");
-  });
+    },
+    DA_CENTRAL,
+  );
+  /*
+    Avisos que viraram pendências abrem a aba Pendências no edital;
+    demais avisos abrem a aba Aprovados filtrada pela pessoa; um número da
+    Visão geral abre a aba Aprovados no edital, com o status do número.
+  */
+  usarPedidoDeFiltro(
+    "approved",
+    carregado,
+    (pedido) => {
+      if (pedido?.pendencias) {
+        mudarAbaNaUrl({ aba: "pendencias" }, { substituir: true });
+        setEditalDaPendencia(String(pedido.edital || ""));
+        return;
+      }
+      const ids = (pedido?.candidatos || []).map(String).filter(Boolean);
+      const doEdital = ids.length
+        ? null
+        : filtrosDosAprovados(
+            pedido,
+            opcoesDeTodos.map((o) => ({ valor: o.value, rotulo: o.label })),
+          );
+      if (!ids.length && !doEdital) return;
+      // O edital (ou a pessoa) pedido pode estar no Histórico: abre a vista dele.
+      setVista(
+        vistaDoPedido(
+          separados,
+          vista,
+          { editalIds: doEdital?.editalId, candidatoIds: ids },
+          (c) => String(c.candidato_id),
+        ),
+      );
+      mudarAbaNaUrl({ aba: "aprovados" }, { substituir: true });
+      setFiltros({ ...FILTROS_INICIAIS, ...(doEdital || { candidatos: ids }) });
+      setBusca("");
+    },
+    FORA_DA_CENTRAL,
+  );
 
   return (
     <div className="ui-tela aprovados-tela">
