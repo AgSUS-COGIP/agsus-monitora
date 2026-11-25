@@ -2,7 +2,14 @@
    página. O ícone da aba é o símbolo do sistema (12/11/2026), com fallback local. */
 
 /** O símbolo do Yeendé, no repositório. É para onde tudo volta quando algo falha. */
-export const FAVICON_PADRAO = "/icons/agsus-monitora.svg";
+export const FAVICON_PADRAO = "/icons/yeende.svg";
+
+/*
+  O mesmo símbolo para a tela de início do iOS: PNG com fundo verde-escuro,
+  porque o iOS não lê SVG no apple-touch-icon e pinta de preto o transparente
+  (scripts/gerar-icones-da-marca.mjs).
+*/
+export const ICONE_DA_TELA_DE_INICIO = "/icons/yeende-apple-180.png";
 
 /*
   As três tags que o SIGAV usa. `apple-touch-icon` é o que o iOS lê ao guardar
@@ -47,7 +54,9 @@ export function escreverFavicon(
   const alvo = ehUrlUsavel(url);
   if (!alvo || !documento?.head) return false;
   for (const link of ligacoesDeIcone(documento)) {
-    link.setAttribute("href", alvo);
+    const doIos =
+      alvo === FAVICON_PADRAO && link.rel === "apple-touch-icon";
+    link.setAttribute("href", doIos ? ICONE_DA_TELA_DE_INICIO : alvo);
     link.removeAttribute("type");
   }
   return true;

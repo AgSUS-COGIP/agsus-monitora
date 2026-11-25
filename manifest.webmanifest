@@ -14,15 +14,27 @@
   "categories": ["business", "productivity", "medical"],
   "icons": [
     {
-      "src": "/icons/agsus-monitora.svg",
+      "src": "/icons/yeende.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "/icons/agsus-monitora-maskable.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/icons/yeende-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/yeende-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/yeende-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "maskable"
     }
   ],
@@ -33,9 +45,9 @@
       "url": "/",
       "icons": [
         {
-          "src": "/icons/agsus-monitora.svg",
-          "sizes": "any",
-          "type": "image/svg+xml"
+          "src": "/icons/yeende-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
         }
       ]
     },
@@ -45,9 +57,9 @@
       "url": "/analises.html",
       "icons": [
         {
-          "src": "/icons/agsus-monitora.svg",
-          "sizes": "any",
-          "type": "image/svg+xml"
+          "src": "/icons/yeende-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
         }
       ]
     }

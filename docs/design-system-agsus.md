@@ -131,7 +131,7 @@ Os valores de contraste abaixo foram calculados contra branco (`#FFFFFF`), confo
 
 ### 3.1 Primitivos — azul institucional
 
-Escala do Manual de Identidade Visual da AgSUS (11/11/2026): `blue-600` é o azul escuro do manual (RGB 0 85 161); `blue-300` a `blue-500` puxam para o azul claro do manual (RGB 15 142 237); as demais são tintas e sombras do `blue-600`. As outras cores do manual (amarelo 255 207 0, verde 0 207 0, vermelho 255 0 0, azul vivo 24 62 255) não passam no contraste de texto e ficam só para marca e ícone (`--marca-agsus-*`).
+Escala do Manual de Identidade Visual da AgSUS (11/11/2026): `blue-600` é o azul escuro do manual (RGB 0 85 161); `blue-300` a `blue-500` puxam para o azul claro do manual (RGB 15 142 237); as demais são tintas e sombras do `blue-600`. As outras cores do manual (amarelo 255 207 0, verde 0 207 0, vermelho 255 0 0, azul vivo 24 62 255) não passam no contraste de texto e ficam só para marca e ícone (`--marca-agsus-*`; o símbolo do Yeendé usa amarelo, verde e vermelho).
 
 | Token | Hex | Contraste | Uso típico |
 |---|---|---|---|

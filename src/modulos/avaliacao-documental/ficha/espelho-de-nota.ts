@@ -32,8 +32,10 @@ import {
   TEXTOS_PADRAO_DO_ESPELHO,
   type TextosDoEspelho,
 } from "../../../lib/avaliacao-documental/modelo-do-espelho.ts";
-import { CHAVE_DO_CABECALHO } from "../../../lib/base/cabecalho-dos-documentos.ts";
-import { LOGO_PADRAO_DA_BARRA } from "../../../lib/navegacao/marca-da-barra-lateral.ts";
+import {
+  CHAVE_DO_CABECALHO,
+  LOGO_DOS_DOCUMENTOS,
+} from "../../../lib/base/cabecalho-dos-documentos.ts";
 import {
   imprimirPagina,
   logoEmPng,
@@ -53,7 +55,7 @@ function cabecalhoConfigurado() {
 
 /** O timbrado da página HTML (impressão e prévia do modelo): cabeçalho de Configurações › Marca e logo. */
 export function marcaDaPagina(cabecalho: () => string = cabecalhoConfigurado) {
-  return { cabecalho: cabecalho() || undefined, logo: LOGO_PADRAO_DA_BARRA };
+  return { cabecalho: cabecalho() || undefined, logo: LOGO_DOS_DOCUMENTOS };
 }
 
 /** Abre a impressão de vários espelhos num documento só (um por página). */
@@ -95,7 +97,7 @@ export function abrirEspelhoDeNota(
 async function marcaDoPdf(cabecalho: () => string): Promise<MarcaDoPdf> {
   return {
     cabecalho: cabecalho() || undefined,
-    logo: await logoEmPng(LOGO_PADRAO_DA_BARRA),
+    logo: await logoEmPng(LOGO_DOS_DOCUMENTOS),
   };
 }
 

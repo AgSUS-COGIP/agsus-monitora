@@ -77,7 +77,7 @@ publicação no histórico de Operação, de onde uma versão pode ser restaurad
 ## Logo e cor da barra lateral
 
 **perguntas:** logo da barra lateral | como trocar a logo da barra lateral | cor da barra lateral | logos enviadas | trocar logo do menu
-**resposta:** A logo e a cor da barra lateral são escolhidas em Configurações › Aparência. A logo aceita JPG, PNG ou WEBP de até 6 MB; enviar guarda o arquivo em Logos enviadas, mas a escolha só vale depois de "Salvar alterações". Enquanto a escolha está pendente, a barra lateral já mostra a logo e a cor escolhidas; descartada a alteração, ela volta ao que está publicado. Os textos e ícones da barra mudam sozinhos para claro ou escuro conforme a cor. A logo selecionada não pode ser apagada: escolha outra ou restaure o padrão antes.
+**resposta:** A logo e a cor da barra lateral são escolhidas em Configurações › Aparência. A logo aceita JPG, PNG ou WEBP de até 6 MB; enviar guarda o arquivo em Logos enviadas, mas a escolha só vale depois de "Salvar alterações". Enquanto a escolha está pendente, a barra lateral já mostra a logo e a cor escolhidas; descartada a alteração, ela volta ao que está publicado. Os textos e ícones da barra mudam sozinhos para claro ou escuro conforme a cor. A logo selecionada não pode ser apagada: escolha outra ou restaure o padrão antes. O padrão é o símbolo do Yeendé.
 **fonte:** interface do Yeendé
 
 ## Quem abre as Configurações

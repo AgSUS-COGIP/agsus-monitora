@@ -20,8 +20,10 @@ alimenta por `buildNav`/`setActiveNav`.
   `marcarItemAtivoNoMenu`; a barra lê com `useSyncExternalStore`).
 - `menu-de-areas.tsx` (acordeão; recolhida, painel flutuante), `alca-de-recolher.tsx` (o botão único
   de recolher: na marca acima de 900 px ou no cabeçalho, por portal), `rodape.tsx` (seletor
-  Claro/Escuro de `seletor-de-tema.ts`, Sair e versão), `marca.ts` (a logo `#sideLogo`, de
-  Configurações › Marca).
+  Claro/Escuro de `seletor-de-tema.ts`, Sair e versão), `marca.ts` (a logo e a cor, de
+  Configurações › Aparência). Sem logo enviada, a marca é o símbolo do Yeendé em linha
+  (`SimboloDoYeende`, [[design-e-tokens]]); logo enviada é o `<img id="sideLogo">`, que volta para o
+  símbolo se não carregar. O cabeçalho do celular usa a mesma peça (`LogoDaMarca`).
 - `integracao.ts` resolve as ações da janela na hora do clique, com as confirmações de saída;
   `usar-ambiente.ts` traz o que o legado controla (classe do `body` e largura; o tema é
   `src/app/tema.ts`); contratos em `tipos.ts`.
@@ -38,7 +40,7 @@ alimenta por `buildNav`/`setActiveNav`.
   Ordens aceitam números finitos ou texto numérico. Não substitui as permissões: a navegação decide
   quais páginas entram (`paginasPermitidas`, [[modulo-acessos]]).
 - Ids e atributos usados pelo menu no celular, branding, versão, mapas e tours são preservados
-  (`#nav [data-view]`, `data-area`, `data-rotulo`, `data-icone`, `aria-current`, `#sideLogo`,
+  (`#nav [data-view]`, `data-area`, `data-rotulo`, `data-icone`, `aria-current`, `#sideLogo` (só com logo enviada),
   `#sidebarLogoutBtn.side-logout`, `#globalSidebarToggle`). O texto de `#sidebarVersion` é escrito
   pelo legado; a logo e a versão são atualizadas pelos seus donos.
 - CSS em `src/styles/barra-lateral.css` e `platform-shell.css`; o breakpoint da gaveta é 900 px.

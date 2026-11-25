@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-labelledby="titulo descricao">
+  <title id="titulo">Yeendé</title>
+  <desc id="descricao">Símbolo do Yeendé: pássaro de asas abertas em V, asa amarela, asa verde, cabeça vermelha e corpo em cápsula, sem fundo.</desc>
+  <style>.corpo{fill:#022d20}@media (prefers-color-scheme:dark){.corpo{fill:#fdf8ec}}</style>
+  <path d="M17.8 22C9.4 27.6 2 36.4 1.9 47C1.8 58.1 10.6 65.9 22.8 70.1C28.3 72 33.9 73.7 36.4 76.2C37.1 76.9 37.9 76.6 37.7 75.3C36.2 65.9 37.3 57 41.3 49.8C42.2 48.1 41.8 46.6 40.1 45C32.2 38.7 22.8 32.6 19.6 23.7C19.1 22.3 18.3 21.4 17.8 22Z" fill="#ffcf00"/>
+  <path d="M82.2 22C90.6 27.6 98 36.4 98.1 47C98.2 58.1 89.4 65.9 77.2 70.1C71.7 72 66.1 73.7 63.6 76.2C62.9 76.9 62.1 76.6 62.3 75.3C63.8 65.9 62.7 57 58.7 49.8C57.8 48.1 58.2 46.6 59.9 45C67.8 38.7 77.2 32.6 80.4 23.7C80.9 22.3 81.7 21.4 82.2 22Z" fill="#00cf00"/>
+  <path d="M44 39.1A11.4 11.4 0 1 1 56.2 39.1C53.6 41.4 51.1 43.2 50.4 45.2C50.2 45.9 49.8 45.9 49.6 45.2C48.9 43.2 46.4 41.4 44 39.1Z" fill="#ff0000"/>
+  <rect class="corpo" x="42.4" y="48.1" width="15.1" height="33.6" rx="7.6"/>
+</svg>

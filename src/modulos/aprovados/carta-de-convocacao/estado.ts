@@ -33,7 +33,10 @@ import {
 */
 
 import { MIME_DOCX } from "../../../lib/recursos/documento-da-resposta.ts";
-import { CABECALHO_PADRAO } from "../../../lib/base/cabecalho-dos-documentos.ts";
+import {
+  CABECALHO_PADRAO,
+  LOGO_DOS_DOCUMENTOS,
+} from "../../../lib/base/cabecalho-dos-documentos.ts";
 import { canChangeCandidateStatus } from "../../../lib/acessos/access-roles.ts";
 import { ehConflitoDeVersao } from "../../../lib/base/conflito-de-versao.ts";
 import {
@@ -55,7 +58,6 @@ import {
   soACarta,
   textoParaSei,
 } from "../../../lib/aprovados/carta-de-convocacao/carta-de-convocacao-documento.ts";
-import { LOGO_PADRAO_DA_BARRA } from "../../../lib/navegacao/marca-da-barra-lateral.ts";
 
 const texto = (valor: unknown) => String(valor ?? "").trim();
 const mensagemDe = (erro: unknown) =>
@@ -89,7 +91,7 @@ export function criarEstadoDaCarta({
   copiar = async () => "",
   carregarLogo = async () => null,
   cabecalho = () => CABECALHO_PADRAO,
-  enderecoDoLogo = LOGO_PADRAO_DA_BARRA,
+  enderecoDoLogo = LOGO_DOS_DOCUMENTOS,
   hoje = () => hojeEmBrasilia(),
   marcarConvocados = async () => null,
 }: OpcoesDoEstadoDaCarta = {}) {

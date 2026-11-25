@@ -6,6 +6,13 @@
 */
 export const CHAVE_DO_CABECALHO = "documento_cabecalho";
 
+/*
+  O logo do timbrado é o da AgSUS, não o símbolo do Yeendé: o documento é da
+  Agência; o sistema só o gera. Antes isto era a logo padrão da barra lateral,
+  que desde 25/11/2026 é o símbolo do Yeendé.
+*/
+export const LOGO_DOS_DOCUMENTOS = "/assets/agsus-logo.webp";
+
 export const CABECALHO_PADRAO = [
   "AGÊNCIA BRASILEIRA DE APOIO À GESTÃO DO SISTEMA ÚNICO DE SAÚDE",
   "SEPN CRN 514, Bloco D, - Bairro Asa Norte, Brasília/DF, CEP 70760-544",
