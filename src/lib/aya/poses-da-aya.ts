@@ -1,7 +1,9 @@
 /*
-  As poses da arara da Aya (ilustrações 3D em webp, uma por estado, em
-  src/modulos/aya/mascote/imagens/), sem React: onde cada uma fica no quadro,
-  o recorte do rosto e qual arquivo (1x ou 2x) baixar para o tamanho na tela.
+  As poses da arara ilustrada da Aya (ilustrações 3D em webp, uma por estado
+  e mais "apontando", do tour, em src/modulos/aya/mascote/imagens/), sem
+  React: onde cada uma fica no quadro, o recorte do rosto e qual arquivo (1x
+  ou 2x) baixar para o tamanho na tela. A arara do canto segue no desenho em
+  SVG; a ilustrada é a das aparições grandes (painel, tour, comemorações).
 
   O quadro é o quadrado da arara inteira ("corpo"), de lado 1. Todas as poses
   estão na mesma escala e com os pés no mesmo ponto (ANCORA_DOS_PES): trocar
@@ -14,7 +16,15 @@
   ilustração = refazer o arquivo na mesma escala e atualizar a linha dela.
 */
 
-import type { EstadoDaMascote } from "./estado-da-aya.ts";
+import { ESTADOS_DA_MASCOTE, type EstadoDaMascote } from "./estado-da-aya.ts";
+
+/** Os estados da mascote e "apontando" (só o tour pede; não é estado do evento). */
+export const POSES_DA_ARARA = Object.freeze([
+  ...ESTADOS_DA_MASCOTE,
+  "apontando",
+] as const);
+
+export type PoseDaArara = EstadoDaMascote | "apontando";
 
 export interface MedidasDaPose {
   /** Canto e tamanho da imagem, em frações do lado do quadro. */
@@ -28,7 +38,7 @@ export interface MedidasDaPose {
 }
 
 export const MEDIDAS_DAS_POSES: Readonly<
-  Record<EstadoDaMascote, Readonly<MedidasDaPose>>
+  Record<PoseDaArara, Readonly<MedidasDaPose>>
 > = Object.freeze({
   parada: {
     x: 0.1452,
@@ -111,7 +121,7 @@ export type ArquivoDaPose = keyof typeof ALTURA_DO_ARQUIVO;
  * Do quadro "corpo" ao "rosto": desloca (em % do quadro) e amplia, com a
  * origem no canto de cima à esquerda, para o rosto ocupar o quadro.
  */
-export function enquadramentoDoRosto(pose: EstadoDaMascote) {
+export function enquadramentoDoRosto(pose: PoseDaArara) {
   const medidas = MEDIDAS_DAS_POSES[pose];
   const escala = 1 / LADO_DO_ROSTO;
   const arredondar = (valor: number) => Number(valor.toFixed(2));
@@ -124,7 +134,7 @@ export function enquadramentoDoRosto(pose: EstadoDaMascote) {
 
 /** Largura da imagem da pose na tela (px CSS), com o rosto ampliado. */
 export function larguraNaTela(
-  pose: EstadoDaMascote,
+  pose: PoseDaArara,
   tamanho: number,
   rosto: boolean,
 ) {
@@ -133,10 +143,7 @@ export function larguraNaTela(
 }
 
 /** Largura do arquivo (px) da pose. */
-export function larguraDoArquivo(
-  pose: EstadoDaMascote,
-  arquivo: ArquivoDaPose,
-) {
+export function larguraDoArquivo(pose: PoseDaArara, arquivo: ArquivoDaPose) {
   return Math.round(
     MEDIDAS_DAS_POSES[pose].largura * ALTURA_DO_ARQUIVO[arquivo],
   );
@@ -147,7 +154,7 @@ export function larguraDoArquivo(
  * a densidade de pixels (com 5% de folga), senão o 2x.
  */
 export function escolherArquivo(
-  pose: EstadoDaMascote,
+  pose: PoseDaArara,
   larguraCss: number,
   densidade = 1,
 ): ArquivoDaPose {

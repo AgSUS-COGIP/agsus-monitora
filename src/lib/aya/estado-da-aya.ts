@@ -1,9 +1,8 @@
 /*
   O estado da mascote da Aya (a arara-azul), sem React: os estados, o evento
   global que qualquer tela usa para pedir um estado, a regra de qual estado
-  aparece quando vários pedidos chegam juntos, o tempo para dormir e a
-  distância que deixa a arara atenta. Cada estado é uma pose ilustrada
-  (src/lib/aya/poses-da-aya.ts); o componente é de src/modulos/aya/mascote/.
+  aparece quando vários pedidos chegam juntos e os tempos (piscar, arrepiar,
+  dormir). O desenho e as animações são de src/modulos/aya/mascote/.
 
   Pedir um estado de qualquer lugar (legado ou React):
 
@@ -23,7 +22,6 @@ export const ESTADOS_DA_MASCOTE = Object.freeze([
   "comemorando",
   "dormindo",
   "acenando",
-  "apontando",
 ] as const);
 
 export type EstadoDaMascote = (typeof ESTADOS_DA_MASCOTE)[number];
@@ -139,6 +137,37 @@ export function resolverEstado(entrada: EntradaDoEstado): EstadoDaMascote {
   return "parada";
 }
 
+/**
+ * O que aparece de fato. Movimento reduzido: só o piscar — a arara fica
+ * parada (dormindo continua de olhos fechados, sem o "z" subindo).
+ */
+export function estadoVisivel(
+  estado: EstadoDaMascote,
+  { reduzido = false }: { reduzido?: boolean } = {},
+): EstadoDaMascote {
+  if (!reduzido) return estado;
+  return estado === "dormindo" ? "dormindo" : "parada";
+}
+
+type Sorteio = () => number;
+
+const entre = (rng: Sorteio, minimo: number, maximo: number) => {
+  const valor = Number(rng());
+  const fracao = Number.isFinite(valor) ? Math.min(Math.max(valor, 0), 1) : 0.5;
+  return Math.round(minimo + fracao * (maximo - minimo));
+};
+
+/** Espera até a próxima piscada: 3 a 7 s, sorteado. */
+export const intervaloDaPiscada = (rng: Sorteio = Math.random) =>
+  entre(rng, 3000, 7000);
+
+/** Às vezes (de 9 a 16 s) as penas da cabeça arrepiam. */
+export const intervaloDoArrepio = (rng: Sorteio = Math.random) =>
+  entre(rng, 9000, 16000);
+
+/** Às vezes a arara pisca duas vezes seguidas (1 em 5). */
+export const piscadaDupla = (rng: Sorteio = Math.random) => Number(rng()) < 0.2;
+
 /** Mostra o aceno agora? Uma vez por sessão; marca ao responder que sim. */
 export function deveAcenar(armazenamento: Armazenamento | null | undefined) {
   try {
@@ -161,14 +190,20 @@ export function comemoracoesPessoaisDesligadas(
   }
 }
 
-/** O ponteiro está perto da arara? Mede do centro da caixa, somando o raio. */
-export function ponteiroPerto(
-  caixa: { left: number; top: number; width: number; height: number },
+/** Para onde o olho olha (−1 a 1 em cada eixo), do centro da arara ao ponteiro. */
+export function direcaoDoOlhar(
+  centro: { x: number; y: number },
   ponteiro: { x: number; y: number },
-  raio = RAIO_DE_ATENCAO_PX,
+  alcance = RAIO_DE_ATENCAO_PX,
 ) {
-  const centroX = caixa.left + caixa.width / 2;
-  const centroY = caixa.top + caixa.height / 2;
-  const distancia = Math.hypot(ponteiro.x - centroX, ponteiro.y - centroY);
-  return distancia <= raio + Math.max(caixa.width, caixa.height) / 2;
+  const dx = ponteiro.x - centro.x;
+  const dy = ponteiro.y - centro.y;
+  const distancia = Math.hypot(dx, dy);
+  if (!distancia) return { x: 0, y: 0, distancia: 0 };
+  const forca = Math.min(1, distancia / Math.max(alcance, 1));
+  return {
+    x: Number(((dx / distancia) * forca).toFixed(3)),
+    y: Number(((dy / distancia) * forca).toFixed(3)),
+    distancia,
+  };
 }

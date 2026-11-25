@@ -102,11 +102,6 @@ body.access-request-mode .login-screen {
   gap: var(--space-3);
   margin-top: auto;
 }
-.solicitacao-aya-reserva {
-  display: block;
-  width: 96px;
-  height: 96px;
-}
 .solicitacao-aya-fala {
   position: relative;
   margin: 0;

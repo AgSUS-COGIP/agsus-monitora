@@ -1404,6 +1404,7 @@ export function Aya({
             <div className="aya-apresentacao">
               <span className="aya-avatar aya-figura">
                 <Mascote
+                  ilustrada
                   tamanho={TAMANHO_NO_PAINEL}
                   enquadramentoInicial="rosto"
                   proprio={estadoDoPainel}

@@ -60,9 +60,9 @@ Lógica pura em `src/lib/`:
   Sistema inteiro) e a preferência pessoal ("Para mim").
 - **Falhou o download** do desenho: a comemoração não aparece e nada mais muda.
 - A Aya entra pelo evento `aya:estado` ("comemorando"), sem acoplar os módulos ([[modulo-aya]]).
-  A arara que atravessa a tela e dança no fim é a própria `<Mascote>`, fixa em "comemorando"
-  (a pose ilustrada de asas abertas, que pula); o voo, a rotação e a escala são da comemoração,
-  por transform, a cada quadro.
+  A arara que atravessa a tela e dança no fim é a `<Mascote ilustrada>`, fixa em "comemorando"
+  (a pose 3D de asas abertas, que pula; desde 25/11/2026, antes o desenho em SVG batendo as
+  asas). O voo, a rotação e a escala são da comemoração, por transform, a cada quadro.
 
 ## Onde nasce cada marco
 

@@ -304,8 +304,8 @@ import {
   larguraDoArquivo,
   larguraNaTela,
   MEDIDAS_DAS_POSES,
+  POSES_DA_ARARA,
 } from "../src/lib/aya/poses-da-aya.ts";
-import { ESTADOS_DA_MASCOTE } from "../src/lib/aya/estado-da-aya.ts";
 
 bloco("animacoes-coreografadas", () => {
   /*
@@ -5131,13 +5131,13 @@ bloco("poses-da-aya", () => {
   /* As poses ilustradas da arara da Aya, sem DOM (src/lib/aya/poses-da-aya.ts). */
   const PASTA = "src/modulos/aya/mascote/imagens";
 
-  it("uma pose por estado, com 1x e 2x de até 30 KB cada", () => {
+  it("uma pose por estado e a do tour, com 1x e 2x de até 30 KB cada", () => {
     expect(Object.keys(MEDIDAS_DAS_POSES).sort()).toEqual(
-      [...ESTADOS_DA_MASCOTE].sort(),
+      [...POSES_DA_ARARA].sort(),
     );
     const arquivos = readdirSync(PASTA).sort();
     expect(arquivos).toEqual(
-      ESTADOS_DA_MASCOTE.flatMap((pose) => [
+      POSES_DA_ARARA.flatMap((pose) => [
         `arara-${pose}-2x.webp`,
         `arara-${pose}.webp`,
       ]).sort(),

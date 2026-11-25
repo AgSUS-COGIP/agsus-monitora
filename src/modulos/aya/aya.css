@@ -52,7 +52,8 @@
   terço do rosto sai da tela (nas laterais; no topo e embaixo, a metade) e
   ela fica espiando com o olho à mostra, virada para dentro (na
   direita, espelhada; no topo, de cabeça para baixo). Mouse em cima ou foco
-  de teclado a trazem para fora.
+  de teclado a trazem para fora. O olho que segue o ponteiro
+  acompanha o espelho (--olho-sentido-*, mascote.css).
 */
 .aya-arara[data-borda="esquerda"] {
   transform: translateX(calc(-38% - 8px));
@@ -87,15 +88,18 @@
   transform: none;
 }
 .aya-arara[data-borda="direita"] .mascote {
+  --olho-sentido-x: -1;
   transform: scaleX(-1);
 }
 .aya-arara[data-borda="topo"] .mascote {
+  --olho-sentido-x: -1;
+  --olho-sentido-y: -1;
   transform: rotate(180deg);
 }
 
 /*
   Fechada, só o rosto da arara, de perto (mascote/, enquadramento "rosto");
-  no painel, a arara inteira. Sem aro em volta (08/10).
+  no painel, a arara inteira, em pé no poleiro. Sem aro em volta (08/10).
 */
 .aya-figura {
   position: relative;

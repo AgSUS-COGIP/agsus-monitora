@@ -443,7 +443,9 @@ export function Tour({
             aria-hidden="true"
           >
             <Mascote
-              estado={caixa ? "apontando" : "falando"}
+              ilustrada
+              estado="falando"
+              pose={caixa ? "apontando" : null}
               tamanho={ARARA_NO_BALAO}
               ouvirAya={false}
               atencao={false}
