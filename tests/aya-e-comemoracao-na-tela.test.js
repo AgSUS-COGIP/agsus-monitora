@@ -37,15 +37,11 @@ import {
   comemoracoesPessoaisDesligadas,
   definirEstadoDaAya,
   deveAcenar,
-  direcaoDoOlhar,
   DURACAO_PADRAO_MS,
   ESTADOS_DA_MASCOTE,
-  estadoVisivel,
   EVENTO_ESTADO_DA_AYA,
-  intervaloDaPiscada,
-  intervaloDoArrepio,
   lerPedido,
-  piscadaDupla,
+  ponteiroPerto,
   resolverEstado,
   INATIVIDADE_PARA_DORMIR_MS,
 } from "../src/lib/aya/estado-da-aya.ts";
@@ -617,11 +613,6 @@ bloco("contexto-da-aya", () => {
 bloco("estado-da-aya", () => {
   /* A regra da mascote da Aya, sem DOM (src/lib/aya/estado-da-aya.ts). */
 
-  const sequencia = (...valores) => {
-    let i = 0;
-    return () => valores[i++ % valores.length];
-  };
-
   function armazenamento(inicial = {}) {
     const dados = new Map(Object.entries(inicial));
     return {
@@ -631,7 +622,7 @@ bloco("estado-da-aya", () => {
   }
 
   describe("estados e pedidos", () => {
-    it("os sete estados", () => {
+    it("os oito estados (uma pose ilustrada cada)", () => {
       expect(ESTADOS_DA_MASCOTE).toEqual([
         "parada",
         "atenta",
@@ -640,6 +631,7 @@ bloco("estado-da-aya", () => {
         "comemorando",
         "dormindo",
         "acenando",
+        "apontando",
       ]);
     });
 
@@ -706,37 +698,6 @@ bloco("estado-da-aya", () => {
         resolverEstado({ fixo: "comemorando", comemoracoesDesligadas: true }),
       ).toBe("parada");
     });
-
-    it("movimento reduzido: só parada (ou dormindo, de olhos fechados)", () => {
-      for (const estado of ESTADOS_DA_MASCOTE)
-        expect(estadoVisivel(estado, { reduzido: true })).toBe(
-          estado === "dormindo" ? "dormindo" : "parada",
-        );
-      expect(estadoVisivel("comemorando")).toBe("comemorando");
-    });
-  });
-
-  describe("tempos sorteados", () => {
-    it("pisca de 3 a 7 s; o sorteio fixo dá sempre o mesmo intervalo", () => {
-      expect(intervaloDaPiscada(() => 0)).toBe(3000);
-      expect(intervaloDaPiscada(() => 1)).toBe(7000);
-      expect(intervaloDaPiscada(() => 0.5)).toBe(5000);
-      const a = sequencia(0.1, 0.9, 0.42);
-      const b = sequencia(0.1, 0.9, 0.42);
-      const primeira = [1, 2, 3].map(() => intervaloDaPiscada(a));
-      expect(primeira).toEqual([1, 2, 3].map(() => intervaloDaPiscada(b)));
-      expect(primeira).toEqual([3400, 6600, 4680]);
-      // Valor fora do intervalo não quebra.
-      expect(intervaloDaPiscada(() => Number.NaN)).toBe(5000);
-      expect(intervaloDaPiscada(() => 5)).toBe(7000);
-    });
-
-    it("arrepio de 9 a 16 s; piscada dupla 1 em 5", () => {
-      expect(intervaloDoArrepio(() => 0)).toBe(9000);
-      expect(intervaloDoArrepio(() => 1)).toBe(16000);
-      expect(piscadaDupla(() => 0.1)).toBe(true);
-      expect(piscadaDupla(() => 0.5)).toBe(false);
-    });
   });
 
   describe("preferências", () => {
@@ -764,18 +725,13 @@ bloco("estado-da-aya", () => {
     });
   });
 
-  describe("olhar", () => {
-    it("aponta para o ponteiro, até 1 em cada eixo", () => {
-      expect(direcaoDoOlhar({ x: 0, y: 0 }, { x: 0, y: 0 })).toEqual({
-        x: 0,
-        y: 0,
-        distancia: 0,
-      });
-      const longe = direcaoDoOlhar({ x: 0, y: 0 }, { x: 1000, y: 0 });
-      expect(longe.x).toBe(1);
-      expect(longe.y).toBe(0);
-      const perto = direcaoDoOlhar({ x: 0, y: 0 }, { x: 0, y: -80 }, 160);
-      expect(perto.y).toBe(-0.5);
+  describe("atenção", () => {
+    it("o ponteiro perto (raio mais meia caixa) deixa atenta", () => {
+      const caixa = { left: 100, top: 100, width: 64, height: 64 };
+      expect(ponteiroPerto(caixa, { x: 132, y: 132 })).toBe(true);
+      expect(ponteiroPerto(caixa, { x: 132 + 160 + 32, y: 132 })).toBe(true);
+      expect(ponteiroPerto(caixa, { x: 132 + 160 + 33, y: 132 })).toBe(false);
+      expect(ponteiroPerto(caixa, { x: 900, y: 900 }, 10)).toBe(false);
     });
   });
 });
@@ -1011,7 +967,7 @@ bloco("fogos-ao-concluir", () => {
     it("a Aya voa (transform muda a cada quadro), solta o primeiro foguete e sai", () => {
       const { doc, janela, quadros } = janelaComCanvas();
       soltarFogos(doc, janela, { aleatorio: criarAleatorio(5) });
-      // A arara viva (src/modulos/aya/mascote/), batendo as asas.
+      // A arara de verdade (src/modulos/aya/mascote/), comemorando.
       const aya = doc.querySelector(".comemoracao__aya");
       expect(aya.getAttribute("aria-hidden")).toBe("true");
       let agora = 0;
@@ -1690,6 +1646,17 @@ bloco("modulos/aya-tour", async () => {
       expect($(".aya-tour__faixa--inteira")).not.toBeNull();
       await clicar(botao("Concluir"));
       expect(aoFechar).toHaveBeenCalledWith("concluiu", 3);
+    });
+
+    it("a arara do balão aponta para o elemento da vez; sem elemento, fala", async () => {
+      const araraDoBalao = () => $(".aya-tour__arara .mascote");
+      await montar();
+      expect($(".aya-tour__arara").getAttribute("aria-hidden")).toBe("true");
+      expect(araraDoBalao().getAttribute("data-estado")).toBe("apontando");
+      await clicar(botao("Próximo"));
+      await clicar(botao("Próximo"));
+      expect(titulo()).toBe("Fim");
+      expect(araraDoBalao().getAttribute("data-pedido")).toBe("falando");
     });
 
     it("último passo ausente conclui ao avançar", async () => {
@@ -2504,7 +2471,9 @@ bloco("modulos/aya", async () => {
 
   describe("a arara: rosto fechada, corpo no painel e escondida na borda", () => {
     const arara = () => $(".aya-arara");
-    const mascoteDoBotao = () => $(".aya-arara svg.mascote");
+    const mascoteDoBotao = () => $(".aya-arara .mascote");
+    const tamanhoDe = (mascote) =>
+      mascote.style.getPropertyValue("--mascote-tamanho");
     const posicaoGuardada = () =>
       JSON.parse(localStorage.getItem(CHAVE_POSICAO_DA_ARARA) || "null");
 
@@ -2522,15 +2491,14 @@ bloco("modulos/aya", async () => {
     it("fechada mostra só o rosto; aberta, o painel mostra a arara inteira, maior", async () => {
       await montar();
       expect(mascoteDoBotao().getAttribute("data-enquadramento")).toBe("rosto");
-      expect(mascoteDoBotao().getAttribute("width")).toBe("56");
+      expect(tamanhoDe(mascoteDoBotao())).toBe("56px");
       // A área clicável e o nome acessível continuam os mesmos.
       expect(arara().getAttribute("aria-label")).toBe(
         "Abrir a Aya, assistente do Yeendé",
       );
       await abrirPainel();
-      const doPainel = $(".aya-avatar svg.mascote");
-      expect(doPainel.getAttribute("width")).toBe("88");
-      expect(doPainel.getAttribute("data-versao")).toBe("completa");
+      const doPainel = $(".aya-avatar .mascote");
+      expect(tamanhoDe(doPainel)).toBe("88px");
       await act(async () => {
         await new Promise((resolver) => setTimeout(resolver, 80));
       });
@@ -2699,16 +2667,16 @@ bloco("modulos/comemoracoes-na-casca", () => {
 
 bloco("modulos/mascote", async () => {
   /*
-  A mascote da Aya (src/modulos/aya/mascote/): troca de estados, o evento
-  global aya:estado, movimento reduzido (só pisca), piscar com sorteio fixo,
-  aceno uma vez por sessão, sono por inatividade, pausa com a aba oculta e o
-  enquadramento (rosto com a Aya fechada, corpo com o painel aberto e nos fogos).
+  A mascote da Aya (src/modulos/aya/mascote/): uma pose ilustrada por estado,
+  a troca suave (a nova entra, a antiga sai), o evento global aya:estado,
+  movimento reduzido (troca direta, sem animação), só a pose da vez baixada
+  (as outras depois, em prioridade baixa), aceno uma vez por sessão, sono por
+  inatividade, pausa com a aba oculta e o enquadramento (rosto com a Aya
+  fechada, corpo com o painel aberto e nos fogos).
 */
 
-  const { Mascote, TAMANHO_DA_VERSAO_SIMPLES, carregarDesenhoDaMascote } =
+  const { Mascote, enderecoDaPose, reiniciarPosesDaMascote, TROCA_DE_POSE_MS } =
     await import("../src/modulos/aya/mascote/mascote.tsx");
-  // O desenho vem num pedaço próprio (import dinâmico): carregado antes dos testes.
-  await carregarDesenhoDaMascote();
   const { reiniciarPedidoDaAya } =
     await import("../src/modulos/aya/mascote/estado.ts");
   const { CartaoDaMascote } =
@@ -2716,9 +2684,12 @@ bloco("modulos/mascote", async () => {
 
   let raiz;
   let elemento;
-  let animar;
-  const svg = () => elemento.querySelector("svg.mascote");
-  const estado = () => svg()?.getAttribute("data-estado");
+  const ImagemOriginal = window.Image;
+  const arara = () => elemento.querySelector(".mascote");
+  const estado = () => arara()?.getAttribute("data-estado");
+  const poses = () =>
+    [...arara().querySelectorAll(".mascote__pose")].map((p) => p.dataset.pose);
+  const imagens = () => [...arara().querySelectorAll("img")];
 
   async function montar(props = {}) {
     await act(async () => raiz.render(createElement(Mascote, props)));
@@ -2737,14 +2708,27 @@ bloco("modulos/mascote", async () => {
     });
   }
 
+  /* Imagem falsa do navegador: guarda o que foi pedido; `decode` controlável. */
+  function imagemFalsa({ decode } = {}) {
+    const pedidos = [];
+    window.Image = class {
+      set src(valor) {
+        pedidos.push({ src: valor, prioridade: this.fetchPriority });
+      }
+      decode() {
+        return decode ? decode() : Promise.resolve();
+      }
+    };
+    return pedidos;
+  }
+
   beforeEach(() => {
     vi.useFakeTimers();
     sessionStorage.clear();
     localStorage.clear();
     reiniciarPedidoDaAya();
+    reiniciarPosesDaMascote();
     oculto(false);
-    animar = vi.fn();
-    Element.prototype.animate = animar;
     elemento = document.createElement("div");
     document.body.append(elemento);
     raiz = createRoot(elemento);
@@ -2753,93 +2737,94 @@ bloco("modulos/mascote", async () => {
   afterEach(async () => {
     await act(async () => raiz.unmount());
     elemento.remove();
-    delete Element.prototype.animate;
+    window.Image = ImagemOriginal;
     delete window.matchMedia;
+    delete window.devicePixelRatio;
     vi.useRealTimers();
   });
 
-  describe("desenho", () => {
-    it("o svg já nasce no tamanho final, antes do desenho chegar", async () => {
+  describe("a imagem", () => {
+    it("nasce no tamanho final, com a pose da vez e nada mais", async () => {
       await montar({ tamanho: 84 });
-      expect(svg().getAttribute("width")).toBe("84");
-      expect(svg().getAttribute("height")).toBe("84");
+      expect(arara().style.getPropertyValue("--mascote-tamanho")).toBe("84px");
+      expect(poses()).toEqual(["parada"]);
+      expect(imagens()).toHaveLength(1);
+      expect(imagens()[0].getAttribute("src")).toBe(
+        enderecoDaPose("parada", "1x"),
+      );
     });
 
-    it("decorativa por padrão; com rótulo vira imagem com nome", async () => {
+    it("decorativa por padrão (alt vazio); com rótulo vira imagem com nome", async () => {
       await montar();
-      expect(svg().getAttribute("aria-hidden")).toBe("true");
-      expect(svg().getAttribute("data-versao")).toBe("completa");
-      for (const parte of [
-        "corpo",
-        "cabeca",
-        "olho",
-        "palpebra",
-        "bico-superior",
-        "bico-inferior",
-        "asa",
-        "cauda",
-        "pes",
-        "poleiro",
-      ])
-        expect(svg().querySelector(`.mascote__${parte}`), parte).not.toBeNull();
+      expect(arara().getAttribute("aria-hidden")).toBe("true");
+      expect(imagens()[0].getAttribute("alt")).toBe("");
       await montar({ rotulo: "Aya" });
-      expect(svg().getAttribute("role")).toBe("img");
-      expect(svg().getAttribute("aria-label")).toBe("Aya");
+      expect(arara().getAttribute("role")).toBe("img");
+      expect(arara().getAttribute("aria-label")).toBe("Aya");
+      expect(arara().getAttribute("aria-hidden")).toBeNull();
     });
 
-    it("de corpo inteiro por padrão; abaixo de 40px, a versão simples (também inteira)", async () => {
-      await montar({ tamanho: 84 });
-      expect(svg().getAttribute("data-versao")).toBe("completa");
-      expect(svg().getAttribute("viewBox")).toBe("0 0 200 190");
-      await montar({ tamanho: TAMANHO_DA_VERSAO_SIMPLES - 1 });
-      expect(svg().getAttribute("data-versao")).toBe("simples");
-      expect(svg().getAttribute("viewBox")).toBe("0 0 200 190");
-      expect(svg().querySelector(".mascote__palpebra")).not.toBeNull();
-      expect(svg().querySelector(".mascote__asa-aberta")).not.toBeNull();
-      await montar({ tamanho: TAMANHO_DA_VERSAO_SIMPLES });
-      expect(svg().getAttribute("data-versao")).toBe("completa");
-      // Os fogos voam sem poleiro.
-      await montar({ poleiro: false });
-      expect(svg().querySelector(".mascote__poleiro")).toBeNull();
+    it("o arquivo segue o tamanho na tela e a densidade de pixels", async () => {
+      await montar({ tamanho: 56, enquadramento: "rosto" });
+      expect(imagens()[0].getAttribute("src")).toBe(
+        enderecoDaPose("parada", "1x"),
+      );
+      await act(async () => raiz.unmount());
+      raiz = createRoot(elemento);
+      window.devicePixelRatio = 2;
+      await montar({ tamanho: 56, enquadramento: "rosto" });
+      expect(imagens()[0].getAttribute("src")).toBe(
+        enderecoDaPose("parada", "2x"),
+      );
     });
 
-    it("cada parte recorta os mesmos tons (sem emenda entre cabeça, corpo e asas)", async () => {
-      await montar();
-      const recortes = [...svg().querySelectorAll("clipPath")].map((c) =>
-        c.id.replace(/^.*-c-/, ""),
-      );
-      expect(recortes).toEqual(
-        expect.arrayContaining([
-          "cauda",
-          "asaAberta",
-          "corpo",
-          "asa",
-          "coxa",
-          "cabeca",
-          "bicoSuperior",
-          "bicoInferior",
-          "pes",
-        ]),
-      );
-      const usos = [...svg().querySelectorAll("use")].map((u) =>
-        u.getAttribute("href"),
-      );
+    it("cada pose fica no quadro pelas medidas dela (e o recorte do rosto)", async () => {
+      await montar({ estado: "comemorando" });
+      const pose = arara().querySelector(".mascote__pose");
+      expect(pose.style.getPropertyValue("--pose-largura")).toMatch(/^13\d\./);
       expect(
-        new Set(usos.map((h) => h.replace(/^#.*-/, ""))).size,
-      ).toBeLessThanOrEqual(3);
+        Number(pose.style.getPropertyValue("--rosto-escala")),
+      ).toBeGreaterThan(2);
+    });
+  });
+
+  describe("carga das poses", () => {
+    it("a arara livre pede as outras poses em prioridade baixa, depois da carga e no ócio", async () => {
+      const pedidos = imagemFalsa();
+      await montar();
+      expect(pedidos).toHaveLength(0);
+      await avancar(1600);
+      expect(pedidos.map((p) => p.src).sort()).toEqual(
+        ESTADOS_DA_MASCOTE.map((pose) => enderecoDaPose(pose, "1x")).sort(),
+      );
+      expect(new Set(pedidos.map((p) => p.prioridade))).toEqual(
+        new Set(["low"]),
+      );
     });
 
-    it("gradientes com prefixo próprio em cada arara", async () => {
-      await act(async () =>
-        raiz.render(
-          createElement("div", null, [
-            createElement(Mascote, { key: 1 }),
-            createElement(Mascote, { key: 2 }),
-          ]),
-        ),
-      );
-      const ids = [...elemento.querySelectorAll("[id]")].map((n) => n.id);
-      expect(new Set(ids).size).toBe(ids.length);
+    it("a de estado fixo (prévia, fogos, tour) só baixa a pose que mostra", async () => {
+      const pedidos = imagemFalsa();
+      await montar({ estado: "comemorando" });
+      await avancar(5000);
+      expect(pedidos).toHaveLength(0);
+      expect(poses()).toEqual(["comemorando"]);
+    });
+
+    it("a pose nova só entra depois de decodificada (sem piscar vazio)", async () => {
+      let liberar;
+      imagemFalsa({
+        decode: () =>
+          new Promise((resolver) => {
+            liberar = resolver;
+          }),
+      });
+      await montar({ proprio: null, atencao: false });
+      await montar({ proprio: "pensando", atencao: false });
+      expect(arara().dataset.pedido).toBe("pensando");
+      expect(estado()).toBe("parada");
+      expect(poses()).toEqual(["parada"]);
+      await act(async () => liberar());
+      expect(estado()).toBe("pensando");
     });
   });
 
@@ -2853,6 +2838,17 @@ bloco("modulos/mascote", async () => {
       expect(estado()).toBe("parada");
       await montar({ estado: "dormindo", proprio: "falando" });
       expect(estado()).toBe("dormindo");
+    });
+
+    it("troca suave: a nova entra e a antiga sai, e some no fim da troca", async () => {
+      await montar();
+      await montar({ proprio: "falando" });
+      expect(poses()).toEqual(["parada", "falando"]);
+      const [antiga, nova] = arara().querySelectorAll(".mascote__pose");
+      expect(antiga.dataset.saindo).toBe("sim");
+      expect(nova.dataset.entrando).toBe("sim");
+      await avancar(TROCA_DE_POSE_MS + 10);
+      expect(poses()).toEqual(["falando"]);
     });
 
     it("momento inicial vale pelo tempo pedido", async () => {
@@ -2885,9 +2881,9 @@ bloco("modulos/mascote", async () => {
       expect(estado()).toBe("parada");
     });
 
-    it("fica atenta com o ponteiro perto e o olho acompanha", async () => {
+    it("fica atenta com o ponteiro perto e volta quando ele se afasta", async () => {
       await montar();
-      svg().getBoundingClientRect = () => ({
+      arara().getBoundingClientRect = () => ({
         left: 100,
         top: 100,
         width: 64,
@@ -2895,39 +2891,20 @@ bloco("modulos/mascote", async () => {
         right: 164,
         bottom: 164,
       });
-      await act(async () => {
-        window.dispatchEvent(
-          Object.assign(new Event("pointermove"), {
-            clientX: 300,
-            clientY: 132,
-          }),
-        );
-        vi.advanceTimersByTime(20);
-      });
+      const mover = async (x, y) =>
+        act(async () => {
+          window.dispatchEvent(
+            Object.assign(new Event("pointermove"), {
+              clientX: x,
+              clientY: y,
+            }),
+          );
+          vi.advanceTimersByTime(20);
+        });
+      await mover(300, 132);
       expect(estado()).toBe("atenta");
-      await act(async () => {
-        window.dispatchEvent(
-          Object.assign(new Event("pointermove"), {
-            clientX: 200,
-            clientY: 132,
-          }),
-        );
-        vi.advanceTimersByTime(20);
-      });
-      expect(Number(svg().style.getPropertyValue("--olho-x"))).toBeGreaterThan(
-        0,
-      );
-      await act(async () => {
-        window.dispatchEvent(
-          Object.assign(new Event("pointermove"), {
-            clientX: 900,
-            clientY: 900,
-          }),
-        );
-        vi.advanceTimersByTime(20);
-      });
+      await mover(900, 900);
       expect(estado()).toBe("parada");
-      expect(svg().style.getPropertyValue("--olho-x")).toBe("");
     });
   });
 
@@ -2985,80 +2962,34 @@ bloco("modulos/mascote", async () => {
       }));
     });
 
-    it("só pisca: os estados de movimento viram parada", async () => {
-      await montar({ proprio: "falando", rng: () => 0 });
-      expect(svg().getAttribute("data-reduzido")).toBe("sim");
-      expect(estado()).toBe("parada");
-      expect(svg().getAttribute("data-pedido")).toBe("falando");
-      await act(async () => {
-        definirEstadoDaAya("comemorando", 2000);
-      });
-      expect(estado()).toBe("parada");
-      await avancar(3000);
-      // Pisca mesmo assim; o arrepio das penas não acontece.
-      const alvos = animar.mock.contexts.map((el) => el.getAttribute("class"));
-      expect(alvos).toContain("mascote__palpebra");
-      expect(alvos).not.toContain("mascote__penas-da-cabeca");
-    });
-
-    it("dormindo continua de olhos fechados", async () => {
-      await montar({ estado: "dormindo" });
-      expect(estado()).toBe("dormindo");
-    });
-  });
-
-  describe("piscar com sorteio fixo", () => {
-    it("rng 0 → pisca a cada 3 s; nada antes", async () => {
-      await montar({ rng: () => 0, atencao: false });
-      await avancar(2999);
+    it("sem animação: a pose troca direto, sem a antiga saindo", async () => {
+      await montar();
+      expect(arara().getAttribute("data-reduzido")).toBe("sim");
+      await montar({ proprio: "falando" });
+      expect(estado()).toBe("falando");
+      expect(poses()).toEqual(["falando"]);
       expect(
-        animar.mock.contexts.filter((el) =>
-          el.classList.contains("mascote__palpebra"),
-        ),
-      ).toHaveLength(0);
-      await avancar(1);
-      expect(svg().dataset.piscadas).toBe("1");
-      const [quadros, opcoes] = animar.mock.calls.find((_, i) =>
-        animar.mock.contexts[i].classList.contains("mascote__palpebra"),
-      );
-      expect(quadros[0]).toEqual({ transform: "scaleY(0)" });
-      expect(opcoes.duration).toBeGreaterThan(100);
-      await avancar(3000);
-      expect(svg().dataset.piscadas).toBe("2");
+        arara().querySelector(".mascote__pose").dataset.entrando,
+      ).toBeUndefined();
     });
 
-    it("rng 1 → espera 7 s; dormindo não pisca", async () => {
-      await montar({ rng: () => 0.99999 });
-      await avancar(6900);
-      expect(svg().dataset.piscadas).toBeUndefined();
-      await avancar(200);
-      expect(svg().dataset.piscadas).toBe("1");
-      await montar({ estado: "dormindo", rng: () => 0 });
-      await avancar(20000);
-      expect(svg().dataset.piscadas).toBe("1");
-    });
-
-    it("com a aba oculta não pisca e as animações pausam", async () => {
-      await montar({ rng: () => 0 });
+    it("com a aba oculta as animações pausam", async () => {
+      await montar();
       oculto(true);
       await act(async () => {
         document.dispatchEvent(new Event("visibilitychange"));
       });
-      expect(svg().dataset.pausada).toBe("sim");
-      await avancar(3000);
-      expect(svg().dataset.piscadas).toBeUndefined();
+      expect(arara().dataset.pausada).toBe("sim");
       oculto(false);
       await act(async () => {
         document.dispatchEvent(new Event("visibilitychange"));
       });
-      expect(svg().dataset.pausada).toBeUndefined();
-      await avancar(3000);
-      expect(svg().dataset.piscadas).toBe("1");
+      expect(arara().dataset.pausada).toBeUndefined();
     });
   });
 
   describe("enquadramento: rosto (fechada) e corpo (painel aberto, fogos)", () => {
-    const quadro = () => svg()?.getAttribute("data-enquadramento");
+    const quadro = () => arara()?.getAttribute("data-enquadramento");
     const reduzir = () => {
       window.matchMedia = vi.fn(() => ({
         matches: true,
@@ -3067,37 +2998,21 @@ bloco("modulos/mascote", async () => {
       }));
     };
 
-    it("corpo por padrão; o rosto usa o mesmo svg, do mesmo tamanho, com os detalhes de perto", async () => {
+    it("corpo por padrão; o rosto usa a mesma caixa, do mesmo tamanho", async () => {
       await montar({ tamanho: 56 });
       expect(quadro()).toBe("corpo");
       await montar({ tamanho: 56, enquadramento: "rosto" });
       expect(quadro()).toBe("rosto");
-      expect(svg().getAttribute("width")).toBe("56");
-      expect(svg().getAttribute("viewBox")).toBe("0 0 200 190");
-      expect(svg().querySelector(".mascote__quadro")).not.toBeNull();
-      // Penas em camadas, anel, faixa, olho e bico com relevo, contorno, busto.
-      expect(
-        svg().querySelectorAll(".mascote__detalhe").length,
-      ).toBeGreaterThanOrEqual(6);
-      expect(svg().querySelectorAll(".mascote__contorno").length).toBe(3);
-      expect(svg().querySelector(".mascote__busto")).not.toBeNull();
-      // O "z" do sono fica fora do quadro (não cresce com a cabeça).
-      expect(svg().querySelector(".mascote__quadro .mascote__sono")).toBeNull();
-      expect(svg().querySelector(".mascote__sono")).not.toBeNull();
+      expect(arara().style.getPropertyValue("--mascote-tamanho")).toBe("56px");
     });
 
-    it("de perto o rosto nunca é a versão simples, nem pequeno", async () => {
-      await montar({ tamanho: 32, enquadramento: "rosto" });
-      expect(svg().getAttribute("data-versao")).toBe("completa");
-      await montar({ tamanho: 32 });
-      expect(svg().getAttribute("data-versao")).toBe("simples");
-    });
-
-    it("trocar o enquadramento na mesma arara não remonta o svg (a transição é do CSS)", async () => {
+    it("trocar o enquadramento na mesma arara não remonta (a transição é do CSS)", async () => {
       await montar({ tamanho: 56, enquadramento: "rosto" });
-      const antes = svg();
+      const antes = arara();
+      const imagem = imagens()[0];
       await montar({ tamanho: 56, enquadramento: "corpo" });
-      expect(svg()).toBe(antes);
+      expect(arara()).toBe(antes);
+      expect(imagens()[0]).toBe(imagem);
       expect(quadro()).toBe("corpo");
     });
 
@@ -3112,66 +3027,34 @@ bloco("modulos/mascote", async () => {
       reduzir();
       await montar({ tamanho: 88, enquadramentoInicial: "rosto" });
       expect(quadro()).toBe("corpo");
-      expect(svg().dataset.reduzido).toBe("sim");
+      expect(arara().dataset.reduzido).toBe("sim");
     });
 
-    it("os estados continuam valendo no rosto (piscar, falar, dormir, comemorar)", async () => {
-      await montar({ enquadramento: "rosto", rng: () => 0 });
-      expect(estado()).toBe("parada");
-      await avancar(3000);
-      expect(svg().dataset.piscadas).toBe("1");
-      for (const pedido of [
-        "falando",
-        "pensando",
-        "dormindo",
-        "comemorando",
-        "acenando",
-      ]) {
+    it("os estados continuam valendo no rosto", async () => {
+      for (const pedido of ESTADOS_DA_MASCOTE) {
         await montar({ enquadramento: "rosto", estado: pedido });
         expect(estado()).toBe(pedido);
         expect(quadro()).toBe("rosto");
       }
-      expect(svg().querySelector(".mascote__penas-da-cabeca")).not.toBeNull();
     });
 
-    it("o olho acompanha o ponteiro também no rosto", async () => {
-      await montar({ enquadramento: "rosto" });
-      svg().getBoundingClientRect = () => ({
-        left: 100,
-        top: 100,
-        width: 56,
-        height: 56,
-      });
-      await act(async () => {
-        window.dispatchEvent(
-          Object.assign(new Event("pointermove"), {
-            clientX: 200,
-            clientY: 128,
-          }),
-        );
-        vi.advanceTimersByTime(50);
-      });
-      expect(estado()).toBe("atenta");
-    });
-
-    it("os fogos (a arara sem poleiro, src/modulos/comemoracao/) voam de corpo inteiro", async () => {
+    it("os fogos (src/modulos/comemoracao/) voam de corpo inteiro, de asas abertas", async () => {
       await montar({
         estado: "comemorando",
-        poleiro: false,
         tamanho: 120,
         ouvirAya: false,
         atencao: false,
         dormir: false,
       });
-      const arara = svg();
-      expect(arara.getAttribute("data-enquadramento")).toBe("corpo");
-      expect(arara.getAttribute("data-estado")).toBe("comemorando");
-      expect(arara.querySelector(".mascote__poleiro")).toBeNull();
-      expect(arara.querySelector(".mascote__asa-aberta")).not.toBeNull();
+      expect(quadro()).toBe("corpo");
+      expect(estado()).toBe("comemorando");
+      expect(imagens()[0].getAttribute("src")).toBe(
+        enderecoDaPose("comemorando", "1x"),
+      );
     });
   });
 
-  describe("a arara dos fogos: erro no desenho não derruba a página", () => {
+  describe("a arara dos fogos: erro na mascote não derruba a página", () => {
     it("o erro fica na arara (ErrorBoundary da comemoração)", async () => {
       const erro = vi.spyOn(console, "error").mockImplementation(() => {});
       await act(async () =>
@@ -3180,10 +3063,10 @@ bloco("modulos/mascote", async () => {
             ErrorBoundary,
             { nome: "a arara da comemoração" },
             createElement(Mascote, {
-              // Um tamanho que estoura ao ser lido no desenho.
+              // Um tamanho que estoura ao ser lido.
               tamanho: {
                 valueOf() {
-                  throw new Error("desenho quebrado");
+                  throw new Error("mascote quebrada");
                 },
               },
               ouvirAya: false,
@@ -3215,23 +3098,24 @@ bloco("modulos/mascote", async () => {
         "Comemorando",
         "Dormindo",
         "Acenando",
+        "Apontando",
       ]);
       const grande = () =>
-        elemento.querySelector(".cartao-da-mascote__palco > svg");
+        elemento.querySelector(".cartao-da-mascote__palco > .mascote");
       expect(grande().getAttribute("data-estado")).toBe("parada");
       // Fechada (só o rosto), no painel (inteira) e no menor tamanho.
       expect(
-        [...elemento.querySelectorAll(".cartao-da-mascote__tamanhos svg")].map(
-          (arara) => arara.getAttribute("data-enquadramento"),
-        ),
+        [
+          ...elemento.querySelectorAll(".cartao-da-mascote__tamanhos .mascote"),
+        ].map((a) => a.getAttribute("data-enquadramento")),
       ).toEqual(["rosto", "corpo", "corpo"]);
       await act(async () => opcoes[4].click());
       expect(grande().getAttribute("data-estado")).toBe("comemorando");
       // As araras pequenas acompanham.
-      for (const arara of elemento.querySelectorAll(
-        ".cartao-da-mascote__tamanhos svg",
+      for (const pequena of elemento.querySelectorAll(
+        ".cartao-da-mascote__tamanhos .mascote",
       ))
-        expect(arara.getAttribute("data-estado")).toBe("comemorando");
+        expect(pequena.getAttribute("data-estado")).toBe("comemorando");
       const ouvinte = vi.fn();
       window.addEventListener("aya:estado", ouvinte);
       await act(async () =>

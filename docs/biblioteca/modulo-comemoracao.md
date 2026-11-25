@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-17
+atualizado: 2026-11-25
 ---
 
 # Módulo: Comemorações (fogos e aviso)
@@ -26,8 +26,8 @@ marco, que efeito, intensidade, duração, som, mensagem) fica em Configuraçõe
 
 Lógica pura em `src/lib/`:
 
-| Arquivo                        | O quê                                                                    |
-| ------------------------------ | ------------------------------------------------------------------------ |
+| Arquivo                                    | O quê                                                                    |
+| ------------------------------------------ | ------------------------------------------------------------------------ |
 | `comemoracao/comemoracao.ts`               | quando comemorar (transições vistas) e as frases de cada marco           |
 | `comemoracao/catalogo-de-comemoracoes.ts`  | o catálogo, a configuração publicada, `soAviso` e `reservarEfeitoDoDia`  |
 | `comemoracao/exemplos-das-comemoracoes.ts` | a frase de exemplo de cada marco (Testar e campo Mensagem)               |
@@ -60,6 +60,9 @@ Lógica pura em `src/lib/`:
   Sistema inteiro) e a preferência pessoal ("Para mim").
 - **Falhou o download** do desenho: a comemoração não aparece e nada mais muda.
 - A Aya entra pelo evento `aya:estado` ("comemorando"), sem acoplar os módulos ([[modulo-aya]]).
+  A arara que atravessa a tela e dança no fim é a própria `<Mascote>`, fixa em "comemorando"
+  (a pose ilustrada de asas abertas, que pula); o voo, a rotação e a escala são da comemoração,
+  por transform, a cada quadro.
 
 ## Onde nasce cada marco
 

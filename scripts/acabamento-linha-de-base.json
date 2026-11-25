@@ -32,9 +32,6 @@
     "zIndex": 1,
     "curva": 6
   },
-  "src/modulos/aya/mascote/desenho.tsx": {
-    "cor": 31
-  },
   "src/modulos/aya/mascote/mascote.css": {
     "curva": 27
   },

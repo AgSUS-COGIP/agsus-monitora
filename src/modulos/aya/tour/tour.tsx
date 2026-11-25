@@ -23,6 +23,8 @@
     querySelector na hora do passo; nada de MutationObserver).
   - Celular (até 600px): balão com a largura da tela, embaixo ou em cima,
     do lado oposto ao elemento. Tema escuro: só tokens (tour.css).
+  - A arara no balão aponta para o elemento da vez (pose "apontando", virada
+    quando o elemento está à esquerda do balão); no passo sem elemento, fala.
 
   Sem innerHTML: todo texto entra como texto.
 */
@@ -49,6 +51,10 @@ import type {
   PosicaoDoBalao,
 } from "../../../lib/aya/aya-tours.ts";
 import { haTelaCarregando } from "../../../lib/carga/carga-de-telas";
+import { Mascote } from "../mascote/mascote.tsx";
+
+/* A arara no canto do balão: px de lado. */
+const ARARA_NO_BALAO = 64;
 
 /** Por que o tour acabou: chegou ao fim ou a pessoa pulou (Esc, Pular). */
 export type MotivoDoFimDoTour = "concluiu" | "pulou";
@@ -423,6 +429,20 @@ export function Tour({
       >
         {/* Sem <div> filho direto: mobile-app.css estiliza "[role=dialog] > div" com !important. */}
         <article className="aya-tour__conteudo">
+          <span
+            className="aya-tour__arara"
+            data-virada={posicao?.modo === "direita" ? "sim" : undefined}
+            aria-hidden="true"
+          >
+            <Mascote
+              estado={caixa ? "apontando" : "falando"}
+              tamanho={ARARA_NO_BALAO}
+              ouvirAya={false}
+              atencao={false}
+              dormir={false}
+              janela={janela}
+            />
+          </span>
           <p className="aya-tour__contador">{contador}</p>
           <h2 id={idTitulo} className="aya-tour__titulo">
             {passo.titulo}

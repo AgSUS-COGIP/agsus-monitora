@@ -338,7 +338,6 @@ function AraraDaComemoracao({
       <ErrorBoundary nome="a arara da comemoração">
         <Mascote
           estado="comemorando"
-          poleiro={false}
           tamanho={tamanho}
           ouvirAya={false}
           atencao={false}

@@ -27,6 +27,7 @@ const ROTULOS: Readonly<Record<EstadoDaMascote, string>> = Object.freeze({
   comemorando: "Comemorando",
   dormindo: "Dormindo",
   acenando: "Acenando",
+  apontando: "Apontando",
 });
 
 const OPCOES = ESTADOS_DA_MASCOTE.map((valor) => ({
