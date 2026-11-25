@@ -25,6 +25,8 @@ import {
   contextoDoAdmin,
   SUPABASE,
 } from "./apoio/sessao-simulada.js";
+import { monitoramento } from "./fixtures/acabamento/dados.js";
+import { rpcsDaAuditoria } from "./fixtures/auditoria-visual/dados.js";
 
 const titulo = (page) => page.locator("#pageTitle");
 
@@ -405,6 +407,271 @@ test.describe("sessão simulada", () => {
       gaveta.getByRole("button", { name: "Cancelar pedido" }),
     ).toBeVisible();
     expect(erros).toEqual([]);
+  });
+
+  /*
+    Central de convocações (#581), a 375px, com quatro perfis: só Aprovados;
+    Aprovados + Entrevistas; + Classificação; e Conduzir entrevistas desligada
+    na área. A aba e o tipo vão no endereço; "Para entrevistas" lê a loja de
+    Conduzir (a lista da Classificação e a agenda, só leitura); "Ver em
+    Convocações", de Conduzir › Preparar › Convocação, leva até ela.
+  */
+  const EDITAL_DA_ENTREVISTA = "00000000-0000-4000-8000-000000000581";
+  const CENTRAL = "/sede/aprovados?aba=convocacao&tipo=entrevista";
+  const contextoCom = (permissoes) => ({
+    profile: {
+      ...contextoDoAdmin(["sede"]).profile,
+      admin_global: false,
+      role: "usuario",
+      perfil: "usuario",
+      permissoes,
+    },
+    panel_ids: [],
+  });
+  const SO_APROVADOS = { aprovados: "leitor" };
+  const COM_ENTREVISTAS = { aprovados: "leitor", entrevistas: "leitor" };
+  const COM_CLASSIFICACAO = {
+    aprovados: "leitor",
+    entrevistas: "editor",
+    classificacao: "leitor",
+  };
+  const candidatoDoRetrato = (posicao, nota) => ({
+    posicao,
+    analise_id: `a${posicao}`,
+    nome: `Pessoa Teste 00${posicao}`,
+    nota,
+    modalidades: ["AC"],
+  });
+  const RETRATO = {
+    schema: 1,
+    tipo: "CONVOCACAO",
+    vagas: [
+      {
+        chave: "V1",
+        codigo: "V1",
+        cargo: "Enfermeiro",
+        total: 1,
+        origem_das_vagas: "QUADRO",
+        limite_convocacao: { limite: 2, origem: "2 × 1 vaga(s)" },
+        geral: [candidatoDoRetrato(1, 90), candidatoDoRetrato(2, 80)],
+        listas: {},
+        eliminados: [],
+      },
+    ],
+  };
+  const RPCS_DA_CONDUCAO = {
+    listar_editais_entrevista: {
+      admin_global: false,
+      editais: [
+        {
+          id: EDITAL_DA_ENTREVISTA,
+          edital: "58/2026",
+          unidade: "Unidade de Teste",
+          na_janela: true,
+          visivel_por: "janela",
+        },
+      ],
+    },
+    obter_entrevistas_do_edital: {
+      edital: {
+        id: EDITAL_DA_ENTREVISTA,
+        edital: "58/2026",
+        unidade: "Unidade de Teste",
+        area: "sede",
+      },
+      pode_editar: true,
+      configuracao: { roteiro: { id: "r1", nome: "Roteiro", versao: 1 } },
+      regra_classificacao: { versao: 1, convocacao: { multiplo_vagas: 2 } },
+      lista_convocacao: {
+        lista: { id: "l1", versao_regra: 1, gerada_em: "2026-11-20T12:00:00Z" },
+        retrato: RETRATO,
+      },
+      convocados: [
+        {
+          id: "e1",
+          analise_id: "a1",
+          vaga: "V1",
+          candidato: "Pessoa Teste 001",
+          avaliacoes: [],
+        },
+      ],
+    },
+    obter_previsao_entrevista_edital: {
+      situacao: "PREVISTA",
+      motivo: null,
+      pode_alterar: false,
+    },
+    obter_agenda_entrevista: {
+      itens: [
+        {
+          analise_id: "a1",
+          data: "2026-12-02",
+          inicio: "09:00:00",
+          fim: "09:30:00",
+          banca: 1,
+        },
+      ],
+    },
+  };
+  /* O catálogo das abas com Conduzir entrevistas só na Saúde Indígena. */
+  const TRES_AREAS = ["saude-indigena", "sede", "projetos"];
+  const aba = (co_aba, co_view, co_recurso, areas) => ({
+    co_aba,
+    no_aba: co_aba,
+    co_view,
+    co_recurso,
+    areas: areas.map((co_area, i) => ({ co_area, nu_ordem: i })),
+  });
+  const SEM_CONDUZIR_NA_SEDE = [
+    aba("aprovados", "approved", "aprovados", TRES_AREAS),
+    aba("conduzir-entrevistas", "conduzir-entrevistas", "entrevistas", [
+      "saude-indigena",
+    ]),
+    aba("classificacao", "classificacao", "classificacao", TRES_AREAS),
+  ];
+
+  async function abrirNoCelular(browser, permissoes, rpcs = {}) {
+    const contexto = await browser.newContext({
+      viewport: { width: 375, height: 812 },
+      isMobile: true,
+      hasTouch: true,
+    });
+    const page = await contexto.newPage();
+    // A Lista de aprovados vazia (as respostas da auditoria visual) e Conduzir com um edital.
+    const erros = await abrirComSessao(page, {
+      contexto: contextoCom(permissoes),
+      rpcs: {
+        ...rpcsDaAuditoria("vazio", "sede"),
+        listar_monitoramento_operacional: monitoramento("vazio", "sede"),
+        ...RPCS_DA_CONDUCAO,
+        ...rpcs,
+      },
+    });
+    return { contexto, page, erros };
+  }
+  const central = (page) => page.locator("[data-tour='central-convocacoes']");
+  const botaoDaCentral = (page, nome) =>
+    central(page).getByRole("button", { name: nome, exact: true });
+  const semRolarDeLado = async (page) =>
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(375);
+  const BOTOES_DA_CLASSIFICACAO = [
+    "Abrir listas da Classificação",
+    "Editar na Classificação › Agenda",
+  ];
+
+  test("só Aprovados: a Convocação abre na contratação, sem o bloco das entrevistas", async ({
+    browser,
+  }) => {
+    const { contexto, page, erros } = await abrirNoCelular(
+      browser,
+      SO_APROVADOS,
+    );
+    await page.goto(CENTRAL, { waitUntil: "domcontentloaded" });
+    await expect(page.locator("#approvedTabConvocacao")).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    await expect(page.locator("#approvedPanelConvocacao")).toBeVisible();
+    await expect(central(page)).toHaveCount(0);
+    await expect(
+      page.locator("[data-bloco='convocacao-para-entrevistas']"),
+    ).toHaveCount(0);
+    await semRolarDeLado(page);
+    expect(erros).toEqual([]);
+    await contexto.close();
+  });
+
+  test("Aprovados + Entrevistas: a lista e a agenda só para ler, sem os botões da Classificação", async ({
+    browser,
+  }) => {
+    const { contexto, page, erros } = await abrirNoCelular(
+      browser,
+      COM_ENTREVISTAS,
+      // Leitor nas Entrevistas: o banco diz que não edita.
+      {
+        obter_entrevistas_do_edital: {
+          ...RPCS_DA_CONDUCAO.obter_entrevistas_do_edital,
+          pode_editar: false,
+        },
+      },
+    );
+    await page.goto(CENTRAL, { waitUntil: "domcontentloaded" });
+    await expect(
+      central(page).locator("[role='radio'][data-valor='entrevista']"),
+    ).toHaveAttribute("aria-checked", "true");
+    // Um edital só na janela: abre sozinho, o mesmo de Conduzir entrevistas.
+    await expect(central(page).locator("select")).toHaveValue(
+      EDITAL_DA_ENTREVISTA,
+    );
+    await expect(central(page)).toContainText("Pessoa Teste 002");
+    const agenda = central(page).locator("[data-bloco='agenda-da-central']");
+    await expect(agenda).toContainText("09:00–09:30");
+    await expect(central(page).locator("input[type='checkbox']")).toHaveCount(
+      0,
+    );
+    for (const fora of BOTOES_DA_CLASSIFICACAO)
+      await expect(botaoDaCentral(page, fora)).toHaveCount(0);
+    await expect(
+      botaoDaCentral(page, "Abrir em Conduzir entrevistas"),
+    ).toBeVisible();
+    await semRolarDeLado(page);
+    expect(erros).toEqual([]);
+    await contexto.close();
+  });
+
+  test("+ Classificação: 'Ver em Convocações' do Preparar abre a central no edital, com os atalhos para a Classificação", async ({
+    browser,
+  }) => {
+    const { contexto, page, erros } = await abrirNoCelular(
+      browser,
+      COM_CLASSIFICACAO,
+    );
+    // O único edital na janela abre sozinho, já no Preparar › Convocação.
+    await page.goto("/sede/entrevistas?visao=preparar&passo=convocacao", {
+      waitUntil: "domcontentloaded",
+    });
+    const atalho = page.locator("[data-acao='ver-em-convocacoes']");
+    await expect(atalho).toBeVisible();
+    // Convocar continua no Preparar.
+    await expect(page.locator(".entrevistas-convocacao")).toBeVisible();
+    await semRolarDeLado(page);
+    await atalho.click();
+    await expect(page).toHaveURL(
+      /\/sede\/aprovados\?aba=convocacao&tipo=entrevista$/,
+    );
+    await expect(central(page).locator("select")).toHaveValue(
+      EDITAL_DA_ENTREVISTA,
+    );
+    await expect(
+      botaoDaCentral(page, "Convocar em Conduzir entrevistas"),
+    ).toBeVisible();
+    for (const dentro of BOTOES_DA_CLASSIFICACAO)
+      await expect(botaoDaCentral(page, dentro)).toBeVisible();
+    await semRolarDeLado(page);
+    expect(erros).toEqual([]);
+    await contexto.close();
+  });
+
+  test("Conduzir entrevistas desligada na área: sem o bloco das entrevistas, mesmo com o endereço pedindo", async ({
+    browser,
+  }) => {
+    const { contexto, page, erros } = await abrirNoCelular(
+      browser,
+      COM_CLASSIFICACAO,
+      { listar_abas_do_menu: SEM_CONDUZIR_NA_SEDE },
+    );
+    await page.goto(CENTRAL, { waitUntil: "domcontentloaded" });
+    await expect(page.locator("#approvedTabConvocacao")).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    await expect(page.locator("#approvedPanelConvocacao")).toBeVisible();
+    await expect(central(page)).toHaveCount(0);
+    await semRolarDeLado(page);
+    expect(erros).toEqual([]);
+    await contexto.close();
   });
 
   test("sem perfil, vai para a solicitação de acesso e não abre o sistema", async ({

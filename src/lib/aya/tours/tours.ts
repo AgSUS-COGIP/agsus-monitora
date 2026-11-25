@@ -6,6 +6,7 @@ import {
   canEditClassificacao,
   canEditRecursos,
   canManageEditais,
+  canViewEntrevistas,
   isAdminGlobal,
 } from "../../acessos/access-roles.ts";
 import {
@@ -665,6 +666,16 @@ export const TOURS: Readonly<Record<string, TourDaTela>> = Object.freeze({
   "approved:convocacao": Object.freeze({
     titulo: "Lista de aprovados · Convocação",
     passos: Object.freeze([
+      /*
+        A Central de convocações (#581): só com acesso às Entrevistas (e
+        Conduzir ligada na área; desligada, o alvo some e o passo também).
+      */
+      passo(
+        t("central-convocacoes"),
+        "Convocações",
+        "Para contratação, a ordem de chamada desta aba; Para entrevistas, a lista e a agenda, só para ler. Convocar é em Conduzir entrevistas.",
+        { antes: ABA.convocacao, exige: canViewEntrevistas },
+      ),
       passo(
         t("aprovados-convocacao-kpis"),
         "Indicadores",
