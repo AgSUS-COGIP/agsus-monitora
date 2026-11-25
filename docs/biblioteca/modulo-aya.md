@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-10
+atualizado: 2026-11-25
 ---
 
 # Módulo: Aya (painel da assistente)
@@ -23,15 +23,31 @@ quando o app abre). Substitui os antigos `arara-guide.js`, `arara-speaking-effec
 - `fontes.ts` — dados ao vivo das perguntas com número: o estado já carregado das telas ou as
   RPCs de leitura que elas já usam (guardadas por 1 min).
 - `aya.css` — só tokens; camada 10042 (acima do cabeçalho, abaixo do parabéns).
-- `mascote/` — `desenho.tsx` (a arara-azul em SVG, em camadas; abaixo de 40px, versão chapada),
-  `contornos.ts` (só dados, traçados da ilustração `arara-azul-monitora.png`, no histórico do
-  git), `mascote.tsx` (`<Mascote>`: enquadramento "corpo" ou "rosto"; estados parada, atenta,
-  falando, pensando, comemorando, dormindo e acenando; piscar e arrepio sorteados com Web
-  Animations, olho que segue o ponteiro, sono por inatividade, pausa com a aba oculta),
-  `estado.ts` (o pedido global, evento `aya:estado`, com expiração) e `mascote.css` (só
-  transform/opacity; com movimento reduzido, só pisca e troca sem transição).
+- `mascote/` — a `<Mascote>` (`mascote.tsx`), com a mesma lógica de estados (parada, atenta,
+  falando, pensando, comemorando, dormindo e acenando; enquadramento "corpo" ou "rosto"; sono por
+  inatividade; atenta com o ponteiro perto; pausa com a aba oculta) em duas artes:
+  - **Desenho em SVG** (padrão): a arara do canto, só o rosto, e a da tela de solicitação de
+    acesso. `desenho.tsx` (em camadas; abaixo de 40px, versão chapada), `contornos.ts` (só dados,
+    traçados da ilustração `arara-azul-monitora.png`, no histórico do git) e `mascote.css` (só
+    transform/opacity; piscar e arrepio sorteados com Web Animations, olho que segue o ponteiro;
+    com movimento reduzido, só pisca e troca sem transição).
+  - **Ilustrada em 3D** (`<Mascote ilustrada>`, desde 25/11/2026): as aparições grandes, que são
+    o painel aberto, a arara do balão do tour, as comemorações e a prévia. `ilustrada.tsx` põe uma
+    pose por estado, mais "apontando", que só o tour pede (prop `pose`; não é estado do evento).
+    A troca é suave: a nova entra com fade e um pulinho, só depois de decodificada, e a antiga
+    sai com fade. A parada só respira; com movimento reduzido, a pose troca sem animação. O CSS
+    fica em `mascote-ilustrada.css`; no tema escuro, uma borda de luz fina com `drop-shadow`.
+  - `imagens/`: `arara-<pose>.webp` (quadro a 160 px de altura) e `arara-<pose>-2x.webp` (320 px),
+    com transparência, até 30 KB cada (teste no bloco `poses-da-aya`). Os originais (~200 KB)
+    ficam fora do repositório. Para trocar uma pose: refazer os dois arquivos na mesma escala,
+    com os pés no mesmo ponto do quadro, e atualizar a linha dela em `aya/poses-da-aya.ts`.
+  - Carga: cada arte vem num pedaço próprio, só quando a primeira arara dela monta, então nada
+    da ilustrada entra na entrada. Cada arara ilustrada baixa só a pose que mostra, no arquivo
+    (1x ou 2x) que fica nítido no tamanho e na densidade da tela. As livres (a do painel) pedem
+    as outras poses com `fetchPriority="low"` depois do `load`, no ócio do navegador.
+  - `estado.ts` guarda o pedido global (evento `aya:estado`, com expiração).
 - `tour/` — `tour.tsx` (`<Tour>`: véu com recorte no elemento da vez, balão Pular/Anterior/
-  Próximo, "Passo 2 de 6", Esc, setas, foco preso, anúncio ao leitor de tela; pula elemento
+  Próximo, "Passo 2 de 6", a arara apontando, Esc, setas, foco preso, anúncio ao leitor de tela; pula elemento
   ausente; o recorte acompanha rolagem, redimensionamento e um ResizeObserver, nada de
   MutationObserver), `aprender.tsx` (seção "Aprender" e oferta de "Primeiros passos" na primeira
   entrada), `progresso.ts` (passos, conclusão, oferta e convites no localStorage, com try/catch) e
@@ -60,6 +76,10 @@ quando o app abre). Substitui os antigos `arara-guide.js`, `arara-speaking-effec
   `aya/estado-da-aya.ts`. Qualquer tela pede `definirEstadoDaAya("comemorando", 3000)` ou o evento
   `aya:estado` (`{ detail: { estado, duracaoMs } }`); os fogos (`src/modulos/comemoracao/`) já
   pedem "comemorando". Prévia em Configurações › Marca › Mascote (`cartao-da-mascote.tsx`).
+- Poses da arara ilustrada (onde cada uma fica no quadro, recorte do rosto, arquivo 1x ou 2x):
+  `aya/poses-da-aya.ts`. No tour, a arara do balão usa "apontando" nos passos com elemento
+  (virada quando o elemento está à esquerda do meio do balão, `araraViradaNoBalao`) e "falando"
+  nos passos sem elemento.
 
 ## TypeScript e limites
 
@@ -75,8 +95,8 @@ chega como `unknown` e passa pelas leituras que já existiam; o resultado de cad
 `tests/aya-e-comemoracao-na-tela.test.js` (bloco `modulos/aya`), `tests/aya-e-comemoracao.test.js` (bloco `aya-paginas`), `tests/aya-e-comemoracao.test.js` (bloco `aya-respostas-chave`),
 `tests/aya-e-comemoracao.test.js` (bloco `busca-da-aya`), `tests/aya-e-comemoracao.test.js` (bloco `termos-da-aya`), `tests/aya-e-comemoracao.test.js` (bloco `conversa-da-aya`),
 `tests/aya-e-comemoracao.test.js` (bloco `chamado-da-aya`), `tests/aya-e-comemoracao.test.js` (bloco `aya-tours`), `tests/aya-e-comemoracao-na-tela.test.js` (bloco `modulos/aya-tour`),
-`tests/aya-e-comemoracao-na-tela.test.js` (bloco `modulos/aya-trilhas`), `tests/aya-e-comemoracao-na-tela.test.js` (bloco `modulos/mascote`),
-`tests/aya-e-comemoracao-na-tela.test.js` (bloco `estado-da-aya`) e `tests/aya-e-comemoracao.test.js` (bloco `borda-da-aya`).
+`tests/aya-e-comemoracao-na-tela.test.js` (bloco `modulos/aya-trilhas`), `tests/aya-e-comemoracao-na-tela.test.js` (bloco `modulos/mascote`), `tests/aya-e-comemoracao-na-tela.test.js` (bloco `modulos/mascote-ilustrada`),
+`tests/aya-e-comemoracao-na-tela.test.js` (bloco `estado-da-aya`), `tests/aya-e-comemoracao.test.js` (bloco `poses-da-aya`) e `tests/aya-e-comemoracao.test.js` (bloco `borda-da-aya`).
 
 ## Relacionadas
 

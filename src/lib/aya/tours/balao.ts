@@ -87,6 +87,30 @@ export function posicaoDoBalao({
   };
 }
 
+/*
+  A arara do balão aponta para a direita; vira (aponta para a esquerda)
+  quando o meio do elemento fica à esquerda do meio do balão. No celular, o
+  balão ocupa a largura da tela. Sem elemento, não vira.
+*/
+export function araraViradaNoBalao({
+  caixa,
+  posicao,
+  larguraDoBalao,
+  larguraDaTela,
+}: {
+  caixa: RetanguloNaTela | null | undefined;
+  posicao: PosicaoDoBalao | null | undefined;
+  larguraDoBalao: number;
+  larguraDaTela: number;
+}): boolean {
+  if (!caixa || !posicao) return false;
+  const meioDoBalao =
+    posicao.modo === "celular"
+      ? larguraDaTela / 2
+      : posicao.left + larguraDoBalao / 2;
+  return caixa.left + caixa.width / 2 < meioDoBalao;
+}
+
 /* ---------- O holofote: recorte e véu do mesmo retângulo ---------- */
 
 /** A folga em volta do elemento destacado, em pixels. */

@@ -1,0 +1,129 @@
+/*
+  A arara ilustrada (ilustrada.tsx), dentro da `<Mascote ilustrada>`: cada
+  pose posta no quadro pelas medidas de src/lib/aya/poses-da-aya.ts (--pose-*,
+  inline). Só transform, opacity e filter. A caixa, o recorte do rosto, a
+  pausa com a aba oculta e o movimento reduzido vêm de mascote.css (valem para
+  as duas artes).
+
+  - Troca de pose: a nova entra com fade e um pulinho, a antiga sai com fade
+    (data-entrando / data-saindo; TROCA_DE_POSE_MS em ilustrada.tsx).
+  - Por pose (`data-pose`): todas respiram de leve; dormindo respira mais
+    fundo; comemorando pula.
+  - Enquadramento: no "rosto", cada pose aproxima a própria cabeça (--rosto-*).
+  - Tema escuro: uma luz de borda fina.
+*/
+
+.mascote--ilustrada {
+  --mascote-troca-de-pose: 380ms;
+}
+
+.mascote--ilustrada .mascote__movimento,
+.mascote--ilustrada .mascote__pose {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+.mascote--ilustrada .mascote__movimento {
+  /* Os pés (ANCORA_DOS_PES): o pivô do respiro e do pulinho. */
+  transform-origin: 64% 97%;
+  animation: mascote-respira 3.6s ease-in-out infinite; /* acabamento: permitido(curva) — respiro da mascote, coreografia própria (o mesmo do desenho) */
+}
+
+.mascote--ilustrada .mascote__movimento[data-pose="dormindo"] {
+  animation: mascote-respira-fundo 5.2s ease-in-out infinite; /* acabamento: permitido(curva) — respiro do sono, coreografia própria */
+}
+
+.mascote--ilustrada .mascote__movimento[data-pose="comemorando"] {
+  animation: ilustrada-pula 0.72s cubic-bezier(0.3, 0, 0.4, 1) infinite; /* acabamento: permitido(curva) — pulo da comemoração, coreografia própria */
+}
+
+/* ---------- A pose no quadro (corpo inteiro ou rosto de perto) ---------- */
+
+.mascote--ilustrada .mascote__pose {
+  transform-origin: 0 0;
+  transition: transform var(--mascote-enquadramento-ms) var(--ease-standard);
+}
+
+.mascote--ilustrada[data-enquadramento="rosto"] .mascote__pose {
+  transform: translate(var(--rosto-x), var(--rosto-y))
+    scale(var(--rosto-escala));
+}
+
+.mascote--ilustrada .mascote__imagem {
+  position: absolute;
+  top: var(--pose-y);
+  left: var(--pose-x);
+  display: block;
+  width: var(--pose-largura);
+  height: var(--pose-altura);
+  max-width: none;
+  pointer-events: none;
+  transform-origin: 50% 100%;
+}
+
+/*
+  No escuro, uma luz de borda fina (a arara azul e o bico escuro não somem no
+  fundo). Fina de propósito: no rosto ela cresce com a ampliação, e um halo
+  largo apareceria cortado pelo recorte, como uma caixa.
+*/
+[data-theme="dark"] .mascote--ilustrada .mascote__imagem {
+  filter: drop-shadow(
+    0 0 1px color-mix(in srgb, var(--brand-primary) 55%, var(--text-primary))
+  );
+}
+
+/* ---------- Troca de pose ---------- */
+
+.mascote--ilustrada .mascote__pose[data-entrando="sim"] .mascote__imagem {
+  animation: ilustrada-chega var(--mascote-troca-de-pose) var(--ease-standard)
+    both;
+}
+
+.mascote--ilustrada .mascote__pose[data-saindo="sim"] .mascote__imagem {
+  animation: ilustrada-sai var(--mascote-troca-de-pose) var(--ease-exit)
+    forwards;
+}
+
+@keyframes ilustrada-chega {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.97, 1.03);
+  }
+  45% {
+    opacity: 1;
+    transform: translateY(-5%) scale(1);
+  }
+  80% {
+    transform: translateY(0) scale(1.02, 0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes ilustrada-sai {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes ilustrada-pula {
+  0%,
+  100% {
+    transform: translateY(0) scale(1.03, 0.97);
+  }
+  15% {
+    transform: translateY(0) scale(0.98, 1.02);
+  }
+  45% {
+    transform: translateY(-7%) scale(1, 1);
+  }
+  80% {
+    transform: translateY(0) scale(1.04, 0.96);
+  }
+}

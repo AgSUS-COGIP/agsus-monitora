@@ -21,6 +21,14 @@
 
   Movimento reduzido: só pisca (e o enquadramento troca sem transição). Aba oculta: tudo pausa (sem piscar, sem CSS).
   Comemorações desligadas pela pessoa: não comemora.
+
+  Duas artes, a mesma lógica de estados: o desenho em SVG (padrão; a arara
+  do canto e a da tela de solicitação de acesso) e a arara ilustrada em 3D
+  (`ilustrada`: o painel aberto, o tour, as comemorações e a prévia), uma
+  pose por estado (ilustrada.tsx). A ilustrada mostra o estado pedido também
+  com movimento reduzido (troca a imagem, sem animação) e aceita uma `pose`
+  fora dos estados ("apontando", do tour). Cada arte vem num pedaço próprio
+  do bundle, só quando a primeira arara dela monta.
 */
 
 import {
@@ -31,6 +39,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import type { CSSProperties, RefObject } from "react";
 import {
   comemoracoesPessoaisDesligadas,
   deveAcenar,
@@ -45,6 +54,7 @@ import {
   DURACAO_PADRAO_MS,
   type EstadoDaMascote,
 } from "../../../lib/aya/estado-da-aya.ts";
+import type { PoseDaArara } from "../../../lib/aya/poses-da-aya.ts";
 /* Começa em 0 0: os pivôs do CSS (transform-box: view-box) contam da origem. */
 export const VIEWBOX = "0 0 200 190";
 
@@ -76,6 +86,32 @@ function assinarDesenho(ouvinte: () => void) {
   return () => ouvintesDoDesenho.delete(ouvinte);
 }
 const obterDesenho = () => desenho;
+
+/* A arara ilustrada (ilustrada.tsx, com o CSS e as imagens): outro pedaço, carregado do mesmo jeito. */
+type ModuloDaIlustracao = typeof import("./ilustrada.tsx");
+let ilustracao: ModuloDaIlustracao | null = null;
+let carregamentoDaIlustracao: Promise<ModuloDaIlustracao> | null = null;
+const ouvintesDaIlustracao = new Set<() => void>();
+
+/** Carrega a arara ilustrada (uma vez); os testes podem esperar por ela. */
+export function carregarIlustracaoDaMascote() {
+  carregamentoDaIlustracao ??= import("./ilustrada.tsx").then((modulo) => {
+    ilustracao = modulo;
+    for (const ouvinte of [...ouvintesDaIlustracao]) ouvinte();
+    return modulo;
+  });
+  return carregamentoDaIlustracao;
+}
+
+function assinarIlustracao(ouvinte: () => void) {
+  ouvintesDaIlustracao.add(ouvinte);
+  void carregarIlustracaoDaMascote().catch(() => {
+    /* sem o pedaço (rede): a arara fica vazia, nada quebra */
+  });
+  return () => ouvintesDaIlustracao.delete(ouvinte);
+}
+const obterIlustracao = () => ilustracao;
+const semModulo = () => null;
 import { assinarPedidoDaAya, obterPedidoDaAya } from "./estado.ts";
 import "./mascote.css";
 
@@ -112,6 +148,10 @@ export interface PropsDaMascote {
   acenarAoEntrar?: boolean;
   /** Estado de momento ao montar (ex.: atenta ao abrir o painel). */
   momentoInicial?: { estado: EstadoDaMascote; duracaoMs: number } | null;
+  /** A arara ilustrada em 3D (aparições grandes) em vez do desenho em SVG. */
+  ilustrada?: boolean;
+  /** Só na ilustrada: uma pose imposta, fora dos estados ("apontando", do tour). */
+  pose?: PoseDaArara | null;
   /** Texto para leitores de tela; sem ele, a arara é decorativa. */
   rotulo?: string;
   className?: string;
@@ -172,19 +212,28 @@ export function Mascote({
   dormir = true,
   acenarAoEntrar = false,
   momentoInicial = null,
+  ilustrada = false,
+  pose = null,
   rotulo,
   className,
   janela = globalThis.window,
   rng = Math.random,
 }: PropsDaMascote) {
   const prefixo = `arara${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
-  const refRaiz = useRef<SVGSVGElement | null>(null);
+  const refRaiz = useRef<HTMLSpanElement | SVGSVGElement | null>(null);
   const simples =
-    enquadramento === "corpo" && tamanho < TAMANHO_DA_VERSAO_SIMPLES;
+    !ilustrada &&
+    enquadramento === "corpo" &&
+    tamanho < TAMANHO_DA_VERSAO_SIMPLES;
   const modulo = useSyncExternalStore(
-    assinarDesenho,
-    obterDesenho,
-    obterDesenho,
+    ilustrada ? nada : assinarDesenho,
+    ilustrada ? semModulo : obterDesenho,
+    semModulo,
+  );
+  const moduloIlustrado = useSyncExternalStore(
+    ilustrada ? assinarIlustracao : nada,
+    ilustrada ? obterIlustracao : semModulo,
+    semModulo,
   );
   const livre = !fixo;
 
@@ -273,7 +322,7 @@ export function Mascote({
   // Piscar (3–7 s sorteados; às vezes duas vezes) — também com movimento reduzido.
   const olhosFechados = visivel === "dormindo";
   useEffect(() => {
-    if (olhosFechados) return undefined;
+    if (olhosFechados || ilustrada) return undefined;
     let tempo: ReturnType<typeof setTimeout> | null = null;
     const piscar = () => {
       const raiz = refRaiz.current;
@@ -309,11 +358,11 @@ export function Mascote({
     return () => {
       if (tempo) clearTimeout(tempo);
     };
-  }, [olhosFechados, janela, rng]);
+  }, [olhosFechados, ilustrada, janela, rng]);
 
   // Às vezes as penas da cabeça arrepiam (parada ou atenta, com movimento).
   useEffect(() => {
-    if (reduzido || simples) return undefined;
+    if (reduzido || simples || ilustrada) return undefined;
     let tempo: ReturnType<typeof setTimeout> | null = null;
     const arrepiar = () => {
       const raiz = refRaiz.current;
@@ -339,7 +388,7 @@ export function Mascote({
     return () => {
       if (tempo) clearTimeout(tempo);
     };
-  }, [reduzido, simples, janela, rng]);
+  }, [reduzido, simples, ilustrada, janela, rng]);
 
   // Ponteiro perto: atenta, e o olho acompanha (CSS vars, sem render por quadro).
   const acompanhar = livre && atencao && !reduzido;
@@ -454,11 +503,45 @@ export function Mascote({
     return () => documento.removeEventListener("visibilitychange", marcar);
   }, [janela]);
 
+  if (ilustrada) {
+    // A ilustrada mostra o pedido (ou a pose imposta) também com movimento reduzido.
+    const poseDesejada: PoseDaArara = pose ?? pedido;
+    const lado = Number(tamanho);
+    const classesDaIlustrada = ["mascote", "mascote--ilustrada", className]
+      .filter(Boolean)
+      .join(" ");
+    return (
+      <span
+        ref={refRaiz as RefObject<HTMLSpanElement | null>}
+        className={classesDaIlustrada}
+        style={{ "--mascote-tamanho": `${lado}px` } as CSSProperties}
+        data-estado={poseDesejada}
+        data-enquadramento={quadro}
+        data-pedido={pedido}
+        data-reduzido={reduzido ? "sim" : undefined}
+        role={rotulo ? "img" : undefined}
+        aria-label={rotulo || undefined}
+        aria-hidden={rotulo ? undefined : "true"}
+      >
+        {moduloIlustrado ? (
+          <moduloIlustrado.PosesDaArara
+            pose={poseDesejada}
+            tamanho={lado}
+            rosto={enquadramento === "rosto"}
+            reduzido={reduzido}
+            livre={livre}
+            janela={janela}
+          />
+        ) : null}
+      </span>
+    );
+  }
+
   const viewBox = VIEWBOX;
   const classes = ["mascote", className].filter(Boolean).join(" ");
   return (
     <svg
-      ref={refRaiz}
+      ref={refRaiz as RefObject<SVGSVGElement | null>}
       className={classes}
       viewBox={viewBox}
       width={tamanho}

@@ -129,6 +129,7 @@ import {
   PAGINAS_COM_TOUR,
   passoParaRetomar,
   posicaoDoBalao,
+  araraViradaNoBalao,
   progressoDasTrilhas,
   rotuloDoPasso,
   rotuloDoProgresso,
@@ -294,6 +295,17 @@ import {
   termosDe,
   toleranciaPara,
 } from "../src/lib/aya/termos-da-aya.ts";
+import {
+  ALTURA_DO_ARQUIVO,
+  ANCORA_DOS_PES,
+  enquadramentoDoRosto,
+  escolherArquivo,
+  LADO_DO_ROSTO,
+  larguraDoArquivo,
+  larguraNaTela,
+  MEDIDAS_DAS_POSES,
+  POSES_DA_ARARA,
+} from "../src/lib/aya/poses-da-aya.ts";
 
 bloco("animacoes-coreografadas", () => {
   /*
@@ -1556,6 +1568,34 @@ bloco("aya-tours", () => {
       expect(rotuloDoProgresso(undefined, 7)).toBe("7 passos");
       // A trilha encolheu (perdeu permissão): retoma no último passo que existe.
       expect(passoParaRetomar({ passo: 9, concluida: false }, 4)).toBe(3);
+    });
+  });
+
+  describe("a arara do balão", () => {
+    const caixa = (left) => ({ top: 100, left, width: 40, height: 40 });
+    const posicao = { modo: "baixo", top: 160, left: 400 };
+    const dados = { larguraDoBalao: 340, larguraDaTela: 1200 };
+
+    it("aponta para a direita; vira quando o elemento está à esquerda do meio do balão", () => {
+      expect(araraViradaNoBalao({ caixa: caixa(700), posicao, ...dados })).toBe(
+        false,
+      );
+      expect(araraViradaNoBalao({ caixa: caixa(420), posicao, ...dados })).toBe(
+        true,
+      );
+    });
+
+    it("no celular, o meio é o da tela; sem elemento, não vira", () => {
+      const celular = { modo: "celular", lado: "baixo" };
+      expect(
+        araraViradaNoBalao({ caixa: caixa(20), posicao: celular, ...dados }),
+      ).toBe(true);
+      expect(
+        araraViradaNoBalao({ caixa: caixa(900), posicao: celular, ...dados }),
+      ).toBe(false);
+      expect(araraViradaNoBalao({ caixa: null, posicao, ...dados })).toBe(
+        false,
+      );
     });
   });
 
@@ -5084,6 +5124,74 @@ bloco("permissoes-da-aya", () => {
       expect(r.provider).toBe("monitora-perfil");
       expect(r.answer).toContain("nível Editor em Recursos");
     });
+  });
+});
+
+bloco("poses-da-aya", () => {
+  /* As poses ilustradas da arara da Aya, sem DOM (src/lib/aya/poses-da-aya.ts). */
+  const PASTA = "src/modulos/aya/mascote/imagens";
+
+  it("uma pose por estado e a do tour, com 1x e 2x de até 30 KB cada", () => {
+    expect(Object.keys(MEDIDAS_DAS_POSES).sort()).toEqual(
+      [...POSES_DA_ARARA].sort(),
+    );
+    const arquivos = readdirSync(PASTA).sort();
+    expect(arquivos).toEqual(
+      POSES_DA_ARARA.flatMap((pose) => [
+        `arara-${pose}-2x.webp`,
+        `arara-${pose}.webp`,
+      ]).sort(),
+    );
+    for (const arquivo of arquivos)
+      expect(statSync(join(PASTA, arquivo)).size, arquivo).toBeLessThanOrEqual(
+        30 * 1024,
+      );
+  });
+
+  it("todas na mesma escala, com os pés no mesmo ponto do quadro", () => {
+    for (const [pose, medidas] of Object.entries(MEDIDAS_DAS_POSES)) {
+      // A arara inteira ocupa a altura do quadro (as asas podem passar dos lados).
+      expect(medidas.altura, pose).toBeGreaterThan(0.94);
+      expect(medidas.y + medidas.altura, pose).toBeLessThanOrEqual(1.01);
+      expect(medidas.x, pose).toBeLessThan(ANCORA_DOS_PES.x);
+      expect(medidas.x + medidas.largura, pose).toBeGreaterThan(
+        ANCORA_DOS_PES.x,
+      );
+      // O rosto fica no alto do quadro.
+      expect(medidas.rostoY, pose).toBeLessThan(0.3);
+    }
+  });
+
+  it("o rosto: o centro do recorte vai ao meio do quadro, ampliado", () => {
+    const { x, y, escala } = enquadramentoDoRosto("parada");
+    expect(escala).toBeCloseTo(1 / LADO_DO_ROSTO, 3);
+    const { rostoX, rostoY } = MEDIDAS_DAS_POSES.parada;
+    expect(x / 100 + escala * rostoX).toBeCloseTo(0.5, 2);
+    expect(y / 100 + escala * rostoY).toBeCloseTo(0.5, 2);
+    // Dormindo, a cabeça está mais baixa: o recorte desce junto.
+    expect(enquadramentoDoRosto("dormindo").y).toBeLessThan(y);
+  });
+
+  it("o arquivo: o 1x enquanto fica nítido; o rosto ampliado e as telas densas pedem o 2x", () => {
+    expect(larguraDoArquivo("parada", "1x")).toBe(
+      Math.round(MEDIDAS_DAS_POSES.parada.largura * ALTURA_DO_ARQUIVO["1x"]),
+    );
+    // A arara do canto (56 px, rosto).
+    const canto = larguraNaTela("parada", 56, true);
+    expect(canto).toBeCloseTo(
+      (MEDIDAS_DAS_POSES.parada.largura * 56) / LADO_DO_ROSTO,
+    );
+    expect(escolherArquivo("parada", canto, 1)).toBe("1x");
+    expect(escolherArquivo("parada", canto, 2)).toBe("2x");
+    // O painel (88 px, inteira) num monitor comum; a prévia grande pede o 2x.
+    expect(
+      escolherArquivo("parada", larguraNaTela("parada", 88, false), 1),
+    ).toBe("1x");
+    expect(
+      escolherArquivo("parada", larguraNaTela("parada", 220, false), 1),
+    ).toBe("2x");
+    // Densidade inválida conta como 1.
+    expect(escolherArquivo("parada", canto, Number.NaN)).toBe("1x");
   });
 });
 

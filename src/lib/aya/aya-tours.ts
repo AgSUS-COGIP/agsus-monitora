@@ -71,6 +71,7 @@ export {
   deveConvidar,
 } from "./tours/progresso.ts";
 export {
+  araraViradaNoBalao,
   posicaoDoBalao,
   MARGEM_DO_HOLOFOTE,
   geometriaDoHolofote,

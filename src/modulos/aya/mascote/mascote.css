@@ -481,3 +481,14 @@
     transition: none;
   }
 }
+
+/* ---------- A arara ilustrada (ilustrada.tsx; o resto em mascote-ilustrada.css) ---------- */
+
+/* A caixa já no tamanho final, antes do pedaço da ilustração chegar (sem pulo de layout). */
+.mascote--ilustrada {
+  position: relative;
+}
+:where(.mascote--ilustrada) {
+  width: var(--mascote-tamanho, 64px);
+  height: var(--mascote-tamanho, 64px);
+}

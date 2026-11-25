@@ -61,7 +61,7 @@ import type { ComemoracaoNaTela, OpcoesDaComemoracao } from "./plano.ts";
   padrão) e o ×, e o efeito escolhido (fogos, confete, serpentina, estrelas,
   corações, balões, a Aya comemorando ou o combinado — src/lib/comemoracao/motor-de-efeitos.ts)
   num <canvas>, com um véu escuro suave quando há fogos ou estrelas e a Aya
-  (a mascote de verdade, src/modulos/aya/mascote/) atravessando a tela nos
+  (a mascote ilustrada, de asas abertas, src/modulos/aya/mascote/) atravessando a tela nos
   fogos e, no Normal e no Festa, voltando no fim para dançar, dar uma
   cambalhota e soltar confete. A frase fica só no aviso. Sem efeito (marco
   só de aviso, segundo efeito do dia ou prefers-reduced-motion), só o aviso.
@@ -337,8 +337,8 @@ function AraraDaComemoracao({
     >
       <ErrorBoundary nome="a arara da comemoração">
         <Mascote
+          ilustrada
           estado="comemorando"
-          poleiro={false}
           tamanho={tamanho}
           ouvirAya={false}
           atencao={false}

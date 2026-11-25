@@ -54,6 +54,24 @@
   padding: 14px 16px 12px;
 }
 
+/*
+  A arara no alto do balão, do lado do elemento: aponta para ele (virada
+  quando o balão fica à direita do elemento). O texto contorna.
+*/
+.aya-tour__arara {
+  float: right;
+  margin: calc(var(--space-2) * -1) calc(var(--space-2) * -1) var(--space-1)
+    var(--space-2);
+}
+.aya-tour__arara[data-virada="sim"] {
+  float: left;
+  margin: calc(var(--space-2) * -1) var(--space-2) var(--space-1)
+    calc(var(--space-2) * -1);
+}
+.aya-tour__arara[data-virada="sim"] .mascote {
+  transform: scaleX(-1);
+}
+
 .aya-tour__balao--medindo {
   top: 0;
   left: 0;

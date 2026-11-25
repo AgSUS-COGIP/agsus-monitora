@@ -1,4 +1,6 @@
 import {
+  lazy,
+  Suspense,
   useEffect,
   useRef,
   useState,
@@ -12,7 +14,6 @@ import {
   classes,
   SimboloDoYeende,
 } from "../../ui/index.ts";
-import { Mascote } from "../../modulos/aya/mascote/mascote.tsx";
 import type { EstadoDaMascote } from "../../lib/aya/estado-da-aya.ts";
 import {
   AREAS_DA_SOLICITACAO,
@@ -113,6 +114,16 @@ export function falaDaAya(
   };
 }
 
+/*
+  A arara da Aya chega sob demanda: a mascote (componente, CSS e imagens) fica
+  fora da entrada; até chegar, um espaço do mesmo tamanho segura o lugar.
+*/
+const MascotePreguicosa = lazy(() =>
+  import("../../modulos/aya/mascote/mascote.tsx").then((modulo) => ({
+    default: modulo.Mascote,
+  })),
+);
+
 function Logo({ url }: { url: string }) {
   const [falhou, definirFalhou] = useState(false);
   useEffect(() => definirFalhou(false), [url]);
@@ -154,14 +165,23 @@ function Marca({
       </div>
       <p className="solicitacao-slogan">{slogan}</p>
       <div className="solicitacao-aya">
-        <Mascote
-          tamanho={96}
-          estado={fala.humor}
-          ouvirAya={false}
-          dormir={false}
-          rotulo="Aya, a assistente do Yeendé"
-          className="solicitacao-aya-arara"
-        />
+        <Suspense
+          fallback={
+            <span
+              className="solicitacao-aya-arara solicitacao-aya-reserva"
+              aria-hidden="true"
+            />
+          }
+        >
+          <MascotePreguicosa
+            tamanho={96}
+            estado={fala.humor}
+            ouvirAya={false}
+            dormir={false}
+            rotulo="Aya, a assistente do Yeendé"
+            className="solicitacao-aya-arara"
+          />
+        </Suspense>
         <p className="solicitacao-aya-fala" aria-live="polite">
           {fala.texto}
         </p>
