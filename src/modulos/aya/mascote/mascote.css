@@ -23,12 +23,16 @@
   position: relative;
   display: block;
   flex: none;
-  width: var(--mascote-tamanho);
-  height: var(--mascote-tamanho);
   overflow: visible;
   clip-path: inset(-60%);
   transition: clip-path 0s linear var(--mascote-enquadramento-ms);
   user-select: none;
+}
+
+/* Sem peso de seletor: quem monta (o canto no celular, a entrada) troca o tamanho no CSS. */
+:where(.mascote) {
+  width: var(--mascote-tamanho);
+  height: var(--mascote-tamanho);
 }
 
 .mascote[data-enquadramento="rosto"] {
@@ -72,14 +76,15 @@
   transform-origin: 50% 100%;
 }
 
-/* No escuro, a luz de borda (a arara azul não some no fundo escuro). */
+/*
+  No escuro, uma luz de borda fina (a arara azul e o bico escuro não somem no
+  fundo). Fina de propósito: no rosto ela cresce com a ampliação, e um halo
+  largo apareceria cortado pelo recorte, como uma caixa.
+*/
 [data-theme="dark"] .mascote__imagem {
   filter: drop-shadow(
-      0 0 1px color-mix(in srgb, var(--brand-primary) 70%, var(--text-primary))
-    )
-    drop-shadow(
-      0 0 6px color-mix(in srgb, var(--brand-primary) 45%, transparent)
-    );
+    0 0 1px color-mix(in srgb, var(--brand-primary) 55%, var(--text-primary))
+  );
 }
 
 /* ---------- Troca de pose ---------- */

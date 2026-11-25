@@ -24,7 +24,8 @@
   - Celular (até 600px): balão com a largura da tela, embaixo ou em cima,
     do lado oposto ao elemento. Tema escuro: só tokens (tour.css).
   - A arara no balão aponta para o elemento da vez (pose "apontando", virada
-    quando o elemento está à esquerda do balão); no passo sem elemento, fala.
+    quando o elemento está à esquerda do meio do balão); no passo sem
+    elemento, fala.
 
   Sem innerHTML: todo texto entra como texto.
 */
@@ -40,6 +41,7 @@ import {
 import type { KeyboardEvent as EventoDeTecla } from "react";
 import { createPortal } from "react-dom";
 import {
+  araraViradaNoBalao,
   geometriaDoHolofote,
   posicaoDoBalao,
   rotuloDoPasso,
@@ -162,6 +164,7 @@ export function Tour({
   const [atual, setAtual] = useState<PassoAtual | null>(null); // { indice, elemento }
   const [caixa, setCaixa] = useState<GeometriaDoHolofote | null>(null);
   const [posicao, setPosicao] = useState<PosicaoDoBalao | null>(null);
+  const [araraVirada, setAraraVirada] = useState(false);
   const refBalao = useRef<HTMLElement>(null);
   const refProximo = useRef<HTMLButtonElement>(null);
   const focoAnterior = useRef<(Element & { focus?: () => void }) | null>(null);
@@ -309,15 +312,20 @@ export function Tour({
   useLayoutEffect(() => {
     if (!atual) return;
     const balao = refBalao.current;
-    setPosicao(
-      posicaoDoBalao({
+    const larguraDoBalao = balao?.offsetWidth || 0;
+    const nova = posicaoDoBalao({
+      caixa: caixa?.recorte ?? null,
+      balao: { largura: larguraDoBalao, altura: balao?.offsetHeight || 0 },
+      tela: { largura: janela.innerWidth, altura: janela.innerHeight },
+      celular: telaDeCelular(janela),
+    });
+    setPosicao(nova);
+    setAraraVirada(
+      araraViradaNoBalao({
         caixa: caixa?.recorte ?? null,
-        balao: {
-          largura: balao?.offsetWidth || 0,
-          altura: balao?.offsetHeight || 0,
-        },
-        tela: { largura: janela.innerWidth, altura: janela.innerHeight },
-        celular: telaDeCelular(janela),
+        posicao: nova,
+        larguraDoBalao,
+        larguraDaTela: janela.innerWidth,
       }),
     );
   }, [atual, caixa, janela]);
@@ -431,7 +439,7 @@ export function Tour({
         <article className="aya-tour__conteudo">
           <span
             className="aya-tour__arara"
-            data-virada={posicao?.modo === "direita" ? "sim" : undefined}
+            data-virada={araraVirada ? "sim" : undefined}
             aria-hidden="true"
           >
             <Mascote

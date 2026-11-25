@@ -129,6 +129,7 @@ import {
   PAGINAS_COM_TOUR,
   passoParaRetomar,
   posicaoDoBalao,
+  araraViradaNoBalao,
   progressoDasTrilhas,
   rotuloDoPasso,
   rotuloDoProgresso,
@@ -1567,6 +1568,34 @@ bloco("aya-tours", () => {
       expect(rotuloDoProgresso(undefined, 7)).toBe("7 passos");
       // A trilha encolheu (perdeu permissão): retoma no último passo que existe.
       expect(passoParaRetomar({ passo: 9, concluida: false }, 4)).toBe(3);
+    });
+  });
+
+  describe("a arara do balão", () => {
+    const caixa = (left) => ({ top: 100, left, width: 40, height: 40 });
+    const posicao = { modo: "baixo", top: 160, left: 400 };
+    const dados = { larguraDoBalao: 340, larguraDaTela: 1200 };
+
+    it("aponta para a direita; vira quando o elemento está à esquerda do meio do balão", () => {
+      expect(araraViradaNoBalao({ caixa: caixa(700), posicao, ...dados })).toBe(
+        false,
+      );
+      expect(araraViradaNoBalao({ caixa: caixa(420), posicao, ...dados })).toBe(
+        true,
+      );
+    });
+
+    it("no celular, o meio é o da tela; sem elemento, não vira", () => {
+      const celular = { modo: "celular", lado: "baixo" };
+      expect(
+        araraViradaNoBalao({ caixa: caixa(20), posicao: celular, ...dados }),
+      ).toBe(true);
+      expect(
+        araraViradaNoBalao({ caixa: caixa(900), posicao: celular, ...dados }),
+      ).toBe(false);
+      expect(araraViradaNoBalao({ caixa: null, posicao, ...dados })).toBe(
+        false,
+      );
     });
   });
 
