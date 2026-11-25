@@ -20,6 +20,14 @@ de 17/11/2026). Esta nota diz o que o service worker guarda, o que abre sem inte
 | `src/modules/pwa-lifecycle.ts`                   | registra o service worker; o novo só assume no "Atualizar" do aviso          |
 | `src/app/casca/aviso-de-conexao.tsx`             | "Sem conexão com a internet" e "Conexão restabelecida"                       |
 
+## Ícones
+
+`manifest.webmanifest` lista `icons/yeende.svg` (sem fundo), `yeende-192.png` e `yeende-512.png`
+("any", quadrado arredondado) e `yeende-maskable-512.png` (cheio até a borda); o `index.html` põe
+`yeende-apple-180.png` no apple-touch-icon. Os PNG têm fundo verde-escuro porque o iOS pinta de
+preto o transparente e o "maskable" é recortado pelo sistema; saem do SVG com
+`npm run icones:marca` ([[design-e-tokens]], seção Marca do Yeendé).
+
 ## O que o service worker guarda
 
 - **Na instalação:** a casca (`APP_SHELL`: `/`, `offline.html`, manifesto, ícones) e

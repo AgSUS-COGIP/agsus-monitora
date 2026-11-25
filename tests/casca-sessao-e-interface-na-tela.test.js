@@ -117,6 +117,7 @@ import {
 } from "../src/modules/google-profile-photo.ts";
 import {
   FAVICON_PADRAO,
+  ICONE_DA_TELA_DE_INICIO,
   aplicarFaviconDaMarca,
   definirPaginaDaAba,
   definirSistemaDaAba,
@@ -2451,6 +2452,16 @@ bloco("identidade-da-aba", () => {
       expect(await aplicarFaviconDaMarca(FAVICON_PADRAO)).toBe(true);
       expect(hrefs()[0]).toBe(FAVICON_PADRAO);
     });
+
+    /* O iOS não lê SVG no apple-touch-icon e pinta de preto o transparente. */
+    it("com o símbolo padrão, o apple-touch-icon recebe o PNG de fundo sólido", () => {
+      escreverFavicon(FAVICON_PADRAO);
+      expect(hrefs()).toEqual([
+        FAVICON_PADRAO,
+        FAVICON_PADRAO,
+        ICONE_DA_TELA_DE_INICIO,
+      ]);
+    });
   });
 
   describe("como o HTML e o app ficam", () => {
@@ -2461,7 +2472,8 @@ bloco("identidade-da-aba", () => {
     it("o índice não depende mais de host de terceiros para o ícone", () => {
       const cabecalho = semComentarios(html).slice(0, html.indexOf("</head>"));
       expect(cabecalho).not.toContain("postimg");
-      expect(cabecalho).toContain('href="/icons/agsus-monitora.svg"');
+      expect(cabecalho).toContain('href="/icons/yeende.svg"');
+      expect(cabecalho).toContain('href="/icons/yeende-apple-180.png"');
     });
 
     it("traz as três tags, como o SIGAV", () => {
@@ -7194,7 +7206,7 @@ bloco("modulos/configuracoes-inicio-acesso-aparencia", () => {
         /\/assets\/access-background-default\.svg$/,
       );
       expect(valor("auth_access_background_path")).toBe("");
-      expect(valor("ui_sidebar_logo_url")).toBe("/assets/agsus-logo.webp");
+      expect(valor("ui_sidebar_logo_url")).toBe("/icons/yeende.svg");
       expect(valor("ui_sidebar_background_color")).toBe("#ffffff");
     });
   });
@@ -7575,7 +7587,7 @@ bloco("modulos/configuracoes-inicio-acesso-aparencia", () => {
       expect(sujo()).toBe(true);
       expect(
         secao("aparencia").querySelector(".config-imagem__previa--logo").src,
-      ).toMatch(/\/assets\/agsus-logo\.webp$/);
+      ).toMatch(/\/icons\/yeende\.svg$/);
       // A publicada segue na barra de todo mundo até salvar: não se apaga.
       expect(
         secao("aparencia").querySelector(

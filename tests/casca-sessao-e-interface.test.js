@@ -37,7 +37,7 @@ import {
   textoDaBusca,
   tituloDoResultado,
 } from "../src/lib/navegacao/busca-global.ts";
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import {
   ABAS_DO_MENU,
   AREAS_DO_SISTEMA,
@@ -5116,8 +5116,11 @@ bloco("pos159-regressoes", () => {
         marca,
         barraLateral.indexOf(">", barraLateral.indexOf("/>", marca)),
       );
-      // O `src` vem de marca.ts, que nasce com a logo local padrão.
-      expect(LOGO_PADRAO_DA_BARRA).toBe("/assets/agsus-logo.webp");
+      // O `src` vem de marca.ts, que nasce com a logo local padrão: o símbolo do Yeendé.
+      expect(LOGO_PADRAO_DA_BARRA).toBe("/icons/yeende.svg");
+      expect(existsSync(`icons/${LOGO_PADRAO_DA_BARRA.split("/").pop()}`)).toBe(
+        true,
+      );
       expect(sidebar).toContain("let logoAtual = LOGO_PADRAO_DA_BARRA;");
       expect(barraLateral).not.toContain("postimg.cc");
       expect(tag).not.toMatch(/onerror/i);

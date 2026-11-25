@@ -37,6 +37,11 @@ export type {
   PropriedadesDaCaixaDeMarcarTodos,
 } from "./caixa-de-marcar-todos.tsx";
 export { Campo } from "./campo.tsx";
+export {
+  FORMAS_DO_SIMBOLO,
+  QUADRO_DO_SIMBOLO,
+  SimboloDoYeende,
+} from "./simbolo-do-yeende.tsx";
 export type { PropriedadesDoCampo } from "./campo.tsx";
 export { ContagemDaAba, formatarContagem } from "./contagem-da-aba.tsx";
 export type {

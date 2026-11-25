@@ -7734,7 +7734,7 @@ bloco("service-worker-policy", () => {
           "assets/telas-DDQIcVp4.js",
           "assets\\agsus-logo.webp",
           "fonts/geist-latin.woff2",
-          "/icons/agsus-monitora.svg",
+          "/icons/yeende.svg",
           "data/terras-indigenas.json",
           "assets/modelo-importacao-lista-aprovados.xlsx",
           "assets/main-DwO2Aiew.js.map",
@@ -7747,7 +7747,7 @@ bloco("service-worker-policy", () => {
         "/assets/main-CQ0xKEuX.css",
         "/assets/telas-DDQIcVp4.js",
         "/fonts/geist-latin.woff2",
-        "/icons/agsus-monitora.svg",
+        "/icons/yeende.svg",
       ]);
     });
   });

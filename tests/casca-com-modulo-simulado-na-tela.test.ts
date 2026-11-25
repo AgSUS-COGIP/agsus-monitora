@@ -481,11 +481,13 @@ bloco("componentes/barra-lateral", () => {
         document.querySelector<HTMLElement>("#appScreen .sidebar"),
       );
 
-      expect(
-        aside
-          .querySelector<HTMLElement>(".side-brand #sideLogo")
-          ?.getAttribute("src"),
-      ).toBe("/assets/agsus-logo.webp");
+      /* Sem logo enviada, a marca é o símbolo do Yeendé, em linha e decorativo. */
+      const simbolo = aside.querySelector(".side-brand svg.side-simbolo");
+      expect(simbolo?.getAttribute("aria-hidden")).toBe("true");
+      expect(aside.querySelector(".side-brand #sideLogo")).toBeNull();
+      expect(aside.querySelector(".side-brand-copy strong")?.textContent).toBe(
+        "Yeendé",
+      );
       expect(
         aside.querySelector<HTMLElement>(
           ".side-navigation > nav#nav.menu-lateral",
@@ -1708,7 +1710,10 @@ bloco("componentes/barra-lateral", () => {
       await act(async () =>
         aplicarMarcaDaBarraLateral({ logo: "javascript:alert(1)", cor: "red" }),
       );
-      expect(logo.getAttribute("src")).toBe("/assets/agsus-logo.webp");
+      expect(logo.isConnected).toBe(false);
+      expect(
+        document.querySelector(".side-brand svg.side-simbolo"),
+      ).not.toBeNull();
       expect(
         document.documentElement.style.getPropertyValue("--sidebar-custom-bg"),
       ).toBe("#ffffff");
@@ -1717,7 +1722,7 @@ bloco("componentes/barra-lateral", () => {
       );
     });
 
-    it("logo que não carrega volta para a padrão, sem esconder a imagem", async () => {
+    it("logo que não carrega volta para o símbolo, sem deixar a marca vazia", async () => {
       await montar();
       await act(async () =>
         aplicarMarcaDaBarraLateral({ logo: "/assets/quebrada.webp" }),
@@ -1725,9 +1730,10 @@ bloco("componentes/barra-lateral", () => {
       const logo = definido(document.getElementById("sideLogo"));
       expect(logo.getAttribute("src")).toBe("/assets/quebrada.webp");
       await act(async () => logo.dispatchEvent(new Event("error")));
-      expect(logo.getAttribute("src")).toBe("/assets/agsus-logo.webp");
-      expect(logo.style.display).not.toBe("none");
-      expect(logo.hidden).toBe(false);
+      expect(document.getElementById("sideLogo")).toBeNull();
+      expect(
+        document.querySelector(".side-logo-wrap svg.side-simbolo"),
+      ).not.toBeNull();
     });
 
     it("monta já com a cor padrão da marca (antes de a configuração chegar)", async () => {
@@ -1858,7 +1864,7 @@ bloco("componentes/barra-lateral", () => {
         /<aside class="sidebar"[^>]*>([\s\S]*?)<\/aside>/,
       );
       expect(aside).not.toBeNull();
-      expect(aside?.[1]).toContain('id="sideLogo"');
+      expect(aside?.[1]).toContain('class="marca-yeende side-simbolo"');
       expect(aside?.[1]).toContain('id="globalSidebarToggle"');
     });
   });

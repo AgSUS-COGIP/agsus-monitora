@@ -65,45 +65,6 @@ function Traco({
   );
 }
 
-/*
-  O símbolo do Yeendé ao lado do nome no lockup (12/11/2026): o pássaro de
-  frente, de asas abertas em V, com as formas do manual da AgSUS (quartos de
-  círculo e círculo): asa amarela, asa verde, corpo azul e cabeça vermelha
-  (tokens --marca-agsus-*, platform-shell.css). Yeendé é "pássaro" em Kariri.
-*/
-export function IconeDoYeende() {
-  return (
-    <svg
-      className="login-product-icon marca-yeende"
-      viewBox="4 8 92 82"
-      width={40}
-      height={40}
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path
-        className="marca-yeende__asa-esquerda"
-        d="M46 58 L8 58 A38 38 0 0 1 46 20 Z"
-        transform="rotate(-32 46 58)"
-      />
-      <path
-        className="marca-yeende__asa-direita"
-        d="M54 58 L92 58 A38 38 0 0 0 54 20 Z"
-        transform="rotate(32 54 58)"
-      />
-      <rect
-        className="marca-yeende__corpo"
-        x="42"
-        y="52"
-        width="16"
-        height="32"
-        rx="8"
-      />
-      <circle className="marca-yeende__cabeca" cx="50" cy="38" r="10" />
-    </svg>
-  );
-}
-
 /** O escudo do rodapé institucional. */
 export function IconeDeEscudo() {
   return (

@@ -16,8 +16,11 @@ const APP_SHELL = [
   OFFLINE_URL,
   "/manifest.webmanifest",
   "/sw-policy.js",
-  "/icons/agsus-monitora.svg",
-  "/icons/agsus-monitora-maskable.svg",
+  "/icons/yeende.svg",
+  "/icons/yeende-192.png",
+  "/icons/yeende-512.png",
+  "/icons/yeende-maskable-512.png",
+  "/icons/yeende-apple-180.png",
 ];
 /*
   Trocada a cada build pela lista dos arquivos publicados (vite.config.js,

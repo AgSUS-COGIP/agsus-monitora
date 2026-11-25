@@ -3,6 +3,7 @@ import { bloco } from "./apoio/bloco.ts";
 import fs, { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it, beforeAll, vi } from "vitest";
 import { deflateRawSync } from "node:zlib";
+import { FORMAS_DO_SIMBOLO } from "../src/ui/simbolo-do-yeende.tsx";
 import {
   ABA,
   abasDoXlsx,
@@ -2660,5 +2661,53 @@ bloco("pedido-de-mais-acesso-no-banco", () => {
       });
       expect((await perfil(db, BIA.perfil))?.perfil).toBe("usuario");
     });
+  });
+});
+
+/*
+  A marca do Yeendé (25/11/2026) tem um desenho só: as formas do componente
+  React são as do SVG do favicon e as do cartão provisório do index.html. Os
+  ícones do PWA saem desse SVG (scripts/gerar-icones-da-marca.mjs).
+*/
+bloco("marca-do-yeende", () => {
+  const formas = [
+    FORMAS_DO_SIMBOLO.asaEsquerda,
+    FORMAS_DO_SIMBOLO.asaDireita,
+    FORMAS_DO_SIMBOLO.cabeca,
+  ];
+  const { corpo } = FORMAS_DO_SIMBOLO;
+  const corpoNoSvg = `x="${corpo.x}" y="${corpo.y}" width="${corpo.largura}" height="${corpo.altura}" rx="${corpo.raio}"`;
+
+  it("o símbolo do React é o desenho de icons/yeende.svg, sem fundo", () => {
+    const svg = readFileSync("icons/yeende.svg", "utf8");
+    for (const d of formas) expect(svg).toContain(`d="${d}"`);
+    expect(svg).toContain(corpoNoSvg);
+    expect(svg).not.toMatch(/<rect(?![^>]*class="corpo")/);
+  });
+
+  it("as versões com o nome usam o mesmo símbolo", () => {
+    for (const arquivo of ["yeende-marca.svg", "yeende-marca-negativa.svg"]) {
+      const svg = readFileSync(`icons/${arquivo}`, "utf8");
+      for (const d of formas) expect(svg, arquivo).toContain(`d="${d}"`);
+    }
+  });
+
+  it("o cartão provisório do index.html desenha o mesmo símbolo", () => {
+    const indice = readFileSync("index.html", "utf8");
+    for (const d of formas) expect(indice).toContain(`d="${d}"`);
+  });
+
+  it("o manifest e as tags de ícone apontam para arquivos que existem", () => {
+    const manifest = JSON.parse(readFileSync("manifest.webmanifest", "utf8"));
+    const icones: string[] = [
+      ...manifest.icons.map((i: { src: string }) => i.src),
+      "/icons/yeende-apple-180.png",
+    ];
+    expect(icones).toContain("/icons/yeende-maskable-512.png");
+    for (const src of icones)
+      expect(fs.existsSync(src.slice(1)), src).toBe(true);
+    expect(readdirSync("icons").filter((f) => f.startsWith("agsus-"))).toEqual(
+      [],
+    );
   });
 });

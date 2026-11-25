@@ -121,7 +121,7 @@ import {
 } from "../../lib/classificacao/documento-sei.ts";
 import { gerarDocxOficial } from "../../lib/classificacao/documento-docx.ts";
 import { ehEditalDeTreinamento } from "../../lib/editais/edital-de-treinamento.ts";
-import { LOGO_PADRAO_DA_BARRA } from "../../lib/navegacao/marca-da-barra-lateral.ts";
+import { LOGO_DOS_DOCUMENTOS } from "../../lib/base/cabecalho-dos-documentos.ts";
 import {
   copiarParaAreaDeTransferencia,
   imprimirPagina,
@@ -218,7 +218,7 @@ export function criarEstadoDaClassificacao({
   copiar = copiarParaAreaDeTransferencia,
   carregarLogo = logoEmPng,
   cabecalho = () => CABECALHO_PADRAO,
-  enderecoDoLogo = LOGO_PADRAO_DA_BARRA,
+  enderecoDoLogo = LOGO_DOS_DOCUMENTOS,
   tempoLimiteMs = TEMPO_LIMITE_MS,
   agendaDoEdital = () => null,
   aoGravarVersao = () => {},
