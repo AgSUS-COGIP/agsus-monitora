@@ -54,8 +54,7 @@ export function escreverFavicon(
   const alvo = ehUrlUsavel(url);
   if (!alvo || !documento?.head) return false;
   for (const link of ligacoesDeIcone(documento)) {
-    const doIos =
-      alvo === FAVICON_PADRAO && link.rel === "apple-touch-icon";
+    const doIos = alvo === FAVICON_PADRAO && link.rel === "apple-touch-icon";
     link.setAttribute("href", doIos ? ICONE_DA_TELA_DE_INICIO : alvo);
     link.removeAttribute("type");
   }

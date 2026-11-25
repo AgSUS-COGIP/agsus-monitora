@@ -11,10 +11,7 @@ import {
   textoDaEntradaAutomatica,
   type OpcoesDoLogin,
 } from "../sessao.ts";
-import {
-  IconeDeEscudo,
-  MarcaDoGoogle,
-} from "./icones-da-entrada.tsx";
+import { IconeDeEscudo, MarcaDoGoogle } from "./icones-da-entrada.tsx";
 import {
   atualizarMarcaUmaVez,
   type EstadoDaMarcaDaEntrada,

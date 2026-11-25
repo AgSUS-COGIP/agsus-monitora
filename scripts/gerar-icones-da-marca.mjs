@@ -57,7 +57,9 @@ try {
       viewport: { width: icone.lado, height: icone.lado },
     });
     await pagina.setContent(
-      `<html><body style="margin:0;background:transparent">${svgDoIcone(icone).replace(
+      `<html><body style="margin:0;background:transparent">${svgDoIcone(
+        icone,
+      ).replace(
         "<svg ",
         `<svg width="${icone.lado}" height="${icone.lado}" style="display:block" `,
       )}</body></html>`,

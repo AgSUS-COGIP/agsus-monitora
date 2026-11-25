@@ -1701,7 +1701,9 @@ bloco("componentes/barra-lateral", () => {
         aplicarMarcaDaBarraLateral({ logo: "javascript:alert(1)", cor: "red" }),
       );
       expect(logo.isConnected).toBe(false);
-      expect(document.querySelector(".side-brand svg.side-simbolo")).not.toBeNull();
+      expect(
+        document.querySelector(".side-brand svg.side-simbolo"),
+      ).not.toBeNull();
       expect(
         document.documentElement.style.getPropertyValue("--sidebar-custom-bg"),
       ).toBe("#ffffff");

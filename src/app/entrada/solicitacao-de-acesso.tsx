@@ -30,10 +30,7 @@ import {
   SITUACOES,
   type CodigoDaArea,
 } from "../../lib/acessos/solicitacao-de-acesso.ts";
-import {
-  IconeDeEscudo,
-  MarcaDoGoogle,
-} from "./icones-da-entrada.tsx";
+import { IconeDeEscudo, MarcaDoGoogle } from "./icones-da-entrada.tsx";
 import {
   coordenacoesDaArea,
   lotacoesDaArea,

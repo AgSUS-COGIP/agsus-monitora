@@ -9961,7 +9961,9 @@ bloco("componentes/previa-da-barra-lateral", () => {
       await act(async () => definido(logo()).dispatchEvent(new Event("error")));
       expect(logo()).toBeNull();
       expect(
-        barraDaPrevia(documento).querySelector(".side-logo-wrap svg.side-simbolo"),
+        barraDaPrevia(documento).querySelector(
+          ".side-logo-wrap svg.side-simbolo",
+        ),
       ).not.toBeNull();
     });
 
