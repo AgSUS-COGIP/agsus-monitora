@@ -308,48 +308,39 @@ function RetificarLinha({
     }
     setOcupado("simulando");
     setErro("");
-    try {
-      const simulado = await estado.salvarQuadroDeVagas(
+    setTentou(false);
+    await simular(mudanca, () => true);
+  }
+
+  /** A prévia: `salvar_quadro_de_vagas` com `simular: true` (nada fica gravado). */
+  function simular(m: MudancaNoQuadro, vivo: () => boolean) {
+    return estado
+      .salvarQuadroDeVagas(
         idEdital,
-        quadroRetificado(
-          linhas,
-          mudanca,
-          motivo.trim() || SIMULACAO,
-          errata,
-          true,
-        ),
-      );
-      setResumo(resumoDaMudanca(dados, simulado, mudanca));
-      setTentou(false);
-    } catch (e) {
-      setErro(`Não foi possível conferir: ${mensagem(e)}`);
-    } finally {
-      setOcupado("");
-    }
+        quadroRetificado(linhas, m, motivo.trim() || SIMULACAO, errata, true),
+      )
+      .then((simulado) => {
+        if (vivo()) setResumo(resumoDaMudanca(dados, simulado, m));
+      })
+      .catch((e: unknown) => {
+        if (vivo()) setErro(`Não foi possível conferir: ${mensagem(e)}`);
+      })
+      .finally(() => {
+        if (vivo()) setOcupado("");
+      });
   }
 
   // Retirar não tem formulário: a prévia vem logo que o modal abre.
   useEffect(() => {
     if (inicial.tipo !== "retirar") return undefined;
     let vivo = true;
-    estado
-      .salvarQuadroDeVagas(
-        idEdital,
-        quadroRetificado(linhas, inicial, SIMULACAO, "", true),
-      )
-      .then((simulado) => {
-        if (vivo) setResumo(resumoDaMudanca(dados, simulado, inicial));
-      })
-      .catch((e: unknown) => {
-        if (vivo) setErro(`Não foi possível conferir: ${mensagem(e)}`);
-      })
-      .finally(() => {
-        if (vivo) setOcupado("");
-      });
+    void simular(inicial, () => vivo);
     return () => {
       vivo = false;
     };
-  }, [estado, idEdital, linhas, dados, inicial]);
+    // Só ao abrir: o retirar não tem campo que mude a simulação.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function gravar() {
     if (!mudanca || ocupado) return;
