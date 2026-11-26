@@ -1,7 +1,7 @@
 ---
 tipo: modulo
 area: modulo
-atualizado: 2026-11-24
+atualizado: 2026-11-26
 ---
 
 # Módulo: Editais (cadastro, regras e encerramento)
@@ -56,6 +56,19 @@ Tabela, alertas, formulário e linha do tempo. A tela é `nucleo.tsx`; o estado 
   Classificação, a pré-classificação e as conferências (`CLASSIFICACAO_VAGA_QUADRO_AMBIGUO`)
   consultam o vínculo antes das palavras. Edital sem vaga com código: "não se aplica"
   (cancelado), "externo" (Seleção sem código) ou "pendente de integração".
+- **Quadro de vagas por linha** (`retificar-quadro.tsx`, `src/lib/editais/retificar-quadro.ts`,
+  migration `20261126180000`): no quadro salvo ("Ver quadro"), Editar e Retirar por linha e
+  "Acrescentar vaga", para quem grava o quadro (`pode_editar`; Núcleo ou Calendário, editor) e só
+  com o banco novo (`historico` no payload de `obter_quadro_de_vagas`; a RPC antiga ignoraria a
+  simulação e gravaria). O modal edita cargo, lotação, vagas por modalidade (total = soma) e CR;
+  recusa linha de mesma chave cargo + lotação (`FC_CHAVE_LINHA_QUADRO`). "Conferir o que muda"
+  chama `salvar_quadro_de_vagas` com `simular: true` (o banco faz tudo num bloco que se desfaz) e
+  mostra a linha antes e depois e as vagas que continuam, ficam sem linha, passam à linha ou
+  mudam. Grava pela mesma RPC do PDF, com o quadro inteiro: cada linha que fica leva `anterior`
+  (o vínculo vai direto para ela, evento `RETIFICACAO`), a mudada ou nova leva origem `MANUAL`,
+  e o motivo (10 a 500) e a errata vão a `TH_QUADRO_VAGA_EDITAL`. Na retificação, a vaga ligada
+  pela equipe a uma linha retirada fica "sem linha" (MANUAL, sem pendência); a linha acrescentada
+  recebe as vagas pela regra. A importação do PDF segue como antes (vínculo pela chave).
 - **Acompanhamento operacional** no topo da fila: oito indicadores (total, ativos, inativos, em
   andamento, sem cronograma, incompletos, próximos 7 dias, excepcionais); cada um filtra a fila.
   Vêm de `resumo.ts` (`get_nucleo_cronograma_resumo`, uma linha por edital): UMA carga, cache curto,

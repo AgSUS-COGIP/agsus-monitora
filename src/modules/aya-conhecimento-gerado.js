@@ -6871,6 +6871,28 @@ export const VERBETES_AYA = Object.freeze([
   },
   {
     arquivo: "regras-dos-editais.md",
+    titulo: "Corrigir uma vaga do quadro",
+    perguntas: [
+      "como corrijo uma vaga do quadro",
+      "corrigir vaga do quadro de vagas",
+      "retificar quadro de vagas",
+      "editar linha do quadro",
+      "mudar quantidade de vagas do quadro",
+      "acrescentar vaga ao quadro",
+      "retirar vaga do quadro",
+      "retificacao do edital numa vaga so",
+      "tirar cargo do quadro",
+      "colocar cargo no quadro",
+    ],
+    resposta:
+      'Quando a retificação do edital muda uma vaga só, não precisa subir o PDF de novo. No formulário do edital, em Anexos do edital, "Ver quadro" mostra o quadro salvo linha por linha: "Editar" muda o cargo, a lotação, as vagas imediatas de cada modalidade (o total é a soma) e o cadastro reserva; no "⋯", "Retirar" tira a linha; "Acrescentar vaga" põe uma linha nova. "Conferir o que muda" mostra, antes de gravar, a linha antes e depois e as vagas da seleção ligadas a ela: as que continuam na linha, as que ficam sem linha (ao retirar, a vaga ligada pela equipe fica "sem linha", e o botão diz quantas) e as que passam à linha nova pela regra do nome. Para gravar, diga o motivo (por exemplo, "Retificação nº 2 do edital") e, se houver, o número da errata. A linha corrigida ou acrescentada fica marcada como Manual; as outras continuam como vieram do PDF, e o quadro anterior fica no histórico com o motivo. As vagas ligadas à linha corrigida continuam ligadas a ela, mesmo com outro cargo ou lotação. Corrige quem tem nível Editor em Editais ou em Cronograma.',
+    fato: "",
+    fonte:
+      "supabase/migrations/20261126180000_retificar_linha_do_quadro_de_vagas.sql; src/lib/editais/retificar-quadro.ts; src/modulos/editais/retificar-quadro.tsx",
+    abrir: "nucleo",
+  },
+  {
+    arquivo: "regras-dos-editais.md",
     titulo: "Vagas imediatas",
     perguntas: [
       "vagas imediatas",

@@ -568,6 +568,35 @@
   white-space: nowrap;
 }
 
+/* Quadro salvo, linha por linha, e a retificação de uma linha (retificar-quadro.tsx). */
+.quadro-salvo,
+.quadro-previa {
+  display: grid;
+  gap: var(--space-3);
+}
+.quadro-previa th[scope="row"] {
+  position: static;
+  border-bottom: 0;
+  border-top: 1px solid var(--border-subtle);
+}
+.quadro-acoes-da-linha {
+  display: inline-flex;
+  gap: var(--space-1);
+  white-space: nowrap;
+}
+.quadro-total {
+  display: block;
+  padding: var(--space-2) 0;
+  font-weight: var(--font-weight-medium);
+}
+.quadro-cr {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  align-self: end;
+  padding-bottom: var(--space-2);
+}
+
 /* Fila do vínculo de cada vaga com a linha do quadro (vinculos-do-quadro.tsx). */
 .vinculos-do-quadro {
   display: grid;
