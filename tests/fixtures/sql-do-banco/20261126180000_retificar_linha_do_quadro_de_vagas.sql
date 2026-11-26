@@ -1,31 +1,62 @@
+-- Migration aplicada em produção e registrada em public.migracoes_aplicadas, guardada aqui
+-- só para montar o banco dos testes (PGlite); não aplicar. A fonte do código do banco é o
+-- banco e o retrato supabase/esquema-atual.sql. O arquivo saiu de supabase/migrations/ em
+-- 26/11/2026 (histórico no Git). Daqui para baixo, o conteúdo aplicado, sem mudança.
 /*
-  ENSAIO de 20261126180000_retificar_linha_do_quadro_de_vagas.sql (não grava: termina em rollback)
+  RETIFICAR UMA LINHA DO QUADRO DE VAGAS DO EDITAL
 
-  Roda a migration inteira (o SQL entre o begin e o commit dela, sem mudança) e confere:
-    1. TH_QUADRO_VAGA_EDITAL vazia, com RLS; a CHECK dos vínculos aceita RETIFICACAO;
-    2. nenhum vínculo nem linha do quadro mudou só por aplicar.
-  Com uma pessoa editora do Núcleo (rode antes, na mesma sessão,
-  select set_config('agsus.ensaio_usuario', '<user_id>', false);), confere também, no edital com
-  mais vínculos decididos pela equipe:
-    3. a simulação (simular: true) do quadro igual, linha por linha com `anterior`, devolve as
-       mesmas situações e não grava nada;
-    4. a retificação de verdade (dentro deste ensaio) leva cada vínculo para a linha sucessora,
-       sem pendência nova, e grava o histórico RETIFICACAO;
-    5. retirar a linha de um vínculo MANUAL deixa a vaga "sem linha" (AUSENTE, MANUAL, sem
-       pendência).
+  Pedido de 26/11/2026: quando o edital é retificado numa vaga só (a quantidade imediata de um
+  cargo, a lotação, a modalidade), a equipe precisava subir o PDF inteiro de novo. O cronograma
+  já se corrige etapa por etapa, com motivo e número da errata; o quadro de vagas não.
 
-  psql "$SUPABASE_DB_URL" -X -v ON_ERROR_STOP=1 -f supabase/ensaios/20261126180000_retificar_linha_do_quadro_de_vagas.sql
+  O PROBLEMA (salvar_quadro_de_vagas até aqui)
+    - Não guardava motivo nem número da errata: o quadro anterior ficava desativado sem dizer
+      por quê.
+    - A origem (PDF|MANUAL) e o arquivo eram um valor só para o quadro inteiro: uma linha mudada à
+      mão marcaria todas as linhas do PDF como manuais.
+    - O vínculo da vaga passava para a linha nova pela chave cargo + lotação
+      (FC_PREENCHER_VINCULOS_QUADRO, passo 1). Corrigir o cargo ou a lotação de uma linha deixava
+      o vínculo confirmado pela equipe AUSENTE ("a linha escolhida saiu do quadro").
+
+  O QUE MUDA (a assinatura salvar_quadro_de_vagas(uuid, jsonb) é a mesma)
+    1. p_dados ganha `motivo` e `numero_errata`; cada linha ganha `origem` (PDF|MANUAL),
+       `arquivo` e `anterior` (o CO_QUADRO_VAGA da linha vigente que ela substitui).
+       - Linha com `anterior` e sem `origem`/`arquivo` herda os da linha anterior; sem
+         `anterior`, vale o `origem`/`arquivo` do quadro, como antes.
+       - Retificação = há `motivo` ou alguma linha com `anterior`: o motivo (10 a 500 caracteres)
+         é obrigatório. A importação do PDF (sem `anterior` nem motivo) segue como hoje.
+    2. O vínculo de cada vaga cuja linha tem sucessora (`anterior`) passa direto para a linha
+       nova (FC_GRAVAR_VINCULO_QUADRO, evento RETIFICACAO), seja qual for o cargo e a lotação;
+       quem confirmou continua o mesmo. Na retificação, a vaga que a equipe ligou (MANUAL) a uma
+       linha retirada fica "sem linha" (AUSENTE, MANUAL, sem pendência, evento RETIFICACAO),
+       como o SEM_LINHA de gravar_vinculo_do_quadro. Só depois roda
+       FC_PREENCHER_VINCULOS_QUADRO, que segue pela chave para as linhas sem sucessora da
+       reimportação e recalcula os AUTOMATICO pela regra, como sempre: a linha acrescentada
+       recebe as vagas que a regra lhe dá.
+    2a. `simular: true` faz tudo isso num bloco que se desfaz e devolve o quadro como ficaria
+       (obter_quadro_de_vagas), para a tela mostrar antes de salvar quais vagas mudam de linha,
+       ficam sem linha ou se ligam à linha nova. Nada fica gravado.
+    3. TH_QUADRO_VAGA_EDITAL: cada gravação do quadro (IMPORTACAO ou RETIFICACAO), com o
+       motivo, a errata, as linhas antes e depois (com `anterior`) e quem gravou.
+    4. obter_quadro_de_vagas devolve, por linha, `origem` e `arquivo`, e o `historico` das 20
+       últimas gravações (evento, motivo, errata, quando, quem, linhas antes e depois). A
+       `origem` do quadro prefere a linha do PDF, em ordem (antes: uma linha qualquer).
+    5. CK_HISTVAGAQUADRO_TPEVENTO aceita RETIFICACAO.
+    A guarda de quem grava é a de sempre: Núcleo ou Calendário (editor) e a área do edital.
+    A gravação do quadro do mesmo edital fica em fila (trava da linha do edital).
+
+  GUARDAS (a migration não aplica nada se falhar)
+    - Já aplicada (TH_QUADRO_VAGA_EDITAL existe) ou sem o vínculo (TA_VAGA_QUADRO_EDITAL,
+      20261118120000).
+    - As funções trocadas ou de que esta depende não são as de 26/11/2026 (md5 do corpo, sem
+      \r: há funções gravadas com CRLF no banco): alguém as mudou depois; junte as mudanças.
+    - A CHECK de TH_VAGA_QUADRO_EDITAL não é a de 20261118120000.
+
+  Ensaio: supabase/ensaios/20261126180000_retificar_linha_do_quadro_de_vagas.sql
+  Rollback: supabase/rollback/20261126180000_retificar_linha_do_quadro_de_vagas.sql
+  Testes: tests/retificar-quadro-no-banco.test.ts (PGlite: hoje × migrada × rollback).
 */
 begin;
-
-create temp table ensaio_vinculos_antes on commit drop as
-  select v."CO_MONITORAMENTO", v."CO_VAGA", v."TP_VINCULO", v."TP_ORIGEM", v."CO_QUADRO_VAGA", v."DS_PENDENCIA"
-    from public."TA_VAGA_QUADRO_EDITAL" v;
-create temp table ensaio_quadro_antes on commit drop as
-  select q."CO_QUADRO_VAGA", q."ST_REGISTRO_ATIVO" from public."TB_QUADRO_VAGA_EDITAL" q;
-
--- A migration, sem o begin e o commit ----------------------------------------------------------
--- >>> migration
 
 set local lock_timeout = '5s';
 
@@ -316,120 +347,4 @@ $$;
 
 COMMENT ON FUNCTION public.obter_quadro_de_vagas(p_edital uuid) IS 'Quadro de vagas vigente do edital (cada linha com origem PDF|MANUAL e arquivo), de onde veio, o histórico das 20 últimas gravações (TH_QUADRO_VAGA_EDITAL: evento, motivo, errata, quem, quando) e o vínculo de cada vaga com a linha (TA_VAGA_QUADRO_EDITAL: situação, origem, candidatas, pendência, quem confirmou); vagas_do_edital diz por que não há vaga para ligar (NAO_SE_APLICA, EXTERNO, PENDENTE_INTEGRACAO); pode_editar = pode gravar o quadro e o vínculo. Núcleo, Calendário ou Entrevistas (leitor) e o edital. 20261126180000.';
 
--- <<< migration
-
--- Conferências ---------------------------------------------------------------------------------
-do $$
-declare
-  v_usuario text := nullif(current_setting('agsus.ensaio_usuario', true), '');
-  v_edital uuid;
-  v_linhas jsonb;
-  v_sim json;
-  v_retirar uuid;
-  v_vaga text;
-  r record;
-begin
-  -- 1.
-  if exists (select 1 from public."TH_QUADRO_VAGA_EDITAL") then
-    raise exception 'Ensaio: TH_QUADRO_VAGA_EDITAL deveria nascer vazia.';
-  end if;
-  if not (select c.relrowsecurity from pg_class c where c.oid = 'public."TH_QUADRO_VAGA_EDITAL"'::regclass) then
-    raise exception 'Ensaio: TH_QUADRO_VAGA_EDITAL sem RLS.';
-  end if;
-  if pg_get_constraintdef((select c.oid from pg_constraint c where c.conname = 'CK_HISTVAGAQUADRO_TPEVENTO'))
-       not like '%RETIFICACAO%' then
-    raise exception 'Ensaio: a CHECK dos vínculos não aceita RETIFICACAO.';
-  end if;
-  -- 2.
-  if exists (select v."CO_MONITORAMENTO", v."CO_VAGA", v."TP_VINCULO", v."TP_ORIGEM", v."CO_QUADRO_VAGA", v."DS_PENDENCIA"
-               from public."TA_VAGA_QUADRO_EDITAL" v
-             except select * from ensaio_vinculos_antes)
-     or exists (select q."CO_QUADRO_VAGA", q."ST_REGISTRO_ATIVO" from public."TB_QUADRO_VAGA_EDITAL" q
-                except select * from ensaio_quadro_antes) then
-    raise exception 'Ensaio: aplicar a migration mudou vínculo ou linha do quadro.';
-  end if;
-  raise notice 'Ensaio: estrutura conferida (1 e 2).';
-
-  if v_usuario is null then
-    raise notice 'Ensaio: sem agsus.ensaio_usuario, as conferências 3 a 5 ficam de fora.';
-    return;
-  end if;
-  perform set_config('request.jwt.claims', json_build_object('sub', v_usuario, 'role', 'authenticated')::text, true);
-
-  select v."CO_MONITORAMENTO" into v_edital
-    from public."TA_VAGA_QUADRO_EDITAL" v
-    join public."TB_QUADRO_VAGA_EDITAL" q on q."CO_QUADRO_VAGA" = v."CO_QUADRO_VAGA" and q."ST_REGISTRO_ATIVO" = 'S'
-   group by 1 order by count(*) filter (where v."TP_ORIGEM" = 'MANUAL') desc, count(*) desc limit 1;
-  if v_edital is null then
-    raise notice 'Ensaio: nenhum edital com vínculo confirmado; 3 a 5 de fora.';
-    return;
-  end if;
-  select jsonb_agg(jsonb_build_object('cargo', q."NO_CARGO", 'lotacao', q."NO_LOTACAO", 'modalidades', q."DS_MODALIDADE_VAGA",
-           'vagas_imediatas', q."QT_VAGA_IMEDIATA", 'cadastro_reserva', q."ST_CADASTRO_RESERVA" = 'S',
-           'anterior', q."CO_QUADRO_VAGA") order by q."NU_ORDEM")
-    into v_linhas
-    from public."TB_QUADRO_VAGA_EDITAL" q where q."CO_MONITORAMENTO" = v_edital and q."ST_REGISTRO_ATIVO" = 'S';
-  raise notice 'Ensaio: edital % (% linhas).', v_edital, jsonb_array_length(v_linhas);
-
-  -- 3.
-  v_sim := public.salvar_quadro_de_vagas(v_edital, jsonb_build_object('motivo', 'Ensaio da retificação por linha',
-                                                                       'simular', true, 'linhas', v_linhas));
-  if exists (select 1 from json_array_elements(v_sim -> 'vinculos') x
-               join ensaio_vinculos_antes a on a."CO_MONITORAMENTO" = v_edital and a."CO_VAGA" = x ->> 'vaga'
-              where (x ->> 'situacao') is distinct from a."TP_VINCULO") then
-    raise exception 'Ensaio: a simulação do quadro igual mudou a situação de algum vínculo.';
-  end if;
-  if exists (select 1 from public."TH_QUADRO_VAGA_EDITAL")
-     or exists (select q."CO_QUADRO_VAGA", q."ST_REGISTRO_ATIVO" from public."TB_QUADRO_VAGA_EDITAL" q
-                except select * from ensaio_quadro_antes) then
-    raise exception 'Ensaio: a simulação gravou.';
-  end if;
-
-  -- 4.
-  perform public.salvar_quadro_de_vagas(v_edital, jsonb_build_object('motivo', 'Ensaio da retificação por linha',
-                                                                     'linhas', v_linhas));
-  for r in
-    select a."CO_VAGA" as vaga, a."TP_VINCULO" as antes, v."TP_VINCULO" as depois, v."DS_PENDENCIA" as pendencia,
-           qa."NU_ORDEM" as ordem_antes, qd."NU_ORDEM" as ordem_depois
-      from ensaio_vinculos_antes a
-      join public."TA_VAGA_QUADRO_EDITAL" v on v."CO_MONITORAMENTO" = a."CO_MONITORAMENTO" and v."CO_VAGA" = a."CO_VAGA"
-      left join public."TB_QUADRO_VAGA_EDITAL" qa on qa."CO_QUADRO_VAGA" = a."CO_QUADRO_VAGA"
-      left join public."TB_QUADRO_VAGA_EDITAL" qd on qd."CO_QUADRO_VAGA" = v."CO_QUADRO_VAGA"
-     where a."CO_MONITORAMENTO" = v_edital
-  loop
-    if r.antes is distinct from r.depois or r.ordem_antes is distinct from r.ordem_depois
-       or (r.pendencia is not null and r.antes = 'CONFIRMADO') then
-      raise exception 'Ensaio: a vaga % mudou com o quadro igual (% → %).', r.vaga, r.antes, r.depois;
-    end if;
-  end loop;
-  if (select count(*) from public."TH_QUADRO_VAGA_EDITAL" h where h."TP_EVENTO" = 'RETIFICACAO') <> 1 then
-    raise exception 'Ensaio: a retificação não foi ao histórico do quadro.';
-  end if;
-
-  -- 5.
-  select v."CO_QUADRO_VAGA", v."CO_VAGA" into v_retirar, v_vaga
-    from public."TA_VAGA_QUADRO_EDITAL" v
-   where v."CO_MONITORAMENTO" = v_edital and v."TP_ORIGEM" = 'MANUAL' and v."CO_QUADRO_VAGA" is not null
-   order by v."CO_VAGA" limit 1;
-  if v_retirar is null then
-    raise notice 'Ensaio: o edital não tem vínculo MANUAL com linha; 5 de fora.';
-  else
-    select jsonb_agg(jsonb_build_object('cargo', q."NO_CARGO", 'lotacao', q."NO_LOTACAO", 'modalidades', q."DS_MODALIDADE_VAGA",
-             'vagas_imediatas', q."QT_VAGA_IMEDIATA", 'cadastro_reserva', q."ST_CADASTRO_RESERVA" = 'S',
-             'anterior', q."CO_QUADRO_VAGA") order by q."NU_ORDEM")
-      into v_linhas
-      from public."TB_QUADRO_VAGA_EDITAL" q
-     where q."CO_MONITORAMENTO" = v_edital and q."ST_REGISTRO_ATIVO" = 'S' and q."CO_QUADRO_VAGA" <> v_retirar;
-    perform public.salvar_quadro_de_vagas(v_edital, jsonb_build_object('motivo', 'Ensaio: retirar uma linha',
-                                                                       'linhas', coalesce(v_linhas, '[]'::jsonb)));
-    if not exists (select 1 from public."TA_VAGA_QUADRO_EDITAL" v
-                    where v."CO_MONITORAMENTO" = v_edital and v."CO_VAGA" = v_vaga and v."TP_VINCULO" = 'AUSENTE'
-                      and v."TP_ORIGEM" = 'MANUAL' and v."DS_PENDENCIA" is null and v."CO_QUADRO_VAGA" is null) then
-      raise exception 'Ensaio: a vaga % da linha retirada não ficou "sem linha".', v_vaga;
-    end if;
-  end if;
-  raise notice 'Ensaio: retificação conferida (3 a 5).';
-end
-$$;
-
-rollback;
+commit;

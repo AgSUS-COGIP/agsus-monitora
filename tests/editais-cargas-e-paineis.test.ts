@@ -6604,18 +6604,17 @@ bloco("retificar-quadro-no-banco", () => {
   const bancoDeHoje = bancoDeHoje__2;
   const entrar = entrar__3;
   /*
-  Retificar uma linha do quadro de vagas (migration 20261126180000, pendente) num Postgres de
-  verdade (PGlite): o banco de hoje (a 20261118120000 aplicada sobre os corpos copiados do
-  retrato) × migrado × rollback. O edital 105/2026 tem três linhas do PDF; a vaga 1002 (Médico)
+  Retificar uma linha do quadro de vagas (migration 20261126180000, aplicada em 26/11/2026) num
+  Postgres de verdade (PGlite): o banco de antes (a 20261118120000 aplicada sobre os corpos
+  copiados do retrato) × com a migration, guardada sem mudança em tests/fixtures/sql-do-banco/.
+  A guarda, o ensaio e o rollback saíram com ela (regra do #712). O edital 105/2026 tem três linhas do PDF; a vaga 1002 (Médico)
   e a 1004 (Dentista) foram ligadas pela equipe (MANUAL), a 1001 pela regra e a 1003 (Agente
   Indígena de Saúde) não tem linha.
 */
   const NOME = "20261126180000_retificar_linha_do_quadro_de_vagas.sql";
   const lerSql = (caminho: string) =>
     readFileSync(caminho, "utf8").replace(/\r\n/g, "\n");
-  const migracao = () => lerSql(`supabase/migrations/${NOME}`);
-  const rollback = () => lerSql(`supabase/rollback/${NOME}`);
-  const ensaio = () => lerSql(`supabase/ensaios/${NOME}`);
+  const migracao = () => lerSql(`tests/fixtures/sql-do-banco/${NOME}`);
   const LONGO = 60_000;
   const MOTIVO = "Retificação nº 2 do edital";
   const ARQUIVO = "anexos-105.pdf";
@@ -6734,58 +6733,10 @@ bloco("retificar-quadro-no-banco", () => {
     return db;
   });
 
-  /** md5 (sem \r) do corpo das funções que a migration troca e da CHECK. */
-  const retrato = async (db: Banco) =>
-    (
-      await db.query<{ nome: string; md5: string; comentario: string | null }>(
-        `select p.oid::regprocedure::text as nome, md5(replace(p.prosrc, E'\\r', '')) as md5,
-                obj_description(p.oid, 'pg_proc') as comentario
-           from pg_proc p
-          where p.oid in (to_regprocedure('public.salvar_quadro_de_vagas(uuid, jsonb)'),
-                          to_regprocedure('public.obter_quadro_de_vagas(uuid)'))
-          union all
-         select c.conname, md5(pg_get_constraintdef(c.oid)), col_description(c.conrelid, 4)
-           from pg_constraint c where c.conname = 'CK_HISTVAGAQUADRO_TPEVENTO'
-          order by 1`,
-      )
-    ).rows;
-
   const vinculo = async (db: Banco, vaga: string) =>
     (await vinculos(db, EDITAL)).find((v) => v.vaga === vaga);
 
   describe("a migration", () => {
-    it(
-      "a guarda confere o corpo de hoje sem \\r e recusa função mudada ou migration repetida",
-      async () => {
-        const db = await bancoDeHojeComDados();
-        // A mesma função gravada com CRLF passa.
-        const { rows } = await db.query<{ corpo: string }>(
-          `select prosrc as corpo from pg_proc where oid = to_regprocedure('public.salvar_quadro_de_vagas(uuid, jsonb)')`,
-        );
-        await db.exec(
-          `create or replace function public.salvar_quadro_de_vagas(p_edital uuid, p_dados jsonb) returns json
-           language plpgsql security definer set search_path to '' as $corpo$${rows[0]!.corpo.replace(/\n/g, "\r\n")}$corpo$`,
-        );
-        await db.exec(migracao());
-        await expect(db.exec(migracao())).rejects.toThrow(/já foi aplicada/);
-
-        const mudado = await bancoDeHojeComDados();
-        await mudado.exec(
-          `create or replace function public.obter_quadro_de_vagas(p_edital uuid) returns json language sql as $$ select null::json $$`,
-        );
-        await expect(mudado.exec(migracao())).rejects.toThrow(/mudou desde/);
-        await mudado.exec("rollback");
-        expect(
-          (
-            await mudado.query(
-              `select to_regclass('public."TH_QUADRO_VAGA_EDITAL"') as t`,
-            )
-          ).rows,
-        ).toEqual([{ t: null }]);
-      },
-      LONGO,
-    );
-
     it("aplicar não muda vínculo nem linha; o quadro mostra origem e arquivo por linha", async () => {
       const hoje = await bancoDeHojeComDados();
       const db = await bancoMigrado();
@@ -7038,93 +6989,6 @@ bloco("retificar-quadro-no-banco", () => {
         "42501",
       );
     });
-  });
-
-  describe("o rollback e o ensaio", () => {
-    it(
-      "o rollback volta as funções, a CHECK e os comentários de hoje",
-      async () => {
-        const hoje = await bancoDeHojeComDados();
-        const db = await bancoMigrado();
-        expect(await retrato(db)).not.toEqual(await retrato(hoje));
-        await db.exec(rollback());
-        expect(await retrato(db)).toEqual(await retrato(hoje));
-        expect(
-          (
-            await db.query(
-              `select to_regclass('public."TH_QUADRO_VAGA_EDITAL"') as t`,
-            )
-          ).rows,
-        ).toEqual([{ t: null }]);
-      },
-      LONGO,
-    );
-
-    it(
-      "com retificação gravada, o rollback só segue com a perda confirmada",
-      async () => {
-        const db = await bancoMigrado();
-        await entrar(db, 2);
-        await salvar(db, {
-          motivo: MOTIVO,
-          linhas: iguais((await lerQuadro(db)).linhas),
-        });
-        await expect(db.exec(rollback())).rejects.toThrow(/confirme a perda/);
-        await db.exec(`rollback`).catch(() => undefined);
-        await db.exec(
-          `select set_config('agsus.rollback_perde_retificacoes', 'sim', false);\n${rollback()}`,
-        );
-        expect(
-          (
-            await db.query(
-              `select count(*)::integer as n from public."TH_VAGA_QUADRO_EDITAL" where "TP_EVENTO" = 'REIMPORTACAO'`,
-            )
-          ).rows,
-        ).toEqual([{ n: 3 }]);
-        // O corpo antigo lê o quadro retificado.
-        expect((await lerQuadro(db)).linhas).toHaveLength(3);
-      },
-      LONGO,
-    );
-
-    it(
-      "o ensaio roda a migration sem mudança, confere a retificação e não grava",
-      async () => {
-        const corpo = migracao();
-        const miolo = corpo.slice(
-          corpo.indexOf("\nbegin;\n") + 8,
-          corpo.lastIndexOf("\ncommit;\n") + 1,
-        );
-        expect(ensaio()).toContain(miolo);
-        expect(ensaio().trimEnd().endsWith("rollback;")).toBe(true);
-
-        const db = await bancoDeHojeComDados();
-        await entrar(db, 2);
-        await db.query(`select set_config('agsus.ensaio_usuario', $1, false)`, [
-          USUARIO,
-        ]);
-        const avisos: string[] = [];
-        await db.exec(ensaio(), {
-          onNotice: (n) => {
-            avisos.push(n.message ?? "");
-          },
-        });
-        expect(avisos).toEqual(
-          expect.arrayContaining([
-            "Ensaio: estrutura conferida (1 e 2).",
-            "Ensaio: retificação conferida (3 a 5).",
-          ]),
-        );
-        expect(
-          (
-            await db.query(
-              `select to_regclass('public."TH_QUADRO_VAGA_EDITAL"') as t`,
-            )
-          ).rows,
-        ).toEqual([{ t: null }]);
-      },
-      LONGO,
-    );
   });
 });
 
