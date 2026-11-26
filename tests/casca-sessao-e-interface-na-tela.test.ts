@@ -3010,6 +3010,24 @@ bloco("app/navegacao", () => {
       expect(history.length).toBe(tamanho);
     });
 
+    it("link para tela proibida em outra área: a tela de entrada abre na área do endereço", () => {
+      history.replaceState(null, "", "/sede/recursos");
+      const { navegacao, avisar } = criar({
+        obterPerfil: () => ({
+          ...SO_EDITAIS,
+          areas: ["saude-indigena", "sede"],
+        }),
+      });
+      entrar(navegacao);
+      expect(avisar).toHaveBeenCalledWith(
+        "Sem permissão para analisar recursos.",
+        "warn",
+      );
+      expect(ativas()).toEqual(["page-nucleo"]);
+      expect(obterDadosDoMonitoramento().areaAtual).toBe("sede");
+      expect(endereco()).toBe("/sede/editais");
+    });
+
     it("endereço que não é tela: avisa e abre a tela de entrada", () => {
       history.replaceState(null, "", "/sede/nao-existe");
       const { navegacao, avisar } = criar();

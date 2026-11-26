@@ -426,10 +426,10 @@ export function criarNavegacao({
   */
   function deEntrada() {
     const { destino } = destinoPedido();
-    if (destino?.view && permitida(destino.view)) {
-      usarAreaDoEndereco(destino.area);
+    // A área do endereço vale mesmo quando a tela não é permitida.
+    usarAreaDoEndereco(destino?.area);
+    if (destino?.view && permitida(destino.view))
       return ligadaOuPrimeira(destino.view);
-    }
     return ligadaOuPrimeira(telaDeEntrada(telaGuardada(), perfil(), paineis));
   }
 
@@ -671,8 +671,12 @@ export function criarNavegacao({
     const { destino, desconhecido } = destinoPedido();
     esquecerRotaPedida();
     if (desconhecido) avisar(TEXTO_ROTA_DESCONHECIDA, "warn");
+    /*
+      A área do endereço, se a pessoa a tem, vale também quando a tela não é
+      permitida: a tela de entrada abre na área do link, não na primeira.
+    */
+    usarAreaDoEndereco(destino?.area);
     if (destino?.view && permitida(destino.view)) {
-      usarAreaDoEndereco(destino.area);
       const tela = ligadaOuPrimeira(destino.view);
       if (
         abrir(
