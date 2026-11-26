@@ -6,6 +6,11 @@ import { BarraDeSelecao } from "../src/ui/barra-de-selecao.tsx";
 import { TabelaInfinita as TabelaInfinitaDaBarra } from "../src/ui/tabela-infinita.tsx";
 import { BotoesDeExportacao } from "../src/ui/botoes-de-exportacao.tsx";
 import { Popover, desvioParaCaber } from "../src/ui/popover.tsx";
+import {
+  criarEditorSobDemanda,
+  type EditorSobDemanda,
+} from "../src/modulos/editor-de-coordenadas/editor-sob-demanda.ts";
+import type { EditorDeCoordenadas } from "../src/modulos/editor-de-coordenadas/editor-de-coordenadas.tsx";
 import { usarRegraDaTriagem } from "../src/modulos/triagem/usar-regra-da-triagem.ts";
 import {
   act,
@@ -3209,6 +3214,44 @@ bloco("modulos/regra-da-triagem-na-troca-de-edital", () => {
       definido(visto as ReturnType<typeof usarRegraDaTriagem> | null).resposta
         ?.regra,
     ).toMatchObject({ versao: 1, edital: "E2" });
+  });
+});
+
+bloco("modulos/editor-de-coordenadas-sob-demanda", () => {
+  /* O download do editor falhou uma vez: o erro aparece e "Tentar novamente" baixa de novo. */
+  let raiz: Root | null = null;
+  afterEach(() => {
+    act(() => raiz?.unmount());
+    raiz = null;
+    document.body.innerHTML = "";
+  });
+
+  it("falha no download: mostra o erro, e tentar de novo traz o editor", async () => {
+    const editorFalso: typeof EditorDeCoordenadas = () => null;
+    const importar = vi
+      .fn<() => Promise<{ EditorDeCoordenadas: typeof EditorDeCoordenadas }>>()
+      .mockRejectedValueOnce(new Error("Failed to fetch"))
+      .mockResolvedValue({ EditorDeCoordenadas: editorFalso });
+    const sob = criarEditorSobDemanda(importar);
+    let visto: EditorSobDemanda | null = null;
+    function Sonda() {
+      visto = sob.usar();
+      return null;
+    }
+    const atual = () => definido(visto as EditorSobDemanda | null);
+    const caixa = document.createElement("div");
+    document.body.append(caixa);
+    raiz = createRoot(caixa);
+    await act(async () => raiz!.render(h(Sonda)));
+    await act(async () => {});
+    expect(atual()).toMatchObject({ editor: null, erro: "Failed to fetch" });
+    // Sem pedir sozinho em laço: só um download até a pessoa pedir.
+    expect(importar).toHaveBeenCalledTimes(1);
+
+    await act(async () => atual().tentarDeNovo());
+    await act(async () => {});
+    expect(atual()).toMatchObject({ editor: editorFalso, erro: "" });
+    expect(importar).toHaveBeenCalledTimes(2);
   });
 });
 

@@ -69,6 +69,9 @@ function useSequencia(etapas: CronogramaLido["etapas"]): string[] {
       (modulo) => {
         if (vivo) setAvisos(modulo.avisosDeSequencia(lista));
       },
+      // Sem o pedaço (rede, versão nova): a linha do tempo abre sem os avisos.
+      (erro: unknown) =>
+        console.warn("Avisos de sequência indisponíveis:", erro),
     );
     return () => {
       vivo = false;
