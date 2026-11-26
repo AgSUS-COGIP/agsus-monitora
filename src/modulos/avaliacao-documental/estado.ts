@@ -260,11 +260,41 @@ export function criarEstadoDaAvaliacao({
     Os editais da área. Troca de área recomeça do zero. Na primeira carga da
     área, sem edital escolhido, abre sozinho o `preferido` (o edital da ficha
     que estava aberta), o último aberto ou o único vigente.
+
+    Pedido igual a um que ainda está a caminho (mesma área e preferido, sem
+    outro pedido depois) espera o mesmo: na abertura da Triagem, o efeito da
+    tela e o `render()` do registro pediam juntos, e a 1ª resposta era
+    descartada (auditoria de 26/11/2026, #5).
   */
-  async function carregar(
+  let editaisACaminho: {
+    area: string;
+    preferido: string;
+    pedido: number;
+    promessa: Promise<boolean>;
+  } | null = null;
+  function carregar(
     area = estado.area,
     { preferido = "" }: { preferido?: string } = {},
   ): Promise<boolean> {
+    const aCaminho = editaisACaminho;
+    if (
+      aCaminho &&
+      aCaminho.pedido === pedidoDosEditais &&
+      aCaminho.area === area &&
+      aCaminho.preferido === preferido
+    )
+      return aCaminho.promessa;
+    const promessa = lerEditais(area, preferido);
+    if (!area) return promessa;
+    const esta = { area, preferido, pedido: pedidoDosEditais, promessa };
+    editaisACaminho = esta;
+    void promessa.then(() => {
+      if (editaisACaminho === esta) editaisACaminho = null;
+    });
+    return promessa;
+  }
+
+  async function lerEditais(area: string, preferido: string) {
     if (!area) return false;
     const meu = ++pedidoDosEditais;
     if (area !== estado.area) {

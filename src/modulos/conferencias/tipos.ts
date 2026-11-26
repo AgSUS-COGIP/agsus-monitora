@@ -201,7 +201,7 @@ export interface SnapshotDosAvisos {
   readonly agindo: string | null;
   readonly erroDaAcao: string;
 }
-type RespostaDosAvisos = {
+export type RespostaDosAvisos = {
   data: unknown;
   error: { message?: string; code?: string } | null;
 };

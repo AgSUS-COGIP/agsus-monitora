@@ -91,8 +91,28 @@ export function criarEstadoDaPaginaDoEdital({
   avisos = null,
 }: OpcoesDoEstadoDaPagina) {
   let estado = ESTADO_INICIAL;
-  /* Muda a cada `renovar`/`esquecer`: resposta de antes não entra. */
-  let geracao = 0;
+  /*
+    A leitura em curso de cada chave (`cronograma:<id>`, `quadro:<id>`,
+    `acompanhamento`): a resposta de uma leitura substituída (por `forcar`) ou
+    descartada (por `renovar`) não entra.
+  */
+  const leituras = new Map<string, number>();
+  let contador = 0;
+  /*
+    As chaves pedidas nesta mesma tarefa. Na primeira abertura, os efeitos da
+    tela leem antes de o registro chamar `render()` (o efeito do filho roda
+    antes do do pai, no mesmo ciclo): essas leituras já são desta abertura, e
+    `renovar` não as repete (eram 4 RPCs em dobro por abertura, auditoria de
+    26/11/2026).
+  */
+  const pedidasAgora = new Set<string>();
+  function comecarLeitura(chave: string) {
+    const minha = ++contador;
+    leituras.set(chave, minha);
+    if (!pedidasAgora.size) queueMicrotask(() => pedidasAgora.clear());
+    pedidasAgora.add(chave);
+    return () => leituras.get(chave) === minha;
+  }
   const ouvintes = new Set<() => void>();
 
   function publicar(mudancas: Partial<SnapshotDaPaginaDoEdital>) {
@@ -108,7 +128,7 @@ export function criarEstadoDaPaginaDoEdital({
   async function carregarCronograma(id: string, { forcar = false } = {}) {
     if (!id) return;
     if (!forcar && estado.cronogramas[id]) return;
-    const minha = geracao;
+    const vale = comecarLeitura(`cronograma:${id}`);
     guardarCronograma(id, { status: "carregando" });
     try {
       if (!supabase) throw new Error("Sem conexão com o banco.");
@@ -118,14 +138,14 @@ export function criarEstadoDaPaginaDoEdital({
         { p_monitoramento_id: id },
       );
       if (error) throw error;
-      if (minha !== geracao) return;
+      if (!vale()) return;
       // A fronteira com o banco: a resposta da RPC.
       guardarCronograma(id, {
         status: "pronto",
         dados: (data || {}) as CronogramaLido,
       });
     } catch (erro) {
-      if (minha !== geracao) return;
+      if (!vale()) return;
       guardarCronograma(id, { status: "erro", mensagem: mensagemDe(erro) });
     }
   }
@@ -134,7 +154,7 @@ export function criarEstadoDaPaginaDoEdital({
   async function carregarQuadro(id: string, { forcar = false } = {}) {
     if (!id) return;
     if (!forcar && estado.quadros[id]) return;
-    const minha = geracao;
+    const vale = comecarLeitura(`quadro:${id}`);
     const guardar = (carga: Carga<unknown>) =>
       publicar({ quadros: { ...estado.quadros, [id]: carga } });
     guardar({ status: "carregando" });
@@ -145,10 +165,10 @@ export function criarEstadoDaPaginaDoEdital({
         p_edital: id,
       });
       if (error) throw error;
-      if (minha !== geracao) return;
+      if (!vale()) return;
       guardar({ status: "pronto", dados: data ?? {} });
     } catch (erro) {
-      if (minha !== geracao) return;
+      if (!vale()) return;
       guardar({
         status: "erro",
         mensagem: mensagemDe(erro),
@@ -170,7 +190,7 @@ export function criarEstadoDaPaginaDoEdital({
     const atual = estado.acompanhamento;
     if (!area || !buscarAcompanhamento) return;
     if (atual && atual.area === area && atual.linhas === linhas) return;
-    const minha = geracao;
+    const vale = comecarLeitura("acompanhamento");
     publicar({
       acompanhamento: { area, linhas, carga: { status: "carregando" } },
     });
@@ -186,7 +206,7 @@ export function criarEstadoDaPaginaDoEdital({
             (modulo) => modulo.reaberturasDosCargos(cargos),
             () => undefined,
           );
-      if (minha !== geracao || estado.acompanhamento?.linhas !== linhas) return;
+      if (!vale() || estado.acompanhamento?.linhas !== linhas) return;
       publicar({
         acompanhamento: {
           area,
@@ -195,7 +215,7 @@ export function criarEstadoDaPaginaDoEdital({
         },
       });
     } catch (erro) {
-      if (minha !== geracao || estado.acompanhamento?.linhas !== linhas) return;
+      if (!vale() || estado.acompanhamento?.linhas !== linhas) return;
       publicar({
         acompanhamento: {
           area,
@@ -218,10 +238,30 @@ export function criarEstadoDaPaginaDoEdital({
     carregarQuadro,
     carregarAcompanhamento,
     avisos,
-    /** Nova abertura da página: o cronograma e o acompanhamento são relidos. */
+    /*
+      Nova abertura da página: o cronograma, o quadro e o acompanhamento lidos
+      em aberturas anteriores são esquecidos (a tela relê). Os pedidos nesta
+      mesma tarefa já são desta abertura e ficam.
+    */
     renovar() {
-      geracao += 1;
-      publicar({ ...ESTADO_INICIAL, abertura: estado.abertura + 1 });
+      const ficam = (chave: string) => pedidasAgora.has(chave);
+      for (const chave of [...leituras.keys()])
+        if (!ficam(chave)) leituras.delete(chave);
+      const recorte = <T>(
+        registro: Readonly<Record<string, T>>,
+        tipo: string,
+      ) =>
+        Object.freeze(
+          Object.fromEntries(
+            Object.entries(registro).filter(([id]) => ficam(`${tipo}:${id}`)),
+          ),
+        );
+      publicar({
+        cronogramas: recorte(estado.cronogramas, "cronograma"),
+        quadros: recorte(estado.quadros, "quadro"),
+        acompanhamento: ficam("acompanhamento") ? estado.acompanhamento : null,
+        abertura: estado.abertura + 1,
+      });
     },
   };
 }

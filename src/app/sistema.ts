@@ -351,8 +351,11 @@ export function ligarSistema() {
   navegacao.acompanharArea();
   // Apontar ou focar um painel no menu já abre a conexão com o site dele.
   paineis.preconectarAoApontar();
-  // Linhas do monitoramento e acompanhamento da Visão geral, só para a página que os usa.
-  acompanharPaginaAberta({ navegacao });
+  // Linhas do monitoramento, acompanhamento da Visão geral e mapa, só para a página que os usa.
+  acompanharPaginaAberta({
+    navegacao,
+    pedirMapa: () => void carga.garantirMapa(),
+  });
   presenca.acompanhar();
   // O retrato de desempenho do front vai de carona na batida, sem chamada própria.
   definirEnvioDoRetrato(presenca.enfileirarEvento);
