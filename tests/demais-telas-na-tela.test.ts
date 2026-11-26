@@ -5,6 +5,7 @@ import * as alcanceDaBarraNs from "../src/lib/base/alcance-da-selecao.ts";
 import { BarraDeSelecao } from "../src/ui/barra-de-selecao.tsx";
 import { TabelaInfinita as TabelaInfinitaDaBarra } from "../src/ui/tabela-infinita.tsx";
 import { BotoesDeExportacao } from "../src/ui/botoes-de-exportacao.tsx";
+import { Popover, desvioParaCaber } from "../src/ui/popover.tsx";
 import {
   act,
   createElement,
@@ -3160,6 +3161,54 @@ bloco("componentes/barra-de-selecao", () => {
       expect(alcance()).toBe("");
       expect(pagina.checked).toBe(false);
     });
+  });
+});
+
+bloco("ui/popover-dentro-da-janela", () => {
+  let raiz: Root | null = null;
+  afterEach(() => {
+    act(() => raiz?.unmount());
+    raiz = null;
+    document.body.innerHTML = "";
+  });
+
+  it("o desvio põe o painel dentro da janela, com a folga das bordas", () => {
+    expect(desvioParaCaber(40, 300, 375)).toBe(0);
+    // O balão da Visão geral a 375px: 118px fora, à esquerda.
+    expect(desvioParaCaber(-118, 210, 375)).toBe(134);
+    expect(desvioParaCaber(200, 420, 375)).toBe(-61);
+    // Mais largo que a janela: fica a borda esquerda.
+    expect(desvioParaCaber(10, 400, 375)).toBe(6);
+  });
+
+  it("a 375px, o painel que sairia pela esquerda abre deslocado para dentro", () => {
+    const caixa = document.createElement("div");
+    document.body.append(caixa);
+    const largura = vi
+      .spyOn(document.documentElement, "clientWidth", "get")
+      .mockReturnValue(375);
+    const medida = vi
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockImplementation(function (this: HTMLElement) {
+        return this.classList.contains("ui-popover-painel")
+          ? DOMRect.fromRect({ x: -118, y: 0, width: 328, height: 80 })
+          : DOMRect.fromRect({ x: 0, y: 0, width: 0, height: 0 });
+      });
+    raiz = createRoot(caixa);
+    act(() =>
+      raiz!.render(
+        h(
+          Popover,
+          { rotulo: "Inscritos", gatilho: "372", lado: "direita" },
+          "Origem",
+        ),
+      ),
+    );
+    act(() => caixa.querySelector("button")!.click());
+    const painel = caixa.querySelector<HTMLElement>(".ui-popover-painel");
+    expect(painel?.style.getPropertyValue("--ui-popover-desvio")).toBe("134px");
+    medida.mockRestore();
+    largura.mockRestore();
   });
 });
 
