@@ -6,6 +6,7 @@ import { BarraDeSelecao } from "../src/ui/barra-de-selecao.tsx";
 import { TabelaInfinita as TabelaInfinitaDaBarra } from "../src/ui/tabela-infinita.tsx";
 import { BotoesDeExportacao } from "../src/ui/botoes-de-exportacao.tsx";
 import { Popover, desvioParaCaber } from "../src/ui/popover.tsx";
+import { usarRegraDaTriagem } from "../src/modulos/triagem/usar-regra-da-triagem.ts";
 import {
   act,
   createElement,
@@ -3164,6 +3165,53 @@ bloco("componentes/barra-de-selecao", () => {
   });
 });
 
+bloco("modulos/regra-da-triagem-na-troca-de-edital", () => {
+  /* Salvar a regra e trocar de edital antes da resposta (rede lenta). */
+  let raiz: Root | null = null;
+  afterEach(() => {
+    act(() => raiz?.unmount());
+    raiz = null;
+    document.body.innerHTML = "";
+  });
+
+  it("a regra salva do edital anterior não entra no edital novo", async () => {
+    let responderSalvar: (valor: unknown) => void = () => {};
+    const rpc = vi.fn((nome: string, argumentos: Record<string, unknown>) => {
+      if (nome === "salvar_regra_triagem")
+        return new Promise((pronto) => (responderSalvar = pronto));
+      return Promise.resolve({
+        pode_coordenar: true,
+        regra: { versao: 1, edital: argumentos["p_edital"] },
+      });
+    });
+    let visto: ReturnType<typeof usarRegraDaTriagem> | null = null;
+    function Sonda({ edital }: { edital: string }) {
+      visto = usarRegraDaTriagem(rpc, edital);
+      return null;
+    }
+    const caixa = document.createElement("div");
+    document.body.append(caixa);
+    raiz = createRoot(caixa);
+    await act(async () => raiz!.render(h(Sonda, { edital: "E1" })));
+    const salvar = definido(
+      visto as ReturnType<typeof usarRegraDaTriagem> | null,
+    ).salvar;
+    let salvo: Promise<unknown> = Promise.resolve();
+    await act(async () => {
+      salvo = salvar({ formato: 1 }, "lote por vaga");
+    });
+    await act(async () => raiz!.render(h(Sonda, { edital: "E2" })));
+    await act(async () => {
+      responderSalvar({ regra: { versao: 2, edital: "E1" } });
+      await salvo;
+    });
+    expect(
+      definido(visto as ReturnType<typeof usarRegraDaTriagem> | null).resposta
+        ?.regra,
+    ).toMatchObject({ versao: 1, edital: "E2" });
+  });
+});
+
 bloco("ui/popover-dentro-da-janela", () => {
   let raiz: Root | null = null;
   afterEach(() => {
@@ -3197,15 +3245,12 @@ bloco("ui/popover-dentro-da-janela", () => {
     raiz = createRoot(caixa);
     act(() =>
       raiz!.render(
-        h(
-          Popover,
-          {
-            rotulo: "Inscritos",
-            gatilho: "372",
-            lado: "direita",
-            children: "Origem",
-          },
-        ),
+        h(Popover, {
+          rotulo: "Inscritos",
+          gatilho: "372",
+          lado: "direita",
+          children: "Origem",
+        }),
       ),
     );
     act(() => caixa.querySelector("button")!.click());

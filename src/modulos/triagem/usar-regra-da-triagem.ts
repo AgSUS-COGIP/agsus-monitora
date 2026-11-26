@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   obterRegraDaTriagem,
   salvarRegraDaTriagem,
@@ -35,7 +35,13 @@ export function usarRegraDaTriagem(rpc: RpcDireta, editalId: string) {
     null,
   );
   const [erro, setErro] = useState("");
+  /*
+    O edital à vista. Trocar de edital não remonta a tela: a regra salva do
+    edital anterior que responde depois da troca não entra no do novo.
+  */
+  const editalVigente = useRef(editalId);
   useEffect(() => {
+    editalVigente.current = editalId;
     let vivo = true;
     setResposta(null);
     setErro("");
@@ -64,7 +70,8 @@ export function usarRegraDaTriagem(rpc: RpcDireta, editalId: string) {
           versaoAtual: versao,
           motivo,
         });
-        setResposta((r) => (r ? { ...r, regra } : r));
+        if (editalVigente.current === editalId)
+          setResposta((r) => (r ? { ...r, regra } : r));
         return { ok: true };
       } catch (e) {
         return { ok: false, erro: String((e as Error)?.message || e) };
