@@ -8861,6 +8861,65 @@ bloco("app/pedido-de-mais-acesso", () => {
     });
   });
 
+  it("gravou e a releitura falhou: conta como enviado e a gaveta recarrega", async () => {
+    let leituras = 0;
+    const { cliente, chamadas } = clienteFalso({
+      registrar_solicitacao_acesso: () => ({ data: { ok: true }, error: null }),
+      // A rede cai logo depois de gravar e volta na recarga.
+      obter_minha_solicitacao_acesso: () =>
+        ++leituras === 1
+          ? { data: null, error: { message: "Failed to fetch" } }
+          : { data: PENDENTE, error: null },
+    });
+    const pedido = criarPedidoDeMaisAcesso({ cliente });
+    const campos = {
+      ...PEDIDO_VAZIO,
+      recurso: "calendario",
+      nivel: "editor",
+      justificativa: "Preciso editar o cronograma dos editais da unidade.",
+    };
+    expect(await pedido.enviar(campos)).toBe(true);
+    expect(pedido.obter().erro).toBe("");
+    await vi.waitFor(() =>
+      expect(pedido.obter()).toMatchObject({
+        status: "pronto",
+        pedido: PENDENTE,
+      }),
+    );
+    expect(
+      chamadas.filter(([n]) => n === "registrar_solicitacao_acesso"),
+    ).toHaveLength(1);
+  });
+
+  it("cancelou e a releitura falhou: não diz que falhou e recarrega", async () => {
+    let cancelado = false;
+    let falhar = false;
+    const { cliente } = clienteFalso({
+      cancelar_minha_solicitacao_acesso: () => (
+        (cancelado = true),
+        (falhar = true),
+        { data: { ok: true }, error: null }
+      ),
+      obter_minha_solicitacao_acesso: () => {
+        if (falhar) {
+          falhar = false;
+          return { data: null, error: { message: "Failed to fetch" } };
+        }
+        return {
+          data: { ...PENDENTE, status: cancelado ? "cancelado" : "pendente" },
+          error: null,
+        };
+      },
+    });
+    const pedido = criarPedidoDeMaisAcesso({ cliente });
+    await pedido.carregar();
+    expect(await pedido.cancelar()).toBe(true);
+    expect(pedido.obter().erro).toBe("");
+    await vi.waitFor(() =>
+      expect(pedido.obter().pedido).toMatchObject({ status: "cancelado" }),
+    );
+  });
+
   it("cancela o pendente e relê", async () => {
     let cancelado = false;
     const { cliente } = clienteFalso({

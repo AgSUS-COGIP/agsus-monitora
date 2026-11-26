@@ -90,6 +90,21 @@ export function criarPedidoDeMaisAcesso({
     }
   }
 
+  /*
+    Depois de gravar, a releitura mostra o pedido como o banco o guardou. A
+    falha dela não desfaz a gravação: não vira "não foi possível enviar"
+    (a pessoa enviaria de novo); a gaveta recarrega e, sem rede, mostra o
+    erro com "Tentar de novo".
+  */
+  async function releerDepoisDeGravar(sb: ClienteDoPedido) {
+    try {
+      definir({ pedido: await lerPedido(sb) });
+    } catch (erro) {
+      console.warn("Pedido gravado, mas a releitura falhou:", erro);
+      void carregar();
+    }
+  }
+
   /** Envia o pedido (já validado pela tela). Devolve se deu certo. */
   async function enviar(campos: CamposDoPedidoDeMaisAcesso) {
     const sb = cliente();
@@ -101,7 +116,7 @@ export function criarPedidoDeMaisAcesso({
         argumentosDoPedidoDeMaisAcesso(campos),
       );
       if (error) throw error;
-      definir({ pedido: await lerPedido(sb) });
+      await releerDepoisDeGravar(sb);
       return true;
     } catch (erro) {
       definir({
@@ -121,7 +136,7 @@ export function criarPedidoDeMaisAcesso({
     try {
       const { error } = await sb.rpc(RPC_CANCELAR_PEDIDO);
       if (error) throw error;
-      definir({ pedido: await lerPedido(sb) });
+      await releerDepoisDeGravar(sb);
       return true;
     } catch (erro) {
       definir({
