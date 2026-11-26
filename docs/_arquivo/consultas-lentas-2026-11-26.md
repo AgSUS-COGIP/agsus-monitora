@@ -9,11 +9,57 @@ atualizado: 2026-11-26
 Lote 2 da auditoria de 26/11/2026 ([auditoria das telas](auditoria-telas-2026-11-26.md)): as seis
 RPCs mais lentas do `pg_stat_statements` desde 16/11. **Nada foi aplicado nem rodado no banco.**
 
-**Estado:** diagnóstico **estático**, pela leitura do corpo de cada função e das que ela chama em
-`supabase/esquema-atual.sql` (as linhas citadas são desse arquivo). O `EXPLAIN (ANALYZE, BUFFERS)`
-contra o banco ainda não rodou: o acesso de leitura a produção não foi liberado nesta sessão. Por
-isso o "ganho esperado" abaixo é estimativa; a seção [Para medir](#para-medir) traz as consultas que
-confirmam cada causa e medem o ganho, todas em `begin read only; … rollback;`.
+**Estado:** diagnóstico pela leitura do corpo de cada função e das que ela chama em
+`supabase/esquema-atual.sql` (as linhas citadas são desse arquivo), **conferido no banco em
+26/11/2026** com as consultas de [Para medir](#para-medir), em `begin read only; … rollback;`
+(seção [Medido em 26/11/2026](#medido-em-26112026)). Migrations escritas, **não aplicadas**:
+[Migrations](#migrations).
+
+## Medido em 26/11/2026
+
+PostgreSQL 17.11. `statement_timeout`: `authenticated` 8 s, `anon` 3 s, `service_role` 30 s — os
+piores casos (7,7 a 10,4 s) batem no limite de quem está na tela.
+
+| #   | O quê                                                        | Medido                                                                                                                    | Conclusão                                                                                                                                             |
+| --- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Vagas por cargo (SI): 2.836 vagas, **2.610 nomes distintos** | `FC_CARGO_DA_GRAFIA` por linha: 781 ms; por nome distinto: 595 ms                                                         | Chamar por nome quase não ganha. O plano dela **usa** `IN_TDCARGO_AREA_NOME` (0,18 ms): a causa 2 não se confirma; o custo é a chamada (~0,28 ms)     |
+| 2   | Seleção (SI): 13.887 candidatos                              | `FC_EM_OUTRA_LISTA` numa agregação: 429 ms                                                                                | Custo médio, real                                                                                                                                     |
+| 3   | Fontes que giram a marca (Visão geral e Seleção)             | `TB_PERFIL_USUARIO` 587, `TL_SYNC_SELECAO` 648 (só Seleção), `TB_CANDIDATO_APROVADO` 540, `TB_MONITORAMENTO_INDIGENA` 510 | O perfil é a fonte que mais invalida a Visão geral, e não muda o conteúdo dela: [migration 20261126190200](#migrations)                               |
+| 4   | Classificação (SI): 13.205 análises ativas                   | `FC_NUMERO_EDITAL` por análise: **2.068 ms**; a mesma contagem sem ela: **9 ms**                                          | Causa confirmada: [migration 20261126190000](#migrations)                                                                                             |
+| 5   | Pacote dos aprovados: `NU_DURACAO_MS`                        | **projetos 7.626 ms** (13.549 candidatos), sede 548 ms, SI 218 ms; `FC_MONTAR_APROVADOS_AREA('saude-indigena')` 158 ms    | Projetos 35× mais lento com volume parecido: falta medir a montagem de Projetos (o número inclui o `DELETE` das marcas e a gravação, numa amostra só) |
+| 6   | Status do candidato: `m.id::text = …`                        | 0,14 ms contra 0,05 ms com `uuid`                                                                                         | O cast não é a causa; resta gatilho ou trava                                                                                                          |
+
+## Migrations
+
+Em `supabase/migrations/`, cada uma com rollback, ensaio (termina em `rollback`) e teste em PGlite
+(`tests/repositorio-e-banco.test.ts`, bloco `consultas-lentas-no-banco`: hoje × migrada × migrada +
+rollback, as mesmas respostas, o corpo de volta pelo md5). Guarda: o md5 do `prosrc` do retrato
+(`md5(replace(prosrc, E'\r', ''))`). Ordem de ganho:
+
+1. **`20261126190000_editais_da_classificacao_sem_funcao_por_analise`** (4): `an` conta por número
+   de edital distinto com `FC_NUMERO_EDITAL(edital) = número` como condição do índice que já
+   existe; a função não roda mais por análise. Mesma saída, sem índice novo. Esperado: de ~2,1 s
+   para a casa da contagem sem a função (o ensaio traz o `EXPLAIN` para medir).
+2. **`20261126190200_marca_das_leituras_sem_o_perfil_dos_outros`** (3): `TB_PERFIL_USUARIO` sai das
+   fontes da Visão geral e da Seleção (coluna `DS_FONTES_PELA_PESSOA` em `TD_LEITURA_POR_MARCA`) e o
+   recorte de quem chama (`FC_EDITAIS_VISIVEIS`) entra na chave da marca. Os pacotes só leem o
+   perfil pela permissão, conferida a cada chamada. Esperado: ~1/3 menos montagens completas da
+   Visão geral (587 de ~1.740 mudanças das fontes dela).
+3. (1) vagas por cargo e (5) Projetos: [Próximos passos](#próximos-passos).
+
+## Próximos passos
+
+- **(1) vagas por cargo:** com 2.610 nomes distintos em 2.836, o ganho só vem de tirar a chamada
+  da função: o cargo de cada nome por junção da grafia normalizada com os cargos e apelidos da
+  área (uma consulta só, mesma regra de `FC_CARGO_DA_GRAFIA`). Falta medir o custo de
+  `FC_NORMALIZAR_GRAFIA_CARGO` sozinha por linha, que vira o piso dessa forma; se for alto, o
+  caminho é guardar o `CO_CARGO` resolvido na vaga (gatilho ou robô da carga).
+- **(5) Projetos:** medir `explain (analyze, buffers) select * from
+private."FC_MONTAR_APROVADOS_AREA"('projetos', null)` e as contagens por área (listas,
+  candidatos, cargos, códigos) antes de propor.
+- **(3), o resto da marca:** `TL_SYNC_SELECAO` (648) gira a da Seleção; vale ver se as colunas de
+  andamento da carga podem ir para `TD_COLUNA_SEM_MARCA` (a Seleção só lê a última carga
+  concluída).
 
 | RPC                                             | Média | Pior   | Causa principal (certeza no código)                                             |
 | ----------------------------------------------- | ----- | ------ | ------------------------------------------------------------------------------- |
