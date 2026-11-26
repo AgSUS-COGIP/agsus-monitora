@@ -686,37 +686,52 @@ export function criarEstadoDaVisaoGeral({
     /*
       O Exportar: a tabela como está (recorte e colunas à vista), em Excel
       ou PDF (src/lib/visao-geral/tabela-para-exportar.ts, baixado só aqui).
-      Sem recorte, ele já é a área inteira; recorte vazio não exporta.
+      Sem recorte, ele já é a área inteira; recorte vazio não exporta. A
+      falha (versão nova publicada, arquivo que não se gera) vira aviso: o
+      botão só volta de "Gerando…", e sem isto nada diria o porquê.
     */
     async exportar(formato) {
-      const { filtradas, area, colunas } = obterInstantaneo();
-      if (!filtradas.length) return;
-      const [
-        { tabelaDaVisaoGeral },
-        { arquivoDaTabela, nomeDoArquivoExportado },
-      ] = await Promise.all([
-        import("../../lib/visao-geral/tabela-para-exportar.ts"),
-        import("../../lib/base/exportacao-da-tabela.ts"),
-      ]).catch((erro: unknown) => {
-        throw erroDeVersaoNova(erro);
-      });
-      const quando = new Date(agora());
-      const rotulo = nomeDaArea(area) || area;
-      const arquivo = await arquivoDaTabela(
-        formato,
-        tabelaDaVisaoGeral(filtradas, colunas, rotulo),
-        quando,
-      );
-      baixar(
-        arquivo.bytes,
-        nomeDoArquivoExportado(
-          ["visao-geral", rotulo, hojeEmBrasilia(quando)],
-          arquivo.extensao,
-        ),
-        arquivo.tipo,
-      );
+      try {
+        await gerarExportacao(formato);
+      } catch (erro) {
+        console.warn("Falha ao exportar a Visão geral:", erro);
+        aviso(
+          erro instanceof Error && erro.message
+            ? `Não foi possível exportar: ${erro.message}`
+            : "Não foi possível exportar. Tente de novo.",
+        );
+      }
     },
   };
+
+  async function gerarExportacao(formato: "excel" | "pdf") {
+    const { filtradas, area, colunas } = obterInstantaneo();
+    if (!filtradas.length) return;
+    const [
+      { tabelaDaVisaoGeral },
+      { arquivoDaTabela, nomeDoArquivoExportado },
+    ] = await Promise.all([
+      import("../../lib/visao-geral/tabela-para-exportar.ts"),
+      import("../../lib/base/exportacao-da-tabela.ts"),
+    ]).catch((erro: unknown) => {
+      throw erroDeVersaoNova(erro);
+    });
+    const quando = new Date(agora());
+    const rotulo = nomeDaArea(area) || area;
+    const arquivo = await arquivoDaTabela(
+      formato,
+      tabelaDaVisaoGeral(filtradas, colunas, rotulo),
+      quando,
+    );
+    baixar(
+      arquivo.bytes,
+      nomeDoArquivoExportado(
+        ["visao-geral", rotulo, hojeEmBrasilia(quando)],
+        arquivo.extensao,
+      ),
+      arquivo.tipo,
+    );
+  }
 }
 
 /*

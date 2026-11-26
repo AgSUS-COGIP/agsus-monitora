@@ -8775,6 +8775,36 @@ bloco("lib/pedido-de-mais-acesso", () => {
   });
 });
 
+bloco("modulos/visao-geral-exportar-com-falha", () => {
+  /* O Exportar da Visão geral: a falha aparece como aviso, sem rejeição solta. */
+  it("se o arquivo não sai, avisa o motivo e não rejeita", async () => {
+    const base = obterDadosDoMonitoramento();
+    const dados = {
+      assinar: () => () => {},
+      obter: () => ({
+        ...base,
+        carregado: true,
+        areaAtual: "saude-indigena",
+        linhas: [{ id: 1, unidade: "DSEI Xingu", CO_AREA: "saude-indigena" }],
+      }),
+    };
+    const estado = criarEstadoDaVisaoGeral({
+      dados,
+      armazenamento: null,
+      baixar: () => {
+        throw new Error("O navegador bloqueou o download.");
+      },
+    });
+    const aviso = vi.fn();
+    estado.definirAviso(aviso);
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    await expect(estado.exportar("excel")).resolves.toBeUndefined();
+    expect(aviso).toHaveBeenCalledWith(
+      "Não foi possível exportar: O navegador bloqueou o download.",
+    );
+  });
+});
+
 bloco("app/pedido-de-mais-acesso", () => {
   /* O estado do pedido na gaveta Meus acessos, com um cliente falso. */
   type Chamada = [string, Record<string, unknown> | undefined];
