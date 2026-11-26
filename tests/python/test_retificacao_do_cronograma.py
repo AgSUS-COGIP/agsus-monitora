@@ -299,3 +299,80 @@ class TestPdf:
         r = ler(numero="", objeto="", titulo="COMUNICADO EXTERNO", leia=[], onde=[])
         assert r["leia_se"] == []
         assert 'Não achei a tabela do "Leia-se".' in r["avisos"]
+
+
+# ── Retificação dos anexos lida pela importação (extrair) ───────────────────
+
+
+def retificacao_dos_anexos_pdf():
+    """Bytes de uma "1ª Retificação dos Anexos I e II" sintética: cronograma e
+    quadro de vagas duas vezes, a antiga em "Onde se lê:" e a nova em "Leia-se:"."""
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfgen import canvas
+
+    saida = io.BytesIO()
+    c = canvas.Canvas(saida, pagesize=A4)
+    largura, altura = A4
+
+    def texto(y, conteudo, fonte="Helvetica"):
+        c.setFont(fonte, 10)
+        c.drawString(50, y, conteudo)
+        return y - 16
+
+    def tabela(y, linhas, colunas):
+        for linha in linhas:
+            c.rect(colunas[0], y - 16, colunas[-1] - colunas[0], 16)
+            for x, valor in zip(colunas, linha, strict=False):
+                c.line(x, y - 16, x, y)
+                c.setFont("Helvetica", 8)
+                c.drawString(x + 3, y - 12, valor)
+            y -= 16
+        return y - 12
+
+    crono = [50, 380, 540]
+    quadro = [50, 260, 360, 460, 540]
+
+    def anexos(y, inscricao, quadro_linhas):
+        y = texto(y, "ANEXO I")
+        y = tabela(
+            y,
+            [("Atividades", "Datas prováveis"), ("Publicação do Edital", "21/10"), ("Período de inscrição", inscricao)],
+            crono,
+        )
+        y = texto(y, "ANEXO II")
+        return tabela(y, [("Vagas", "Ampla Concorrência", "Pretos e Pardos", "Total"), *quadro_linhas], quadro)
+
+    y = altura - 50
+    y = texto(y, "1ª RETIFICAÇÃO DOS ANEXOS I E II", "Helvetica-Bold")
+    y = texto(y, f"PROCESSO SELETIVO SIMPLIFICADO – {UNIDADE} – EDITAL Nº 120/2026", "Helvetica-Bold")
+    y = texto(y, "Onde se lê:", "Helvetica-Bold")
+    y = anexos(y, "28/10 a 01/11", [("Agente de Endemias", "CR", "CR", "CR"), ("Analista Técnico", "1", "1", "2+CR")])
+    y = texto(y, "Leia-se:", "Helvetica-Bold")
+    y = anexos(
+        y,
+        "19 a 23/11",
+        [
+            ("Agente de Endemias", "1", "CR", "1+CR"),
+            ("Analista Técnico", "CR", "CR", "CR"),
+            ("Monitor de Água", "1", "1", "2+CR"),
+        ],
+    )
+    texto(y, "As demais cláusulas e condições do Edital permanecem inalteradas.")
+    c.save()
+    return saida.getvalue()
+
+
+class TestRetificacaoDosAnexosNaImportacao:
+    def test_so_as_tabelas_do_leia_se(self):
+        r = ax.extrair(retificacao_dos_anexos_pdf())
+        assert r["edital"] == "120/2026"
+        assert [(e["atividade"], e["data_inicio"]) for e in r["cronograma"]] == [
+            ("Publicação do Edital", "2026-10-21"),
+            ("Período de inscrição", "2026-11-19"),
+        ]
+        assert [(v["cargo"], v["vagas_imediatas"], v["cadastro_reserva"]) for v in r["vagas"]] == [
+            ("Agente de Endemias", 1, True),
+            ("Analista Técnico", 0, True),
+            ("Monitor de Água", 2, True),
+        ]
+        assert any("Leia-se" in a for a in r["avisos"])
