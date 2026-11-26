@@ -1948,6 +1948,8 @@ th[aria-sort="descending"] .ui-ordenar i {
   color: var(--text-primary);
   font-size: var(--text-body-sm);
   text-align: left;
+  /* O desvio que o popover.tsx mede para o painel caber na janela. */
+  translate: var(--ui-popover-desvio, 0) 0;
   animation: ui-popover-entrar var(--duration-fast, 120ms) var(--ease-standard);
 }
 .ui-popover-painel[data-lado="direita"] {

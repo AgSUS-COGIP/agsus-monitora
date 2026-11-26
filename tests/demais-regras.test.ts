@@ -8895,6 +8895,36 @@ bloco("lib/pedido-de-mais-acesso", () => {
   });
 });
 
+bloco("modulos/visao-geral-exportar-com-falha", () => {
+  /* O Exportar da Visão geral: a falha aparece como aviso, sem rejeição solta. */
+  it("se o arquivo não sai, avisa o motivo e não rejeita", async () => {
+    const base = obterDadosDoMonitoramento();
+    const dados = {
+      assinar: () => () => {},
+      obter: () => ({
+        ...base,
+        carregado: true,
+        areaAtual: "saude-indigena",
+        linhas: [{ id: 1, unidade: "DSEI Xingu", CO_AREA: "saude-indigena" }],
+      }),
+    };
+    const estado = criarEstadoDaVisaoGeral({
+      dados,
+      armazenamento: null,
+      baixar: () => {
+        throw new Error("O navegador bloqueou o download.");
+      },
+    });
+    const aviso = vi.fn();
+    estado.definirAviso(aviso);
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    await expect(estado.exportar("excel")).resolves.toBeUndefined();
+    expect(aviso).toHaveBeenCalledWith(
+      "Não foi possível exportar: O navegador bloqueou o download.",
+    );
+  });
+});
+
 bloco("app/pedido-de-mais-acesso", () => {
   /* O estado do pedido na gaveta Meus acessos, com um cliente falso. */
   type Chamada = [string, Record<string, unknown> | undefined];
@@ -8979,6 +9009,65 @@ bloco("app/pedido-de-mais-acesso", () => {
       enviando: false,
       erro: "Não foi possível enviar o pedido: Você já tem esse nível (ou mais) neste módulo.",
     });
+  });
+
+  it("gravou e a releitura falhou: conta como enviado e a gaveta recarrega", async () => {
+    let leituras = 0;
+    const { cliente, chamadas } = clienteFalso({
+      registrar_solicitacao_acesso: () => ({ data: { ok: true }, error: null }),
+      // A rede cai logo depois de gravar e volta na recarga.
+      obter_minha_solicitacao_acesso: () =>
+        ++leituras === 1
+          ? { data: null, error: { message: "Failed to fetch" } }
+          : { data: PENDENTE, error: null },
+    });
+    const pedido = criarPedidoDeMaisAcesso({ cliente });
+    const campos = {
+      ...PEDIDO_VAZIO,
+      recurso: "calendario",
+      nivel: "editor",
+      justificativa: "Preciso editar o cronograma dos editais da unidade.",
+    };
+    expect(await pedido.enviar(campos)).toBe(true);
+    expect(pedido.obter().erro).toBe("");
+    await vi.waitFor(() =>
+      expect(pedido.obter()).toMatchObject({
+        status: "pronto",
+        pedido: PENDENTE,
+      }),
+    );
+    expect(
+      chamadas.filter(([n]) => n === "registrar_solicitacao_acesso"),
+    ).toHaveLength(1);
+  });
+
+  it("cancelou e a releitura falhou: não diz que falhou e recarrega", async () => {
+    let cancelado = false;
+    let falhar = false;
+    const { cliente } = clienteFalso({
+      cancelar_minha_solicitacao_acesso: () => (
+        (cancelado = true),
+        (falhar = true),
+        { data: { ok: true }, error: null }
+      ),
+      obter_minha_solicitacao_acesso: () => {
+        if (falhar) {
+          falhar = false;
+          return { data: null, error: { message: "Failed to fetch" } };
+        }
+        return {
+          data: { ...PENDENTE, status: cancelado ? "cancelado" : "pendente" },
+          error: null,
+        };
+      },
+    });
+    const pedido = criarPedidoDeMaisAcesso({ cliente });
+    await pedido.carregar();
+    expect(await pedido.cancelar()).toBe(true);
+    expect(pedido.obter().erro).toBe("");
+    await vi.waitFor(() =>
+      expect(pedido.obter().pedido).toMatchObject({ status: "cancelado" }),
+    );
   });
 
   it("cancela o pendente e relê", async () => {

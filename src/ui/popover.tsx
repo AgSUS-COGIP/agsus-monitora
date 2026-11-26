@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { classes } from "./classes.ts";
 
@@ -20,6 +20,25 @@ export type PropriedadesDoPopover = {
   /** O conteúdo; a função recebe `fechar` para quem fecha ao escolher. */
   children: ReactNode | ((fechar: () => void) => ReactNode);
 };
+
+/* A folga mínima entre o painel e a borda da janela (o `--space-4`). */
+const FOLGA_DA_JANELA = 16;
+
+/**
+ * Quanto o painel precisa andar na horizontal para caber na janela, com a
+ * folga das bordas: positivo para a direita, negativo para a esquerda.
+ */
+export function desvioParaCaber(
+  esquerda: number,
+  direita: number,
+  largura: number,
+  folga = FOLGA_DA_JANELA,
+): number {
+  if (esquerda < folga) return folga - esquerda;
+  if (direita > largura - folga)
+    return Math.max(folga - esquerda, largura - folga - direita);
+  return 0;
+}
 
 /*
   Popover: um botão pequeno que abre um painel por cima (informações, a
@@ -43,6 +62,7 @@ export function Popover({
   const [aberto, setAberto] = useState(false);
   const raiz = useRef<HTMLDivElement>(null);
   const botao = useRef<HTMLButtonElement>(null);
+  const painel = useRef<HTMLDivElement>(null);
   const id = useId();
   const fechar = () => setAberto(false);
 
@@ -53,6 +73,22 @@ export function Popover({
     };
     document.addEventListener("mousedown", fora);
     return () => document.removeEventListener("mousedown", fora);
+  }, [aberto]);
+
+  /*
+    O painel abre preso ao botão; perto da borda (o número no cartão, a
+    375px), ele sairia da janela. Ao abrir, mede e anda o que falta.
+  */
+  useLayoutEffect(() => {
+    const elemento = painel.current;
+    if (!aberto || !elemento) return;
+    const { left, right } = elemento.getBoundingClientRect();
+    const largura =
+      document.documentElement.clientWidth || window.innerWidth || 0;
+    if (!largura) return;
+    const desvio = desvioParaCaber(left, right, largura);
+    if (desvio)
+      elemento.style.setProperty("--ui-popover-desvio", `${desvio}px`);
   }, [aberto]);
 
   return (
@@ -84,6 +120,7 @@ export function Popover({
       {aberto ? (
         <div
           className="ui-popover-painel"
+          ref={painel}
           id={id}
           role="region"
           aria-label={rotulo}

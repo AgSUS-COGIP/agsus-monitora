@@ -33,6 +33,7 @@ import type {
   LequeDoMapa,
 } from "./tipos-do-leaflet.ts";
 import { leafletDoMapa } from "./tipos-do-leaflet.ts";
+import { pedidoSobDemanda } from "../../lib/carga/pedido-sob-demanda.ts";
 export interface ConteudoDoBalao {
   titulo?: string;
   linhas?: readonly string[];
@@ -385,15 +386,12 @@ export function criarMapaDoBrasil(
 
 /*
   Os contornos (~140 kB de GeoJSON) saem do pacote principal: chegam sob
-  demanda, uma vez, quando o primeiro mapa os desenha.
+  demanda, uma vez, quando o primeiro mapa os desenha. Se o download falhar,
+  o próximo desenho pede de novo.
 */
-let contornos: Promise<
-  typeof import("../../lib/mapas/mapa-saude-indigena/contornos.js")
-> | null = null;
-export function carregarContornos() {
-  contornos ??= import("../../lib/mapas/mapa-saude-indigena/contornos.js");
-  return contornos;
-}
+export const carregarContornos = pedidoSobDemanda(
+  () => import("../../lib/mapas/mapa-saude-indigena/contornos.js"),
+);
 
 /* Contorno do Brasil e divisas das UFs: referência, sem clique. */
 export async function desenharContornos(

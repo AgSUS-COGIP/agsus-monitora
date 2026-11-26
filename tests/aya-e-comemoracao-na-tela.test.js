@@ -2399,6 +2399,32 @@ bloco("modulos/aya", async () => {
       expect(sessionStorage.getItem("agsus_aya_conversa_v1")).toBe("[]");
     });
 
+    it("resposta que chega depois de sair do sistema não entra na conversa nem na aba", async () => {
+      let responder;
+      perguntar = vi.fn(
+        () =>
+          new Promise((resolver) => {
+            responder = resolver;
+          }),
+      );
+      await montar();
+      await abrirPainel();
+      await perguntarNoCampo("Quantos inscritos tem o edital?");
+      // Enquanto pensa, "Limpar conversa" fica desativado: só a saída corre.
+      expect(botao("Limpar conversa").disabled).toBe(true);
+      await act(async () => esquecerConversaDaAya());
+      await act(async () =>
+        responder({
+          answer: "São 372 inscritos.",
+          provider: "curated-official",
+          sources: [],
+        }),
+      );
+      expect($('[role="log"]').textContent).toBe("");
+      expect(sessionStorage.getItem("agsus_aya_conversa_v1")).toBe("[]");
+      expect($("textarea").readOnly).toBe(false);
+    });
+
     it("Limpar conversa apaga a conversa e volta o Aprender", async () => {
       await montar();
       await abrirPainel();

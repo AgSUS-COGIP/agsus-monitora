@@ -3010,6 +3010,24 @@ bloco("app/navegacao", () => {
       expect(history.length).toBe(tamanho);
     });
 
+    it("link para tela proibida em outra área: a tela de entrada abre na área do endereço", () => {
+      history.replaceState(null, "", "/sede/recursos");
+      const { navegacao, avisar } = criar({
+        obterPerfil: () => ({
+          ...SO_EDITAIS,
+          areas: ["saude-indigena", "sede"],
+        }),
+      });
+      entrar(navegacao);
+      expect(avisar).toHaveBeenCalledWith(
+        "Sem permissão para analisar recursos.",
+        "warn",
+      );
+      expect(ativas()).toEqual(["page-nucleo"]);
+      expect(obterDadosDoMonitoramento().areaAtual).toBe("sede");
+      expect(endereco()).toBe("/sede/editais");
+    });
+
     it("endereço que não é tela: avisa e abre a tela de entrada", () => {
       history.replaceState(null, "", "/sede/nao-existe");
       const { navegacao, avisar } = criar();
@@ -5575,6 +5593,46 @@ bloco("app/sessao", () => {
       expect(estado.fase).toBe(FASES.CONECTADO);
       expect(estado.usuario?.id).toBe("u1");
       expect(sistema.encerrarEspera).toHaveBeenCalled();
+    });
+
+    it("F5: o SIGNED_IN da sessão restaurada no arranque entra como boot, não como login", async () => {
+      const cliente = clienteFalso({ guardada: sessaoDe("u1") });
+      const sistema = sistemaFalso({
+        // O Supabase restaura a sessão e emite SIGNED_IN enquanto a configuração carrega.
+        carregarConfiguracao: vi.fn(async () => {
+          cliente.emitir("SIGNED_IN", sessaoDe("u1"));
+          await proximoCiclo();
+          await proximoCiclo();
+        }),
+      });
+      const { sessao } = montar({ cliente, sistema });
+      await sessao.iniciar();
+      await vi.waitFor(() => expect(sessao.obter().fase).toBe(FASES.CONECTADO));
+      expect(sistema.abrir).toHaveBeenCalledTimes(1);
+      expect(sistema.abrir).toHaveBeenCalledWith(
+        expect.objectContaining({ origem: "boot" }),
+      );
+    });
+
+    it("volta do Google com ?auth=google: o SIGNED_IN do arranque é o login", async () => {
+      const cliente = clienteFalso({ guardada: sessaoDe("u1") });
+      const sistema = sistemaFalso({
+        carregarConfiguracao: vi.fn(async () => {
+          cliente.emitir("SIGNED_IN", sessaoDe("u1"));
+          await proximoCiclo();
+        }),
+      });
+      const { sessao } = montar({
+        cliente,
+        sistema,
+        janela: janelaFalsa({ search: "?auth=google" }),
+      });
+      await sessao.iniciar();
+      await vi.waitFor(() => expect(sessao.obter().fase).toBe(FASES.CONECTADO));
+      expect(sistema.abrir).toHaveBeenCalledTimes(1);
+      expect(sistema.abrir).toHaveBeenCalledWith(
+        expect.objectContaining({ origem: "oauth_callback" }),
+      );
     });
 
     it("o skeleton e a cópia (aoVerificar) começam antes da consulta do perfil", async () => {

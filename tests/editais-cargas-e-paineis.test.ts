@@ -1,5 +1,6 @@
 // @vitest-environment node
 import { bloco } from "./apoio/bloco.ts";
+import { pedidoSobDemanda } from "../src/lib/carga/pedido-sob-demanda.ts";
 import { readFileSync, existsSync, readdirSync } from "node:fs";
 import {
   describe,
@@ -3550,6 +3551,36 @@ bloco("lib/aprovados-por-edital", () => {
     it("concluído sem as listas carregadas: sem aviso", () => {
       expect(avisoDaListaDoEdital(null, "12", "Concluído")).toBeNull();
     });
+  });
+});
+
+bloco("lib/pedido-sob-demanda", () => {
+  /*
+    O pedaço baixado sob demanda (editor de coordenadas, mascote, contornos
+    do mapa): falhou uma vez, o próximo pedido baixa de novo; deu certo, não
+    baixa mais.
+  */
+  it("esquece a promessa rejeitada e baixa de novo no próximo pedido", async () => {
+    const modulo = { pronto: true };
+    const importar = vi
+      .fn<() => Promise<typeof modulo>>()
+      .mockRejectedValueOnce(
+        new TypeError("Failed to fetch dynamically imported module"),
+      )
+      .mockResolvedValue(modulo);
+    const carregar = pedidoSobDemanda(importar);
+    await expect(carregar()).rejects.toThrow("Failed to fetch");
+    await expect(carregar()).resolves.toBe(modulo);
+    await expect(carregar()).resolves.toBe(modulo);
+    expect(importar).toHaveBeenCalledTimes(2);
+  });
+
+  it("pedidos ao mesmo tempo dividem um download só", async () => {
+    const importar = vi.fn(async () => ({ pronto: true }));
+    const carregar = pedidoSobDemanda(importar);
+    const [a, b] = await Promise.all([carregar(), carregar()]);
+    expect(a).toBe(b);
+    expect(importar).toHaveBeenCalledTimes(1);
   });
 });
 

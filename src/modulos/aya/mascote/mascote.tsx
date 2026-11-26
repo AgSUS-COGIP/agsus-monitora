@@ -65,17 +65,19 @@ export const VIEWBOX = "0 0 200 190";
 */
 type ModuloDoDesenho = typeof import("./desenho.tsx");
 let desenho: ModuloDoDesenho | null = null;
-let carregamento: Promise<ModuloDoDesenho> | null = null;
 const ouvintesDoDesenho = new Set<() => void>();
+/* A falha do download é esquecida: a próxima arara montada pede de novo. */
+const baixarDesenho = pedidoSobDemanda(() => import("./desenho.tsx"));
 
 /** Carrega o desenho (uma vez); os testes e a prévia podem esperar por ele. */
 export function carregarDesenhoDaMascote() {
-  carregamento ??= import("./desenho.tsx").then((modulo) => {
-    desenho = modulo;
-    for (const ouvinte of [...ouvintesDoDesenho]) ouvinte();
+  return baixarDesenho().then((modulo) => {
+    if (desenho !== modulo) {
+      desenho = modulo;
+      for (const ouvinte of [...ouvintesDoDesenho]) ouvinte();
+    }
     return modulo;
   });
-  return carregamento;
 }
 
 function assinarDesenho(ouvinte: () => void) {
@@ -90,17 +92,18 @@ const obterDesenho = () => desenho;
 /* A arara ilustrada (ilustrada.tsx, com o CSS e as imagens): outro pedaço, carregado do mesmo jeito. */
 type ModuloDaIlustracao = typeof import("./ilustrada.tsx");
 let ilustracao: ModuloDaIlustracao | null = null;
-let carregamentoDaIlustracao: Promise<ModuloDaIlustracao> | null = null;
 const ouvintesDaIlustracao = new Set<() => void>();
+const baixarIlustracao = pedidoSobDemanda(() => import("./ilustrada.tsx"));
 
 /** Carrega a arara ilustrada (uma vez); os testes podem esperar por ela. */
 export function carregarIlustracaoDaMascote() {
-  carregamentoDaIlustracao ??= import("./ilustrada.tsx").then((modulo) => {
-    ilustracao = modulo;
-    for (const ouvinte of [...ouvintesDaIlustracao]) ouvinte();
+  return baixarIlustracao().then((modulo) => {
+    if (ilustracao !== modulo) {
+      ilustracao = modulo;
+      for (const ouvinte of [...ouvintesDaIlustracao]) ouvinte();
+    }
     return modulo;
   });
-  return carregamentoDaIlustracao;
 }
 
 function assinarIlustracao(ouvinte: () => void) {
@@ -113,6 +116,7 @@ function assinarIlustracao(ouvinte: () => void) {
 const obterIlustracao = () => ilustracao;
 const semModulo = () => null;
 import { assinarPedidoDaAya, obterPedidoDaAya } from "./estado.ts";
+import { pedidoSobDemanda } from "../../../lib/carga/pedido-sob-demanda.ts";
 import "./mascote.css";
 
 /* Abaixo disto (px), a versão simples (contornos chapados); o rosto, de perto, nunca é simples. */

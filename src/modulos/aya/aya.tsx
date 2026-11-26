@@ -884,11 +884,19 @@ export function Aya({
   const [revelando, setRevelando] = useState("");
   const [chamadoPara, setChamadoPara] = useState("");
   const [semResposta, setSemResposta] = useState(() => lerSemResposta(janela));
+  /*
+    Cada conversa tem uma rodada; "Limpar conversa" e a saída do sistema
+    começam outra. A resposta que chega de uma rodada antiga é descartada:
+    não entra na conversa limpa nem é guardada na aba.
+  */
+  const rodada = useRef(0);
   // Saída do sistema (esquecerConversaDaAya): a conversa na tela sai também.
   const conversaVista = useRef(local.conversa);
   useEffect(() => {
     if (conversaVista.current === local.conversa) return;
     conversaVista.current = local.conversa;
+    rodada.current += 1;
+    setOcupada(false);
     setMensagens([]);
     setTexto("");
     setChamadoPara("");
@@ -1112,7 +1120,9 @@ export function Aya({
   }, [janela]);
 
   function limparConversa() {
+    rodada.current += 1;
     esquecerConversa(janela);
+    setOcupada(false);
     setMensagens([]);
     setChamadoPara("");
     setRevelando("");
@@ -1180,6 +1190,7 @@ export function Aya({
     ]);
     setTexto("");
     setOcupada(true);
+    const minhaRodada = rodada.current;
     let resultado: RespostaDoPainel | null;
     try {
       resultado = await perguntar({
@@ -1200,6 +1211,7 @@ export function Aya({
         unavailable: true,
       };
     }
+    if (minhaRodada !== rodada.current) return;
     const id = novoId();
     setMensagens((atuais) => [
       ...atuais,
