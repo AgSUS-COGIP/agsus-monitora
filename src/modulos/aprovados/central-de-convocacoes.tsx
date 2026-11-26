@@ -1,8 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
 import { irParaTela } from "../../app/ir-para-tela.ts";
 import { carregarTela } from "../../app/registro-das-telas.ts";
 import type { ControladoresDasTelas } from "../../app/registro-das-telas.ts";
+import {
+  assinarDadosDoMonitoramento,
+  obterDadosDoMonitoramento,
+} from "../../componentes/dados-do-monitoramento.ts";
 import { usarPaginaLigada } from "../../componentes/usar-pagina-ligada.ts";
 import type { TipoDaCentralDeConvocacoes } from "../../lib/aprovados/central-de-convocacoes.ts";
 import { Aviso, Carregando, Segmentado } from "../../ui/index.ts";
@@ -30,7 +34,9 @@ const TIPOS_DE_CONVOCACAO = [
   (`convocacaoParaLeitura`, com a loja daquela tela): nada de estado
   próprio aqui. A tela baixa sob demanda só quando se escolhe "Para
   entrevistas"; `render()` é o da abertura dela (área atual, editais e o
-  edital aberto ou lembrado), repetido a cada vez que se volta a esta visão.
+  edital aberto ou lembrado), repetido a cada vez que se volta a esta visão
+  e a cada troca de área do app: a Lista de aprovados fica montada, e sem
+  isso a convocação continuaria a da área anterior.
 */
 type ControladorDaConducao = ControladoresDasTelas["conduzir-entrevistas"];
 type LeituraDasEntrevistas =
@@ -47,6 +53,10 @@ function usarConvocacaoDasEntrevistas(ligada: boolean): LeituraDasEntrevistas {
   const [leitura, setLeitura] = useState<LeituraDasEntrevistas>({
     tipo: "carregando",
   });
+  const area = useSyncExternalStore(
+    assinarDadosDoMonitoramento,
+    () => obterDadosDoMonitoramento().areaAtual,
+  );
   useEffect(() => {
     if (!ligada) return undefined;
     let viva = true;
@@ -69,7 +79,7 @@ function usarConvocacaoDasEntrevistas(ligada: boolean): LeituraDasEntrevistas {
     return () => {
       viva = false;
     };
-  }, [ligada]);
+  }, [ligada, area]);
   return leitura;
 }
 
