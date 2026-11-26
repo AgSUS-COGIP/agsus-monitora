@@ -15,14 +15,14 @@ contra o banco ainda não rodou: o acesso de leitura a produção não foi liber
 isso o "ganho esperado" abaixo é estimativa; a seção [Para medir](#para-medir) traz as consultas que
 confirmam cada causa e medem o ganho, todas em `begin read only; … rollback;`.
 
-| RPC | Média | Pior | Causa principal (certeza no código) |
-| --- | --- | --- | --- |
-| `listar_vagas_por_cargo_da_visao_geral` | 2,8 s | 9,8 s | `FC_CARGO_DA_GRAFIA` por linha de vaga e de quadro, e ela sem usar índice |
-| `get_selecao_da_area_se_mudou` | 2,7 s | 7,7 s | `FC_EM_OUTRA_LISTA` ~2× por candidato, em duas varreduras iguais dos candidatos |
-| `listar_acompanhamento_da_visao_geral_se_mudou` | 1,3 s | 7,9 s | a marca muda muito (pacote remontado) + `FC_EM_OUTRA_LISTA` por contratado |
-| `listar_editais_classificacao` | 1,3 s | 8 s | `FC_NUMERO_EDITAL` (regex) por análise ativa da área, com leitura no heap |
-| `abrir_lista_aprovados` | 0,9 s | 10,4 s | remonta o pacote da área **antes** de comparar a versão |
-| `alterar_status_candidato_aprovado` | 0,5 s | 6,4 s | gatilhos e recálculos em cascata; pior caso: provável espera por trava |
+| RPC                                             | Média | Pior   | Causa principal (certeza no código)                                             |
+| ----------------------------------------------- | ----- | ------ | ------------------------------------------------------------------------------- |
+| `listar_vagas_por_cargo_da_visao_geral`         | 2,8 s | 9,8 s  | `FC_CARGO_DA_GRAFIA` por linha de vaga e de quadro, e ela sem usar índice       |
+| `get_selecao_da_area_se_mudou`                  | 2,7 s | 7,7 s  | `FC_EM_OUTRA_LISTA` ~2× por candidato, em duas varreduras iguais dos candidatos |
+| `listar_acompanhamento_da_visao_geral_se_mudou` | 1,3 s | 7,9 s  | a marca muda muito (pacote remontado) + `FC_EM_OUTRA_LISTA` por contratado      |
+| `listar_editais_classificacao`                  | 1,3 s | 8 s    | `FC_NUMERO_EDITAL` (regex) por análise ativa da área, com leitura no heap       |
+| `abrir_lista_aprovados`                         | 0,9 s | 10,4 s | remonta o pacote da área **antes** de comparar a versão                         |
+| `alterar_status_candidato_aprovado`             | 0,5 s | 6,4 s  | gatilhos e recálculos em cascata; pior caso: provável espera por trava          |
 
 ## O que vale para todas
 
@@ -36,7 +36,7 @@ confirmam cada causa e medem o ganho, todas em `begin read only; … rollback;`.
 - **Os piores casos ficam colados em 8 s**, o `statement_timeout` padrão do papel `authenticated`
   na Supabase (conferir o valor atual). O `pg_stat_statements` só conta o que terminou: pode haver
   chamadas canceladas por tempo que nem aparecem. Conferir nos logs: `canceling statement due to
-  statement timeout`.
+statement timeout`.
 - **Nenhuma correção muda assinatura de RPC pública** (o `src/lib/rpc-contrato.ts` não muda), salvo
   as opções B e C de `abrir_lista_aprovados`, marcadas.
 
@@ -55,7 +55,7 @@ A tela inicial (Visão geral) chama com os ids de todos os editais da área (~22
   da tabela, por linha de vaga**.
 - **Correção (sem índice novo, mesma saída):**
   - (a) na RPC, resolver o cargo **uma vez por grafia distinta**: um `jsonb_object_agg(nome,
-    FC_CARGO_DA_GRAFIA(nome, v_area))` sobre a `union` dos `NO_CARGO` não nulos das vagas e do
+FC_CARGO_DA_GRAFIA(nome, v_area))` sobre a `union` dos `NO_CARGO` não nulos das vagas e do
     quadro, e `(v_cargos ->> s."NO_CARGO")::integer` nas linhas 33719 e 33731;
   - (b) em `FC_CARGO_DA_GRAFIA`, separar os ramos `p_area is not null` / `p_area is null` (union de
     quatro ramos), para `CO_AREA = p_area` e a grafia normalizada do parâmetro casarem com os dois
@@ -121,13 +121,13 @@ A tela inicial (Visão geral) chama com os ids de todos os editais da área (~22
   - índice com `INCLUDE (edital)`, criado com `CONCURRENTLY` (fora de transação) e, conferido o
     plano, sai o antigo:
     `CREATE INDEX CONCURRENTLY "IN_ANALISECURR_AREANUMEDITAL_INCL" ON public."TB_ANALISE_CURRICULAR"
-    USING btree ("CO_AREA", private."FC_NUMERO_EDITAL"(edital)) INCLUDE (edital) WHERE ativo;`
+USING btree ("CO_AREA", private."FC_NUMERO_EDITAL"(edital)) INCLUDE (edital) WHERE ativo;`
   - `an` passa a contar só os números de edital distintos de `m` (subconsulta por número, mesma
     junção `an.numero = m.numero`, mesma saída).
 - **Ganho esperado:** de uma chamada + leitura no heap por análise ativa para uma busca index-only
-  por número de edital (dezenas a centenas). Ressalva: depende do *visibility map* de uma tabela
+  por número de edital (dezenas a centenas). Ressalva: depende do _visibility map_ de uma tabela
   muito atualizada pelo sync (olhar `Heap Fetches`). Plano B: contagem `(CO_AREA, NU_EDITAL,
-  QT_ATIVA)` mantida pelo robô das análises.
+QT_ATIVA)` mantida pelo robô das análises.
 
 ## 5. `abrir_lista_aprovados(p_area, p_versao, p_com_candidatos)` — 0,9 s / 10,4 s
 
@@ -164,7 +164,7 @@ Escrita de uma linha, mas com cascata (certeza no código):
   (varredura de `TB_MONITORAMENTO_INDIGENA`); o mesmo `m.id::text = l.edital_id` está no gatilho de
   cache (16112).
 - O histórico (`TH_CANDIDATO_APROVADO`) dispara `FC_TG_CONTRATACAO_BASE_MUDOU` (16341): `DELETE …
-  WHERE CO_CANDIDATO_APROVADO IN (…) OR (CO_MONITORAMENTO::text, DS_VINCULO) IN (…)` — o `OR` com
+WHERE CO_CANDIDATO_APROVADO IN (…) OR (CO_MONITORAMENTO::text, DS_VINCULO) IN (…)` — o `OR` com
   cast impede os índices — e, envolvendo Contratado, dispara o robô de contratação (pg_net).
 - `FC_ATUALIZAR_CONTRATADOS_DO_EDITAL` (1575) chama `FC_EM_OUTRA_LISTA` por contratado e faz
   `UPDATE` na linha do edital em `TB_MONITORAMENTO_INDIGENA`, que **trava a linha até o commit** e
