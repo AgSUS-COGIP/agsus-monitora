@@ -3199,8 +3199,12 @@ bloco("ui/popover-dentro-da-janela", () => {
       raiz!.render(
         h(
           Popover,
-          { rotulo: "Inscritos", gatilho: "372", lado: "direita" },
-          "Origem",
+          {
+            rotulo: "Inscritos",
+            gatilho: "372",
+            lado: "direita",
+            children: "Origem",
+          },
         ),
       ),
     );
