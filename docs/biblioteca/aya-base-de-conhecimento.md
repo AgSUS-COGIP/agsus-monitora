@@ -37,12 +37,12 @@ Um verbete por assunto; a ordem dos campos não importa e o que falta é omitido
 **fonte:** interface do MONITORA
 ```
 
-| Campo       | Para que serve                                                                                                          |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `perguntas` | obrigatório: termos que disparam o verbete, separados por `\|` (o compilador acusa verbete sem perguntas)               |
-| `resposta`  | texto devolvido pela busca da Aya, sem gerar conteúdo                                                                   |
-| `fato`      | referência complementar; a busca responde apenas com o campo `resposta`                                                 |
-| `fonte`     | de onde veio; obrigatório quando não for a própria interface                                                            |
+| Campo       | Para que serve                                                                                                              |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `perguntas` | obrigatório: termos que disparam o verbete, separados por `\|` (o compilador acusa verbete sem perguntas)                   |
+| `resposta`  | texto devolvido pela busca da Aya, sem gerar conteúdo                                                                       |
+| `fato`      | referência complementar, só no `.md`: a busca responde apenas com o campo `resposta` e o arquivo gerado não o leva          |
+| `fonte`     | de onde veio; obrigatório quando não for a própria interface                                                                |
 | `abrir`     | opcional: botão que leva à tela citada (`recursos`, `config:acessos`… — ver `ACOES_DA_AYA` em `src/lib/aya/aya-paginas.ts`) |
 
 Duas frases que a busca lê igual ("lista de aprovados" e "as listas dos aprovados") não podem estar

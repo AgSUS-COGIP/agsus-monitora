@@ -67,7 +67,6 @@ export interface VerbeteDaAya {
   readonly resposta: string;
   /** O código de ACOES_DA_AYA do botão "Abrir". */
   readonly abrir?: string;
-  readonly fato?: string;
   readonly fonte?: string;
 }
 
