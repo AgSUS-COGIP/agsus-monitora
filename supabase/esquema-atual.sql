@@ -36616,12 +36616,15 @@ begin
     'linhas', coalesce((
       select json_agg(json_build_object('id', q."CO_QUADRO_VAGA", 'ordem', q."NU_ORDEM", 'cargo', q."NO_CARGO",
                'lotacao', q."NO_LOTACAO", 'modalidades', q."DS_MODALIDADE_VAGA", 'vagas_imediatas', q."QT_VAGA_IMEDIATA",
-               'cadastro_reserva', q."ST_CADASTRO_RESERVA" = 'S') order by q."NU_ORDEM")
+               'cadastro_reserva', q."ST_CADASTRO_RESERVA" = 'S',
+               'origem', q."TP_ORIGEM", 'arquivo', q."DS_ARQUIVO_ORIGEM") order by q."NU_ORDEM")
         from public."TB_QUADRO_VAGA_EDITAL" q
        where q."CO_MONITORAMENTO" = p_edital and q."ST_REGISTRO_ATIVO" = 'S'), '[]'::json),
+    -- De onde veio: a primeira linha do PDF; quadro todo manual, a primeira linha (20261126180000).
     'origem', (select json_build_object('tipo', q."TP_ORIGEM", 'arquivo', q."DS_ARQUIVO_ORIGEM", 'gravado_em', q."DT_CRIACAO")
                  from public."TB_QUADRO_VAGA_EDITAL" q
-                where q."CO_MONITORAMENTO" = p_edital and q."ST_REGISTRO_ATIVO" = 'S' limit 1),
+                where q."CO_MONITORAMENTO" = p_edital and q."ST_REGISTRO_ATIVO" = 'S'
+                order by (q."TP_ORIGEM" = 'PDF') desc, q."NU_ORDEM" limit 1),
     -- O vínculo de cada vaga (TA_VAGA_QUADRO_EDITAL, 20261118120000); 'cargo' é o nome da vaga, como antes.
     'vinculos', coalesce((
       select json_agg(json_build_object('vaga', v."CO_VAGA", 'cargo', v."NO_VAGA", 'quadro', v."CO_QUADRO_VAGA",
@@ -36641,6 +36644,16 @@ begin
       when exists (select 1 from public."TB_SELECAO_VAGA" s
                     where s."CO_MONITORAMENTO" = p_edital and s."ST_REGISTRO_ATIVO" = 'S') then 'EXTERNO'
       else 'PENDENTE_INTEGRACAO' end,
+    -- As 20 últimas gravações do quadro, da mais recente (TH_QUADRO_VAGA_EDITAL, 20261126180000).
+    'historico', coalesce((
+      select json_agg(json_build_object('evento', h."TP_EVENTO", 'motivo', h."DS_MOTIVO",
+               'numero_errata', h."DS_NUMERO_ERRATA", 'gravado_em', h."DT_EVENTO",
+               'gravado_por', (select p.nome from public."TB_PERFIL_USUARIO" p where p.user_id = h."CO_USUARIO" limit 1),
+               'linhas_antes', jsonb_array_length(h."DS_LINHA_ANTERIOR"), 'linhas_depois', jsonb_array_length(h."DS_LINHA_NOVA"))
+             order by h."DT_EVENTO" desc, h."SQ_HISTORICO" desc)
+        from (select * from public."TH_QUADRO_VAGA_EDITAL" x
+               where x."CO_MONITORAMENTO" = p_edital
+               order by x."DT_EVENTO" desc, x."SQ_HISTORICO" desc limit 20) h), '[]'::json),
     'pode_editar', private.pode_recurso('nucleo', 2) or private.pode_recurso('calendario', 2)
   );
 end;
@@ -36650,7 +36663,7 @@ $$;
 -- Name: FUNCTION obter_quadro_de_vagas(p_edital uuid); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.obter_quadro_de_vagas(p_edital uuid) IS 'Quadro de vagas vigente do edital, de onde veio e o vínculo de cada vaga com a linha (TA_VAGA_QUADRO_EDITAL: situação, origem, candidatas, pendência, quem confirmou); vagas_do_edital diz por que não há vaga para ligar (NAO_SE_APLICA, EXTERNO, PENDENTE_INTEGRACAO); pode_editar = pode gravar o vínculo. Núcleo, Calendário ou Entrevistas (leitor) e o edital.';
+COMMENT ON FUNCTION public.obter_quadro_de_vagas(p_edital uuid) IS 'Quadro de vagas vigente do edital (cada linha com origem PDF|MANUAL e arquivo), de onde veio, o histórico das 20 últimas gravações (TH_QUADRO_VAGA_EDITAL: evento, motivo, errata, quem, quando) e o vínculo de cada vaga com a linha (TA_VAGA_QUADRO_EDITAL: situação, origem, candidatas, pendência, quem confirmou); vagas_do_edital diz por que não há vaga para ligar (NAO_SE_APLICA, EXTERNO, PENDENTE_INTEGRACAO); pode_editar = pode gravar o quadro e o vínculo. Núcleo, Calendário ou Entrevistas (leitor) e o edital. 20261126180000.';
 
 --
 -- Name: obter_rascunho_regra(text, uuid); Type: FUNCTION; Schema: public; Owner: -
@@ -43489,8 +43502,21 @@ declare
   v_linhas jsonb := coalesce(p_dados -> 'linhas', '[]'::jsonb);
   v_origem text := coalesce(nullif(upper(p_dados ->> 'origem'), ''), 'PDF');
   v_arquivo text := left(nullif(btrim(p_dados ->> 'arquivo'), ''), 300);
+  v_motivo text := nullif(btrim(p_dados ->> 'motivo'), '');
+  v_errata text := left(nullif(btrim(p_dados ->> 'numero_errata'), ''), 100);
+  v_uid uuid := (select auth.uid());
+  v_simular boolean := coalesce((p_dados ->> 'simular')::boolean, false);
+  v_retificacao boolean;
+  v_antes jsonb;
+  v_depois jsonb;
+  v_resultado json;
+  r record;
 begin
-  if not exists (select 1 from public."TB_MONITORAMENTO_INDIGENA" where id = p_edital) then
+ -- A simulação faz tudo num bloco que se desfaz no fim e devolve o quadro como ficaria.
+ begin
+  -- A gravação do quadro do mesmo edital fica em fila (as validações abaixo veem o quadro vigente).
+  perform 1 from public."TB_MONITORAMENTO_INDIGENA" where id = p_edital for no key update;
+  if not found then
     raise exception 'Edital não encontrado' using errcode = '22023';
   end if;
   if not (private.pode_recurso('nucleo', 2) or private.pode_recurso('calendario', 2)) then
@@ -43501,28 +43527,118 @@ begin
     raise exception 'Quadro de vagas inválido (até 500 linhas)' using errcode = '22023';
   end if;
   if exists (select 1 from jsonb_array_elements(v_linhas) l
-              where length(btrim(coalesce(l ->> 'cargo', ''))) not between 1 and 300
+              where jsonb_typeof(l) <> 'object'
+                 or length(btrim(coalesce(l ->> 'cargo', ''))) not between 1 and 300
                  or coalesce(nullif(l ->> 'vagas_imediatas', '')::integer, 0) not between 0 and 9999
                  or jsonb_typeof(coalesce(l -> 'modalidades', '{}'::jsonb)) <> 'object') then
     raise exception 'Há linha do quadro sem cargo ou com quantidade inválida' using errcode = '22023';
   end if;
+  if v_origem not in ('PDF', 'MANUAL')
+     or exists (select 1 from jsonb_array_elements(v_linhas) l
+                 where upper(coalesce(nullif(l ->> 'origem', ''), 'PDF')) not in ('PDF', 'MANUAL')) then
+    raise exception 'Origem do quadro inválida (PDF ou MANUAL)' using errcode = '22023';
+  end if;
+  -- `anterior`: uma linha do quadro vigente deste edital, sucedida por uma linha só.
+  if exists (select 1 from jsonb_array_elements(v_linhas) l
+              where nullif(l ->> 'anterior', '') is not null
+                and not exists (select 1 from public."TB_QUADRO_VAGA_EDITAL" q
+                                 where q."CO_QUADRO_VAGA"::text = lower(l ->> 'anterior')
+                                   and q."CO_MONITORAMENTO" = p_edital and q."ST_REGISTRO_ATIVO" = 'S'))
+     or (select count(*) <> count(distinct lower(l ->> 'anterior'))
+           from jsonb_array_elements(v_linhas) l where nullif(l ->> 'anterior', '') is not null) then
+    raise exception 'A linha retificada não é do quadro vigente deste edital, ou aparece duas vezes' using errcode = '22023';
+  end if;
+
+  v_retificacao := v_motivo is not null
+                   or exists (select 1 from jsonb_array_elements(v_linhas) l where nullif(l ->> 'anterior', '') is not null);
+  if v_retificacao and length(coalesce(v_motivo, '')) not between 10 and 500 then
+    raise exception 'Diga o motivo da retificação (de 10 a 500 caracteres)' using errcode = '22023';
+  end if;
+
+  select coalesce(jsonb_agg(jsonb_build_object('id', q."CO_QUADRO_VAGA", 'ordem', q."NU_ORDEM", 'cargo', q."NO_CARGO",
+           'lotacao', q."NO_LOTACAO", 'modalidades', q."DS_MODALIDADE_VAGA", 'vagas_imediatas', q."QT_VAGA_IMEDIATA",
+           'cadastro_reserva', q."ST_CADASTRO_RESERVA" = 'S', 'origem', q."TP_ORIGEM", 'arquivo', q."DS_ARQUIVO_ORIGEM")
+           order by q."NU_ORDEM"), '[]'::jsonb)
+    into v_antes
+    from public."TB_QUADRO_VAGA_EDITAL" q
+   where q."CO_MONITORAMENTO" = p_edital and q."ST_REGISTRO_ATIVO" = 'S';
 
   update public."TB_QUADRO_VAGA_EDITAL"
      set "ST_REGISTRO_ATIVO" = 'N', "DT_DESATIVACAO" = now()
    where "CO_MONITORAMENTO" = p_edital and "ST_REGISTRO_ATIVO" = 'S';
 
+  -- Linha com `anterior` herda dela a origem e o arquivo que não vierem.
   insert into public."TB_QUADRO_VAGA_EDITAL" ("CO_MONITORAMENTO", "NU_ORDEM", "NO_CARGO", "NO_LOTACAO", "DS_MODALIDADE_VAGA",
     "QT_VAGA_IMEDIATA", "ST_CADASTRO_RESERVA", "TP_ORIGEM", "DS_ARQUIVO_ORIGEM", "CO_USUARIO_ATUALIZACAO")
   select p_edital, l.ordem, btrim(l.valor ->> 'cargo'), left(nullif(btrim(l.valor ->> 'lotacao'), ''), 300),
          coalesce(l.valor -> 'modalidades', '{}'::jsonb), coalesce(nullif(l.valor ->> 'vagas_imediatas', '')::integer, 0),
          case when (l.valor ->> 'cadastro_reserva')::boolean then 'S' else 'N' end,
-         v_origem, v_arquivo, (select auth.uid())
-    from jsonb_array_elements(v_linhas) with ordinality l(valor, ordem);
+         coalesce(nullif(upper(l.valor ->> 'origem'), ''), a."TP_ORIGEM", v_origem),
+         case when l.valor ? 'arquivo' then left(nullif(btrim(l.valor ->> 'arquivo'), ''), 300)
+              when a."CO_QUADRO_VAGA" is not null then a."DS_ARQUIVO_ORIGEM"
+              else v_arquivo end,
+         v_uid
+    from jsonb_array_elements(v_linhas) with ordinality l(valor, ordem)
+    left join public."TB_QUADRO_VAGA_EDITAL" a
+      on a."CO_MONITORAMENTO" = p_edital and a."CO_QUADRO_VAGA"::text = lower(nullif(l.valor ->> 'anterior', ''));
 
-  -- Os vínculos das vagas passam para as linhas novas (20261118120000).
-  perform private."FC_PREENCHER_VINCULOS_QUADRO"(p_edital, false, (select auth.uid()));
+  -- O vínculo da linha retificada vai direto para a sucessora, mesmo com outro cargo ou lotação.
+  for r in
+    select v."CO_VAGA" as vaga, v."NO_VAGA" as nome, v."TP_VINCULO" as situacao, v."TP_ORIGEM" as origem,
+           v."TP_REGRA" as regra, n."CO_QUADRO_VAGA" as nova
+      from jsonb_array_elements(v_linhas) with ordinality l(valor, ordem)
+      join public."TB_QUADRO_VAGA_EDITAL" n
+        on n."CO_MONITORAMENTO" = p_edital and n."ST_REGISTRO_ATIVO" = 'S' and n."NU_ORDEM" = l.ordem
+      join public."TA_VAGA_QUADRO_EDITAL" v
+        on v."CO_MONITORAMENTO" = p_edital and v."CO_QUADRO_VAGA"::text = lower(nullif(l.valor ->> 'anterior', ''))
+     order by v."CO_VAGA"
+  loop
+    perform private."FC_GRAVAR_VINCULO_QUADRO"(p_edital, r.vaga, r.nome, r.situacao, r.origem, r.regra,
+                                               r.nova, '{}', null, 'RETIFICACAO', v_uid);
+  end loop;
 
-  return public.obter_quadro_de_vagas(p_edital);
+  -- Linha retirada na retificação: a vaga que a equipe ligou a ela fica "sem linha" (MANUAL), com
+  -- histórico, em vez da pendência da reimportação. O automático segue a regra, abaixo.
+  if v_retificacao then
+    for r in
+      select v."CO_VAGA" as vaga, v."NO_VAGA" as nome
+        from public."TA_VAGA_QUADRO_EDITAL" v
+        join public."TB_QUADRO_VAGA_EDITAL" q on q."CO_QUADRO_VAGA" = v."CO_QUADRO_VAGA"
+       where v."CO_MONITORAMENTO" = p_edital and v."TP_ORIGEM" = 'MANUAL' and q."ST_REGISTRO_ATIVO" = 'N'
+       order by v."CO_VAGA"
+    loop
+      perform private."FC_GRAVAR_VINCULO_QUADRO"(p_edital, r.vaga, r.nome, 'AUSENTE', 'MANUAL', null,
+                                                 null, '{}', null, 'RETIFICACAO', v_uid);
+    end loop;
+  end if;
+
+  select coalesce(jsonb_agg(jsonb_build_object('id', q."CO_QUADRO_VAGA", 'ordem', q."NU_ORDEM", 'cargo', q."NO_CARGO",
+           'lotacao', q."NO_LOTACAO", 'modalidades', q."DS_MODALIDADE_VAGA", 'vagas_imediatas', q."QT_VAGA_IMEDIATA",
+           'cadastro_reserva', q."ST_CADASTRO_RESERVA" = 'S', 'origem', q."TP_ORIGEM", 'arquivo', q."DS_ARQUIVO_ORIGEM",
+           'anterior', lower(nullif(l.valor ->> 'anterior', '')))
+           order by q."NU_ORDEM"), '[]'::jsonb)
+    into v_depois
+    from public."TB_QUADRO_VAGA_EDITAL" q
+    join jsonb_array_elements(v_linhas) with ordinality l(valor, ordem) on l.ordem = q."NU_ORDEM"
+   where q."CO_MONITORAMENTO" = p_edital and q."ST_REGISTRO_ATIVO" = 'S';
+
+  insert into public."TH_QUADRO_VAGA_EDITAL" ("CO_MONITORAMENTO", "TP_EVENTO", "DS_MOTIVO", "DS_NUMERO_ERRATA",
+    "DS_LINHA_ANTERIOR", "DS_LINHA_NOVA", "CO_USUARIO")
+  values (p_edital, case when v_retificacao then 'RETIFICACAO' else 'IMPORTACAO' end, v_motivo, v_errata,
+          v_antes, v_depois, v_uid);
+
+  -- Os outros vínculos: pela chave (linha sem sucessora) e pela regra (20261118120000).
+  perform private."FC_PREENCHER_VINCULOS_QUADRO"(p_edital, false, v_uid);
+
+  v_resultado := public.obter_quadro_de_vagas(p_edital);
+  if v_simular then
+    raise exception 'Simulação do quadro de vagas' using errcode = 'AGQ01';
+  end if;
+ exception when sqlstate 'AGQ01' then
+  null; -- simulação: o bloco se desfez; v_resultado é o quadro como ficaria
+ end;
+
+  return v_resultado;
 end;
 $$;
 
@@ -43530,7 +43646,7 @@ $$;
 -- Name: FUNCTION salvar_quadro_de_vagas(p_edital uuid, p_dados jsonb); Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON FUNCTION public.salvar_quadro_de_vagas(p_edital uuid, p_dados jsonb) IS 'Substitui o quadro de vagas do edital (o anterior fica desativado) e passa os vínculos das vagas para as linhas novas (FC_PREENCHER_VINCULOS_QUADRO). p_dados: {origem PDF|MANUAL, arquivo, linhas:[{cargo, lotacao, modalidades, vagas_imediatas, cadastro_reserva}]}. Núcleo ou Calendário (editor) e o edital.';
+COMMENT ON FUNCTION public.salvar_quadro_de_vagas(p_edital uuid, p_dados jsonb) IS 'Substitui o quadro de vagas do edital (o anterior fica desativado, com histórico em TH_QUADRO_VAGA_EDITAL) e passa os vínculos das vagas para as linhas novas: a linha com `anterior` leva o vínculo da linha que substitui (evento RETIFICACAO); na retificação, a vaga MANUAL de linha retirada fica sem linha; as demais, pela chave e pela regra (FC_PREENCHER_VINCULOS_QUADRO). simular: true devolve o quadro como ficaria, sem gravar. p_dados: {origem PDF|MANUAL, arquivo, motivo, numero_errata, simular, linhas:[{cargo, lotacao, modalidades, vagas_imediatas, cadastro_reserva, origem, arquivo, anterior}]}; com `anterior` ou motivo é retificação, e o motivo (10 a 500 caracteres) é obrigatório. Núcleo ou Calendário (editor) e o edital. 20261126180000.';
 
 --
 -- Name: salvar_rascunho_ficha(uuid, integer, jsonb, jsonb, text); Type: FUNCTION; Schema: public; Owner: -
@@ -61186,6 +61302,116 @@ COMMENT ON CONSTRAINT "CK_PUBAPROVADO_QUANTIDADES" ON public."TH_PUBLICACAO_APRO
 COMMENT ON CONSTRAINT "CK_PUBAPROVADO_TPORIGEM" ON public."TH_PUBLICACAO_APROVADO" IS 'Origens válidas.';
 
 --
+-- Name: TH_QUADRO_VAGA_EDITAL; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public."TH_QUADRO_VAGA_EDITAL" (
+    "SQ_HISTORICO" bigint NOT NULL,
+    "CO_MONITORAMENTO" uuid NOT NULL,
+    "TP_EVENTO" character varying(20) NOT NULL,
+    "DS_MOTIVO" character varying(500),
+    "DS_NUMERO_ERRATA" character varying(100),
+    "DS_LINHA_ANTERIOR" jsonb DEFAULT '[]'::jsonb NOT NULL,
+    "DS_LINHA_NOVA" jsonb DEFAULT '[]'::jsonb NOT NULL,
+    "CO_USUARIO" uuid,
+    "DT_EVENTO" timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT "CK_HISTQUADROVAGA_LINHAS" CHECK (((jsonb_typeof("DS_LINHA_ANTERIOR") = 'array'::text) AND (jsonb_typeof("DS_LINHA_NOVA") = 'array'::text))),
+    CONSTRAINT "CK_HISTQUADROVAGA_MOTIVO" CHECK (((("TP_EVENTO")::text <> 'RETIFICACAO'::text) OR ((length(btrim(("DS_MOTIVO")::text)) >= 10) AND (length(btrim(("DS_MOTIVO")::text)) <= 500)))),
+    CONSTRAINT "CK_HISTQUADROVAGA_TPEVENTO" CHECK ((("TP_EVENTO")::text = ANY ((ARRAY['IMPORTACAO'::character varying, 'RETIFICACAO'::character varying])::text[])))
+);
+
+--
+-- Name: TABLE "TH_QUADRO_VAGA_EDITAL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON TABLE public."TH_QUADRO_VAGA_EDITAL" IS 'Histórico do quadro de vagas do edital (TB_QUADRO_VAGA_EDITAL): cada gravação, importação do PDF ou retificação de linhas, com motivo, errata e as linhas antes e depois. 20261126180000.';
+
+--
+-- Name: COLUMN "TH_QUADRO_VAGA_EDITAL"."SQ_HISTORICO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_QUADRO_VAGA_EDITAL"."SQ_HISTORICO" IS 'Sequencial do evento.';
+
+--
+-- Name: COLUMN "TH_QUADRO_VAGA_EDITAL"."CO_MONITORAMENTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_QUADRO_VAGA_EDITAL"."CO_MONITORAMENTO" IS 'Edital (sem chave estrangeira: o histórico fica).';
+
+--
+-- Name: COLUMN "TH_QUADRO_VAGA_EDITAL"."TP_EVENTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_QUADRO_VAGA_EDITAL"."TP_EVENTO" IS 'IMPORTACAO (o quadro inteiro, do PDF) ou RETIFICACAO (linhas corrigidas, acrescentadas ou retiradas, com motivo).';
+
+--
+-- Name: COLUMN "TH_QUADRO_VAGA_EDITAL"."DS_MOTIVO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_QUADRO_VAGA_EDITAL"."DS_MOTIVO" IS 'Por que o quadro mudou ("Retificação nº 2 do edital"); obrigatório na retificação.';
+
+--
+-- Name: COLUMN "TH_QUADRO_VAGA_EDITAL"."DS_NUMERO_ERRATA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_QUADRO_VAGA_EDITAL"."DS_NUMERO_ERRATA" IS 'Número da errata ou retificação publicada, quando houver.';
+
+--
+-- Name: COLUMN "TH_QUADRO_VAGA_EDITAL"."DS_LINHA_ANTERIOR"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_QUADRO_VAGA_EDITAL"."DS_LINHA_ANTERIOR" IS 'As linhas vigentes antes (id, ordem, cargo, lotação, modalidades, vagas imediatas, cadastro reserva, origem, arquivo).';
+
+--
+-- Name: COLUMN "TH_QUADRO_VAGA_EDITAL"."DS_LINHA_NOVA"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_QUADRO_VAGA_EDITAL"."DS_LINHA_NOVA" IS 'As linhas gravadas, com `anterior` (a linha que cada uma substitui; nulo = linha nova).';
+
+--
+-- Name: COLUMN "TH_QUADRO_VAGA_EDITAL"."CO_USUARIO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_QUADRO_VAGA_EDITAL"."CO_USUARIO" IS 'Quem gravou (auth.users).';
+
+--
+-- Name: COLUMN "TH_QUADRO_VAGA_EDITAL"."DT_EVENTO"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON COLUMN public."TH_QUADRO_VAGA_EDITAL"."DT_EVENTO" IS 'Quando.';
+
+--
+-- Name: CONSTRAINT "CK_HISTQUADROVAGA_LINHAS" ON "TH_QUADRO_VAGA_EDITAL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_HISTQUADROVAGA_LINHAS" ON public."TH_QUADRO_VAGA_EDITAL" IS 'As linhas antes e depois são listas.';
+
+--
+-- Name: CONSTRAINT "CK_HISTQUADROVAGA_MOTIVO" ON "TH_QUADRO_VAGA_EDITAL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_HISTQUADROVAGA_MOTIVO" ON public."TH_QUADRO_VAGA_EDITAL" IS 'A retificação tem motivo de 10 a 500 caracteres.';
+
+--
+-- Name: CONSTRAINT "CK_HISTQUADROVAGA_TPEVENTO" ON "TH_QUADRO_VAGA_EDITAL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON CONSTRAINT "CK_HISTQUADROVAGA_TPEVENTO" ON public."TH_QUADRO_VAGA_EDITAL" IS 'IMPORTACAO ou RETIFICACAO.';
+
+--
+-- Name: TH_QUADRO_VAGA_EDITAL_SQ_HISTORICO_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+ALTER TABLE public."TH_QUADRO_VAGA_EDITAL" ALTER COLUMN "SQ_HISTORICO" ADD GENERATED ALWAYS AS IDENTITY (
+    SEQUENCE NAME public."TH_QUADRO_VAGA_EDITAL_SQ_HISTORICO_seq"
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1
+);
+
+--
 -- Name: TH_RECURSO_CANDIDATO; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -61900,7 +62126,7 @@ CREATE TABLE public."TH_VAGA_QUADRO_EDITAL" (
     "DS_NOVO" jsonb,
     "CO_USUARIO" uuid,
     "DT_EVENTO" timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT "CK_HISTVAGAQUADRO_TPEVENTO" CHECK ((("TP_EVENTO")::text = ANY ((ARRAY['PREENCHIMENTO'::character varying, 'CONFIRMACAO'::character varying, 'REIMPORTACAO'::character varying, 'RETORNO_AUTOMATICO'::character varying, 'REMOCAO'::character varying])::text[])))
+    CONSTRAINT "CK_HISTVAGAQUADRO_TPEVENTO" CHECK ((("TP_EVENTO")::text = ANY ((ARRAY['PREENCHIMENTO'::character varying, 'CONFIRMACAO'::character varying, 'REIMPORTACAO'::character varying, 'RETIFICACAO'::character varying, 'RETORNO_AUTOMATICO'::character varying, 'REMOCAO'::character varying])::text[])))
 );
 
 --
@@ -61931,7 +62157,7 @@ COMMENT ON COLUMN public."TH_VAGA_QUADRO_EDITAL"."CO_VAGA" IS 'Código da vaga.'
 -- Name: COLUMN "TH_VAGA_QUADRO_EDITAL"."TP_EVENTO"; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON COLUMN public."TH_VAGA_QUADRO_EDITAL"."TP_EVENTO" IS 'PREENCHIMENTO (regra), CONFIRMACAO (equipe), REIMPORTACAO (quadro novo), RETORNO_AUTOMATICO (equipe devolveu à regra) ou REMOCAO (a vaga saiu do edital).';
+COMMENT ON COLUMN public."TH_VAGA_QUADRO_EDITAL"."TP_EVENTO" IS 'PREENCHIMENTO (regra), CONFIRMACAO (equipe), REIMPORTACAO (quadro novo), RETIFICACAO (a linha foi corrigida e o vínculo foi junto, 20261126180000), RETORNO_AUTOMATICO (equipe devolveu à regra) ou REMOCAO (a vaga saiu do edital).';
 
 --
 -- Name: COLUMN "TH_VAGA_QUADRO_EDITAL"."DS_ANTERIOR"; Type: COMMENT; Schema: public; Owner: -
@@ -64980,6 +65206,13 @@ ALTER TABLE ONLY public."TH_PUBLICACAO_APROVADO"
     ADD CONSTRAINT "PK_TH_PUBLICACAO_APROVADO" PRIMARY KEY ("CO_PUBLICACAO");
 
 --
+-- Name: TH_QUADRO_VAGA_EDITAL PK_TH_QUADRO_VAGA_EDITAL; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public."TH_QUADRO_VAGA_EDITAL"
+    ADD CONSTRAINT "PK_TH_QUADRO_VAGA_EDITAL" PRIMARY KEY ("SQ_HISTORICO");
+
+--
 -- Name: TH_RECURSO_CANDIDATO PK_TH_RECURSO_CANDIDATO; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -67465,6 +67698,18 @@ CREATE INDEX "IN_HISTPEDREINFICHA_COPEDIDO" ON public."TH_PEDIDO_REINICIO_FICHA"
 --
 
 COMMENT ON INDEX public."IN_HISTPEDREINFICHA_COPEDIDO" IS 'Os eventos de um pedido.';
+
+--
+-- Name: IN_HISTQUADROVAGA_EDITAL; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX "IN_HISTQUADROVAGA_EDITAL" ON public."TH_QUADRO_VAGA_EDITAL" USING btree ("CO_MONITORAMENTO", "DT_EVENTO" DESC);
+
+--
+-- Name: INDEX "IN_HISTQUADROVAGA_EDITAL"; Type: COMMENT; Schema: public; Owner: -
+--
+
+COMMENT ON INDEX public."IN_HISTQUADROVAGA_EDITAL" IS 'Histórico do quadro de um edital, do mais recente.';
 
 --
 -- Name: IN_HISTSITUACAO_DTALTERACAO; Type: INDEX; Schema: public; Owner: -
@@ -74673,6 +74918,12 @@ ALTER TABLE public."TH_PRE_CLASSIFICACAO" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public."TH_PUBLICACAO_APROVADO" ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: TH_QUADRO_VAGA_EDITAL; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public."TH_QUADRO_VAGA_EDITAL" ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: TH_RECURSO_CANDIDATO; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -81369,6 +81620,12 @@ GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TH_PRE_CLASSIFICACAO
 --
 
 GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TH_PUBLICACAO_APROVADO" TO service_role;
+
+--
+-- Name: TABLE "TH_QUADRO_VAGA_EDITAL"; Type: ACL; Schema: public; Owner: -
+--
+
+GRANT REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE public."TH_QUADRO_VAGA_EDITAL" TO service_role;
 
 --
 -- Name: TABLE "TH_RECURSO_CANDIDATO"; Type: ACL; Schema: public; Owner: -
