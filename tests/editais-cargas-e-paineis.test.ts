@@ -164,6 +164,19 @@ import {
 import { canManagePaineisDeDados } from "../src/lib/acessos/access-roles.ts";
 import { PGlite } from "@electric-sql/pglite";
 import { moldeDeBanco } from "./apoio/molde-de-banco.ts";
+import {
+  aplicarMudanca,
+  chaveDaLinha,
+  linhasDoQuadro as linhasDoQuadroRetificavel,
+  modalidadesDoQuadro,
+  problemaDoMotivo,
+  problemasDoRascunho,
+  quadroRetificado,
+  rascunhoDaLinha,
+  resumoDaMudanca,
+  TEXTO_DO_EFEITO,
+  totalDoRascunho,
+} from "../src/lib/editais/retificar-quadro.ts";
 import { lembrarBanco } from "./apoio/bancos-abertos.ts";
 import {
   aprovadosPorEdital,
@@ -254,6 +267,7 @@ import {
   entrar as entrar__3,
   gravarQuadro,
   migration,
+  USUARIO,
   vinculos,
 } from "./apoio/banco-do-vinculo-do-quadro.ts";
 import {
@@ -6585,6 +6599,399 @@ bloco("vinculo-do-quadro-no-banco", () => {
   });
 });
 
+bloco("retificar-quadro-no-banco", () => {
+  type Banco = Banco__DoVinculo;
+  const bancoDeHoje = bancoDeHoje__2;
+  const entrar = entrar__3;
+  /*
+  Retificar uma linha do quadro de vagas (migration 20261126180000, aplicada em 26/11/2026) num
+  Postgres de verdade (PGlite): o banco de antes (a 20261118120000 aplicada sobre os corpos
+  copiados do retrato) × com a migration, guardada sem mudança em tests/fixtures/sql-do-banco/.
+  A guarda, o ensaio e o rollback saíram com ela (regra do #712). O edital 105/2026 tem três linhas do PDF; a vaga 1002 (Médico)
+  e a 1004 (Dentista) foram ligadas pela equipe (MANUAL), a 1001 pela regra e a 1003 (Agente
+  Indígena de Saúde) não tem linha.
+*/
+  const NOME = "20261126180000_retificar_linha_do_quadro_de_vagas.sql";
+  const lerSql = (caminho: string) =>
+    readFileSync(caminho, "utf8").replace(/\r\n/g, "\n");
+  const migracao = () => lerSql(`tests/fixtures/sql-do-banco/${NOME}`);
+  const LONGO = 60_000;
+  const MOTIVO = "Retificação nº 2 do edital";
+  const ARQUIVO = "anexos-105.pdf";
+
+  interface LinhaSalva {
+    id: string;
+    ordem: number;
+    cargo: string;
+    lotacao: string | null;
+    modalidades: Record<string, number | null>;
+    vagas_imediatas: number;
+    cadastro_reserva: boolean;
+    origem?: string;
+    arquivo?: string | null;
+  }
+  interface QuadroSalvo {
+    linhas: LinhaSalva[];
+    vinculos: { vaga: string; quadro: string | null; situacao: string }[];
+    historico?: {
+      evento: string;
+      motivo: string | null;
+      numero_errata: string | null;
+      gravado_por: string | null;
+      linhas_antes: number;
+      linhas_depois: number;
+    }[];
+  }
+
+  const QUADRO = [
+    {
+      cargo: "Enfermeiro",
+      lotacao: "Polo Base Alfa",
+      modalidades: { "Ampla Concorrência": 2 },
+      vagas_imediatas: 2,
+      cadastro_reserva: true,
+    },
+    {
+      cargo: "Médico",
+      lotacao: "Polo Base Alfa",
+      modalidades: { "Ampla Concorrência": 1 },
+      vagas_imediatas: 1,
+      cadastro_reserva: true,
+    },
+    {
+      cargo: "Dentista",
+      lotacao: "Polo Base Gama",
+      modalidades: { "Ampla Concorrência": 1 },
+      vagas_imediatas: 1,
+      cadastro_reserva: false,
+    },
+  ];
+
+  const lerQuadro = async (db: Banco): Promise<QuadroSalvo> =>
+    (
+      await db.query<{ q: QuadroSalvo }>(
+        `select public.obter_quadro_de_vagas($1)::jsonb as q`,
+        [EDITAL],
+      )
+    ).rows[0]!.q;
+  const salvar = async (db: Banco, dados: object): Promise<QuadroSalvo> =>
+    (
+      await db.query<{ q: QuadroSalvo }>(
+        `select public.salvar_quadro_de_vagas($1, $2::jsonb)::jsonb as q`,
+        [EDITAL, JSON.stringify(dados)],
+      )
+    ).rows[0]!.q;
+  /** O quadro salvo como linhas para gravar, cada uma com `anterior` = ela mesma. */
+  const iguais = (linhas: LinhaSalva[]) =>
+    linhas.map((l) => ({
+      cargo: l.cargo,
+      lotacao: l.lotacao,
+      modalidades: l.modalidades,
+      vagas_imediatas: l.vagas_imediatas,
+      cadastro_reserva: l.cadastro_reserva,
+      anterior: l.id,
+    }));
+
+  async function erroDe(p: Promise<unknown>): Promise<string> {
+    try {
+      await p;
+    } catch (e) {
+      return String((e as { code?: string }).code ?? e);
+    }
+    return "sem erro";
+  }
+
+  const bancoDeHojeComDados = moldeDeBanco(async () => {
+    const db = await bancoDeHoje();
+    await db.exec(migration());
+    await criarEdital(db, EDITAL, "105/2026");
+    await criarAnalise(db, "105/2026", "1001", "Enfermeiro - Polo Base Alfa");
+    await criarAnalise(db, "105/2026", "1002", "Médico");
+    await criarAnalise(db, "105/2026", "1003", "Agente Indígena de Saúde");
+    await criarAnalise(db, "105/2026", "1004", "Dentista - Polo Base Gama");
+    await entrar(db, 2);
+    const q = await salvar(db, {
+      origem: "PDF",
+      arquivo: ARQUIVO,
+      linhas: QUADRO,
+    });
+    const id = (cargo: string) => q.linhas.find((l) => l.cargo === cargo)!.id;
+    await db.query(
+      `select public.gravar_vinculo_do_quadro($1, '1002', 'CONFIRMAR', $2)`,
+      [EDITAL, id("Médico")],
+    );
+    await db.query(
+      `select public.gravar_vinculo_do_quadro($1, '1004', 'CONFIRMAR', $2)`,
+      [EDITAL, id("Dentista")],
+    );
+    await entrar(db, 0);
+    return db;
+  });
+  const bancoMigrado = moldeDeBanco(async () => {
+    const db = await bancoDeHojeComDados();
+    await db.exec(migracao());
+    return db;
+  });
+
+  const vinculo = async (db: Banco, vaga: string) =>
+    (await vinculos(db, EDITAL)).find((v) => v.vaga === vaga);
+
+  describe("a migration", () => {
+    it("aplicar não muda vínculo nem linha; o quadro mostra origem e arquivo por linha", async () => {
+      const hoje = await bancoDeHojeComDados();
+      const db = await bancoMigrado();
+      expect(await vinculos(db, EDITAL)).toEqual(await vinculos(hoje, EDITAL));
+      await entrar(db, 1);
+      const q = await lerQuadro(db);
+      expect(q.linhas.map((l) => [l.cargo, l.origem, l.arquivo])).toEqual([
+        ["Enfermeiro", "PDF", ARQUIVO],
+        ["Médico", "PDF", ARQUIVO],
+        ["Dentista", "PDF", ARQUIVO],
+      ]);
+      expect(q.historico).toEqual([]);
+    });
+  });
+
+  describe("retificar uma linha", () => {
+    const corrigirMedico = (linhas: LinhaSalva[]) =>
+      iguais(linhas).map((l) =>
+        l.cargo === "Médico"
+          ? {
+              ...l,
+              cargo: "Médico Clínico",
+              lotacao: "Polo Base Beta",
+              modalidades: { "Ampla Concorrência": 2, PcD: 1 },
+              vagas_imediatas: 3,
+              origem: "MANUAL",
+            }
+          : l,
+      );
+
+    it("hoje, mudar o cargo ou a lotação deixa a vaga ligada pela equipe sem linha, com pendência", async () => {
+      const db = await bancoDeHojeComDados();
+      await entrar(db, 2);
+      await salvar(db, {
+        origem: "PDF",
+        arquivo: ARQUIVO,
+        linhas: corrigirMedico((await lerQuadro(db)).linhas),
+      });
+      expect(await vinculo(db, "1002")).toMatchObject({
+        situacao: "AUSENTE",
+        origem: "MANUAL",
+        pendencia: expect.stringContaining("saiu do quadro"),
+      });
+    });
+
+    it(
+      "migrado, o vínculo vai para a linha corrigida; só ela fica MANUAL; o motivo vai ao histórico",
+      async () => {
+        const db = await bancoMigrado();
+        await entrar(db, 2);
+        const antes = await lerQuadro(db);
+        const depois = await salvar(db, {
+          motivo: MOTIVO,
+          numero_errata: "Retificação nº 2",
+          linhas: corrigirMedico(antes.linhas),
+        });
+        const medico = depois.linhas.find((l) => l.cargo === "Médico Clínico")!;
+        expect(medico).toMatchObject({
+          lotacao: "Polo Base Beta",
+          vagas_imediatas: 3,
+          modalidades: { "Ampla Concorrência": 2, PcD: 1 },
+          origem: "MANUAL",
+          arquivo: ARQUIVO,
+        });
+        expect(depois.linhas.map((l) => l.origem)).toEqual([
+          "PDF",
+          "MANUAL",
+          "PDF",
+        ]);
+        expect(await vinculo(db, "1002")).toMatchObject({
+          situacao: "CONFIRMADO",
+          origem: "MANUAL",
+          quadro: medico.id,
+          pendencia: null,
+        });
+        // Quem confirmou continua o mesmo; a 1001 (regra) e a 1004 seguem nas suas linhas.
+        expect(
+          (
+            await db.query(
+              `select "CO_USUARIO_CONFIRMACAO" as u from public."TA_VAGA_QUADRO_EDITAL" where "CO_VAGA" = '1002'`,
+            )
+          ).rows,
+        ).toEqual([{ u: USUARIO }]);
+        expect((await vinculo(db, "1001"))?.quadro).toBe(depois.linhas[0]!.id);
+        expect((await vinculo(db, "1004"))?.quadro).toBe(depois.linhas[2]!.id);
+        expect(
+          (
+            await db.query(
+              `select "CO_VAGA" as vaga from public."TH_VAGA_QUADRO_EDITAL" where "TP_EVENTO" = 'RETIFICACAO' order by 1`,
+            )
+          ).rows.map((r) => (r as { vaga: string }).vaga),
+        ).toEqual(["1001", "1002", "1004"]);
+        expect(depois.historico?.[0]).toMatchObject({
+          evento: "RETIFICACAO",
+          motivo: MOTIVO,
+          numero_errata: "Retificação nº 2",
+          gravado_por: "Pessoa da Equipe",
+          linhas_antes: 3,
+          linhas_depois: 3,
+        });
+        const { rows } = await db.query<{
+          anterior: { id: string }[];
+          nova: { id: string; anterior: string | null }[];
+        }>(
+          `select "DS_LINHA_ANTERIOR" as anterior, "DS_LINHA_NOVA" as nova from public."TH_QUADRO_VAGA_EDITAL"`,
+        );
+        expect(rows[0]!.nova.map((l) => l.anterior)).toEqual(
+          antes.linhas.map((l) => l.id),
+        );
+      },
+      LONGO,
+    );
+
+    it("retirar a linha: a vaga ligada pela equipe fica sem linha (MANUAL, sem pendência), com histórico", async () => {
+      const db = await bancoMigrado();
+      await entrar(db, 2);
+      const antes = await lerQuadro(db);
+      await salvar(db, {
+        motivo: MOTIVO,
+        linhas: iguais(antes.linhas).filter((l) => l.cargo !== "Dentista"),
+      });
+      expect(await vinculo(db, "1004")).toMatchObject({
+        situacao: "AUSENTE",
+        origem: "MANUAL",
+        quadro: null,
+        pendencia: null,
+      });
+      expect(
+        (
+          await db.query(
+            `select "TP_EVENTO" as e from public."TH_VAGA_QUADRO_EDITAL" where "CO_VAGA" = '1004' order by "SQ_HISTORICO" desc limit 1`,
+          )
+        ).rows,
+      ).toEqual([{ e: "RETIFICACAO" }]);
+      expect((await lerQuadro(db)).historico?.[0]).toMatchObject({
+        linhas_antes: 3,
+        linhas_depois: 2,
+      });
+    });
+
+    it("acrescentar a linha: a vaga sem linha se liga a ela pela regra", async () => {
+      const db = await bancoMigrado();
+      await entrar(db, 2);
+      expect(await vinculo(db, "1003")).toMatchObject({ situacao: "AUSENTE" });
+      const depois = await salvar(db, {
+        motivo: MOTIVO,
+        linhas: [
+          ...iguais((await lerQuadro(db)).linhas),
+          {
+            cargo: "Agente Indígena de Saúde",
+            lotacao: "Polo Base Alfa",
+            modalidades: { "Ampla Concorrência": 1 },
+            vagas_imediatas: 1,
+            cadastro_reserva: false,
+            origem: "MANUAL",
+          },
+        ],
+      });
+      const nova = depois.linhas[3]!;
+      expect(nova).toMatchObject({ origem: "MANUAL", arquivo: null, ordem: 4 });
+      expect(await vinculo(db, "1003")).toMatchObject({
+        situacao: "CONFIRMADO",
+        origem: "AUTOMATICO",
+        quadro: nova.id,
+      });
+    });
+
+    it("simular devolve o quadro como ficaria e não grava nada", async () => {
+      const db = await bancoMigrado();
+      await entrar(db, 2);
+      const antes = await lerQuadro(db);
+      const vinculosAntes = await vinculos(db, EDITAL);
+      const simulado = await salvar(db, {
+        motivo: MOTIVO,
+        simular: true,
+        linhas: iguais(antes.linhas).filter((l) => l.cargo !== "Dentista"),
+      });
+      expect(simulado.linhas).toHaveLength(2);
+      expect(simulado.vinculos.find((v) => v.vaga === "1004")).toMatchObject({
+        situacao: "AUSENTE",
+        quadro: null,
+      });
+      expect(await lerQuadro(db)).toEqual(antes);
+      expect(await vinculos(db, EDITAL)).toEqual(vinculosAntes);
+      expect(
+        (await db.query(`select 1 from public."TH_QUADRO_VAGA_EDITAL"`)).rows,
+      ).toEqual([]);
+    });
+
+    it("a importação do PDF segue como hoje, pela chave, e vai ao histórico como IMPORTACAO", async () => {
+      const db = await bancoMigrado();
+      await entrar(db, 2);
+      const depois = await salvar(db, {
+        origem: "PDF",
+        arquivo: "anexos-105-v2.pdf",
+        linhas: QUADRO,
+      });
+      expect(await vinculo(db, "1002")).toMatchObject({
+        situacao: "CONFIRMADO",
+        origem: "MANUAL",
+        quadro: depois.linhas[1]!.id,
+      });
+      expect(depois.linhas.map((l) => [l.origem, l.arquivo])).toEqual([
+        ["PDF", "anexos-105-v2.pdf"],
+        ["PDF", "anexos-105-v2.pdf"],
+        ["PDF", "anexos-105-v2.pdf"],
+      ]);
+      expect(depois.historico?.[0]).toMatchObject({
+        evento: "IMPORTACAO",
+        motivo: null,
+      });
+    });
+
+    it("recusa retificação sem motivo, linha de fora, linha repetida, origem inválida e quem só lê", async () => {
+      const db = await bancoMigrado();
+      await entrar(db, 2);
+      const linhas = iguais((await lerQuadro(db)).linhas);
+      expect(await erroDe(salvar(db, { linhas }))).toBe("22023");
+      expect(await erroDe(salvar(db, { motivo: "curto", linhas }))).toBe(
+        "22023",
+      );
+      expect(
+        await erroDe(
+          salvar(db, {
+            motivo: MOTIVO,
+            linhas: [
+              {
+                ...linhas[0]!,
+                anterior: "aaaaaaaa-9999-0000-0000-000000000000",
+              },
+            ],
+          }),
+        ),
+      ).toBe("22023");
+      expect(
+        await erroDe(
+          salvar(db, { motivo: MOTIVO, linhas: [linhas[0]!, linhas[0]!] }),
+        ),
+      ).toBe("22023");
+      expect(
+        await erroDe(
+          salvar(db, {
+            motivo: MOTIVO,
+            linhas: [{ ...linhas[0]!, origem: "OUTRA" }],
+          }),
+        ),
+      ).toBe("22023");
+      await entrar(db, 1);
+      expect(await erroDe(salvar(db, { motivo: MOTIVO, linhas }))).toBe(
+        "42501",
+      );
+    });
+  });
+});
+
 bloco("vinculos-do-quadro", () => {
   const L1 = { id: "l1", cargo: "Enfermeiro", lotacao: "Polo Base Alfa" };
   const L2 = { id: "l2", cargo: "Enfermeiro", lotacao: "Polo Base Beta" };
@@ -7072,6 +7479,355 @@ bloco("lib/pagina-do-edital", () => {
       });
       expect(quadro.fila.vagasDoEdital).toBe("PENDENTE_INTEGRACAO");
       expect(quadroDaPagina(null)).toMatchObject({ linhas: [], origem: null });
+    });
+  });
+});
+
+bloco("lib/retificar-quadro", () => {
+  /*
+  Retificar uma linha do quadro de vagas (src/lib/editais/retificar-quadro.ts): o quadro inteiro
+  que vai à RPC (anterior, origem MANUAL só na linha mudada ou nova), as validações do modal e o
+  resumo do que muda nas vagas a partir do quadro simulado.
+*/
+  const linha = (
+    id: string,
+    ordem: number,
+    cargo: string,
+    lotacao: string | null,
+    modalidades: Record<string, number | null>,
+    extra: Record<string, unknown> = {},
+  ) => ({
+    id,
+    ordem,
+    cargo,
+    lotacao,
+    modalidades,
+    vagas_imediatas: Object.values(modalidades).reduce<number>(
+      (s, v) => s + (v ?? 0),
+      0,
+    ),
+    cadastro_reserva: true,
+    origem: "PDF",
+    arquivo: "anexos.pdf",
+    ...extra,
+  });
+  const vinculo = (
+    vaga: string,
+    cargo: string,
+    quadro: string | null,
+    origem = "MANUAL",
+  ) => ({
+    vaga,
+    cargo,
+    quadro,
+    situacao: quadro ? "CONFIRMADO" : "AUSENTE",
+    origem,
+    candidatas: [],
+  });
+  const AGORA = {
+    linhas: [
+      linha("a", 1, "Enfermeiro", "Polo Base Alfa", {
+        "Ampla Concorrência": 2,
+        PcD: null,
+      }),
+      linha("b", 2, "Médico", "Polo Base Alfa", {
+        "Ampla Concorrência": 1,
+        PcD: null,
+      }),
+      linha("c", 3, "Dentista", "Polo Base Gama", { "Ampla Concorrência": 1 }),
+    ],
+    vinculos: [
+      vinculo("1001", "Enfermeiro - Polo Base Alfa", "a", "AUTOMATICO"),
+      vinculo("1002", "Médico", "b"),
+      vinculo("1003", "Agente Indígena de Saúde", null, "AUTOMATICO"),
+      vinculo("1004", "Dentista - Polo Base Gama", "c"),
+    ],
+  };
+  const linhas = linhasDoQuadroRetificavel(AGORA);
+  const modalidades = modalidadesDoQuadro(linhas);
+
+  it("lê as linhas vigentes sem confiar no formato e junta as modalidades", () => {
+    expect(linhas.map((l) => [l.id, l.ordem, l.origem, l.arquivo])).toEqual([
+      ["a", 1, "PDF", "anexos.pdf"],
+      ["b", 2, "PDF", "anexos.pdf"],
+      ["c", 3, "PDF", "anexos.pdf"],
+    ]);
+    expect(
+      linhasDoQuadroRetificavel({ linhas: [null, { id: "x" }, "y"] }),
+    ).toEqual([]);
+    expect(linhasDoQuadroRetificavel(null)).toEqual([]);
+    expect(modalidades).toEqual(["Ampla Concorrência", "PcD"]);
+    expect(modalidadesDoQuadro([])).toEqual(["Ampla Concorrência"]);
+  });
+
+  it("o rascunho do modal traz as quantidades e o total sai da soma", () => {
+    const r = rascunhoDaLinha(linhas[1]!, modalidades);
+    expect(r).toEqual({
+      cargo: "Médico",
+      lotacao: "Polo Base Alfa",
+      modalidades: [
+        { nome: "Ampla Concorrência", quantidade: "1" },
+        { nome: "PcD", quantidade: "" },
+      ],
+      cadastroReserva: true,
+    });
+    expect(
+      totalDoRascunho({
+        ...r,
+        modalidades: [
+          { nome: "Ampla Concorrência", quantidade: "3" },
+          { nome: "PcD", quantidade: "1" },
+        ],
+      }),
+    ).toBe(4);
+    expect(rascunhoDaLinha(null, modalidades).cargo).toBe("");
+  });
+
+  it("recusa cargo vazio, quantidade inválida, linha sem vaga nem CR, linha repetida e nada mudado", () => {
+    const r = rascunhoDaLinha(linhas[1]!, modalidades);
+    expect(problemasDoRascunho(r, linhas, "b")).toEqual(["Nada mudou."]);
+    expect(problemasDoRascunho({ ...r, cargo: "  " }, linhas, "b")).toContain(
+      "Informe o cargo.",
+    );
+    expect(
+      problemasDoRascunho(
+        {
+          ...r,
+          modalidades: [{ nome: "Ampla Concorrência", quantidade: "1,5" }],
+        },
+        linhas,
+        "b",
+      ),
+    ).toContain(
+      "Quantidade inválida em Ampla Concorrência: use um número inteiro.",
+    );
+    expect(
+      problemasDoRascunho(
+        {
+          ...r,
+          modalidades: [{ nome: "Ampla Concorrência", quantidade: "" }],
+          cadastroReserva: false,
+        },
+        linhas,
+        "b",
+      ),
+    ).toContain("A linha precisa de vaga imediata ou de cadastro reserva.");
+    // A mesma chave do banco: sem acento, caixa e pontuação.
+    expect(
+      problemasDoRascunho(
+        { ...r, cargo: "ENFERMEIRO", lotacao: "polo base  alfa." },
+        linhas,
+        "b",
+      ),
+    ).toEqual([
+      "Já há a linha Enfermeiro — Polo Base Alfa no quadro: edite-a em vez de repetir.",
+    ]);
+    expect(
+      problemasDoRascunho({ ...r, cargo: "Médico Clínico" }, linhas, "b"),
+    ).toEqual([]);
+    expect(chaveDaLinha("Técnico de Enfermagem", null)).toBe(
+      "tecnico de enfermagem|",
+    );
+  });
+
+  it("o quadro inteiro vai à RPC: anterior em toda linha que fica, MANUAL só na mudada ou nova", () => {
+    const editada = quadroRetificado(
+      linhas,
+      {
+        tipo: "editar",
+        id: "b",
+        linha: {
+          ...rascunhoDaLinha(linhas[1]!, modalidades),
+          modalidades: [
+            { nome: "Ampla Concorrência", quantidade: "2" },
+            { nome: "PcD", quantidade: "1" },
+          ],
+        },
+      },
+      "  Retificação nº 2 do edital ",
+      "Retificação nº 2",
+    );
+    expect(editada).toEqual({
+      motivo: "Retificação nº 2 do edital",
+      numero_errata: "Retificação nº 2",
+      linhas: [
+        {
+          cargo: "Enfermeiro",
+          lotacao: "Polo Base Alfa",
+          modalidades: { "Ampla Concorrência": 2, PcD: null },
+          vagas_imediatas: 2,
+          cadastro_reserva: true,
+          anterior: "a",
+        },
+        {
+          cargo: "Médico",
+          lotacao: "Polo Base Alfa",
+          modalidades: { "Ampla Concorrência": 2, PcD: 1 },
+          vagas_imediatas: 3,
+          cadastro_reserva: true,
+          anterior: "b",
+          origem: "MANUAL",
+        },
+        expect.objectContaining({ cargo: "Dentista", anterior: "c" }),
+      ],
+    });
+    expect(
+      aplicarMudanca(linhas, { tipo: "retirar", id: "c" }).map(
+        (l) => l.anterior,
+      ),
+    ).toEqual(["a", "b"]);
+    const nova = aplicarMudanca(linhas, {
+      tipo: "acrescentar",
+      linha: {
+        cargo: "Agente Indígena de Saúde",
+        lotacao: "Polo Base Alfa",
+        modalidades: [{ nome: "Ampla Concorrência", quantidade: "1" }],
+        cadastroReserva: false,
+      },
+    });
+    expect(nova[3]).toEqual({
+      cargo: "Agente Indígena de Saúde",
+      lotacao: "Polo Base Alfa",
+      modalidades: { "Ampla Concorrência": 1 },
+      vagas_imediatas: 1,
+      cadastro_reserva: false,
+      origem: "MANUAL",
+    });
+    expect(
+      quadroRetificado(
+        linhas,
+        { tipo: "retirar", id: "c" },
+        "Motivo longo o bastante",
+        "",
+        true,
+      ),
+    ).toMatchObject({ simular: true });
+    expect(
+      quadroRetificado(
+        linhas,
+        { tipo: "retirar", id: "c" },
+        "Motivo longo o bastante",
+        "",
+      ),
+    ).not.toHaveProperty("numero_errata");
+  });
+
+  it("o motivo tem de 10 a 500 caracteres", () => {
+    expect(problemaDoMotivo("curto")).toMatch(/pelo menos 10/);
+    expect(problemaDoMotivo("Retificação nº 2 do edital")).toBe("");
+    expect(problemaDoMotivo("x".repeat(501))).toMatch(/500/);
+  });
+
+  describe("o resumo do que muda, pelo quadro simulado", () => {
+    it("retirar: a vaga ligada à linha fica sem linha", () => {
+      const simulado = {
+        linhas: [
+          linha("a2", 1, "Enfermeiro", "Polo Base Alfa", {
+            "Ampla Concorrência": 2,
+          }),
+          linha("b2", 2, "Médico", "Polo Base Alfa", {
+            "Ampla Concorrência": 1,
+          }),
+        ],
+        vinculos: [
+          vinculo("1001", "Enfermeiro - Polo Base Alfa", "a2", "AUTOMATICO"),
+          vinculo("1002", "Médico", "b2"),
+          vinculo("1003", "Agente Indígena de Saúde", null, "AUTOMATICO"),
+          vinculo("1004", "Dentista - Polo Base Gama", null),
+        ],
+      };
+      const r = resumoDaMudanca(AGORA, simulado, { tipo: "retirar", id: "c" });
+      expect(r.antes?.cargo).toBe("Dentista");
+      expect(r.depois).toBeNull();
+      expect(r.vagas).toEqual([
+        {
+          vaga: "1004",
+          nome: "Dentista - Polo Base Gama",
+          efeito: "sem-linha",
+          antes: "Dentista — Polo Base Gama",
+          depois: null,
+          pelaEquipe: true,
+        },
+      ]);
+    });
+
+    it("acrescentar: a vaga sem linha passa à linha nova", () => {
+      const simulado = {
+        linhas: [
+          ...AGORA.linhas.map((l, i) => ({
+            ...l,
+            id: `${l.id}2`,
+            ordem: i + 1,
+          })),
+          linha(
+            "d2",
+            4,
+            "Agente Indígena de Saúde",
+            "Polo Base Alfa",
+            { "Ampla Concorrência": 1 },
+            { origem: "MANUAL" },
+          ),
+        ],
+        vinculos: [
+          vinculo("1001", "Enfermeiro - Polo Base Alfa", "a2", "AUTOMATICO"),
+          vinculo("1002", "Médico", "b2"),
+          vinculo("1003", "Agente Indígena de Saúde", "d2", "AUTOMATICO"),
+          vinculo("1004", "Dentista - Polo Base Gama", "c2"),
+        ],
+      };
+      const r = resumoDaMudanca(AGORA, simulado, {
+        tipo: "acrescentar",
+        linha: rascunhoDaLinha(null, modalidades),
+      });
+      expect(r.antes).toBeNull();
+      expect(r.depois).toMatchObject({ id: "d2", origem: "MANUAL" });
+      expect(r.vagas).toEqual([
+        expect.objectContaining({
+          vaga: "1003",
+          efeito: "passa",
+          antes: null,
+          depois: "Agente Indígena de Saúde — Polo Base Alfa",
+        }),
+      ]);
+    });
+
+    it("editar: a vaga da linha continua nela, e a que a regra levou para outra linha aparece", () => {
+      const simulado = {
+        linhas: [
+          linha("a2", 1, "Enfermeiro", "Polo Base Alfa", {
+            "Ampla Concorrência": 2,
+          }),
+          linha(
+            "b2",
+            2,
+            "Médico Clínico",
+            "Polo Base Beta",
+            { "Ampla Concorrência": 3 },
+            { origem: "MANUAL" },
+          ),
+          linha("c2", 3, "Dentista", "Polo Base Gama", {
+            "Ampla Concorrência": 1,
+          }),
+        ],
+        vinculos: [
+          vinculo("1001", "Enfermeiro - Polo Base Alfa", "b2", "AUTOMATICO"),
+          vinculo("1002", "Médico", "b2"),
+          vinculo("1003", "Agente Indígena de Saúde", null, "AUTOMATICO"),
+          vinculo("1004", "Dentista - Polo Base Gama", "c2"),
+        ],
+      };
+      const r = resumoDaMudanca(AGORA, simulado, {
+        tipo: "editar",
+        id: "b",
+        linha: rascunhoDaLinha(linhas[1]!, modalidades),
+      });
+      expect(r.antes?.cargo).toBe("Médico");
+      expect(r.depois?.cargo).toBe("Médico Clínico");
+      expect(r.vagas.map((v) => [v.vaga, v.efeito])).toEqual([
+        ["1001", "passa"],
+        ["1002", "continua"],
+      ]);
+      expect(TEXTO_DO_EFEITO["sem-linha"]).toBe("Fica sem linha");
     });
   });
 });
