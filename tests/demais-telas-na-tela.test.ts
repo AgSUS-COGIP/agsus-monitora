@@ -7,6 +7,10 @@ import { TabelaInfinita as TabelaInfinitaDaBarra } from "../src/ui/tabela-infini
 import { BotoesDeExportacao } from "../src/ui/botoes-de-exportacao.tsx";
 import { Popover, desvioParaCaber } from "../src/ui/popover.tsx";
 import {
+  opcoesDoMapa,
+  protegerMapa,
+} from "../src/modulos/mapa-saude-indigena/guarda-do-mapa.ts";
+import {
   criarEditorSobDemanda,
   type EditorSobDemanda,
 } from "../src/modulos/editor-de-coordenadas/editor-sob-demanda.ts";
@@ -3252,6 +3256,178 @@ bloco("modulos/editor-de-coordenadas-sob-demanda", () => {
     await act(async () => {});
     expect(atual()).toMatchObject({ editor: editorFalso, erro: "" });
     expect(importar).toHaveBeenCalledTimes(2);
+  });
+});
+
+bloco("modulos/mapa-escondido-sem-nan", () => {
+  /*
+    As telas visitadas ficam montadas e escondidas: o contêiner do mapa fica
+    com largura 0. O Leaflet que enquadra (folga maior que a moldura) ou voa
+    (divide pela largura) com medida 0 dá "Invalid LatLng object: (NaN,
+    NaN)" — o erro real gravado de 23 a 26/11/2026. O falso abaixo faz a
+    mesma conta que o Leaflet e lança o mesmo erro.
+  */
+  type Caixa = {
+    getSouth(): number;
+    getNorth(): number;
+    getWest(): number;
+    getEast(): number;
+  };
+  type Par = [number, number];
+  function caixa(entrada: Caixa | [Par, Par] | Par, segundo?: Par): Caixa {
+    if (!Array.isArray(entrada)) return entrada;
+    const [a, b]: [Par, Par] = segundo
+      ? [entrada as Par, segundo]
+      : (entrada as [Par, Par]);
+    return {
+      getSouth: () => Math.min(a[0], b[0]),
+      getNorth: () => Math.max(a[0], b[0]),
+      getWest: () => Math.min(a[1], b[1]),
+      getEast: () => Math.max(a[1], b[1]),
+    };
+  }
+  const L = {
+    latLngBounds: caixa,
+    latLng: (lat: number, lng: number) => ({ lat, lng }),
+  };
+  const invalido = () => {
+    throw new Error("Invalid LatLng object: (NaN, NaN)");
+  };
+
+  function mapaFalso({ enquadramentoProprio = true } = {}) {
+    const medida = { x: 800, y: 400 };
+    const ouvintes: Record<string, (() => void)[]> = {};
+    const container = document.createElement("div");
+    const mapa = {
+      options: { enquadramentoProprio },
+      _loaded: true,
+      on(eventos: string, ouvinte: () => void) {
+        for (const nome of eventos.split(" "))
+          (ouvintes[nome] ??= []).push(ouvinte);
+        return mapa;
+      },
+      disparar(nome: string) {
+        for (const ouvinte of ouvintes[nome] ?? []) ouvinte();
+      },
+      whenReady: (pronto: () => void) => pronto(),
+      getContainer: () => container,
+      getSize: () => ({ ...medida }),
+      getZoom: () => 4.5,
+      getMinZoom: () => 4.5,
+      getMaxZoom: () => 19,
+      setMaxBounds: vi.fn(),
+      setMinZoom: vi.fn(),
+      setMaxZoom: vi.fn(),
+      eachLayer: () => {},
+      zoomIn: vi.fn(),
+      zoomOut: vi.fn(),
+      invalidateSize: vi.fn(),
+      panInsideBounds: vi.fn(),
+      setView: vi.fn(),
+      // Como o Leaflet: a moldura menos a folga entra num logaritmo.
+      fitBounds: vi.fn((_limites: unknown, opcoes?: { padding?: Par }) => {
+        const folga = opcoes?.padding?.[0] ?? 0;
+        const util = Math.min(medida.x, medida.y) - 2 * folga;
+        if (Number.isNaN(Math.log2(util / 256))) invalido();
+      }),
+      flyToBounds: vi.fn((_limites?: unknown, _opcoes?: unknown) => {
+        if (!Math.max(medida.x, medida.y)) invalido();
+      }),
+      flyTo: vi.fn((_centro?: unknown, _zoom?: unknown) => {
+        if (!Math.max(medida.x, medida.y)) invalido();
+      }),
+    };
+    return { mapa, medida, container };
+  }
+
+  let observados: ResizeObserverCallback[] = [];
+  beforeEach(() => {
+    observados = [];
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(aoMudar: ResizeObserverCallback) {
+          observados.push(aoMudar);
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    vi.stubGlobal("requestAnimationFrame", (quadro: FrameRequestCallback) => {
+      quadro(0);
+      return 1;
+    });
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const medir = (largura: number, altura: number) => {
+    const entrada = {
+      contentRect: { width: largura, height: altura },
+    } as ResizeObserverEntry;
+    for (const aoMudar of observados) aoMudar([entrada], {} as ResizeObserver);
+  };
+
+  it("escondido, enquadrar e voar não fazem conta com medida 0", () => {
+    const { mapa, medida } = mapaFalso();
+    // As funções do Leaflet, antes de a guarda pôr as dela por cima.
+    const { fitBounds, flyTo, flyToBounds, setView } = mapa;
+    protegerMapa(L, mapa);
+    medida.x = 0;
+    medida.y = 0;
+    expect(() =>
+      mapa.fitBounds(
+        caixa([
+          [-33.7, -73.9],
+          [5.3, -34.8],
+        ]),
+        { padding: [30, 30] },
+      ),
+    ).not.toThrow();
+    expect(() => mapa.flyTo([-3.1, -60], 8)).not.toThrow();
+    expect(() =>
+      mapa.flyToBounds(
+        caixa([
+          [-4, -61],
+          [-3, -60],
+        ]),
+      ),
+    ).not.toThrow();
+    expect(fitBounds).not.toHaveBeenCalled();
+    expect(flyTo).not.toHaveBeenCalled();
+    expect(flyToBounds).not.toHaveBeenCalled();
+    // Só o centro, sem animação: o enquadramento vem quando aparecer.
+    expect(setView).toHaveBeenLastCalledWith({ lat: -3.5, lng: -60.5 }, 4.5, {
+      animate: false,
+    });
+  });
+
+  it("o resize de um mapa escondido não reenquadra o Brasil com medida 0", () => {
+    const { mapa, medida } = mapaFalso({ enquadramentoProprio: false });
+    const { fitBounds } = mapa;
+    protegerMapa(L, mapa);
+    fitBounds.mockClear();
+    medida.x = 0;
+    medida.y = 0;
+    expect(() => mapa.disparar("resize")).not.toThrow();
+    expect(fitBounds).not.toHaveBeenCalled();
+  });
+
+  it("sem trackResize; remede só com medida real, uma vez ao voltar a aparecer", () => {
+    expect(opcoesDoMapa(L)).toMatchObject({ trackResize: false });
+    const { mapa } = mapaFalso();
+    protegerMapa(L, mapa);
+    mapa.invalidateSize.mockClear();
+    medir(0, 0);
+    expect(mapa.invalidateSize).not.toHaveBeenCalled();
+    medir(800, 400);
+    medir(800, 400);
+    expect(mapa.invalidateSize).toHaveBeenCalledTimes(1);
+    expect(mapa.invalidateSize).toHaveBeenCalledWith({
+      animate: false,
+      pan: false,
+    });
   });
 });
 

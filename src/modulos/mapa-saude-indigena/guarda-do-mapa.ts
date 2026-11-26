@@ -19,7 +19,20 @@ import {
     - `OPCOES_DOS_AZULEJOS`: o fundo de azulejos sem cópias laterais e sem
       recorte por `bounds` (ver a nota em `OPCOES_DOS_AZULEJOS`);
     - `protegerMapa`: enquadramentos presos aos limites, zoom mínimo que
-      acompanha a moldura, régua, teclado (+, −, 0) e nome acessível.
+      acompanha a moldura, régua, teclado (+, −, 0), nome acessível e o
+      tamanho medido só quando o contêiner tem medida (abaixo).
+
+  O MAPA ESCONDIDO. As telas visitadas ficam montadas e escondidas
+  (src/app/telas.tsx): o contêiner do mapa fica com largura 0, e o `resize`
+  da janela faz o Leaflet guardar essa medida. Com medida 0 ele não sabe
+  enquadrar: no `fitBounds` a moldura menos a folga dá negativo, e no
+  `flyTo`/`flyToBounds` ele divide pela largura. O ponto sai "Invalid LatLng
+  object: (NaN, NaN)" (o único erro real gravado em TL_ERRO_APLICACAO de 23
+  a 26/11/2026; conferido com o Leaflet 1.9.4). Por isso: `trackResize:
+  false` (o `resize` da janela não remede o mapa escondido); um `ResizeObserver` remede
+  só com medida real, e uma vez ao voltar a aparecer; e, sem medida, os
+  enquadramentos só guardam o centro, sem animação nem conta de zoom. Quem
+  enquadra de novo ao aparecer é o componente (`observarTamanho`, leaflet.ts).
 
   O Leaflet vem do CDN como `window.L`, sem tipos instalados: este arquivo
   declara só o que usa dele (os limites, o ponto, a régua e o mapa).
@@ -96,11 +109,14 @@ interface MapaDaGuarda {
   touchZoom?: InteracaoDoMapa;
   boxZoom?: InteracaoDoMapa;
   keyboard?: InteracaoDoMapa;
+  /** O Leaflet já tem centro e zoom (`setView` feito). */
+  _loaded?: boolean;
   __agsusMapGuarded?: boolean;
   __agsusOverviewMode?: boolean;
   __agsusRemovido?: boolean;
   __agsusStabilizeTimer?: number;
   __agsusResizeObserver?: ResizeObserver;
+  __agsusObservadorDaMedida?: ResizeObserver;
   __agsusScaleControlAdded?: boolean;
 }
 
@@ -166,7 +182,57 @@ export function opcoesDoMapa(
     worldCopyJump: false,
     minZoom: ZOOM_MINIMO,
     maxZoom: ZOOM_MAXIMO,
+    // O `resize` da janela remedia também o mapa escondido (medida 0): quem remede é a guarda.
+    trackResize: false,
   };
+}
+
+/*
+  O mapa está sem medida (contêiner escondido)? Pela medida que o próprio
+  Leaflet usa (`getSize`). Mapa sem `getSize` (os falsos dos testes) conta
+  como medido.
+*/
+function semMedida(map: MapaDaGuarda): boolean {
+  const tamanho = map.getSize?.();
+  if (!tamanho) return false;
+  return !(Number(tamanho.x) > 0 && Number(tamanho.y) > 0);
+}
+
+/*
+  No lugar do `resize` da janela: remede o mapa quando o contêiner muda de
+  medida, só com medida real. Escondido (0), nada; ao voltar a aparecer,
+  remede uma vez.
+*/
+function remedirComMedidaReal(map: MapaDaGuarda) {
+  const container = map.getContainer?.();
+  if (!container || typeof ResizeObserver === "undefined") return;
+  let medida = "";
+  let quadro = 0;
+  const observador = new ResizeObserver((entradas) => {
+    const caixa = entradas[entradas.length - 1]?.contentRect;
+    if (!caixa || !(caixa.width > 0) || !(caixa.height > 0)) {
+      medida = "";
+      return;
+    }
+    const nova = `${caixa.width}x${caixa.height}`;
+    if (nova === medida) return;
+    medida = nova;
+    window.cancelAnimationFrame?.(quadro);
+    quadro = window.requestAnimationFrame(() => {
+      if (map.__agsusRemovido) return;
+      try {
+        map.invalidateSize({ animate: false, pan: false });
+      } catch {
+        // mapa já removido
+      }
+    });
+  });
+  observador.observe(container);
+  map.__agsusObservadorDaMedida = observador;
+  map.on("unload", () => {
+    window.cancelAnimationFrame?.(quadro);
+    observador.disconnect();
+  });
 }
 
 /*
@@ -265,6 +331,21 @@ function hardenMapInstance(L: LeafletDaGuarda, map: MapaDaGuarda) {
     );
   };
 
+  /*
+    Sem medida, enquadrar daria NaN: só o centro da caixa vai para o mapa,
+    sem animação, no zoom atual (ou no mínimo, se o mapa ainda não tem
+    vista). O enquadramento de verdade vem quando o mapa aparecer.
+  */
+  const centrarSemMedida = (limites: LimitesDoLeaflet) =>
+    originalSetView(
+      L.latLng(
+        (limites.getSouth() + limites.getNorth()) / 2,
+        (limites.getWest() + limites.getEast()) / 2,
+      ),
+      map._loaded ? clampZoom(map, undefined) : HEALTH_MAP_MIN_ZOOM,
+      { animate: false },
+    );
+
   map.setMaxBounds = function setGuardedMaxBounds() {
     return originalSetMaxBounds(maxBounds);
   };
@@ -304,6 +385,7 @@ function hardenMapInstance(L: LeafletDaGuarda, map: MapaDaGuarda) {
     options: OpcoesDoEnquadramento = {},
   ) {
     const limited = limitBounds(L, bounds, maxBounds);
+    if (semMedida(map)) return centrarSemMedida(limited);
     const overview = isBrazilOverviewBounds(L, limited);
     const requestedMax = Number(options.maxZoom);
     const maxZoom = overview
@@ -334,6 +416,7 @@ function hardenMapInstance(L: LeafletDaGuarda, map: MapaDaGuarda) {
       options: OpcoesDoEnquadramento = {},
     ) {
       const limited = limitBounds(L, bounds, maxBounds);
+      if (semMedida(map)) return centrarSemMedida(limited);
       const overview = isBrazilOverviewBounds(L, limited);
       if (overview) liberarZoomParaCaber(limited, folgaDoBrasil);
       /* Mesma razão do `fitBounds`: a animação termina em `setView`. */
@@ -361,6 +444,13 @@ function hardenMapInstance(L: LeafletDaGuarda, map: MapaDaGuarda) {
       options: OpcoesDoEnquadramento = {},
     ) {
       map.__agsusOverviewMode = false;
+      // Sem medida, o voo divide pela largura: vai direto, sem animação.
+      if (semMedida(map))
+        return originalSetView(
+          clampLatLng(L, center, maxBounds),
+          clampZoom(map, zoom),
+          { ...options, animate: false },
+        );
       return originalFlyTo(
         clampLatLng(L, center, maxBounds),
         clampZoom(map, zoom),
@@ -398,11 +488,14 @@ function hardenMapInstance(L: LeafletDaGuarda, map: MapaDaGuarda) {
   }
 
   enhanceMapAccessibility(L, map);
+  remedirComMedidaReal(map);
 
   const fitBrazilOverview = () => {
-    if (map.__agsusRemovido) return;
+    if (map.__agsusRemovido || semMedida(map)) return;
     try {
       map.invalidateSize({ animate: false, pan: false });
+      // A medida guardada podia ser a de antes de esconder.
+      if (semMedida(map)) return;
       liberarZoomParaCaber(viewBounds, folgaDoBrasil);
       originalFitBounds(viewBounds, {
         padding: folgaDoBrasil,
@@ -461,7 +554,7 @@ function hardenMapInstance(L: LeafletDaGuarda, map: MapaDaGuarda) {
     Brasil saíam cortados sem como afastar.
   */
   map.on("resize", () => {
-    if (map.__agsusRemovido) return;
+    if (map.__agsusRemovido || semMedida(map)) return;
     liberarZoomParaCaber(viewBounds, folgaDoBrasil);
     stabilizeMap(map, maxBounds);
     if (enquadramentoProprio || !emOverview(map)) return;
@@ -608,7 +701,7 @@ function stabilizeMap(map: MapaDaGuarda, maxBounds: LimitesDoLeaflet) {
   window.clearTimeout(map.__agsusStabilizeTimer);
   if (map.__agsusRemovido) return;
   map.__agsusStabilizeTimer = window.setTimeout(() => {
-    if (map.__agsusRemovido) return;
+    if (map.__agsusRemovido || semMedida(map)) return;
     try {
       map.invalidateSize({ animate: false, pan: false });
       map.panInsideBounds(maxBounds, { animate: false });
