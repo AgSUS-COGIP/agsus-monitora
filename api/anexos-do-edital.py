@@ -291,22 +291,27 @@ def extrair(conteudo):
     """Lê o PDF (bytes) e devolve o dicionário da resposta."""
     import pdfplumber
 
-    tabelas = []
+    lidas = []
     textos = []
+    com_tabela = False
     with pdfplumber.open(io.BytesIO(conteudo)) as pdf:
         paginas = len(pdf.pages)
         for pagina in pdf.pages[:PAGINAS_LIDAS]:
             texto = pagina.extract_text() or ""
             textos.append(texto)
-            tabelas.extend(pagina.extract_tables() or [])
-            if re.search(r"ANEXO\s+III", texto, re.I) and tabelas:
+            lidas.append(pagina)
+            com_tabela = com_tabela or bool(pagina.find_tables())
+            if re.search(r"ANEXO\s+III", texto, re.I) and com_tabela:
                 break
+        tabelas, retificacao = tabelas_que_valem(lidas)
     edital, unidade, ano = identificar("\n".join(textos[:2]))
     ano = ano or date.today().year
     cronograma = extrair_cronograma(tabelas, ano)
     vagas, modalidades = extrair_quadro(tabelas)
 
     avisos = []
+    if retificacao:
+        avisos.append('Retificação: valem só as tabelas do "Leia-se"; as do "Onde se lê" ficaram de fora.')
     if not cronograma:
         avisos.append("Não achei a tabela do cronograma (Anexo I).")
     elif any(not e["data_inicio"] for e in cronograma):
@@ -418,6 +423,35 @@ _MARCAS = (
     ("leia", r"Leia-se|Leia\s+se"),
     ("fim", r"DISPOSI[ÇC][ÕO]ES\s+FINAIS|As\s+demais\s+cl[áa]usulas"),
 )
+
+
+def tabelas_que_valem(paginas):
+    """
+    As tabelas das páginas, na ordem, e se o PDF é uma retificação dos anexos.
+    A retificação ("1ª Retificação dos Anexos I, II e III") traz cada tabela
+    duas vezes: a antiga, depois de "Onde se lê:", e a que vale, depois de
+    "Leia-se:". Com as duas marcas, só as tabelas do "Leia-se" entram (a que
+    continua na página seguinte segue na seção da marca acima dela); sem elas,
+    todas.
+    """
+    eventos = []
+    for numero, pagina in enumerate(paginas):
+        for nome, padrao in _MARCAS:
+            for achado in pagina.search(padrao, regex=True, case=False):
+                eventos.append((numero, achado["top"], 0, nome, None))
+        for tabela in pagina.find_tables():
+            eventos.append((numero, tabela.bbox[1], 1, "tabela", tabela))
+    eventos.sort(key=lambda e: (e[0], e[1], e[2]))
+    marcas = {e[3] for e in eventos}
+    retificacao = "onde" in marcas and "leia" in marcas
+    tabelas = []
+    atual = None
+    for _, _, _, nome, tabela in eventos:
+        if nome != "tabela":
+            atual = None if nome == "fim" else nome
+        elif not retificacao or atual == "leia":
+            tabelas.append(tabela.extract())
+    return tabelas, retificacao
 
 
 def secoes_da_retificacao(paginas):

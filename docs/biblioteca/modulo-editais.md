@@ -146,7 +146,9 @@ Tabela, alertas, formulário e linha do tempo. A tela é `nucleo.tsx`; o estado 
 ### Leitura do PDF (`api/anexos-do-edital.py`)
 
 Função Python da Vercel (pdfplumber): lê o PDF de anexos e devolve cronograma (Anexo I) e quadro
-de vagas (Anexo II) em JSON. Só usuário logado; não grava nada. Com `?tipo=retificacao`, lê a
+de vagas (Anexo II) em JSON. Só usuário logado; não grava nada. Se o PDF for uma retificação dos
+anexos (com "Onde se lê" e "Leia-se"), só as tabelas do "Leia-se" entram, com aviso; sem isso o
+quadro vinha em dobro (a tabela antiga mais a nova). Com `?tipo=retificacao`, lê a
 retificação (nº, edital, SEI, assinatura, "Onde se lê" e "Leia-se", linhas em negrito e avisos das
 datas). Ver [[deploy-e-vercel]].
 
