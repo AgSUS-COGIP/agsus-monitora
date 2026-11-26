@@ -2732,7 +2732,7 @@ bloco("consultas-lentas-no-banco", () => {
   type BancoDasConsultas = Awaited<
     ReturnType<typeof bancoAntesDasConsultasLentas>
   >;
-  const { classificacao, marca } = MIGRATIONS_DAS_CONSULTAS_LENTAS;
+  const { classificacao, vagas, marca } = MIGRATIONS_DAS_CONSULTAS_LENTAS;
   const CLASSIFICACAO_DE_HOJE = "33a2a3adf41b161b89202166b267d33d";
   const EDITAL_6 = "aaaaaaaa-0000-4000-8000-000000000006";
   const EDITAL_7 = "aaaaaaaa-0000-4000-8000-000000000007";
@@ -2807,6 +2807,91 @@ bloco("consultas-lentas-no-banco", () => {
       await expect(
         db.exec(migrationDasConsultasLentas(classificacao)),
       ).rejects.toThrow(/mudou desde 26\/11\/2026/);
+    });
+  });
+
+  describe("vagas por cargo sem função por linha", () => {
+    const VAGAS_DE_HOJE = "0d36350d911b76999671df93fc2c3a4b";
+    const vagasPorCargo = async (db: BancoDasConsultas) =>
+      (
+        await db.query<{ r: string }>(
+          `select public.listar_vagas_por_cargo_da_visao_geral('sede', array['${EDITAL_6}', '${EDITAL_7}']::uuid[])::text as r`,
+        )
+      ).rows[0]?.r;
+
+    async function comCargosEVagas() {
+      const db = await comEditaisEAnalises();
+      await db.exec(`
+        insert into public."TD_CARGO" ("CO_CARGO", "NO_CARGO", "CO_AREA", "ST_REGISTRO_ATIVO") values
+          (1, 'Enfermeiro 40h', 'sede', 'S'), (2, 'Técnico de Enfermagem', 'sede', 'S'),
+          (3, 'Médico', 'sede', 'S'), (4, 'Nutricionista', 'projetos', 'S'),
+          (5, 'Cargo Antigo', 'sede', 'N');
+        insert into public."TD_CARGO_APELIDO" ("CO_AREA", "DS_GRAFIA_NORMALIZADA", "CO_CARGO", "TP_ORIGEM", "ST_CONFIRMADO", "DT_CONFIRMACAO") values
+          ('sede', 'ENF 40H', 1, 'MANUAL', 'S', now()),
+          ('sede', 'MEDICO CLINICO', 3, 'MANUAL', 'N', null),
+          ('sede', 'MEDICO', 2, 'MANUAL', 'S', now());
+        insert into public."TB_SELECAO_VAGA" ("CO_AREA", "DS_EDITAL", "DS_VAGA_PLANILHA", "DS_CHAVE_ORIGEM", "CO_MONITORAMENTO", "NO_CARGO", "QT_INSCRITO")
+        select 'sede', '6/2026', 'Vaga ' || n, 'chave-' || n, '${EDITAL_6}', n, 10
+          from unnest(array['enfermeiro   40h', 'Enf 40h', 'Médico', 'Médico clínico', 'Cargo Antigo',
+                            'Nutricionista', 'Desconhecido']) n;
+        insert into public."TB_SELECAO_VAGA" ("CO_AREA", "DS_EDITAL", "DS_VAGA_PLANILHA", "DS_CHAVE_ORIGEM", "CO_MONITORAMENTO", "NO_CARGO")
+        values ('sede', '8/2026', 'Fora do pedido', 'chave-fora', '${EDITAL_8}', 'Enfermeiro 40h');
+        insert into public."TB_QUADRO_VAGA_EDITAL" ("CO_MONITORAMENTO", "NU_ORDEM", "NO_CARGO") values
+          ('${EDITAL_7}', 1, 'Técnico de enfermagem'), ('${EDITAL_7}', 2, 'ENFERMEIRO 40H');
+      `);
+      return db;
+    }
+
+    it("migrada e depois do rollback, os mesmos cargos; o corpo volta letra por letra", async () => {
+      const db = await comCargosEVagas();
+      const hoje = await vagasPorCargo(db);
+      const resposta = JSON.parse(hoje ?? "{}") as {
+        vagas: { cargo: string; co_cargo: number | null }[];
+        quadro: { cargo: string; co_cargo: number | null }[];
+      };
+      // Pelo nome, pelo apelido confirmado; ambíguo (nome de um, apelido de outro), apelido sem
+      // confirmação, cargo inativo, de outra área ou sem cadastro: nulo.
+      expect(
+        Object.fromEntries(resposta.vagas.map((v) => [v.cargo, v.co_cargo])),
+      ).toEqual({
+        "enfermeiro   40h": 1,
+        "Enf 40h": 1,
+        Médico: null,
+        "Médico clínico": null,
+        "Cargo Antigo": null,
+        Nutricionista: null,
+        Desconhecido: null,
+      });
+      expect(resposta.quadro.map((q) => q.co_cargo)).toEqual([2, 1]);
+
+      await db.exec(migrationDasConsultasLentas(vagas));
+      expect(
+        await md5DaFuncao(
+          db,
+          "public.listar_vagas_por_cargo_da_visao_geral(text, uuid[])",
+        ),
+      ).not.toBe(VAGAS_DE_HOJE);
+      expect(await vagasPorCargo(db)).toBe(hoje);
+
+      await db.exec(rollbackDasConsultasLentas(vagas));
+      expect(
+        await md5DaFuncao(
+          db,
+          "public.listar_vagas_por_cargo_da_visao_geral(text, uuid[])",
+        ),
+      ).toBe(VAGAS_DE_HOJE);
+      expect(await vagasPorCargo(db)).toBe(hoje);
+    });
+
+    it("o ensaio confere o mapa com a função, roda e não muda nada", async () => {
+      const db = await comCargosEVagas();
+      await db.exec(ensaioDasConsultasLentas(vagas));
+      expect(
+        await md5DaFuncao(
+          db,
+          "public.listar_vagas_por_cargo_da_visao_geral(text, uuid[])",
+        ),
+      ).toBe(VAGAS_DE_HOJE);
     });
   });
 

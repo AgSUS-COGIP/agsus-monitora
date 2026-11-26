@@ -23,6 +23,7 @@ export type Banco = PGlite;
 export const MIGRATIONS = {
   classificacao:
     "20261126190000_editais_da_classificacao_sem_funcao_por_analise.sql",
+  vagas: "20261126190100_vagas_por_cargo_sem_funcao_por_linha.sql",
   marca: "20261126190200_marca_das_leituras_sem_o_perfil_dos_outros.sql",
 } as const;
 

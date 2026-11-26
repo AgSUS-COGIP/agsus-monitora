@@ -45,15 +45,18 @@ rollback, as mesmas respostas, o corpo de volta pelo md5). Guarda: o md5 do `pro
    recorte de quem chama (`FC_EDITAIS_VISIVEIS`) entra na chave da marca. Os pacotes só leem o
    perfil pela permissão, conferida a cada chamada. Esperado: ~1/3 menos montagens completas da
    Visão geral (587 de ~1.740 mudanças das fontes dela).
-3. (1) vagas por cargo e (5) Projetos: [Próximos passos](#próximos-passos).
+3. **`20261126190100_vagas_por_cargo_sem_funcao_por_linha`** (1): com 2.610 nomes distintos em
+   2.836, o ganho só vem de tirar a chamada da função. O cargo de cada nome sai de uma consulta
+   só, por junção da grafia normalizada com os cargos e apelidos da área (a regra de
+   `FC_CARGO_DA_GRAFIA`: vale se casar com um cargo só). Mesma saída; o ensaio confere, em cada
+   área, o cargo de todo nome pelo mapa novo contra a função. O piso é
+   `FC_NORMALIZAR_GRAFIA_CARGO` uma vez por nome: o `EXPLAIN` do ensaio mede o ganho. Se o piso
+   ficar alto, o próximo passo é guardar o `CO_CARGO` resolvido na vaga (gatilho ou robô da
+   carga).
+4. (5) Projetos: [Próximos passos](#próximos-passos).
 
 ## Próximos passos
 
-- **(1) vagas por cargo:** com 2.610 nomes distintos em 2.836, o ganho só vem de tirar a chamada
-  da função: o cargo de cada nome por junção da grafia normalizada com os cargos e apelidos da
-  área (uma consulta só, mesma regra de `FC_CARGO_DA_GRAFIA`). Falta medir o custo de
-  `FC_NORMALIZAR_GRAFIA_CARGO` sozinha por linha, que vira o piso dessa forma; se for alto, o
-  caminho é guardar o `CO_CARGO` resolvido na vaga (gatilho ou robô da carga).
 - **(5) Projetos:** medir `explain (analyze, buffers) select * from
 private."FC_MONTAR_APROVADOS_AREA"('projetos', null)` e as contagens por área (listas,
   candidatos, cargos, códigos) antes de propor.
