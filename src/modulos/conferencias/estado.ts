@@ -1,6 +1,7 @@
 import type {
   EstadoDosAvisos,
   ClienteDosAvisos,
+  RespostaDosAvisos,
   SnapshotDosAvisos,
   FiltroDosAvisos,
   ConsultaDeCasos,
@@ -59,6 +60,43 @@ const RPC_DOS_AVISOS = "listar_avisos_conferencia_se_mudou";
 
 /* Recorte → a última lista lida e a versão dela (só nesta página; a saída apaga). */
 const memoria = memoriaDosAvisos;
+
+/*
+  Leituras a caminho, por cliente e argumentos (recorte e versão). Cada selo
+  tem o próprio estado, e o mesmo recorte pedido por dois deles ao mesmo
+  tempo (o selo montado de novo, a central e o selo) virava duas leituras
+  iguais (auditoria de 26/11/2026, #6). Pedido igual espera a mesma resposta.
+*/
+type ArgumentosDosAvisos = {
+  p_area: string | null;
+  p_modulo: string | null;
+  p_versao: string | null;
+};
+const aCaminho = new WeakMap<
+  ClienteDosAvisos,
+  Map<string, Promise<RespostaDosAvisos>>
+>();
+function lerAvisos(
+  supabase: ClienteDosAvisos,
+  argumentos: ArgumentosDosAvisos,
+): Promise<RespostaDosAvisos> {
+  const doCliente =
+    aCaminho.get(supabase) ?? new Map<string, Promise<RespostaDosAvisos>>();
+  aCaminho.set(supabase, doCliente);
+  const chave = JSON.stringify(argumentos);
+  const andando = doCliente.get(chave);
+  if (andando) return andando;
+  const leitura = comTempoLimite(
+    supabase.rpc(RPC_DOS_AVISOS, argumentos),
+    20000,
+  );
+  doCliente.set(chave, leitura);
+  const soltar = () => {
+    if (doCliente.get(chave) === leitura) doCliente.delete(chave);
+  };
+  leitura.then(soltar, soltar);
+  return leitura;
+}
 const chaveDoRecorte = ({ area, modulo }: FiltroDosAvisos) =>
   `${area || ""}|${modulo || ""}`;
 
@@ -109,14 +147,11 @@ export function criarEstadoDosAvisos({
     // pessoa pode ter entrado nesta aba e ver outro recorte).
     publicar({ status: "loading", erro: "", erroCodigo: "" });
     try {
-      const { data, error } = await comTempoLimite(
-        supabase.rpc(RPC_DOS_AVISOS, {
-          p_area: filtro.area,
-          p_modulo: filtro.modulo,
-          p_versao: guardada?.versao ?? null,
-        }),
-        20000,
-      );
+      const { data, error } = await lerAvisos(supabase, {
+        p_area: filtro.area ?? null,
+        p_modulo: filtro.modulo ?? null,
+        p_versao: guardada?.versao ?? null,
+      });
       if (meu !== pedido) return;
       if (error) {
         publicar({

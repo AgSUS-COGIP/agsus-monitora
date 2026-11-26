@@ -187,6 +187,7 @@ import {
   type ArquivoDoZip,
 } from "../src/lib/recursos/documento-da-resposta.ts";
 import { rotuloEmLinhas } from "../src/lib/selecao/rotulo-em-linhas.ts";
+import { formatNumberBR } from "../src/lib/base/formatters.ts";
 import { criarEstadoDaAvaliacao } from "../src/modulos/avaliacao-documental/estado.ts";
 import { type ClienteDaAvaliacao } from "../src/modulos/avaliacao-documental/tipos-do-estado.ts";
 import { CATALOGO_DE_MARCOS } from "../src/lib/comemoracao/catalogo-de-comemoracoes.ts";
@@ -1426,6 +1427,48 @@ bloco("modulos/avaliacao-documental-voltar-aos-cartoes", () => {
   });
 });
 
+bloco("modulos/avaliacao-documental-editais-a-caminho", () => {
+  /*
+    Na abertura da Triagem, o efeito da tela e o render() do registro pediam
+    os editais da área juntos, e a 1ª resposta era descartada (auditoria de
+    26/11/2026, #5). Pedido igual a um a caminho espera o mesmo.
+  */
+  type Resposta = { data: unknown; error: unknown };
+  const esperar = () => new Promise((r) => setTimeout(r, 0));
+
+  it("dois pedidos iguais juntos fazem uma leitura; depois dela, relê", async () => {
+    const pendentes: { nome: string; responder: (r: Resposta) => void }[] = [];
+    const cliente: ClienteDaAvaliacao = {
+      rpc: (nome) =>
+        new Promise<Resposta>((responder) =>
+          pendentes.push({ nome, responder }),
+        ),
+    };
+    const estado = criarEstadoDaAvaliacao({
+      supabase: cliente,
+      toast: () => {},
+      copias: null,
+    });
+    const doEfeito = estado.carregar("sede");
+    const doRender = estado.carregar("sede");
+    await esperar();
+    const editais = () =>
+      pendentes.filter((p) => p.nome === "listar_editais_avaliacao");
+    expect(editais()).toHaveLength(1);
+    editais()[0]!.responder({ data: { editais: [] }, error: null });
+    expect(await doEfeito).toBe(true);
+    expect(await doRender).toBe(true);
+    expect(estado.obter().carregado).toBe(true);
+
+    // Depois da resposta, "Atualizar" lê de novo; outra área também.
+    pendentes.splice(0);
+    void estado.carregar("sede");
+    void estado.carregar("projetos");
+    await esperar();
+    expect(editais()).toHaveLength(2);
+  });
+});
+
 bloco("exemplos-das-comemoracoes", () => {
   /*
   O "Testar" de Configurações › Comemorações mostrava no aviso o rótulo da
@@ -1777,7 +1820,38 @@ bloco("app/carga", () => {
       ).toBeGreaterThanOrEqual(1);
       expect(saidas).toContain("obter_inicio_da_sessao");
       expect(saidas).toContain("listar_monitoramento_operacional");
+      // O mapa só com o Mapa (auditoria de 26/11/2026, #7).
+      expect(saidas).not.toContain("listar_mapa_da_saude_indigena");
+    });
+
+    it("entrando pelo Mapa, o mapa sai junto com as outras consultas", async () => {
+      const { carga, saidas } = montar({ telaDeEntrada: "mapa" });
+      await carga.carregarEntrada();
       expect(saidas).toContain("listar_mapa_da_saude_indigena");
+    });
+
+    it("o mapa lido depois da entrada vai para a cópia da sessão", async () => {
+      const primeira = montar();
+      await primeira.carga.carregarEntrada();
+      await esperarTudo();
+      const guardada = definido(primeira.copia.guardar.mock.calls[0])[0];
+      // Sem o Mapa, a cópia não tem mapa nem versão (nada foi lido).
+      expect(guardada.dados.mapa).toEqual([]);
+      expect(guardada.dados.versaoDoMapa).toBeNull();
+      const { carga, copia, cliente } = montar({ copiaGuardada: guardada });
+      await carga.carregarEntrada();
+      await esperarTudo();
+      await carga.garantirMapa();
+      await carga.garantirMapa();
+      expect(
+        cliente.rpc.mock.calls.filter(
+          ([nome]) => nome === "listar_mapa_da_saude_indigena",
+        ),
+      ).toHaveLength(1);
+      const comMapa = definido(copia.guardar.mock.calls.at(-1))[0];
+      expect(comMapa.dados.mapa).toEqual(MAPA);
+      expect(comMapa.dados.versaoDoMapa).toBe(VERSAO_DO_MAPA);
+      expect(comMapa.guardadaEm).toBe(guardada.guardadaEm);
     });
 
     it("configuração, painéis, abas, situação e unidades: uma chamada, não cinco", async () => {
@@ -1871,7 +1945,6 @@ bloco("app/carga", () => {
       await carga.atualizarDados();
       const nomes = new Set(cliente.rpc.mock.calls.map(([nome]) => nome));
       expect([...nomes].sort()).toEqual([
-        "listar_mapa_da_saude_indigena",
         "listar_monitoramento_operacional",
         "obter_inicio_da_sessao",
       ]);
@@ -1893,7 +1966,7 @@ bloco("app/carga", () => {
     });
 
     it("o mapa também pergunta pela versão: sem mudança, o mesmo mapa", async () => {
-      const { carga, cliente } = montar();
+      const { carga, cliente } = montar({ telaDeEntrada: "mapa" });
       await carga.carregarEntrada();
       await esperarTudo();
       await carga.atualizarDados();
@@ -1907,13 +1980,16 @@ bloco("app/carga", () => {
     });
 
     it("a cópia guarda a versão do mapa e a próxima entrada a manda", async () => {
-      const primeira = montar();
+      const primeira = montar({ telaDeEntrada: "mapa" });
       await primeira.carga.carregarEntrada();
       await esperarTudo();
       const guardada = definido(primeira.copia.guardar.mock.calls[0])[0];
       expect(guardada.dados.mapa).toEqual(MAPA);
       expect(guardada.dados.versaoDoMapa).toBe(VERSAO_DO_MAPA);
-      const { carga, cliente } = montar({ copiaGuardada: guardada });
+      const { carga, cliente } = montar({
+        copiaGuardada: guardada,
+        telaDeEntrada: "mapa",
+      });
       await carga.carregarEntrada();
       await esperarTudo();
       const pedido = cliente.rpc.mock.calls.find(
@@ -2860,7 +2936,11 @@ bloco("app/pagina-aberta", () => {
       visaoGeral.definirBuscaDoAcompanhamento(
         buscarAcompanhamentoNoSupabase(cliente),
       );
-      parar = acompanharPaginaAberta({ navegacao, visaoGeral });
+      parar = acompanharPaginaAberta({
+        navegacao,
+        visaoGeral,
+        pedirMapa: () => void carga?.garantirMapa(),
+      });
       carga = criarCarga(
         comoDependencias({
           cliente: () => cliente,
@@ -2917,17 +2997,37 @@ bloco("app/pagina-aberta", () => {
       redefinirDadosDoMonitoramento();
     });
 
-    it("avaliador direto na Avaliação documental: 2 chamadas, sem linhas, acompanhamento nem Realtime", async () => {
+    it("avaliador direto na Avaliação documental: 1 chamada, sem linhas, mapa, acompanhamento nem Realtime", async () => {
       const { chamadas, cliente } = montar("avaliacao-documental");
       await definido(carga).carregarEntrada();
       definido(carga).iniciarRealtime();
       await esperar();
-      expect([...chamadas].sort()).toEqual(
-        // Configuração, painéis, abas, situação e unidades: obter_inicio_da_sessao.
-        ["listar_mapa_da_saude_indigena", "obter_inicio_da_sessao"].sort(),
-      );
+      // Configuração, painéis, abas, situação e unidades: obter_inicio_da_sessao.
+      // O mapa só sai com o Mapa (auditoria de 26/11/2026, #7).
+      expect(chamadas).toEqual(["obter_inicio_da_sessao"]);
       expect(cliente.channel).not.toHaveBeenCalled();
       expect(linhasPedidas()).toBe(false);
+    });
+
+    it("o mapa sai uma vez na sessão: na entrada do Mapa, ou quando ele abre depois", async () => {
+      const mapas = (chamadas: string[]) =>
+        chamadas.filter((nome) => nome === "listar_mapa_da_saude_indigena");
+      const direto = montar("mapa");
+      await definido(carga).carregarEntrada();
+      await esperar();
+      expect(mapas(direto.chamadas)).toHaveLength(1);
+      parar?.();
+      definido(carga).esquecer();
+
+      const depois = montar("avaliacao-documental");
+      await definido(carga).carregarEntrada();
+      await esperar();
+      expect(mapas(depois.chamadas)).toHaveLength(0);
+      depois.navegacao.irPara("mapa");
+      depois.navegacao.irPara("avaliacao-documental");
+      depois.navegacao.irPara("mapa");
+      await esperar();
+      expect(mapas(depois.chamadas)).toHaveLength(1);
     });
 
     it("quem entra na Visão geral continua com as linhas e o acompanhamento na entrada", async () => {
@@ -7176,6 +7276,26 @@ bloco("cronograma-encerrado-na-visao-geral", () => {
         "Cronograma encerrado",
       );
     });
+  });
+});
+
+bloco("lib/base/formatters", () => {
+  /* O formatador guardado por opções dá o mesmo texto que toLocaleString. */
+  it("formatNumberBR igual a toLocaleString('pt-BR'), com e sem opções", () => {
+    const valores = [0, -0, 7, 1234, 1234567.891, -42.5, 0.105, "2092", null];
+    const opcoes: Intl.NumberFormatOptions[] = [
+      {},
+      { maximumFractionDigits: 1 },
+      { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+      { style: "percent", maximumFractionDigits: 1 },
+    ];
+    for (const opcao of opcoes)
+      for (const valor of valores)
+        expect(formatNumberBR(valor, opcao)).toBe(
+          Number(valor ?? 0).toLocaleString("pt-BR", opcao),
+        );
+    expect(formatNumberBR("não é número")).toBe("0");
+    expect(formatNumberBR(Number.POSITIVE_INFINITY)).toBe("0");
   });
 });
 

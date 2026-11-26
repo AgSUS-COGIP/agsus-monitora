@@ -142,7 +142,7 @@ bloco("componentes/avisos-de-conferencia", async () => {
 
   const { SeloDeAvisos, CartaoDeAvisos } =
     await import("../src/modulos/conferencias/avisos-de-conferencia.tsx");
-  const { esquecerAvisosGuardados } =
+  const { esquecerAvisosGuardados, criarEstadoDosAvisos } =
     await import("../src/modulos/conferencias/estado.ts");
 
   const aviso = (extra: Record<string, unknown> = {}) => ({
@@ -416,6 +416,31 @@ bloco("componentes/avisos-de-conferencia", async () => {
           p_chave_caso: "analise:an1",
         },
       );
+    });
+  });
+
+  describe("pedidos iguais juntos", () => {
+    it("dois selos do mesmo recorte ao mesmo tempo fazem uma leitura só", async () => {
+      const supabase = supabaseFalso(() => [aviso()]);
+      const um = criarEstadoDosAvisos({ supabase });
+      const outro = criarEstadoDosAvisos({ supabase });
+      await Promise.all([
+        um.carregar({ area: "sede", modulo: "analises" }),
+        outro.carregar({ area: "sede", modulo: "analises" }),
+      ]);
+      const leituras = supabase.rpc.mock.calls.filter(
+        ([nome]) => nome === "listar_avisos_conferencia_se_mudou",
+      );
+      expect(leituras).toHaveLength(1);
+      expect(um.obter().lista?.abertos).toHaveLength(1);
+      expect(outro.obter().lista?.abertos).toHaveLength(1);
+      // Outro recorte não espera a leitura deste.
+      await um.carregar({ area: "sede", modulo: "entrevistas" });
+      expect(
+        supabase.rpc.mock.calls.filter(
+          ([nome]) => nome === "listar_avisos_conferencia_se_mudou",
+        ),
+      ).toHaveLength(2);
     });
   });
 
@@ -7563,6 +7588,13 @@ bloco("modulos/pagina-do-edital", () => {
         "Contratações além das vagas imediatas",
       );
       expect(secao()?.textContent).toContain("3 desistentes à parte");
+      /* Uma leitura de cada por abertura: o render() do registro não repete o
+         que os efeitos da tela acabaram de pedir (auditoria de 26/11/2026, #4). */
+      const pedidos = banco.rpc.mock.calls.map(([nome, parametros]) =>
+        JSON.stringify([nome, parametros]),
+      );
+      expect(pedidos.length).toBeGreaterThan(0);
+      expect(pedidos.filter((p, i) => pedidos.indexOf(p) !== i)).toEqual([]);
       // Etapas: a linha do tempo, sem esqueleto.
       await clicar(secao()?.querySelector('[role="tab"][data-aba="etapas"]'));
       await vi.waitFor(() =>

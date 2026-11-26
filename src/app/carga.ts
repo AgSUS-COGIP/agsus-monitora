@@ -85,7 +85,8 @@ import type { InicioDaSessao, PartesDoInicio } from "./inicio-da-sessao.ts";
 
   As linhas e as unidades vão para src/componentes/dados-do-monitoramento.ts
   (as telas React assinam lá); o mapa da Saúde Indígena, para o estado da
-  Visão geral.
+  Visão geral. O MAPA TAMBÉM É SOB DEMANDA: só a tela do Mapa o usa, e ele é
+  lido quando ela abre (`garantirMapa`) ou quando é a tela de entrada.
 */
 
 /*
@@ -95,6 +96,8 @@ import type { InicioDaSessao, PartesDoInicio } from "./inicio-da-sessao.ts";
   banco responde só `{ inalterado: true }`.
 */
 const RPC_DO_MAPA = "listar_mapa_da_saude_indigena";
+/* A única tela que usa o mapa (src/modulos/mapa/): só ela o faz ser lido. */
+const TELA_DO_MAPA = "mapa";
 
 /*
   O Realtime avisa de qualquer escrita em TB_MONITORAMENTO_INDIGENA, e cada
@@ -279,6 +282,13 @@ export function criarCarga(
   let realtimePermitido = false;
   /* O mapa que a tela tem (`{ linhas, versao }`), pelo mesmo motivo. */
   let mapaAtual: ConhecidasComVersao | null = null;
+  /* O mapa que veio do banco nesta sessão (null: ninguém abriu o Mapa ainda). */
+  let mapaDoBanco: ConhecidasComVersao | null = null;
+  /* A leitura do mapa a caminho (a entrada ou o Mapa aberto): outra não sai junto. */
+  let mapaACaminho: Promise<RespostaComVersao> | null = null;
+  /* Quem abriu esta sessão e a cópia que a entrada está guardando (o mapa lido depois entra nela). */
+  let sessaoDaEntrada: SessaoDaCopia | null = null;
+  let copiaDaEntrada: Promise<unknown> | null = null;
   let unidades: unknown[] = [];
   let copiaEmLeitura: Promise<CopiaDaSessao | null> | null = null;
   let cargaDasLinhas: Promise<boolean> | null = null;
@@ -366,8 +376,38 @@ export function criarCarga(
   ) => consultaComVersao(RPC_DO_MONITORAMENTO, conhecidas);
 
   /* `lmap`: `[{ chave, payload }]`, como a tabela. */
-  const consultaDoMapa = (conhecido: ConhecidasDaCarga = mapaAtual) =>
-    consultaComVersao(RPC_DO_MAPA, conhecido);
+  function consultaDoMapa(conhecido: ConhecidasDaCarga = mapaAtual) {
+    const rodada = rodadaDasLinhas;
+    const leitura = consultaComVersao(RPC_DO_MAPA, conhecido).then(
+      (resposta) => {
+        if (!resposta.error && rodada === rodadaDasLinhas)
+          mapaDoBanco = { linhas: resposta.data, versao: resposta.versao };
+        return resposta;
+      },
+    );
+    mapaACaminho = leitura;
+    const soltar = () => {
+      if (mapaACaminho === leitura) mapaACaminho = null;
+    };
+    leitura.then(soltar, soltar);
+    return leitura;
+  }
+
+  /*
+    O mapa sem ir ao banco: o que a tela já tem (memória ou cópia da sessão),
+    para a cópia nova não o perder. Nada conhecido: vazio e sem versão, que
+    `carregarMapa` não aplica (o mapa não foi lido, não está incompleto).
+  */
+  const mapaConhecido = (
+    conhecido: ConhecidasDaCarga = mapaAtual,
+  ): Promise<RespostaComVersao> =>
+    Promise.resolve(conhecido)
+      .catch(() => null)
+      .then((base) => ({
+        data: base?.linhas ?? [],
+        versao: base?.versao ?? null,
+        error: null,
+      }));
 
   /*
     As consultas da entrada saem juntas: dependem só da sessão e do perfil, não
@@ -394,21 +434,27 @@ export function criarCarga(
     return partes;
   }
 
+  /*
+    O mapa, como as linhas, só vai ao banco com `comMapa` (a tela do Mapa vai
+    abrir ou ele já foi lido); sem ele, segue o que a tela já tem.
+  */
   function iniciarConsultas({
     partes,
     monitoramento,
     mapa,
     comLinhas = true,
+    comMapa = true,
   }: {
     partes: PartesDoInicio;
     monitoramento?: ConhecidasDaCarga;
     mapa?: ConhecidasDaCarga;
     comLinhas?: boolean;
+    comMapa?: boolean;
   }) {
     return {
       config: partes.config,
       paineis: partes.paineis,
-      mapa: consultaDoMapa(mapa),
+      mapa: comMapa ? consultaDoMapa(mapa) : mapaConhecido(mapa),
       unidades: partes.unidades,
       abas: partes.abas,
       monitoramento:
@@ -454,6 +500,8 @@ export function criarCarga(
         );
       return false;
     }
+    // Ainda não lido (`mapaConhecido` sem nada): não há o que aplicar nem avisar.
+    if (!versao && !(Array.isArray(data) && data.length)) return false;
     mapaAtual = {
       linhas: Array.isArray(data) ? data : [],
       versao: versao || null,
@@ -575,6 +623,11 @@ export function criarCarga(
   ) {
     const dados = dadosDasRespostas(await respostasDasConsultas(consultas));
     if (usuarioId() !== sessao.usuarioId) return;
+    // O Mapa aberto enquanto isso leu o mapa do banco: a cópia nova leva esse.
+    if (dados && mapaDoBanco) {
+      dados.mapa = mapaDoBanco.linhas;
+      dados.versaoDoMapa = mapaDoBanco.versao ?? null;
+    }
     // A entrada não leu as linhas: a cópia nova leva as que a tela tem (lidas
     // depois, sob demanda) ou as da cópia anterior, para a versão não se perder.
     if (dados && !consultas.monitoramento && podeCarregarMonitoramento())
@@ -653,10 +706,18 @@ export function criarCarga(
     const comLinhas = telaUsaAsLinhas(navegacao.telaDeEntrada());
     // Sem elas agora, a cópia que serve guarda as linhas para a primeira página que as pedir.
     linhasDaCopia = comLinhas ? null : linhasDaCopiaQueServe;
+    /*
+      O mapa da Saúde Indígena, só se a entrada é o Mapa: as outras telas não o
+      usam, e ele saía em toda entrada, para qualquer área e perfil (auditoria
+      de 26/11/2026, #7). Aberto depois, o Mapa pede (`garantirMapa`).
+    */
+    const comMapa = navegacao.telaDeEntrada() === TELA_DO_MAPA;
+    sessaoDaEntrada = sessao;
     const partes = partesDoInicio();
     const consultas = iniciarConsultas({
       partes,
       comLinhas,
+      comMapa,
       monitoramento: linhasDaCopiaQueServe,
       mapa: daCopiaQueServe((dados) =>
         dados.versaoDoMapa
@@ -700,10 +761,54 @@ export function criarCarga(
     if (linhasOk) void garantirLinhas();
     esqueleto.esconder();
     comemorar();
-    atualizarCopia(sessao, consultas, daCopia ? guardada!.dados : null).catch(
-      (erro) => console.warn("Falha ao atualizar a cópia da sessão:", erro),
+    copiaDaEntrada = atualizarCopia(
+      sessao,
+      consultas,
+      daCopia ? guardada!.dados : null,
+    ).catch((erro) =>
+      console.warn("Falha ao atualizar a cópia da sessão:", erro),
     );
     return true;
+  }
+
+  /*
+    O Mapa abriu (src/app/pagina-aberta.ts): lê o mapa do banco uma vez na
+    sessão, com a versão que a tela já tem (da cópia, quase sempre
+    `inalterado`). Lido, entra na cópia da sessão, para a próxima entrada
+    perguntar só se mudou.
+  */
+  async function garantirMapa() {
+    if (!sessaoAberta || !sb() || mapaDoBanco || mapaACaminho) return;
+    const rodada = rodadaDasLinhas;
+    await carregarMapa();
+    if (rodada !== rodadaDasLinhas || !mapaDoBanco) return;
+    await guardarMapaNaCopia().catch((erro) =>
+      console.warn("Falha ao guardar o mapa na cópia da sessão:", erro),
+    );
+  }
+
+  async function guardarMapaNaCopia() {
+    const sessao = sessaoDaEntrada;
+    await copiaDaEntrada;
+    const lido = mapaDoBanco;
+    if (!sessao || !lido || usuarioId() !== sessao.usuarioId) return;
+    const guardada = await copia.ler();
+    // A mesma regra da entrada: só a cópia desta pessoa, deste acesso e versão.
+    if (!guardada || !copiaServe(guardada, { ...sessao, agora: agora() }))
+      return;
+    if (
+      guardada.dados.versaoDoMapa &&
+      guardada.dados.versaoDoMapa === lido.versao
+    )
+      return;
+    await copia.guardar({
+      ...guardada,
+      dados: {
+        ...guardada.dados,
+        mapa: lido.linhas,
+        versaoDoMapa: lido.versao ?? null,
+      },
+    });
   }
 
   /*
@@ -720,8 +825,11 @@ export function criarCarga(
       // As linhas, só se alguém as usa agora; lidas antes, ficam para a próxima página que as pedir.
       const comLinhas = pedidos.ha();
       if (!comLinhas && linhasCarregadas) desatualizadas = true;
+      // O mapa, se já foi lido ou se o Mapa está aberto.
+      const comMapa =
+        Boolean(mapaDoBanco) || navegacao.obter().view === TELA_DO_MAPA;
       const partes = partesDoInicio();
-      const consultas = iniciarConsultas({ partes, comLinhas });
+      const consultas = iniciarConsultas({ partes, comLinhas, comMapa });
       const situacaoDoBanco = partes.situacao;
       await respostasDasConsultas(consultas);
       await configuracao.carregar({ consulta: consultas.config });
@@ -885,6 +993,10 @@ export function criarCarga(
     linhasDaCopia = null;
     sessaoAberta = false;
     mapaAtual = null;
+    mapaDoBanco = null;
+    mapaACaminho = null;
+    sessaoDaEntrada = null;
+    copiaDaEntrada = null;
     copiaEmLeitura = null;
     esquecerLinhasDoMonitoramento();
   }
@@ -903,6 +1015,7 @@ export function criarCarga(
     carregarLinhas,
     carregarUnidades,
     carregarMapa,
+    garantirMapa,
     iniciarRealtime,
     pararRealtime,
     retomarRealtime,

@@ -115,6 +115,9 @@ O que acontece entre o login ([[seguranca]]) e a primeira tela:
 - **Linhas do monitoramento sob demanda:** só as páginas de `src/lib/navegacao/telas-com-linhas.ts` (via
   `src/app/pagina-aberta.ts`) ou `usarLinhasDoMonitoramento` fazem a carga lê-las; o legado as
   publica em `src/componentes/dados-do-monitoramento.ts` ([[nova-tela-e-legado]]).
+- **Mapa da Saúde Indígena sob demanda:** `listar_mapa_da_saude_indigena` só sai quando a tela do
+  Mapa abre (`garantirMapa` em `src/app/carga.ts`, chamado por `src/app/pagina-aberta.ts`) ou é a
+  tela de entrada; lido, entra na cópia da sessão com a versão.
 - **Cópia da sessão no navegador:** `src/lib/sessao/copia-da-sessao.ts` decide quando a cópia guardada
   pode abrir a tela (mesmo usuário, mesmo acesso, mesma versão publicada, dentro da validade) e o
   que mudou desde ela; `src/modules/copia-da-sessao-indexeddb.ts` guarda no IndexedDB. **Afrouxar

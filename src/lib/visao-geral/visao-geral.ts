@@ -169,8 +169,25 @@ export function normalizarTexto(valor: unknown) {
     .trim();
 }
 
+/*
+  A ordem do status e das fases, já normalizada, e o comparador de texto,
+  criados uma vez: a abertura da Visão geral ordena as opções de cada filtro,
+  e `localeCompare` com locale monta um `Intl.Collator` a cada comparação
+  (perfil de CPU, auditoria de 26/11/2026, #10). O resultado é o mesmo.
+*/
+const listasNormalizadas = new WeakMap<readonly string[], string[]>();
+const COMPARAR_TEXTO = new Intl.Collator("pt-BR", {
+  numeric: true,
+  sensitivity: "base",
+});
+
 function posicaoNaLista(valor: unknown, lista: readonly string[]) {
-  const indice = lista.map(normalizarTexto).indexOf(normalizarTexto(valor));
+  let normalizada = listasNormalizadas.get(lista);
+  if (!normalizada) {
+    normalizada = lista.map(normalizarTexto);
+    listasNormalizadas.set(lista, normalizada);
+  }
+  const indice = normalizada.indexOf(normalizarTexto(valor));
   return indice >= 0 ? indice : 999;
 }
 
@@ -200,10 +217,7 @@ export function compararValoresDoFiltro(campo: string, a: unknown, b: unknown) {
     const diferenca = posicaoNaLista(a, lista) - posicaoNaLista(b, lista);
     if (diferenca) return diferenca;
   }
-  return txt(a).localeCompare(txt(b), "pt-BR", {
-    numeric: true,
-    sensitivity: "base",
-  });
+  return COMPARAR_TEXTO.compare(txt(a), txt(b));
 }
 
 /** As opções de cada filtro: o que as linhas que atendem aos OUTROS filtros têm. */
