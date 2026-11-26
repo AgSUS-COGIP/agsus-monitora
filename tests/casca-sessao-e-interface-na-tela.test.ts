@@ -5577,6 +5577,46 @@ bloco("app/sessao", () => {
       expect(sistema.encerrarEspera).toHaveBeenCalled();
     });
 
+    it("F5: o SIGNED_IN da sessão restaurada no arranque entra como boot, não como login", async () => {
+      const cliente = clienteFalso({ guardada: sessaoDe("u1") });
+      const sistema = sistemaFalso({
+        // O Supabase restaura a sessão e emite SIGNED_IN enquanto a configuração carrega.
+        carregarConfiguracao: vi.fn(async () => {
+          cliente.emitir("SIGNED_IN", sessaoDe("u1"));
+          await proximoCiclo();
+          await proximoCiclo();
+        }),
+      });
+      const { sessao } = montar({ cliente, sistema });
+      await sessao.iniciar();
+      await vi.waitFor(() => expect(sessao.obter().fase).toBe(FASES.CONECTADO));
+      expect(sistema.abrir).toHaveBeenCalledTimes(1);
+      expect(sistema.abrir).toHaveBeenCalledWith(
+        expect.objectContaining({ origem: "boot" }),
+      );
+    });
+
+    it("volta do Google com ?auth=google: o SIGNED_IN do arranque é o login", async () => {
+      const cliente = clienteFalso({ guardada: sessaoDe("u1") });
+      const sistema = sistemaFalso({
+        carregarConfiguracao: vi.fn(async () => {
+          cliente.emitir("SIGNED_IN", sessaoDe("u1"));
+          await proximoCiclo();
+        }),
+      });
+      const { sessao } = montar({
+        cliente,
+        sistema,
+        janela: janelaFalsa({ search: "?auth=google" }),
+      });
+      await sessao.iniciar();
+      await vi.waitFor(() => expect(sessao.obter().fase).toBe(FASES.CONECTADO));
+      expect(sistema.abrir).toHaveBeenCalledTimes(1);
+      expect(sistema.abrir).toHaveBeenCalledWith(
+        expect.objectContaining({ origem: "oauth_callback" }),
+      );
+    });
+
     it("o skeleton e a cópia (aoVerificar) começam antes da consulta do perfil", async () => {
       const ordem: unknown[] = [];
       const cliente = clienteFalso({ guardada: sessaoDe("u1") });
