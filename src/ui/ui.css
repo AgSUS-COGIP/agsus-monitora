@@ -1161,7 +1161,7 @@ th[aria-sort="descending"] .ui-ordenar i {
 .ui-modal-descarte {
   position: sticky;
   top: 0;
-  z-index: calc(var(--z-sticky, 100) + 1);
+  z-index: calc(var(--z-header) + 1);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
