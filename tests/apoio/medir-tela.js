@@ -472,7 +472,9 @@ export function medirTela({ toque, limiteDeOrigens = 60 }) {
       !el.matches(
         "button, a, input, select, textarea, dialog, header, nav, aside, body, main, tr, td, th",
       ) &&
-      !dentroDeComponente(el.parentElement || el, ".leaflet-control")
+      !dentroDeComponente(el.parentElement || el, ".leaflet-control") &&
+      // A moldura do mapa (a borda em volta do Leaflet) é parte do mapa.
+      !el.querySelector(":scope > .leaflet-container")
     )
       tipo = "cartão";
     if (tipo)
