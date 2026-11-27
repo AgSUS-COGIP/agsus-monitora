@@ -74,6 +74,7 @@ import type {
 import {
   categoriaDaAmpla,
   categoriasDeReserva,
+  ehSerieDoMgi,
   lerModalidade,
   normalizarModelo,
 } from "./carta-de-convocacao/modelo-de-convocacao.ts";
@@ -374,6 +375,11 @@ function sequenciaPorPosicao(
       49ª, porque a 50ª é de pretos e pardos), e só não havendo nenhuma antes é
       que vai para a seguinte.
 
+  A ORDEM UNIFICADA DA AGSUS (`ordem_agsus`, UJUR) é a mesma série com uma
+  diferença: a posição já ocupada fica com a livre SEGUINTE (o indígena da 50ª
+  vai para a 51ª). É a tabela "Ordem Unificada de Convocação" do edital 93/2026
+  (item 11.1.4): indígenas na 17ª, 51ª e 84ª.
+
   O passo vem do percentual, e não do total de vagas: numa vaga de 45, pretos e
   pardos continuam de 4 em 4. Categoria sem percentual (quadro manual) usa o
   passo total ÷ vagas da categoria.
@@ -397,13 +403,34 @@ function serieDoMgi(
   return serie.slice(0, quantidade);
 }
 
-function livreMaisProxima(slots: readonly (string | null)[], alvo: number) {
+/*
+  A posição pedida ou, ocupada, a livre mais próxima: a anterior no MGI (e, sem
+  nenhuma antes, a seguinte); a seguinte na ordem da AgSUS (e, sem nenhuma
+  depois, a anterior).
+*/
+function livreMaisProxima(
+  slots: readonly (string | null)[],
+  alvo: number,
+  seguinte = false,
+) {
   const inicio = Math.min(Math.max(alvo, 0), slots.length - 1);
-  for (let indice = inicio; indice >= 0; indice -= 1)
-    if (slots[indice] === null) return indice;
-  for (let indice = inicio + 1; indice < slots.length; indice += 1)
-    if (slots[indice] === null) return indice;
-  return -1;
+  const antes = () => {
+    for (let indice = inicio - 1; indice >= 0; indice -= 1)
+      if (slots[indice] === null) return indice;
+    return -1;
+  };
+  const depois = () => {
+    for (let indice = inicio + 1; indice < slots.length; indice += 1)
+      if (slots[indice] === null) return indice;
+    return -1;
+  };
+  if (slots[inicio] === null) return inicio;
+  if (seguinte) {
+    const proxima = depois();
+    return proxima >= 0 ? proxima : antes();
+  }
+  const anterior = antes();
+  return anterior >= 0 ? anterior : depois();
 }
 
 function sequenciaDoMgi(
@@ -423,7 +450,11 @@ function sequenciaDoMgi(
     .forEach((categoria) => {
       serieDoMgi(categoria, quadro[categoria.id] ?? 0, total).forEach(
         (posicao) => {
-          const indice = livreMaisProxima(slots, posicao - 1);
+          const indice = livreMaisProxima(
+            slots,
+            posicao - 1,
+            modelo.distribuicao === "ordem_agsus",
+          );
           if (indice >= 0) slots[indice] = categoria.id;
         },
       );
@@ -446,7 +477,7 @@ export function sequenciaDeConvocacao(
   if (!total) return [];
   if (modelo.distribuicao === "posicao_fixa")
     return sequenciaPorPosicao(quadro, modelo, total);
-  if (modelo.distribuicao === "serie_mgi")
+  if (ehSerieDoMgi(modelo.distribuicao))
     return sequenciaDoMgi(quadro, modelo, total);
   return sequenciaProporcional(quadro, modelo, total);
 }
@@ -613,7 +644,7 @@ export function montarConvocacaoDaVaga<T extends CandidatoDaConvocacao>({
     a partir do quadro imediato. Sem quadro, caem para ampla concorrência.
   */
   const sequenciaDaFila =
-    modelo.distribuicao === "serie_mgi" && fila.length > 0
+    ehSerieDoMgi(modelo.distribuicao) && fila.length > 0
       ? sequenciaDeConvocacao(derivarQuadro(fila.length, modelo), modelo)
       : null;
   const cicloEfetivo = ciclo.length ? ciclo : [ampla.id];

@@ -2116,6 +2116,43 @@ bloco("convocacao-mgi-e-saude-indigena", () => {
       expect(posicoesDe(sequencia, "quilombola")).toEqual([25, 75]);
     });
 
+    /*
+    A ORDEM UNIFICADA DA AGSUS (UJUR): a tabela do item 11.1.4 do edital 93/2026,
+    posição por posição. A única diferença para o MGI nas 100 primeiras é a 2ª
+    indígena: a 50ª é de pretos e pardos, e ela vai para a 51ª (no MGI, a 49ª).
+  */
+    it("ordem da AgSUS reproduz a tabela do edital 93/2026 e o MGI segue na 49ª", () => {
+      const AGSUS = { ...MGI, distribuicao: "ordem_agsus" };
+      const quadro = derivarQuadro(100, AGSUS);
+      const sequencia = sequenciaDeConvocacao(quadro, AGSUS);
+      const tabela = Array.from({ length: 100 }, () => "ampla");
+      for (const p of [5, 21, 41, 61, 81]) tabela[p - 1] = "pcd";
+      for (let p = 2; p <= 98; p += 4) tabela[p - 1] = "pretos_pardos";
+      for (const p of [17, 51, 84]) tabela[p - 1] = "indigena";
+      for (const p of [25, 75]) tabela[p - 1] = "quilombola";
+      expect(sequencia).toEqual(tabela);
+      expect(
+        posicoesDe(sequenciaDeConvocacao(quadro, MGI), "indigena"),
+      ).toEqual([17, 49, 84]);
+    });
+
+    it("ordem da AgSUS é lida do banco, continua a série no cadastro e põe a série da PCD", () => {
+      expect(
+        normalizarModelo({ distribuicao: "ordem_agsus" }).distribuicao,
+      ).toBe("ordem_agsus");
+      const pcd = comDistribuicao(
+        normalizarModelo({
+          categorias: [
+            { id: "ampla", ampla: true },
+            { id: "pcd", rotulo: "PCD", sigla: "PCD", percentual: 5 },
+          ],
+        }),
+        "ordem_agsus",
+      ).categorias.find((categoria) => categoria.id === "pcd");
+      expect(pcd?.posicoes).toEqual([5, 21]);
+      expect(pcd?.intervalo).toBe(20);
+    });
+
     /* O passo vem do percentual, e não do total: 45 vagas continuam de 4 em 4. */
     it("numa vaga de 45, o 5º é PCD e pretos e pardos seguem de 4 em 4", () => {
       const quadro = {

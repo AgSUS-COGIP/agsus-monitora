@@ -62,6 +62,11 @@ export const ARREDONDAMENTOS = Object.freeze([
   escolha muda: são decisões que ninguém acerta pelo rótulo sozinho, e explicar
   com um exemplo custa menos do que uma convocação calculada errado.
 */
+/** A série do MGI e a ordem unificada da AgSUS (que muda só a posição já ocupada). */
+export function ehSerieDoMgi(distribuicao: unknown) {
+  return distribuicao === "serie_mgi" || distribuicao === "ordem_agsus";
+}
+
 export const DISTRIBUICOES = Object.freeze([
   {
     id: "proporcional",
@@ -74,6 +79,12 @@ export const DISTRIBUICOES = Object.freeze([
     rotulo: "Seguir o simulador do MGI",
     ajuda:
       "PCD na 5ª, 21ª, 41ª, 61ª, 81ª… (de 20 em 20, como fixou o STF). As outras cotas a cada 100 ÷ percentual posições, começando no meio: pretos e pardos (25%) na 2ª, 6ª, 10ª…; indígenas (3%) na 17ª, 50ª e 84ª; quilombolas (2%) na 25ª e 75ª. Posição já ocupada fica com a livre anterior. É a ordem do simulador de reserva de vagas do MGI (Lei 15.142/2025 e Decreto 12.536/2025).",
+  },
+  {
+    id: "ordem_agsus",
+    rotulo: "Ordem unificada da AgSUS (UJUR)",
+    ajuda:
+      "A série do MGI, com uma diferença: a posição que já é de outra cota fica com a livre SEGUINTE, e não com a anterior. Indígenas na 17ª, 51ª e 84ª (a 50ª é de pretos e pardos); pretos e pardos na 2ª, 6ª, 10ª…; PCD na 5ª, 21ª, 41ª…; quilombolas na 25ª e 75ª. É a tabela “Ordem Unificada de Convocação” do edital 93/2026 (item 11.1.4).",
   },
   {
     id: "posicao_fixa",
