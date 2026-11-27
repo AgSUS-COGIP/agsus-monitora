@@ -106,7 +106,8 @@ function filtroDeStatus(escolhidos: readonly string[]) {
 
   Status é filtro de exibição e entra só aqui, DEPOIS do cálculo — recortar
   por ele antes tiraria da fila o desistente que o cálculo precisa de ver para
-  saltar.
+  repassar a vaga dele. Quem saiu vem no seu lugar da ordem original; para
+  escondê-lo, o filtro de Status.
 */
 function linhasPlanas(
   grupos: readonly GrupoDaTabelaDaConvocacao[],
@@ -114,7 +115,7 @@ function linhasPlanas(
 ) {
   const linhas: LinhaPlanaDaConvocacao[] = [];
   grupos.forEach((grupo) => {
-    [...grupo.linhas, ...grupo.foraDaFila].forEach((linha) => {
+    grupo.linhas.forEach((linha) => {
       if (passaNoStatus(linha.candidato)) linhas.push({ grupo, linha });
     });
   });
@@ -143,13 +144,25 @@ function VagaDaConvocacao({
   grupo: GrupoDaTabelaDaConvocacao;
   linha: LinhaDaTabelaDaConvocacao;
 }) {
-  if (!linha.posicao)
+  if (!linha.posicao || linha.saiu)
     return <span className="convocacao-vaga fora">Fora da fila</span>;
+  // A vaga herdada de quem saiu: a ordem não muda, e a linha diz de quem é a vaga.
+  const noLugar = linha.noLugarDe ? (
+    <small className="convocacao-no-lugar" data-no-lugar-de="">
+      No lugar de {linha.noLugarDe.nome || "quem saiu"} (
+      {linha.noLugarDe.posicao}º)
+    </small>
+  ) : null;
   if (!grupo.proporcionalidade)
     return linha.imediata ? (
-      <span className="convocacao-vaga imediata">
-        {ordinalFeminino(linha.posicao)} · Vaga imediata
-      </span>
+      <>
+        <span className="convocacao-vaga imediata">
+          {linha.noLugarDe
+            ? "Vaga imediata"
+            : `${ordinalFeminino(linha.posicao)} · Vaga imediata`}
+        </span>
+        {noLugar}
+      </>
     ) : (
       <span className="convocacao-vaga reserva">Cadastro de reserva</span>
     );
@@ -158,7 +171,8 @@ function VagaDaConvocacao({
     <>
       {linha.imediata ? (
         <span className="convocacao-vaga imediata">
-          {ordinalFeminino(linha.posicao)} · {categoria}
+          {linha.noLugarDe ? "Imediata" : ordinalFeminino(linha.posicao)} ·{" "}
+          {categoria}
         </span>
       ) : (
         <span className="convocacao-vaga reserva">Reserva · {categoria}</span>
@@ -169,6 +183,7 @@ function VagaDaConvocacao({
           sem candidato
         </small>
       ) : null}
+      {noLugar}
     </>
   );
 }
@@ -313,7 +328,7 @@ function TabelaDoGrupo({
                 key={candidato.candidato_id}
                 className={classes(
                   linha.imediata && "convocacao-linha-imediata",
-                  !linha.posicao && "convocacao-linha-fora",
+                  (!linha.posicao || linha.saiu) && "convocacao-linha-fora",
                 )}
                 data-a-convocar={estaAConvocar(linha) ? "" : undefined}
               >

@@ -4386,7 +4386,12 @@ bloco("lista-convocacao-rules", () => {
       expect(categorias(linhas)).toEqual(["ampla", "pretos_pardos", "ampla"]);
     });
 
-    it("pula desistente e documentação rejeitada sem gastar a vaga", () => {
+    /*
+    A ORDEM É FIXA (27/11/2026): quem saiu fica no seu número, sem vaga, e a vaga
+    imediata dele vai para o primeiro do cadastro de reserva que a disputa. Os
+    números de todos ficam como estavam.
+  */
+    it("quem saiu fica no seu lugar e a vaga vai para o primeiro da reserva", () => {
       const resultado = convocar(
         [
           candidato("MARIA", "Ampla Concorrência", { status: "Desistente" }),
@@ -4398,13 +4403,94 @@ bloco("lista-convocacao-rules", () => {
         ],
         { ampla: 2 },
       );
-      expect(nomes(resultado.linhas)).toEqual(["CARLOS", "RITA"]);
-      expect(resultado.linhas.every((linha) => linha.imediata)).toBe(true);
-      expect(nomes(resultado.foraDaFila)).toEqual(["MARIA", "PAULO"]);
+      expect(nomes(resultado.linhas)).toEqual([
+        "MARIA",
+        "CARLOS",
+        "PAULO",
+        "RITA",
+      ]);
+      expect(resultado.linhas.map((linha) => linha.posicao)).toEqual([
+        1, 2, 3, 4,
+      ]);
+      expect(resultado.linhas.map((linha) => Boolean(linha.saiu))).toEqual([
+        true,
+        false,
+        true,
+        false,
+      ]);
+      expect(nomes(resultado.linhas.filter((linha) => linha.imediata))).toEqual(
+        ["CARLOS", "RITA"],
+      );
+      expect(resultado.linhas[3].noLugarDe).toEqual({
+        nome: "MARIA",
+        posicao: 1,
+      });
+      expect(resultado.linhas[1].noLugarDe).toBeUndefined();
+      expect(situacaoNaChamada(resultado.linhas[0])).toBe("Fora da fila");
+    });
+
+    it("a vaga de cota de quem saiu vai para o próximo da mesma cota, não para o próximo da ampla", () => {
+      const { linhas } = convocar(
+        [
+          candidato("ANA", "Ampla Concorrência"),
+          candidato("BIA", '"Pretos e Pardos"', { status: "Desistente" }),
+          candidato("CAIO", "Ampla Concorrência"),
+          candidato("DANI", "Ampla Concorrência"),
+          candidato("EDU", '"Pretos e Pardos"'),
+        ],
+        { ampla: 1, pretos_pardos: 1 },
+      );
+      // A ordem original: ANA (AC) e BIA (PP) nas imediatas; a reserva segue o
+      // ciclo AC, PP (CAIO, EDU, DANI).
+      expect(nomes(linhas)).toEqual(["ANA", "BIA", "CAIO", "EDU", "DANI"]);
+      const imediatas = linhas.filter((linha) => linha.imediata);
+      expect(nomes(imediatas)).toEqual(["ANA", "EDU"]);
+      const edu = linhas[3];
+      expect(edu.posicao).toBe(4);
+      expect(edu.categoria).toBe("pretos_pardos");
+      expect(edu.categoriaReservada).toBeNull();
+      expect(edu.noLugarDe).toEqual({ nome: "BIA", posicao: 2 });
+      expect(linhas[2].imediata).toBe(false);
+    });
+
+    it("sem ninguém da cota na reserva, a vaga de quem saiu desce até a ampla", () => {
+      const { linhas } = convocar(
+        [
+          candidato("ANA", "Ampla Concorrência"),
+          candidato("BIA", '"Pretos e Pardos"', { status: "Desistente" }),
+          candidato("CAIO", "Ampla Concorrência"),
+        ],
+        { ampla: 1, pretos_pardos: 1 },
+      );
+      const caio = linhas[2];
+      expect(caio.imediata).toBe(true);
+      expect(caio.categoria).toBe("ampla");
+      expect(caio.categoriaReservada).toBe("pretos_pardos");
+      expect(caio.noLugarDe).toEqual({ nome: "BIA", posicao: 2 });
+    });
+
+    it("sem proporcionalidade, também fica a ordem e a vaga vai ao próximo", () => {
+      const { linhas } = montarConvocacaoDaVaga({
+        candidatos: [
+          candidato("ANA", "Ampla", { status: "Desistente" }),
+          candidato("BRUNO", "Ampla"),
+          candidato("CARLA", "Ampla"),
+        ],
+        quadro: { ampla: 1 },
+        modelo: MODELO,
+        proporcionalidade: false,
+      });
+      expect(nomes(linhas)).toEqual(["ANA", "BRUNO", "CARLA"]);
+      expect(linhas.map((linha) => linha.imediata)).toEqual([
+        false,
+        true,
+        false,
+      ]);
+      expect(linhas[1].noLugarDe).toEqual({ nome: "ANA", posicao: 1 });
     });
 
     it("mantém na fila quem está contratado ou em migração", () => {
-      const { linhas, foraDaFila } = convocar(
+      const { linhas } = convocar(
         [
           candidato("MARIA", "Ampla Concorrência", { status: "Contratado" }),
           candidato("CARLOS", "Ampla Concorrência", { status: "Migração" }),
@@ -4412,7 +4498,7 @@ bloco("lista-convocacao-rules", () => {
         { ampla: 2 },
       );
       expect(nomes(linhas)).toEqual(["MARIA", "CARLOS"]);
-      expect(foraDaFila).toEqual([]);
+      expect(linhas.some((linha) => linha.saiu)).toBe(false);
     });
 
     it("segue o mesmo ciclo depois das vagas imediatas, para ordenar a reserva", () => {
@@ -4626,7 +4712,7 @@ bloco("lista-convocacao-rules", () => {
       });
     });
 
-    it("convocado que desiste sai da fila e o próximo passa a ser a convocar", () => {
+    it("convocado que desiste fica no lugar e o próximo passa a ser a convocar", () => {
       const grupos = montarListaDeConvocacao(
         [
           candidato("ANA", "Ampla", { status: "Desistente" }),
@@ -4639,8 +4725,14 @@ bloco("lista-convocacao-rules", () => {
           proporcionalidade: true,
         }),
       );
-      expect(nomes(grupos[0].foraDaFila)).toEqual(["ANA"]);
+      expect(nomes(grupos[0].linhas)).toEqual(["ANA", "BRUNO", "CARLA"]);
+      expect(grupos[0].linhas[0].saiu).toBe(true);
       expect(nomes(grupos[0].linhas.filter(estaAConvocar))).toEqual(["BRUNO"]);
+      expect(resumirConvocacao(grupos)).toMatchObject({
+        aConvocar: 1,
+        foraDaFila: 1,
+        reserva: 1,
+      });
     });
 
     it("contratado e migração também já foram chamados", () => {

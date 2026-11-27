@@ -120,7 +120,10 @@ Convocado (com a data), Contratado, Desistente, Migração e Documentação Reje
 (migration `20261005180000`). Status definido só o admin de Aprovados muda, exceto do Convocado para
 o seguinte (quem edita faz); deixar sem status é do admin. Contratados (Seleção e KPIs) = Contratado e
 Migração. Regras: `src/lib/aprovados/lista-aprovados-rules.ts` (status, trava, resumo) e
-`src/lib/aprovados/lista-convocacao-rules.ts` (ordem, "a convocar", CSV).
+`src/lib/aprovados/lista-convocacao-rules.ts` (ordem, "a convocar", CSV). A ordem de convocação é
+fixa (27/11/2026): calcula-se com todos, e quem sai (Desistente, Documentação Rejeitada, Contratado
+em outra lista) fica no seu número com `saiu`; a vaga imediata dele vai ao primeiro da reserva que a
+disputa (`repassarVagas`: a cota, a cascata, a ampla), que mostra "No lugar de…".
 
 **Status em lote** (11/11/2026): na aba Aprovados, quem muda status marca linhas e usa "Mudar
 status". A barra da seleção (`BarraDeSelecao`, desde 17/11/2026) separa "Selecionar esta página (N)"

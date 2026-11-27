@@ -268,7 +268,7 @@ export function situacoesNaFila<T extends CandidatoDaConvocacao>(
 ): Map<string, string> {
   const situacoes = new Map<string, string>();
   for (const grupo of montarListaDeConvocacao(candidatos, obterConfiguracao)) {
-    for (const linha of [...grupo.linhas, ...grupo.foraDaFila])
+    for (const linha of grupo.linhas)
       situacoes.set(
         texto(linha.candidato.candidato_id),
         situacaoNaChamada(linha),
