@@ -4420,7 +4420,23 @@ bloco("componentes/lista-de-convocacao", () => {
         candidatos: [candidato("LUA", "Pessoa Trans")],
         padraoImediata: 1,
       });
-      expect(document.querySelector(".convocacao-alerta")).not.toBeNull();
+      expect(
+        document.querySelector(".convocacao-alerta")?.textContent,
+      ).toContain("Termo não reconhecido — disputa só a ampla");
+    });
+
+    it("sem modelo de convocação, a cota declarada avisa que o edital não tem cotas, não que o termo é desconhecido", async () => {
+      await montar({
+        candidatos: [candidato("CHARLES", "Pretos e pardos")],
+        padraoImediata: 1,
+        comModelo: false,
+      });
+      await abrirAbaDeConvocacao();
+      const alerta = document.querySelector(".convocacao-alerta")?.textContent;
+      expect(alerta).toContain(
+        "Edital sem cotas no modelo de convocação — disputa só a ampla",
+      );
+      expect(alerta).not.toContain("Termo não reconhecido");
     });
 
     it("mostra as duas reservas declaradas e destaca a que vale", async () => {
