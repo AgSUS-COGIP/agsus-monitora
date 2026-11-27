@@ -37,6 +37,7 @@ import {
 } from "./central-de-convocacoes.tsx";
 import { podeVerEntrevistasNaCentral } from "../../lib/aprovados/central-de-convocacoes.ts";
 import {
+  categoriasDeReserva,
   lerModalidade,
   rotuloDaCategoria,
   siglaDaCategoria,
@@ -191,6 +192,11 @@ function ModalidadeDeclarada({
   if (!declarada)
     return <span className="convocacao-modalidade vazia">Não declarada</span>;
   const reconhecida = lerModalidade(declarada, modelo).reconhecida;
+  /*
+    Sem modelo de convocação (ou com um só de ampla), nenhuma cota casa: o aviso diz isso, e não
+    que o termo é desconhecido ("Pretos e pardos" é termo de toda cota, 93/2026 em 27/11/2026).
+  */
+  const semReservas = categoriasDeReserva(modelo).length === 0;
   const reservas = linha.reservas || [];
   const efetivas = linha.reservasEfetivas || [];
   return (
@@ -221,7 +227,9 @@ function ModalidadeDeclarada({
       {reconhecida ? null : (
         <small className="convocacao-alerta">
           <i className="fa-solid fa-triangle-exclamation" aria-hidden="true" />{" "}
-          Termo não reconhecido — disputa só a ampla
+          {semReservas
+            ? "Edital sem cotas no modelo de convocação — disputa só a ampla"
+            : "Termo não reconhecido — disputa só a ampla"}
         </small>
       )}
     </div>
