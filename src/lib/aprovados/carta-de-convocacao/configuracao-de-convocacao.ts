@@ -40,6 +40,7 @@ import {
 
 import {
   categoriasDeReserva,
+  ehSerieDoMgi,
   lerTermos,
   modeloEmBranco,
   normalizarModelo,
@@ -484,7 +485,7 @@ export function comDistribuicao(
   modelo: ModeloDaConvocacao,
   distribuicao: DistribuicaoDaConvocacao,
 ): ModeloDaConvocacao {
-  if (distribuicao !== "serie_mgi") return { ...modelo, distribuicao };
+  if (!ehSerieDoMgi(distribuicao)) return { ...modelo, distribuicao };
   return {
     ...modelo,
     distribuicao,

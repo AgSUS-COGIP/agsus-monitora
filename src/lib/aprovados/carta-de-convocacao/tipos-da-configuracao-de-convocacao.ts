@@ -1,7 +1,7 @@
 import type { EstadoDaAcao } from "../../../ui/botao-de-acao.tsx";
 export type ArredondamentoDaConvocacao = "meio_acima" | "sempre_acima";
 export type DistribuicaoDaConvocacao =
-  "proporcional" | "serie_mgi" | "posicao_fixa";
+  "proporcional" | "serie_mgi" | "ordem_agsus" | "posicao_fixa";
 export type CotaMultiplaDaConvocacao =
   "maior_percentual" | "acumula_com_acumulavel" | "todas";
 export interface OpcaoDaConvocacao<T extends string = string> {

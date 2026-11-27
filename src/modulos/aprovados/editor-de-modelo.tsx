@@ -12,6 +12,7 @@ import {
   ARREDONDAMENTOS,
   COTAS_MULTIPLAS,
   DISTRIBUICOES,
+  ehSerieDoMgi,
   MODELOS_DE_REFERENCIA,
   lerTermos,
   normalizarModelo,
@@ -205,8 +206,7 @@ function FichaDaCategoria({
   aoRemover: () => void;
 }) {
   const comPosicoes =
-    modelo.distribuicao === "posicao_fixa" ||
-    modelo.distribuicao === "serie_mgi";
+    modelo.distribuicao === "posicao_fixa" || ehSerieDoMgi(modelo.distribuicao);
   const arredondamento =
     ARREDONDAMENTOS.find((item) => item.id === categoria.arredondamento) ||
     ARREDONDAMENTOS[0];
@@ -363,7 +363,7 @@ function FichaDaCategoria({
                   <span>
                     Posições{" "}
                     <small>
-                      {modelo.distribuicao === "serie_mgi"
+                      {ehSerieDoMgi(modelo.distribuicao)
                         ? "vazio = pelo percentual"
                         : "as que o edital lista"}
                     </small>

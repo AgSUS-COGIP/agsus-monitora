@@ -13,6 +13,7 @@ import { useMemo, useState } from "react";
 import { canConfigureCallList } from "../../lib/acessos/access-roles.ts";
 import {
   categoriasDeReserva,
+  ehSerieDoMgi,
   modeloDeReferencia,
   modeloEmBranco,
 } from "../../lib/aprovados/carta-de-convocacao/modelo-de-convocacao.ts";
@@ -331,7 +332,7 @@ export function FormularioDeConvocacao({
                 já com a ordem do MGI (e a série 5ª, 21ª… da PCD), para conferir
                 na prévia e salvar.
               */
-              editavel && modelo.distribuicao !== "serie_mgi" ? (
+              editavel && !ehSerieDoMgi(modelo.distribuicao) ? (
                 <button
                   id="convocacaoUsarOrdemDoMgi"
                   className="btn outline"
