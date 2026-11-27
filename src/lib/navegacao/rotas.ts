@@ -72,6 +72,12 @@ export interface TelaDaRota {
    * histórico). Ex.: `/<área>/paineis-de-dados` → `/<área>/relatorios`.
    */
   caminhosAntigos?: readonly string[];
+  /**
+   * A tela só existe nesta área. Em outra, o endereço abre a Visão geral
+   * dela: `/sede/mapa` e `/projetos/mapa` não mostram uma tela vazia (o mapa
+   * de Projetos mora na Visão geral de Projetos).
+   */
+  soNaArea?: string;
 }
 
 /*
@@ -80,7 +86,13 @@ export interface TelaDaRota {
 */
 const TELAS: TelaDaRota[] = [
   { view: "dashboard", caminho: "visao-geral", titulo: "Visão geral" },
-  { view: "mapa", caminho: "mapa", titulo: "Mapa", campoNoCaminho: "dsei" },
+  {
+    view: "mapa",
+    caminho: "mapa",
+    titulo: "Mapa",
+    campoNoCaminho: "dsei",
+    soNaArea: "saude-indigena",
+  },
   {
     view: "nucleo",
     caminho: "editais",
@@ -292,6 +304,8 @@ export function destinoDoCaminho(
   if (!tela || (terceira && !tela.comEdital && !tela.campoNoCaminho))
     return null;
   if (tela.editalObrigatorio && !terceira) return null;
+  if (tela.soNaArea && primeira !== tela.soNaArea)
+    return { view: "dashboard", area: primeira };
   const parametros = new URLSearchParams(busca || "");
   const visao = pedaco(parametros.get("visao"));
   parametros.delete("visao");

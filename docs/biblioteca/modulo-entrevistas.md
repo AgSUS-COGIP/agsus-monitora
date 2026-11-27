@@ -42,8 +42,10 @@ contagem por situação no rótulo.
   como Regra e Equipe na Avaliação documental), com versões e o que falta
   (`src/lib/entrevistas/pendencias-do-roteiro.ts`).
 - O edital fica no cabeçalho (`seletor-do-edital.tsx`, com "mostrar também os concluídos" para o
-  administrador global); o último aberto na área fica no navegador (só conveniência); com um só na
-  lista, abre sozinho. Na URL: a seção, o período, a situação, a vaga, a banca e o passo.
+  administrador global); o edital vai ao endereço (`?edital=`, `usarEditalNaUrl`, como na
+  Classificação), e o link copiado e o F5 abrem o mesmo; sem ele, o último aberto na área (no
+  navegador, só conveniência) ou, com um só na lista, ele. Na URL também: a seção, o período, a
+  situação, a vaga, a banca e o passo.
 - Links antigos (`entrevistas:conduzir`, `entrevistas:roteiros`) vão para Conduzir entrevistas
   (`destinoDaTela`, `src/lib/navegacao/navegacao.ts`; o controlador tem `abrirVisao` e `abrirEdital`).
 

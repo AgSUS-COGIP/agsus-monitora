@@ -35,6 +35,7 @@ import {
 } from "../../lib/navegacao/busca-global.ts";
 import { usarLinhasDoMonitoramento } from "../usar-linhas-do-monitoramento.ts";
 import { Modal } from "../../ui/modal.tsx";
+import { travarRolagemDaPagina } from "../../lib/base/trava-de-rolagem.ts";
 import { abrirPaginaDoEditalNaArea } from "../../modulos/pagina-do-edital/abrir.ts";
 
 function Realce({ valor, termo }: { valor: string; termo: string }) {
@@ -192,15 +193,12 @@ function PainelDaBusca({
   );
 }
 
-/* Trava a rolagem da página enquanto a busca está aberta. */
+/*
+  Trava a rolagem da página enquanto a busca está aberta, pela trava contada:
+  fechar a busca sobre o mapa em tela cheia não solta a rolagem por trás dele.
+*/
 function useRolagemTravada(ativa: boolean) {
-  useEffect(() => {
-    if (!ativa) return undefined;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [ativa]);
+  useEffect(() => (ativa ? travarRolagemDaPagina() : undefined), [ativa]);
 }
 
 export function BuscaGlobal({ estaConectado, aoEscolher }: OpcoesDaBusca) {

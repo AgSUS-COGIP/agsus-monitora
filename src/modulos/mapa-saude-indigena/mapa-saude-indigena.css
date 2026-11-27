@@ -364,6 +364,25 @@
   height: 100%;
 }
 
+/*
+  Toque (Design System, seção 16): o + e o − do Leaflet com 44 × 44px (o
+  Leaflet os deixa com 30px de largura), e o link da atribuição com 44px de
+  alvo sem engordar a faixa (o acréscimo é por dentro, com margem negativa).
+*/
+@media (pointer: coarse) {
+  /* Um nível a mais que o `.leaflet-touch .leaflet-bar a` do Leaflet, que carrega depois. */
+  .mapa-si .leaflet-container .leaflet-bar a {
+    width: 44px;
+    height: 44px;
+    line-height: 44px;
+  }
+  .mapa-si .leaflet-control-attribution a {
+    display: inline-block;
+    padding-block: var(--space-4);
+    margin-block: calc(-1 * var(--space-4));
+  }
+}
+
 .mapa-si-sem-mapa {
   display: grid;
   height: 100%;

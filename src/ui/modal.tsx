@@ -70,6 +70,11 @@ const FOCAVEIS = [
 /* Os modais abertos, na ordem em que abriram: o teclado é do último. */
 const ABERTOS: object[] = [];
 
+/** Há um modal aberto (quem também ouve Esc na página deixa a tecla para ele). */
+export function haModalAberto(): boolean {
+  return ABERTOS.length > 0;
+}
+
 /* Um painel de aba escondido continua no DOM; o que está nele não recebe foco. */
 const focaveisDe = (cartao: HTMLElement) =>
   [...cartao.querySelectorAll<HTMLElement>(FOCAVEIS)].filter(

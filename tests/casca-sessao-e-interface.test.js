@@ -5521,6 +5521,15 @@ bloco("rotas", () => {
         area: "saude-indigena",
       });
       expect(destinoDoCaminho("/saude-indigena/mapa/yanomami/x")).toBeNull();
+      // O Mapa só existe na Saúde Indígena: nas outras áreas, a Visão geral.
+      expect(destinoDoCaminho("/sede/mapa")).toEqual({
+        view: "dashboard",
+        area: "sede",
+      });
+      expect(destinoDoCaminho("/projetos/mapa/yanomami")).toEqual({
+        view: "dashboard",
+        area: "projetos",
+      });
       // Tela sem edital nem campo no caminho continua sem terceiro pedaço.
       expect(
         destinoDoCaminho("/saude-indigena/visao-geral/yanomami"),
@@ -5529,13 +5538,18 @@ bloco("rotas", () => {
 
     it("todas as telas vão e voltam, em todas as áreas", () => {
       for (const { id: area } of AREAS_DO_SISTEMA)
-        for (const { view, editalObrigatorio } of TELAS_DAS_AREAS) {
+        for (const { view, editalObrigatorio, soNaArea } of TELAS_DAS_AREAS) {
           // A página do edital só existe com o edital: vai e volta com ele.
           const destino = editalObrigatorio
             ? { view, area, edital: "105-2026" }
             : { view, area };
           const caminho = caminhoDoDestino(destino);
-          expect(destinoDoCaminho(caminho), caminho).toEqual(destino);
+          // A tela de uma área só (o Mapa) leva as outras à Visão geral.
+          const esperado =
+            soNaArea && soNaArea !== area
+              ? { view: "dashboard", area }
+              : destino;
+          expect(destinoDoCaminho(caminho), caminho).toEqual(esperado);
         }
     });
 

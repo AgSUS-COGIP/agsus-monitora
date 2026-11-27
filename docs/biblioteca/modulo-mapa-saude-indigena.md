@@ -48,8 +48,10 @@ Tipos e fronteiras dos dados (e o que saiu do legado): [[mapa-saude-indigena-con
   de cada vez), `mapa-nacional.tsx` (bolhas, CASAIs nacionais, leque, "Territórios por vagas") e `mapa-do-dsei.tsx` (unidades agrupadas
   por proximidade + leque, sede, vínculos externos, filtros por tipo, Terras Indígenas e povos).
 - Peças comuns aos dois mapas: `leaflet.ts`, `painel-do-mapa.tsx`, `legenda.tsx`
-  (`<LegendaFlutuante>`), `tela-cheia.tsx` (`travarRolagemDaPagina` é contada: tela cheia e edição
-  de Projetos), `usar-ultimo.ts`.
+  (`<LegendaFlutuante>`), `tela-cheia.tsx` (com um modal aberto por cima, o Esc é do modal; a
+  trava de rolagem contada é `src/lib/base/trava-de-rolagem.ts`, que a edição de Projetos e a busca
+  global também usam), `usar-ultimo.ts`. O Mapa só existe na Saúde Indígena: `/sede/mapa` e
+  `/projetos/mapa` abrem a Visão geral da área (`soNaArea` em `src/lib/navegacao/rotas.ts`).
 - `processos-do-dsei.tsx` — o cartão "Processos seletivos" do DSEI aberto (editais abertos, vagas,
   contratadas, em seleção, ociosas e aguardando chamada), pelas contas da Visão geral
   (`processosDoDsei`, `src/lib/mapas/mapa-saude-indigena/processos-do-dsei.ts`). "Abrir na Visão
