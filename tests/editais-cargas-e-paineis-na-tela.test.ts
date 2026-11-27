@@ -7045,13 +7045,15 @@ bloco("componentes/retificar-quadro", () => {
   function montar(
     inicial: unknown,
     salvarQuadroDeVagas: EstadoDaRetificacaoDoQuadro["salvarQuadroDeVagas"],
+    listarCargos?: EstadoDaRetificacaoDoQuadro["listarCargos"],
   ) {
     document.body.innerHTML = `<div id="raiz"></div>`;
     function Casca() {
       const [dados, setDados] = useState<unknown>(inicial);
       return createElement(QuadroSalvo, {
-        estado: { salvarQuadroDeVagas },
+        estado: { salvarQuadroDeVagas, listarCargos },
         idEdital: "e1",
+        area: "saude-indigena",
         dados,
         aoMudar: setDados,
       });
@@ -7250,6 +7252,89 @@ bloco("componentes/retificar-quadro", () => {
     );
     expect(vaga?.getAttribute("data-efeito")).toBe("passa");
     expect(vaga?.textContent).toContain("Passa a esta linha");
+  });
+
+  it("com o catálogo da área, o cargo se escolhe na lista ou se digita em Outro cargo", async () => {
+    const salvar = vi.fn(async (_id: string, quadro: unknown) => quadro);
+    const cargo = (nome: string) => ({ nome, ativo: true, sintetico: false });
+    const listarCargos = vi.fn(async () => ({
+      cargos: [
+        cargo("PSICOLOGO"),
+        cargo("AGENTE INDIGENA DE SAUDE"),
+        cargo("ENFERMEIRO"),
+        { nome: "ANALISTA SI", ativo: true, sintetico: true },
+      ],
+    }));
+    montar(QUADRO, salvar, listarCargos);
+    await esperar();
+    expect(listarCargos).toHaveBeenCalledWith("saude-indigena");
+    await clicar(botao("acrescentar-linha-do-quadro"));
+    const lista = campo("cargo-da-lista") as HTMLSelectElement;
+    expect([...lista.options].map((o) => o.textContent)).toEqual([
+      "Escolha o cargo…",
+      "AGENTE INDIGENA DE SAUDE",
+      "ENFERMEIRO",
+      "PSICOLOGO",
+      "Outro cargo (fora da lista)",
+    ]);
+    expect(campo("cargo")).toBeNull();
+    // Da lista: o nome oficial vai à linha.
+    await escolher(lista, "PSICOLOGO");
+    await clicar(campo("cadastro-reserva"));
+    await clicar(botao("conferir-retificacao-do-quadro"));
+    await esperar();
+    expect(payloads(salvar)[0]?.linhas.at(-1)?.cargo).toBe("PSICOLOGO");
+
+    // Outro cargo: o nome novo se digita.
+    act(() => desmontar());
+    montar(QUADRO, salvar, listarCargos);
+    await esperar();
+    await clicar(botao("acrescentar-linha-do-quadro"));
+    await escolher(campo("cargo-da-lista"), "__outro__");
+    await digitar(campo("cargo"), "Monitor de Água, Saneamento e Higiene");
+    await clicar(campo("cadastro-reserva"));
+    await clicar(botao("conferir-retificacao-do-quadro"));
+    await esperar();
+    expect(payloads(salvar).at(-1)?.linhas.at(-1)?.cargo).toBe(
+      "Monitor de Água, Saneamento e Higiene",
+    );
+  });
+
+  it("editar a linha com cargo fora da lista abre em Outro cargo, com o nome dela", async () => {
+    const catalogo = async () => ({
+      cargos: ["ENFERMEIRO", "PSICOLOGO"].map((nome) => ({
+        nome,
+        ativo: true,
+        sintetico: false,
+      })),
+    });
+    montar(QUADRO, vi.fn(), catalogo);
+    await esperar();
+    const editar = document.querySelectorAll<HTMLButtonElement>(
+      '[data-acao="editar-linha-do-quadro"]',
+    );
+    // A linha "Médico" não está no catálogo; a "Enfermeiro" está.
+    const doMedico = [...editar].find((b) =>
+      b.getAttribute("aria-label")?.includes("Médico"),
+    );
+    await clicar(doMedico ?? null);
+    expect((campo("cargo-da-lista") as HTMLSelectElement).value).toBe(
+      "__outro__",
+    );
+    expect((campo("cargo") as HTMLInputElement).value).toBe("Médico");
+    act(() => desmontar());
+    montar(QUADRO, vi.fn(), catalogo);
+    await esperar();
+    const doEnfermeiro = [
+      ...document.querySelectorAll<HTMLButtonElement>(
+        '[data-acao="editar-linha-do-quadro"]',
+      ),
+    ].find((b) => b.getAttribute("aria-label")?.includes("Enfermeiro"));
+    await clicar(doEnfermeiro ?? null);
+    expect((campo("cargo-da-lista") as HTMLSelectElement).value).toBe(
+      "ENFERMEIRO",
+    );
+    expect(campo("cargo")).toBeNull();
   });
 
   it("sem permissão ou sem o banco novo, o quadro só se mostra", () => {

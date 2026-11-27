@@ -168,6 +168,7 @@ const RPC_UNIDADES_POR_AREA = "listar_unidades_por_area";
 const RPC_MOVER_DE_AREA = "mover_edital_de_area";
 const RPC_QUADRO = "obter_quadro_de_vagas";
 const RPC_SALVAR_QUADRO = "salvar_quadro_de_vagas";
+const RPC_CARGOS = "listar_cargos";
 const RPC_GRAVAR_VINCULO = "gravar_vinculo_do_quadro";
 const RPC_ATUALIZAR_VINCULOS = "atualizar_vinculos_do_quadro";
 const RPC_REINICIAR_TREINAMENTO = "reiniciar_edital_treinamento";
@@ -378,6 +379,28 @@ export function criarEstadoDoNucleo({
     const { data, error } = await supabase.rpc(RPC_QUADRO, { p_edital: id });
     if (error) throw error;
     return data || {};
+  }
+
+  /*
+    Os cargos oficiais da área, para o campo Cargo do quadro (`listar_cargos`): lidos uma vez por
+    área enquanto a tela vive; a falha não fica guardada (a próxima abertura tenta de novo). Vai a
+    resposta crua: quem a filtra é o quadro (`cargosParaEscolher`), que carrega sob demanda; o
+    import aqui levaria a lógica do quadro para a carga da entrada.
+  */
+  const cargosPorArea = new Map<string, Promise<unknown>>();
+  function listarCargos(area: string): Promise<unknown> {
+    const guardado = cargosPorArea.get(area);
+    if (guardado) return guardado;
+    const lendo = (async () => {
+      if (!supabase) throw new Error("Supabase indisponível.");
+      await exigirSessao(supabase);
+      const { data, error } = await supabase.rpc(RPC_CARGOS, { p_area: area });
+      if (error) throw error;
+      return data;
+    })();
+    cargosPorArea.set(area, lendo);
+    lendo.catch(() => cargosPorArea.delete(area));
+    return lendo;
   }
 
   /** Grava o quadro de vagas de um edital já cadastrado, sem esperar o Salvar do edital. */
@@ -844,6 +867,7 @@ export function criarEstadoDoNucleo({
     lerRetificacao,
     lerQuadroDeVagas,
     salvarQuadroDeVagas,
+    listarCargos,
     gravarVinculoDoQuadro,
     atualizarVinculosDoQuadro,
     salvarEdital,

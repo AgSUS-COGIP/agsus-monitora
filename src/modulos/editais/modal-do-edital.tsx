@@ -915,6 +915,7 @@ export function ModalDoEdital({
           <ImportarAnexos
             estado={estado}
             idAtual={id}
+            area={areaDoEdital}
             numeroDoFormulario={formulario.edital}
             temEtapas={cronograma.etapas.length > 0}
             quadroPendente={quadroPendente}

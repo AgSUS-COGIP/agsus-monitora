@@ -1,6 +1,8 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import { Aviso, Campo, FecharModal, Modal, Selo } from "../../ui/index.ts";
 import {
+  cargoDaLista,
+  cargosParaEscolher,
   linhasDoQuadro,
   modalidadesDoQuadro,
   problemaDoMotivo,
@@ -26,11 +28,15 @@ import { rotuloDaLinha } from "../../lib/editais/vinculos-do-quadro.ts";
 export interface EstadoDaRetificacaoDoQuadro {
   /** `salvar_quadro_de_vagas`: grava (ou simula) e devolve o quadro. */
   salvarQuadroDeVagas(id: string, quadro: QuadroRetificado): Promise<unknown>;
+  /** `listar_cargos` (a resposta crua): os cargos oficiais da área, para o campo Cargo. */
+  listarCargos?(area: string): Promise<unknown>;
 }
 
 export interface PropriedadesDoQuadroSalvo {
   estado: EstadoDaRetificacaoDoQuadro;
   idEdital: string;
+  /** A área do edital: os cargos oficiais dela aparecem no campo Cargo. */
+  area?: string;
   /** O payload de `obter_quadro_de_vagas`. */
   dados: unknown;
   /** O quadro devolvido depois de gravar. */
@@ -135,6 +141,7 @@ function Cabecalho({
 export function QuadroSalvo({
   estado,
   idEdital,
+  area = "",
   dados,
   aoMudar,
 }: PropriedadesDoQuadroSalvo) {
@@ -148,6 +155,23 @@ export function QuadroSalvo({
     bruto?.pode_editar === true && Array.isArray(bruto?.historico);
   const temLotacao = linhas.some((l) => l.lotacao);
   const [mudanca, setMudanca] = useState<MudancaNoQuadro | null>(null);
+  // Os cargos oficiais da área; sem eles (outra área, falha), o campo Cargo é de texto livre.
+  const [cargos, setCargos] = useState<readonly string[]>([]);
+  useEffect(() => {
+    if (!podeRetificar || !area || !estado.listarCargos) return undefined;
+    let vivo = true;
+    estado
+      .listarCargos(area)
+      .then((dados) => {
+        if (vivo) setCargos(cargosParaEscolher(dados));
+      })
+      .catch(() => {
+        if (vivo) setCargos([]);
+      });
+    return () => {
+      vivo = false;
+    };
+  }, [estado, area, podeRetificar]);
 
   return (
     <div className="quadro-salvo" data-quadro-salvo="">
@@ -228,6 +252,7 @@ export function QuadroSalvo({
           dados={dados}
           linhas={linhas}
           modalidades={modalidades}
+          cargos={cargos}
           inicial={mudanca}
           aoGravar={(novo) => {
             setMudanca(null);
@@ -246,6 +271,7 @@ interface PropriedadesDeRetificarLinha {
   dados: unknown;
   linhas: readonly LinhaVigente[];
   modalidades: readonly string[];
+  cargos: readonly string[];
   inicial: MudancaNoQuadro;
   aoGravar: (dados: unknown) => void;
   aoFechar: () => void;
@@ -258,6 +284,8 @@ const TITULO: Record<MudancaNoQuadro["tipo"], string> = {
 };
 
 const SIMULACAO = "Simulação da retificação";
+/* A opção da lista de cargos que abre o campo do nome novo. */
+const OUTRO_CARGO = "__outro__";
 
 function RetificarLinha({
   estado,
@@ -265,6 +293,7 @@ function RetificarLinha({
   dados,
   linhas,
   modalidades,
+  cargos,
   inicial,
   aoGravar,
   aoFechar,
@@ -273,6 +302,8 @@ function RetificarLinha({
   const [rascunho, setRascunho] = useState<RascunhoDaLinha | null>(
     inicial.tipo === "retirar" ? null : inicial.linha,
   );
+  // "Outro cargo" escolhido na lista: o nome se digita (cargo fora do catálogo da área).
+  const [outroCargo, setOutroCargo] = useState(false);
   const [resumo, setResumo] = useState<ResumoDaMudanca | null>(null);
   const [motivo, setMotivo] = useState("");
   const [errata, setErrata] = useState("");
@@ -368,6 +399,69 @@ function RetificarLinha({
     setResumo(null);
   };
 
+  /*
+    O campo Cargo: com o catálogo da área, a lista dos cargos oficiais e, no fim, "Outro cargo",
+    que abre o nome a digitar (o cargo que a linha já tinha e não está na lista abre assim).
+    Sem catálogo, texto livre.
+  */
+  function campoDoCargo() {
+    if (!rascunho) return null;
+    const semCargo =
+      tentou && !rascunho.cargo.trim() ? "Informe o cargo." : undefined;
+    const digitado = (
+      <input
+        type="text"
+        maxLength={300}
+        data-foco-inicial={cargos.length ? undefined : ""}
+        data-campo="cargo"
+        value={rascunho.cargo}
+        onChange={(e) => mudar({ cargo: e.target.value })}
+      />
+    );
+    if (!cargos.length)
+      return (
+        <Campo rotulo="Cargo" obrigatorio largo erro={semCargo}>
+          {digitado}
+        </Campo>
+      );
+    const daLista = cargoDaLista(rascunho.cargo, cargos);
+    const outro = outroCargo || (rascunho.cargo.trim() !== "" && !daLista);
+    return (
+      <>
+        <Campo
+          rotulo="Cargo"
+          obrigatorio
+          largo
+          erro={outro ? undefined : semCargo}
+        >
+          <select
+            data-foco-inicial=""
+            data-campo="cargo-da-lista"
+            value={outro ? OUTRO_CARGO : (daLista ?? "")}
+            onChange={(e) => {
+              const valor = e.target.value;
+              setOutroCargo(valor === OUTRO_CARGO);
+              mudar({ cargo: valor === OUTRO_CARGO ? "" : valor });
+            }}
+          >
+            <option value="">Escolha o cargo…</option>
+            {cargos.map((nome) => (
+              <option key={nome} value={nome}>
+                {nome}
+              </option>
+            ))}
+            <option value={OUTRO_CARGO}>Outro cargo (fora da lista)</option>
+          </select>
+        </Campo>
+        {outro && (
+          <Campo rotulo="Nome do cargo" obrigatorio largo erro={semCargo}>
+            {digitado}
+          </Campo>
+        )}
+      </>
+    );
+  }
+
   const semLinha = resumo?.vagas.filter((v) => v.efeito === "sem-linha") ?? [];
   const nomesDaPrevia = resumo
     ? modalidadesDoQuadro(
@@ -394,23 +488,7 @@ function RetificarLinha({
 
       {rascunho && !resumo && (
         <div className="ui-grade-de-campos" data-formulario-da-linha="">
-          <Campo
-            rotulo="Cargo"
-            obrigatorio
-            largo
-            erro={
-              tentou && !rascunho.cargo.trim() ? "Informe o cargo." : undefined
-            }
-          >
-            <input
-              type="text"
-              maxLength={300}
-              data-foco-inicial=""
-              data-campo="cargo"
-              value={rascunho.cargo}
-              onChange={(e) => mudar({ cargo: e.target.value })}
-            />
-          </Campo>
+          {campoDoCargo()}
           <Campo rotulo="Lotação" largo>
             <input
               type="text"
