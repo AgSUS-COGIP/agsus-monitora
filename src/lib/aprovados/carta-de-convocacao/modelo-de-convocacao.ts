@@ -73,7 +73,7 @@ export const DISTRIBUICOES = Object.freeze([
     id: "serie_mgi",
     rotulo: "Seguir o simulador do MGI",
     ajuda:
-      "PCD na 5ª, 21ª, 41ª, 61ª, 81ª… (de 20 em 20, como fixou o STF). As outras cotas a cada 100 ÷ percentual posições, começando no meio: pretos e pardos (25%) na 2ª, 6ª, 10ª…; indígenas (3%) na 17ª, 50ª e 84ª; quilombolas (2%) na 25ª e 75ª. Posição já ocupada fica com a livre anterior. É a ordem do simulador de reserva de vagas do MGI (Lei 15.142/2025 e Decreto 12.536/2025).",
+      "PCD na 5ª, 21ª, 41ª, 61ª, 81ª… (de 20 em 20, como fixou o STF). As outras cotas a cada 100 ÷ percentual posições, começando no meio: pretos e pardos (25%) na 2ª, 6ª, 10ª…; indígenas (3%) na 17ª, 51ª e 84ª; quilombolas (2%) na 25ª e 75ª. Posição já ocupada fica com a livre seguinte, pela ordem estabelecida pela UJUR (a 50ª é de pretos e pardos, e a 2ª indígena vai para a 51ª). É a ordem do simulador de reserva de vagas do MGI (Lei 15.142/2025 e Decreto 12.536/2025), com esse ajuste.",
   },
   {
     id: "posicao_fixa",

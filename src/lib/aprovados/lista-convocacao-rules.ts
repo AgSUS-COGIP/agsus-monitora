@@ -370,9 +370,11 @@ function sequenciaPorPosicao(
       primeiro intervalo e arredondando para cima: pretos e pardos (25%) na 2ª,
       6ª, 10ª…; indígenas (3%) na 17ª, 50ª, 84ª; quilombolas (2%) na 25ª e 75ª;
     - quem tem série publicada entra primeiro, depois o maior percentual; a
-      posição já ocupada fica com a livre ANTERIOR (o indígena da 50ª vai para a
-      49ª, porque a 50ª é de pretos e pardos), e só não havendo nenhuma antes é
-      que vai para a seguinte.
+      posição já ocupada fica com a livre SEGUINTE (a 2ª indígena, da 50ª, vai
+      para a 51ª, porque a 50ª é de pretos e pardos), e só não havendo nenhuma
+      depois é que vai para a anterior. É a ordem estabelecida pela UJUR
+      (27/11/2026); o simulador do MGI levava para a anterior (49ª), e a lista
+      saía diferente da que a AgSUS publica.
 
   O passo vem do percentual, e não do total de vagas: numa vaga de 45, pretos e
   pardos continuam de 4 em 4. Categoria sem percentual (quadro manual) usa o
@@ -397,11 +399,12 @@ function serieDoMgi(
   return serie.slice(0, quantidade);
 }
 
+/* A posição pedida ou, ocupada, a livre seguinte (UJUR); sem nenhuma depois, a anterior. */
 function livreMaisProxima(slots: readonly (string | null)[], alvo: number) {
   const inicio = Math.min(Math.max(alvo, 0), slots.length - 1);
-  for (let indice = inicio; indice >= 0; indice -= 1)
+  for (let indice = inicio; indice < slots.length; indice += 1)
     if (slots[indice] === null) return indice;
-  for (let indice = inicio + 1; indice < slots.length; indice += 1)
+  for (let indice = inicio - 1; indice >= 0; indice -= 1)
     if (slots[indice] === null) return indice;
   return -1;
 }

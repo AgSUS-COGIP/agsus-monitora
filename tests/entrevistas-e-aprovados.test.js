@@ -2111,8 +2111,11 @@ bloco("convocacao-mgi-e-saude-indigena", () => {
       expect(posicoesDe(sequencia, "pretos_pardos")).toEqual(
         Array.from({ length: 25 }, (_, k) => 2 + 4 * k),
       );
-      // A 50ª é de pretos e pardos: a 2ª indígena fica com a livre anterior.
-      expect(posicoesDe(sequencia, "indigena")).toEqual([17, 49, 84]);
+      // A 50ª é de pretos e pardos: a 2ª indígena fica com a livre SEGUINTE,
+      // a 51ª, como na ordem estabelecida pela UJUR (27/11/2026), e não a 49ª.
+      expect(posicoesDe(sequencia, "indigena")).toEqual([17, 51, 84]);
+      expect(sequencia[48]).toBe("ampla");
+      expect(sequencia[49]).toBe("pretos_pardos");
       expect(posicoesDe(sequencia, "quilombola")).toEqual([25, 75]);
     });
 
