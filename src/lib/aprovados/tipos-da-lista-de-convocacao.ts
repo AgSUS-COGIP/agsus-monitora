@@ -25,12 +25,16 @@ export interface LinhaDaConvocacao<
   imediata: boolean;
   reservas: string[];
   reservasEfetivas: string[];
+  /** Saiu da fila (Desistente, Documentação Rejeitada, Contratado em outra lista): fica no lugar, sem vaga. */
+  saiu?: boolean;
+  /** A vaga imediata que a linha herdou de quem saiu. */
+  noLugarDe?: { nome: string; posicao: number } | null;
 }
 export interface ResultadoDaConvocacao<
   T extends CandidatoDaConvocacao = CandidatoDaConvocacao,
 > {
+  /** Todos, na ordem original da convocação; quem saiu fica no lugar, com `saiu`. */
   linhas: LinhaDaConvocacao<T>[];
-  foraDaFila: LinhaDaConvocacao<T>[];
   totalImediatas: number;
   ciclo: string[];
 }

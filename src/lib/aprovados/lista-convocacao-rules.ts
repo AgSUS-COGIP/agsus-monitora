@@ -54,10 +54,17 @@ import type {
 
   E duas regras de operação, que valem em todos os editais lidos:
 
-    - Desistente, Documentação Rejeitada e Contratado em outra lista (a pessoa
-      foi contratada pela outra linha do edital, ampla ou cota; migration
-      20261024120000) não ocupam vaga; quem vem a seguir na mesma fila toma o
-      lugar. Continuam visíveis, fora da numeração.
+    - A ORDEM É FIXA (27/11/2026). O cálculo corre com todos, como se ninguém
+      tivesse saído: a numeração não muda quando o status muda. Desistente,
+      Documentação Rejeitada e Contratado em outra lista (a pessoa foi
+      contratada pela outra linha do edital, ampla ou cota; migration
+      20261024120000) ficam na sua linha, com o seu número, marcados `saiu`, e
+      não ocupam vaga. A vaga imediata de quem saiu vai para o primeiro do
+      cadastro de reserva, na ordem, que disputa a mesma vaga: a reserva dela,
+      a cascata do modelo e, no fim, a ampla (`repassarVagas`). Quem herda fica
+      no seu número, com `noLugarDe`. Antes, quem saía ia para o fim, sem
+      número, e a fila se refazia: o próximo da ampla assumia o número dele, o
+      que confundia quem acompanhava a lista publicada.
     - Convocado, Contratado e Migração continuam na fila, na posição que o
       cálculo lhes deu (a vaga é deles): já foram chamados e não são chamados
       de novo — "a convocar" são só as vagas imediatas ainda sem status.
@@ -580,36 +587,26 @@ export function montarConvocacaoDaVaga<T extends CandidatoDaConvocacao>({
   const declaradasDe = (candidato: T) =>
     lerModalidade(candidato?.modalidade, modelo).reservas;
 
-  const ordenados = ordenarPorClassificacao(candidatos);
-  const foraDaFila: LinhaDaConvocacao<T>[] = ordenados
-    .filter(estaForaDaFila)
-    .map((candidato) => ({
-      candidato,
-      posicao: null,
-      categoria: null,
-      categoriaReservada: null,
-      imediata: false,
-      reservas: declaradasDe(candidato),
-      reservasEfetivas: [],
-    }));
-  const naFila = ordenados.filter((candidato) => !estaForaDaFila(candidato));
+  // A ordem original: todos entram, inclusive quem saiu (ver "A ORDEM É FIXA").
+  const naFila = ordenarPorClassificacao(candidatos);
 
   if (!proporcionalidade) {
     const total = totalDoQuadro(quadroFinal);
-    return {
-      linhas: naFila.map((candidato, indice) => ({
-        candidato,
-        posicao: indice + 1,
-        categoria: null,
-        categoriaReservada: null,
-        imediata: total > 0 && indice < total,
-        reservas: declaradasDe(candidato),
-        reservasEfetivas: [],
-      })),
-      foraDaFila,
-      totalImediatas: total,
-      ciclo: [],
-    };
+    const linhas: LinhaDaConvocacao<T>[] = naFila.map((candidato, indice) => ({
+      candidato,
+      posicao: indice + 1,
+      categoria: null,
+      categoriaReservada: null,
+      imediata: total > 0 && indice < total,
+      reservas: declaradasDe(candidato),
+      reservasEfetivas: [],
+    }));
+    repassarVagas(
+      linhas,
+      () => [null],
+      () => true,
+    );
+    return { linhas, totalImediatas: total, ciclo: [] };
   }
 
   const ciclo = sequenciaDeConvocacao(quadroFinal, modelo);
@@ -765,7 +762,58 @@ export function montarConvocacaoDaVaga<T extends CandidatoDaConvocacao>({
     });
   }
 
-  return { linhas, foraDaFila, totalImediatas, ciclo };
+  repassarVagas(
+    linhas,
+    (vaga) => [
+      vaga,
+      ...(modelo.categorias.find((item) => item.id === vaga)?.cascata || []),
+      ampla.id,
+    ],
+    (linha, alvo) =>
+      alvo === ampla.id || linha.reservasEfetivas.includes(alvo ?? ""),
+  );
+  return { linhas, totalImediatas, ciclo };
+}
+
+/*
+  A vaga imediata de quem saiu, na ordem original (ver "A ORDEM É FIXA"). As
+  imediatas são as primeiras posições; cada uma de quem saiu vai, na ordem das
+  posições, para o primeiro do cadastro de reserva (sem vaga ainda e na fila)
+  que disputa a categoria da vaga — a reservada, quando a vaga já tinha
+  revertido —, tentando a cascata e a ampla (`tentativas`; `null` = qualquer
+  um, sem proporcionalidade). Quem já foi chamado pela reserva (Convocado)
+  também herda: foi chamado justamente para a vaga que se abriu.
+*/
+function repassarVagas<T extends CandidatoDaConvocacao>(
+  linhas: LinhaDaConvocacao<T>[],
+  tentativas: (vaga: string | null) => (string | null)[],
+  disputa: (linha: LinhaDaConvocacao<T>, alvo: string | null) => boolean,
+) {
+  linhas.forEach((linha) => {
+    if (estaForaDaFila(linha.candidato)) linha.saiu = true;
+  });
+  linhas.forEach((vaga) => {
+    if (!vaga.saiu || !vaga.imediata) return;
+    vaga.imediata = false;
+    const categoriaDaVaga = vaga.categoriaReservada ?? vaga.categoria;
+    for (const alvo of tentativas(categoriaDaVaga)) {
+      const herdeira = linhas.find(
+        (linha) => !linha.saiu && !linha.imediata && disputa(linha, alvo),
+      );
+      if (!herdeira) continue;
+      herdeira.imediata = true;
+      herdeira.noLugarDe = {
+        nome: texto(vaga.candidato?.nome),
+        posicao: vaga.posicao ?? 0,
+      };
+      if (alvo !== null) {
+        herdeira.categoria = alvo;
+        herdeira.categoriaReservada =
+          categoriaDaVaga && alvo !== categoriaDaVaga ? categoriaDaVaga : null;
+      }
+      return;
+    }
+  });
 }
 
 /*
@@ -897,9 +945,9 @@ export function resumirConvocacao(
       // reserva sai do cadastro (auditoria dos cálculos, 10/11/2026).
       if (situacaoNaChamada(linha) === "Cadastro de reserva")
         resumo.reserva += 1;
-      if (linha.categoriaReservada) resumo.vagasRevertidas += 1;
+      if (linha.saiu) resumo.foraDaFila += 1;
+      else if (linha.categoriaReservada) resumo.vagasRevertidas += 1;
     });
-    resumo.foraDaFila += grupo.foraDaFila.length;
   });
   return resumo;
 }
@@ -912,14 +960,14 @@ const dataBr = (valor: unknown) => {
 
 /** Onde a linha está na chamada: a convocar, já chamado, reserva ou fora. */
 export function situacaoNaChamada(linha: LinhaDaConvocacao | null | undefined) {
-  if (!linha?.posicao) return "Fora da fila";
+  if (!linha?.posicao || linha.saiu) return "Fora da fila";
   if (jaFoiChamado(linha.candidato)) return "Já chamado";
   return linha.imediata ? "A convocar" : "Cadastro de reserva";
 }
 
 /**
  * As linhas do CSV da ordem de convocação (cabeçalho primeiro), na ordem da
- * tela: por vaga, os da fila e depois os de fora. `convocacoes` é o mapa
+ * tela: por vaga, na ordem original (quem saiu fica no seu lugar). `convocacoes` é o mapa
  * candidato_id → { data } (listar_convocacoes_aprovados); `rotulo(grupo,
  * categoria)` dá o nome da categoria da vaga. Quem gera o arquivo passa as
  * células por sanitizeCsvCell (csv-security.js).
@@ -949,14 +997,18 @@ export function linhasDoCsvDaConvocacao<T extends CandidatoDaConvocacao>(
     ],
   ];
   (grupos || []).forEach((grupo) => {
-    [...grupo.linhas, ...grupo.foraDaFila].forEach((linha) => {
+    grupo.linhas.forEach((linha) => {
       const c = linha.candidato || {};
       const categoria = linha.categoria
         ? ` · ${rotulo(grupo, linha.categoria)}`
         : "";
-      const vaga = !linha.posicao
-        ? ""
-        : `${linha.imediata ? "Imediata" : "Reserva"}${categoria}`;
+      const noLugar = linha.noLugarDe
+        ? ` (no lugar de ${linha.noLugarDe.nome}, ${linha.noLugarDe.posicao}º)`
+        : "";
+      const vaga =
+        !linha.posicao || linha.saiu
+          ? ""
+          : `${linha.imediata ? "Imediata" : "Reserva"}${categoria}${noLugar}`;
       const nota = Number(c.nota);
       linhas.push([
         grupo.edital,

@@ -4370,7 +4370,11 @@ bloco("componentes/lista-de-convocacao", () => {
       expect(cabecalhos[1]).toContain("Sem vaga imediata");
     });
 
-    it("mostra quem desistiu fora da numeração, sem gastar vaga", async () => {
+    /*
+    A ordem é fixa (27/11/2026): quem desistiu fica no seu número, sem vaga, e
+    quem herda a vaga imediata diz de quem ela era.
+  */
+    it("quem desistiu fica no seu lugar, sem gastar vaga, e o próximo herda a vaga", async () => {
       await montar({
         candidatos: [
           candidato("MARIA", "Ampla", { status: "Desistente" }),
@@ -4378,14 +4382,24 @@ bloco("componentes/lista-de-convocacao", () => {
         ],
         vagas: [vagaManual("VG-001", { ampla: 1 })],
       });
-      expect(nomesNaTabela()).toEqual(["CARLOS", "MARIA"]);
-      expect(document.querySelector(".convocacao-vaga.fora")).not.toBeNull();
+      expect(nomesNaTabela()).toEqual(["MARIA", "CARLOS"]);
+      const [maria, carlos] = [
+        ...document.querySelectorAll("#convocacaoRows tr"),
+      ].filter((linha) => linha.querySelector(".approved-name"));
+      expect(maria?.querySelector("td.num")?.textContent).toBe("1");
+      expect(maria?.querySelector(".convocacao-vaga.fora")).not.toBeNull();
+      expect(maria?.classList.contains("convocacao-linha-fora")).toBe(true);
+      expect(carlos?.querySelector("td.num")?.textContent).toBe("2");
+      expect(
+        carlos?.querySelector("[data-no-lugar-de]")?.textContent,
+      ).toContain("No lugar de MARIA (1º)");
+      expect(carlos?.hasAttribute("data-a-convocar")).toBe(true);
       expect($("convocacaoKpiForaDaFila")?.textContent).toBe("1");
     });
 
     /*
     Status é filtro de exibição e entra DEPOIS do cálculo: o desistente some da
-    tabela, mas continua a não gastar vaga.
+    tabela, mas continua a não gastar vaga, e os números não mudam.
   */
     it("filtrar por status não muda a ordem de quem fica", async () => {
       await montar({
@@ -4408,7 +4422,7 @@ bloco("componentes/lista-de-convocacao", () => {
       expect(nomesNaTabela()).toEqual(["CARLOS"]);
       expect(
         document.querySelector("#convocacaoRows td.num")?.textContent,
-      ).toBe("1");
+      ).toBe("2");
     });
 
     /*

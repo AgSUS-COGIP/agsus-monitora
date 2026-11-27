@@ -3230,7 +3230,7 @@ export const VERBETES_AYA = Object.freeze([
       "ordem de chamada convocado",
     ],
     resposta:
-      'Na aba Convocação, "A convocar" são as vagas imediatas cujo candidato ainda não foi chamado (sem status). Convocado, Contratado e Migração continuam na posição que a ordem lhes deu e não são chamados de novo; Desistente, Documentação Rejeitada e Contratado em outra lista saem da fila e o próximo toma a vaga. "Marcar quem falta convocar" marca de uma vez esses candidatos para a carta. "Exportar CSV" baixa a ordem com a situação na chamada, o status e a data da convocação.',
+      'Na aba Convocação, "A convocar" são as vagas imediatas cujo candidato ainda não foi chamado (sem status). Convocado, Contratado e Migração continuam na posição que a ordem lhes deu e não são chamados de novo; Desistente, Documentação Rejeitada e Contratado em outra lista ficam no seu número, apagados e com "Fora da fila", e não ocupam vaga: a ordem não muda quando o status muda. A vaga imediata de quem saiu vai para o primeiro do cadastro de reserva que disputa a mesma vaga (a mesma cota; sem ninguém dela, a cascata e a ampla), e essa linha mostra "No lugar de Fulano (1º)". Para esconder quem saiu, use o filtro de Status. "Marcar quem falta convocar" marca de uma vez esses candidatos para a carta. "Exportar CSV" baixa a ordem com a situação na chamada, o status e a data da convocação.',
     fonte:
       "src/lib/aprovados/lista-convocacao-rules.ts; src/modulos/aprovados/aba-convocacao.tsx",
     abrir: "approved",
