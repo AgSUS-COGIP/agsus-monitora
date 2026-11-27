@@ -166,6 +166,8 @@ import { PGlite } from "@electric-sql/pglite";
 import { moldeDeBanco } from "./apoio/molde-de-banco.ts";
 import {
   aplicarMudanca,
+  cargoDaLista,
+  cargosParaEscolher,
   chaveDaLinha,
   linhasDoQuadro as linhasDoQuadroRetificavel,
   modalidadesDoQuadro,
@@ -7628,6 +7630,35 @@ bloco("lib/retificar-quadro", () => {
     expect(chaveDaLinha("Técnico de Enfermagem", null)).toBe(
       "tecnico de enfermagem|",
     );
+  });
+
+  it("os cargos da área para o campo Cargo: ativos, sem sintéticos nem grafia repetida, em ordem", () => {
+    const dados = {
+      cargos: [
+        { nome: "TECNICO DE ENFERMAGEM", ativo: true, sintetico: false },
+        { nome: "ANALISTA SI", ativo: true, sintetico: true },
+        { nome: "ENFERMEIRO", ativo: true, sintetico: false },
+        { nome: "GEOLOGO", ativo: false, sintetico: false },
+        { nome: "Técnico de Enfermagem", ativo: true, sintetico: false },
+        { nome: "  ", ativo: true, sintetico: false },
+        { nome: "AGENTE DE COMBATE A ENDEMIAS", ativo: true },
+      ],
+      apelidos_pendentes: [],
+    };
+    const lista = cargosParaEscolher(dados);
+    expect(lista).toEqual([
+      "AGENTE DE COMBATE A ENDEMIAS",
+      "ENFERMEIRO",
+      "TECNICO DE ENFERMAGEM",
+    ]);
+    expect(cargosParaEscolher(null)).toEqual([]);
+    expect(cargosParaEscolher({ cargos: "x" })).toEqual([]);
+    // A linha do PDF ("Técnico de Enfermagem") casa com o cargo oficial pela grafia.
+    expect(cargoDaLista("Técnico de Enfermagem", lista)).toBe(
+      "TECNICO DE ENFERMAGEM",
+    );
+    expect(cargoDaLista("Monitor de Água", lista)).toBeNull();
+    expect(cargoDaLista("  ", lista)).toBeNull();
   });
 
   it("o quadro inteiro vai à RPC: anterior em toda linha que fica, MANUAL só na mudada ou nova", () => {

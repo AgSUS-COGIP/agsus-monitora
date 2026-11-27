@@ -1072,6 +1072,12 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     resumo:
       "Quadro de vagas vigente do edital (cada linha com origem PDF/MANUAL e arquivo), de onde veio, o histórico das 20 últimas gravações (evento IMPORTACAO/RETIFICACAO, motivo, errata, quem, quando; 20261126180000) e o vínculo de cada vaga com a linha (situação CONFIRMADO/AMBIGUO/AUSENTE, origem, candidatas, pendência; vagas_do_edital sem vaga com código: NAO_SE_APLICA, EXTERNO, PENDENTE_INTEGRACAO; pode_editar).",
   },
+  listar_cargos: {
+    argumentos: ["p_area"],
+    critica: false,
+    resumo:
+      "Cargos oficiais (TD_CARGO, com o número de apelidos confirmados) e apelidos pendentes, da área pedida ou de todas (nula), só das áreas que quem lê vê. O campo Cargo de Acrescentar vaga e Editar do quadro de vagas usa os ativos e não sintéticos (20261104150000).",
+  },
   salvar_quadro_de_vagas: {
     argumentos: ["p_edital", "p_dados"],
     critica: false,

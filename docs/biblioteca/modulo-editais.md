@@ -60,7 +60,10 @@ Tabela, alertas, formulário e linha do tempo. A tela é `nucleo.tsx`; o estado 
   migration `20261126180000`): no quadro salvo ("Ver quadro"), Editar e Retirar por linha e
   "Acrescentar vaga", para quem grava o quadro (`pode_editar`; Núcleo ou Calendário, editor) e só
   com o banco novo (`historico` no payload de `obter_quadro_de_vagas`; a RPC antiga ignoraria a
-  simulação e gravaria). O modal edita cargo, lotação, vagas por modalidade (total = soma) e CR;
+  simulação e gravaria). O modal edita cargo, lotação, vagas por modalidade (total = soma) e CR.
+  O cargo se escolhe na lista dos cargos oficiais da área (`listar_cargos`: ativos, sem os
+  sintéticos; `cargosParaEscolher`), ou em "Outro cargo (fora da lista)", que abre o nome a
+  digitar; a linha com cargo fora da lista abre assim, e área sem catálogo fica no texto livre;
   recusa linha de mesma chave cargo + lotação (`FC_CHAVE_LINHA_QUADRO`). "Conferir o que muda"
   chama `salvar_quadro_de_vagas` com `simular: true` (o banco faz tudo num bloco que se desfaz) e
   mostra a linha antes e depois e as vagas que continuam, ficam sem linha, passam à linha ou

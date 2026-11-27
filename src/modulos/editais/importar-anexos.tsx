@@ -37,11 +37,15 @@ export interface EstadoDosAnexos extends EstadoDosVinculos {
     id: string,
     quadro: QuadroParaSalvar | QuadroRetificado,
   ): Promise<unknown>;
+  /** `listar_cargos`: os cargos oficiais da área (o campo Cargo do quadro). */
+  listarCargos?(area: string): Promise<string[]>;
 }
 
 export interface PropriedadesDeImportarAnexos {
   estado: EstadoDosAnexos;
   idAtual: string;
+  /** A área do edital (os cargos oficiais dela no quadro salvo). */
+  area?: string;
   numeroDoFormulario: string;
   temEtapas: boolean;
   quadroPendente: QuadroParaSalvar | null;
@@ -143,6 +147,7 @@ export function TabelaDoQuadro({
 export function ImportarAnexos({
   estado,
   idAtual,
+  area,
   numeroDoFormulario,
   temEtapas,
   quadroPendente,
@@ -398,6 +403,7 @@ export function ImportarAnexos({
             <QuadroSalvo
               estado={estado}
               idEdital={idAtual}
+              area={area}
               dados={salvo}
               aoMudar={(dados) => setSalvo(dados as QuadroDeVagasSalvo | null)}
             />

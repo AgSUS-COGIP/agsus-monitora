@@ -37,7 +37,10 @@ import type {
   EtapaDoCronograma,
 } from "../../lib/cronograma/cronograma-do-edital.ts";
 import type { QuadroParaSalvar } from "../../lib/editais/anexos-do-edital.ts";
-import type { QuadroRetificado } from "../../lib/editais/retificar-quadro.ts";
+import {
+  cargosParaEscolher,
+  type QuadroRetificado,
+} from "../../lib/editais/retificar-quadro.ts";
 import type {
   ItemDoResumo,
   UnidadeComArea,
@@ -168,6 +171,7 @@ const RPC_UNIDADES_POR_AREA = "listar_unidades_por_area";
 const RPC_MOVER_DE_AREA = "mover_edital_de_area";
 const RPC_QUADRO = "obter_quadro_de_vagas";
 const RPC_SALVAR_QUADRO = "salvar_quadro_de_vagas";
+const RPC_CARGOS = "listar_cargos";
 const RPC_GRAVAR_VINCULO = "gravar_vinculo_do_quadro";
 const RPC_ATUALIZAR_VINCULOS = "atualizar_vinculos_do_quadro";
 const RPC_REINICIAR_TREINAMENTO = "reiniciar_edital_treinamento";
@@ -378,6 +382,26 @@ export function criarEstadoDoNucleo({
     const { data, error } = await supabase.rpc(RPC_QUADRO, { p_edital: id });
     if (error) throw error;
     return data || {};
+  }
+
+  /*
+    Os cargos oficiais da área, para o campo Cargo do quadro (`listar_cargos`): lidos uma vez por
+    área enquanto a tela vive; a falha não fica guardada (a próxima abertura tenta de novo).
+  */
+  const cargosPorArea = new Map<string, Promise<string[]>>();
+  function listarCargos(area: string): Promise<string[]> {
+    const guardado = cargosPorArea.get(area);
+    if (guardado) return guardado;
+    const lendo = (async () => {
+      if (!supabase) throw new Error("Supabase indisponível.");
+      await exigirSessao(supabase);
+      const { data, error } = await supabase.rpc(RPC_CARGOS, { p_area: area });
+      if (error) throw error;
+      return cargosParaEscolher(data);
+    })();
+    cargosPorArea.set(area, lendo);
+    lendo.catch(() => cargosPorArea.delete(area));
+    return lendo;
   }
 
   /** Grava o quadro de vagas de um edital já cadastrado, sem esperar o Salvar do edital. */
@@ -844,6 +868,7 @@ export function criarEstadoDoNucleo({
     lerRetificacao,
     lerQuadroDeVagas,
     salvarQuadroDeVagas,
+    listarCargos,
     gravarVinculoDoQuadro,
     atualizarVinculosDoQuadro,
     salvarEdital,

@@ -158,6 +158,40 @@ export function chaveDaLinha(cargo: string, lotacao: string | null): string {
   return `${limpar(cargo)}|${limpar(lotacao)}`;
 }
 
+/*
+  Os cargos oficiais da área (`listar_cargos`, TD_CARGO) para o campo Cargo de "Acrescentar
+  vaga" e "Editar": só os ativos, sem os sintéticos (agrupamentos como "ANALISTA SI"), sem
+  repetir a grafia e em ordem alfabética. Área sem catálogo devolve lista vazia, e o campo fica
+  de texto livre.
+*/
+export function cargosParaEscolher(dados: unknown): string[] {
+  const lista = (dados as { cargos?: unknown } | null)?.cargos;
+  if (!Array.isArray(lista)) return [];
+  const porGrafia = new Map<string, string>();
+  for (const item of lista) {
+    const cargo = item as {
+      nome?: unknown;
+      ativo?: unknown;
+      sintetico?: unknown;
+    } | null;
+    if (cargo?.ativo !== true || cargo.sintetico === true) continue;
+    const nome = typeof cargo.nome === "string" ? cargo.nome.trim() : "";
+    const grafia = chaveDaLinha(nome, null);
+    if (nome && !porGrafia.has(grafia)) porGrafia.set(grafia, nome);
+  }
+  return [...porGrafia.values()].sort((a, b) => a.localeCompare(b, "pt-BR"));
+}
+
+/** O cargo da lista com a mesma grafia (sem acento, caixa e pontuação), ou `null`. */
+export function cargoDaLista(
+  cargo: string,
+  lista: readonly string[],
+): string | null {
+  if (!cargo.trim()) return null;
+  const grafia = chaveDaLinha(cargo, null);
+  return lista.find((nome) => chaveDaLinha(nome, null) === grafia) ?? null;
+}
+
 /** O rascunho como linha a gravar (sem `anterior` nem origem). */
 function linhaDoRascunho(r: RascunhoDaLinha): LinhaParaGravar {
   const modalidades: Record<string, number | null> = {};
