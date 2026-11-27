@@ -37,10 +37,7 @@ import type {
   EtapaDoCronograma,
 } from "../../lib/cronograma/cronograma-do-edital.ts";
 import type { QuadroParaSalvar } from "../../lib/editais/anexos-do-edital.ts";
-import {
-  cargosParaEscolher,
-  type QuadroRetificado,
-} from "../../lib/editais/retificar-quadro.ts";
+import type { QuadroRetificado } from "../../lib/editais/retificar-quadro.ts";
 import type {
   ItemDoResumo,
   UnidadeComArea,
@@ -386,10 +383,12 @@ export function criarEstadoDoNucleo({
 
   /*
     Os cargos oficiais da área, para o campo Cargo do quadro (`listar_cargos`): lidos uma vez por
-    área enquanto a tela vive; a falha não fica guardada (a próxima abertura tenta de novo).
+    área enquanto a tela vive; a falha não fica guardada (a próxima abertura tenta de novo). Vai a
+    resposta crua: quem a filtra é o quadro (`cargosParaEscolher`), que carrega sob demanda; o
+    import aqui levaria a lógica do quadro para a carga da entrada.
   */
-  const cargosPorArea = new Map<string, Promise<string[]>>();
-  function listarCargos(area: string): Promise<string[]> {
+  const cargosPorArea = new Map<string, Promise<unknown>>();
+  function listarCargos(area: string): Promise<unknown> {
     const guardado = cargosPorArea.get(area);
     if (guardado) return guardado;
     const lendo = (async () => {
@@ -397,7 +396,7 @@ export function criarEstadoDoNucleo({
       await exigirSessao(supabase);
       const { data, error } = await supabase.rpc(RPC_CARGOS, { p_area: area });
       if (error) throw error;
-      return cargosParaEscolher(data);
+      return data;
     })();
     cargosPorArea.set(area, lendo);
     lendo.catch(() => cargosPorArea.delete(area));

@@ -7256,11 +7256,15 @@ bloco("componentes/retificar-quadro", () => {
 
   it("com o catálogo da área, o cargo se escolhe na lista ou se digita em Outro cargo", async () => {
     const salvar = vi.fn(async (_id: string, quadro: unknown) => quadro);
-    const listarCargos = vi.fn(async () => [
-      "AGENTE INDIGENA DE SAUDE",
-      "ENFERMEIRO",
-      "PSICOLOGO",
-    ]);
+    const cargo = (nome: string) => ({ nome, ativo: true, sintetico: false });
+    const listarCargos = vi.fn(async () => ({
+      cargos: [
+        cargo("PSICOLOGO"),
+        cargo("AGENTE INDIGENA DE SAUDE"),
+        cargo("ENFERMEIRO"),
+        { nome: "ANALISTA SI", ativo: true, sintetico: true },
+      ],
+    }));
     montar(QUADRO, salvar, listarCargos);
     await esperar();
     expect(listarCargos).toHaveBeenCalledWith("saude-indigena");
@@ -7297,7 +7301,14 @@ bloco("componentes/retificar-quadro", () => {
   });
 
   it("editar a linha com cargo fora da lista abre em Outro cargo, com o nome dela", async () => {
-    montar(QUADRO, vi.fn(), async () => ["ENFERMEIRO", "PSICOLOGO"]);
+    const catalogo = async () => ({
+      cargos: ["ENFERMEIRO", "PSICOLOGO"].map((nome) => ({
+        nome,
+        ativo: true,
+        sintetico: false,
+      })),
+    });
+    montar(QUADRO, vi.fn(), catalogo);
     await esperar();
     const editar = document.querySelectorAll<HTMLButtonElement>(
       '[data-acao="editar-linha-do-quadro"]',
@@ -7312,7 +7323,7 @@ bloco("componentes/retificar-quadro", () => {
     );
     expect((campo("cargo") as HTMLInputElement).value).toBe("Médico");
     act(() => desmontar());
-    montar(QUADRO, vi.fn(), async () => ["ENFERMEIRO", "PSICOLOGO"]);
+    montar(QUADRO, vi.fn(), catalogo);
     await esperar();
     const doEnfermeiro = [
       ...document.querySelectorAll<HTMLButtonElement>(

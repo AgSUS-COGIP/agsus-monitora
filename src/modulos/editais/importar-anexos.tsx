@@ -37,8 +37,8 @@ export interface EstadoDosAnexos extends EstadoDosVinculos {
     id: string,
     quadro: QuadroParaSalvar | QuadroRetificado,
   ): Promise<unknown>;
-  /** `listar_cargos`: os cargos oficiais da área (o campo Cargo do quadro). */
-  listarCargos?(area: string): Promise<string[]>;
+  /** `listar_cargos` (a resposta crua): os cargos oficiais da área (o campo Cargo do quadro). */
+  listarCargos?(area: string): Promise<unknown>;
 }
 
 export interface PropriedadesDeImportarAnexos {

@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { Aviso, Campo, FecharModal, Modal, Selo } from "../../ui/index.ts";
 import {
   cargoDaLista,
+  cargosParaEscolher,
   linhasDoQuadro,
   modalidadesDoQuadro,
   problemaDoMotivo,
@@ -27,8 +28,8 @@ import { rotuloDaLinha } from "../../lib/editais/vinculos-do-quadro.ts";
 export interface EstadoDaRetificacaoDoQuadro {
   /** `salvar_quadro_de_vagas`: grava (ou simula) e devolve o quadro. */
   salvarQuadroDeVagas(id: string, quadro: QuadroRetificado): Promise<unknown>;
-  /** `listar_cargos`: os cargos oficiais da área, para escolher no campo Cargo. */
-  listarCargos?(area: string): Promise<string[]>;
+  /** `listar_cargos` (a resposta crua): os cargos oficiais da área, para o campo Cargo. */
+  listarCargos?(area: string): Promise<unknown>;
 }
 
 export interface PropriedadesDoQuadroSalvo {
@@ -161,8 +162,8 @@ export function QuadroSalvo({
     let vivo = true;
     estado
       .listarCargos(area)
-      .then((lista) => {
-        if (vivo) setCargos(lista);
+      .then((dados) => {
+        if (vivo) setCargos(cargosParaEscolher(dados));
       })
       .catch(() => {
         if (vivo) setCargos([]);
