@@ -606,7 +606,14 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
     O título sai do resumo, se o edital estiver nele.
   */
   const navegacao = usarNavegacao();
-  const { regras } = usarEstadoDaNavegacao();
+  const { regras, view, aviso } = usarEstadoDaNavegacao();
+  /*
+    O selo dos avisos lê só depois que Editais abre: a tela monta escondida
+    desde a entrada, antes de a rota fixar a área, e lia os avisos da área
+    errada em toda tela (auditoria de 26/11/2026, #6).
+  */
+  const [jaAberta, definirJaAberta] = useState(false);
+  if (!jaAberta && view === "nucleo" && !aviso) definirJaAberta(true);
   const fecharModal = estado.fecharModal;
   useEffect(() => {
     if (regras) fecharModal();
@@ -667,9 +674,11 @@ export function Nucleo({ estado, agora }: PropriedadesDoNucleo) {
           ) : null
         }
       >
-        <Suspense fallback={null}>
-          <SeloDeAvisos modulo="editais" />
-        </Suspense>
+        {jaAberta ? (
+          <Suspense fallback={null}>
+            <SeloDeAvisos modulo="editais" />
+          </Suspense>
+        ) : null}
         {podeEditar ? (
           <Suspense fallback={null}>
             <EncerradosDoCronograma

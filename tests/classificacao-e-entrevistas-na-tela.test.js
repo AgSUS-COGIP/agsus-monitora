@@ -4642,6 +4642,49 @@ bloco("modulos/conduzir-entrevistas", async () => {
       });
     });
 
+    it("o edital vai ao endereço (?edital=) e o endereço vence o último aberto guardado", async () => {
+      const supabase = supabaseDaConducao({
+        respostas: {
+          listar_editais_entrevista: () => ({
+            data: {
+              admin_global: false,
+              editais: [
+                { id: "m1", edital: "100/2026", unidade: "A", na_janela: true },
+                { id: "m2", edital: "101/2026", unidade: "B", na_janela: true },
+              ],
+            },
+            error: null,
+          }),
+        },
+      });
+      const antes = location.pathname + location.search;
+      try {
+        // O link da página do edital: /<área>/entrevistas/<id> abre o edital…
+        history.replaceState(null, "", "/saude-indigena/entrevistas");
+        await montar(supabase);
+        await act(async () => tela.abrirEdital("m2"));
+        await esperar();
+        // …e o endereço fica com ele, para o F5 e o link copiado.
+        expect(location.search).toBe("?edital=m2");
+        await act(async () => tela.raiz.unmount());
+        secao.remove();
+
+        // F5 com outro edital guardado no navegador: vale o do endereço.
+        guardado.setItem(
+          "agsus:conduzir-entrevistas:edital:saude-indigena",
+          "m1",
+        );
+        await montar(supabase);
+        await esperar();
+        expect(
+          chamadas(supabase, "obter_entrevistas_do_edital").at(-1)[1],
+        ).toEqual({ p_edital: "m2" });
+        expect(location.search).toBe("?edital=m2");
+      } finally {
+        history.replaceState(null, "", antes);
+      }
+    });
+
     it("Fila: abre em Hoje pela agenda, com situações, contador e recortes", async () => {
       const supabase = supabaseDaConducao({
         edital: EDITAL_DO_DIA,

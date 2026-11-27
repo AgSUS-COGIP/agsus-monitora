@@ -28,6 +28,8 @@ import {
   baixarAprovadosDaDiretoria,
   lerVagasPorCargo,
 } from "./dados-da-diretoria.ts";
+/* Estático: o montador já o traz no pedaço da tela (a miniatura), e o import() não dividia nada. */
+import { imagensDosGraficos } from "./graficos-do-relatorio.tsx";
 
 /*
   Gera o arquivo (PDF ou Excel) do relatório dos editais: o do montador
@@ -100,19 +102,14 @@ async function gerarPdf(
   conteudo: ReturnType<typeof conteudoDoRelatorio>,
   cabecalho: string,
 ) {
-  const [
-    { carregarBibliotecasDoPdf },
-    { pdfDoRelatorio },
-    { logoEmPng },
-    { imagensDosGraficos },
-  ] = await Promise.all([
-    import("../../lib/avaliacao-documental/espelho-em-pdf.ts"),
-    import("../../lib/paineis/relatorio-da-visao-geral-em-pdf.ts"),
-    import("../classificacao/documento-no-navegador.ts"),
-    import("./graficos-do-relatorio.tsx"),
-  ]).catch((erro: unknown) => {
-    throw erroDeVersaoNova(erro);
-  });
+  const [{ carregarBibliotecasDoPdf }, { pdfDoRelatorio }, { logoEmPng }] =
+    await Promise.all([
+      import("../../lib/avaliacao-documental/espelho-em-pdf.ts"),
+      import("../../lib/paineis/relatorio-da-visao-geral-em-pdf.ts"),
+      import("../classificacao/documento-no-navegador.ts"),
+    ]).catch((erro: unknown) => {
+      throw erroDeVersaoNova(erro);
+    });
   const [bibliotecas, logo, imagens] = await Promise.all([
     carregarBibliotecasDoPdf(),
     logoEmPng().catch(() => null),

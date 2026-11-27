@@ -1399,10 +1399,15 @@ tr:hover td {
   border: 1px solid var(--line);
   box-shadow: var(--shadow-lg);
 }
+/*
+  Camada de cabeçalho (como o .top da página): o cabeçalho de tabela que rola
+  dentro do modal (`.ui-tabela-rolagem th`, --z-sticky e +1 no canto) não
+  passa por cima. O .modal já é um contexto próprio, então isso não vaza.
+*/
 .modal-head {
   position: sticky;
   top: 0;
-  z-index: var(--z-sticky);
+  z-index: var(--z-header);
   background: var(--card);
   border-bottom: 1px solid var(--line);
   padding: var(--space-4) var(--space-5);

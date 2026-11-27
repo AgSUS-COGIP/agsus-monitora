@@ -74,10 +74,13 @@ export function usarSeletorDoEdital({
   conducao,
   e,
   doPainel = [],
+  escolher = (id: string) => void conducao.abrirEdital(id),
 }: {
   conducao: EstadoDaConducaoComAcoes;
   e: EstadoDaConducao;
   doPainel?: unknown[];
+  /** A escolha da pessoa no seletor (a tela leva o edital ao endereço). */
+  escolher?: (id: string) => void;
 }): { campo: ReactNode; avisos: ReactNode } {
   const { editais } = e;
   const [editar, setEditar] = useState(false);
@@ -128,7 +131,7 @@ export function usarSeletorDoEdital({
               return;
             }
             conducao.abrirFicha(null);
-            void conducao.abrirEdital(valor);
+            escolher(valor);
           }}
         >
           <option value="">

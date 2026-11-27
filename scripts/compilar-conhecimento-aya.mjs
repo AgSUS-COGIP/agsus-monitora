@@ -152,7 +152,7 @@ export async function gerarModulo({ verbetes }) {
     titulo: verbete.titulo,
     perguntas: verbete.perguntas,
     resposta: verbete.resposta,
-    fato: verbete.fato,
+    // O `fato` fica só no .md: a busca responde com `resposta` e não o lê (26/11/2026, bundle).
     fonte: verbete.fonte,
     ...(verbete.abrir ? { abrir: verbete.abrir } : {}),
   }));

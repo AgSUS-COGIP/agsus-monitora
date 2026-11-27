@@ -1070,13 +1070,13 @@ export const CONTRATO_RPC: Record<string, ContratoRpc> = {
     argumentos: ["p_edital"],
     critica: false,
     resumo:
-      "Quadro de vagas vigente do edital (Anexo II importado do PDF), de onde veio e o vínculo de cada vaga com a linha (situação CONFIRMADO/AMBIGUO/AUSENTE, origem, candidatas, pendência; vagas_do_edital sem vaga com código: NAO_SE_APLICA, EXTERNO, PENDENTE_INTEGRACAO; pode_editar).",
+      "Quadro de vagas vigente do edital (cada linha com origem PDF/MANUAL e arquivo), de onde veio, o histórico das 20 últimas gravações (evento IMPORTACAO/RETIFICACAO, motivo, errata, quem, quando; 20261126180000) e o vínculo de cada vaga com a linha (situação CONFIRMADO/AMBIGUO/AUSENTE, origem, candidatas, pendência; vagas_do_edital sem vaga com código: NAO_SE_APLICA, EXTERNO, PENDENTE_INTEGRACAO; pode_editar).",
   },
   salvar_quadro_de_vagas: {
     argumentos: ["p_edital", "p_dados"],
     critica: false,
     resumo:
-      "Substitui o quadro de vagas do edital (o anterior fica desativado) e passa os vínculos das vagas para as linhas novas. Núcleo ou Calendário (editor). Devolve o quadro.",
+      "Substitui o quadro de vagas do edital (o anterior fica desativado, com histórico) e passa os vínculos para as linhas novas. Retificação por linha (20261126180000): cada linha leva anterior (a que substitui, e o vínculo vai junto), origem e arquivo; motivo obrigatório (10 a 500) e numero_errata; a vaga MANUAL de linha retirada fica sem linha; simular: true devolve o quadro como ficaria, sem gravar (22023 motivo, linha de fora ou repetida). Núcleo ou Calendário (editor). Devolve o quadro.",
   },
   gravar_vinculo_do_quadro: {
     argumentos: ["p_edital", "p_vaga", "p_acao", "p_quadro"],

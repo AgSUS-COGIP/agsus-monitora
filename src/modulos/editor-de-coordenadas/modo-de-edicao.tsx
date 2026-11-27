@@ -10,7 +10,7 @@ import {
 import { folgaDoEnquadramento } from "../../lib/mapas/editor-de-coordenadas.ts";
 import { classes } from "../../ui/index.ts";
 import { remedir } from "../mapa-saude-indigena/leaflet.ts";
-import { travarRolagemDaPagina } from "../mapa-saude-indigena/tela-cheia.tsx";
+import { travarRolagemDaPagina } from "../../lib/base/trava-de-rolagem.ts";
 import { usarUltimo } from "../mapa-saude-indigena/usar-ultimo.ts";
 import { CAMPOS_E_JANELAS } from "../mapa-saude-indigena/volta-ao-brasil.ts";
 

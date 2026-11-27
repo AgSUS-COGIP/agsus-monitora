@@ -388,6 +388,13 @@ export function criarSessao({
   let usuarioCarregado = "";
   let ultimoSignedIn = 0;
   let carregamento: Promise<void> | null = null;
+  /*
+    Enquanto o arranque decide, o `SIGNED_IN` que o Supabase emite ao
+    restaurar a sessão guardada é a mesma entrada do arranque, não um login
+    novo: entra com esta origem ("boot", ou "oauth_callback" na volta do
+    Google). Fora do arranque, `null`.
+  */
+  let origemDoArranque: OrigemDaEntrada | null = null;
   /* Cada entrada automática (ou clique que a cancela) ganha um número novo. */
   let tentativaAutomatica = 0;
 
@@ -856,7 +863,8 @@ export function criarSessao({
       if (id && estado.usuario?.id === id && instante - ultimoSignedIn < 1500)
         return;
       ultimoSignedIn = instante;
-      setTimeout(() => void entrar(sessao, "oauth"), 0);
+      const origem = origemDoArranque ?? "oauth";
+      setTimeout(() => void entrar(sessao, origem), 0);
     }
   }
 
@@ -1106,6 +1114,16 @@ export function criarSessao({
   async function iniciar() {
     if (iniciado) return;
     iniciado = true;
+    origemDoArranque =
+      parametros().get("auth") === "google" ? "oauth_callback" : "boot";
+    try {
+      await arrancar(origemDoArranque);
+    } finally {
+      origemDoArranque = null;
+    }
+  }
+
+  async function arrancar(origem: OrigemDaEntrada) {
     instalarOuvintesDaJanela();
 
     const client = temAmbiente() ? obterCliente() : null;
@@ -1150,7 +1168,7 @@ export function criarSessao({
     }
 
     if (isUsableSession(data?.session)) {
-      await entrar(data!.session, "boot");
+      await entrar(data!.session, origem);
       return;
     }
 

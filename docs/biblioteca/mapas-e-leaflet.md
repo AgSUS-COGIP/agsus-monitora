@@ -1,7 +1,7 @@
 ---
 tipo: guia
 area: front
-atualizado: 2026-11-17
+atualizado: 2026-11-26
 ---
 
 # Mapas e Leaflet
@@ -51,6 +51,12 @@ formas são comuns. Só a camada de Terras Indígenas é exclusiva da Saúde Ind
   rede ou acesso aos fornecedores, não dados.
 - Em aberto: se os termos do ArcGIS World Imagery permitem o uso como base, se vale ter chave da
   CARTO e se o OpenStreetMap continua primário (a política dele desaconselha tráfego de aplicação).
+- **Mapa escondido não faz conta com medida 0** (`guarda-do-mapa.ts`): as telas visitadas ficam
+  montadas e escondidas, e o Leaflet que enquadra ou voa num contêiner de largura 0 dá
+  "Invalid LatLng object: (NaN, NaN)". Os mapas nascem com `trackResize: false`; a guarda remede
+  por `ResizeObserver` só com medida real (uma vez ao voltar a aparecer) e, sem medida,
+  `fitBounds`/`flyTo`/`flyToBounds` só guardam o centro, sem animação. Quem reenquadra ao
+  aparecer é o componente (`observarTamanho`).
 - **Os pontos da Saúde Indígena vêm só do SIGEPSI; os de Projetos, do banco** ([[coordenadas]]).
 - Cores de série dos projetos: `--series-*` ([[design-e-tokens]]).
 

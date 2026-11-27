@@ -62,6 +62,7 @@ import {
   CACHE_TTL_MS,
 } from "../src/modulos/mapa-de-projetos/carregador.ts";
 import { MapaDeProjetos } from "../src/modulos/mapa-de-projetos/mapa-de-projetos.tsx";
+import { Modal } from "../src/ui/modal.tsx";
 import {
   clicar,
   digitar,
@@ -2732,6 +2733,34 @@ bloco("modulos/mapa-de-projetos", () => {
       );
       await teclar(document, "Escape");
       expect(host.querySelector(".mapa-si--tela-cheia")).toBeNull();
+    });
+
+    it("com um modal aberto por cima, o Esc fecha o modal e o mapa segue em tela cheia", async () => {
+      const { carregador } = await carregadorCom(SIMPLES);
+      await montar({ carregador });
+      await clicar(botao("Tela cheia"));
+      const caixa = document.createElement("div");
+      document.body.append(caixa);
+      const raiz = createRoot(caixa);
+      const fechar = vi.fn();
+      await act(async () =>
+        raiz.render(
+          createElement(
+            Modal,
+            { rotulo: "Buscar", aoFechar: fechar },
+            "conteúdo",
+          ),
+        ),
+      );
+      await teclar(document, "Escape");
+      expect(fechar).toHaveBeenCalledTimes(1);
+      expect(host.querySelector(".mapa-si--tela-cheia")).not.toBeNull();
+      expect(document.body.style.overflow).toBe("hidden");
+      await act(async () => raiz.unmount());
+      caixa.remove();
+      await teclar(document, "Escape");
+      expect(host.querySelector(".mapa-si--tela-cheia")).toBeNull();
+      expect(document.body.style.overflow).toBe("");
     });
 
     it("recolhe e mostra o mapa, com a mesma escolha do mapa da Saúde Indígena", async () => {

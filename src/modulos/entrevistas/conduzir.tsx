@@ -17,6 +17,7 @@ import { obterDadosDoMonitoramento } from "../../componentes/dados-do-monitorame
 import { usarAreaAtual } from "../../componentes/usar-area-atual.ts";
 import {
   TelaNaUrl,
+  usarEditalNaUrl,
   usarFiltrosNaUrl,
   usarLojaNaUrl,
 } from "../../app/usar-filtros-na-url.ts";
@@ -85,8 +86,8 @@ import { CarregandoConteudo } from "../../ui/index.ts";
     o dia (todas as de hoje concluídas ou com falta) mostra o aviso
     (src/modulos/comemoracao/, sem efeito, com o liga/desliga das
     comemorações do app), uma vez, na passagem.
-    Na URL (src/app/usar-filtros-na-url.ts): a seção (?aba=preparar), o
-    período, a situação, a vaga e a banca; a busca, não.
+    Na URL (src/app/usar-filtros-na-url.ts): o edital (?edital=), a seção
+    (?aba=preparar), o período, a situação, a vaga e a banca; a busca, não.
   - Preparar: o resumo das regras e os passos Roteiro, Banca, Convocação e
     Agenda (preparar.tsx) — a configuração do gestor, como Regra e Equipe
     ficam na própria tela da Avaliação documental. Quem só lê vê tudo sem os
@@ -191,7 +192,26 @@ function TelaDeConducao({
   );
   const contador = useMemo(() => contadorDoDia(fila, hoje), [fila, hoje]);
   const editalId = dados?.edital?.id || "";
-  const seletor = usarSeletorDoEdital({ conducao, e, doPainel: doPainel() });
+  /*
+    O edital na URL (?edital=), como na Classificação e na Triagem: o link
+    copiado e o F5 abrem o mesmo edital, sem depender do último aberto
+    guardado no navegador. Trocar no seletor é entrada nova no histórico.
+  */
+  const escolherEditalNaUrl = usarEditalNaUrl({
+    editalId: e.editalId,
+    editais: e.editais.lista,
+    carregado: e.editais.carregado,
+    escolher: (id) => {
+      conducao.abrirFicha(null);
+      void conducao.abrirEdital(id);
+    },
+  });
+  const seletor = usarSeletorDoEdital({
+    conducao,
+    e,
+    doPainel: doPainel(),
+    escolher: escolherEditalNaUrl,
+  });
   // A seção na URL; o controlador também a muda (links antigos).
   const mudarSecao = usarLojaNaUrl(
     ESQUEMA_DA_SECAO,

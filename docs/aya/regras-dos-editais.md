@@ -94,6 +94,13 @@ migrations `20260928120000_edital_novo_sem_motivo.sql`, `20260928220000_edital_n
 **abrir:** nucleo
 **fonte:** supabase/migrations/20261118120000_vinculo_da_vaga_com_o_quadro.sql; src/lib/editais/vinculos-do-quadro.ts
 
+## Corrigir uma vaga do quadro
+
+**perguntas:** como corrijo uma vaga do quadro | corrigir vaga do quadro de vagas | retificar quadro de vagas | editar linha do quadro | mudar quantidade de vagas do quadro | acrescentar vaga ao quadro | retirar vaga do quadro | retificacao do edital numa vaga so | tirar cargo do quadro | colocar cargo no quadro
+**resposta:** Não precisa subir o PDF de novo. No formulário do edital, em Anexos do edital › "Ver quadro": "Editar" muda cargo, lotação, vagas por modalidade (o total é a soma) e cadastro reserva; "Retirar" tira a linha; "Acrescentar vaga" põe uma nova. "Conferir o que muda" mostra a linha antes e depois e as vagas da seleção: as que continuam, as que ficam sem linha (ao retirar) e as que passam à linha nova pela regra do nome. Grave com o motivo ("Retificação nº 2 do edital") e, se houver, o número da errata. A linha corrigida ou nova fica Manual, o vínculo das vagas acompanha a linha corrigida e o quadro anterior fica no histórico. Corrige quem é Editor em Editais ou em Cronograma.
+**abrir:** nucleo
+**fonte:** supabase/migrations/20261126180000_retificar_linha_do_quadro_de_vagas.sql; src/lib/editais/retificar-quadro.ts; src/modulos/editais/retificar-quadro.tsx
+
 ## Vagas imediatas
 
 **perguntas:** vagas imediatas | de onde vem as vagas imediatas | origem das vagas imediatas | vaga imediata

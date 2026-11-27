@@ -2006,13 +2006,14 @@ bloco("componentes/central-de-convocacoes-para-entrevistas", () => {
     agenda = null as unknown,
     primeiro = "E1",
     editalPedido = null as EditalPedidoDaCentral | null,
+    areaAtual = (): string => "saude-indigena",
   } = {}) {
     const { cliente, chamadas } = bancoFalso({ agenda, primeiro });
     const criar = vi.fn(() =>
       criarConducaoDeEntrevistas({
         supabase: cliente,
         toast: () => {},
-        areaAtual: () => "saude-indigena",
+        areaAtual,
         armazenamento: () => undefined,
       }),
     );
@@ -2040,6 +2041,26 @@ bloco("componentes/central-de-convocacoes-para-entrevistas", () => {
     [...raiz.querySelectorAll("button.btn")].map((b) => b.textContent?.trim());
 
   describe("Central de convocações: Para entrevistas", () => {
+    it("ao trocar a área do app, a convocação lê os editais da área nova", async () => {
+      await act(async () => definirAreaAtual("saude-indigena"));
+      const { chamadas } = await montar({
+        areaAtual: () => obterDadosDoMonitoramento().areaAtual,
+      });
+      await esperar();
+      await esperar();
+      const areasPedidas = () =>
+        chamadas
+          .filter((c) => c.nome === "listar_editais_entrevista")
+          .map((c) => c.argumentos?.["p_area"]);
+      expect(areasPedidas()).toEqual(["saude-indigena"]);
+
+      await act(async () => definirAreaAtual("sede"));
+      await esperar();
+      await esperar();
+      expect(areasPedidas()).toEqual(["saude-indigena", "sede"]);
+      await act(async () => redefinirDadosDoMonitoramento());
+    });
+
     it("mostra a lista da Classificação do edital aberto, sem marcar nem convocar", async () => {
       const { elemento, criar } = await montar();
       await esperar();

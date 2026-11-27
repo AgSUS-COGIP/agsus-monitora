@@ -108,6 +108,10 @@ import {
 import { mapearBrandingPublico } from "../src/lib/entrada/access-branding-publico.ts";
 import { aplicarEstiloDoPainel } from "../src/app/entrada/marca.ts";
 import {
+  QuadroSalvo,
+  type EstadoDaRetificacaoDoQuadro,
+} from "../src/modulos/editais/retificar-quadro.tsx";
+import {
   VinculosDoQuadro,
   type EstadoDosVinculos,
 } from "../src/modulos/editais/vinculos-do-quadro.tsx";
@@ -142,7 +146,7 @@ bloco("componentes/avisos-de-conferencia", async () => {
 
   const { SeloDeAvisos, CartaoDeAvisos } =
     await import("../src/modulos/conferencias/avisos-de-conferencia.tsx");
-  const { esquecerAvisosGuardados } =
+  const { esquecerAvisosGuardados, criarEstadoDosAvisos } =
     await import("../src/modulos/conferencias/estado.ts");
 
   const aviso = (extra: Record<string, unknown> = {}) => ({
@@ -416,6 +420,31 @@ bloco("componentes/avisos-de-conferencia", async () => {
           p_chave_caso: "analise:an1",
         },
       );
+    });
+  });
+
+  describe("pedidos iguais juntos", () => {
+    it("dois selos do mesmo recorte ao mesmo tempo fazem uma leitura só", async () => {
+      const supabase = supabaseFalso(() => [aviso()]);
+      const um = criarEstadoDosAvisos({ supabase });
+      const outro = criarEstadoDosAvisos({ supabase });
+      await Promise.all([
+        um.carregar({ area: "sede", modulo: "analises" }),
+        outro.carregar({ area: "sede", modulo: "analises" }),
+      ]);
+      const leituras = supabase.rpc.mock.calls.filter(
+        ([nome]) => nome === "listar_avisos_conferencia_se_mudou",
+      );
+      expect(leituras).toHaveLength(1);
+      expect(um.obter().lista?.abertos).toHaveLength(1);
+      expect(outro.obter().lista?.abertos).toHaveLength(1);
+      // Outro recorte não espera a leitura deste.
+      await um.carregar({ area: "sede", modulo: "entrevistas" });
+      expect(
+        supabase.rpc.mock.calls.filter(
+          ([nome]) => nome === "listar_avisos_conferencia_se_mudou",
+        ),
+      ).toHaveLength(2);
     });
   });
 
@@ -6498,6 +6527,42 @@ bloco("modulos/paineis-de-dados", () => {
       expect(primeiroTh()?.style.width).toBe("260px");
     });
 
+    it("o toque que vira rolagem (pointercancel) encerra o arraste", async () => {
+      await montar({ "resumo-dos-editais": CENTO_E_VINTE });
+      await act(async () => {
+        alca()?.dispatchEvent(
+          new MouseEvent("pointerdown", { bubbles: true, clientX: 10 }),
+        );
+        window.dispatchEvent(
+          new MouseEvent("pointermove", { bubbles: true, clientX: 110 }),
+        );
+        window.dispatchEvent(
+          new MouseEvent("pointercancel", { bubbles: true }),
+        );
+        window.dispatchEvent(
+          new MouseEvent("pointermove", { bubbles: true, clientX: 410 }),
+        );
+      });
+      expect(primeiroTh()?.style.width).toBe("160px");
+    });
+
+    it("a tela que sai no meio do arraste não deixa a coluna seguindo o ponteiro", async () => {
+      await montar({ "resumo-dos-editais": CENTO_E_VINTE });
+      const ouvintes = vi.spyOn(window, "removeEventListener");
+      await act(async () => {
+        alca()?.dispatchEvent(
+          new MouseEvent("pointerdown", { bubbles: true, clientX: 10 }),
+        );
+      });
+      await act(async () => raiz?.unmount());
+      const tirados = ouvintes.mock.calls.map(([tipo]) => tipo);
+      expect(tirados).toEqual(
+        expect.arrayContaining(["pointermove", "pointerup", "pointercancel"]),
+      );
+      ouvintes.mockRestore();
+      caixa?.remove();
+    });
+
     it("seta para a esquerda na alça estreita a coluna", async () => {
       await montar({ "resumo-dos-editais": CENTO_E_VINTE });
       await arrastar(alca(), 10, 210);
@@ -6920,6 +6985,297 @@ bloco("vidro-no-painel-de-acesso", () => {
       expect(solido?.mensagem).toContain("Acima do mínimo");
       expect(avaliarCor("#8fb3d9", "claro", "solido")?.passa).toBe(false);
     });
+  });
+});
+
+bloco("componentes/retificar-quadro", () => {
+  /*
+  O quadro salvo do edital linha por linha (retificar-quadro.tsx, migration 20261126180000):
+  Editar, Retirar e "Acrescentar vaga" abrem o modal; a prévia vem da simulação no banco
+  (simular: true) e mostra a linha antes e depois e as vagas que seguem, ficam sem linha ou
+  passam à linha; só "Salvar retificação" grava, com o motivo. Sem o banco novo, só se vê.
+*/
+  const linha = (
+    id: string,
+    ordem: number,
+    cargo: string,
+    lotacao: string,
+    imediatas: number,
+    extra: Record<string, unknown> = {},
+  ) => ({
+    id,
+    ordem,
+    cargo,
+    lotacao,
+    modalidades: { "Ampla Concorrência": imediatas },
+    vagas_imediatas: imediatas,
+    cadastro_reserva: true,
+    origem: "PDF",
+    arquivo: "anexos.pdf",
+    ...extra,
+  });
+  const vinculo = (vaga: string, cargo: string, quadro: string | null) => ({
+    vaga,
+    cargo,
+    quadro,
+    situacao: quadro ? "CONFIRMADO" : "AUSENTE",
+    origem: "MANUAL",
+    candidatas: [],
+  });
+  const QUADRO = {
+    linhas: [
+      linha("a", 1, "Enfermeiro", "Polo Base Alfa", 2),
+      linha("b", 2, "Médico", "Polo Base Alfa", 1),
+    ],
+    vinculos: [
+      vinculo("1001", "Enfermeiro - Polo Base Alfa", "a"),
+      vinculo("1002", "Médico", "b"),
+      vinculo("1003", "Agente Indígena de Saúde", null),
+    ],
+    pode_editar: true,
+    historico: [],
+  };
+
+  let desmontar = () => {};
+  afterEach(() => {
+    act(() => desmontar());
+    document.body.innerHTML = "";
+  });
+
+  function montar(
+    inicial: unknown,
+    salvarQuadroDeVagas: EstadoDaRetificacaoDoQuadro["salvarQuadroDeVagas"],
+  ) {
+    document.body.innerHTML = `<div id="raiz"></div>`;
+    function Casca() {
+      const [dados, setDados] = useState<unknown>(inicial);
+      return createElement(QuadroSalvo, {
+        estado: { salvarQuadroDeVagas },
+        idEdital: "e1",
+        dados,
+        aoMudar: setDados,
+      });
+    }
+    act(() => {
+      ({ desmontar } = desenharNoTeste(
+        document.getElementById("raiz")!,
+        createElement(Casca),
+      ));
+    });
+  }
+
+  const texto = () => document.body.textContent ?? "";
+  const botao = (acao: string) =>
+    document.querySelector<HTMLButtonElement>(`[data-acao="${acao}"]`);
+  const campo = (nome: string) =>
+    document.querySelector(`[data-campo="${nome}"]`);
+  type Payload = {
+    motivo: string;
+    numero_errata?: string;
+    simular?: boolean;
+    linhas: Record<string, unknown>[];
+  };
+  const payloads = (fn: ReturnType<typeof vi.fn>) =>
+    fn.mock.calls.map((c) => c[1] as Payload);
+
+  it("editar: o total sai da soma, a prévia mostra antes e depois e a vaga que continua; grava com motivo", async () => {
+    const depois = {
+      ...QUADRO,
+      linhas: [
+        linha("a2", 1, "Enfermeiro", "Polo Base Alfa", 2),
+        linha("b2", 2, "Médico", "Polo Base Alfa", 3, {
+          modalidades: { "Ampla Concorrência": 3 },
+          origem: "MANUAL",
+        }),
+      ],
+      vinculos: [
+        vinculo("1001", "Enfermeiro - Polo Base Alfa", "a2"),
+        vinculo("1002", "Médico", "b2"),
+        vinculo("1003", "Agente Indígena de Saúde", null),
+      ],
+    };
+    const salvar = vi.fn(async () => depois);
+    montar(QUADRO, salvar);
+    const editar = document.querySelectorAll<HTMLButtonElement>(
+      '[data-acao="editar-linha-do-quadro"]',
+    );
+    expect(editar).toHaveLength(2);
+    await clicar(editar[1]!);
+    expect(texto()).toContain("Editar vaga do quadro");
+    await digitar(
+      document.querySelector('[data-modalidade="Ampla Concorrência"]'),
+      "3",
+    );
+    expect(document.querySelector("[data-total-da-linha]")?.textContent).toBe(
+      "3",
+    );
+    await clicar(botao("conferir-retificacao-do-quadro"));
+    await esperar();
+    expect(payloads(salvar)[0]).toMatchObject({
+      simular: true,
+      linhas: [
+        { cargo: "Enfermeiro", anterior: "a" },
+        {
+          cargo: "Médico",
+          anterior: "b",
+          origem: "MANUAL",
+          vagas_imediatas: 3,
+        },
+      ],
+    });
+    const previa = document.querySelector("[data-previa-da-retificacao]")!;
+    expect(
+      previa.querySelector('[data-previa="antes"]')?.textContent,
+    ).toContain("Médico");
+    expect(
+      previa.querySelector('[data-previa="depois"]')?.textContent,
+    ).toContain("Manual");
+    expect(
+      previa.querySelector('tr[data-vaga="1002"]')?.getAttribute("data-efeito"),
+    ).toBe("continua");
+
+    // Sem motivo não grava.
+    await clicar(botao("gravar-retificacao-do-quadro"));
+    expect(salvar).toHaveBeenCalledTimes(1);
+    expect(texto()).toContain("Diga o motivo da retificação");
+    await digitar(campo("motivo"), "Retificação nº 2 do edital");
+    await digitar(campo("errata"), "Retificação nº 2");
+    await clicar(botao("gravar-retificacao-do-quadro"));
+    await esperar();
+    expect(salvar).toHaveBeenCalledTimes(2);
+    expect(payloads(salvar)[1]).toMatchObject({
+      motivo: "Retificação nº 2 do edital",
+      numero_errata: "Retificação nº 2",
+    });
+    expect(payloads(salvar)[1]).not.toHaveProperty("simular");
+    expect(document.querySelector("[data-previa-da-retificacao]")).toBeNull();
+    expect(
+      document.querySelector('[data-linha-do-quadro="b2"]')?.textContent,
+    ).toContain("Manual");
+  });
+
+  it("retirar: a prévia diz que a vaga ligada fica sem linha e pede confirmação no botão", async () => {
+    const simulado = {
+      ...QUADRO,
+      linhas: [linha("a2", 1, "Enfermeiro", "Polo Base Alfa", 2)],
+      vinculos: [
+        vinculo("1001", "Enfermeiro - Polo Base Alfa", "a2"),
+        vinculo("1002", "Médico", null),
+        vinculo("1003", "Agente Indígena de Saúde", null),
+      ],
+    };
+    const salvar = vi.fn(async () => simulado);
+    montar(QUADRO, salvar);
+    await clicar(
+      document.querySelector('[aria-label="Retirar Médico — Polo Base Alfa"]'),
+    );
+    await esperar();
+    expect(payloads(salvar)[0]).toMatchObject({
+      simular: true,
+      linhas: [{ cargo: "Enfermeiro", anterior: "a" }],
+    });
+    expect(texto()).toContain("A vaga 1002 fica sem linha no quadro.");
+    expect(
+      document
+        .querySelector('[data-vagas-da-previa] tr[data-vaga="1002"]')
+        ?.getAttribute("data-efeito"),
+    ).toBe("sem-linha");
+    expect(
+      document.querySelector('[data-previa="depois"]')?.textContent,
+    ).toContain("Retirada do quadro");
+    const gravar = botao("gravar-retificacao-do-quadro")!;
+    expect(gravar.textContent).toBe("Retirar e deixar 1 vaga sem linha");
+    await digitar(campo("motivo"), "Retificação nº 3: vaga cancelada");
+    await clicar(gravar);
+    await esperar();
+    // A simulação pode correr duas vezes no StrictMode; a gravação, uma só.
+    const gravacoes = payloads(salvar).filter((p) => !p.simular);
+    expect(gravacoes).toHaveLength(1);
+    expect(gravacoes[0]).toMatchObject({
+      motivo: "Retificação nº 3: vaga cancelada",
+      linhas: [{ anterior: "a" }],
+    });
+    expect(gravacoes[0]?.linhas).toHaveLength(1);
+  });
+
+  it("acrescentar: a prévia mostra a vaga que passa à linha nova", async () => {
+    const simulado = {
+      ...QUADRO,
+      linhas: [
+        linha("a2", 1, "Enfermeiro", "Polo Base Alfa", 2),
+        linha("b2", 2, "Médico", "Polo Base Alfa", 1),
+        linha("c2", 3, "Agente Indígena de Saúde", "Polo Base Alfa", 1, {
+          origem: "MANUAL",
+        }),
+      ],
+      vinculos: [
+        vinculo("1001", "Enfermeiro - Polo Base Alfa", "a2"),
+        vinculo("1002", "Médico", "b2"),
+        {
+          ...vinculo("1003", "Agente Indígena de Saúde", "c2"),
+          origem: "AUTOMATICO",
+        },
+      ],
+    };
+    const salvar = vi.fn(async () => simulado);
+    montar(QUADRO, salvar);
+    await clicar(botao("acrescentar-linha-do-quadro"));
+    // Linha repetida não segue.
+    await digitar(campo("cargo"), "médico");
+    await digitar(campo("lotacao"), "Polo Base Alfa");
+    await digitar(
+      document.querySelector('[data-modalidade="Ampla Concorrência"]'),
+      "1",
+    );
+    await clicar(botao("conferir-retificacao-do-quadro"));
+    expect(salvar).not.toHaveBeenCalled();
+    expect(texto()).toContain("Já há a linha Médico — Polo Base Alfa");
+
+    await digitar(campo("cargo"), "Agente Indígena de Saúde");
+    await clicar(botao("conferir-retificacao-do-quadro"));
+    await esperar();
+    expect(payloads(salvar)[0]?.linhas[2]).toEqual({
+      cargo: "Agente Indígena de Saúde",
+      lotacao: "Polo Base Alfa",
+      modalidades: { "Ampla Concorrência": 1 },
+      vagas_imediatas: 1,
+      cadastro_reserva: false,
+      origem: "MANUAL",
+    });
+    expect(
+      document.querySelector('[data-previa="antes"]')?.textContent,
+    ).toContain("Linha nova");
+    const vaga = document.querySelector(
+      '[data-vagas-da-previa] tr[data-vaga="1003"]',
+    );
+    expect(vaga?.getAttribute("data-efeito")).toBe("passa");
+    expect(vaga?.textContent).toContain("Passa a esta linha");
+  });
+
+  it("sem permissão ou sem o banco novo, o quadro só se mostra", () => {
+    montar({ ...QUADRO, pode_editar: false }, vi.fn());
+    expect(botao("editar-linha-do-quadro")).toBeNull();
+    expect(botao("acrescentar-linha-do-quadro")).toBeNull();
+    act(() => desmontar());
+    montar({ ...QUADRO, historico: undefined }, vi.fn());
+    expect(botao("editar-linha-do-quadro")).toBeNull();
+    expect(texto()).toContain("Médico");
+  });
+
+  it("a falha da simulação aparece e não grava", async () => {
+    const salvar = vi.fn(async () => {
+      throw new Error("Sem permissão para este recurso");
+    });
+    montar(QUADRO, salvar);
+    await clicar(botao("acrescentar-linha-do-quadro"));
+    await digitar(campo("cargo"), "Psicólogo");
+    await clicar(campo("cadastro-reserva"));
+    await clicar(botao("conferir-retificacao-do-quadro"));
+    await esperar();
+    expect(texto()).toContain(
+      "Não foi possível conferir: Sem permissão para este recurso",
+    );
+    expect(botao("gravar-retificacao-do-quadro")).toBeNull();
   });
 });
 
@@ -7563,6 +7919,13 @@ bloco("modulos/pagina-do-edital", () => {
         "Contratações além das vagas imediatas",
       );
       expect(secao()?.textContent).toContain("3 desistentes à parte");
+      /* Uma leitura de cada por abertura: o render() do registro não repete o
+         que os efeitos da tela acabaram de pedir (auditoria de 26/11/2026, #4). */
+      const pedidos = banco.rpc.mock.calls.map(([nome, parametros]) =>
+        JSON.stringify([nome, parametros]),
+      );
+      expect(pedidos.length).toBeGreaterThan(0);
+      expect(pedidos.filter((p, i) => pedidos.indexOf(p) !== i)).toEqual([]);
       // Etapas: a linha do tempo, sem esqueleto.
       await clicar(secao()?.querySelector('[role="tab"][data-aba="etapas"]'));
       await vi.waitFor(() =>

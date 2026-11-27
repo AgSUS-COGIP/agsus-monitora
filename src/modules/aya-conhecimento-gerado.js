@@ -16,7 +16,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "SasiSUS é o Subsistema de Atenção à Saúde Indígena, criado pela Lei 9.836/1999, conhecida como Lei Arouca, que acrescentou esse capítulo à Lei 8.080/1990. Ele funciona dentro do SUS, com financiamento da União, e organiza a atenção à saúde dos povos indígenas em 34 Distritos Sanitários Especiais Indígenas. A gestão é da SESAI, no Ministério da Saúde.",
-    fato: "O SasiSUS foi criado pela Lei 9.836/1999, a Lei Arouca, que acrescentou o Subsistema de Atenção à Saúde Indígena à Lei 8.080/1990.",
     fonte: "https://www.planalto.gov.br/ccivil_03/leis/l9836.htm",
   },
   {
@@ -25,7 +24,6 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: ["lei arouca", "lei 9836", "lei 9.836"],
     resposta:
       "A Lei Arouca é a Lei 9.836, de 23 de setembro de 1999. Ela acrescentou à Lei 8.080/1990, que organiza o SUS, o capítulo que institui o Subsistema de Atenção à Saúde Indígena, o SasiSUS. É a base legal da atenção à saúde indígena como parte do SUS, custeada pela União.",
-    fato: "A Lei Arouca é a Lei 9.836, de 23 de setembro de 1999, base legal do SasiSUS.",
     fonte: "https://www.planalto.gov.br/ccivil_03/leis/l9836.htm",
   },
   {
@@ -38,7 +36,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "No SasiSUS, a atenção primária em território indígena é responsabilidade do Ministério da Saúde, pela SESAI, por meio dos DSEIs. Estados e municípios atuam de forma complementar: respondem pela média e alta complexidade e funcionam como retaguarda do SUS para o que o distrito não resolve no território.",
-    fato: "A atenção primária em território indígena cabe à SESAI pelos DSEIs; estados e municípios atuam de forma complementar, na média e alta complexidade e como retaguarda do SUS.",
     fonte:
       "https://www.gov.br/funai/pt-br/atuacao/povos-indigenas/direitos-sociais/saude",
   },
@@ -48,7 +45,6 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: ["sesai", "secretaria especial de saude indigena"],
     resposta:
       "SESAI é a Secretaria Especial de Saúde Indígena, do Ministério da Saúde, criada em 2010. Ela coordena, supervisiona, monitora e avalia as ações de atenção integral à saúde indígena no SasiSUS, incluindo saneamento e edificações de saúde em território indígena, observando as práticas tradicionais de saúde dos povos atendidos.",
-    fato: "SESAI é a Secretaria Especial de Saúde Indígena, do Ministério da Saúde, criada em 2010. Não é secretaria estadual nem agência reguladora.",
     fonte: "https://www.gov.br/saude/pt-br/composicao/sesai",
   },
   {
@@ -57,7 +53,6 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: ["siasi", "sistema de informacao da atencao a saude indigena"],
     resposta:
       "SIASI é o Sistema de Informação da Atenção à Saúde Indígena, do Ministério da Saúde, gerido pela SESAI. Reúne os dados dos 34 DSEIs e é a origem dos números de população e atendimento divulgados pela Secretaria. Não confunda com o SasiSUS: o SIASI é o sistema de informação, o SasiSUS é o subsistema de atenção.",
-    fato: "SIASI é o Sistema de Informação da Atenção à Saúde Indígena, gerido pela SESAI, e reúne dados dos 34 DSEIs. Não pertence à ANS nem a qualquer agência reguladora.",
     fonte:
       "http://www.ccms.saude.gov.br/saudeindigena/asesai/sistemasdeinformacao.html",
   },
@@ -71,7 +66,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "O Censo 2022 do IBGE registrou quase 1,7 milhão de pessoas indígenas no Brasil, equivalentes a 0,83% da população do país naquele levantamento. Esse número é do Censo e se refere a 2022; a população atendida pelo SasiSUS é contada pelo SIASI e tem outro recorte, porque cobre quem está adscrito aos DSEIs.",
-    fato: "O Censo 2022 do IBGE registrou quase 1,7 milhão de pessoas indígenas, 0,83% da população. Dado censitário sempre com a referência de 2022.",
     fonte:
       "https://educa.ibge.gov.br/criancas/brasil/2848-nosso-povo/22324-os-indigenas-no-censo-2022.html",
   },
@@ -86,7 +80,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "O Censo 2022 do IBGE identificou 391 povos indígenas e 295 línguas indígenas no Brasil. Os números atualizam o Censo 2010, que registrava 305 povos e 274 línguas. As três línguas com mais falantes são Tikuna, Guarani Kaiowá e Guajajara.",
-    fato: "O Censo 2022 do IBGE identificou 391 povos indígenas e 295 línguas indígenas. Não confunda com os números do Censo 2010, que eram 305 povos e 274 línguas.",
     fonte:
       "https://www.gov.br/funai/pt-br/assuntos/noticias/2025/censo-2022-identifica-391-povos-e-295-linguas-indigenas-e-reforca-necessidade-de-atuacao-integrada-entre-os-entes-federados",
   },
@@ -101,7 +94,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "A Funai foi criada pela Lei nº 5.371, de 5 de dezembro de 1967. A fundação é o órgão indigenista oficial do Estado brasileiro.",
-    fato: "A Funai foi criada pela Lei nº 5.371, de 5 de dezembro de 1967.",
     fonte:
       "https://www.gov.br/funai/pt-br/acesso-a-informacao/institucional/Institucional",
   },
@@ -116,7 +108,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Terras Indígenas são os territórios tradicionalmente ocupados pelos povos indígenas, protegidos pelo artigo 231 da Constituição Federal de 1988. A instrução dos processos de demarcação e a proteção dessas terras cabem à Funai, a Fundação Nacional dos Povos Indígenas, vinculada ao Ministério dos Povos Indígenas.",
-    fato: "Terra Indígena é território tradicionalmente ocupado, protegido pelo artigo 231 da Constituição de 1988. A demarcação cabe à Funai, Fundação Nacional dos Povos Indígenas, vinculada ao Ministério dos Povos Indígenas.",
     fonte:
       "https://www.gov.br/funai/pt-br/atuacao/terras-indigenas/geoprocessamento-e-mapas",
   },
@@ -130,7 +121,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "A atuação direta do SasiSUS e das Equipes Multidisciplinares de Saúde Indígena se concentra nas aldeias em terras indígenas. Pessoas indígenas que vivem em contexto urbano são atendidas pela rede de atenção à saúde do SUS do município, com articulação das CASAIs quando referenciadas.",
-    fato: "O SasiSUS atua nas aldeias em terras indígenas. Pessoas indígenas em contexto urbano são atendidas pela rede municipal do SUS, com articulação das CASAIs quando referenciadas.",
     fonte:
       "https://www.gov.br/funai/pt-br/atuacao/povos-indigenas/direitos-sociais/saude",
   },
@@ -140,7 +130,6 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: ["dsei", "distrito sanitario especial indigena", "o que e dsei"],
     resposta:
       "DSEI é o Distrito Sanitário Especial Indígena, a unidade territorial e de gestão da atenção à saúde indígena. São 34 no Brasil. Os limites de um DSEI seguem critérios geográficos, demográficos, culturais e sanitários, e por isso não coincidem com limites de estado, de município nem de Terra Indígena — um mesmo distrito pode atravessar vários estados.",
-    fato: "DSEI é a unidade territorial e de gestão da atenção à saúde indígena. São 34 no Brasil, com limites definidos por critérios geográficos, demográficos, culturais e sanitários, que não precisam coincidir com limites estaduais, municipais ou de Terras Indígenas.",
     fonte: "https://www.gov.br/saude/pt-br/composicao/sesai/estrutura/dsei",
   },
   {
@@ -154,7 +143,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "A SESAI informa que a rede do SasiSUS reúne 34 DSEIs, 383 Polos Base, 1.212 UBSIs e 70 CASAIs. Esses são os números da rede oficial; o Yeendé pode mostrar contagens diferentes, porque exibe o recorte carregado na tela e a base de lotações do acompanhamento, que têm outra finalidade e outra data.",
-    fato: "A SESAI informa 34 DSEIs, 383 Polos Base, 1.212 UBSIs e 70 CASAIs na rede do SasiSUS. Contagens da tela do Yeendé podem divergir, por terem recorte e data próprios.",
     fonte:
       "http://www.ccms.saude.gov.br/saudeindigena/asesai/organizacaododsei.html",
   },
@@ -164,7 +152,6 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: ["polo base", "polos base", "pb"],
     resposta:
       "Polo Base é uma subdivisão territorial do DSEI. Serve de base para as Equipes Multidisciplinares de Saúde Indígena organizarem, técnica e administrativamente, a atenção à população indígena adscrita. Cada DSEI reúne um conjunto de Polos Base, e cada Polo Base cobre um conjunto de aldeias.",
-    fato: "Polo Base é subdivisão territorial do DSEI e base para as EMSI organizarem a atenção a um conjunto de aldeias. Na planilha de lotações do Yeendé aparece abreviado como PB.",
     fonte:
       "http://www.ccms.saude.gov.br/saudeindigena/asesai/organizacaododsei.html",
   },
@@ -174,7 +161,6 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: ["ubsi", "unidade basica de saude indigena"],
     resposta:
       "UBSI é a Unidade Básica de Saúde Indígena, o estabelecimento de saúde localizado dentro do território indígena onde as Equipes Multidisciplinares de Saúde Indígena executam diretamente os serviços de atenção à saúde e as ações de saneamento.",
-    fato: "UBSI é a Unidade Básica de Saúde Indígena, estabelecimento dentro do território indígena onde as EMSI executam os serviços.",
     fonte:
       "http://www.ccms.saude.gov.br/saudeindigena/asesai/organizacaododsei.html",
   },
@@ -184,7 +170,6 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: ["casai", "casa de saude indigena"],
     resposta:
       "CASAI é a Casa de Saúde Indígena. É o estabelecimento que apoia, acolhe e assiste pessoas indígenas referenciadas a outros serviços do SUS, para ações complementares de atenção básica e para atenção especializada. Pode acolher acompanhantes quando necessário. A CASAI não é um hospital: ela dá suporte a quem precisou sair do território para ser atendido.",
-    fato: "CASAI é a Casa de Saúde Indígena, que apoia e acolhe pessoas indígenas referenciadas a outros serviços do SUS, inclusive para atenção especializada, e pode acolher acompanhantes. Não é hospital.",
     fonte:
       "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2017/prt1317_08_08_2017.html",
   },
@@ -198,7 +183,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "EMSI é a Equipe Multidisciplinar de Saúde Indígena, que atende nas aldeias. É composta por médico, enfermeiro, odontólogo, auxiliar de enfermagem, auxiliar de saúde bucal, Agente Indígena de Saúde (AIS) e Agente Indígena de Saneamento (AISAN). É a EMSI que executa a atenção primária no território.",
-    fato: "A EMSI atende nas aldeias e reúne médico, enfermeiro, odontólogo, auxiliar de enfermagem, auxiliar de saúde bucal, Agente Indígena de Saúde (AIS) e Agente Indígena de Saneamento (AISAN).",
     fonte:
       "http://www.ccms.saude.gov.br/saudeindigena/asesai/organizacaododsei.html",
   },
@@ -213,7 +197,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "AIS é o Agente Indígena de Saúde e AISAN é o Agente Indígena de Saneamento. Os dois integram a Equipe Multidisciplinar de Saúde Indígena e são profissionais indígenas, o que faz deles a ligação permanente entre a equipe e a comunidade atendida.",
-    fato: "AIS é o Agente Indígena de Saúde e AISAN o Agente Indígena de Saneamento; ambos integram a EMSI.",
     fonte:
       "http://www.ccms.saude.gov.br/saudeindigena/asesai/organizacaododsei.html",
   },
@@ -226,7 +209,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Não são a mesma coisa. Terra Indígena é uma categoria territorial e jurídica, com processo próprio de demarcação, e a base oficial é da Funai. DSEI é uma unidade de gestão da saúde, com limites definidos por critérios sanitários e culturais. Uma Terra Indígena pode estar dentro da área de um DSEI sem que os limites dos dois coincidam.",
-    fato: "Terra Indígena e DSEI são categorias distintas e não devem ser tratadas como sinônimos. A base oficial de Terras Indígenas é da Funai.",
     fonte:
       "https://www.gov.br/funai/pt-br/atuacao/terras-indigenas/geoprocessamento-e-mapas",
   },
@@ -240,7 +222,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "A Funai mantém a base geoespacial oficial de Terras Indígenas, aldeias, áreas de atuação e sedes de DSEIs, com atualização mensal informada na própria página. É a referência para listas e limites de Terras Indígenas e aldeias.",
-    fato: "A Funai mantém a base geoespacial oficial de Terras Indígenas, aldeias, áreas de atuação e sedes de DSEIs, com atualização mensal informada na própria página.",
     fonte:
       "https://www.gov.br/funai/pt-br/atuacao/terras-indigenas/geoprocessamento-e-mapas",
   },
@@ -250,7 +231,6 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: ["plano nacional de saude", "pns 2024-2027"],
     resposta:
       "O Plano Nacional de Saúde 2024-2027 registra 34 Distritos Sanitários Especiais Indígenas.",
-    fato: "O Plano Nacional de Saúde 2024-2027 registra 34 Distritos Sanitários Especiais Indígenas.",
     fonte: "https://www.gov.br/saude/pt-br/composicao/sesai/estrutura/dsei",
   },
   {
@@ -270,7 +250,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Yeendé é o nome do sistema de gestão dos processos seletivos da AgSUS, do edital à contratação. Antes se chamava MONITORA; o nome mudou porque o sistema deixou de só monitorar: hoje ele cuida do processo inteiro, da triagem à convocação. A palavra vem da língua dos povos Kariri (Dzubukuá e Kipeá), do povo Kariri-Xocó, e quer dizer "pássaro": como um pássaro que vê do alto, o sistema acompanha, por território, as vagas previstas, as contratações e as vagas que permanecem ociosas. Yeendé Parú é o beija-flor. A marca é o pássaro com as asas amarela e verde, o corpo azul e o sol vermelho, nas cores da AgSUS. Não é uma sigla.',
-    fato: 'Yeendé é o nome do sistema de gestão dos processos seletivos da AgSUS, do edital à contratação (antes MONITORA). A palavra é Kariri (Dzubukuá e Kipeá), do povo Kariri-Xocó, e significa "pássaro". Não é sigla e não deve ser expandida em palavras.',
     fonte: "interface do Yeendé",
   },
   {
@@ -279,7 +258,6 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: ["agsus", "agencia brasileira de apoio a gestao do sus"],
     resposta:
       "AgSUS é a Agência Brasileira de Apoio à Gestão do Sistema Único de Saúde. É um serviço social autônomo, instituído como pessoa jurídica de direito privado sem fins lucrativos, de interesse coletivo e utilidade pública. Foi criada pela transformação da Adaps, na Lei 14.621/2023, a partir da autorização da Lei 13.958/2019. Atua sob orientação técnica e supervisão do Ministério da Saúde, e uma de suas finalidades é executar políticas de atenção à saúde indígena. É por isso que a AgSUS assumiu a gestão da força de trabalho dos 34 DSEIs e que o Yeendé acompanha vagas, contratações e ociosidade por território.",
-    fato: "AgSUS é a Agência Brasileira de Apoio à Gestão do Sistema Único de Saúde, serviço social autônomo criado pela Lei 14.621/2023. Assumiu a gestão da força de trabalho dos 34 DSEIs, em articulação com a SESAI. Não use outro nome para essa sigla.",
     fonte:
       "http://www.planalto.gov.br/ccivil_03/_ato2023-2026/2023/lei/l14621.htm",
   },
@@ -289,7 +267,6 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: ["sus", "sistema unico de saude"],
     resposta:
       "SUS é o Sistema Único de Saúde, a política pública de saúde do Brasil, criada pela Constituição de 1988 e regulamentada pela Lei 8.080/1990. Atende de forma universal e gratuita. A atenção à saúde indígena acontece dentro dele, pelo SasiSUS, sob coordenação da SESAI.",
-    fato: "SUS é o Sistema Único de Saúde, criado pela Constituição de 1988 e regulamentado pela Lei 8.080/1990. A atenção à saúde indígena ocorre dentro dele, pelo SasiSUS.",
     fonte: "https://www.planalto.gov.br/ccivil_03/leis/l8080.htm",
   },
   {
@@ -298,7 +275,6 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: ["vaga ociosa", "vagas ociosas", "ociosa", "ociosas"],
     resposta:
       "No Yeendé, vaga ociosa é a parcela das vagas previstas que permanece sem contratação. Cada linha de acompanhamento mostra três números lado a lado: Vagas, que é o total previsto, Contratados, que é quanto já foi preenchido, e Ociosas, que é o que sobrou sem contratação.",
-    fato: "No Yeendé, cada linha traz Vagas, Contratados e Ociosas lado a lado. Vagas é o total previsto, Contratados é quanto foi preenchido, Ociosas é o que permanece sem contratação.",
     fonte: "interface do Yeendé",
   },
   {
@@ -307,7 +283,6 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: ["taxa de ociosidade", "ociosidade", "percentual de ociosas"],
     resposta:
       "A taxa de ociosidade do Yeendé é o número de vagas Ociosas dividido pelo total de Vagas, apresentado em porcentagem. Na tabela da Visão geral, ela aparece ao lado das Ociosas de cada edital.",
-    fato: "A taxa de ociosidade é Ociosas dividido por Vagas, em porcentagem, e aparece ao lado das Ociosas na tabela da Visão geral.",
     fonte: "interface do Yeendé",
   },
   {
@@ -316,7 +291,6 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: ["contratados", "contratado"],
     resposta:
       "No Yeendé, Contratados é a quantidade de vagas de uma linha que já foi preenchida por contratação. Aparece entre Vagas, que é o total previsto, e Ociosas, que é o que permanece sem contratação.",
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -325,7 +299,6 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: ["edital", "editais"],
     resposta:
       "No Yeendé, o edital é o instrumento ao qual as vagas estão vinculadas. Cada linha de acompanhamento registra o edital, as datas de início e fim, a situação e a etapa em que ele se encontra.",
-    fato: "No Yeendé, cada linha registra o edital ao qual as vagas se vinculam, com datas de início e fim, situação e etapa.",
     fonte: "interface do Yeendé",
   },
   {
@@ -338,7 +311,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "O Yeendé destaca Contratados em verde e Ociosas em vermelho, porque ociosidade alta indica vaga prevista que ainda não virou contratação.",
-    fato: "O Yeendé destaca Contratados em verde e Ociosas em vermelho, porque ociosidade alta indica vaga prevista que ainda não virou contratação.",
     fonte: "interface do Yeendé",
   },
   {
@@ -347,7 +319,6 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: ["36 pontos no mapa", "por que 36 pontos", "36 dseis"],
     resposta:
       "Na visão nacional do Yeendé, os 34 DSEIs são distintos das 2 CASAIs nacionais; quando ambos estão desenhados, são 36 pontos no mapa, não 36 DSEIs.",
-    fato: "Na visão nacional do Yeendé, os 34 DSEIs são distintos das 2 CASAIs nacionais; quando ambos estão desenhados, são 36 pontos no mapa, não 36 DSEIs.",
     fonte: "interface do Yeendé",
   },
   {
@@ -360,7 +331,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "O Yeendé organiza vagas, contratações e ociosidade por território, o que permite comparar os DSEIs entre si.",
-    fato: "O Yeendé organiza vagas, contratações e ociosidade por território, o que permite comparar DSEIs entre si.",
     fonte: "interface do Yeendé",
   },
   {
@@ -375,7 +345,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "O DSEI Alagoas e Sergipe (AL/SE) tem sede em Maceió. Na caracterização do PDSI 2024–2027, com base de 2023, atende 30 aldeias e conta com 13 Polos Base Tipo I, 4 casas de apoio, 12 UBSIs e 1 CASAI. O Painel SIASI de 2023 registra população total de 13.480 pessoas no distrito. A maior comunidade é a Kariri-Xocó, em Porto Real do Colégio (AL), com 2.509 pessoas, 18,61% do total do distrito naquele ano.",
-    fato: "",
     fonte:
       "https://www.gov.br/saude/pt-br/composicao/sesai/planos-distritais-2024-2027/plano-distrital-alagoas-e-sergipe",
   },
@@ -385,7 +354,6 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: ["kariri xoco", "kariri-xoco", "povo kariri"],
     resposta:
       "No DSEI Alagoas e Sergipe, a comunidade Kariri-Xocó fica em Porto Real do Colégio (AL), com 1 aldeia e 2.509 pessoas no Painel SIASI de 2023, o equivalente a 18,61% da população do distrito naquele ano. O PDSI descreve a denominação como resultado da fusão histórica, ocorrida há cerca de 200 anos, entre os Kariri de Porto Real do Colégio e parte dos Xocó da ilha de São Pedro, em Sergipe. Entre as práticas culturais citadas está o ritual Ouricuri, praticado desde a infância. A comunidade vive na região ribeirinha do rio São Francisco, onde pesca e agricultura têm importância local.",
-    fato: "",
     fonte:
       "https://www.gov.br/saude/pt-br/composicao/sesai/planos-distritais-2024-2027/plano-distrital-alagoas-e-sergipe",
   },
@@ -401,7 +369,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Os 34 DSEIs são: Alagoas e Sergipe, Altamira, Alto Rio Juruá, Alto Rio Negro, Alto Rio Purus, Alto Rio Solimões, Amapá e Norte do Pará, Araguaia, Bahia, Ceará, Cuiabá, Guamá Tocantins, Interior Sul, Kaiapó do Mato Grosso, Kaiapó do Pará, Leste de Roraima, Litoral Sul, Manaus, Maranhão, Mato Grosso do Sul, Médio Rio Purus, Médio Rio Solimões e Afluentes, Minas Gerais e Espírito Santo, Parintins, Pernambuco, Porto Velho, Potiguara, Rio Tapajós, Tocantins, Vale do Javari, Vilhena, Xavante, Xingu e Yanomami. O nome do distrito nem sempre corresponde a um estado: vários atravessam fronteiras estaduais e alguns são nomeados pelo povo ou pelo rio que organiza o território.",
-    fato: "",
     fonte: "https://www.gov.br/saude/pt-br/composicao/sesai/estrutura/dsei",
   },
   {
@@ -410,7 +377,6 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: ["dsei vale do javari", "vale do javari", "dsei javari"],
     resposta:
       "O DSEI Vale do Javari tem sede em Atalaia do Norte, no extremo oeste do Amazonas, na fronteira com o Peru. É um dos distritos de acesso mais difícil do país, com deslocamento predominantemente fluvial. Para número de aldeias e população, a referência é o Plano Distrital do distrito, que declara o ano-base.",
-    fato: "",
     fonte:
       "https://www.gov.br/saude/pt-br/composicao/sesai/planos-distritais-2024-2027/plano-distrital-vale-do-javari",
   },
@@ -424,7 +390,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "A PNASPI é a Política Nacional de Atenção à Saúde dos Povos Indígenas. Foi aprovada pelo Conselho Nacional de Saúde em novembro de 2001 e segue em vigor pela Portaria 254, de 31 de janeiro de 2002, do Ministério da Saúde. Seu propósito é garantir aos povos indígenas o acesso à atenção integral à saúde, conforme os princípios e diretrizes do SUS, considerando a diversidade social, cultural, geográfica, histórica e política, e reconhecendo a eficácia de sua medicina e o direito desses povos à sua cultura.",
-    fato: "A PNASPI, Política Nacional de Atenção à Saúde dos Povos Indígenas, está em vigor pela Portaria 254, de 31 de janeiro de 2002, e reconhece a eficácia da medicina tradicional indígena.",
     fonte:
       "https://www.gov.br/saude/pt-br/composicao/sesai/publicacoes/folder-pnaspi.pdf",
   },
@@ -437,7 +402,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "A atenção à saúde indígena é dever da União, exercido conforme a Constituição e a Lei 8.080/1990, com os objetivos de universalidade, integralidade e equidade dos serviços de saúde. É o que estabelece o artigo 1º da Política Nacional de Atenção à Saúde dos Povos Indígenas.",
-    fato: "A atenção à saúde indígena é dever da União, conforme a Constituição e a Lei 8.080/1990, com universalidade, integralidade e equidade.",
     fonte:
       "https://www.gov.br/saude/pt-br/composicao/sesai/publicacoes/folder-pnaspi.pdf",
   },
@@ -447,7 +411,6 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: ["diretrizes da pnaspi", "portaria 70 2004"],
     resposta:
       "As diretrizes da PNASPI foram estabelecidas pela Portaria 70, de 20 de janeiro de 2004. A primeira delas define o DSEI como o modelo de organização dos serviços de atenção primária, situados em território etnocultural dinâmico — é daí que vem a existência dos 34 distritos.",
-    fato: "As diretrizes da PNASPI vêm da Portaria 70, de 20 de janeiro de 2004, e a primeira define o DSEI como modelo de organização da atenção primária em território etnocultural.",
     fonte:
       "https://www.gov.br/saude/pt-br/composicao/sesai/publicacoes/folder-pnaspi.pdf",
   },
@@ -457,7 +420,6 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: ["condisi", "conselho distrital de saude indigena"],
     resposta:
       "CONDISI é o Conselho Distrital de Saúde Indígena. Existe um em cada DSEI e é um colegiado permanente e deliberativo, que acompanha e fiscaliza a execução da atenção à saúde indígena no distrito. A composição é paritária: metade das vagas é de representantes dos usuários, um quarto é de trabalhadores da saúde indígena do DSEI e um quarto é de governos municipais, estaduais e federal e de prestadores de serviço.",
-    fato: "CONDISI é o Conselho Distrital de Saúde Indígena, um por DSEI, permanente e deliberativo. Composição paritária: 50% usuários, 25% trabalhadores do DSEI, 25% governos e prestadores.",
     fonte:
       "https://www.gov.br/saude/pt-br/composicao/sesai/estrutura/cgpsi/conselhos-distritais-de-saude-indigena-condisis",
   },
@@ -467,7 +429,6 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: ["clsi", "conselho local de saude indigena", "conselho local"],
     resposta:
       "O Conselho Local de Saúde Indígena, o CLSI, é um colegiado permanente e consultivo, formado por representantes eleitos pelas próprias comunidades indígenas. É a instância de controle social mais próxima da aldeia, abaixo do CONDISI, que é distrital e deliberativo.",
-    fato: "O CLSI, Conselho Local de Saúde Indígena, é permanente e consultivo, com representantes eleitos pelas comunidades. É a instância mais próxima da aldeia; o CONDISI é distrital e deliberativo.",
     fonte: "https://www.gov.br/saude/pt-br/composicao/sesai/estrutura/cgpsi",
   },
   {
@@ -476,7 +437,6 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: ["fpcondisi", "forum de presidentes", "forum dos condisi"],
     resposta:
       "O FPCONDISI é o Fórum de Presidentes dos Conselhos Distritais de Saúde Indígena. Reúne os presidentes dos 34 CONDISI, tem caráter consultivo e assessora a SESAI quanto à Política Nacional de Atenção à Saúde dos Povos Indígenas. Serve à articulação política do controle social na gestão participativa do subsistema e do SUS.",
-    fato: "O FPCONDISI, Fórum de Presidentes dos CONDISI, reúne os presidentes dos 34 conselhos distritais, é consultivo e assessora a SESAI sobre a PNASPI.",
     fonte: "https://www.gov.br/saude/pt-br/composicao/sesai/estrutura/cgpsi",
   },
   {
@@ -488,7 +448,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "São três, da aldeia para cima: o Conselho Local de Saúde Indígena (CLSI), consultivo, com representantes eleitos pelas comunidades; o Conselho Distrital de Saúde Indígena (CONDISI), um por DSEI, deliberativo e de composição paritária; e o Fórum de Presidentes dos CONDISI (FPCONDISI), consultivo, que reúne os 34 presidentes e assessora a SESAI.",
-    fato: "O controle social da saúde indígena tem três instâncias: CLSI na aldeia, CONDISI no distrito e FPCONDISI no âmbito nacional.",
     fonte: "https://www.gov.br/saude/pt-br/composicao/sesai/estrutura/cgpsi",
   },
   {
@@ -503,7 +462,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Eu explico cada tela do Yeendé e as regras de cada etapa do processo seletivo, sempre na página e na área em que você está, e leio o que já está carregado na tela. Respondo só com a base de conhecimento escrita e conferida pela equipe. Reconheço sinônimos, perguntas sem acento e pequenos erros de digitação. Quando não tenho certeza, ofereço até três perguntas parecidas e a opção de abrir chamado; perguntas fora do Yeendé recebem sugestões do que posso explicar. Quando a resposta depende de um dado que não está carregado, eu digo isso em vez de inventar. Também respondo números ao vivo (contagens e datas), explico a permissão que falta para o seu perfil e mostro a tela item por item. Posso oferecer um botão para abrir a tela certa, mas não altero nada por você.",
-    fato: "A interface do Yeendé não tem textos explicativos: quem explica as telas e as regras é a Aya, no contexto da página e da área atuais.",
     fonte: "comportamento da Aya",
   },
   {
@@ -530,7 +488,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Sou eu: uma arara-azul (Anodorhynchus hyacinthinus), a ave azul-cobalto de anel amarelo nos olhos e faixa amarela no bico, que vive no Pantanal e no Cerrado. Fechada, no canto, apareço só de rosto; quando você abre a conversa, apareço inteira no alto do painel. Dá para me arrastar para outro lugar da tela (ou, com o foco em mim, usar as setas do teclado); se você me soltar encostada numa borda, eu me escondo e fico só espiando — passe o mouse para eu sair um pouco, clique para abrir a conversa e me arraste (ou use as setas) para me tirar da borda. O lugar fica guardado neste navegador. Eu me mexo para mostrar o que estou fazendo: respiro e pisco quando estou parada; inclino a cabeça e sigo o ponteiro com o olho quando você chega perto ou abre o painel; olho para cima enquanto procuro a resposta; mexo o bico enquanto o texto aparece; bato as asas nas comemorações; aceno uma vez quando você entra; e cochilo depois de alguns minutos sem uso (qualquer clique, tecla ou movimento me acorda). Se o seu sistema pede menos movimento, eu só pisco; se você desligou as comemorações, eu não comemoro. No painel aberto, nos tours (onde aponto com a asa para cada item) e nas comemorações, apareço ilustrada em 3D, com uma pose para cada estado. Em Configurações › Marca, o cartão "Mascote" mostra cada estado.',
-    fato: "A mascote da Aya é uma arara-azul-grande de corpo inteiro, em pé num poleiro, desenhada a partir da ilustração da Aya e animada em sete estados: parada, atenta, falando, pensando, comemorando, dormindo e acenando. No painel, nos tours e nas comemorações ela aparece ilustrada em 3D, com uma pose por estado (e apontando, nos tours).",
     fonte: "src/modulos/aya/mascote/; src/lib/aya/estado-da-aya.ts",
     abrir: "config:marca",
   },
@@ -545,7 +502,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Eu uso só o que já está disponível para você no Yeendé e não amplio seu acesso. A conversa fica guardada só nesta aba do navegador e some quando ela fecha; "Limpar conversa" apaga antes. A avaliação "Isso ajudou?" fica só no seu navegador.',
-    fato: "",
     fonte: "src/modules/aya-memoria.ts; src/modulos/aya/",
   },
   {
@@ -558,7 +514,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Não. Eu oriento o caminho e posso abrir a tela certa, mas a confirmação e qualquer alteração continuam com você.",
-    fato: "",
     fonte: "comportamento da Aya",
   },
   {
@@ -573,7 +528,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Use também o ícone de envelope (Feedback e suporte), no alto do painel da Aya, para enviar uma dúvida ou sugestão. Quando uma resposta não ajudar (marque "não ajudou") ou quando você pedir para falar com o suporte, eu mostro o cartão "Abrir chamado". O botão abre o Gmail no navegador, em uma nova aba, já preenchido para o suporte, com a pergunta, a minha resposta, a página, a área e a data; nada é enviado sem você. Descreva o problema e anexe prints no próprio e-mail, se quiser. O endereço do suporte é configurado em Configurações › Operação.',
-    fato: "",
     fonte: "src/lib/aya/chamado-da-aya.ts; src/modulos/aya/",
   },
   {
@@ -592,7 +546,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Toque em "Me mostra esta tela, item por item" (no começo do meu painel ou no ícone de bússola no topo dele) ou escreva "me mostra esta tela". Eu escureço a página e destaco um item por vez, com um título curto e uma ou duas frases, e mostro "Passo 3 de 9". Use Próximo e Anterior (ou as setas do teclado), Pular ou Esc para sair. Cada tela tem o seu tour, e as abas principais têm o próprio: Entrevistas (Resultados, Conduzir e Roteiros), Classificação (Listas, Agenda e Regra), Lista de aprovados (Aprovados e Convocação), cada seção de Configurações e o Status das atualizações. O que o seu perfil não vê, ou o que a tela ainda não tem, eu pulo. Na primeira visita a cada tela eu convido uma vez, sem obrigar; dá para reabrir quando quiser. O tour só mostra: não altera nada.',
-    fato: 'A Aya tem um tour guiado ("Me mostra esta tela") que destaca os itens da página e da aba atuais, um por vez.',
     fonte: "src/modulos/aya/tour/; src/lib/aya/aya-tours.ts",
   },
   {
@@ -610,7 +563,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na seção "Aprender" do meu painel ficam as trilhas: tours que atravessam várias telas na ordem do trabalho. São elas: Primeiros passos; Do edital ao aprovado; Conduzir uma entrevista; Registrar e decidir um recurso; Convocar e emitir carta; e Dar acesso a alguém. Eu mostro só as que o seu perfil pode fazer e pulo as telas que você não acessa. O progresso ("3 de 7", "Concluída") fica guardado só neste navegador: sair no meio e voltar depois retoma de onde parou, e uma trilha concluída pode ser refeita. Na primeira entrada eu ofereço "Primeiros passos" uma única vez, sem obrigar.',
-    fato: "As trilhas da Aya (seção Aprender) são Primeiros passos, Do edital ao aprovado, Conduzir uma entrevista, Registrar e decidir um recurso, Convocar e emitir carta e Dar acesso a alguém; aparecem conforme as permissões do perfil.",
     fonte: "src/modulos/aya/tour/; src/lib/aya/aya-tours.ts",
   },
   {
@@ -627,7 +579,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Eu respondo perguntas com número usando os dados que você já pode ver, só para leitura: por exemplo "quantas análises pendentes tem o 93/2026?", "quantos recursos aguardando parecer?", "quantos convocados sem nota?", "qual a taxa de contratação do edital 12/2026?", "quando foi a última carga da Seleção?" e, para o administrador global, "tem alguma carga atrasada?". Uso a área do menu (ou a que você disser, como "na SEDE") e o edital da pergunta ou o escolhido na tela. Mostro só contagens e datas, nunca nomes ou CPF, e o botão "Abrir" leva à tela já recortada (em Recursos, Entrevistas e Seleção). Se o seu acesso não inclui a tela, eu digo isso em vez de mostrar o número.',
-    fato: "",
     fonte:
       "src/lib/aya/intencoes-da-aya.ts; src/lib/aya/dados-da-aya.ts; src/modulos/aya/fontes.ts",
   },
@@ -644,7 +595,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Diga qual botão ou ação (por exemplo "não aparece o botão de novo recurso" ou "não consigo emitir a carta") e eu confiro no seu perfil: se você não tem a permissão, digo qual falta (por exemplo, nível Editor em Recursos) e que quem libera é o administrador de acessos da sua coordenação, em Configurações › Acessos; se você tem, digo onde o botão fica e o que conferir (área do menu, edital escolhido).',
-    fato: "",
     fonte: "src/lib/aya/permissoes-da-aya.ts; src/lib/acessos/access-roles.ts",
   },
   {
@@ -658,7 +608,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Quando você marca "não ajudou", ou quando eu não entendo a pergunta, eu guardo a pergunta neste navegador, sem e-mail, CPF, telefone ou números longos, com a página. O administrador global vê no topo do meu painel o botão "Copiar perguntas sem resposta", para a equipe acrescentar o que falta na minha base.',
-    fato: "",
     fonte: "src/lib/aya/perguntas-sem-resposta.ts; src/modulos/aya/aya.tsx",
   },
   {
@@ -678,7 +627,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em Configurações › Automação (só o administrador global), cada aba tem uma chave: Entrevistas, Seleção, KPIs do edital, Robô de inscrições, Triagem automática, Conferências, Pacotes dos painéis e Manutenção do banco. Desligada, as tarefas agendadas no banco daquela chave param e a agenda dos robôs não pede a carga ao GitHub; a triagem automática deixa de rodar no fim do robô da Empregare. Ligar ou desligar pede motivo (10 a 500 caracteres), e a lista mostra a última e a próxima execução e quem mudou, quando e por quê; o histórico guarda as 50 últimas mudanças. No Status das atualizações, a carga desligada aparece como "Desligada pelo administrador", e não como atrasada. A chave manda: a cada 5 minutos o banco põe as tarefas de cada aba no estado da chave, então uma tarefa religada ou desligada por fora (direto no banco) volta ao que a chave diz, e o acerto aparece no histórico da chave sem nome de quem mudou. "Gerar listas pelo Python" só tem efeito com "Classificação em Python" também ligada; ligada sozinha, a tela avisa que está sem efeito e o Gerar segue com o cálculo da tela.',
-    fato: "",
     fonte:
       "src/modulos/automacao/automacao.tsx; supabase/migrations/20261022190000_chaves_da_automacao.sql; supabase/migrations/20261109180000_catalogo_dos_robos_e_chave_unica.sql",
     abrir: "config:automacao",
@@ -695,7 +643,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Sim. A chave só para o que roda sozinho. O "Rodar agora" e as "Opções" do Status das atualizações continuam com o administrador global; com a chave desligada, a tela pede confirmação antes de pedir a carga. A coordenação de um edital continua usando o Recalcular da aba Triagem.',
-    fato: "",
     fonte:
       "src/componentes/saude-das-cargas/saude-das-cargas.tsx; supabase/migrations/20261022190000_chaves_da_automacao.sql",
     abrir: "config:cargas",
@@ -713,7 +660,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A Avaliação documental é o módulo de trabalho da etapa "Avaliação Documental e de Títulos": escolhido o edital, a coordenação cadastra a regra da avaliação daquele edital (blocos por documento ou pergunta da Empregare, eliminatórios com o item do edital, critério étnico com aldeias, escolaridade por nível, cursos, experiência, nota declarada, lote, distribuição, revisão e os textos do parecer) e diz quem analisa, quem revisa e quem coordena (aba Equipe). Há a regra, a equipe, a Triagem (a Lista Provisória por ART e o lote de convocação de cada vaga, com as listas oficiais PROVISORIA e LOTE) e a Fila (as fichas de quem está no lote, a distribuição entre os analistas e a reserva da ficha aberta); o conteúdo da ficha (documentos, títulos, vínculos e nota) chega na fase seguinte. O resultado continua aparecendo no Painel das análises. As abas Regra, Equipe e Triagem são só de quem coordena o edital (gestor do edital, coordenação na equipe ou administrador global); quem analisa ou revisa (e quem só lê) vê só a Fila, que abre direto.',
-    fato: "",
     fonte:
       "src/modulos/avaliacao-documental/; docs/biblioteca/modulo-avaliacao-documental.md",
     abrir: "avaliacao-documental",
@@ -735,7 +681,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na Avaliação documental, as abas Regra, Equipe e Triagem aparecem só para quem coordena o edital escolhido: o gestor do edital, quem está como Coordenação na equipe e o administrador global. Quem analisa ou revisa (e quem só tem Leitor) vê só a Fila, sem o seletor de abas, e a tela abre direto nela; a ficha usa a regra vigente do edital do mesmo jeito. Para ver as outras abas, a pessoa precisa coordenar o edital (Administrador em Avaliação documental e ser gestora do edital ou estar como Coordenação na aba Equipe). Ao entrar, a tela abre sozinha o último edital que a pessoa abriu naquela área (lembrado neste navegador) ou, se a área tem um edital vigente só, ele; senão, mostra um cartão por edital vigente, com o número, a unidade, a versão da regra e se está Conferida ou A conferir — clique no cartão para abrir. O seletor "Edital" continua no topo para trocar.',
-    fato: "Na Avaliação documental, só quem coordena o edital vê Regra, Equipe e Triagem; quem analisa vê só a Fila.",
     fonte:
       "src/modulos/avaliacao-documental/abas-e-entrada.ts; src/modulos/avaliacao-documental/entrada-da-avaliacao.tsx",
     abrir: "avaliacao-documental",
@@ -752,7 +697,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'São duas entradas do menu. O Painel das análises (a tela que antes se chamava Análises curriculares) é só leitura: indicadores, pendências, carga por responsável, evolução e a lista das análises, com a permissão Painel das análises. A Avaliação documental é o trabalho: regra da avaliação, equipe e, nas próximas fases, a Provisória por ART, o lote, a fila e a ficha do candidato, com a permissão própria "Avaliação documental". No edital com a análise no Yeendé (o botão ao lado de "Avaliação:", da coordenação), cada ficha grava na hora na mesma base que o Painel das análises e a Classificação leem.',
-    fato: "No Yeendé, o Painel das análises é leitura (permissão analises) e a Avaliação documental é o trabalho da avaliação (permissão avaliacao_documental).",
     fonte:
       "docs/biblioteca/modulo-avaliacao-documental.md; supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql",
     abrir: "avaliacao-documental",
@@ -771,7 +715,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Cada edital tem a sua regra da avaliação, e nada fica fixo no sistema: os pesos (por exemplo, indígena +8 e aldeia +6 no 100/2026, +7 e +5 no 28/2026), os títulos por nível, as faixas de cursos, a experiência (por mês ou por período de N meses, com ou sem o mínimo exigido), os efeitos de cada situação e os textos do parecer vêm da regra. A regra nasce de um modelo ou do zero e fica "Conferir"; salvar sempre cria uma versão nova (da segunda em diante com o motivo, de 10 a 2.000 caracteres), as anteriores ficam no histórico e não mudam, e outra pessoa da coordenação marca a versão vigente como "Conferida" (dupla conferência: quem salvou não confere; o administrador global pode). Salvar outra versão volta a regra para "Conferir". A regra se monta pelo assistente (o padrão) ou pelo modo avançado. A nota mínima não fica aqui: é a da regra de classificação do edital.',
-    fato: "No Yeendé, a regra da avaliação documental é de cada edital, versionada e imutável por versão; a nota mínima é a da regra de classificação.",
     fonte:
       "src/lib/avaliacao-documental/regra.ts; supabase/migrations/20261006100000_regra_da_analise.sql",
     abrir: "avaliacao-documental",
@@ -793,7 +736,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A regra da Avaliação documental se edita em Editais › Regras do edital, etapa 2 (a tela da Avaliação mostra o resumo, com "Editar nas Regras do edital"). Ali, quem coordena o edital escolhe "Assistente" (o padrão) ou "Modo avançado"; os dois mexem no mesmo rascunho, e a escolha fica lembrada neste navegador. O assistente ("Nova regra" ou "Editar regra") tem cinco passos, e dá para ir e voltar entre eles: 1) Ponto de partida: continuar da versão vigente, copiar a regra conferida de outro edital da mesma área (aparece o número, a unidade e a versão), usar um modelo ou começar do zero — sempre uma cópia independente, que não muda a origem; 2) O que vale e o que elimina: um cardápio de cartões com caixa, começando pelo grupo "Na inscrição" (inscrição cancelada, questionário não finalizado, reprovado na Empregare e termo recusado, que eliminam antes de qualquer análise) e seguindo com os requisitos que eliminam (identidade, formação exigida, conselho de classe e outros documentos, com o item do edital e os motivos), titulação (pontos por título e por nível, vale o maior ou somam, teto), cursos (faixas de horas, pontos, teto, por nível), experiência (mínimo exigido, por mês ou por período, só além do mínimo, teto, por nível), critério étnico (indígena e aldeia; só na Saúde Indígena), e as cotas. O corte por pontos mínimos, a nota do corte e da ordem do lote (declarada ou ART), o desempate da lista do lote e a pergunta da experiência desse desempate são da Triagem (Regras do edital, etapa 1): o assistente não os mostra, e a regra salva leva esses valores como estavam. Marcado, o cartão abre só os seus campos, já com valores sugeridos (do ponto de partida, dos modelos e das regras da área); desmarcado, some da regra, e marcar de novo traz de volta o que estava; 3) Perguntas da Empregare; 4) Nota mínima e desempate; 5) Testar e salvar: no topo, um cartão diz em que pé está (sem mudanças, pronto para salvar com o que falta, ou salvo); depois o resumo, a comparação de versões, o "Testar com um candidato fictício" (fechado até abrir) e o nome da versão e o motivo. O botão principal fica preso ao pé e diz o que vai acontecer ("Salvar como Versão 2", "Concluir sem mudanças" ou "Fechar o assistente"); salvar cria a versão nova (na primeira versão, o motivo diz de onde ela veio). O que o assistente não mostra (distribuição, revisão, textos do parecer, observações prontas) continua no modo avançado e não muda.',
-    fato: "No Yeendé, o assistente da regra da avaliação documental tem cinco passos (ponto de partida, cardápio do que vale e do que elimina, perguntas da Empregare, nota mínima e desempate, testar e salvar) e grava o mesmo formato de regra do modo avançado.",
     fonte:
       "src/modulos/avaliacao-documental/assistente/; src/lib/avaliacao-documental/assistente-da-regra.ts",
     abrir: "avaliacao-documental",
@@ -820,7 +762,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na aba Regra, o que você muda (no assistente ou no modo avançado, inclusive a nota mínima e o desempate) é guardado sozinho cerca de um segundo depois de cada mudança, no banco, por edital e por pessoa — só você vê o seu rascunho. O indicador discreto ao lado diz "Guardando…", "Rascunho guardado às 14:05" ou, sem internet, "Sem conexão — guardado neste computador" (o banco recebe quando a conexão volta). Ao abrir a regra de novo — depois de recarregar a página, fechar o navegador ou em outro computador —, aparece "Você tem um rascunho não salvo de 13/10 14:05" com "Continuar de onde parei" (o assistente volta no passo 2 com tudo) ou "Descartar" (pede confirmação e não dá para recuperar). Se outra pessoa salvou uma versão depois que o seu rascunho começou, o aviso diz de qual versão ele partiu e qual é a vigente: ao continuar, confira a comparação de versões antes de salvar. Salvar a versão nova ou descartar as alterações apaga o rascunho. Com alteração por salvar, recarregar (F5) ou fechar a aba pede confirmação, o botão "Atualizar" da tela avisa antes, e a versão nova do sistema espera o rascunho ser guardado para entrar. O rascunho não é versão: só "Salvar como versão" vale para a avaliação.',
-    fato: "No Yeendé, o rascunho da regra da avaliação documental e da regra de classificação é guardado a cada mudança em TB_RASCUNHO_REGRA (por tipo, edital e pessoa; migration 20261013120000), com cópia no navegador quando falta conexão.",
     fonte:
       "src/app/rascunho-da-regra.ts; src/app/guarda-de-alteracoes.ts; supabase/migrations/20261013120000_rascunho_das_regras.sql",
     abrir: "avaliacao-documental",
@@ -841,7 +782,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No passo 3 do assistente, o sistema lê as colunas "Pergunta N - …" da última carga de cada vaga do edital (só os nomes das colunas, nenhuma resposta) e liga sozinho, pelo começo do enunciado, o bloco que ainda não tem pergunta ("Ligar automaticamente" faz de novo, sem mexer no que já está ligado). Cada pergunta da regra aparece com uma cor, pela mesma regra de casamento da nota declarada e da ficha, vaga por vaga: verde "Achou" (uma coluna em cada vaga onde aparece; diz em quantas vagas), amarelo "Ambígua" (casa com mais de uma coluna numa vaga, e aí nenhuma é usada; aparecem as colunas) e vermelho "Não achou" (nenhuma vaga tem). Para acertar, escreva um começo que só ela tenha ou escolha em "Escolher da lista", que traz cada pergunta da carga uma vez, com em quantas vagas aparece. No mesmo passo, a nota declarada: em cada parcial (titulação, cursos, experiência, critério étnico), "conta na nota declarada" liga a pergunta e mostra as respostas da carga com quantas vezes aparecem e os pontos de cada uma (ou por nível); resposta da carga sem pontos fica em vermelho. Sem carga da Empregare, as perguntas ficam sem conferência.',
-    fato: "",
     fonte:
       "src/modulos/avaliacao-documental/assistente/perguntas.tsx; src/lib/avaliacao-documental/assistente-da-regra.ts; supabase/migrations/20261008120000_assistente_da_regra.sql",
     abrir: "avaliacao-documental",
@@ -864,7 +804,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No passo 4 do assistente ficam juntos a nota mínima e o desempate. A nota mínima (e a por nível, quando diferente) e os critérios de desempate da classificação são da regra de classificação do edital: o assistente mostra e, para quem tem Editor na Classificação, grava pelo mesmo caminho da aba Classificação, como versão nova dela, com o mesmo motivo (até 500 caracteres); sem Editor na Classificação, aparecem só para ler, com um aviso (antes, o "Acrescentar critério" aparecia vazio). Sem regra de classificação no edital, crie-a primeiro na Classificação. Arraste o critério ou use as setas para mudar a ordem, troque a direção e tire critérios. "Acrescentar critério" abre o catálogo inteiro em grupos (Prioridade legal, Pontuação, Experiência, Idade, Outros), com busca; os já usados aparecem com a posição ("2º na lista"). O desempate da lista do lote (a antiga Provisória) não fica mais aqui: é da Triagem, em Editais › Regras do edital, etapa 1. Ao salvar, a regra de classificação é gravada antes; se ela recusar, nada é salvo.',
-    fato: "",
     fonte:
       "src/modulos/avaliacao-documental/assistente/nota-e-desempate.tsx; src/modulos/avaliacao-documental/assistente/seletor-de-criterios.tsx; src/lib/avaliacao-documental/catalogo-de-desempate.ts; src/lib/classificacao/catalogo.ts; supabase/migrations/20261002150000_classificacao.sql (salvar_regra_classificacao)",
     abrir: "avaliacao-documental",
@@ -887,7 +826,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O passo 5 sempre tem uma saída, no botão preso ao pé do assistente. Sem nenhuma mudança, o cartão do topo diz "Sem mudanças — a Versão 1 continua valendo (Conferida)": "Concluir sem mudanças" marca o passo 5 com ✓ e nada é gravado; "Fechar o assistente" volta ao resumo da regra (com "Abrir o assistente") e "Voltar ao passo 2" leva ao cardápio. Com mudanças, o cartão diz "Pronto para salvar como Versão N" e o que falta; cada item leva ao campo. Depois de salvar, o assistente fica no passo 5 com ✓ e a confirmação "Versão N salva": quem pode conferir (outra pessoa da coordenação do edital, ou o administrador global) marca como conferida ali mesmo; quem salvou a versão vê que outra pessoa precisa conferir (dupla conferência). Atenção: abrir o passo 3 pode ligar sozinho perguntas da Empregare que estavam sem ligação, e isso já conta como mudança.',
-    fato: "",
     fonte:
       "src/modulos/avaliacao-documental/assistente/estado-do-passo-5.tsx; src/modulos/avaliacao-documental/assistente/assistente.tsx",
     abrir: "avaliacao-documental",
@@ -907,7 +845,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No passo 5 do assistente, o cartão do topo lista o que falta para "Salvar como Versão N" (o botão, preso ao pé, fica desabilitado até resolver): o motivo com menos de 10 caracteres, o nome da versão fora de 3 a 80 caracteres e os erros da regra ou da classificação. Perto do motivo, "Confira também" (não impede): pergunta sem ligação com a Empregare e requisito sem item do edital. Clicar num item leva ao passo e ao campo. Sem nenhuma mudança não há o que salvar: o botão vira "Concluir sem mudanças".',
-    fato: "",
     fonte:
       "src/lib/avaliacao-documental/pendencias-do-salvar.ts; src/modulos/avaliacao-documental/assistente/conferir.tsx",
     abrir: "avaliacao-documental",
@@ -927,7 +864,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No passo 5 do assistente (e, para quem só lê, embaixo da regra), o "Resumo da regra" diz em linguagem simples o que elimina, quanto vale cada item, as cotas, a nota mínima e o lote, a nota declarada e os desempates; "Copiar para o SEI" leva o texto com títulos e listas, e "Imprimir" abre a impressão (dá para salvar em PDF). "Comparar versões" mostra o que entrou, o que saiu e o que mudou, com o nome de cada coisa ("Titulação acadêmica › teto: 10 → 12"), entre a vigente e o rascunho novo ou entre duas versões do histórico.',
-    fato: "",
     fonte:
       "src/lib/avaliacao-documental/resumo-da-regra.ts; src/lib/avaliacao-documental/comparar-regras.ts",
     abrir: "avaliacao-documental",
@@ -946,7 +882,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       '"Conferida" exige dupla conferência: quem salvou a versão vigente da regra não pode marcá-la como conferida — outra pessoa da coordenação do edital (o gestor do edital ou quem está como Coordenação na equipe) confere. O botão "Marcar como conferida" fica travado para quem salvou, com o aviso, e o banco recusa do mesmo jeito ("Dupla conferência: quem salvou a versão N não pode conferi-la"). O administrador global pode conferir mesmo a versão que salvou. Depois de conferida, o cabeçalho diz quem conferiu; salvar outra versão volta a regra para "Conferir".',
-    fato: "No Yeendé, a regra da avaliação documental só fica Conferida por outra pessoa da coordenação, que não salvou a versão (o administrador global é a exceção).",
     fonte:
       "supabase/migrations/20261008120000_assistente_da_regra.sql (conferir_regra_analise)",
     abrir: "avaliacao-documental",
@@ -964,7 +899,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Há três modelos para começar: PROJ26-CURRICULAR (Projetos, sem critério étnico, lido do edital 93/2026: titulação 5/8/10, cursos por faixa de horas e experiência a cada 6 meses além do mínimo), SI26-INTERIOR-SUL (o do simulador do DSEI Interior Sul, edital 28/2026: indígena +7 e aldeia da lista +5, cursos 0,5/0,3/0,2, experiência 0,2 por mês com teto 10 e o estágio de indígena) e SI26-100 (o questionário do 100/2026, nível superior: indígena +8 e aldeia +6, e a declaração irregular zera os pontos étnicos sem eliminar). No assistente, o modelo é um dos pontos de partida (e os modelos também sugerem os valores dos cartões); no modo avançado, "Criar a partir do modelo" faz a versão 1 do edital e, num edital que já tem regra, "Carregar um modelo no formulário" leva o modelo ao formulário para salvar como versão nova, com o motivo.',
-    fato: "",
     fonte: "supabase/correcoes/20261006-modelos-da-regra-da-analise.sql",
     abrir: "avaliacao-documental",
   },
@@ -982,7 +916,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na regra, cada documento ou pergunta da Empregare vira um bloco: título, item do edital, as perguntas ligadas pelo começo do enunciado (ex.: "Você é indígena e mora em aldeia"), uma condição opcional (só para indígena, só para uma modalidade) e o efeito de cada situação — Conforme, Não conforme, Não enviado (Não se aplica não tem efeito). Os efeitos são: elimina (inapto, nota 0), zera os pontos do bloco, tira só os pontos de aldeia, só registro, encaminha à heteroidentificação ou à perícia, e segue na ampla. Cada bloco tem motivos padronizados com o texto que vai ao parecer e o item do edital; um motivo com efeito próprio vale no lugar do efeito da situação (ex.: "Aldeia fora do DSEI" só tira a aldeia).',
-    fato: "",
     fonte:
       "src/lib/avaliacao-documental/catalogo.ts; src/lib/avaliacao-documental/pontuacao.ts",
     abrir: "avaliacao-documental",
@@ -1001,7 +934,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Para quem coordena, a aba Regra lista as perguntas da última carga do robô da Empregare nas vagas do edital, com as respostas encontradas e quantas vezes cada uma aparece — respostas que aparecem uma vez só não são mostradas, para não expor texto livre. Dali se liga a pergunta a um bloco ou se cria a pontuação da nota declarada: cada resposta vale pontos (ou meses × pontos por mês), por parcial. Quando a mesma resposta vale pontos diferentes conforme o nível da vaga, marque "Pontos por nível" na pergunta: aparece uma coluna de pontos para Superior, Técnico e Médio (no 93/2026, "1 ano" de experiência vale 5 no nível superior e 4 no técnico e no médio). O nível sai do nome do cargo da vaga ("(Nível Superior)", "Técnico de…") ou da regra de classificação do edital. Essa nota recalculada (na tela, "Nota recalculada" na aba Regra e a coluna "Recalculada" na Triagem) é a pontuação autodeclarada na inscrição: com a "Nota do corte e da ordem do lote" em "Nota declarada na inscrição" (o padrão quando há nota declarada), é ela que faz o corte e a ordem do lote; a "Nota declarada (ART)" do questionário da Empregare fica para comparar, e a diferença além da tolerância vira aviso.',
-    fato: "",
     fonte:
       "src/lib/avaliacao-documental/nota-declarada.ts; supabase/migrations/20261006100000_regra_da_analise.sql; supabase/migrations/20261007140000_declarada_por_nivel.sql",
     abrir: "avaliacao-documental",
@@ -1021,7 +953,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No arquivo da Empregare cada pergunta é uma coluna "Pergunta N - enunciado", e o número N da mesma pergunta muda de vaga para vaga no mesmo edital (no 93/2026 a experiência é a Pergunta 10, 11 ou 12, conforme o cargo). Por isso, na regra, escreva o começo do enunciado — por exemplo "Experiência Profissional" —, sem acento ou caixa importando; ele não confunde com "Anexe o comprovante de Experiência Profissional…", que começa diferente. O começo do nome ("Pergunta 15 -") ainda funciona, mas só serve quando o número não muda. Quando o próprio enunciado muda de questionário para questionário, separe as alternativas com ";" (ex.: "Selecione sua Experiência Profissional; Marque a pontuação referente"): vale qualquer uma. Se o texto casar com mais de uma coluna, a regra não usa nenhuma e a Triagem avisa que a pergunta é ambígua; aí escreva um começo que só ela tenha.',
-    fato: "",
     fonte:
       "src/lib/avaliacao-documental/nota-declarada.ts; python/monitora/avaliacao_documental/nota_declarada.py; supabase/correcoes/20261007-perguntas-pelo-texto.sql",
     abrir: "avaliacao-documental",
@@ -1038,7 +969,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No modo avançado (no fim da aba Regra) e no passo 5 do assistente (fechado até abrir), "Testar com um candidato fictício" calcula na hora, sobre o formulário (mesmo sem salvar), a nota, as parciais, a situação (Apto, Inapto por requisito, Inapto por nota mínima) e o parecer de um candidato inventado: nível da vaga, modalidade, indígena e aldeia, a situação e o motivo de cada bloco, títulos, cursos, vínculos e observações prontas. Entradas à esquerda, resultado preso à direita (em tela estreita, em cima). Nada é gravado. A nota mínima vem da regra de classificação do edital; sem ela, dá para digitar uma só para a prévia. A conta oficial, em lote, para a Provisória e o lote é feita pela base Python e confere com os mesmos casos de teste.',
-    fato: "",
     fonte:
       "src/modulos/avaliacao-documental/previa.tsx; tests/fixtures/avaliacao-documental/casos-de-pontuacao.json",
     abrir: "avaliacao-documental",
@@ -1057,7 +987,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "A experiência une os vínculos aceitos que se sobrepõem (e emenda o que começa no dia seguinte), conta os dias com o primeiro e o último, e os meses são os dias ÷ 30 (só os inteiros). A pontuação é por mês ou por período completo (ex.: a cada 6 meses além do mínimo exigido), com teto, e pode mudar com o nível da vaga. Abaixo do mínimo exigido, elimina ou só registra, conforme a regra. O estágio de indígena sem experiência vale horas ÷ 8 ÷ 22 meses. Os desempates (saúde indígena, atenção básica…) saem em anos de 365 dias, meses de 30 e dias. Os títulos valem pelo nível da vaga (o maior, ou somados se a regra disser), e os cursos pela faixa de carga horária, com teto.",
-    fato: "",
     fonte: "src/lib/avaliacao-documental/pontuacao.ts",
     abrir: "avaliacao-documental",
   },
@@ -1078,7 +1007,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A regra muda por nível da vaga e, quando o edital pede, também por cargo: em "Diferenças por cargo" (no passo 2 do assistente e no modo avançado), cada diferença diz a quem vale — as vagas do edital, com o cargo de cada uma, e/ou o começo do nome do cargo pelo quadro de vagas ("CARGO 15"; "CARGO 1" não pega o "CARGO 15") — e o que muda em cada bloco: o teto e as faixas dos cursos, itens extras que pontuam (ex.: o certificado de condução de UMCQA do Motorista categoria D, +5, até 15 em cursos no Edital 114/2026), o teto da titulação ou da experiência, a área exigida da experiência e os requisitos daquele cargo (cada um com o motivo da eliminação). Vale primeiro o código da vaga, depois o nome do cargo; e o cargo vence o nível, que vence o padrão. A mesma conta roda na tela, na base Python e no banco.',
-    fato: "",
     fonte:
       "src/lib/avaliacao-documental/regra-por-cargo.ts; src/modulos/avaliacao-documental/assistente/diferencas-por-cargo.tsx; supabase/migrations/20261013130000_regra_por_cargo.sql",
     abrir: "avaliacao-documental",
@@ -1098,7 +1026,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na ficha, o item "Requisito específico do cargo" mostra só os requisitos do cargo da vaga, um por linha, cada um com Confere / Não confere; o Não confere já traz o motivo pronto (com o item do edital) e elimina. Com todas as linhas Confere, o item fica Conforme; marcar Confere no item sem passar pelas linhas deixa a falta "Confira cada requisito do cargo". Nos cursos ou na titulação, o item extra do cargo (ex.: UMCQA) é uma linha própria com Confere / Não confere: conferido, soma os pontos dele até o teto do cargo ("Cursos 0/15"); na pontuação pelos itens, a ficha pede essa decisão. Na experiência, aparece a área exigida do cargo (texto do Anexo I do edital).',
-    fato: "",
     fonte:
       "src/modulos/avaliacao-documental/ficha/diferencas-do-cargo.tsx; src/lib/avaliacao-documental/regra-por-cargo.ts",
     abrir: "avaliacao-documental",
@@ -1116,7 +1043,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Documento exigido como requisito do cargo não pontua de novo (itens 8.2.7 e 8.2.10.5 do 114/2026). Quando a regra diz que o requisito "não pontua em" títulos ou cursos, a ficha avisa no item: se o nome de um curso ou título lançado tem os termos do requisito (ex.: "direção defensiva", "cromatografia"), aparece o aviso naquela linha; se o requisito já foi conferido e há cursos lançados, aparece o lembrete. A decisão é do avaliador: recusar a linha com o motivo, ou manter se for outro documento.',
-    fato: "",
     fonte:
       "src/lib/avaliacao-documental/regra-por-cargo.ts (avisosDoTituloUnico)",
     abrir: "avaliacao-documental",
@@ -1137,7 +1063,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Quem é inapto por requisito (ex.: Escolaridade "Não confere", curso diverso do exigido) não tem os títulos avaliados (item 8.2.1 do 114/2026): o resultado é Inapto (requisito) e a nota final é 0 — isso não muda a classificação, o lote nem o painel oficial. Quando a regra liga "Mostrar a pontuação dos títulos mesmo quando inapto por requisito (só informativa)" (no passo 4 do assistente, em "Inapto por requisito", e no modo avançado, em Parecer), a ficha mostra também, abaixo do resultado, "Pontuação dos títulos (informativa): 10" com as parciais (Titulação 8 · Cursos 2 · Experiência 0) e "Não entra na nota final", e o parecer ganha a linha do modelo "Pontuação informativa" (campos {nota_informativa} e {distribuicao_informativa}), ex.: "Pontuação apurada dos títulos, para fins informativos: 10,0 pontos (Titulação 8,0; Cursos 2,0; Experiência 0,0)." A pontuação informativa é a soma das parciais apuradas, gravada junto com o resultado da ficha; a nota final oficial continua 0. Desligada (o padrão), tudo fica como antes. Ligar ou desligar cria uma versão nova da regra, que a coordenação confere.',
-    fato: "",
     fonte:
       "src/lib/avaliacao-documental/pontuacao.ts (pontos_informativos), src/lib/avaliacao-documental/pontos-informativos.ts, supabase/migrations/20261014170000_pontos_informativos_no_inapto.sql",
     abrir: "avaliacao-documental",
@@ -1159,7 +1084,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A coordenação de um edital na Avaliação documental é o gestor do edital (grupo Gestor de edital com Administrador em Avaliação documental e acesso ao edital, automaticamente, sem cadastro) ou quem estiver como Coordenação na equipe; o administrador global também coordena. Só a coordenação muda a regra e a equipe. Na aba Equipe entram analistas e revisores (precisam de Editor em Avaliação documental) e coordenadores (precisam de Administrador), no edital todo ou numa vaga, com limite de fichas opcional; a pessoa também precisa ver o edital (área e coordenação). Por isso a lista "Pessoa" só traz quem já tem a área do edital (ex.: Projetos) e Editor ou mais em Avaliação documental — sem isso, a pessoa não aparece (é comum aparecerem só gestores e administradores, que já têm as duas coisas). Para incluir outra, um administrador dá em Configurações › Acessos a área do edital e Editor em Avaliação documental (pelo grupo ou por exceção individual); quem ainda não tem conta recebe o convite lá. Se faltar a permissão, o sistema diz qual — ela é dada em Configurações › Acessos. Tirar alguém da equipe pede o motivo e só desativa a linha, que fica no histórico.',
-    fato: "Na Avaliação documental, o gestor do edital coordena automaticamente; analista e revisor precisam de Editor e coordenador de Administrador em Avaliação documental.",
     fonte:
       "src/lib/avaliacao-documental/equipe.ts; supabase/migrations/20261006100000_regra_da_analise.sql",
     abrir: "avaliacao-documental",
@@ -1176,7 +1100,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "A Avaliação documental tem permissão própria, separada do Painel das análises: Leitor vê a Fila dos editais que enxerga (Regra, Equipe e Triagem são só de quem coordena o edital); Editor trabalha nas fichas dos editais em que está na equipe (nas próximas fases); Administrador coordena os editais em que é gestor ou está como coordenação. No começo, o administrador global, o Gestor de edital e o Coordenador têm Administrador e os demais grupos não veem o item — quem vai analisar recebe Editor em Configurações › Acessos. Vale também a área e o recorte da coordenação do edital.",
-    fato: "",
     fonte:
       "supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql; src/lib/acessos/access-roles.ts",
     abrir: "config:acessos",
@@ -1193,7 +1116,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O critério étnico só soma os pontos de aldeia quando a aldeia está na lista oficial do DSEI do edital (se a regra pedir a lista). A aba Regra mostra quantas aldeias o DSEI tem; só o administrador global carrega ou atualiza a lista ("Atualizar a lista"), uma por linha, no formato NOME ou NOME-(polo), com a fonte. A lista enviada passa a ser a vigente: as aldeias que saíram são desativadas, não apagadas.',
-    fato: "",
     fonte: "supabase/migrations/20261006100000_regra_da_analise.sql",
     abrir: "avaliacao-documental",
   },
@@ -1217,7 +1139,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A Triagem tem um cabeçalho com o edital, as seções Pessoas, Por vaga e Regra, o "⋯" das ações da coordenação e o Atualizar. Logo abaixo fica a faixa de situação, num card só: Inscritos, No lote (com a porcentagem dos inscritos), Por decisão (só informativo), Podem entrar (o total da lista de quem está fora do lote ou eliminado e pode entrar por decisão) e Eliminados. Clicar num número leva à lista dele: Inscritos e Podem entrar abrem Pessoas já filtrada (o número de Podem entrar é o total da mesma lista), No lote abre Por vaga e Eliminados abre a lista dos eliminados, com os comunicados. Embaixo dos números, a barra da distribuição dos inscritos (no lote, fora do lote, eliminados), o lote ("Lote: 11 pela regra + 6 por decisão"), quantas vagas, as vagas ainda sem triagem e "Ver a regra". A tela abre em Pessoas. Em "Por vaga", cada vaga aparece com os números; aberta, carrega a classificação 50 por vez, com o tamanho do lote e a inclusão por decisão. Na lista dos eliminados, busca por código ou nome, filtro por vaga e por motivo, marcação de várias pessoas e os comunicados em PDF, ZIP ou para imprimir. Em "Regra", a situação (último cálculo, versão da regra e se está conferida, inscrições e notas declaradas congeladas, e quantos têm a ART diferente da nota recalculada, com atalho para os casos), o resumo da regra da Triagem, o cartão das inscrições e as listas oficiais (a Lista Geral por ART e o lote de convocação, para registrar e exportar). Recalcular, incluir por decisão da coordenação (o edital todo), descongelar as notas declaradas e congelar ou liberar as inscrições ficam no "⋯" do cabeçalho (só para quem coordena o edital), sempre com confirmação.',
-    fato: "",
     fonte:
       "src/modulos/avaliacao-documental/pre-classificacao.tsx; supabase/migrations/20261029210000_eliminados_da_triagem_por_motivo.sql",
     abrir: "pre-classificacao",
@@ -1240,7 +1161,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em "Pessoas" (a seção que a Triagem abre), digite o código ou o nome no campo de busca (a tecla "/" leva o cursor até ele; Esc apaga). A busca vale para o edital todo, sem abrir vaga por vaga, e pode ser recortada pela vaga e, em "Filtros", pela situação: Todas (classificados e eliminados, em duas listas no mesmo card), Classificados (no lote e fora), Eliminados ou Podem entrar por decisão — os números Inscritos e Podem entrar da faixa escolhem a situação. A lista mostra 50 e, ao chegar no fim da rolagem, mais 50, na ordem da Triagem (vaga, quem está no lote antes de quem está fora, posição); a pessoa aparece com o nome e, embaixo, "código · modalidade". Com algum filtro em uso aparece "Limpar". O filtro fica guardado nesta aba do navegador para cada edital e a vaga e a situação vão no endereço da página. Cada linha tem a ação principal à vista e o "⋯" com o resto: para o eliminado, o comunicado em PDF; para quem está fora do lote, "Incluir no lote" (azul; a gaveta já abre com a pessoa marcada e pede o motivo); para os demais, "Ver na vaga"; no "⋯", "Revogar decisão" (com motivo) e "Copiar código". A busca por CPF ainda não existe: as listas da Triagem não trazem o CPF.',
-    fato: "",
     fonte:
       "src/modulos/avaliacao-documental/pessoas-da-triagem.tsx; src/lib/avaliacao-documental/pessoas-da-triagem.ts",
     abrir: "pre-classificacao",
@@ -1260,7 +1180,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A Triagem tem regra própria, com versões, separada da regra da Avaliação documental e da Classificação: requisitos e motivos de eliminação, nota da lista (declarada ou ART) e tolerância, desempate, modalidade das cotas, nível da vaga e formação do lote. Ela aparece resumida no topo da tela da Triagem; para mudar, use "Editar nas Regras do edital" ou, em Editais, "Regras do edital" no ⋯ da linha do edital (etapa 1 Triagem). A Provisória por ART (requisitos da inscrição, nota declarada, base da nota e desempate da lista) e o lote saíram do formulário da regra da Avaliação documental: só a regra da Triagem vale para eles. Só a coordenação do edital (ou o administrador global) grava uma versão nova, sempre com motivo; a versão nova fica "a conferir" e outra pessoa da coordenação confere. Salvar não recalcula: a Triagem usa a regra na próxima execução (fim do robô da Empregare ou Recalcular).',
-    fato: "No Yeendé, a regra da Triagem mora em TB_REGRA_TRIAGEM e TH_REGRA_TRIAGEM desde 29/10/2026; a primeira versão de cada edital é a cópia exata do que a Triagem usava antes, com o mesmo resultado.",
     fonte:
       "supabase/migrations/20261029160000_regras_proprias_da_triagem.sql; python/monitora/avaliacao_documental/regra_da_triagem.py",
     abrir: "pre-classificacao",
@@ -1287,7 +1206,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A Triagem (página do Processo seletivo que antes se chamava Pré-classificação) mostra, por vaga, a Lista Geral de Classificação Provisória (item 8.3.1): os inscritos que o robô da Empregare trouxe, em ordem decrescente da nota que a regra manda usar: a nota declarada na inscrição, recalculada pela regra (o padrão quando a regra tem nota declarada; item 8.2.6 do 93/2026), ou a ART (a nota do questionário da Empregare, "24,0/30,0"). Quem não tem a nota da base usa a outra, com aviso. Empate na nota segue o desempate da regra (por padrão: idoso de 60 anos ou mais, o mais velho primeiro, e depois a candidatura mais antiga) e, por último, o código do candidato, para a ordem nunca variar. A Provisória tem caráter provisório e classificatório e não valida documentos: a conferência é na ficha, na etapa seguinte. Quem calcula é um job Python que roda no GitHub Actions e grava o resultado pronto; a tela só lê.',
-    fato: "No Yeendé, a Provisória por ART é calculada pelo job Python da triagem (scripts/pre_classificacao/) e gravada em TB_PRE_CLASSIFICACAO; a tela só lê.",
     fonte:
       "python/monitora/avaliacao_documental/pre_classificacao.py; supabase/migrations/20261006110000_pre_classificacao_e_lote.sql",
     abrir: "avaliacao-documental",
@@ -1306,7 +1224,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Antes de ordenar, cada inscrito passa pelas regras de eliminação automática da regra do edital, na ordem em que estão lá: por exemplo, a coluna SITUAÇÃO igual a "Cancelado" (cancelou a inscrição), a situação do questionário diferente de "Finalizado", REPROVADO = "Sim" na Empregare ou a resposta "Não estou de acordo" no termo de responsabilidade. A primeira que vale dá o motivo, que aparece em "Eliminados" na vaga e na lista oficial. O valor é comparado inteiro, sem diferença de acento e de caixa. Se a coluna que a regra cita não vier no arquivo, ninguém é eliminado por ela e a vaga mostra o aviso. Quem estava na lista e sumiu do arquivo da Empregare vira eliminado com o motivo "Saiu do arquivo da Empregare".',
-    fato: "",
     fonte:
       "src/lib/avaliacao-documental/pre-classificacao.ts; python/monitora/avaliacao_documental/pre_classificacao.py",
     abrir: "avaliacao-documental",
@@ -1325,7 +1242,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'ART é a Autodeclaração de Requisitos e Títulos: a nota que a Empregare calcula a partir das respostas do questionário de inscrição, antes de alguém conferir os documentos. Nas telas da Avaliação documental ela aparece como "Nota declarada (ART)" (ou "Nota declarada", com a sigla na dica, nas colunas estreitas): na Fila, no topo da ficha, na lateral da ficha ("mínima 15 · Nota declarada (ART) 13") e na Triagem. A ART muda quando a equipe ajusta pontos na Empregare durante a conferência; por isso, quando a regra tem a nota declarada configurada, o lote sai da nota declarada recalculada pelas respostas da inscrição (e congelada depois do fim das inscrições), e a ART fica para comparar. Na ficha, a coluna "Declarado" de cada bloco é a parte da ART daquele bloco (o que a resposta vale pela regra); somadas, dão a nota declarada. O Apurado é o que vale depois da conferência dos documentos.',
-    fato: 'No Yeendé, ART (Autodeclaração de Requisitos e Títulos) é a nota que a Empregare calcula pelo questionário, antes da conferência; a tela a chama de "Nota declarada (ART)".',
     fonte:
       "src/lib/avaliacao-documental/tela-da-pre-classificacao.ts (ROTULO_DA_ART, DICA_DA_ART)",
     abrir: "avaliacao-documental",
@@ -1344,7 +1260,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A ART (Nota da Autodeclaração de Requisitos e Títulos) é a nota que a Empregare calcula com as respostas do questionário. Se a regra tiver a nota declarada configurada (aba Regra), o sistema recalcula a nota pelas mesmas respostas e compara: diferença acima da tolerância da regra aparece como "diverge" na linha do candidato e no contador "ART × recalculada" (na tabela da vaga, a coluna "Recalculada" ao lado da "Nota declarada (ART)"). Só compara quando a nota declarada do candidato está completa: toda pergunta da nota declarada achada sem ambiguidade, a resposta dada mapeada na regra e, na pergunta com pontos por nível, o nível da vaga conhecido (resposta em branco, ou pergunta que não existe no questionário da vaga, vale zero, como na ART). Faltando um pedaço, não conta divergência. Se o nível da vaga não for identificado, a pergunta por nível fica fora da conta e a vaga mostra o aviso para conferir o cargo ou a regra de classificação. Muitas divergências de uma vez costumam indicar que falta uma pergunta na nota declarada da regra (no 93/2026, a experiência). É só um aviso para a coordenação conferir o questionário ou a regra. A nota que faz o corte e a ordem do lote é a da base da regra (a declarada completa, por padrão quando há nota declarada, ou a ART); veja "Nota do corte e da ordem do lote".',
-    fato: "",
     fonte:
       "src/lib/avaliacao-documental/nota-declarada.ts; python/monitora/avaliacao_documental/nota_declarada.py; src/lib/avaliacao-documental/pre-classificacao.ts",
     abrir: "avaliacao-documental",
@@ -1365,7 +1280,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na regra da Triagem (Editais › Regras do edital, etapa Triagem), o campo "Nota da lista e do corte" diz qual nota faz o corte (a nota mínima ou a linha de corte) e a ordem do lote: "Nota declarada na inscrição" ou "ART da Empregare". O edital 93/2026 (item 8.2.6) avalia quem tem o mínimo de 15 pontos "de acordo com as pontuações do quadro", isto é, a pontuação autodeclarada na inscrição. A ART da Empregare muda quando a equipe ajusta pontos lá durante a conferência (houve ART que caiu de 45 para 5), e isso tirava do lote quem tinha direito. Com a nota declarada, vale a nota recalculada pela regra a partir das respostas, quando a do candidato está completa (toda pergunta achada sem ambiguidade, a resposta mapeada e o nível da vaga conhecido); a ART fica só para comparar ("diverge"). Sem declarada completa, aquele candidato vai pela ART e a vaga mostra o aviso "Inscrito sem nota declarada completa". Na tabela da vaga, a nota usada aparece em negrito. É o padrão quando a regra tem a nota declarada configurada; sem nota declarada, vale a ART. Quem já está no lote continua: só sai eliminado.',
-    fato: "No Yeendé, quando a regra da avaliação tem nota declarada, o corte e a ordem do lote usam a nota declarada completa do candidato (item 8.2.6); a ART da Empregare fica só para comparar.",
     fonte:
       "src/lib/avaliacao-documental/pre-classificacao.ts; python/monitora/avaliacao_documental/pre_classificacao.py; supabase/migrations/20261007180000_lote_pela_declarada.sql",
     abrir: "avaliacao-documental",
@@ -1385,7 +1299,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A nota declarada de cada candidato congela na primeira triagem depois do fim das inscrições do edital (a etapa de inscrição do cronograma; com prorrogação, o fim mais tarde) ou, se o cronograma não tiver essa data, já na primeira. O sistema guarda a nota, as parciais e as respostas usadas e não recalcula mais, mesmo que as respostas mudem na Empregare; os recálculos usam o valor guardado. Só a nota declarada completa congela: a incompleta continua recalculada até ficar completa. Na tabela da vaga, o cadeado ao lado da nota recalculada mostra a data, e a aba diz desde quando as notas estão congeladas. Se for preciso refazer (por exemplo, a regra da nota declarada estava errada), a coordenação do edital clica em "Descongelar", informa o motivo (de 10 a 250 caracteres) e em "Descongelar e recalcular": o valor que era, o motivo e quem pediu ficam no histórico, e o recálculo congela de novo com as respostas de agora. Não dá para descongelar enquanto uma triagem está rodando.',
-    fato: "No Yeendé, a nota declarada congela na primeira triagem depois do fim das inscrições do edital e só muda se a coordenação descongelar, com motivo registrado no histórico.",
     fonte:
       "src/lib/avaliacao-documental/pre-classificacao.ts; scripts/pre_classificacao/pre_classificacao.py; supabase/migrations/20261007180000_lote_pela_declarada.sql",
     abrir: "avaliacao-documental",
@@ -1406,7 +1319,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Só quem está no lote de convocação (item 8.4) segue para a avaliação documental; o último do lote é a linha de corte. O tamanho de cada vaga vem, nesta ordem: do número definido para a vaga na aba Triagem (campo "Tamanho do lote", que vira versão nova da regra com motivo); do número fixo da regra; ou do múltiplo das vagas imediatas do quadro de vagas, com o cadastro reserva contando como mais uma vaga quando a regra inclui o CR (ex.: 3 × (11 + CR) = 36). Sem quadro de vagas não há como sugerir: a vaga mostra o aviso e ninguém entra até alguém definir o tamanho. No lote por modalidade, a ampla concorrência pega os primeiros de todos e depois cada cota pega os seus, entre os que ainda não entraram. Com "inclui os empatados", quem tem a mesma nota do último do lote também entra.',
-    fato: "No Yeendé, o tamanho do lote de uma vaga é o definido para a vaga, o número fixo da regra ou o múltiplo das vagas imediatas do quadro (o cadastro reserva conta como mais uma vaga quando a regra inclui o CR).",
     fonte:
       "src/lib/avaliacao-documental/pre-classificacao.ts; python/monitora/avaliacao_documental/pre_classificacao.py",
     abrir: "avaliacao-documental",
@@ -1426,7 +1338,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Quem entrou no lote só sai eliminado (por exemplo, cancelou a inscrição depois). Quando alguém sai e a regra manda repor ("a linha anda"), o próximo da Provisória entra num lote novo (2, 3…), com o motivo gravado: "Entrou no lugar de 7000654 (Cancelou a inscrição)". Sem reposição na regra, o lugar fica aberto e a vaga avisa. Um inscrito que chega depois com a ART maior não tira ninguém do lote: ele fica fora, e a vaga mostra o aviso "Fora do lote com nota acima da linha de corte". Quem já tem ficha não muda por recálculo: a ficha de quem sai eliminado fica na fila como "Fora do lote", com o motivo, e quem entra ganha ficha nova. Enquanto nenhuma ficha foi tocada (todas pendentes, sem ninguém atribuído, aberto, salvo ou concluído), dá para refazer o lote do zero (modo refazer_lote do job, no GitHub): quem continua mantém a ficha, quem sai fica com a ficha "Fora do lote" ("Lote refeito em dd/mm") e quem entra ganha ficha nova. Com uma ficha iniciada que seja, o job recusa ("o lote já está em análise: N fichas iniciadas") e o banco não tira ninguém do lote. Toda entrada e saída fica no histórico.',
-    fato: "",
     fonte:
       "python/monitora/avaliacao_documental/pre_classificacao.py; supabase/migrations/20261006110000_pre_classificacao_e_lote.sql",
     abrir: "avaliacao-documental",
@@ -1449,7 +1360,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Quando a coordenação decide que candidatos que a regra deixa fora do lote (eliminados automaticamente, como o questionário não finalizado, ou abaixo da nota mínima) devem ser analisados, a coordenação do edital (gestor do edital, coordenador da equipe ou administrador global) clica em "Incluir por decisão da coordenação" no menu "Ações" da Triagem (o edital todo, com busca por código ou nome, em qualquer aba), na vaga aberta em "Por vaga" ou em "Incluir no lote" na linha da pessoa (abas Pessoas e Eliminados) (é a Triagem que forma o lote; a Fila da Avaliação documental não repete essa ação), marca os candidatos e informa o motivo (de 5 a 250 caracteres; a sugestão é "Critério CORES"). O candidato entra na hora no último lote da vaga, com a ficha aberta na fila, e aparece com o selo "Decisão: Critério CORES" nas listas e no topo da ficha. A decisão vale em todo recálculo: mesmo que a regra o elimine ou o deixe abaixo do corte, ele continua no lote com a marca. Quem entra por decisão não conta para o tamanho do lote pela regra, não ocupa lugar de ninguém nem muda a linha de corte; os contadores mostram separado, por exemplo "Lote: 11 pela regra + 6 por decisão". Na Lista Provisória e no Lote de convocação, o nome sai com um asterisco e a nota "Incluído por decisão da coordenação: Critério CORES.". Para desfazer, a coordenação clica em "Revogar decisão" e informa o motivo (de 10 a 250 caracteres): o candidato volta ao que a regra diz e a ficha não concluída sai da fila como "Fora do lote". Com a ficha já concluída, a decisão não se revoga. Nada se apaga: a decisão, a revogação, quem fez, quando e o motivo ficam no histórico. Quem saiu do arquivo da Empregare não fica no lote, mesmo com decisão.',
-    fato: 'No Yeendé, a coordenação do edital inclui no lote, por decisão e com motivo (ex.: "Critério CORES"), candidatos que a regra deixa fora; eles ficam no lote em todo recálculo, contados à parte ("N pela regra + M por decisão"), até a coordenação revogar (não com a ficha concluída).',
     fonte:
       "supabase/migrations/20261007200000_inclusao_no_lote_por_decisao.sql; python/monitora/avaliacao_documental/pre_classificacao.py; src/modulos/avaliacao-documental/decisao-do-lote.tsx",
     abrir: "avaliacao-documental",
@@ -1471,7 +1381,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Hoje não há edital de treinamento: os de Projetos (992/2099) e da Saúde Indígena (991/2099) foram apagados em 04/11/2026, com os candidatos fictícios, as fichas e a triagem deles. Para treinar sem tocar em dados reais, peça ao suporte um edital de treinamento novo. Se ele for recriado, vem com uma cópia independente da regra conferida de um edital verdadeiro (editar a regra no treino grava uma versão do treino e o edital original não muda): em Projetos, a do Edital 93/2026 (versão 7: corte e ordem pela nota declarada, mínimo de 15 pontos do item 8.2.6, eliminação de quem cancelou e de quem não finalizou o questionário), com 40 candidatos fictícios ("Candidato Teste P01" a "P40") e 21 fichas pendentes no lote; na Saúde Indígena, a do Edital 111/2026 (DSEI Parintins, versão "SI26-PARINTINS — Edital 111/2026"), com 30 candidatos fictícios ("Candidato Teste 01" a "30") e 24 fichas pendentes. A triagem vem rodada pelo mesmo cálculo do robô, e cada candidato fictício representa um caso (empates, cotas, cancelados, questionário pendente, nota no limite do corte, o caso do "Critério CORES" para incluir no lote por decisão).',
-    fato: "",
     fonte:
       "supabase/migrations/20261008110000_treinamento_avaliacao_documental.sql; supabase/migrations/20261009120000_treinamentos_completos.sql; scripts/pre_classificacao/gerar_treinamento.py; tests/fixtures/avaliacao-documental/treinamento-projetos.json; tests/fixtures/avaliacao-documental/treinamento-saude-indigena.json",
     abrir: "avaliacao-documental",
@@ -1490,7 +1399,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A triagem roda sozinha no fim de cada carga do robô da Empregare, para os editais das vagas carregadas. A coordenação do edital também pode clicar em "Recalcular" na aba Triagem (o administrador global usa o "Rodar agora" das Configurações › Status das atualizações, para todos os editais). O botão fica travado enquanto a regra não está conferida ou enquanto o job roda. Depois do clique, a aba diz o que aconteceu: "Recálculo pedido às HH:MM" e, quando o job termina, "Triagem recalculada" (a aba relê sozinha enquanto ele roda; o Atualizar também relê a aba aberta). Se o pedido não sai, aparece "Recálculo não pedido:" com o motivo e o botão volta; "Só na versão publicada" quer dizer que o Yeendé está rodando no computador, onde o pedido ao GitHub não existe. Edital sem regra conferida não é calculado: o job explica no resumo e a aba mostra o aviso "Edital sem regra conferida".',
-    fato: "",
     fonte:
       "scripts/pre_classificacao/pre_classificacao.py; .github/workflows/pre-classificacao.yml; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql",
     abrir: "avaliacao-documental",
@@ -1512,7 +1420,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Durante as inscrições do edital (da véspera do início a 3 dias depois do fim, pelo cronograma), a aba Triagem mostra no topo o cartão "Inscrições": inscritos (candidatos ativos na Empregare), quantos finalizaram o questionário, quantos estão aptos para análise pela regra e quantos foram eliminados, um mini-gráfico diário de inscritos e aptos até o fim das inscrições e, em "Por vaga", inscritos, aptos e "hoje +N" (quantos entraram hoje). Os números vêm de um retrato gravado a cada triagem (no fim de cada carga do robô da Empregare): um por vaga e por dia, só contagens. Aptos pela regra: no lote pela nota mínima, os não eliminados com a nota da Provisória a partir da mínima; nos outros lotes, os do lote mais os acima da linha de corte. Com a regra ainda não conferida, os aptos são uma prévia (selo "prévia"); sem regra, só inscritos e finalizados. Sem carga ainda, o cartão diz "Aguardando a primeira carga da Empregare". A "Validação das inscrições" dos editais de Projetos não conta como período de inscrição. Para o 114/2026 o banco pede o robô da Empregare às 7h e às 13h até 15/10/2026.',
-    fato: "No Yeendé, o cartão Inscrições da Triagem mostra, durante as inscrições, inscritos, finalizados, aptos pela regra e eliminados, com a evolução diária, a partir do retrato gravado a cada triagem.",
     fonte:
       "src/modulos/avaliacao-documental/inscricoes-do-edital.tsx; src/lib/avaliacao-documental/acompanhamento-das-inscricoes.ts; python/monitora/avaliacao_documental/retrato_das_inscricoes.py; supabase/migrations/20261009140000_acompanhamento_das_inscricoes.sql",
     abrir: "avaliacao-documental",
@@ -1534,7 +1441,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Depois que as inscrições acabam, a coordenação pode congelar o edital na aba Triagem (cartão "Inscrições congeladas" › Congelar inscrições, com motivo). Com a trava ligada, o robô da Empregare não exporta nem grava candidatos das vagas do edital — no "Rodar agora" sem filtro ele pula o edital; com o edital ou a vaga pedidos, recusa a execução inteira — e a triagem não recalcula nem refaz o lote dele (no fim do robô, fica de fora; no Recalcular, é recusada). Continuam os modos seco, inclusive o "Só anexos" com "só comparar"; o "Só anexos" que grava (relê e guarda os anexos, sem mexer em situação nem lote) também pede a liberação. Quem liga e desliga: a coordenação da avaliação do edital ou o administrador global; cada mudança fica no histórico do cartão. Para uma carga excepcional, só o administrador global, em Status das atualizações › Rodar com opções, marca "Forçar edital com inscrições congeladas" e escreve o motivo: o banco registra a liberação (vale 12 horas) e a execução que a usou.',
-    fato: "No Yeendé, edital com inscrições congeladas não é atualizado pelo robô da Empregare nem pela triagem; só o administrador global força, com motivo registrado.",
     fonte:
       "src/modulos/avaliacao-documental/trava-das-inscricoes.tsx; src/lib/avaliacao-documental/trava-das-inscricoes.ts; supabase/migrations/20261020170000_inscricoes_congeladas.sql; supabase/migrations/20261022170000_robos_mais_robustos.sql",
     abrir: "avaliacao-documental",
@@ -1556,7 +1462,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Só o administrador global reinicia as fichas de um edital, em Fila › Ações da coordenação › Pedir reinício das fichas. Quando nenhuma ficha foi trabalhada (nenhuma concluída nem em análise com lançamento), um administrador reinicia na hora, com motivo e digitando o número do edital. Com trabalho feito, são dois passos com dois administradores globais diferentes: o primeiro pede, com motivo (pelo menos 3 palavras) e o número do edital digitado, vendo quantas fichas concluídas e em análise voltariam a Pendente; o pedido vale 24 horas e quem pediu pode cancelar. Outro administrador global vê no alto da Fila "Reinício pedido por … aguardando sua aprovação" e, digitando o número do edital, aprova (só então as fichas voltam a Pendente, sem responsável nem análise; as fora do lote ficam fora) ou recusa. Quem pediu não aprova o próprio pedido, e pedido vencido não executa. Edital com inscrições congeladas ou encerrado (todas as fichas do lote concluídas) não pode ser reiniciado, nem com dois administradores: o congelamento sai antes, pela Triagem. Pedido, aprovação, recusa, cancelamento e execução ficam no histórico da gaveta; cada ficha ganha o registro de reinício. Nada se apaga.',
-    fato: "No Yeendé, reiniciar fichas de edital com trabalho feito exige dois administradores globais diferentes, com o número do edital digitado nos dois passos; edital congelado ou encerrado não é reiniciado.",
     fonte:
       "src/modulos/avaliacao-documental/reinicio-das-fichas.tsx; src/lib/avaliacao-documental/reinicio-das-fichas.ts; supabase/migrations/20261022210000_reinicio_das_fichas_com_dois_administradores.sql",
     abrir: "avaliacao-documental",
@@ -1576,7 +1481,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na aba Triagem, quem coordena o edital (ou quem tem Editor na Classificação) registra a "Lista Geral de Classificação Provisória (ART)" e o "Lote de convocação". Registrar grava um retrato com hash na Classificação (tipos PROVISORIA e LOTE), montado no banco a partir da triagem gravada; depois saem "Copiar para o SEI" e "Baixar DOCX", no mesmo modelo das outras listas (por vaga: classificação, nome e a nota da ART; a Provisória também tem a lista dos eliminados com o motivo). Os textos-padrão citam os itens 8.3.1 e 8.4 e podem ser trocados por edital na regra de classificação. Com "publica cada reposição" na regra, cada lote novo aparece para registrar como um novo Lote de Convocação; sem, aparece só o lote inicial e as reposições ficam registradas no histórico. Registrar exige a regra de classificação do edital; marcar como publicada exige Editor na Classificação.',
-    fato: "",
     fonte:
       "supabase/migrations/20261006110000_pre_classificacao_e_lote.sql; src/lib/classificacao/documento-sei.ts",
     abrir: "avaliacao-documental",
@@ -1593,7 +1497,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O seletor "Edital" da Avaliação documental mostra só os editais vigentes da área: ativos e que não estão concluídos nem cancelados (a mesma regra dos indicadores do monitoramento). Para ver os outros, marque "Mostrar todos os editais da área". O edital já escolhido continua na lista mesmo que deixe de ser vigente.',
-    fato: "",
     fonte:
       "src/lib/avaliacao-documental/editais.ts; supabase/migrations/20261006120500_lote_por_nota_minima.sql",
     abrir: "avaliacao-documental",
@@ -1611,7 +1514,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Alguns editais não recortam o lote por "N vezes as vagas": avaliam todos os que alcançam uma nota mínima (o 93/2026, item 8.2.6, avalia quem tem pelo menos 15 pontos). Na regra da Triagem (Editais › Regras do edital), o tamanho do lote "Todos acima da nota mínima" leva a nota (ao escolher, vem a nota mínima da regra de classificação) e o item do edital. Entram no lote todos os não eliminados com a nota da Provisória (a nota declarada na inscrição, quando a regra usa a base declarada; senão, a ART) maior ou igual à mínima; quem chega depois com a nota mínima também entra; quem tem menos não entra no lugar de quem sai. Sem a nota na regra, ninguém entra e a vaga avisa.',
-    fato: "No Yeendé, o lote pela nota mínima põe na avaliação todos os inscritos não eliminados com a nota da base da regra (a declarada na inscrição ou a ART) a partir da nota mínima da regra.",
     fonte:
       "src/lib/avaliacao-documental/pre-classificacao.ts; python/monitora/avaliacao_documental/pre_classificacao.py",
     abrir: "avaliacao-documental",
@@ -1630,7 +1532,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Com a mesma nota (a declarada ou a ART, conforme a base da regra), a Provisória segue os desempates da regra, na ordem escolhida na aba Regra: 60 anos ou mais (o mais velho primeiro; a idade é a da data de fim das inscrições do cronograma do edital, e só sem essa etapa no cronograma vale a data do cálculo), a maior experiência declarada (a faixa respondida na pergunta da experiência do questionário, achada pelo começo do enunciado, e lida em meses pelo limite de baixo — "6 meses obrigatórios" vale 6, "1 ano e 6 meses" vale 18, "De 1 a 2 anos" vale 12, e a faixa aberta por baixo, como "Menos de 6 meses", "Até 1 ano", "Abaixo de 2 anos" ou "Inferior a 6 meses", vale 0; resposta vazia ("--") ou que não dá para ler fica por último), a maior idade e a candidatura mais antiga. Por último vale sempre o código do candidato. O 93/2026 e o 114/2026 (item 10.1) usam 60 anos ou mais, a experiência declarada (pergunta "Experiência Profissional") e a maior idade; a experiência comprovada entra quando houver a ficha.',
-    fato: "",
     fonte:
       "src/lib/avaliacao-documental/pre-classificacao.ts; python/monitora/avaliacao_documental/pre_classificacao.py",
     abrir: "avaliacao-documental",
@@ -1668,7 +1569,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No alto da Fila, logo abaixo do cabeçalho (o edital e as seções Fila, Documentos e Configurações), fica a faixa de situação do lote, num card só: No lote, Pendentes, Em análise, Em revisão, Concluídas e, quando há, Saiu do lote (quem está no lote pela pré-classificação mas teve a ficha tirada do lote, como na importação da planilha), cada um com o número grande e, embaixo, a porcentagem do lote (em Concluídas, também quantas deram Apto; em No lote, quantos entraram pela regra e por decisão, ou a porcentagem dos inscritos). Clicar num número mostra aquela etapa na lista (o escolhido fica marcado). Na linha de baixo da faixa: a barra da distribuição do lote (verde concluídas, azul em análise, violeta em revisão, amarelo pendentes, cinza saiu do lote; quem está no lote e ainda não tem ficha conta como pendente, e as partes somam o lote), o selo do ritmo de hoje (o mesmo do card "Ritmo da análise" do Painel das análises, quando a pessoa pode lê-lo), "Hoje N" (as concluídas hoje; com o prazo da análise no cronograma, "Hoje N de M", com a meta do dia) e "N fora do lote", que mostra quem não está no lote (eliminados e ranqueados fora do corte). Embaixo, o bloco "Por vaga (N)", fechado por padrão (o sistema lembra se você o deixou aberto): aberto, uma tabela curta com o código, o cargo e a lotação, a barra, concluídas de N, em análise, pendentes e, quando alguma vaga tem, saiu do lote (a mesma conta da faixa); clicar no título Vaga, Concluídas ou Pendentes ordena e clicar numa vaga filtra a lista por ela (o mesmo filtro Vaga da barra). A lista vem num card: no alto, a busca por código ou nome (a tecla "/" leva até ela; Enter com o código abre a ficha; Esc apaga), Vaga e Responsável (Qualquer, Minhas fichas, Sem responsável ou um analista), o botão "Filtros" (Modalidade e os filtros salvos), "Limpar" quando há filtro (fica na etapa), o "⋯" das ações da coordenação e "Pegar próxima ficha". A tabela mostra a pessoa numa coluna (o nome e, embaixo, "código · modalidade") e as colunas que fazem sentido na etapa: em Concluídas, a nota, o resultado (Apto ou Inapto), o responsável e a data; em Pendentes e Em análise, a posição, a nota declarada (ART), o responsável e a reserva; fora do lote, a situação. Cada linha com ficha tem "Analisar" (azul, na ficha pendente) ou "Abrir" e o "⋯": para a coordenação, "Atribuir a…", "Liberar reserva" e "Mandar para revisão" (as mesmas regras e a mesma confirmação das ações em lote, só para aquela ficha), e para todos "Copiar código". Com a vaga em "Todas", a tabela agrupa por vaga: cada grupo tem um cabeçalho com o código, o cargo, o lote ("lote 12 (11 pela regra + 1 por decisão)") e a linha de corte, e clicar nele recolhe ou mostra o grupo. O cabeçalho da tabela fica preso no alto ao rolar; clicar no nome da coluna ordena (Pessoa ordena pelo nome; de novo inverte; a terceira vez volta à ordem da Provisória). A lista mostra 50 e, ao chegar no fim da rolagem, mais 50; o rodapé diz "Mostrando N de M" e "Exportar em Excel" e "Salvar em PDF" baixam a etapa aberta com as colunas e a ordem da coluna, sem o agrupamento. Sem ninguém na etapa com os filtros, aparece "Ninguém por aqui". Cada inscrito do lote tem uma ficha: Pendente (na fila, livre ou já com um analista), Em análise (o responsável abriu), Em revisão (a coordenação mandou revisar), Concluída ou Fora do lote (saiu eliminado; a ficha fica, com o motivo). As fichas são abertas sozinhas no fim de cada triagem; a coordenação também tem "Abrir fichas do lote", no "⋯" das ações da coordenação. A lista mostra o nome do candidato a quem tem acesso de leitura à Avaliação documental, nunca o CPF.',
-    fato: "",
     fonte:
       "src/modulos/avaliacao-documental/fila.tsx; supabase/migrations/20261006120000_fichas_fila_e_reserva.sql",
     abrir: "avaliacao-documental",
@@ -1686,7 +1586,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O analista do edital (Editor na Avaliação documental e na equipe como Analista) clica em "Pegar próxima ficha" e recebe a próxima ficha na ordem da Provisória: primeiro as suas (a que já está em análise e as que a coordenação distribuiu), depois a primeira livre das vagas que ele analisa. Duas pessoas nunca recebem a mesma ficha. Quando a regra usa a distribuição inicial, as fichas livres não se pegam (a coordenação distribui), a não ser que a regra deixe livres os que entram depois. Em Responsável, "Minhas fichas" mostra só as que estão com você; digitar o código do candidato na busca e apertar Enter abre a ficha direto.',
-    fato: "",
     fonte:
       "supabase/migrations/20261006120000_fichas_fila_e_reserva.sql (pegar_proxima_ficha)",
     abrir: "avaliacao-documental",
@@ -1705,7 +1604,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A coordenação do edital marca fichas na Fila e, na barra da seleção que aparece em cima da tabela, usa "Atribuir a…" (ou "Distribuir as livres", no "⋯" das ações da coordenação) e vê a prévia: quantas cada analista recebe e com quantas fica, antes de gravar. A conta segue a regra do edital: cada ficha, na ordem da Provisória, vai para quem analisa a vaga e tem menos fichas pendentes, respeitando o limite da equipe e, no critério "Até um limite", o limite da regra; o que não cabe fica livre na fila. Dá para mandar tudo para uma pessoa ou devolver à fila. Redistribuir e devolver pedem motivo (10 a 2.000 caracteres, com pelo menos 2 palavras), ficam no histórico e a reserva cai; ficha concluída ou fora do lote não é mexida. Se alguém mexeu na ficha depois que a tela leu, nada grava e a tela pede para atualizar. Na distribuição inicial, quem entra no lote depois vai sozinho para quem tem menos pendentes.',
-    fato: "No Yeendé, a distribuição das fichas dá cada ficha, na ordem da Provisória, ao analista da vaga com menos pendentes, dentro do limite.",
     fonte:
       "src/lib/avaliacao-documental/distribuicao.ts; python/monitora/avaliacao_documental/distribuicao.py",
     abrir: "avaliacao-documental",
@@ -1724,7 +1622,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Quem abre a própria ficha fica com a reserva por 15 minutos, renovada sozinha enquanto a ficha está aberta e liberada ao fechar; só quem tem a reserva grava. Quem abre uma ficha em uso vê "Em uso por <nome> desde HH:MM", só para leitura. Se a pessoa saiu sem fechar, a reserva vence sozinha; a coordenação pode liberar antes (na ficha ou em lote, em "Liberar reservas"), com motivo de pelo menos 2 palavras, e isso fica no histórico. Mudar a ficha com uma versão velha é recusado ("mudou desde que você abriu").',
-    fato: "",
     fonte:
       "supabase/migrations/20261006120000_fichas_fila_e_reserva.sql (reservar_ficha, renovar_reserva, liberar_reserva)",
     abrir: "avaliacao-documental",
@@ -1740,7 +1637,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na Fila, depois de combinar etapa, vaga, responsável, modalidade e busca, abra "Filtros" e use "Salvar filtro" para guardar a combinação com um nome (até 30 por pessoa; o mesmo nome troca a anterior). Os filtros salvos são só seus, valem em qualquer edital e ficam no mesmo "Filtros"; o último filtro usado também é lembrado neste navegador.',
-    fato: "",
     fonte:
       "supabase/migrations/20261006120000_fichas_fila_e_reserva.sql (salvar_filtro_fila)",
     abrir: "avaliacao-documental",
@@ -1766,7 +1662,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'As ações da coordenação ficam no "⋯" ao lado de "Pegar próxima ficha": Distribuir as livres, Relatório de motivos, Abrir fichas do lote (quando há quem esteja no lote sem ficha) e, para o administrador global, o pedido de reinício das fichas. Espelhos e modelo do espelho ficam só na seção Documentos; a inclusão por decisão, só na Triagem. Quem não coordena não vê o "⋯" nem as caixas de marcar. A coordenação marca fichas na lista (a linha marcada fica destacada), ou usa "Selecionar esta página" (a caixa do cabeçalho faz o mesmo) e, com a página marcada, "Selecionar todos os N resultados" (todas as fichas do filtro). A barra em cima da tabela diz sempre o alcance ("1 ficha selecionada (de 73 no resultado)", "Todas as 73 fichas do resultado selecionadas") e, com algo marcado, oferece: Atribuir a… (com a prévia), Liberar, Mandar para revisão (fichas pendentes ou em análise; motivo obrigatório, com pelo menos 2 palavras) ou Reabrir (fichas concluídas ou em revisão, com o motivo da lista). Ficha concluída não é atribuída direto: reabra primeiro — ela volta a Em análise com o mesmo responsável — e então use Atribuir a…; a ação que não vale para a seleção fica apagada, e "Limpar seleção" desmarca tudo; trocar de etapa ou de filtro também limpa a seleção. A confirmação diz quantas fichas serão afetadas e se vão além da página. Para uma ficha só, o "⋯" da linha faz o mesmo. Toda ação pede confirmação e fica no histórico da ficha. Um analista com fichas pendentes ou em análise só sai da equipe depois que elas forem redistribuídas ou devolvidas à fila.',
-    fato: "",
     fonte:
       "supabase/migrations/20261006120000_fichas_fila_e_reserva.sql; supabase/migrations/20261110140000_reabrir_fichas_em_lote_e_coordenador.sql (reabrir_fichas)",
     abrir: "avaliacao-documental",
@@ -1792,7 +1687,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Ao abrir uma ficha (Abrir, Pegar próximo ou o código na busca + Enter), ela ocupa toda a área de conteúdo — fica só o menu lateral — e a lista some até você voltar. O cabeçalho fica preso no alto e mostra só o essencial: "← Voltar à fila", o nome do candidato em destaque com o código, uma linha discreta com a vaga (código · cargo · nível) e três chips — a nota declarada (ART), a posição na Provisória e a modalidade. Situação, responsável, reserva e versão da regra ficam no "i" ao lado dos chips; a reserva só aparece no cabeçalho quando faltam menos de 5 minutos ("Reserva acaba em 3 min"). À direita, as setas andam entre as fichas da lista como ela estava filtrada e ordenada na Fila ("2 de 87"). Trocar de ficha ou voltar salva antes o que falta; se não der para salvar, a tela pergunta. Esc também volta à fila. Logo abaixo fica o stepper (Identidade · Formação · Conselho · Titulação · Cursos · Experiência · Conclusão) com a barra de progresso. Recarregar a página (ou "Atualizar") volta para a mesma ficha; só "Voltar à fila" esquece.',
-    fato: "",
     fonte:
       "src/modulos/avaliacao-documental/fila.tsx (ModoDeAnalise); src/modulos/avaliacao-documental/ficha/cabecalho-da-ficha.tsx; src/modulos/avaliacao-documental/estado-da-fila.ts",
     abrir: "avaliacao-documental",
@@ -1840,7 +1734,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A ficha abre no MODO FOCO: um item por vez, no centro, na ordem do trabalho, de cima para baixo. (1) O que se pede (o título do bloco) e, num bloco compacto "O que o candidato informou", as respostas dele às perguntas que a regra liga ao item ("4 anos ou mais", "Especialização", "5 pontos"…) e, nas perguntas de anexo, a lista dos arquivos que ele enviou, cada um com o nome e o link direto para abrir na Empregare (sem o link capturado, o "Abrir na Empregare" de antes). (2) A pergunta "O documento confere com o declarado?" e as escolhas lado a lado: Confere (verde), Não confere (vermelho) e, nos itens que pontuam (titulação, cursos, experiência), Editar nota (azul) — teclas 1, 2 e 3 (aparecem ao passar o mouse). Nos itens em que o robô leu títulos, cursos ou vínculos do arquivo, no lugar das três escolhas vem o rodapé "Pontuação pelos itens aceitos" com Confirmar e Não confere (veja "Conferir pelos itens lidos e confirmar"). Confere aceita o que o candidato declarou: a pontuação fica igual ao declarado. Não confere pede só o motivo (os motivos do bloco em chips, com "Outro motivo (descrever)" por último, e "O candidato não enviou o documento") e a pontuação fica 0. Editar nota é para quando o documento comprova outra coisa: registre o que comprovou e a pontuação vem dos itens. (3) No Confere e no Editar nota, a lista de títulos ou vínculos aparece com a primeira linha já aberta. Cursos de Aperfeiçoamento NÃO têm lista (pedido da COREs, 14/10/2026): você decide pela faixa/nota do item — Confere (fica a pontuação declarada), Editar nota (a nota começa na declarada; ajuste com o − e o + e, se ficar diferente, escolha a justificativa) ou Não confere (com o motivo) —, sem digitar curso por curso; o resumo do robô ("Lido do arquivo: 2 certificados · 145 h, 60 h") continua ao lado de cada arquivo para ajudar. A linha vazia ou sem horas (aberta antes da mudança) e os cursos lidos do arquivo não trazem a lista de volta nem pedem nome e horas; só a ficha antiga com curso lançado à mão, completo e aceito, abre com a lista como estava. Quando as respostas do candidato trazem o curso com a carga horária ("NR-10 120h"), o período do vínculo ("01/02/2020 a 31/01/2022", "03/2018 a 12/2019") ou o título ("Mestrado"), as linhas já vêm preenchidas e marcadas "da resposta do candidato": é só conferir no documento e corrigir se precisar (mexer na linha tira a marca). Quem interpreta as respostas é o job Python da triagem, que grava as sugestões no banco; a tela só mostra. Sem nada que dê para interpretar, a linha abre vazia (o título vem com o nível da resposta). Com Declarado acima de 0, registrar ao menos um item completo e aceito é obrigatório também no Confere; com Declarado 0 ("Não possuo"), não. (4) Um só resumo: "Pontuação: 3 de 5 · declarou 5", com a diferença destacada só se houver. (5) No máximo uma mensagem por item, a mais útil para o próximo passo (ex.: "Registre ao menos um título.", "Escolha o motivo."); no Confere, se os itens registrados derem outra pontuação, uma linha avisa e oferece "Editar nota". Confere sem pendência passa sozinho ao próximo item que pede algo (menos quando a escolha acabou de abrir a linha, para você conferir o registro). Basta um clique: depois de completar a linha, o item já conta como conferido e o rodapé mostra "Próximo pendente"; clicar de novo na escolha marcada só confirma e avança (não desmarca nem muda nada — para trocar, escolha outra opção). O stepper do alto mostra a marca de cada item — número quando falta decidir, ✓ verde, ✕ vermelho, ⊘ cinza (não enviou), ! âmbar quando falta completar — e "X de 6 conferidos": só conta o item decidido e completo, então o ! e o contador nunca se contradizem; passe o mouse no ! para ver o que falta (a mesma mensagem do item). "Ver todos" troca para a lista completa em cartões compactos, com a Conclusão no fim; "Um por vez" volta ao foco, e a escolha fica lembrada neste navegador. A lateral mostra só a nota ("parcial" enquanto falta conferir), o mínimo, o resultado e a composição por bloco. Enquanto falta conferir algum item, o resultado fica neutro ("Em análise · 2 de 4 requisitos conferidos"); o Inapto só aparece quando um item conferido elimina. Cotas e blocos que não valem para o candidato aparecem na Conclusão ("Não se aplicam: …"). Sem resposta na Empregare, o item avisa que o candidato provavelmente não enviou o documento. Copiar o código e abrir o candidato na Empregare ficam no "⋯" da nota.',
-    fato: "No Yeendé, a ficha de análise mostra um item por vez, com as decisões em botões grandes e o progresso no alto, e calcula a nota pela regra do edital enquanto o analista confere.",
     fonte:
       "src/modulos/avaliacao-documental/ficha/ficha.tsx; src/modulos/avaliacao-documental/ficha/item-da-ficha.tsx; src/modulos/avaliacao-documental/ficha/progresso-da-ficha.tsx; src/lib/avaliacao-documental/respostas-do-candidato.ts; python/monitora/avaliacao_documental/sugestoes_da_ficha.py; src/lib/avaliacao-documental/ficha.ts (passosDaFicha, proximoPassoPendente, composicaoDaNota); src/lib/avaliacao-documental/pontuacao.ts",
     abrir: "avaliacao-documental",
@@ -1862,7 +1755,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Os documentos ficam na Empregare (entre logado nela). Ao lado de cada "Anexo" declarado, "Abrir na Empregare" abre a página do candidato pelo link que o robô captura — por enquanto, o currículo, não o arquivo — e a ficha mostra onde achar o anexo lá dentro: "Na Empregare: aba Questionários › Pergunta 4 — Anexe o documento de identificação com foto". Sem o link do candidato, o botão abre a vaga (e copia o código do candidato para a busca das candidaturas) ou, se nem a vaga foi capturada, a lista de vagas (e copia o código da vaga para a busca de Vagas Anunciadas); o aviso de copiado aparece no rodapé. Nos itens sem anexo, o "Abrir na Empregare" fica ao lado da resposta. No "⋯" da nota ficam "Copiar código" e "Abrir candidato na Empregare". Todo acesso fica registrado. Quando o robô passar a capturar o link direto de cada arquivo, o botão abrirá o arquivo.',
-    fato: "",
     fonte:
       "src/lib/avaliacao-documental/anexo-na-empregare.ts; src/modulos/avaliacao-documental/ficha/empregare.tsx; supabase/migrations/20261007130000_conteudo_da_ficha.sql (registrar_acesso_ficha)",
     abrir: "avaliacao-documental",
@@ -1909,7 +1801,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Um robô em Python abre os anexos que o candidato mandou na Empregare e lê o que dá para ler, para AJUDAR o avaliador — ele só sugere e alerta; quem decide é você. Ao lado de cada arquivo, na ficha, aparece uma linha "Lido do arquivo" com o resumo (ex.: "3 certificados · 145 h, 60 h, 40 h · nome confere") e, se houver, os alertas do arquivo numa linha só (nome do candidato não aparece no documento, CPF do documento diferente do dele, documento ilegível, imagem de baixa qualidade, nada encontrado). "Por imagem — confira" quer dizer que o arquivo era foto ou PDF escaneado e foi lido por reconhecimento de imagem (OCR): confira os números com mais atenção. Arquivo que é foto aparece com o ícone de foto (o link da Empregare abre o visualizador dela, que pede o login e registra o acesso, por isso não vira miniatura). Nos itens de cursos, titulação e experiência, cada certificado, título ou vínculo lido vira uma linha de conferência com o que foi lido (curso, horas, instituição e ano; título, curso e instituição; empregador, cargo, início e fim, carga semanal e dias), os alertas daquele item (carga horária abaixo do mínimo do edital, sem carga horária, sem data, data no futuro, período sobreposto, empregador não encontrado), o link "pág. N" para abrir o arquivo e três botões: Aceitar, Corrigir e Recusar (teclas A, C e R com a linha selecionada). Cada item mostra no máximo UM alerta: o que impede (nome divergente, CPF divergente, ilegível, período sobreposto com o MESMO empregador — possível vínculo repetido) em laranja; os leves (sem carga horária, empregador não encontrado, data não achada…) em cinza; os demais ficam num "+N" — passe o mouse para ler. Vínculo ao mesmo tempo que outro de empregador diferente não é alerta: ganha o selo neutro "concomitante" (os dias em comum contam uma vez). Vínculo atual sem data de emissão não é alerta: o texto diz "até hoje". Aceitar acrescenta a linha no item com a marca "lido do arquivo"; se a linha lida não conta sozinha (vínculo atual sem fim, curso sem horas, título não reconhecido), o Aceitar abre direto o Corrigir para você completar. Corrigir abre a linha já preenchida (empregador e cargo, início e fim, carga horária, título) para ajustar ao que o documento diz; "Aceitar com a correção" grava a linha marcada "lido do arquivo, corrigido" (o item aceito mostra "Corrigido: …") e dá para corrigir de novo ou desfazer. Recusar pede o motivo em chips curtos (fora da área da vaga, carga horária não comprovada, nome divergente, ilegível, período sobreposto, outro… com o texto); a recusa fica registrada na ficha, visível e editável, e "Desfazer" volta o item a pendente. "Conferir todos", no topo da lista, aceita de uma vez todos os itens ainda sem decisão daquele item da ficha (com ou sem alerta), sem mexer nos que você já recusou ou aceitou; o que falta dado (curso sem carga horária, vínculo sem data) fica pendente para corrigir. Logo depois aparece "Desfazer", que volta a pendente só os itens aceitos naquele clique. Quando há itens com alerta, aparece também "Aceitar todos sem alerta", que aceita só os sem nenhum alerta, deixando os com alerta para você olhar. A pontuação vem só das linhas aceitas (a conta da ficha e a do banco). Quando a leitura não achou ou errou um item, "Adicionar vínculo/curso/título", sempre à vista embaixo da lista, abre uma linha para digitar à mão ("Digitados à mão"). O robô não guarda o documento nem o texto dele: só o que aparece aqui, e o nome e o CPF só como "confere/não confere" (o número nunca é gravado). Sem leitura (o robô ainda não passou, o arquivo é ZIP/RAR/DOC antigo ou o download falhou), nada aparece e a ficha funciona como antes. Quem roda o robô é a equipe técnica, pelo workflow "Leitura dos arquivos da Avaliação documental" do GitHub (por edital, com limite de arquivos); ele recomeça de onde parou.',
-    fato: "No Yeendé, um robô em Python lê os anexos dos candidatos na Empregare (texto do PDF ou OCR) e a ficha mostra o que foi lido para o avaliador aceitar ou recusar item a item; a decisão e a pontuação continuam do avaliador.",
     fonte:
       "python/monitora/avaliacao_documental/leitura_de_arquivos/; scripts/robo-empregare/leitura_de_arquivos.py; scripts/robo-empregare/arquivo_empregare.py; .github/workflows/leitura-de-arquivos.yml; supabase/migrations/20261009220000_leitura_dos_arquivos.sql; src/lib/avaliacao-documental/leitura-dos-arquivos.ts; src/modulos/avaliacao-documental/ficha/leitura-dos-arquivos.tsx; docs/leitura-dos-arquivos.md",
     abrir: "avaliacao-documental",
@@ -1937,7 +1828,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Quando o robô leu títulos, cursos ou vínculos do arquivo do item, a ficha segue o caminho mais curto: (1) confira cada item lido — Aceitar, Corrigir ou Recusar — e, se a leitura não achou ou errou algum, use "Adicionar vínculo" (ou curso/título), sempre à vista embaixo da lista, para digitar à mão; (2) a pontuação sai dos aceitos, num rodapé: "Pontuação pelos itens aceitos: 30 de 35 · declarou 35"; na Experiência, logo abaixo, o tempo já unido ("Comprovado: 4 anos e 2 meses (50 meses) · 1.520 dias") e, se houver vínculos ao mesmo tempo, "N dias em comum entre vínculos contam uma vez" — a regra dos editais: dia em comum conta uma vez só; (3) confirme. "Confirmar" grava Confere quando os aceitos dão o declarado; quando dão outra pontuação, grava Editar nota com o valor dos aceitos e pede a justificativa (um chip do bloco); embaixo do rodapé aparece a "Justificativa do ajuste", já preenchida com o resumo dos itens. "Não confere" pede só o motivo, como antes. "Editar nota", discreto à direita, é só o ajuste fino: abre o − e + a partir da pontuação dos aceitos. Se você aceitar, recusar, corrigir, adicionar ou tirar um item depois de confirmar, a confirmação volta a ser pedida (a pontuação mudou). As teclas continuam: 1 Confirmar, 2 Não confere, 3 Editar nota (aparecem ao passar o mouse). Itens sem leitura do robô seguem com as três escolhas de sempre (Confere · Não confere · Editar nota).',
-    fato: "Na ficha da Avaliação documental, com itens lidos do arquivo, o avaliador confere os itens, a pontuação sai dos aceitos e ele confirma (Confere se dá o declarado, senão Editar nota com justificativa); dias em comum entre vínculos contam uma vez.",
     fonte:
       "src/modulos/avaliacao-documental/ficha/item-da-ficha.tsx (DecisaoPelosItens); src/modulos/avaliacao-documental/ficha/leitura-dos-arquivos.tsx (ConferenciaDoLido, CorrecaoDoItem); src/lib/avaliacao-documental/apurado-da-ficha.ts (escolhaPelosItens, lancamentoConfirmadoPelosItens, semConfirmacaoSeMudouItens); src/lib/avaliacao-documental/comprovado-da-ficha.ts (diasEmComum); src/lib/avaliacao-documental/leitura-dos-arquivos.ts (aceitarItemCorrigido, alertasResumidos)",
     abrir: "avaliacao-documental",
@@ -1959,7 +1849,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Quando o questionário da vaga é retificado, a Empregare abre uma resposta nova e o candidato pode ter respondido mais de uma vez. A ficha usa só a resposta vigente — a mais recente que tem respostas —: os arquivos de cada item são dela, sem arquivo repetido. As anteriores ficam na lateral, recolhidas, em "O candidato enviou o questionário N vezes — ver envios anteriores": cada envio com o link das respostas e os arquivos (Pergunta 4, Pergunta 6…), para conferir se precisar. Se o candidato não respondeu o questionário retificado, a ficha usa a resposta anterior dele (os documentos aparecem no item), mas as respostas em texto e as sugestões, que vêm da exportação, ficam vazias; o envio em branco não aparece nos anteriores. Todo acesso fica registrado.',
-    fato: "",
     fonte:
       "supabase/migrations/20261009210000_ficha_com_a_resposta_vigente.sql (FC_RESPOSTA_VIGENTE_EMPREGARE, obter_ficha_analise); src/lib/avaliacao-documental/anexo-na-empregare.ts (enviosAnterioresDaEmpregare); src/modulos/avaliacao-documental/ficha/empregare.tsx (EnviosAnteriores)",
     abrir: "avaliacao-documental",
@@ -1980,7 +1869,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na ficha aberta: 1 marca Confere (e passa sozinho ao próximo item que pede algo), 2 marca Não confere (fica no item para escolher o motivo) e 3 abre Editar nota (só nos itens que pontuam); J e K vão ao item seguinte e ao anterior (a Conclusão é o último); Ctrl+S salva o rascunho na hora; Ctrl+Enter confere o que falta, conclui e abre a próxima ficha. A legenda fica no "?" ao lado de "Ver todos", e a tecla de cada escolha aparece ao passar o mouse no botão (os números não ficam mais escritos nos botões). Nos itens com leitura do robô, o 1 é o "Confirmar" pela pontuação dos aceitos; na linha de um item lido selecionada, A aceita, C corrige e R recusa. Os atalhos valem na página inteira enquanto a ficha está aberta, menos com o cursor num campo de texto, com uma janela aberta ou dentro da Aya. No celular, os botões fazem o mesmo.',
-    fato: "",
     fonte:
       "src/modulos/avaliacao-documental/ficha/ficha.tsx (aoTeclar); src/modulos/avaliacao-documental/ficha/progresso-da-ficha.tsx (ATALHOS); src/lib/avaliacao-documental/ficha.ts (escolhaDaTecla, ESCOLHAS_DA_FICHA)",
     abrir: "avaliacao-documental",
@@ -2014,7 +1902,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Cada item que pontua tem um só resumo: "Pontuação: X de 5 · declarou 5", com a diferença destacada só quando houver. O declarado é o que a resposta da Empregare vale pela nota declarada da regra. Confere: a pontuação é o declarado (o registro do item continua exigido) e não pede justificativa; se os itens registrados derem outra pontuação, uma linha avisa ("Pelos itens registrados, a pontuação seria 1.") e oferece "Editar nota". Não confere: pontuação 0 e só o motivo do bloco (o zero é consequência da escolha e não pede a justificativa da nota). Editar nota: a pontuação vem do calculado pelos títulos, cursos ou vínculos registrados; o − e + ajustam de meio em meio ponto, até o teto do bloco no nível da vaga, e "Usar o calculado" volta à conta. Diferente do declarado, pede justificativa: um motivo do bloco ou uma observação pronta da regra em chips (os do próprio bloco primeiro; as outras em "Outras justificativas") e, se quiser, um complemento. Sem justificativa, a mensagem do item avisa, o stepper mostra o ! âmbar e a ficha não conclui; a justificativa entra no parecer. Rascunhos de antes desta tela: se a pontuação gravada é igual ao declarado (inclusive o declarado gravado como ajuste, sem item), o item abre como Confere e não pede justificativa, só o registro; se é diferente, abre como Editar nota. Quem é inapto por requisito não precisa justificar as notas. Bloco sem pergunta mapeada na nota declarada não mostra o "declarou". Na pergunta com pontos por nível (a experiência do 93/2026), o declarado é o do nível da vaga. O nível vem da vaga e aparece no cabeçalho, só para leitura para o analista; a coordenação do edital pode mudá-lo no "⋯" da nota, com o aviso de que isso muda os pontos declarados.',
-    fato: "No Yeendé, nota apurada diferente da declarada na ficha exige justificativa padronizada, que vai para o parecer e para o histórico.",
     fonte:
       "src/lib/avaliacao-documental/ficha.ts (pendenciasDaFicha, divergenciaDoBloco); src/lib/avaliacao-documental/apurado-da-ficha.ts; supabase/migrations/20261007130000_conteudo_da_ficha.sql (FC_PENDENCIAS_FICHA)",
     abrir: "avaliacao-documental",
@@ -2043,7 +1930,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Nos itens Titulação, Cursos e Experiência, a ficha monta sozinha a "Justificativa do ajuste" a partir dos itens lançados: os aceitos (quantos, as horas de cada um com a faixa e os pontos da regra, e o total) e os não pontuados, agrupados pelo motivo — o motivo da recusa escolhido na linha (ex.: eventos acadêmicos, item 6.4), o motivo da recusa do item lido do arquivo (fora da área da vaga, carga horária não comprovada…), o curso abaixo do mínimo de horas da regra (ex.: abaixo de 40 h, item 8.2.6) ou sem carga horária, o título sem pontos no nível da vaga. Exemplo: "Aceitos 2 cursos (205 h): 145 h (faixa ≥120 h, 3 pontos) e 60 h (faixa 40–60 h, 1 ponto). Não pontuados: 1 curso de 30 h — abaixo de 40 h (8.2.6)." Na Experiência: os vínculos aceitos, os dias unidos, os dias em comum que contam uma vez, a conta além do mínimo ("Além do mínimo de 6 meses: 30 meses → 5 períodos de 6 meses → 25 pontos") e os vínculos não contados com o motivo. O campo aparece quando o item está em Confere ou Editar nota e a pontuação é diferente da declarada ou algum item não pontuou: com a leitura do robô, embaixo de "Pontuação pelos itens aceitos"; sem ela, na área da justificativa. O texto pode ser editado: o que você escreve fica, mesmo que os itens mudem; enquanto não editar, ele acompanha os itens (aceitar, recusar, corrigir ou adicionar refaz o resumo). "Usar o resumo dos itens" volta ao texto automático. Ele entra no parecer, em "Observações da análise", com o item do edital do bloco; o chip escolhido cujo texto o resumo já cita não se repete. O chip do bloco (ou a observação pronta) continua pedido quando a pontuação difere da declarada.',
-    fato: 'No Yeendé, a ficha da Avaliação documental resume na "Justificativa do ajuste" os cursos, títulos e vínculos aceitos e os não pontuados com o motivo, e esse texto entra nas observações do parecer.',
     fonte:
       "src/lib/avaliacao-documental/justificativa-dos-itens.ts; src/modulos/avaliacao-documental/ficha/item-da-ficha.tsx (JustificativaDoAjuste); src/modulos/avaliacao-documental/ficha/estado-da-ficha.ts; src/lib/avaliacao-documental/pontuacao.ts (textosDasJustificativas); python/monitora/avaliacao_documental/pontuacao.py (textos_das_justificativas)",
     abrir: "avaliacao-documental",
@@ -2071,7 +1957,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Todo item da ficha que tem motivos oferece, por último, "Outro motivo (descrever)": no Não confere (e no "não enviou") e na justificativa da pontuação diferente da declarada (Editar nota ou Confirmar com diferença). Ao marcar, aparece "Descreva o motivo (10 caracteres ou mais)" e esse texto VALE como o motivo: o item deixa de pedir "Escolha o motivo"/"escolha a justificativa" e o texto entra no parecer como motivo do item exatamente como você escreveu, sem o item do edital na frente (se quiser citar o item, escreva no texto, ex.: "Item 8.2.6: certificado sem assinatura da instituição."). Os motivos prontos da regra continuam saindo com o item do edital. Marcado sem texto, o item avisa "Descreva o outro motivo (10 caracteres ou mais)"; desmarcar apaga o texto, e trocar de Não confere para Confere/Editar (ou o contrário) também. No item sem motivos na regra, o campo "Motivo (10 caracteres ou mais)" continua sendo o motivo. Separado do motivo, TODO item — em qualquer cargo e situação: Confere, Não confere, Não enviou, Editar nota, itens lidos do arquivo e até Não se aplica — tem no fim do card o mesmo campo "Observação do avaliador (opcional)", para registrar o que for preciso sem mudar a decisão. Ela vai para "Observações da análise" do parecer como o avaliador escreveu, sem o item do edital (se quiser, ele cita o item no texto), uma linha por item, sem repetir a justificativa do ajuste nem o motivo escrito, e não é pendência. Os campos de texto avulsos de antes ("Observação (opcional)" do Não confere e "Complemento (opcional)" da justificativa) saíram: o motivo vai no "Outro motivo" e o comentário na Observação do avaliador. A observação geral da ficha continua na Conclusão.',
-    fato: 'No Yeendé, a ficha da Avaliação documental tem "Outro motivo (descrever)" em todo item com motivos, cujo texto (10 caracteres ou mais) vale como motivo e vai ao parecer como escrito, e a "Observação do avaliador" opcional no fim de todo item, que vai às Observações da análise como escrita, sem o item do edital.',
     fonte:
       "src/modulos/avaliacao-documental/ficha/observacao-do-item.tsx; src/modulos/avaliacao-documental/ficha/item-da-ficha.tsx; src/lib/avaliacao-documental/ficha.ts (pendenciasDaFicha, blocoJustificado); src/lib/avaliacao-documental/pontuacao.ts (observacoesDosItens, textosDasJustificativas); python/monitora/avaliacao_documental/pontuacao.py; supabase/migrations/20261015010000_outro_motivo_e_observacao_do_item.sql",
     abrir: "avaliacao-documental",
@@ -2109,7 +1994,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No item Experiência, a resposta do questionário aparece como "Declarado pelo candidato" (ex.: 2 anos) e não muda: é o que a pessoa respondeu. O tempo que vale é o "Comprovado", logo abaixo da lista de vínculos, calculado na hora pelos vínculos aceitos com a mesma regra da nota (sobreposições contam uma vez, o vínculo que começa no dia seguinte emenda, dias ÷ 30 e só os meses inteiros): "Comprovado: 2 anos, 7 meses e 27 dias (32 meses)" e, embaixo, a conta dos pontos ("Além do mínimo de 6 meses: 26 meses → 4 períodos de 6 meses → 20 pontos"). Em Cursos e Titulação aparece o mesmo resumo ("Comprovado: 3 cursos, 140 h"). Na lateral, o item ainda sem decisão mostra o valor provisório em tom neutro com "(prévia)" e a nota parcial soma essas prévias. Na justificativa da nota, os chips do próprio bloco vêm primeiro (motivos do bloco e observações prontas do mesmo assunto); as demais ficam em "Outras justificativas", recolhidas. Se a ficha der Inapto, a lateral e a Conclusão dizem por quê, com link para o item (ex.: "Experiência mínima de 6 meses não comprovada (comprovado 0 meses) — item 1.1.1 c"). Experiência com Confere ou Editar nota sem vínculo registrado (com Declarado acima de 0) pede o registro ("Registre ao menos um vínculo com início e fim."); com vínculos abaixo do mínimo, a pendência é a experiência mínima (! no stepper): registre os vínculos que comprovam ou escolha Não confere. O contrário também trava: Experiência em Não confere com os vínculos aceitos somando o mínimo ou mais não elimina (o mínimo é contado pelos vínculos aceitos; só zeraria a experiência), então a ficha pede que você desmarque os vínculos que não foram aceitos — sem a experiência mínima o candidato é eliminado — ou marque Confere. E a pontuação confirmada não pode passar do que os vínculos aceitos comprovam: Experiência em Confere vale a declarada, então se os vínculos lançados dão menos (ex.: 35 declarados e 16 meses aceitos, que dão 5 pontos) a ficha pede "Experiência confirmada com 35 pontos, mas os vínculos aceitos comprovam 16 meses (5 pontos)": lance os vínculos que comprovam o período declarado ou use Editar nota — a pontuação passa a ser a dos vínculos e, se precisar manter uma nota maior, escolha a justificativa do ajuste.',
-    fato: "No Yeendé, o mínimo de experiência da regra é conferido pelos vínculos aceitos lançados na ficha, não pela resposta do questionário nem pelo Apurado.",
     fonte:
       "src/lib/avaliacao-documental/comprovado-da-ficha.ts; src/lib/avaliacao-documental/justificativas-do-bloco.ts; src/lib/avaliacao-documental/motivos-do-resultado.ts; src/lib/avaliacao-documental/pontuacao.ts (apurarExperiencia); src/lib/avaliacao-documental/ficha.ts (pendenciasDaFicha)",
     abrir: "avaliacao-documental",
@@ -2131,7 +2015,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O parecer é gerado pela regra do edital: no Apto, a nota total e a distribuição por bloco; no Inapto por requisito, os motivos eliminatórios com o item do edital; no Inapto por nota mínima, a nota obtida e a mínima. Os motivos dos blocos, as justificativas de nota, as observações prontas marcadas e a Observação livre entram em "Observações da análise". O texto não se edita direto: muda-se pelo que foi marcado e pelo campo Observação. O parecer fica na etapa Conclusão (último passo do stepper), com o resumo dos itens, a nota final, as observações prontas (em chips) e a Observação livre. Enquanto falta conferir algum item, a prévia não mostra resultado: aparece "Em análise — o parecer é gerado quando todos os itens forem conferidos" e só os motivos já lançados nos itens conferidos (mesmo que um requisito já elimine). Com tudo conferido, o parecer completo aparece e "Copiar parecer" copia o texto. Na ficha concluída, vale o parecer gravado na conclusão.',
-    fato: "",
     fonte:
       "src/lib/avaliacao-documental/pontuacao.ts (calcularAvaliacao); src/modulos/avaliacao-documental/ficha/ficha.tsx",
     abrir: "avaliacao-documental",
@@ -2153,7 +2036,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na ficha concluída, na etapa Conclusão, o botão "Espelho de nota" (ao lado de "Copiar parecer") abre a impressão do navegador com o "Espelho de Pontuação da Análise Curricular", o documento simplificado para o atendimento ao candidato; "Baixar PDF" baixa o mesmo espelho já em PDF (A4, texto pesquisável, nome "espelho-<vaga>-<código>-<nome>.pdf"), gerado no navegador. Nada é gravado (nem no banco, nem no Storage) e não há consulta nova: o espelho sai do que a ficha já carregou e usa os mesmos textos do parecer. Traz o timbrado da AgSUS (Configurações › Marca), a saudação, os dados do registro (edital e unidade, candidato, código, modalidade, vaga, etapa e situação; a linha Descrição só aparece quando há regime e carga horária) e as notas. O modelo é escolhido pelo resultado gravado: no Inapto por requisito (eliminado), não há pontos nem a nota declarada — só "Não se aplica" na consolidada, e a justificativa traz os motivos da eliminação com o item do edital, inclusive o "Outro motivo" descrito; no Apto e no Inapto por nota mínima, vem também a pontuação por critério (declarada, após a análise e teto, com a justificativa de cada critério) e as observações registradas (a Observação do avaliador de cada item, as observações prontas e a observação geral). Dados internos (avaliador, CPF, questionário) não aparecem.',
-    fato: "",
     fonte:
       "src/lib/avaliacao-documental/espelho-de-nota.ts; src/lib/avaliacao-documental/espelho-da-ficha-gravada.ts; src/modulos/avaliacao-documental/ficha/espelho-de-nota.ts; src/modulos/avaliacao-documental/ficha/conclusao-da-ficha.tsx",
     abrir: "avaliacao-documental",
@@ -2179,7 +2061,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na aba Documentos da Avaliação documental, "Espelhos em massa (por vaga e filtro)" (só administrador e coordenação ou gestor do edital; o banco confere de novo) baixa um ZIP com um PDF por candidato (padrão; "espelhos-<edital>-<data>.zip", cada PDF "espelho-<vaga>-<código>-<nome>.pdf", gerados no navegador com o andamento "x de N PDFs") ou, em Formato › "Imprimir tudo junto", um documento só, com um espelho de nota por página, para imprimir ou "Salvar como PDF". Escolha a vaga (ou todas) e quais fichas concluídas entram: todas, só eliminados e inaptos ou só aptos. A ordem é por vaga; dentro dela, os aptos pela nota final (empate pela posição da triagem e pelo nome), depois os inaptos pela nota mínima e por fim os eliminados (Inapto por requisito) pelo nome. Ou cole a lista de códigos do candidato na Empregare (separados por vírgula ou um por linha, até 5.000): o documento sai na ordem colada e, no fim, a tela lista os códigos sem ficha neste edital e os com ficha ainda não concluída (com a situação). Cada espelho é exatamente o mesmo do botão "Espelho de nota" da ficha concluída (mesmos modelos: eliminado sem pontos e com pontos). A tela mostra quantos espelhos sairão antes de gerar e avisa acima de 500 ("vai gerar N páginas; pode demorar"); nesse caso, prefira gerar por vaga. A busca vem em partes de 200 fichas, com barra de progresso e "Cancelar", trazendo só o necessário de cada ficha (cerca de 1 KB), sem abrir a ficha inteira. Nada é gravado: nem no banco, nem no Storage. Se o download não começar, use "Baixar de novo"; se a impressão não abrir, "Abrir de novo".',
-    fato: "",
     fonte:
       "src/modulos/avaliacao-documental/espelhos-em-massa.tsx; src/lib/avaliacao-documental/espelhos-em-massa.ts; supabase/migrations/20261015180000_espelhos_de_nota_em_massa.sql",
     abrir: "avaliacao-documental",
@@ -2205,7 +2086,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na aba Documentos da Avaliação documental, "Modelo e pré-visualização" (só administrador e coordenação ou gestor do edital; também pelo botão "Editar os textos do modelo" na gaveta dos espelhos em massa) abre os textos da folha do edital: título, subtítulo, saudação (com {candidato}, que vira o nome em negrito), texto de abertura, nomes dos quadros (dados, notas, critérios, justificativa), rótulos das notas autodeclarada e consolidada, a nota do eliminado ("Não se aplica…"), o texto quando não há justificativa ("Sem observação registrada.") e o rodapé, além de mostrar ou não a nota autodeclarada no modelo com pontos. Subtítulo, abertura e rodapé podem ficar vazios (saem da folha); {candidato} só na saudação (obrigatório) e na abertura. O cabeçalho institucional (timbrado) aparece no topo, só para leitura: ele vem de Configurações › Marca e logo e vale para todos os documentos. "Inserir {candidato}" põe o marcador onde está o cursor; o contador mostra quantos caracteres faltam; com algum campo inválido, o aviso "N campos com erro" leva ao primeiro deles; Ctrl+S (⌘+S no Mac) salva. A prévia ao lado usa dados fictícios, com pontos ou eliminado (troque também pelas setas), acompanha a largura da tela e "Imprimir exemplo" abre a impressão da folha de exemplo. A folha segue o manual de identidade da AgSUS (fonte General Sans e azul da marca) e fica branca também no tema escuro. "Salvar modelo" vale na hora para o espelho da ficha, os espelhos em massa, a impressão e o PDF/ZIP; "Restaurar padrão" volta aos textos originais (salve depois). Só textos: quem aparece, notas, critérios e justificativas não mudam. Se outra pessoa salvou antes, a tela pede para recarregar. Cada versão fica no histórico do banco. O comunicado de eliminação antes da análise (Triagem) é outro documento e não usa este modelo.',
-    fato: "",
     fonte:
       "src/modulos/avaliacao-documental/modelo-do-espelho.tsx; src/lib/avaliacao-documental/modelo-do-espelho.ts; supabase/migrations/20261019120000_modelo_do_espelho_de_nota.sql",
     abrir: "avaliacao-documental",
@@ -2228,7 +2108,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na aba Documentos da Avaliação documental, "Espelhos das avaliações concluídas" lista as fichas concluídas do edital: busque pelo código da Empregare ou por parte do nome (sem acento), filtre a vaga, marque uma ou várias pessoas (a caixa do cabeçalho da tabela marca todas as da busca e da vaga, não só as já exibidas; a lista mostra 50 por vez e carrega mais ao rolar) e escolha, na barra que fica presa ao pé enquanto há marcação, "Baixar PDF" (uma pessoa), "Baixar ZIP" (um PDF por pessoa, gerado no navegador com o andamento "x de N" e Cancelar) ou "Imprimir" (um documento só). Os comunicados de eliminação antes da análise ficam na Triagem, que é a etapa que elimina: em "Comunicados de eliminação antes da análise", busque pelo código ou nome, marque na lista de eliminados de cada vaga (a caixa do cabeçalho marca todos os eliminados da vaga na busca; "Marcar todos os eliminados" marca os de todas as vagas) e use as mesmas saídas; o comunicado sai em ZIP "comunicados-<edital>-<data>.zip". Antes de emitir, a tela relê a triagem: quem deixou de estar eliminado e quem não tem justificativa registrada ficam de fora, com aviso. Nada é gravado. Na aba Documentos há um atalho "Abrir comunicados de eliminação".',
-    fato: "",
     fonte:
       "src/modulos/avaliacao-documental/documentos-em-lote.tsx; src/lib/avaliacao-documental/documentos-em-lote.ts; src/modulos/avaliacao-documental/espelhos.tsx; src/modulos/avaliacao-documental/pre-classificacao.tsx",
     abrir: "avaliacao-documental",
@@ -2250,7 +2129,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O comunicado de eliminação na Triagem só cita o item do edital quando ele foi conferido. Quem confere é o gestor ou o coordenador do edital, ou o administrador global, no quadro "Fundamento das eliminações" da aba Eliminados: para cada motivo, digita o item como no texto oficial e a fonte (o edital publicado ou a retificação). Nada vem preenchido: o item que a regra da Triagem cita aparece só como referência. Sem conferência, o comunicado sai só com o motivo. Mudar o item ou a fonte é retificar e pede justificativa; a conferência anterior fica no histórico, com quem, quando e a versão da regra. O item da nota mínima do lote (no 114/2026, o 8.2.6) também pede justificativa, porque a eliminação na triagem não decorre da nota. Se a regra da Triagem mudar o motivo, o fundamento fica "Reconferir" e sai do comunicado até ser conferido de novo. Nas eliminações administrativas (não finalizou o questionário, cancelou a inscrição, reprovado na Empregare) o comunicado não mostra notas. Quem ficou fora do lote pela nota não é eliminado e não recebe este comunicado. Nenhum motivo, nota ou resultado muda.',
-    fato: "",
     fonte:
       "src/modulos/avaliacao-documental/fundamentos-da-eliminacao.tsx; src/lib/avaliacao-documental/fundamento-da-eliminacao.ts; supabase/migrations/20261110215930_fundamento_conferido_da_eliminacao.sql",
     abrir: "avaliacao-documental",
@@ -2277,7 +2155,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na Fila da Avaliação documental, "Ações da coordenação" › "Relatório de motivos" (só administrador e coordenação ou gestor do edital; o banco confere de novo) lista as fichas pelos filtros: critério da regra vigente (Identidade, Formação, Requisito do cargo, cotas, Cursos, Experiência…), situação do critério ("Não confere ou não enviado", "Só não enviado", "Confere", "Não se aplica" — na ficha concluída, o critério que não estava no lançamento, como a cota fora da modalidade, conta como "Não se aplica"), motivo (os do critério e "Outro motivo"), resultado, situação da ficha (concluída por padrão; "Em análise" inclui as a revisar), vaga, avaliador, período de conclusão e "Só nota ajustada" (critério com justificativa de nota, ou seja, pontuação diferente da declarada). Os atalhos montam os mais pedidos: "Outro motivo por critério" (o critério escolhido, senão Identidade, com os textos agrupados), "Eliminados por critério" (Não confere ou não enviado e Inapto por requisito) e "Pontuação ajustada (cursos/experiência)". A tabela traz código, candidato, vaga (cargo ao passar o mouse), resultado, critério e situação, o texto do outro motivo, os demais motivos com o texto (não o código), quem concluiu e quando; os cards mostram quantas fichas, quantas com outro motivo e quantos textos distintos. "Agrupar pelo texto do outro motivo" junta os textos iguais (sem diferença de acento, maiúscula, espaço ou ponto final) com quantas fichas repetem: texto que repete muito é candidato a virar motivo padronizado na regra (aba Regra › bloco › motivos). Clicar num texto filtra a tabela por ele. "CSV" baixa para o Excel (UTF-8, ponto e vírgula) e "XLSX" baixa a planilha com as fichas e, havendo, a planilha "Outro motivo" com os textos e as contagens. O relatório não traz CPF, e-mail nem telefone e nada é gravado (nem banco, nem Storage). Os textos dos motivos vêm da versão vigente da regra: código que saiu da regra aparece como código.',
-    fato: "",
     fonte:
       "src/modulos/avaliacao-documental/relatorio-de-motivos.tsx; src/lib/avaliacao-documental/relatorio-de-motivos.ts; supabase/migrations/20261020120000_relatorio_de_motivos.sql",
     abrir: "avaliacao-documental",
@@ -2304,7 +2181,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Cada mudança na ficha é salva sozinha em um ou dois segundos; "Salvo às HH:MM" aparece no rodapé só depois de o banco confirmar, e "Alteração não salva" enquanto falta; Ctrl+S salva na hora. O rodapé fixo é mínimo: o "Salvo às", Anterior / Próximo item e um botão principal que muda com o momento — nenhum enquanto o item da vez pede decisão (as decisões dele são a ação), "Próximo pendente" quando ele já foi resolvido e falta algo em outro item, "Revisar e concluir" quando tudo foi conferido e, na Conclusão, "Concluir e próxima" com "Salvar rascunho". O que falta aparece no stepper (! âmbar no item; a Conclusão fica verde quando nada falta) e no resumo da Conclusão, que leva de volta ao item com um clique. "Concluir e próxima" fica travado até não faltar nada — a escolha de cada item, motivo do Não confere, motivo do item recusado, datas dos vínculos e justificativa de nota diferente da declarada (pedida só depois de o item ser conferido) — e então conclui e já abre a próxima ficha da sua fila. "← Voltar à fila" salva o que falta e solta a reserva; fechar a aba do navegador com alteração não salva pede confirmação. Se outra pessoa ou outra aba mexeu na ficha, o salvamento para com o aviso e nada é sobrescrito. A conclusão grava quem concluiu (o login) e a hora; não há campo para digitar.',
-    fato: "",
     fonte:
       "src/modulos/avaliacao-documental/ficha/estado-da-ficha.ts; src/modulos/avaliacao-documental/ficha/rodape-da-ficha.tsx; src/modulos/avaliacao-documental/ficha/conclusao-da-ficha.tsx; supabase/migrations/20261007130000_conteudo_da_ficha.sql (salvar_rascunho_ficha, concluir_ficha)",
     abrir: "avaliacao-documental",
@@ -2324,7 +2200,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A ficha concluída abre na Conclusão, só para leitura, com o resumo dos itens, o resultado, a nota, o parecer gravado e o histórico: cada rascunho com mudança, a conclusão e a reabertura, com quem, quando e o que mudou (situação, motivo, a nota de cada bloco de quanto para quanto e a justificativa). Só a coordenação do edital reabre ("Reabrir", no rodapé da ficha, ou várias de uma vez pela seleção da Fila), escolhendo o motivo numa lista. Coordena o edital o administrador global, o Gestor e o Coordenador com Administrador na Avaliação documental que veem o edital (área e coordenação) e quem está como coordenação na equipe do edital; a ficha volta a Em análise com o mesmo responsável. A ficha é analisada pela versão vigente da regra; ao concluir, guarda a versão usada, e uma versão nova da regra não muda a nota de quem já foi concluído (o banco lista as fichas afetadas ao salvar a regra). Pendentes e em análise passam a seguir a versão nova; concluir exige a versão vigente conferida.',
-    fato: "",
     fonte:
       "supabase/migrations/20261007130000_conteudo_da_ficha.sql (reabrir_ficha, FC_REGRA_VIGENTE_FICHA, salvar_regra_analise)",
   },
@@ -2342,7 +2217,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Ao reabrir uma ficha concluída, a coordenação escolhe o motivo numa lista fixa: Correção de experiência, Correção de cursos, Correção de formação/titulação, Correção de escolaridade ou requisito do cargo, Correção de documento de identificação, Correção de cota (PP/PI/PQ/PcD), Correção do critério étnico, Documento novo da Empregare, Decisão de recurso, Pedido da coordenação ou revisão, Erro de digitação ou lançamento e Outro. O complemento é opcional (até 500 caracteres) e, se preenchido, precisa ter palavras. Em "Outro", a descrição é obrigatória: pelo menos 15 caracteres e 3 palavras diferentes; sequências como "dsdfsdfsfsa" não contam como palavra. O histórico da ficha mostra o motivo escrito por extenso, com o complemento depois de um travessão. Se aparecer "Escolha o motivo da reabertura na lista", a página está na versão antiga: recarregue.',
-    fato: 'No Yeendé, a reabertura da ficha concluída tem motivo de uma lista fixa; "Outro" exige descrição de 15 caracteres e 3 palavras.',
     fonte:
       "supabase/migrations/20261021110000_motivos_da_reabertura.sql (reabrir_ficha, FC_MOTIVO_REABERTURA, FC_MOTIVO_PARECE_TEXTO); src/lib/avaliacao-documental/motivos-da-reabertura.ts",
     abrir: "avaliacao-documental",
@@ -2366,7 +2240,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Ao salvar e ao concluir, o banco recalcula a pontuação de Titulação, Cursos (quando há a lista de cursos) e Experiência a partir dos itens registrados na ficha, com a mesma conta da tela. No Confere, vale a pontuação declarada. Se ela passar do que os títulos, cursos ou vínculos aceitos dão, a ficha pede ajuste: registre o que comprova o declarado ou use Editar nota, que passa a valer o calculado; para manter uma nota maior, escolha a justificativa. Sem isso, a ficha não conclui. Declarado abaixo do que os itens comprovam não é falta: vale a declarada. Ficam de fora os Cursos decididos pela faixa (sem lista) e o candidato inapto por requisito. A experiência mínima também trava a ficha marcada como "Não enviou" quando os vínculos aceitos somam o mínimo, mas não trava quando outro critério já elimina o candidato (identidade, escolaridade, requisito do cargo): aí a experiência é só informativa. Todo dia, na conferência das 6h, as fichas concluídas que passaram a ter alguma pendência pela regra vão sozinhas para Em revisão, sem mudar a nota nem o resultado. O histórico registra "Conferência automática" com a pendência, e a fila mostra o motivo na coluna "Motivo da revisão". Isso só acontece com a chave "Conferências" ligada em Configurações › Automação.',
-    fato: "No Yeendé, a ficha concluída que passa a ter pendência pela regra vai para Em revisão na conferência diária, sem mudar a nota, e a fila mostra o motivo.",
     fonte:
       "supabase/migrations/20261023090000_calculo_conferido_no_banco.sql (FC_CALCULADO_DO_BLOCO, FC_VALIDAR_RESULTADO_FICHA, FC_PENDENCIAS_FICHA, revisar_ficha_concluida_com_pendencia); scripts/conferencias/revisao_das_fichas.py; src/lib/avaliacao-documental/ficha.ts (pontuacaoAcimaDoComprovado, pendenciasDaFicha)",
     abrir: "avaliacao-documental",
@@ -2387,7 +2260,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A experiência conta até a data limite do item Experiência. Se a regra não define essa data, vale o fim das inscrições do cronograma do edital (no 114/2026, 14/10/2026). Os dias depois dela não entram nem nos pontos nem no tempo do desempate. O vínculo "atual" ou "até o momento" recebe como fim a data limite, e não a data de hoje; se o documento foi emitido antes dela, o fim é a data de emissão, porque o documento só comprova até ali. Não se salva vínculo com data antes de 1960 nem com fim depois de hoje. Quando o robô de leitura encontra um fim no futuro (contrato com fim previsto ou ano lido errado), ele conta até a emissão do documento ou até hoje e marca o alerta "Fim lido depois da emissão do documento ou de hoje".',
-    fato: "No Yeendé, a experiência conta até o fim das inscrições do edital, salvo outra data limite na regra; o vínculo atual vai até essa data.",
     fonte:
       "supabase/migrations/20261023090000_calculo_conferido_no_banco.sql (FC_FIM_DAS_INSCRICOES, FC_REGRA_COM_DATA_LIMITE, FC_VALIDAR_LANCAMENTO_FICHA); src/lib/avaliacao-documental/datas-do-vinculo.ts; python/monitora/avaliacao_documental/leitura_de_arquivos/experiencia.py",
     abrir: "avaliacao-documental",
@@ -2405,7 +2277,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "O analista vê, na Fila e na ficha, só as vagas que analisa na equipe do edital; a coordenação e a revisão veem todas; quem só lê a Avaliação documental vê a ficha concluída. Grava só quem está com a reserva da ficha em análise. A ficha recebe da Empregare apenas as respostas das perguntas que a regra liga aos blocos e à nota declarada — nunca CPF, e-mail, telefone ou outra resposta —, e copiar o código ou abrir a Empregare fica registrado.",
-    fato: "",
     fonte:
       "supabase/migrations/20261007130000_conteudo_da_ficha.sql (FC_EXIGIR_VER_FICHA, FC_RESPOSTAS_DA_FICHA, registrar_acesso_ficha)",
     abrir: "avaliacao-documental",
@@ -2427,7 +2298,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Cada versão da regra pode ter um nome (de 3 a 80 caracteres), em vez de só o número. Ao salvar (no assistente ou no modo avançado), o campo "Nome desta versão" já vem com uma sugestão — o edital e o começo do motivo, por exemplo "Regra do edital 93/2026 – decisão CORES" — que dá para editar ou apagar (vazio grava sem nome). A tela mostra o nome em destaque e o número discreto ("Decisão CORES · v7") no cabeçalho, no seletor de editais, nas versões, em comparar versões, na triagem, na fila e na ficha; sem nome, aparece "Versão 7". Para trocar o nome de uma versão já salva, use "Renomear" no cabeçalho ou na lista de versões: pede o novo nome e o motivo (10 a 500 caracteres), muda só o nome — o conteúdo, o hash e a situação (Conferida ou não) continuam iguais — e a troca fica no histórico ("nome trocado", com de, para, quem e quando). Renomeia quem pode mudar a regra: a coordenação do edital; o administrador global pode tudo. O número da versão continua sendo o que as fichas e listas guardam.',
-    fato: "No Yeendé, o nome da versão da regra é opcional, fica na versão (NO_VERSAO) e pode ser trocado com motivo sem mudar o conteúdo nem o hash.",
     fonte:
       "src/lib/base/nome-da-versao.ts; src/ui/nome-da-versao.tsx; supabase/migrations/20261008180000_nome_das_versoes_das_regras.sql (salvar_regra_analise, renomear_versao_regra_analise)",
     abrir: "avaliacao-documental",
@@ -2444,7 +2314,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A Classificação monta as listas de um edital, na ordem das publicações da AgSUS — avaliação documental e de títulos, convocação para entrevista, resultado da entrevista e resultado final — com a regra que o gestor daquele edital decidiu. Cada lista traz a classificação geral e a de cada modalidade, os eliminados com o motivo e, ao abrir um candidato, a explicação da posição. Os avisos do topo apontam dados que faltam (entrevista sem análise, candidato convocado sem entrevista, sem data de nascimento para o critério de 60 anos…). "Gerar" registra a lista; dela sai o documento oficial — "Copiar para o SEI", "Como fica no SEI", "Baixar DOCX" com papel timbrado, PDF — e a planilha XLSX. A tela tem três visões, no topo: Listas, Agenda (a agenda das entrevistas dos convocados) e Regra. Leitor vê; Editor de Classificação muda a regra, gera, publica e registra sorteio ou decisão.',
-    fato: "",
     fonte:
       "src/modulos/classificacao/; supabase/migrations/20261002150000_classificacao.sql",
     abrir: "classificacao",
@@ -2464,7 +2333,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na Lista da Classificação, logo abaixo do cabeçalho, fica a faixa de situação: Candidatos, Na vaga, Cadastro reserva, Eliminados e, quando há alguém, Convocados, Aptos e Aguardando análise. Cada número é o total da lista que ele abre (contado com os mesmos filtros) e clicar filtra a lista por ele (de novo, volta a todas). Na linha de baixo da faixa ficam a escolha entre as quatro listas (preliminar, convocação, entrevista, final), quantas vagas e a data de corte da idade. A lista vem num card: a busca pelo nome ou pelo código da inscrição (a tecla "/" leva até ela; Esc apaga), a vaga e, em "Filtros", a lista (geral ou de uma modalidade) e a situação; "Limpar" aparece quando há filtro. O filtro fica guardado nesta aba do navegador para cada edital e volta depois de recarregar a página. As pessoas aparecem numa tabela só, agrupada por vaga (o cabeçalho de cada vaga diz quantas pessoas, o limite da convocação e de onde vêm as vagas, e clicar nele recolhe a vaga), 50 de cada vez e mais 50 ao chegar no fim da rolagem: a posição numa etiqueta (o 1º lugar em destaque; "=" no empate), o nome e, embaixo, o código e a modalidade, a nota, a situação (Vaga, CR, Convocado, Apto, o motivo da eliminação ou Aguardando análise) e "Ver posição" (ou "Ver motivo", nos eliminados), que abre a explicação, com o "⋯": "Copiar código" e, para quem edita, o registro do sorteio ou da decisão do empate daquela pessoa. A busca por CPF ainda não existe: a Classificação não traz o CPF.',
-    fato: "",
     fonte:
       "src/modulos/classificacao/listas.tsx; src/lib/classificacao/dados.ts",
     abrir: "classificacao",
@@ -2481,7 +2349,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Sem edital escolhido, a Classificação mostra a busca e um card por edital da área (o número e a unidade, a versão da regra ou "Sem regra" e quantos candidatos); a busca recorta os cards pelo número ou pela unidade e clicar abre o edital, cujo nome fica no cabeçalho com "Trocar" para voltar aos cards. Aparecem só os editais da área que têm análise curricular ativa — feita no Yeendé ou trazida da planilha, porque a classificação lê os candidatos dessas análises — ou que já têm lista gerada. Edital sem nenhuma análise não aparece (não haveria quem classificar); ele entra sozinho quando as análises chegarem. A ordem: os ativos, fora do treinamento, em andamento antes dos concluídos e cancelados; edital de treinamento, quando houver, vem por último.',
-    fato: "No Yeendé, os cards da Classificação mostram só os editais com análise curricular ativa (qualquer origem) ou com lista de classificação gerada.",
     fonte:
       "supabase/migrations/20261023120000_classificacao_so_editais_analisados.sql",
     abrir: "classificacao",
@@ -2499,7 +2366,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé não há regra de classificação fixa: cada edital tem a sua, decidida pelo gestor do edital em Editais › Regras do edital, etapa Classificação (a aba Classificação › Regra mostra o resumo, com "Editar nas Regras do edital"). Ela define as etapas consideradas, a composição da nota (componentes, pesos, casas decimais e arredondamento), as notas mínimas e eliminatórias (documental, por nível da vaga, total da entrevista e por competência), os critérios de desempate e a ordem deles, o empate final, as modalidades, a convocação para entrevista e o rodapé das listas. Salvar sempre cria uma versão nova (da segunda em diante, com o motivo); as anteriores ficam no histórico e podem voltar ao formulário. Cada lista gerada guarda a versão usada.',
-    fato: "No Yeendé, a regra de classificação é de cada edital, versionada: salvar cria versão nova e a lista gerada guarda a versão usada.",
     fonte:
       "src/lib/classificacao/regra.ts; supabase/migrations/20261002150000_classificacao.sql",
     abrir: "classificacao",
@@ -2516,7 +2382,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No editor da regra da Classificação (Editais › Regras do edital), o que você muda é guardado sozinho cerca de um segundo depois de cada mudança (por edital e por pessoa, só você vê): o indicador ao lado de "Salvar" diz "Rascunho guardado às 14:05" ou, sem internet, "Sem conexão — guardado neste computador". Ao abrir a regra de novo, mesmo em outro computador, aparece "Você tem um rascunho não salvo de…" com "Continuar de onde parei" ou "Descartar"; se outra pessoa salvou uma versão no meio, o aviso diz de qual versão o rascunho partiu. Salvar a versão nova ou descartar apaga o rascunho; com alteração por salvar, recarregar ou fechar a aba pede confirmação.',
-    fato: "No Yeendé, o rascunho da regra de classificação é guardado em TB_RASCUNHO_REGRA (tipo CLASSIFICACAO), como o da regra da avaliação documental.",
     fonte:
       "src/app/rascunho-da-regra.ts; supabase/migrations/20261013120000_rascunho_das_regras.sql",
     abrir: "classificacao",
@@ -2533,7 +2398,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "O empate é sempre na nota publicada (com as casas decimais da regra). Se a regra manda desempatar naquela lista, valem os critérios escolhidos do catálogo, na ordem em que o gestor os arrumou (arrastando): 60 anos ou mais na data de corte, ser comprovadamente indígena (pontuação étnica validada maior que zero), maior tempo de experiência na saúde indígena, maior tempo na atenção básica, maior nota documental, maior nota da entrevista, maior idade, pontuações por critério, tempo de experiência profissional e PcD. Da leitura de todos os editais entraram mais quatro: tempo em média e alta complexidade, tempo em saúde digital, maior escolaridade e nota de conhecimentos específicos da prova — enquanto a análise não grava esses dados, eles não separam ninguém e a tela avisa. Cada critério tem direção (sim antes de não, maior primeiro…). Quem não tem o dado de um critério fica atrás de quem tem, e isso vira aviso. O que sobra empatado depois de todos os critérios segue o empate final.",
-    fato: "",
     fonte: "src/lib/classificacao/catalogo.ts; src/lib/classificacao/motor.ts",
     abrir: "classificacao",
   },
@@ -2550,7 +2414,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O desempate de quem empata na nota da entrevista é o da regra de classificação do edital: uma fonte só, aqui em Classificação › Regra (critérios do catálogo, a ordem e o empate final). O Painel de entrevistas marca os empatados e leva para cá; Conduzir entrevistas › Preparar e o editor do roteiro mostram os mesmos critérios só para ler, com "Editar na Classificação". O roteiro não tem mais critérios próprios (o texto antigo ficou guardado, sem uso). Na lista Resultado da entrevista, o empate que sobra fica na mesma posição; o desempate vale no resultado final.',
-    fato: "O desempate da entrevista se configura em Classificação › Regra; o roteiro só mostra os critérios.",
     fonte:
       "src/lib/entrevistas/convocacao-da-entrevista.ts; src/modulos/entrevistas/conducao.tsx; supabase/migrations/20261008130000_conduzir_entrevistas_no_menu.sql",
     abrir: "classificacao",
@@ -2568,7 +2431,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Quando o empate continua depois de todos os critérios, vale o que o gestor escolheu na regra: sorteio registrado, ordem de inscrição (código menor primeiro), mesma posição (1º, 2º, 2º, 3º ou 1º, 2º, 2º, 4º) ou decisão manual com justificativa. No sorteio, a semente é gerada no servidor ou informada pelo gestor; a ordem é a crescente do SHA-256 de "semente:id da análise", e ficam gravados semente, ordem, quem e quando — qualquer pessoa com a semente refaz a conta. Refazer um sorteio exige justificativa e guarda o anterior. Enquanto um empate espera sorteio ou decisão, a lista mostra os empatados na mesma posição, o aviso pede o registro e a lista não pode ser marcada como publicada.',
-    fato: "No Yeendé, o empate final é escolha do gestor do edital (sorteio registrado e reprodutível, ordem de inscrição, mesma posição ou decisão manual justificada).",
     fonte:
       "src/lib/classificacao/sorteio.ts; supabase/migrations/20261002150000_classificacao.sql",
     abrir: "classificacao",
@@ -2588,7 +2450,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O relatório de desempate mostra, para uma lista gerada, cada grupo de empate de nota por vaga e por lista (a geral e a de cada modalidade): os critérios da regra que foram aplicados, na ordem, o valor de cada candidato em cada critério, o critério que decidiu cada par (quem ficou à frente de quem e por quê) e quem empatou em tudo — com o que resolveu: sorteio ou decisão registrados (com o registro), ordem de inscrição, mesma posição ou pendente. No topo, o cabeçalho da lista (edital e unidade, tipo e fase, número da geração e identificador, quando e por quem foi gerada, versão da regra e data de corte) e um resumo: quantos pares cada critério decidiu e como terminaram os empates até o fim. Cada grupo diz se o empate é na lista geral ou numa lista de cota. A idade aparece em anos na data de corte do edital (a mesma dos critérios idade e 60+) para todos os candidatos de todos os grupos, mesmo quando o empate foi decidido por outro critério (sem data de nascimento, um traço "—"); onde o critério idade foi aplicado, também a ordem de idade dentro do grupo ("1º mais velho do grupo") e se havia certidão de nascimento — nunca a data de nascimento. Mostrar a idade não muda a ordem nem quem desempatou. O PDF tem um índice por vaga; o XLSX tem as planilhas Resumo, Grupos, Pares e Candidatos, com filtro. Relatórios gerados antes desse formato continuam abrindo; para ter o novo, gere a lista de novo. Os candidatos aparecem com nome e número de inscrição (é documento interno da comissão). Quem calcula é a classificação em Python, com a mesma ordenação da tela; o relatório fica guardado junto da lista gerada. Ao gerar uma lista, o relatório é pedido sozinho: a aba Listas mostra "Relatório de desempate sendo preparado…" (leva cerca de um minuto) e, quando ele chega, os botões "Relatório de desempate (XLSX)" e "(PDF)". O Python só grava o relatório se a lista que ele calcula for exatamente a lista gerada; se não for, a tela avisa — "os dados mudaram desde esta geração — gere de novo" ou, se a lista ainda vale, "o cálculo em Python não confere com esta lista — avise o suporte". Com a automação "Classificação em Python" desligada (Configurações › Automação), o relatório não é pedido.',
-    fato: "O relatório de desempate é calculado pela classificação em Python e fica guardado junto da lista gerada.",
     fonte:
       "python/monitora/classificacao/desempate.py; src/lib/classificacao/relatorio-de-desempate.ts; supabase/migrations/20261023140000_classificacao_em_python_e_relatorio_de_desempate.sql; supabase/migrations/20261023170000_classificacao_em_python_etapa_2.sql",
     abrir: "classificacao",
@@ -2605,7 +2466,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O critério "60 anos ou mais" usa a idade na data de corte — o último dia de inscrição, como mandam os editais (Estatuto da Pessoa Idosa) —, não a idade de hoje. A data de corte é a da regra do edital; sem ela, o fim do período de inscrição no cronograma do edital. Quem faz 60 anos no último dia de inscrição conta; no dia seguinte, não. Sem data de nascimento, o candidato fica atrás de quem tem e a tela avisa; sem data de corte, a tela avisa que o critério não pode ser aplicado.',
-    fato: "",
     fonte: "src/lib/classificacao/catalogo.ts; src/lib/classificacao/dados.ts",
     abrir: "classificacao",
   },
@@ -2621,7 +2481,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "A nota final é a soma dos componentes da regra (nota documental, nota da entrevista e, se o edital usar, a nota da autodeclaração), cada um com o seu peso, arredondada nas casas da regra. A entrevista é ligada à análise do candidato só pelo identificador da análise — nunca pelo nome, como fazia a planilha antiga, que perdia candidatos sem avisar; nota com vírgula é lida como número. Fica fora da lista, com o motivo: não habilitado na análise, sem nota documental, abaixo da nota mínima documental (inclusive por nível da vaga), fora do limite de convocação, sem entrevista, ausente, inapto, sem nota da entrevista, abaixo do mínimo da entrevista, competência abaixo do mínimo ou nota eliminatória numa competência.",
-    fato: "",
     fonte: "src/lib/classificacao/motor.ts",
     abrir: "classificacao",
   },
@@ -2636,7 +2495,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "A lista de convocação são os primeiros da avaliação documental até o limite da regra: N vezes as vagas imediatas da vaga, ou, na vaga só de cadastro reserva, até a posição definida (ex.: 5 vezes as vagas e até a 10ª no 83/2026; 6 vezes e até a 5ª no 100/2026). Cargos podem ter exceção (Enfermeiro e Técnico de Enfermagem: 10 vezes e até a 20ª). Se houver empate no limite, a regra diz se os empatados entram todos. No resultado final, quem estava dentro do limite e não tem entrevista lançada vira aviso. É a única convocação do sistema: Conduzir entrevistas › Preparar convoca a partir da última lista de convocação gerada aqui, e só quem está nela; por isso, gere a lista antes de convocar e gere de novo quando a regra ou as vagas mudarem.",
-    fato: "",
     fonte:
       "src/lib/classificacao/motor.ts; supabase/migrations/20261005150000_convocacao_unica_da_entrevista.sql",
     abrir: "classificacao",
@@ -2653,7 +2511,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Cada modalidade da regra (PcD, pretos e pardos, indígenas, quilombolas, trans…) tem percentual, lista própria, posição que recomeça em 1º ou mantém a da geral, se o cotista aparece também na geral, para onde vai a vaga reservada sem candidato e, se for uma reserva conjunta (como a PPIQ de 30% dos editais de 2025), quais modalidades ela reúne — quem declarou pretos e pardos, indígena ou quilombola entra nessa lista. Na lista final, as vagas da ampla vão para os primeiros da geral (cotista aprovado na ampla não ocupa vaga reservada); cada reserva vai para os primeiros da modalidade; a reserva que sobra segue o remanejamento da regra e, por fim, a ampla. Com mais de uma cota, a regra diz se o candidato fica em todas, só na de maior percentual ou em PcD e mais uma (vale no resultado final). As vagas por modalidade vêm do quadro de vagas do edital; quando ele só traz o total, da configuração de convocação do edital (Lista de aprovados › Convocação) ou dos percentuais da regra, pela mesma conta da convocação.",
-    fato: "",
     fonte: "src/lib/classificacao/motor.ts; src/lib/classificacao/vagas.ts",
     abrir: "classificacao",
   },
@@ -2668,7 +2525,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       '"Gerar" registra a lista no banco: o retrato (por vaga, posição, nome, nota e modalidade; eliminados com motivo; só o nome, sem CPF), a versão da regra usada, quem e quando, e o SHA-256 do retrato, calculado no banco pelo conteúdo (a nota 35 ou 35.0 dá o mesmo hash, venha a lista da tela ou do Python). Se a regra mudou desde que a tela abriu, o banco recusa e pede para gerar de novo. "Marcar como publicada" registra quem e quando publicou; lista com empate esperando sorteio ou decisão não pode ser publicada.',
-    fato: "",
     fonte:
       "supabase/migrations/20261002150000_classificacao.sql; supabase/migrations/20261024130000_hash_do_retrato_pelo_conteudo.sql; src/lib/classificacao/exportacao.ts",
     abrir: "classificacao",
@@ -2687,7 +2543,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Com as automações "Gerar listas pelo Python" e "Classificação em Python" ligadas (Configurações › Automação; a primeira nasce desligada e só deve ser ligada depois da publicação da classificação do 114/2026; sem a segunda ligada, ela não tem efeito e a tela de Automação avisa), o botão Gerar pede o cálculo da lista à classificação em Python: a aba Listas mostra "Calculando a lista… (até 5 min)" e, quando o Python termina, a tela calcula a mesma lista com o cálculo dela e só registra se as duas forem exatamente iguais (o banco confere de novo). Se forem diferentes, a lista não é registrada e aparece o aviso "O cálculo em Python não confere com o da tela": clique em Atualizar e gere de novo (os dados podem ter mudado desde que o edital foi aberto); se continuar, avise o suporte — a diferença fica guardada para a análise. Se o cálculo falhar, não chegar ao GitHub ou passar de 5 minutos, o aviso diz o motivo e "Tentar de novo" faz um pedido novo. Com qualquer uma das duas desligada, o Gerar calcula e registra na própria tela, como sempre; uma aba aberta antes de a automação ser ligada recebe "recarregue a página e gere de novo".',
-    fato: 'Com as chaves "Gerar listas pelo Python" e "Classificação em Python" ligadas, a lista só é registrada quando o cálculo do Python e o da tela são iguais.',
     fonte:
       "src/lib/classificacao/calculo-em-python.ts; src/modulos/classificacao/estado.ts; scripts/classificacao/classificacao.py; supabase/migrations/20261023200000_classificacao_em_python_etapa_2b.sql",
     abrir: "classificacao",
@@ -2704,7 +2559,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Tudo sai de uma lista já gerada (registrada com a versão da regra e o hash). Antes, escolha em "Exportar" o recorte — geral e modalidades no mesmo documento (como o 100/2026), só a geral, só uma modalidade (como o 83/2026, um documento por modalidade) ou só os eliminados — e, em "Publicação", se é o resultado preliminar ou o final (depois dos recursos). Saídas: "Copiar para o SEI" (o principal), "Como fica no SEI" (prévia e textos), "Baixar DOCX" (Word com papel timbrado), PDF (impressão da prévia, "Salvar como PDF") e XLSX (planilhas Classificação e Eliminados, para conferência). Só o nome do candidato, sem CPF, inscrição ou nascimento.',
-    fato: "",
     fonte:
       "src/lib/classificacao/exportacao.ts; src/lib/classificacao/documento-sei.ts",
     abrir: "classificacao",
@@ -2721,7 +2575,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O documento segue o Comunicado Externo que a AgSUS publica no SEI (editais 83/2026 e 100/2026): "Brasília, na data da assinatura digital." à direita; o título em caixa alta (ex.: RESULTADO PRELIMINAR - ETAPA DE ANÁLISE CURRICULAR, CONVOCAÇÃO PARA ENTREVISTA, RESULTADO FINAL - ETAPA DE ENTREVISTA, RESULTADO FINAL - PROCESSO SELETIVO); "1. DISPOSIÇÕES PRELIMINARES" com os itens 1.1, 1.2…; uma tabela por vaga, com o cabeçalho "VAGA código - cargo - lotação - unidade - N vagas (x AC + y Pretos e Pardos + CR)" ou "- Cadastro Reserva", todas as vagas, inclusive as vazias ("Não houve candidatos aptos."); e "2. DISPOSIÇÕES FINAIS". Colunas padrão, enxutas: avaliação documental — Classificação, Nome, (Modalidade) e Nota Final (as parciais da regra ficam disponíveis, desmarcadas, na aba Colunas); eliminados — Nome, Nota e Justificativa; convocação — uma tabela Nº, NOME, Vaga, (Modalidade), DATA e HORA, com data e hora da agenda das entrevistas salva (sem agenda, em branco para preencher no SEI); entrevista — Classificação, NOME, NOTA (empate na mesma posição); resultado final — CLASSIFICAÇÃO, NOME, NOTA FINAL, e no fim o rodapé da regra. Em cada tabela (geral ou de cota) em que houve empate de nota resolvido pelo desempate, vai logo abaixo dela a nota em itálico do desempate (o rodapé da regra, ex.: "*Os critérios de desempate foram considerados conforme item 10.1 do edital."). O timbrado, a assinatura eletrônica e o rodapé "título (nº SEI) SEI processo / pg. N" quem põe é o SEI.',
-    fato: "No Yeendé, o documento da lista de classificação segue o Comunicado Externo publicado no SEI; timbrado, assinatura e rodapé ficam com o SEI.",
     fonte: "src/lib/classificacao/documento-sei.ts",
     abrir: "classificacao",
   },
@@ -2737,7 +2590,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Gere a lista, escolha o recorte e a publicação e clique em "Copiar para o SEI". No SEI, crie o documento (Comunicado Externo), abra o editor, clique no corpo e cole (Ctrl+V); depois confira, preencha data e hora na convocação se não houver agenda salva, e assine. O que é copiado: o HTML com as classes de estilo do próprio SEI (Item_Nivel1 e Item_Nivel2 numeram sozinhos "1." e "1.1.", Texto_Centralizado_Maiusculas, Tabela_Texto_Centralizado…) e tabelas com borda e largura em porcentagem, além do texto puro numerado para quem cola fora do SEI. Se o navegador não liberar o formato com tabelas, a cópia vai só como texto e a tela avisa — aí use o DOCX. Se a numeração dos itens não aparecer no SEI, o editor removeu as classes ao colar: aplique o estilo "Item_Nivel1/Item_Nivel2" pelo menu de estilos ou use o DOCX.',
-    fato: "",
     fonte:
       "src/lib/classificacao/documento-sei.ts; src/modulos/classificacao/documento-no-navegador.ts",
     abrir: "classificacao",
@@ -2754,7 +2606,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em "Como fica no SEI" aparecem a prévia (o timbrado simulado, o texto e as tabelas como ficam no SEI) e os textos que o gestor ajusta antes de copiar ou baixar: número do edital, processo SEI (vai no rodapé do Word), unidade por extenso (ex.: "Distrito Sanitário Especial Indígena Xingu (DSEI Xingu)"), autoridade do item 1.1 (ex.: "por intermédio da Diretoria de Atenção Integral à Saúde, no uso das atribuições que lhe foram conferidas pela Designação nº 28/2026/PRES/AgSUS"), local e data (vazia = "na data da assinatura digital"), o título e as disposições preliminares e finais do modelo daquela lista. Cada linha é um item; ">" no começo vira subitem (1.3.1) e ">>" sub-subitem (1.3.3.1); **texto** fica em negrito; campos entre chaves são trocados pelo do edital ({edital}, {unidade}, {fase}, {notas_minimas}…). Os padrões vêm das publicações do 83/2026 e do 100/2026; as notas mínimas do 1.3 vêm da regra. "Salvar no edital" grava na regra (nova versão, motivo "Textos do documento oficial (SEI)"), sem mudar a classificação; "Restaurar o padrão" volta ao texto das publicações.',
-    fato: "",
     fonte:
       "src/modulos/classificacao/documento.tsx; src/lib/classificacao/regra.ts",
     abrir: "classificacao",
@@ -2776,7 +2627,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Quando, numa tabela, dois candidatos com a mesma nota ficaram em posições diferentes — o empate foi resolvido pelos critérios de desempate da regra ou pelo empate final (sorteio, decisão, ordem de inscrição) —, o documento põe logo abaixo daquela tabela, em itálico e letra menor, a nota do desempate (ex.: "_Os critérios de desempate foram considerados conforme item 10.1 do edital."). Vale para cada tabela da vaga: a da classificação geral (ampla concorrência) e a de cada cota (PcD, Pretos e pardos, Indígenas, Quilombolas); a tabela sem empate fica sem a nota, e a vaga sem nenhum empate não leva nota nenhuma. Os candidatos desempatados não ganham asterisco na linha: o "_" fica só no começo da nota. Empate na mesma posição (como na lista do resultado da entrevista, quando a regra não usa os critérios ali) também não leva a nota. Vale em todas as listas por nota (avaliação documental, entrevista, resultado final e a lista provisória), na prévia, no "Baixar DOCX" e no "Copiar para o SEI"; não vale na convocação nem nos eliminados. O texto é um só por edital: em "Como fica no SEI" › Textos, campo "Nota de desempate (abaixo da tabela com empate)". O texto inicial é o rodapé da regra, quando ele já é a frase do desempate (ex.: "conforme item 10.1 do edital"); se o rodapé fala de outra coisa, é a frase padrão do item 10; regra sem rodapé (e sem texto escrito no campo) não leva a nota. Para trocar, escreva no campo e use "Salvar no edital"; "Restaurar o padrão" volta ao texto inicial. A frase do rodapé não se repete no fim do resultado final se já saiu abaixo das tabelas.',
-    fato: 'No Yeendé, a nota de desempate (o rodapé da regra, ex.: "*Os critérios de desempate foram considerados conforme item 10.1 do edital.") sai logo abaixo de cada tabela — geral ou de cota — com empate de nota resolvido; o texto se edita em Como fica no SEI › Textos.',
     fonte:
       "src/lib/classificacao/documento-sei.ts; src/lib/classificacao/documento-docx.ts; src/modulos/classificacao/documento.tsx",
     abrir: "classificacao",
@@ -2795,7 +2645,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       '"Como fica no SEI" abre quase na tela toda, com a folha A4 inteira no centro. Ela começa em "Ajustar" (a folha cabe na largura); − e + mudam o zoom de 50% a 200%, e "Ajustar" volta a caber. O botão de tela cheia, no topo, usa a tela inteira; Esc ou o X fecham. Os ajustes ficam num painel à esquerda, em três abas: "Dados" (número do edital, processo SEI, unidade, autoridade do 1.1, local e data), "Textos" (título, disposições preliminares e finais e a nota de desempate) e "Colunas" (as colunas da tabela de cada vaga); "Ocultar painel" recolhe o painel e a folha cresce, "Textos e colunas" traz de volta. A prévia muda enquanto você digita. No celular fica uma coluna: os textos em cima e a prévia embaixo. "Restaurar o padrão" e "Salvar no edital" ficam no rodapé, junto de "Baixar DOCX" e "Copiar para o SEI", sempre à vista.',
-    fato: "",
     fonte:
       "src/modulos/classificacao/documento.tsx; src/lib/classificacao/escala-da-previa.ts",
     abrir: "classificacao",
@@ -2815,7 +2664,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em "Como fica no SEI", a aba "Colunas" escolhe o que aparece na tabela de cada vaga e em que ordem. O padrão é enxuto: Classificação, Nome, Modalidade de Concorrência (só na tabela geral, quando há modalidades) e Nota Final; nos eliminados, Nome, Nota e Justificativa. Em "Outras colunas" ficam as que dá para incluir: as pontuações parciais da avaliação documental que a regra publica (Formação Acadêmica, Cursos de Aperfeiçoamento, Experiência Profissional, Pontuação Étnica) e, no resultado final, a Situação (dentro das vagas ou cadastro reserva). Marque ou desmarque; as setas ou arrastar mudam a ordem. Classificação e Nome (e a Justificativa dos eliminados) têm cadeado: são obrigatórias. A prévia, o "Baixar DOCX" e o "Copiar para o SEI" mudam na hora; "Salvar no edital" grava a escolha daquela publicação na regra do edital (nova versão) e "Restaurar o padrão", com a aba Colunas aberta, volta às colunas padrão. Na convocação para entrevista as colunas são fixas (Nº, NOME, Vaga, DATA e HORA). Não há coluna de inscrição, CPF ou nascimento: o documento é público e leva só o nome.',
-    fato: "No Yeendé, as colunas das tabelas do documento do SEI são escolhidas por publicação na aba Colunas e gravadas na regra do edital.",
     fonte:
       "src/modulos/classificacao/colunas-do-documento.tsx; src/lib/classificacao/colunas-do-documento.ts",
     abrir: "classificacao",
@@ -2831,7 +2679,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       '"Baixar DOCX" gera o mesmo documento em Word para anexar ou ajustar: no cabeçalho, o logo da AgSUS e o nome, endereço e site da agência (Configurações › Marca › Documentos oficiais); no corpo, o título, os itens numerados com o recuo do SEI, as tabelas por vaga e a linha final "Brasília, <data por extenso>."; no rodapé, o nome do documento, o processo SEI e o número da página. Não tem bloco de assinatura: quem assina é o SEI.',
-    fato: "",
     fonte:
       "src/lib/classificacao/documento-docx.ts; src/lib/base/cabecalho-dos-documentos.ts",
     abrir: "classificacao",
@@ -2848,7 +2695,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "São quatro listas, como a AgSUS publica. 1) Avaliação documental e de títulos: quem passou na documental, por vaga e por modalidade, pela nota documental (com as parciais), e os eliminados com o motivo — a mesma lista vale como resultado preliminar ou final da etapa, antes e depois dos recursos. 2) Convocação para entrevista: os primeiros até o limite da regra (N vezes as vagas, ou até a k-ésima no cadastro reserva), com os empatados no limite se a regra mandar. 3) Resultado da entrevista: os convocados aptos pela nota da entrevista; o empate que sobra fica na mesma posição (o desempate do edital é do resultado final); os eliminados da entrevista com o motivo. 4) Resultado final: documental + entrevista (ou a composição da regra), desempate, vagas imediatas e cadastro reserva.",
-    fato: "",
     fonte:
       "src/lib/classificacao/motor.ts; src/lib/classificacao/exportacao.ts",
     abrir: "classificacao",
@@ -2864,7 +2710,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'As regras de todos os editais com PDF no site da AgSUS foram lidas dos editais e das retificações oficiais e cadastradas como versão 1, com o motivo "Regra lida do edital (PDF oficial) — conferir". A maioria segue um texto-base (modelo): Saúde Indígena 2026 no padrão do 83/2026, no padrão do 100/2026 (ART e lote) e o do Sanitarista; Saúde Indígena 2025 com entrevista e só curricular; Sede 2025 (entrevista só apto/inapto, barema, prova); e os de Projetos. Em cada regra, "importação" guarda o modelo, os PDFs lidos, a pontuação e o que ficou em aberto. O gestor confere e decide sobretudo o empate depois de todos os critérios (os editais não definem; ficou "mesma posição"). Editais com prova objetiva ainda não têm a prova na nota final.',
-    fato: 'No Yeendé, a regra inicial de cada edital foi lida do PDF oficial e marcada para o gestor conferir; o empate final ficou "mesma posição" até ele decidir.',
     fonte:
       "supabase/correcoes/20261002-regras-de-classificacao-todos-os-editais.sql",
     abrir: "classificacao",
@@ -2879,7 +2724,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Nos editais em que a entrevista só diz apto ou inapto (os da Sede de 2025), a regra marca "Entrevista só com parecer": o apto segue sem nota, o inapto é eliminado e quem não tem parecer também sai, com o motivo; a nota final é só a da avaliação documental, e a lista do resultado da entrevista segue a ordem da documental.',
-    fato: "",
     fonte: "src/lib/classificacao/regra.ts; src/lib/classificacao/motor.ts",
     abrir: "classificacao",
   },
@@ -2894,7 +2738,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "A Classificação e a Lista de aprovados › Convocação usam a mesma conta das vagas por modalidade. Vale, nesta ordem: o quadro de vagas do edital quando traz a divisão; senão, a configuração de convocação do edital (quadro manual da vaga ou o total de vagas imediatas pelo modelo de cotas); senão, os percentuais da regra de classificação. A tela mostra de onde vieram as vagas da vaga e avisa quando os percentuais da regra e os do modelo de convocação divergem ou quando o total de vagas não bate. Quem fica em cada lista e para onde vai a vaga reservada sem candidato é da regra de classificação; a ordem de chamada para contratar é da Convocação.",
-    fato: "",
     fonte:
       "src/lib/classificacao/convocacao-do-edital.ts; src/lib/aprovados/carta-de-convocacao/configuracao-de-convocacao.ts",
     abrir: "classificacao",
@@ -2910,7 +2753,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A aba Classificação usa a permissão "Classificação" (Configurações › Acessos): Leitor vê as listas, a regra e as explicações; Editor salva a regra do edital, gera e publica listas e registra sorteio ou decisão. Por padrão, o administrador é Administrador; gestor de edital e coordenador, Editor; contratador, usuário e jurídico, Leitor. Também vale a área e o recorte da coordenação do edital.',
-    fato: "",
     fonte:
       "supabase/migrations/20261002150000_classificacao.sql; src/lib/acessos/access-roles.ts",
     abrir: "config:acessos",
@@ -2928,7 +2770,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, a Classificação aplica os ajustes da pontuação aprovados em recurso por cima da nota da análise (a planilha não muda): o valor novo de cada componente substitui o da análise e o candidato aparece com o selo "Recurso nº X" na tabela; a explicação da posição diz o que mudou ("Nota alterada pelo recurso nº X: …") e o retrato da lista gerada guarda o número do recurso. Se a análise mudar depois do ajuste, a tela avisa e vale o ajuste. Quando há ajuste aprovado (ou cancelado depois de aprovado) depois da última lista gerada, a tela avisa "Há recursos aprovados depois desta lista — gere de novo". O documento do SEI segue o modelo das publicações, sem marca.',
-    fato: "",
     fonte:
       "src/lib/classificacao/motor.ts (aplicarAjustes); src/lib/classificacao/ajustes.ts; src/modulos/classificacao/listas.tsx; supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql",
     abrir: "classificacao",
@@ -2944,7 +2785,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, o resultado final da Classificação é a fonte da Lista de aprovados. Em "Resultado final", quem pode publicar como lista gera a lista e clica em "Publicar como lista de aprovados" — um passo só: a confirmação mostra, em relação à lista de aprovados vigente, quantos entram, saem e mudam de posição e o que é preservado (status, matrícula, sub judice, anexos); quem não foi reconhecido aparece para revisão. Ao confirmar, a lista nova entra em vigor com posição, nota, modalidade, vaga e situação (dentro das vagas ou cadastro reserva) de cada candidato, a anterior fica no histórico e o resultado final fica marcado como publicado. Depois disso, a linha da geração diz "publicada · na Lista de aprovados". Quem pode publicar como lista: Editor de Classificação no edital; se o edital já tem lista de aprovados, também é preciso poder substituí-la (Administrador em Importação e convocação, ou o administrador global).',
-    fato: 'No Yeendé, o resultado final da Classificação vira a lista de aprovados pelo botão "Publicar como lista de aprovados", que também o marca como publicado.',
     fonte:
       "src/modulos/classificacao/publicar-aprovados.tsx; src/lib/aprovados/resultado-final-na-lista.ts; src/lib/aprovados/publicacao-de-aprovados.ts; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql",
     abrir: "classificacao",
@@ -2964,7 +2804,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'São duas coisas. "Marcar como publicada" só registra que a lista foi publicada no SEI (quem e quando); não mexe na Lista de aprovados. "Publicar como lista de aprovados" faz do resultado final a lista de aprovados vigente do edital e já o marca como publicado. Nas listas de avaliação documental, convocação para entrevista e resultado da entrevista existe só o "Marcar como publicada". No Resultado final, quem pode publicar como lista vê só "Publicar como lista de aprovados"; quem edita a Classificação mas não pode substituir a lista de aprovados do edital vê "Marcar como publicada" e a frase "A lista de aprovados é publicada por quem cuida da Lista de aprovados." — a lista de aprovados fica então com o Administrador em Importação e convocação (ou o administrador global), que publica pelo mesmo botão. Resultado final já marcado como publicado e que ainda não virou a lista de aprovados aparece em destaque: "Publicado, mas ainda não está na Lista de aprovados.", com o botão para quem pode.',
-    fato: 'No Yeendé, "Marcar como publicada" não cria a lista de aprovados; só "Publicar como lista de aprovados" cria.',
     fonte:
       "src/modulos/classificacao/listas.tsx; src/lib/aprovados/resultado-final-na-lista.ts; supabase/esquema-atual.sql (publicar_lista_classificacao, obter_publicacao_lista_aprovados)",
     abrir: "classificacao",
@@ -2983,7 +2822,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       '"Gerar", "Marcar como publicada" e "Publicar como lista de aprovados" só aparecem para quem tem Editor em Classificação, com a área e o edital; "Gerar" fica desabilitado enquanto o edital não tem regra salva. Copiar para o SEI, Como fica no SEI, Baixar DOCX, PDF e XLSX ficam desabilitados até existir uma lista gerada naquela etapa: gere primeiro. "Marcar como publicada" e "Publicar como lista de aprovados" ficam desabilitados enquanto houver empate esperando sorteio ou decisão. "Publicar como lista de aprovados" só existe na lista Resultado final, e só para quem pode publicar a lista de aprovados do edital (quem não pode vê "Marcar como publicada"); some quando a lista de aprovados vigente já veio daquele resultado final.',
-    fato: "",
     fonte:
       "src/modulos/classificacao/listas.tsx; src/lib/acessos/access-roles.ts (canEditClassificacao)",
     abrir: "classificacao",
@@ -3008,7 +2846,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Nas listas e nos documentos, AC é ampla concorrência; PcD, pessoas com deficiência; PP, pretos e pardos; PI, indígenas; PQ, quilombolas; e PPIQ, a reserva conjunta de pretos e pardos, indígenas e quilombolas de alguns editais. CR é cadastro reserva: quem passou, mas ficou além das vagas imediatas, ou a vaga que só tem cadastro reserva (no cabeçalho, "- Cadastro Reserva"). O cotista também concorre na ampla, e quem é chamado pela ampla não gasta a vaga reservada. Percentual, lista própria e remanejamento de cada modalidade são da regra de classificação do edital.',
-    fato: "",
     fonte:
       "src/lib/classificacao/catalogo.ts (codigosDaModalidade); src/lib/classificacao/motor.ts; src/lib/classificacao/vagas.ts",
     abrir: "classificacao",
@@ -3025,7 +2862,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'ART é a nota da Autodeclaração de Requisitos e Títulos, a nota do questionário da Empregare. Na Classificação ela pode entrar como componente da nota final ("Nota da autodeclaração (ART)") quando a regra do edital usar, e o recurso deferido pode ajustá-la. A lista provisória do ranqueamento pela ART e a linha de corte (o lote de convocação para a avaliação documental) ainda não são geradas pelo Yeendé: a classificação começa na avaliação documental dos candidatos do lote (situação Triado ou Aprovado na análise).',
-    fato: "",
     fonte:
       "src/lib/classificacao/catalogo.ts (COMPONENTES_DA_NOTA); supabase/correcoes/20261002-regras-de-classificacao-todos-os-editais.sql (importacao.em_aberto)",
     abrir: "classificacao",
@@ -3043,7 +2879,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A regra de classificação também pode ter um nome por versão (3 a 80 caracteres). Ao salvar na aba Regra da Classificação, o campo "Nome desta versão" vem com a sugestão — "Classificação do edital 93/2026" mais o começo do motivo — editável (vazio grava sem nome). O seletor de editais, a barra do topo, a lista de versões e a linha da lista gerada mostram o nome em destaque e o número discreto ("Decisão CORES · v3"); sem nome, "Versão 3". "Renomear", em cada versão, troca só o nome, com motivo de 10 a 500 caracteres; a configuração não muda e a troca fica no histórico. Renomeia quem tem Editor na Classificação (e o administrador global).',
-    fato: "No Yeendé, a versão da regra de classificação tem nome opcional, trocável com motivo sem mudar a configuração.",
     fonte:
       "src/lib/base/nome-da-versao.ts; supabase/migrations/20261008180000_nome_das_versoes_das_regras.sql (salvar_regra_classificacao, renomear_versao_regra_classificacao)",
     abrir: "classificacao",
@@ -3063,7 +2898,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Quando o empate chega ao critério "maior idade" e as pessoas nasceram no mesmo dia, decide a hora de nascimento da certidão enviada na inscrição: quem nasceu mais cedo é mais velho e fica à frente (edital 93/2026, itens 6.11.5 e 6.11.6). Sem certidão, vale 23h59min59s — a pessoa fica como a mais nova daquele dia. A planilha da análise curricular e a Empregare não trazem a hora; quem informa é o analista, na Classificação: abra o candidato na lista e use "Hora de nascimento (certidão)". O campo só aparece para quem está nesse empate (ou já tem hora), e a tela avisa "Empate decidido pela hora de nascimento". "Sem certidão" tira a hora e volta a valer 23h59min59s. Cada mudança fica no histórico (quem, quando, antes e depois); gere a lista de novo depois de informar. Se ainda assim empatar (mesmo dia e mesma hora, ou as duas sem certidão), vale o empate final da regra.',
-    fato: "Na maior idade, entre quem nasceu no mesmo dia, vale a hora da certidão; sem certidão, 23h59min59s.",
     fonte:
       "src/lib/classificacao/numeros.ts; src/lib/classificacao/motor.ts; src/modulos/classificacao/hora-de-nascimento.tsx; supabase/migrations/20261009130000_hora_de_nascimento_na_classificacao.sql",
     abrir: "classificacao",
@@ -3081,7 +2915,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na lista "Avaliação documental — resultado preliminar", o empate na nota segue a regra do edital: "mesma posição" ou "critérios da regra". No 93/2026, cuja análise documental foi feita pela planilha, a lista deixava os empatados na mesma posição — na vaga de Enfermeiro do Trabalho, 8 pessoas com 45 pontos ficavam todas em 1º. O edital manda listar os aprovados pela ordem de classificação (8.2.10.10) e desempatar pelo item 10.1: a) 60 anos ou mais na data de corte (fim das inscrições, 29/09/2026); b) maior tempo de experiência profissional comprovado (os dias da planilha, o mesmo cálculo para todos); c) maior idade, com a hora da certidão. A correção da regra do 93 passa a preliminar para "critérios da regra" (nova versão, com o motivo). A ordem também muda quem entra no limite da convocação (5 × as vagas). Reprovado na planilha sai com o motivo "não habilitado" e, se a nota também ficou abaixo de 15 (8.2.6), a justificativa diz os dois. A lista publica a nota e as parciais (formação, cursos, experiência) lado a lado; quando as colunas de pontuação da planilha não somam a nota — no 93 a nota segue o barema e as colunas não —, a tela avisa "Parciais que não somam a nota documental" por vaga: confira a planilha antes de publicar (a ordem segue a nota).',
-    fato: "No 93/2026, a lista preliminar desempata pelo item 10.1 (60+, tempo de experiência, maior idade com a hora da certidão).",
     fonte:
       "supabase/correcoes/20261009-classificacao-93-desempate-e-quadro.sql; tests/classificacao.test.js (bloco classificacao-93-desempate)",
     abrir: "classificacao",
@@ -3099,7 +2932,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Quem ainda não tem resultado na avaliação documental — ficha Pendente, Em análise ou em Revisar (ou "Pendente" na planilha) — não é eliminado nem entra nas listas: fica em "Aguardando análise", com indicador próprio no topo, uma lista recolhida por vaga ("Aguardando análise (N)"), o aviso "Candidatos aguardando a análise documental" e, ao abrir a pessoa, a situação dela. Eliminados são só os analisados: reprovados (não habilitados) ou abaixo da nota mínima. O documento do SEI não traz quem aguarda; o XLSX traz a planilha "Aguardando análise" para conferência. Quando a ficha for concluída, gere a lista de novo.',
-    fato: 'Na Classificação, ficha não concluída fica em "Aguardando análise", fora dos eliminados e das listas.',
     fonte:
       "src/lib/classificacao/motor.ts (aguardandoAnalise); src/lib/classificacao/catalogo.ts (SITUACOES_AGUARDANDO_ANALISE); src/modulos/classificacao/listas.tsx",
     abrir: "classificacao",
@@ -3117,7 +2949,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O documento (Copiar para o SEI, Como fica no SEI, DOCX, PDF e XLSX) sai sempre da última lista gerada, não da tela. Quando os dados mudaram depois da geração — fichas concluídas ou reabertas, notas, vagas, a versão da regra —, a tela avisa "Esta geração é de 13/10/2026, 16:10; os dados mudaram desde então — gere de novo." (ou "a regra mudou"). A conferência compara as quantidades registradas (nas listas e eliminados) e a versão da regra; ao exportar, compara também o conteúdo inteiro (quem, posição, nota, modalidade, cabeçalho da vaga). Com geração desatualizada, "Marcar como publicada" e "Publicar como lista de aprovados" ficam bloqueados e as exportações pedem confirmação antes de usar a geração antiga. Clique em "Gerar" para registrar uma lista nova.',
-    fato: "A Classificação avisa quando a lista gerada não corresponde mais aos dados e bloqueia a publicação até gerar de novo.",
     fonte:
       "src/lib/classificacao/dados.ts (geracaoDesatualizada, assinaturaDoRetrato); src/modulos/classificacao/listas.tsx",
     abrir: "classificacao",
@@ -3135,7 +2966,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A Lista de aprovados mostra a lista vigente de cada edital da área atual, em duas abas: Aprovados (os candidatos e o status) e Convocação (a ordem de chamada, os a convocar e a carta de convocação). Os status do candidato são Convocado, Contratado, Contratado em outra lista, Desistente, Migração e Documentação Rejeitada; Contratado e Migração exigem matrícula e Convocado leva a data da convocação. Status já definido só quem tem Administrador em Aprovados altera (para os demais, "Mudar status" aparece apagado no menu da linha, com o motivo), exceto do Convocado para o status seguinte. A tabela tem colunas próprias para o código da vaga, o cargo, a lotação (o lugar que vem no texto do cargo) e o edital com a unidade, e todas ordenam. Cada linha tem uma ação principal com nome ("Mudar status" para quem pode, "Abrir" para os demais) e o "⋯" (Mais ações) com Ver detalhes, Ver anexos, Carta de convocação, Ver na Classificação e, para o administrador, as ações de decisão judicial e sub judice. Clicar no nome abre a gaveta do candidato, com os dados, a origem da linha (edital, unidade, a lista importada e a data) com "Ver nota e classificação na Classificação", e as cartas de convocação emitidas. Quem tem Editor em Aprovados muda status; o grupo Gestor edita a lista desde que tenha a área e o edital. Quem importou ou substituiu a lista fica registrado.',
-    fato: "",
     fonte:
       "src/lib/aprovados/lista-aprovados-rules.ts; src/modulos/aprovados/; supabase/migrations/20260930200000_aprovados_por_grupo_edital_gestor_edita.sql",
     abrir: "approved",
@@ -3152,7 +2982,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Listas inativas continuam consultáveis, mas seus candidatos não podem ser alterados, nem receber anexos. Na aba Aprovados (e no Resumo por cargo e status, em Relatórios), elas ficam no "Histórico", junto com as listas de editais cancelados ou desativados: a vista "Ativos", a que abre, mostra a lista de trabalho (as listas ativas, inclusive as de edital já concluído, que estão em convocação), e os indicadores, os filtros e a exportação contam só a vista escolhida. Ativar ou inativar a lista é de quem pode importar (Editor em Importação, como o grupo Gestor), em Listas do edital ("Aplicar situação"); a lista que a validade inativou só volta com a validade em dia (prorrogue o edital ou use "Reativar edital", em Editais). Substituir ou remover o XLSX de uma lista existente é do Administrador em Importação.',
-    fato: "",
     fonte:
       "src/lib/aprovados/lista-aprovados-rules.ts; src/lib/acessos/access-roles.ts",
   },
@@ -3167,7 +2996,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "A importação aceita só .xlsx e usa a primeira aba, com as colunas obrigatórias codigo_vaga, cargo, classificacao, nota, nome e modalidade (classificação inteira maior que 0; nota numérica, 0 ou mais); mostra até 12 erros por vez. Importa quem tem Editor em Importação (ou o grupo Gestor); substituir uma lista existente é do Administrador. A importação liga os candidatos ao edital pelo ID do edital.",
-    fato: "",
     fonte:
       "src/lib/aprovados/aprovados-import.ts; src/lib/acessos/access-roles.ts",
   },
@@ -3183,7 +3011,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O modelo de convocação são as regras de reserva do edital: categorias, percentuais, arredondamento e cascata. As vagas de cota entram intercaladas às de ampla (proporcional, como AC, PP, AC, AC, PP, AC, ou nas posições fixas que o edital publica) e a convocação segue a classificação. Quem concorre a cota concorre também à ampla, e ser chamado pela ampla não gasta a vaga da cota: nas vagas imediatas, quem está entre os primeiros da classificação dentro das vagas da ampla entra por ela, mesmo que a vaga de cota venha antes na sequência, e a vaga de cota vai para o próximo cotista; a sequência só define a ordem de chamada. Cota sem candidato desce a cascata e, no fim, volta para a ampla. Desistente, Documentação Rejeitada e Contratado em outra lista não ocupam vaga; Convocado, Contratado e Migração continuam na posição e não são chamados de novo. As vagas imediatas são informadas por vaga (zero vira cadastro reserva). Sem modelo, tudo sai como ampla concorrência. O modelo é compartilhado entre editais: a tela avisa quantos serão afetados e oferece "Duplicar". Modelo e vagas valem para o edital e sobrevivem à troca do XLSX. Configura-se em Editais › Regras do edital, etapa 5 Chamada para contratação (tipo de convocação, modelo de regras e vagas imediatas, com "Salvar convocação"); a aba "Lista de convocação" do modal "Listas do edital" mostra só o resumo, com "Editar nas Regras do edital". Configura quem importa a lista de aprovados e o administrador global.',
-    fato: "",
     fonte:
       "src/lib/aprovados/lista-convocacao-rules.ts; src/lib/aprovados/carta-de-convocacao/modelo-de-convocacao.ts; src/lib/aprovados/carta-de-convocacao/configuracao-de-convocacao.ts; src/modulos/aprovados/chamada-para-contratacao.tsx",
   },
@@ -3198,7 +3025,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Quem tem Editor em Aprovados inclui um candidato sub judice, que fica vinculado à lista vigente do edital; remover vale só para quem foi incluído assim. Alterar nota ou modalidade por decisão judicial, e desfazer, é só do Administrador em Aprovados: a classificação é refeita e o número do processo judicial é opcional. Na Convocação, quem está sem código de vaga entra na vaga do mesmo cargo quando há uma única no próprio edital; se houver várias, o sistema não escolhe automaticamente. Vagas de outros editais não participam dessa escolha.",
-    fato: "",
     fonte:
       "src/lib/acessos/access-roles.ts; src/lib/aprovados/lista-aprovados-rules.ts; supabase/migrations/20261001150000_sub_judice_alteracao.sql",
   },
@@ -3213,7 +3039,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Só quem tem Administrador em Aprovados inclui e remove anexos do candidato, e só em lista ativa: PDF de até 2 MB, no máximo 5 por candidato. Ver e baixar os anexos é para quem lê a lista.",
-    fato: "",
     fonte:
       "src/lib/aprovados/anexos-do-candidato.ts; src/lib/aprovados/lista-aprovados-rules.ts; supabase/migrations/20260928235000_anexos_so_admin.sql",
   },
@@ -3230,7 +3055,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, a lista de aprovados de cada edital tem uma de duas origens, mostrada na tela e no modal "Listas do edital": "Publicada da Classificação em DD/MM" — o resultado final da aba Classificação, com posição, nota, modalidade, vaga e situação (dentro das vagas ou cadastro reserva) calculados pela regra do edital, sem digitação — ou "Lista manual (planilha)", importada por XLSX com posição e nota digitadas. Edital com análise no sistema publica da Classificação; a planilha fica para editais sem análise no sistema. Cada troca de lista fica no histórico das publicações do edital.',
-    fato: "No Yeendé, a lista de aprovados vem do resultado final da Classificação; a planilha XLSX fica para editais sem análise no sistema.",
     fonte:
       "src/lib/aprovados/publicacao-de-aprovados.ts; src/modulos/aprovados/modal-listas-do-edital.tsx; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql",
     abrir: "approved",
@@ -3246,7 +3070,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na Classificação, abra o edital, vá ao "Resultado final", gere a lista e clique em "Publicar como lista de aprovados" (Editor de Classificação, na área do edital; se o edital já tem lista de aprovados, também Administrador em Importação e convocação; lista com empate pendente não publica, e só o resultado final mais recente). É um passo só: o resultado final também fica marcado como publicado. A confirmação compara com a lista vigente: quantos entram, saem, mudam de posição, quantos têm status ou sub judice preservados e quantos sub judice são mantidos. Publicar cria a nova lista vigente do edital; a anterior fica inativa no histórico, sem apagar nada. Pelo modal "Listas do edital" da Lista de aprovados, "Publicar da Classificação" leva à Classificação no edital.',
-    fato: "",
     fonte:
       "src/modulos/classificacao/publicar-aprovados.tsx; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql",
     abrir: "classificacao",
@@ -3267,7 +3090,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Publicar da Classificação ou substituir o XLSX fazem a mesma coisa: quem já estava na lista vigente leva para a lista nova o status (Contratado, Desistente…), a matrícula, o processo SEI, a data da convocação, o sub judice e os anexos. A pessoa é reconhecida pela análise (lista já publicada da Classificação) ou, nas listas de planilha — que não trazem CPF nem código do candidato —, pelo nome sem acento e sem diferença de maiúsculas no mesmo edital, desempatando pela vaga. Quem tinha nota ou modalidade alterada por decisão judicial continua com a da decisão (a da Classificação vira a original, para desfazer) e é recolocado pela nota; quem foi incluído sub judice e não está no resultado continua na lista como sub judice. Homônimo que não se resolve e quem sai com status ou matrícula aparecem em "Revisar" na confirmação, para dizer quem é na lista nova ou que não está; quem sai continua na lista anterior, com tudo, e fica registrado na publicação. Sub judice segue editável na Lista de aprovados. Quem é a mesma pessoa é calculado por um processo à parte (leva alguns segundos, às vezes até um minuto): "Substituir XLSX" e "Publicar como lista de aprovados" mostram antes a prévia — casados (levam o estado), quem entra, quem fica sem par e os status que ficariam sem dono — e só a confirmação grava; se a lista mudar entre a prévia e a confirmação, é preciso conferir de novo. Os contratados do edital são recontados na hora: ao publicar, substituir, ativar ou inativar a lista; ao remover a lista vigente, voltam a zero.',
-    fato: "",
     fonte:
       "src/lib/aprovados/casamento-da-lista.ts; python/monitora/aprovados/casamento.py; supabase/migrations/20261030090000_lista_de_aprovados_substituir_preserva_o_estado.sql",
     abrir: "approved",
@@ -3285,7 +3107,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "A regra é a mesma pela planilha e pela Classificação: um edital que já teve lista só publica de novo quem tem Administrador em Importação na matriz de Acessos (ou o administrador global). Informar o motivo (de 3 a 500 caracteres) é obrigatório quando a lista vigente tem alguém com status, matrícula, processo ou sub judice, e para trocar pela planilha uma lista publicada da Classificação; o motivo fica no histórico das publicações junto com quem e quando. A primeira lista de um edital, ou uma lista sem nada disso, entra sem motivo.",
-    fato: "",
     fonte:
       "src/modulos/aprovados/modal-listas-do-edital.tsx; src/modulos/classificacao/publicar-aprovados.tsx; supabase/migrations/20261030090000_lista_de_aprovados_substituir_preserva_o_estado.sql",
     abrir: "approved",
@@ -3301,7 +3122,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Cada lista que entra em vigor num edital fica registrada: publicada da Classificação (quem, quando, a lista de classificação, a versão da regra, o hash, quantos entraram, saíram, mudaram de posição, preservados e sub judice mantidos, os vínculos aplicados e quem ficou para revisão) ou importada por planilha (quem, quando, quantos entraram e saíram, os preservados, quem ficou sem par e o motivo, quando houve). O modal "Listas do edital" mostra as últimas publicações. Se a leitura do histórico falhar, use "Tentar de novo" no próprio modal.',
-    fato: "",
     fonte:
       "src/modulos/aprovados/modal-listas-do-edital.tsx; supabase/migrations/20261005160000_lista_de_aprovados_da_classificacao.sql (TH_PUBLICACAO_APROVADO)",
     abrir: "approved",
@@ -3322,7 +3142,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Quem concorre à cota concorre também à ampla, e a lista do edital tem uma linha da pessoa em cada uma. Quando as duas estão Contratado com a mesma matrícula, é uma contratação só: a linha pela qual a pessoa não foi contratada fica "Contratado em outra lista", não conta nos contratados (indicadores, Visão geral, Seleção, comemorações) nem ocupa vaga na Convocação, e continua visível na lista e no histórico. O sistema decide sozinho, todo dia e depois de cada mudança: vale a linha que a convocação daquela lista já alcançou (a posição dela está dentro do que a lista já chamou); se as duas foram alcançadas, vale a ampla concorrência, porque quem passa na ampla não ocupa vaga de cota. Se a convocação não decide, vale a linha que o RH registra na admissão da pessoa (conciliação das admissões com o RH). O selo mostra "Contratado em outra lista · pelo sistema", e o motivo aparece ao passar o mouse; o status gravado continua Contratado. A decisão não muda sozinha depois: só é refeita quando uma das linhas deixa de ser (ou passa a ser) Contratado. Quando nem a convocação nem o RH decidem (nenhuma ou mais de uma linha com admissão no RH), o selo fica Contratado com um alerta ("a equipe decide") e a conferência avisa. Para decidir ou trocar, quem tem Administrador em Aprovados escolhe o status "Contratado em outra lista" na linha pela qual a pessoa não foi contratada (a matrícula fica, opcional); ao marcar Contratado numa linha cuja matrícula já está Contratado em outra linha do edital, a tela sugere marcar a outra.',
-    fato: "",
     fonte:
       "python/monitora/aprovados/contratacao.py; src/lib/aprovados/lista-aprovados-rules.ts; src/modulos/aprovados/partes.tsx; supabase/migrations/20261024120000_contratado_em_outra_lista.sql",
     abrir: "approved",
@@ -3343,7 +3162,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Convocado é o candidato chamado para a contratação que ainda vai se apresentar e entregar os documentos; o status leva a data da convocação (hoje, por padrão, nunca futura). O caminho seguinte é Contratado, Desistente ou Documentação Rejeitada: quem tem Editor em Aprovados faz essa passagem sem o cadeado, mas voltar a "Sem status" é só do Administrador em Aprovados. A data continua registrada depois que o status muda e some se o status for apagado. Convocado não conta como contratado na Seleção nem nos indicadores de contratados (que somam Contratado e Migração). O status "Fim de Fila" deixou de existir.',
-    fato: "",
     fonte:
       "src/lib/aprovados/lista-aprovados-rules.ts; supabase/migrations/20261005180000_convocado_e_carta_de_convocacao.sql",
     abrir: "approved",
@@ -3363,7 +3181,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na aba Convocação, o bloco Convocações separa as duas etapas, cada uma com a sua lista, regra e histórico. "Para contratação" mostra logo abaixo a ordem de chamada, as cartas e os status, calculados pela lista vigente de aprovados. "Para entrevistas" (só para quem tem acesso às Entrevistas, e só nas áreas em que Conduzir entrevistas está ligada) mostra, para consulta, a lista de convocação registrada na Classificação do edital escolhido: posição, nota, modalidade e quem já foi convocado ou ainda falta convocar. Abaixo da lista vem a agenda das entrevistas dos convocados (dia, horário, vaga e banca), também só para ler; sem agenda salva, aparece "Nenhum horário salvo para este edital.". O edital é o mesmo aberto em Conduzir entrevistas (trocar aqui troca lá). Convocar ou desconvocar continua em Conduzir entrevistas › Preparar ("Convocar em Conduzir entrevistas"), com as permissões e o histórico de lá; gerar a lista continua na Classificação. Quem tem acesso à Classificação também vê "Abrir listas da Classificação" e "Editar na Classificação › Agenda", que abre a aba Agenda no edital. O caminho de volta é o botão "Ver em Convocações", em Classificação › Listas (na lista de convocação) e em Conduzir entrevistas › Preparar › Convocação: abre esta aba em "Para entrevistas", já no edital; ele só aparece para quem vê a Lista de aprovados e as Entrevistas. A aba e o tipo ficam no endereço (?aba=convocacao&tipo=entrevista), então o link copiado abre no mesmo lugar.',
-    fato: "",
     fonte:
       "src/modulos/aprovados/central-de-convocacoes.tsx; src/modulos/entrevistas/convocacao-para-leitura.tsx; src/modulos/entrevistas/agenda-do-edital.tsx; src/modulos/aprovados/aba-convocacao.tsx; src/componentes/ver-em-convocacoes.tsx; src/lib/aprovados/central-de-convocacoes.ts",
     abrir: "approved",
@@ -3380,7 +3197,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na aba Aprovados, "Exportar" baixa a lista com os filtros da tela (edital, cargo, modalidade e situação; a busca da tabela não entra), em XLSX, CSV ou PDF. O arquivo traz a área, os editais, os filtros, quantos registros saíram, a data dos dados, a data de emissão e o número do registro da exportação. Antes de gerar, o banco confere a permissão e o total da lista vigente: se a lista mudou desde que a tela carregou, ele pede Atualizar e exportar de novo. O arquivo é gerado no navegador e cada exportação fica registrada (quem, quando, formato e filtros). Não é o "Exportar CSV" da aba Convocação, que baixa a ordem de chamada.',
-    fato: "",
     fonte:
       "src/modulos/aprovados/exportacao/; src/lib/aprovados/exportacao/exportacao-da-lista-de-aprovados.ts",
     abrir: "approved",
@@ -3399,7 +3215,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O Resumo por cargo e status fica em Relatórios (menu Dados), num cartão do grupo Aprovados; até 23/11/2026 era a aba "Resumo por cargo" da Lista de aprovados, que agora tem o botão "Ver em Relatórios" no topo da aba Aprovados, que abre o resumo já nos editais escolhidos. Só aparece para quem tem acesso à Lista de aprovados. Ele conta a lista vigente com os mesmos filtros da aba Aprovados: por edital, cargo, regime e jornada, uma linha por vaga e modalidade, com subtotal e total geral. Cada vínculo (a linha da lista: vaga e modalidade) cai numa coluna só, e as colunas fecham o total de Aprovados: Contratados (Contratado e Migração), Desistentes (uma coluna só: o sistema não registra se a desistência foi voluntária ou tácita), Em reserva (o cadastro de reserva: quem está na fila de convocação depois das vagas imediatas e ainda não foi chamado) e Outros (Convocado, A convocar, Documentação Rejeitada, Contratado em outra lista, Não classificado). Passar o mouse no título da coluna mostra a definição. O cabeçalho e a coluna "Cargo e vaga" ficam fixos enquanto a tabela rola. Quem concorre à cota e à ampla tem duas linhas e conta nas duas em Aprovados; contratado por uma delas, a outra vai a Outras situações, sem contar dois contratados. Listas inativas ficam fora. O filtro Situação restringe a base. Clicar num número mostra quem está nele. A tabela mostra 50 linhas de vaga por vez e carrega mais ao rolar até o fim ou em "Carregar mais"; o Total geral é sempre do recorte inteiro. "Exportar" baixa o resumo em XLSX, CSV ou PDF, sem nomes, com o registro da exportação. Regime e jornada vêm do nome do cargo (ex.: "… - Teletrabalho - 20h" ou "Assistente Social 30h"); o grupo mostra só o que o nome traz, e a tela avisa quantos vínculos ficam sem regime ou jornada (o sistema não tem esse campo; vem do texto do cargo da lista).',
-    fato: "",
     fonte:
       "src/lib/paineis/resumo-por-cargo-e-status.ts; src/modulos/paineis-de-dados/resumo-por-cargo.tsx; src/lib/paineis/exportacao-do-resumo-por-cargo.ts",
     abrir: "paineis-de-dados",
@@ -3416,7 +3231,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na aba Convocação, "A convocar" são as vagas imediatas cujo candidato ainda não foi chamado (sem status). Convocado, Contratado e Migração continuam na posição que a ordem lhes deu e não são chamados de novo; Desistente, Documentação Rejeitada e Contratado em outra lista saem da fila e o próximo toma a vaga. "Marcar quem falta convocar" marca de uma vez esses candidatos para a carta. "Exportar CSV" baixa a ordem com a situação na chamada, o status e a data da convocação.',
-    fato: "",
     fonte:
       "src/lib/aprovados/lista-convocacao-rules.ts; src/modulos/aprovados/aba-convocacao.tsx",
     abrir: "approved",
@@ -3433,7 +3247,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na aba Convocação, marque os candidatos e clique em "Carta de convocação" (ou use o envelope na linha ou na gaveta do candidato). Escolha o modelo (os do edital aparecem primeiro), confira a data limite, o local, os documentos e o contato desta emissão, e se sai um documento com todas ou uma carta por candidato. A prévia mostra como fica no SEI. As saídas são Copiar para o SEI, DOCX (com uma carta por candidato, vem um .zip) e PDF. A primeira saída registra a emissão: quem, quando, o modelo e a versão e os candidatos. Emitir é de quem tem Editor em Aprovados.',
-    fato: "",
     fonte:
       "src/modulos/aprovados/carta-de-convocacao/; src/lib/aprovados/carta-de-convocacao/carta-de-convocacao.ts; src/lib/aprovados/carta-de-convocacao/carta-de-convocacao-documento.ts",
     abrir: "approved",
@@ -3449,7 +3262,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Depois que a carta é registrada, a tela oferece marcar como Convocado, com a data escolhida, os candidatos da carta que estão sem status ou já convocados; quem já tem outro status fica de fora e a tela diz o motivo. A marcação fica ligada à carta no histórico do status. Se a resposta não confirmar todos os candidatos do pedido, a tela mantém os status anteriores e pede atualizar a lista antes de tentar novamente.",
-    fato: "",
     fonte:
       "src/modulos/aprovados/estado.ts; src/lib/aprovados/dados-do-estado-de-aprovados.ts; supabase/migrations/20261005180000_convocado_e_carta_de_convocacao.sql (marcar_candidatos_convocados)",
     abrir: "approved",
@@ -3466,7 +3278,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Os modelos da carta são da área e, se preciso, de um edital, e ficam em "Modelos da carta", na aba Convocação. O texto tem um parágrafo por linha, **negrito** e campos entre chaves: {NOME}, {CPF}, {CARGO}, {VAGA}, {LOTACAO}, {UNIDADE}, {EDITAL}, {POSICAO}, {MODALIDADE}, {DATA_LIMITE}, {LOCAL}, {DOCUMENTOS}, {CONTATO} e {DATA}; a linha que é só {DOCUMENTOS} vira a lista dos documentos. O modelo guarda os valores padrão de local, documentos, contato e prazo em dias. Cada alteração é uma versão nova e, a partir da segunda, pede o motivo; modelo não se apaga, inativa-se com motivo. Quem tem Editor em Aprovados cria e altera; os demais só consultam.',
-    fato: "",
     fonte:
       "src/lib/aprovados/carta-de-convocacao/carta-de-convocacao.ts; src/modulos/aprovados/carta-de-convocacao/modelos-da-carta.tsx",
     abrir: "approved",
@@ -3477,7 +3288,6 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: ["cpf na carta de convocacao", "carta com cpf", "cpf mascarado"],
     resposta:
       "A lista de aprovados não guarda CPF. Se o modelo usa {CPF}, a carta sai com o espaço em branco e a emissão avisa quem ficou sem; quando houver CPF, ele aparece sempre mascarado (***.456.789-**).",
-    fato: "",
     fonte: "src/lib/aprovados/carta-de-convocacao/carta-de-convocacao.ts",
   },
   {
@@ -3491,7 +3301,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Clique no nome do candidato, em qualquer aba, para abrir a gaveta: os dados da lista, o status com a data da convocação e as cartas de convocação emitidas para ele (também nas listas anteriores do edital), com quando, quem, modelo e versão, como saiu, o prazo e se a convocação foi marcada pela carta. Se a leitura das cartas falhar, use "Tentar de novo" na gaveta.',
-    fato: "",
     fonte:
       "src/modulos/aprovados/gaveta-do-candidato.tsx; supabase/migrations/20261005180000_convocado_e_carta_de_convocacao.sql (listar_cartas_do_candidato)",
     abrir: "approved",
@@ -3510,7 +3319,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na aba Aprovados, quem tem Editor em Aprovados marca a caixa ao lado do nome de cada candidato, ou "Selecionar esta página" para pegar as linhas já desenhadas; com a página marcada, aparece "Selecionar todos os N resultados", que pega todos os filtrados e buscados. A barra diz sempre o que está marcado ("50 candidatos desta página selecionados" ou "Todos os N candidatos do resultado selecionados"). Depois, clica em "Mudar status". Em lote dá para escolher Convocado (com uma data para todos), Desistente ou Documentação Rejeitada; "Sem status" é só do Administrador em Aprovados. Contratado e Migração pedem a matrícula de cada um e continuam pelo botão de status da linha. Antes de gravar, a janela mostra quantos serão afetados (e se vão além da página), quantos mudam, como estão hoje e quem fica de fora e por quê (já no status, lista inativa ou status definido que só o Administrador muda). São até 500 por vez, e cada mudança fica no histórico do candidato. Mudar um filtro ou a busca limpa a seleção.',
-    fato: "",
     fonte:
       "src/modulos/aprovados/status-em-lote.tsx; src/lib/aprovados/status-em-lote-dos-aprovados.ts; supabase/migrations/20261111180000_status_em_lote_dos_aprovados.sql",
     abrir: "approved",
@@ -3529,7 +3337,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Para quem tem Editor em Aprovados, "Mudar status" aparece apagado no "⋯" da linha, com o motivo, quando a lista é inativa ("lista inativa", com a dica "Ative a lista em Listas do edital") ou quando o status já foi definido e só o Administrador em Aprovados pode mudá-lo ("status já definido: só o admin altera"), inclusive para voltar a "Sem status". A exceção é o Convocado: o Editor o leva para Contratado, Desistente ou Documentação Rejeitada pelo botão "Mudar status" da linha. Sem Editor em Aprovados, a linha mostra só "Abrir". Peça a mudança a quem tem Administrador em Aprovados.',
-    fato: "",
     fonte:
       "src/modulos/aprovados/partes.tsx (AcaoDeStatus); src/lib/aprovados/lista-aprovados-rules.ts; src/lib/acessos/access-roles.ts",
     abrir: "approved",
@@ -3545,7 +3352,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O botão "Carta de convocação", na aba Convocação, e o envelope na linha e na gaveta do candidato só aparecem para quem tem Editor em Aprovados, e só para candidatos de lista ativa. Com Leitor, ou numa lista inativa, eles não aparecem. Criar e alterar os modelos da carta também é de quem tem Editor em Aprovados.',
-    fato: "",
     fonte:
       "src/modulos/aprovados/partes.tsx (AcaoDeCarta); src/modulos/aprovados/aba-convocacao.tsx",
     abrir: "approved",
@@ -3566,7 +3372,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A Lista de aprovados mostra a lista vigente de cada edital da área atual (e do recorte da sua coordenação). Edital sem lista ainda não teve o resultado final publicado como lista de aprovados nem planilha importada. Marcar o resultado final como publicado na Classificação ("Marcar como publicada") não basta: só registra a publicação no SEI. Quem cria a lista é "Publicar como lista de aprovados", em Classificação › Listas › Resultado final; edital ainda no resultado preliminar precisa antes gerar o resultado final. Em edital sem análise no sistema, importe o XLSX (Editor em Importação e convocação). Para quem vê a Classificação, o aviso no topo da Lista de aprovados traz os editais da área com o resultado final publicado na Classificação e ainda fora da Lista de aprovados (sem lista, com a lista da planilha ou com a lista de um resultado final anterior); cada atalho abre o Resultado final daquele edital. O aviso conta o edital cuja última lista gerada é o resultado final publicado. As listas anteriores ficam inativas, para consulta, no modal "Listas do edital".',
-    fato: "",
     fonte:
       "src/lib/aprovados/publicacao-de-aprovados.ts; src/lib/aprovados/resultado-final-na-lista.ts; src/modulos/aprovados/resultados-fora-da-lista.tsx; src/modulos/aprovados/modal-listas-do-edital.tsx; src/lib/acessos/access-roles.ts",
     abrir: "approved",
@@ -3586,7 +3391,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "O Painel da Seleção do Yeendé mostra o funil de cada vaga, a partir da planilha Auditoria carregada de hora em hora no banco. Os sete indicadores são inscritos, aptos, triados, convocados, aprovados, contratados e a taxa de contratação. Ela é só de consulta e mostra a área escolhida no menu. Os quatro filtros (DSEI ou unidade, edital, cargo e vaga) aceitam vários valores, e as opções de cada um seguem os outros já escolhidos. Clicar numa barra do ranking de unidades filtra a tela por aquela unidade; clicar de novo tira o filtro. A busca da tabela vale só para a tabela.",
-    fato: "",
     fonte: "src/modulos/selecao/; src/lib/selecao/selecao-do-painel.ts",
     abrir: "selecao",
   },
@@ -3601,7 +3405,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A Seleção é carregada pelo GitHub Actions a partir da aba Resultado da planilha Auditoria, quando alguém clica em "Rodar agora" (a agenda automática está desligada desde 16/10/2026). Uma carga com menos da metade das vagas ativas é recusada e nada é desativado. A vaga que sai da planilha fica inativa, guardada para histórico. Na Saúde Indígena só entram as vagas de DSEI e CASAI, e cada uma só conta no edital de mesmo número e da mesma unidade: se a planilha trouxer o número do edital de outro DSEI, a vaga fica sem edital em vez de somar no edital errado. As de outras unidades vão para SEDE ou Projetos pelo edital achado.',
-    fato: "",
     fonte:
       ".github/workflows/sincronizar-selecao.yml; supabase/migrations/20261001090000_selecao.sql; supabase/migrations/20261001100000_selecao_area_pelos_editais.sql; supabase/migrations/20261113120000_ligar_selecao_so_ao_edital_da_mesma_unidade.sql",
   },
@@ -3616,7 +3419,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na Seleção, os convocados para entrevista vêm das entrevistas registradas no Yeendé quando o edital as tem (a vaga sem nenhuma entrevista fica com 0); quando o edital não tem, vêm da planilha Auditoria, que é o dado antigo. A planilha exportada ("Exportar em Excel") e o PDF ("Salvar em PDF") trazem a origem de cada vaga na coluna "Origem dos convocados".',
-    fato: "",
     fonte:
       "supabase/migrations/20261001130000_selecao_aprovados_outras_bancas.sql; src/lib/selecao/selecao-do-painel.ts",
   },
@@ -3630,7 +3432,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na Seleção, os aprovados vêm da lista de aprovados vigente de cada edital. Os contratados são os candidatos dessa lista com a situação Contratado ou Migração, e os não contratados são aprovados menos contratados. Quem foi contratado pela outra linha do mesmo edital (ampla concorrência e cota) é a mesma pessoa e conta uma vez só: a linha "Contratado em outra lista" não entra nem nos aprovados nem nos contratados. Sem lista de aprovados, a vaga não soma aprovados nem contratados. Nas vagas de outras bancas (sem código da vaga), a ligação com a lista é pelo nome do cargo, sem diferenciar acento, maiúsculas ou pontuação.',
-    fato: "",
     fonte:
       "supabase/migrations/20261001090000_selecao.sql; supabase/migrations/20261001130000_selecao_aprovados_outras_bancas.sql; supabase/migrations/20261110203000_selecao_conta_uma_vez_quem_esta_em_outra_lista.sql",
   },
@@ -3645,7 +3446,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na Seleção, a taxa de contratação é o número de contratados dividido pelo número de aprovados, em porcentagem. Sem aprovados no recorte, a taxa aparece como 0%. O medidor "Contratados" mostra a mesma conta, com quantos foram contratados de quantos aprovados.',
-    fato: "",
     fonte: "src/lib/selecao/selecao-do-painel.ts",
   },
   {
@@ -3658,7 +3458,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na Seleção, os eliminados antes da análise são a soma de três grupos: os cancelados, os reprovados por não finalizar o questionário e os eliminados por nota. O gráfico "Aptos na análise e eliminados" compara os aptos para análise com o total de eliminados, e "Triados e reprovados na análise" mostra o resultado da análise curricular.',
-    fato: "",
     fonte: "src/lib/selecao/selecao-do-painel.ts",
   },
   {
@@ -3671,7 +3470,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Na Seleção, os alertas identificados no recorte são as observações da coluna Observação da planilha Auditoria. Cada observação aparece uma vez, sem diferenciar maiúsculas, com quantas vagas a têm e em quais unidades e editais.",
-    fato: "",
     fonte: "src/lib/selecao/selecao-do-painel.ts",
   },
   {
@@ -3685,7 +3483,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A Seleção usa a permissão "Seleção" (Leitor basta, em Configurações › Acessos) e é só de consulta: nenhum número se edita ali. Os números vêm da planilha Auditoria, das entrevistas registradas e da lista de aprovados vigente; para mudar, corrija a fonte. A tela mostra só a área escolhida no menu.',
-    fato: "",
     fonte:
       "src/lib/acessos/access-roles.ts (canViewSelecao); supabase/migrations/20261001090000_selecao.sql",
     abrir: "selecao",
@@ -3702,7 +3499,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A vaga que saiu da planilha Auditoria fica inativa e some da tela; na Saúde Indígena só entram as vagas de DSEI e CASAI (as outras vão para SEDE ou Projetos pelo edital). Aprovados e contratados vêm da lista de aprovados vigente — contratado é Contratado ou Migração, e Convocado não conta —, e sem lista a vaga não soma nenhum dos dois. A carga roda pelo "Rodar agora" (a agenda automática está desligada desde 16/10/2026) e o topo mostra "Conferido às …". Confira também os quatro filtros e a barra do ranking de unidades que estiver clicada.',
-    fato: "",
     fonte:
       "supabase/migrations/20261001090000_selecao.sql; supabase/migrations/20261001100000_selecao_area_pelos_editais.sql; src/lib/selecao/selecao-do-painel.ts; .github/workflows/sincronizar-selecao.yml",
     abrir: "selecao",
@@ -3721,7 +3517,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A Visão geral do Yeendé é a mesma página nas três áreas (Saúde Indígena, SEDE e Projetos) e mostra só os editais da área escolhida no menu. De cima para baixo: o cabeçalho (saudação, quantos editais têm etapa nos próximos 7 dias, a hora da carga e os botões Filtros, Atualizar, Exportar em Excel, Salvar em PDF e Ver em Relatórios), as vagas, "Pede ação" (críticos e pendências do pós-resultado) ao lado de "Em andamento, por fase", o mapa e a tabela de processos. Em Projetos há também "Processos por projeto". Na Saúde Indígena, no lugar do mapa fica o cartão "Mapa" (quantos DSEIs têm edital, o com mais vagas ociosas e o menos preenchido, e "Abrir no mapa"): o mapa dos DSEIs é a página Mapa. Em Projetos, o mapa mostra os municípios das vagas; a SEDE não tem mapa.',
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -3742,7 +3537,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na Visão geral, o bloco das vagas conta os editais do recorte e fecha: Vagas imediatas = Contratadas + Em seleção + Ociosas, com a porcentagem de cada parte e uma barra da divisão; Contratações além das vagas imediatas e Inscritos ficam na linha de baixo. Os números aparecem só depois que a conta das vagas reabertas chega (até 10 segundos), para não trocarem na frente de quem lê; se ela falhar, as vagas aparecem como cada edital publicou, com o aviso "sem desconto das reabertas". Vagas imediatas é a soma das vagas do cadastro do edital, contando uma vez só a vaga reaberta: a vaga que ficou sem contratação num edital com resultado e voltou num edital mais novo da mesma unidade, para o mesmo cargo, conta só no edital novo (o número embaixo do indicador diz quantas saíram da soma). Contratadas são as contratações de cada edital limitadas às vagas imediatas dele (o que passa disso é Contratações além das vagas imediatas, mostrado à parte; antes se chamava "Cadastro reserva", mas não é o cadastro reserva do edital, e sim os contratados acima das vagas). Em seleção são as vagas ainda sem contratação dos editais sem resultado (em andamento, planejados ou sem cronograma). Ociosas são as vagas sem contratação dos editais com resultado (concluídos ou na fase Contratação). Editais cancelados não entram em nenhum indicador, nem em Inscritos. Críticos (em "Pede ação") conta os editais marcados manualmente como críticos e Inscritos soma os inscritos dos editais que informaram o número: quando só parte informou, o indicador diz "informado em X de Y editais", e quando nenhum informou aparece "—" (sem dado), não zero. O zero é zero confirmado; "—" com "nenhum edital com resultado" (em Ociosas) ou "nenhum edital sem resultado" (em Em seleção) quer dizer que aquele número não se aplica ao recorte. Os rótulos podem ser trocados em Configurações › Página inicial.',
-    fato: 'Na Visão geral, Vagas imediatas = Contratadas (contratações limitadas às vagas de cada edital) + Em seleção (editais sem resultado) + Ociosas (editais concluídos ou na fase Contratação); contratações além das vagas são "Contratações além das vagas imediatas" (antes, "Cadastro reserva"); cancelados não entram; Inscritos sem número é "—", não zero.',
     fonte: "src/lib/visao-geral/indicadores-do-monitoramento.ts",
   },
   {
@@ -3762,7 +3556,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O mesmo DSEI abre vários processos seletivos para a mesma vaga: o edital termina com vagas sem contratação (deserto, sem aprovados, desistência antes da contratação) e o posto volta num edital novo. Na Visão geral, essa vaga conta uma vez só, no edital mais novo. Vale quando os dois editais são da mesma unidade, o novo começou depois do fim do anterior, o anterior já tinha resultado e os dois têm o mesmo cargo (pelos cargos das vagas da Seleção e pelo quadro de vagas; na Saúde Indígena, pelo cadastro oficial de cargos, que junta as grafias diferentes do mesmo cargo, como "AISAN" e "Agente Indígena de Saneamento"). O edital novo reabre até as vagas dele nesses cargos, pelo quadro; sem quadro, até o total dele. No edital antigo, as vagas reabertas saem das vagas imediatas e das ociosas; as contratadas continuam nele, e a conta Vagas imediatas = Contratadas + Em seleção + Ociosas segue fechando. O indicador Vagas imediatas mostra embaixo quantas reabertas saíram da soma; os detalhes do edital dizem "N vagas reabertas no edital X" (no antigo) e "Reabre N vagas do edital Y" (no novo). A tabela continua com as vagas que cada edital publicou. Não conta como reaberta a reposição de quem foi contratado e saiu (é contratação nova), o mesmo cargo em outra unidade nem edital cancelado. O código da vaga não serve para ligar os editais: a Empregare dá código novo a cada edital.',
-    fato: "Na Visão geral, a vaga sem contratação de um edital com resultado, reaberta num edital mais novo da mesma unidade e do mesmo cargo, conta só no edital novo; o indicador Vagas imediatas mostra quantas saíram da soma.",
     fonte: "src/lib/visao-geral/vagas-reabertas.ts",
   },
   {
@@ -3785,7 +3578,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na Visão geral, um edital só é crítico quando foi marcado manualmente como crítico pelo gestor, coordenador ou administrador global, no formulário de Editais ("Edital crítico"), com motivo de 10 a 500 caracteres. Desmarcar também pede motivo; as decisões ficam no histórico. Quem só vê lê quem marcou, quando e por quê. Datas vencidas, ausência de inscritos e taxa de contratação não tornam o processo crítico automaticamente. Editais cancelados não entram nos críticos, mesmo quando têm marcação. O indicador, a lista de críticos e o filtro usam as mesmas marcações manuais.',
-    fato: "Processos Críticos conta apenas editais não cancelados marcados manualmente como críticos.",
     fonte: "src/lib/visao-geral/criticos-da-visao-geral.ts",
   },
   {
@@ -3802,7 +3594,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na Visão geral, o botão Filtros do cabeçalho abre os campos Ano, Unidade, Edital e Status, com Fase e UF em "Mais opções"; os filtros aplicados ficam sempre à vista como etiquetas, com "Limpar tudo". Cada filtro aceita vários valores e as opções de um seguem os outros já escolhidos. O campo Ano escolhe de uma vez todos os editais daquele ano (pelo número, como 11/2026); outra escolha de editais aparece como "Seleção própria". A busca da tabela vale para a página toda: indicadores, blocos, tabela e, em Projetos, o mapa. Os filtros ficam guardados no navegador. Críticos e as pendências do Pós-resultado aparecem como "Recorte" entre os filtros aplicados. "Limpar tudo" apaga filtros, busca e recorte. Para ver só um DSEI, use o filtro Unidade.',
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -3818,7 +3609,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na Visão geral da Saúde Indígena, o mapa dos DSEIs deu lugar ao cartão "Mapa": quantos dos 34 DSEIs têm edital, o DSEI com mais vagas ociosas e o menos preenchido (contratadas sobre vagas), contados de todos os editais da área, como no Mapa. O nome do DSEI abre a página Mapa já nele, e "Abrir no mapa" a abre no Brasil. Escolher um DSEI no Mapa não filtra a Visão geral. Clicar numa CASAI nacional no Mapa abre a Visão geral com a busca por ela.',
-    fato: "",
     fonte:
       "src/modulos/visao-geral/cartao-do-mapa.tsx; src/lib/mapas/mapa-saude-indigena/aba-do-mapa.ts",
   },
@@ -3837,7 +3627,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na Visão geral, o cabeçalho diz quantos editais têm etapa nos próximos 7 dias, contando hoje (pelo dia de Brasília, sem os cancelados), com o atalho para o Cronograma. "Pede ação" junta os Críticos e as pendências do pós-resultado: nos editais com resultado, os concluídos sem lista de aprovados vigente e as listas sem nenhum status; o clique filtra a página por aquele item. "Em andamento, por fase" mostra só as fases com edital aberto (Edital, Inscrições, Análise curricular, Recursos, Entrevistas, Resultado, Contratação, Sem cronograma ou Outra), lidas do status e da atividade do cronograma, e embaixo quantos estão com cronograma encerrado, concluídos e cancelados; o clique filtra a fase. Em Projetos, "Processos por projeto" mostra cada projeto com processos, abertos, vagas e contratadas; o clique filtra o projeto.',
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -3851,7 +3640,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A fase do edital na Visão geral vem primeiro do status (cancelado é Cancelado, planejado é Edital, e concluído é "Cronograma encerrado" quando o status vem das datas com o cálculo automático, ou Concluído só quando foi digitado à mão com o cálculo manual) e, nos demais, do texto da atividade do cronograma (a de hoje, ou a etapa mostrada), sem acento nem caixa: contratação, admissão ou posse é Contratação; prazo ou abertura de recurso é Recursos; resultado final ou homologação do resultado é Resultado; outro recurso é Recursos; entrevista é Entrevistas; análise curricular, documental, títulos, prova ou resultado preliminar é Análise curricular; inscrição é Inscrições; outro resultado é Resultado; edital, impugnação ou publicação é Edital. "Aguardando: X" conta como a fase de X; texto que nenhuma regra reconhece fica em Outra e "Cronograma pendente" em Sem cronograma.',
-    fato: "",
     fonte: "src/lib/visao-geral/fases-do-processo.ts",
   },
   {
@@ -3863,7 +3651,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Vagas imediatas é a soma das vagas do cadastro de cada edital do recorte (área, filtros e busca), sem os cancelados. A vaga sem contratação que um edital mais novo da mesma unidade reabriu para o mesmo cargo conta uma vez só, no edital novo: o número embaixo diz quantas saíram da soma, e "sem desconto das reabertas" aparece quando essa conta não pôde ser feita. As vagas imediatas se dividem em Contratadas + Em seleção + Ociosas; clicar no número mostra essa conta.',
-    fato: "Vagas imediatas = Contratadas + Em seleção + Ociosas, contando a vaga reaberta uma vez só.",
     fonte: "src/lib/visao-geral/indicadores-do-monitoramento.ts",
   },
   {
@@ -3875,7 +3662,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Contratadas são as contratações de cada edital limitadas às vagas imediatas dele: quem foi contratado além das vagas fica em "Contratações além das vagas imediatas". As contratações vêm da lista de aprovados vigente (status Contratado ou Migração). A porcentagem é a parte das vagas imediatas já preenchida.',
-    fato: "Contratadas = contratações de cada edital até o número de vagas imediatas dele.",
     fonte: "src/lib/visao-geral/indicadores-do-monitoramento.ts",
   },
   {
@@ -3887,7 +3673,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em seleção são as vagas imediatas ainda sem contratação dos editais que ainda não têm resultado (em andamento, planejados ou sem cronograma). "—" com "nenhum edital sem resultado" quer dizer que todos os editais do recorte já têm resultado.',
-    fato: "Em seleção = vagas sem contratação dos editais sem resultado.",
     fonte: "src/lib/visao-geral/indicadores-do-monitoramento.ts",
   },
   {
@@ -3899,7 +3684,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Ociosas são as vagas imediatas sem contratação dos editais que já têm resultado (concluídos, com cronograma encerrado ou na fase Contratação). "—" com "nenhum edital com resultado" quer dizer que nenhum edital do recorte chegou ao resultado.',
-    fato: "Ociosas = vagas sem contratação dos editais com resultado.",
     fonte: "src/lib/visao-geral/indicadores-do-monitoramento.ts",
   },
   {
@@ -3911,7 +3695,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Contratações além das vagas imediatas são, em cada edital, os contratados que passam do número de vagas imediatas (contratados menos vagas, quando dá mais que zero), somados no recorte. Antes o indicador se chamava "Cadastro reserva", mas não é o cadastro reserva do edital: são contratações feitas a mais, em geral chamando o cadastro reserva. Somadas às Contratadas, dão o total contratado.',
-    fato: "Contratações além das vagas imediatas = contratados − vagas de cada edital, quando passa de zero.",
     fonte: "src/lib/visao-geral/indicadores-do-monitoramento.ts",
   },
   {
@@ -3923,7 +3706,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Inscritos soma os inscritos dos editais do recorte que têm esse número (do funil do edital: Seleção, Análises ou Avaliação documental), sem os cancelados. Quando só parte dos editais tem o número, aparece "informado em X de Y editais"; quando nenhum tem, "—" (sem dado), nunca zero.',
-    fato: "Inscritos = soma dos inscritos dos editais que informaram; os sem número ficam fora e a cobertura aparece.",
     fonte: "src/lib/visao-geral/indicadores-do-monitoramento.ts",
   },
   {
@@ -3940,7 +3722,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na tabela de processos da Visão geral, a coluna Contratados mostra as contratações dentro das vagas, como o indicador "Contratadas"; as que passam das vagas imediatas aparecem ao lado, como "+N além". A célula do edital mostra o prazo do edital (encerra em até 7 dias em vermelho, em até 30 dias em amarelo; "Cronograma encerrado" ou cancelado em cinza) e a situação do cronograma de Editais (atrasada ou próxima etapa em até 3 dias em vermelho, em até 7 dias em amarelo; "Processo suspenso" ou "Processo paralisado" em amarelo; "Sem cronograma" só quando o edital não tem nenhuma etapa em Editais). "Cronograma encerrado" quer dizer que a última data do cronograma passou: não prova que o resultado foi publicado nem que o processo foi homologado, e a validade do cadastro reserva conta a partir da data de encerramento do edital. Por isso, na Visão geral, o status "Concluído" calculado pelas datas aparece como "Cronograma encerrado" também na coluna Status, na fase, nos filtros e no CSV; "Concluído" fica só para o que foi digitado à mão com o cálculo manual. Edital com o cálculo automático desligado (cálculo manual) e com etapas tem cronograma: os detalhes dizem "Cronograma cadastrado · cálculo manual", com o status digitado (por exemplo, "· suspenso"), e o andamento e a próxima etapa vêm das etapas. A borda esquerda da linha segue a mesma cor. "Sem contratação" é vagas menos contratados, com a porcentagem das vagas (a partir de 20% em amarelo, de 40% em vermelho). As colunas Fase e Atenção mostram a fase calculada e os motivos de crítico. Sem coluna escolhida, os críticos vêm primeiro (marcados manualmente como críticos) e depois quem tem mais vagas sem contratação. Clicar no cabeçalho ordena a coluna (crescente, decrescente e de volta à ordem padrão). "Colunas" escolhe as colunas visíveis, guardadas no navegador, uma a uma ou por um conjunto pronto: Gestão (vagas, contratados, sem contratação, status, fase e atenção), Prazos (ciclo, início, encerramento, duração, status e fase) e Contratação (vagas, inscritos, aprovados, aguardando chamada, contratados, sem contratação, 1ª e última admissão); Unidade e Edital estão em todos, e o conjunto à vista fica marcado; o padrão, para todos, são todas menos Observações, que entra pelo menu "Colunas". Quando a tabela rola para o lado, Unidade e Edital ficam presas à esquerda. Clicar na linha (ou Enter) abre os detalhes do processo, com o andamento do cronograma ("N% do cronograma": quanto do cronograma já passou, não a contratação), a linha do tempo de Editais e o link do edital. "Exportar em Excel" e "Salvar em PDF", no cabeçalho, baixam a tabela como está: as linhas do recorte e as colunas à vista. Para escolher seções e modelos, "Ver em Relatórios" abre o montador com o mesmo recorte.',
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -3959,7 +3740,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na tabela de processos da Visão geral, os números de Aprovados, Contratados, Aguardando chamada e Inscritos aparecem sublinhados quando levam aos dados que os compõem. Clicar abre um painel pequeno: Aprovados, Contratados e Aguardando chamada levam à Lista de aprovados já no edital da linha (Contratados com os status Contratado e Migração, Aguardando chamada com "Sem status"); Inscritos leva à tela de onde o número veio (a Seleção ou as Análises curriculares), também no edital. A linha é do edital: o destino nunca é um código de vaga. Quando só existe o total, sem os registros (por exemplo, contratados de um edital sem lista de aprovados vigente, ou inscritos de outra fonte), o painel diz "Origem agregada; detalhe individual não disponível", em vez de abrir uma lista vazia. Sem acesso à tela de destino, o número fica como texto. Ao voltar para a Visão geral (pelo Voltar do navegador ou pelo menu), a área, os filtros e a busca estão como estavam, e a linha de onde se saiu fica destacada.',
-    fato: 'Na tabela da Visão geral, Aprovados, Contratados e Aguardando chamada abrem a Lista de aprovados no edital; Inscritos abre a Seleção (ou as Análises, conforme a fonte); só o total vira "Origem agregada; detalhe individual não disponível".',
     fonte: "src/lib/visao-geral/origem-dos-numeros.ts",
   },
   {
@@ -3977,7 +3757,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Na Visão geral, clicar num número sublinhado mostra as parcelas que o formam, quando os dados permitem. Na faixa das vagas: Vagas imediatas = Contratadas + Em seleção + Ociosas e, quando há vagas reabertas, Publicadas nos editais − Reabertas em edital mais novo; Contratadas e Contratações além das vagas imediatas = dentro das vagas + além delas (o total contratado); Em seleção e Ociosas = vagas dos editais sem (ou com) resultado − as contratadas nesses editais. Na tabela, por edital: Contratados = dentro das vagas imediatas + além delas; Vagas = publicadas no edital − reabertas em edital mais novo; Sem contratação = vagas publicadas − reabertas − contratadas dentro das vagas; Aprovados = já chamados (com status) + aguardando chamada (sem status). Quando o número é um só, sem parcela que o explique, não há composição.",
-    fato: "Clicar num número da Visão geral mostra a composição: Contratados = dentro + além das vagas imediatas; Vagas = publicadas − reabertas; Vagas imediatas = Contratadas + Em seleção + Ociosas.",
     fonte: "src/lib/visao-geral/composicao-dos-numeros.ts",
   },
   {
@@ -3995,7 +3774,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Clicar numa linha da tabela da Visão geral abre os detalhes do edital. Além da situação, do provimento e do cronograma, há o bloco Resultado: Aprovados e Aguardando chamada (da lista de aprovados vigente; sem lista, "—" e "Sem lista de aprovados vigente."), Desistentes e as admissões conciliadas com o RH (a 1ª e a última admissão e quantas foram conciliadas). Embaixo, os avisos de conferência abertos daquele edital (os mesmos da central de avisos, com os casos, o tratamento e o histórico); quem é administrador global tem também "Abrir na central de avisos" (Configurações › Status das atualizações). Clicar no selo da coluna Atenção abre os detalhes já nos avisos do edital.',
-    fato: "Os detalhes do edital na Visão geral mostram o Resultado (aprovados, aguardando chamada, desistentes e admissões conciliadas com o RH: 1ª, última e quantas) e os avisos de conferência abertos do edital; o selo de Atenção abre direto nos avisos.",
     fonte: "src/modulos/visao-geral/gaveta.tsx",
   },
   {
@@ -4013,7 +3791,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na tabela de processos da Visão geral, quatro colunas mostram o resultado de cada edital (estão no padrão; o menu "Colunas" as desliga). Duração (dias) são os dias corridos do início ao encerramento do edital. Inscritos vem do funil do edital ("—" quando a fonte não tem o número). Aprovados são as pessoas da lista de aprovados vigente, e Aguardando chamada, as dessa lista que ainda não têm status, isto é, não foram chamadas (não confundir com o indicador Contratações além das vagas imediatas, que são os contratados acima das vagas); sem lista vigente, as duas ficam "—". Contratados é a coluna de sempre. O arquivo exportado leva as quatro, mesmo com as colunas desligadas, e o ano de cada processo está no número do edital (por exemplo, 80/2025).',
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -4031,7 +3808,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'As colunas 1ª admissão e Última admissão mostram a primeira e a última data de admissão das pessoas contratadas pelo edital, conferidas com o RH (sistema Impacto) nas planilhas de conciliação. Só entram as admissões que a conciliação comprovou; edital sem admissão comprovada fica "—". O arquivo exportado leva também quantas admissões foram conciliadas. A coluna Ciclo mostra o ciclo do edital (1º ciclo, 2º ciclo...), que também é filtro em "Mais opções"; o ciclo se preenche no formulário do edital, em Editais.',
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -4047,7 +3823,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Os números de cada edital (inscritos, aptos, cancelados, eliminados, reprovados e aprovados na análise, entrevistados e contratados) são recalculados pelo banco no fim de cada carga da Seleção e, de novo, às 10h de Brasília. Valem para todo edital ativo que tem a fonte, com ou sem vaga na Seleção: as vagas da planilha Auditoria ligadas ao edital somadas, a lista de aprovados vigente do edital (Contratado ou Migração), as entrevistas do edital com parecer e as análises com status Aprovado do mesmo número de edital (ou do mesmo nome, para editais sem número, quando o nome é único na área). Sem a fonte, o valor anterior fica. As Vagas e o cronograma continuam vindo do cadastro do edital, em Editais. A Visão geral soma esses números dos editais do recorte.",
-    fato: "Os KPIs dos editais na Visão geral são recalculados pelo banco no fim de cada carga da Seleção e às 10h de Brasília, para todo edital ativo que tem a fonte (Seleção, lista de aprovados vigente, entrevistas, análises); sem a fonte, o valor anterior fica; as vagas vêm do cadastro do edital.",
     fonte:
       "supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; src/lib/visao-geral/indicadores-do-monitoramento.ts",
   },
@@ -4063,7 +3838,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Os números de cada edital são recalculados pelo banco no fim de cada carga da Seleção e, de novo, às 10h; entre uma carga e outra, a lista de aprovados pode já ter mudado. Contratadas ficam limitadas às vagas imediatas de cada edital (o excedente vai para Contratações além das vagas imediatas), editais cancelados não entram em nenhum indicador e as Vagas vêm do cadastro do edital, em Editais. Confira também a área atual, os filtros (guardados no navegador) e a busca, que valem para a página toda.",
-    fato: "",
     fonte:
       "src/lib/visao-geral/indicadores-do-monitoramento.ts; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql",
     abrir: "dashboard",
@@ -4079,7 +3853,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A Visão geral usa a permissão "Visão geral" (Leitor basta, em Configurações › Acessos), mostra só a área atual e é só de consulta. Para mudar vagas, cronograma ou status de um edital, use Editais (Editor em Editais ou em Cronograma); os rótulos dos indicadores mudam em Configurações › Página inicial. Corrigir coordenadas do mapa de Projetos é do administrador global ou do Gestor; os pontos do mapa da Saúde Indígena se corrigem no SIGEPSI.',
-    fato: "",
     fonte:
       "src/lib/acessos/access-roles.ts (paginasPermitidas, podeEditarCoordenadas)",
     abrir: "dashboard",
@@ -4101,7 +3874,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O montador de relatório fica em Relatórios (menu Dados), no cartão "Montar relatório" do grupo Editais, com todos os editais da área, sem filtros. Na Visão geral, o botão "Ver em Relatórios" abre o mesmo montador com o que está na tela (área, filtros, busca e atalho); os botões "Exportar em Excel" e "Salvar em PDF" da Visão geral baixam só a tabela como está. O modelo Diretoria também sai direto do cartão "Relatório da diretoria", em Relatórios. Escolha um modelo pronto (Resumo rápido, Completo ou Diretoria) ou monte o seu: marque as seções (resumo em números, tabela dos editais, vagas por cargo, aprovados, editais que pedem atenção), as colunas da tabela, os gráficos e o formato. O modelo Diretoria sai em Excel com três abas: Editais (número, unidade, vagas, divulgação, encerramento e ciclo), Vagas por cargo (cada vaga do edital com as vagas imediatas, os inscritos e os aprovados; as vagas imediatas vêm do quadro de vagas do edital ou do texto da vaga, e ficam "—" quando nenhum dos dois tem o número) e Aprovados (edital, cargo, nota, classificação, nome, status, matrícula e data de admissão conciliada com o RH). A seção Aprovados só aparece para quem tem acesso à Lista de aprovados, e cada download fica registrado com o nome de quem baixou. No PDF, acima de 3 mil aprovados, o Yeendé pede o Excel ou um recorte menor. O PDF sai como um documento, com o timbrado da AgSUS, os números, as tabelas e "Página X de Y"; o Excel sai com uma aba por seção; o CSV leva todas as colunas da tabela, como antes. Pelo "Ver em Relatórios" da Visão geral, o relatório sai do que estava na tela; pelo cartão, sai da área inteira. A última escolha fica guardada neste navegador.',
-    fato: "",
     fonte:
       "src/modulos/paineis-de-dados/montador-de-relatorio.tsx; src/lib/paineis/relatorio-da-visao-geral.ts",
     abrir: "paineis-de-dados",
@@ -4123,7 +3895,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O Painel das análises (antes chamado Análises curriculares) é a tela de leitura da avaliação documental: mostra a análise curricular dos candidatos da área atual, vinda das planilhas de análise: indicadores (Total de aptos p/ análise, Análises realizadas, Pendentes, Em revisão, Aprovados e Reprovados), pendências prioritárias, carga por responsável, evolução diária e a lista. Os filtros são Unidade, Município/UF (só em SEDE e Projetos), Edital, Código da vaga, Status e Responsável, e em "Mais opções" Categoria, Modalidade e Validação da janela; as opções de cada filtro seguem os outros. A taxa de conclusão é aprovados mais reprovados sobre o total, arredondada ao inteiro mais próximo; enquanto houver pendente, para em 99%: só mostra 100% com tudo concluído.',
-    fato: "",
     fonte: "src/lib/analises/analises-curriculares.ts; src/modulos/analises/",
     abrir: "analises",
   },
@@ -4143,7 +3914,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O gráfico Análises por data conta só as análises com decisão (Aprovado, Reprovado ou Revisar) pela data da análise; pendente com data não entra. Nas Análises curriculares, clicar num dia do gráfico Análises por data filtra a tela por aquele dia, pela data da análise: os indicadores, a carga por responsável, as pendências prioritárias, a fila e a planilha de "Exportar em Excel" passam a mostrar só as análises daquele dia. O filtro aparece como o chip Data no Recorte ativo e nos filtros aplicados, e o ponto escolhido fica destacado; o gráfico continua com todos os dias. Clicar de novo no mesmo dia, no x do chip ou em Limpar tudo tira o filtro; outro dia troca. Shift + clique em outro dia escolhe o intervalo entre os dois. Sem mouse, o mesmo filtro está em Refinar resultados › Mais opções, nos campos Data da análise: de e até. Análise sem data de análise sai do recorte enquanto houver filtro de data.',
-    fato: "",
     fonte:
       "src/lib/analises/analises-curriculares.ts; src/modulos/analises/paineis.tsx; docs/historias-de-usuario/analises-curriculares.md",
     abrir: "analises",
@@ -4160,7 +3930,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Nas Análises curriculares, o campo Situação do processo começa em Ativo. Ativo são as análises ativas de editais ativos; Inativo são as análises de editais encerrados (inativos): o edital fica inativo quando a planilha marca NÃO ou, sozinho, à meia-noite depois do último dia de análise (a data de fim na planilha), mesmo com SIM; para reabrir, estenda a data de fim na planilha; Todos junta os dois e as análises desativadas de editais ainda ativos. Só o Ativo fica pronto num cache do banco, remontado a cada 2 minutos; Inativo e Todos são montados na hora do pedido.",
-    fato: "",
     fonte:
       "src/lib/analises/analises-curriculares.ts; supabase/migrations/20260929150000_analises_lista_enxuta.sql; supabase/migrations/20260930234000_cache_sem_atropelo.sql",
   },
@@ -4177,7 +3946,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Nas Análises curriculares, as pendências prioritárias aparecem da mais grave para a menos grave (até 8): Data no futuro, Data fora do período e Sem responsável; depois Pendentes, Em revisão e Análise sem data (análise já realizada — Em revisão, Aprovado ou Reprovado — sem data de análise; Pendente sem data é o normal). Cada uma tem um atalho que aplica o filtro, e a tabela mostra o mesmo número do cartão. A data da análise é comparada com a janela do edital: Dentro do período, Fora do período, Sem data de análise, Sem janela configurada ou Data no futuro (data depois de hoje, um dado a corrigir na planilha). No gráfico de evolução diária, os dias com análise fora do período ou no futuro ficam em vermelho.",
-    fato: "",
     fonte:
       "src/lib/analises/analises-curriculares.ts; src/lib/analises/data-de-analise.ts",
   },
@@ -4193,7 +3961,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "As três planilhas de análise (Saúde Indígena, Projetos e SEDE) enviam para o mesmo banco por Apps Script; em Projetos e SEDE o envio incremental roda a cada 20 minutos. Quem sai da planilha sai do Yeendé: no fim de cada sincronização, as análises ativas daquela planilha (de editais ativos) que não vieram no envio são desativadas, nada é apagado. Há travas: nada é desativado se o envio vier vazio ou incompleto, ou se a remoção passar de 2% das análises ativas da planilha (mínimo de 25). Se o mesmo candidato aparece de novo na mesma vaga e edital, só o registro mais recente fica ativo. Análises de editais encerrados ficam como histórico. Edital analisado no Yeendé não passa pela planilha: as fichas atualizam o painel na hora. O andamento das cargas aparece em Configurações › Status das atualizações.",
-    fato: "",
     fonte:
       "apps-script/LEIA-ME.md; supabase/migrations/20261001140000_incremental_remove_ausentes.sql; supabase/migrations/20260930100000_analises_sem_registro_fantasma.sql",
   },
@@ -4213,7 +3980,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No topo de Análises curriculares, Seleção e Entrevistas, "Conferido às 09:32" é a última vez que a carga conferiu os dados (horário de Brasília; se foi em outro dia, aparece a data, como "em 04/10, 13:05"). Nas Análises curriculares, vem junto "última mudança em …": quando os dados mudaram de fato. Se a carga rodou e a planilha não tinha nada novo, o "Conferido" avança e a última mudança fica — os dados não estão parados. Sem registro de conferência, aparece "Atualizado em …". Se suspeitar de carga atrasada ou com falha, o administrador global confere em Configurações › Status das atualizações.',
-    fato: "",
     fonte:
       "src/lib/conferencias/texto-da-conferencia.ts; src/modulos/analises/analises.tsx; src/modulos/selecao/selecao.tsx; src/modulos/entrevistas/entrevistas.tsx",
   },
@@ -4230,7 +3996,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A aba usa a permissão "Análises curriculares" (Leitor basta, em Configurações › Acessos) e mostra só a área atual e, com coordenação, os editais dela. Ela é só de consulta: a análise é feita e corrigida nas planilhas de análise, que chegam ao Yeendé pelo Apps Script, ou, no edital analisado no Yeendé, nas fichas da Avaliação documental. Nota alterada por recurso não muda a análise: vale como ajuste aprovado, aplicado na Classificação.',
-    fato: "",
     fonte:
       "src/lib/acessos/access-roles.ts; src/lib/acessos/permissoes-recursos.ts; src/modulos/analises/; apps-script/LEIA-ME.md",
     abrir: "analises",
@@ -4247,7 +4012,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Confira primeiro o recorte: a Situação do processo começa em Ativo (editais encerrados ficam em Inativo), os filtros e o filtro de data (chip Data) recortam todos os números, e a tela é só da área atual. O envio das planilhas é esperado a cada 20 minutos e o Ativo vem de um pacote remontado a cada 2 minutos, então uma mudança recente pode demorar um pouco; o "Conferido às" do topo diz quando a carga conferiu. Quem saiu da planilha é desativado no Yeendé, e o mesmo candidato repetido na mesma vaga e edital conta uma vez só (o registro mais recente).',
-    fato: "",
     fonte:
       "src/lib/analises/analises-curriculares.ts; supabase/migrations/20261001140000_incremental_remove_ausentes.sql; supabase/migrations/20260930100000_analises_sem_registro_fantasma.sql",
     abrir: "analises",
@@ -4272,7 +4036,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Cada edital tem um dono da avaliação documental. Pela planilha (o padrão): a análise é feita nas planilhas de análise e chega ao Painel das análises pela sincronização do Apps Script. No Yeendé: a análise é feita nas fichas da Avaliação documental (Fila), e cada ficha alimenta a mesma base na hora: ao abrir o lote a linha entra como Pendente; atribuída, mostra o responsável; aberta por alguém, Em análise; concluída, Aprovado (apto) ou Reprovado (inapto), com a nota, as parciais, a data e o parecer; em revisão, Revisar; reaberta ou reiniciada, volta. A sincronização da planilha não altera nem inativa essas linhas, nem o edital. Acompanhe no Painel das análises (pendentes, em análise, concluídas, aprovados e reprovados por vaga e por responsável) e na Classificação, como os outros editais; o trabalho em si fica na Avaliação documental › Fila. Quem troca o dono é a coordenação da avaliação do edital (ou o administrador global), pelo botão ao lado de "Avaliação:" na Avaliação documental, com motivo; edital que a planilha já decidiu passa importando: a janela mostra antes quantos aprovados e reprovados viram fichas concluídas (com o resultado, a nota, o parecer e a data da planilha) e o que impede (por exemplo, análise em revisão na planilha, que se termina lá). A ficha importada abre só para ler; para refazer a análise no Yeendé, a coordenação reabre a ficha. O Edital 114/2026 de Projetos é analisado no Yeendé.',
-    fato: "No Yeendé, o dono da avaliação documental de cada edital fica em TB_ORIGEM_ANALISE_EDITAL (PLANILHA ou Yeendé); com Yeendé, a ficha publica em TB_ANALISE_CURRICULAR com TP_ORIGEM_REGISTRO Yeendé.",
     fonte:
       "supabase/migrations/20261009200000_fichas_no_painel_das_analises.sql; src/modulos/avaliacao-documental/origem-da-analise.tsx",
     abrir: "analises",
@@ -4296,7 +4059,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na gaveta de uma análise (clique na linha do Painel das análises), quando a linha veio de uma ficha concluída da Avaliação documental (edital analisado no Yeendé), a seção "Nota antes e após a análise" mostra, logo depois da Situação, a Nota autodeclarada (antes da análise) e a Nota consolidada (após a análise) e, por critério, Declarada, Após análise e Teto; embaixo do critério que mudou vêm as justificativas, com o mesmo texto do espelho de nota. Os números são os do espelho de nota da mesma ficha (a mesma conta), então os dois sempre batem. No eliminado (inapto por requisito), como no espelho, não há a declarada nem os critérios: a consolidada diz "Não se aplica" e aparecem os motivos da eliminação. Linhas que vieram da planilha, e fichas ainda não concluídas, seguem com a nota final e a composição da pontuação de sempre.',
-    fato: 'No Yeendé, a gaveta do Painel das análises monta a nota declarada × após a análise pela mesma conta do espelho de nota (espelhoDaFichaGravada), com a entrada que get_analise_detalhe_do_painel traz em "espelho".',
     fonte:
       "src/lib/analises/espelho-do-painel-de-analises.ts; src/modulos/analises/espelho-na-gaveta.tsx; supabase/migrations/20261020150000_detalhe_do_painel_com_espelho.sql",
     abrir: "analises",
@@ -4324,7 +4086,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Painel das análises, o card "Ritmo da análise" aparece para cada edital analisado no Yeendé. Os números são os do resumo do painel, o mesmo dos indicadores do topo ("Conferido às HH:MM": o banco confere a cada 5 minutos e remonta quando chega carga nova), mas só daquele edital: o topo soma todos os editais da área. O destaque é "Hoje": a meta do dia é o que faltava à meia-noite dividido pelos dias úteis até o prazo, contando hoje (segunda a sexta, sem feriados nacionais); "Feito hoje" são as fichas concluídas desde 00:00; "Faltam hoje" é a diferença, e o card diz quantas por avaliador até o fim do expediente (analistas ativos na equipe do edital; sem equipe, quem concluiu fichas nos últimos 7 dias). O selo do dia oscila: o esperado para a hora cresce das 8h às 18h; feito acima dele é No ritmo hoje, abaixo é Abaixo do ritmo hoje, e quem passa da meta vê Meta de hoje batida. Sábado, domingo e feriado: o card diz que hoje não é dia útil. O prazo é o fim da etapa de validação da documentação (ou análise documental/curricular) no cronograma; sem ela, não há meta. Embaixo, como referência, "Faltam" do edital (pendentes, em análise e a revisar), a média dos últimos dias com análise e a previsão de término. A setinha no canto recolhe o card numa linha ("hoje X de Y"); a escolha fica guardada neste navegador para você.',
-    fato: "",
     fonte:
       "src/lib/analises/ritmo-da-analise.ts; supabase/migrations/20261019170000_ritmo_da_analise.sql",
     abrir: "analises",
@@ -4347,7 +4108,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No card "Ritmo da análise", "Destaques de hoje" mostra 🥇🥈🥉 para os três que mais concluíram fichas hoje (empate leva a mesma medalha) e o selo 🎯 Precisão para quem concluiu ao menos 10 fichas hoje sem nenhuma reaberta (reabrir uma ficha concluída hoje, pela coordenação ou pela própria pessoa, tira o selo do dia; reiniciar o edital não conta). Zera todo dia, à meia-noite de Brasília: não há ranking acumulado, e só aparecem os medalhistas e quem tem o selo. Quando a equipe bate a meta de hoje, o selo do dia vira "Meta de hoje batida"; não há comemoração.',
-    fato: "",
     fonte:
       "src/lib/analises/ritmo-da-analise.ts; supabase/migrations/20261021100000_medalhas_do_dia.sql",
     abrir: "analises",
@@ -4368,7 +4128,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Quando todas as fichas do lote de um edital analisado no Yeendé ficam concluídas (as que saíram do lote não contam), quem concluiu ao menos uma ficha vê, uma vez, a tela de encerramento: inscritos, fichas analisadas e dias de análise do edital, o agradecimento à equipe e, embaixo, só a sua parte (fichas que você concluiu, quanto isso é do total e o seu melhor dia). Não há ranking nem números de outras pessoas. Quem entra depois (no dia seguinte, em outro navegador) também vê a tela, uma vez. A comemoração segue Configurações › Comemorações ("Edital 100% analisado") e a sua preferência; com as comemorações desligadas no sistema, a tela espera até religarem. Cada edital encerrado vira um selo com o número do edital (por exemplo, 114/2026) no menu da conta, no topo, com uma marca no avatar; os selos se acumulam, um por edital.',
-    fato: "",
     fonte:
       "src/lib/encerramento-do-edital/encerramento-do-edital.ts; src/modulos/encerramento-do-edital/; supabase/migrations/20261021180000_encerramento_do_edital.sql",
     abrir: "analises",
@@ -4387,7 +4146,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "O Yeendé tem três áreas: Saúde Indígena, SEDE e Projetos. Cada área repete as mesmas páginas (Visão geral, Editais, Cronograma, Painel das análises, Avaliação documental, Painel de recursos, Analisar recursos, Painel de entrevistas, Conduzir entrevistas, Classificação, Lista de aprovados e Seleção), e cada página mostra só os registros da área atual, a escolhida no menu. O que muda é o mapa: a Saúde Indígena tem a página Mapa (DSEIs e CASAIs) e, na Visão geral, um cartão que leva a ela; Projetos tem na Visão geral o mapa com os locais das vagas dos projetos; a SEDE não tem mapa. A área do edital é calculada pelo banco a partir da unidade e do responsável: SEDE, Escritório Distrital e Regional e CCE ficam na SEDE; Caminhoneiros, Saúde nas Fronteiras, MFC e Rio Doce, em Projetos; as demais, na Saúde Indígena.",
-    fato: "O Yeendé tem três áreas (Saúde Indígena, SEDE e Projetos); cada página mostra só a área atual escolhida no menu, e só a Visão geral da Saúde Indígena fala de DSEIs e CASAIs.",
     fonte:
       "src/lib/navegacao/menu-lateral.ts; supabase/migrations/20260925170000_areas_do_sistema.sql",
   },
@@ -4404,7 +4162,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Quem tem mais de uma área vê o seletor "Área" no topo da barra lateral; abaixo dele ficam só as páginas da área escolhida. Trocar de área abre a mesma página na área nova (ou a primeira página dela, se não tiver essa). Com a barra recolhida, o seletor vira o ícone da área atual. A área escolhida fica guardada na aba do navegador: recarregar volta a ela, e uma aba nova começa na primeira área da pessoa. Quem tem uma área só não vê seletor. O administrador global vê todas as áreas; os demais veem as áreas liberadas para eles em Configurações › Acessos (com coordenação, só a área dela).',
-    fato: "",
     fonte:
       "src/componentes/barra-lateral/menu-de-areas.tsx; src/componentes/dados-do-monitoramento.ts; supabase/migrations/20260925180000_areas_do_usuario.sql",
   },
@@ -4423,7 +4180,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "O menu de cada área tem dois blocos. Em Acompanhamento ficam as páginas de consulta: Visão geral, Painel das análises, Painel de recursos, Painel de entrevistas e Seleção (e os painéis externos liberados para a pessoa, quando houver). Em Processo seletivo fica onde se trabalha, na ordem das etapas: Editais, Cronograma, Avaliação documental, Analisar recursos, Conduzir entrevistas, Classificação e Lista de aprovados. Cada pessoa vê só as páginas que pode abrir, e o bloco sem nenhuma página some. Abaixo das áreas fica Administração (as seções de Configurações). Com a barra recolhida, o nome do bloco vira um traço entre os ícones. O selo BETA ao lado do nome marca a aba ainda em teste.",
-    fato: "O menu de cada área tem dois blocos: Acompanhamento (Visão geral, Painel das análises, Painel de recursos, Painel de entrevistas, Seleção e os painéis externos) e Processo seletivo (Editais, Cronograma, Avaliação documental, Analisar recursos, Conduzir entrevistas, Classificação e Lista de aprovados).",
     fonte:
       "supabase/migrations/20261001160000_ordem_do_menu_por_etapa.sql; supabase/migrations/20261006090000_avaliacao_documental_permissao_e_menu.sql; supabase/migrations/20261008130000_conduzir_entrevistas_no_menu.sql; supabase/migrations/20261009230000_analisar_recursos_no_menu.sql; src/lib/navegacao/menu-lateral.ts",
   },
@@ -4438,7 +4194,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Quem não é administrador global só recebe do banco os dados das suas áreas: editais, cronogramas, listas de aprovados, candidatos, convocação, vagas e análises. A gravação também confere a área: ninguém cria edital nem move edital para uma área que não é sua. Para ver outra área, peça a liberação a quem administra os acessos.",
-    fato: "",
     fonte:
       "supabase/migrations/20260925181000_recorta_dados_por_area.sql; supabase/migrations/20260925190000_gravacao_e_matriz_por_area.sql",
   },
@@ -4455,7 +4210,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Todo dia às 6h de Brasília um job em Python lê o banco e confere regras que atravessam os módulos — análises, entrevistas, classificação, lista de aprovados e as cargas da Empregare. Cada problema achado vira um aviso por edital (ou por área, ou por vaga da Empregare), com a gravidade (Crítico, Atenção ou Informativo) e todos os casos (até 5000 por aviso). O job guarda só códigos, ids e o dado que motivou o aviso, nunca nome ou CPF; o nome aparece na tela para quem pode ver aquela análise. Os avisos aparecem no selo do topo de Análises, Entrevistas, Classificação e Lista de aprovados (só os do módulo, na área atual; o selo some quando não há aviso) e, todos juntos, em Configurações › Status das atualizações. A conferência só avisa: não muda análise, entrevista, lista nem aprovado. Quando a conferência deixa de achar o problema, o aviso some sozinho na execução seguinte.",
-    fato: "",
     fonte:
       "scripts/conferencias/; supabase/migrations/20261005210000_conferencias_de_consistencia.sql",
     abrir: "config:cargas",
@@ -4474,7 +4228,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Análises: aprovada com nota abaixo da mínima da regra de classificação; nota final diferente da soma das parciais (formação, cursos, experiência e critério étnico), quando as quatro estão preenchidas; experiência acima do teto, quando a regra tiver teto; data da análise no futuro ou antes da inscrição do candidato no mesmo edital; ficha concluída com a conta diferente da regra (a ficha importada da planilha fica de fora); e, só como informação, o mesmo candidato com análise em dois editais ativos. Entrevistas: convocado sem nota depois da data marcada na agenda; nota de avaliador fora da escala do roteiro; convocado que não está na lista de convocação vigente da Classificação; e dois horários para o mesmo candidato. Classificação: lista final gerada antes da última mudança nas análises; empate sem desempate registrado; vaga das análises sem linha no quadro de vagas do edital; vaga com mais de uma linha possível no quadro (confirme a linha em Editais, nos anexos do edital); ajuste de recurso aprovado depois da última lista; convocação para entrevista gerada com uma versão da regra anterior à vigente. Lista de aprovados: a mesma pessoa com duas matrículas Contratado no mesmo edital (crítico); a mesma matrícula Contratado em mais de uma lista, por exemplo na ampla e na cota, que é uma contratação só, quando o sistema não decidiu qual linha é a contratação — a linha que ele decide fica "Contratado em outra lista" e sai do aviso; a equipe marca esse status na linha pela qual a pessoa não foi contratada (atenção); recontratação em outro edital, com outra matrícula, não gera aviso; convocado há mais de 15 dias sem desfecho e sem admissão no RH; pessoa admitida no RH (admissão conciliada) que na lista ainda está sem o status Contratado; pessoas da publicação vinda da Classificação ainda para revisão. Cargas: vaga da Empregare cujo número de candidatos variou 50% ou mais na última carga. Editais: o cronograma já terminou pelas datas, mas o status gravado do edital ainda está em andamento (ou em outra situação que não concluído, cancelado ou encerrado), sem status manual; o sistema não muda o status sozinho, porque a Avaliação documental e a Classificação leem o status gravado: a equipe confere se o processo terminou e marca "Concluído" no edital (um a um, ou vários de uma vez pelo botão "Cronograma encerrado (N)" do topo de Editais, com motivo), ou dispensa o aviso com justificativa. Esse aviso aparece no selo do topo da tela de Editais e some na conferência seguinte à marcação.',
-    fato: "",
     fonte: "scripts/conferencias/regras.py; scripts/conferencias/catalogo.py",
   },
   {
@@ -4497,7 +4250,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Cada aviso tem a situação da equipe: pendente, em análise, aguardando documento, corrigido ou dispensado com justificativa. "Rechecado sem problema" quem põe é a conferência, quando deixa de achar o problema. Em "Tratar", quem administra o módulo (na Classificação, quem edita) ou o administrador global muda a situação, dispensa (justificativa de 10 a 500 caracteres) e escolhe o responsável, alguém com acesso ao módulo, e o prazo; o responsável também muda a situação e junta evidências. Aguardando documento e corrigido pedem motivo. Se o aviso dispensado crescer, volta a pendente; se o corrigido continuar aparecendo na conferência seguinte, volta para em análise. Em "Histórico" ficam todas as mudanças, com quem, quando e o motivo, e as evidências (processo SEI, link ou nota), do aviso ou de um caso; nada se apaga. O prazo vencido fica em destaque. Os abertos aparecem agrupados por edital, com a data da última rechecagem; os dispensados e os resolvidos dos últimos 30 dias ficam recolhidos.',
-    fato: "",
     fonte:
       "supabase/migrations/20261118140000_central_de_avisos_das_conferencias.sql; src/modulos/conferencias/avisos-de-conferencia.tsx",
   },
@@ -4512,7 +4264,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Cada pessoa vê os avisos dos módulos que tem (pelo menos leitura), só da sua área e dos editais do seu recorte de coordenação. Avisos das cargas da Empregare e avisos sem área ficam só para o administrador global, que vê todos em Configurações › Status das atualizações, com o filtro por módulo.",
-    fato: "",
     fonte:
       "supabase/migrations/20261005210000_conferencias_de_consistencia.sql",
   },
@@ -4534,7 +4285,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na gaveta dos avisos, o botão com o número de casos abre a lista de todos os casos do aviso, 50 por vez ("Mostrar mais" traz os seguintes). Cada caso mostra o código do candidato na Empregare, o nome, o edital, a vaga, o responsável pela análise e o motivo: por exemplo, a data da análise e a data da inscrição, a nota e a nota mínima, a nota e a soma das parciais, a experiência e o teto. No candidato analisado em dois editais ativos aparecem as análises dele em cada edital, com vaga e situação, e quantas ficaram fora do seu acesso. O campo do aviso busca por código ou nome (sem acento) e "Exportar em Excel" e "Salvar em PDF" baixam todos os casos do aviso. O campo do topo da gaveta procura o candidato em todos os avisos. Clicar num caso das análises abre o Painel das análises já buscando pelo nome e com a análise aberta, para conferir e corrigir na planilha; o aviso some na conferência seguinte, quando o problema não aparecer mais. O nome, a vaga e o responsável só aparecem para quem tem a área e o edital da análise no seu recorte.',
-    fato: "",
     fonte:
       "src/modulos/conferencias/avisos-de-conferencia.tsx; supabase/migrations/20261007120000_casos_dos_avisos_de_conferencia.sql",
   },
@@ -4559,7 +4309,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Os casos de todos os módulos mostram quem é e o que conferir. Na lista de aprovados: o nome, o código do candidato na Empregare (quando há), o edital, a vaga e a situação com a data (por exemplo, "Contratado em 03/02/2026"); em "Duas matrículas no mesmo edital" e "Mesma contratação marcada em duas listas" aparecem todas as vagas da pessoa nas listas vigentes, com edital, vaga, situação e data, e quantas ficaram fora do seu acesso. Clicar no caso abre a Lista de aprovados só com as vagas daquela pessoa; "Ver todos" tira o recorte. Nas entrevistas: nome, código, edital, vaga, parecer e nota, e o clique abre Entrevistas já buscando o candidato, com a entrevista aberta. Na classificação aparecem a lista (tipo e data), a vaga (código e nome) ou o candidato do ajuste. Se o registro não existe mais, o caso mostra "Registro removido"; se ele é de uma área ou edital fora do seu acesso, "Sem acesso" — nunca o identificador interno.',
-    fato: "",
     fonte:
       "src/lib/conferencias/avisos-de-conferencia.ts; supabase/migrations/20261007240000_casos_dos_avisos_resolvidos.sql",
   },
@@ -4577,7 +4326,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Em Configurações, a seção Página inicial define o título e o subtítulo que abrem a página inicial, o aviso global, os textos do painel de filtros e o rótulo de cada um dos seis indicadores do topo. O título é obrigatório. A prévia ao lado mostra a página como ela vai ficar; os números da prévia são só marcadores.",
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -4593,7 +4341,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "O aviso global é a faixa no topo do sistema, vista por todas as pessoas. O tipo escolhe a cor: Informação (azul), Alerta (amarelo) ou Crítico (vermelho). Com a mensagem em branco, a faixa não aparece. Ele é definido em Configurações › Página inicial e só vale depois de salvo.",
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -4608,7 +4355,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Em Configurações › Página inicial, o grupo Filtros define o título e o subtítulo do painel de filtros do mapa e da tabela, e o texto do botão que abre os filtros (Mostrar) e que os fecha (Ocultar). O grupo Indicadores define o rótulo de cada número do topo da página inicial, na mesma ordem em que aparecem: Processos, Vagas, Contratações, Ociosas, Críticos e Inscritos.",
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -4626,7 +4372,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em Configurações, a seção Tela de acesso define a saudação (o título grande do cartão de entrada) e o botão do Google: se ele aparece, o texto dele (vazio, fica "Entrar com Google") e o domínio sugerido. Também define quais domínios de e-mail podem entrar. São fixos o slogan "Gestão dos processos seletivos", a linha "Acesse com sua conta institucional." acima do botão e o rodapé com o nome da Agência. A arte de fundo, o logo e a cor do cartão ficam na seção Aparência. A prévia ao lado mostra a tela como ela vai ficar.',
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -4641,7 +4386,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Com o Login Google em Inativo, o botão Entrar com Google some da tela de entrada (o espaço dele fica vazio). Como esse é o acesso institucional principal, as pessoas podem ficar sem conseguir entrar; por isso, ao salvar a desativação, o sistema pede confirmação antes de publicar.",
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -4650,7 +4394,6 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: ["dominio sugerido", "dica de dominio", "dominio do google"],
     resposta:
       "O domínio sugerido é passado à tela do Google para quem tem mais de uma conta conectada, para que a conta institucional apareça primeiro. Deve ser escrito no formato agenciasus.org.br, sem https://, @ ou barras; fora desse formato, a publicação é recusada.",
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -4665,7 +4408,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Só e-mails dos domínios permitidos passam da tela de entrada; quem entra com e-mail de outro domínio não chega ao sistema. Separe mais de um domínio por vírgula, como em agenciasus.org.br,agsus.org.br. Em branco, valem os domínios institucionais padrão (agenciasus.org.br e agsus.org.br).",
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -4683,7 +4425,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A arte de fundo da tela de acesso é escolhida em Configurações › Aparência. Use uma arte 16:9, em JPG, PNG ou WEBP, de até 6 MB. Diferente dos outros campos, a arte é aplicada na hora, sem passar por "Salvar alterações". Toda imagem enviada fica guardada em Artes enviadas para ser reutilizada. A arte em uso não pode ser apagada: para apagá-la, escolha outra ou restaure o padrão antes. Restaurar padrão volta para a arte institucional. Em tela mais larga que 16:9, a arte aparece inteira à direita, sobre uma cópia dela desfocada, sem cortar o logo; em tela mais estreita, o corte cai à esquerda, onde fica o cartão.',
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -4696,7 +4437,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "O logo da tela de acesso aceita um caminho do próprio site, como /assets/agsus-logo.webp, ou um endereço HTTPS da identidade institucional. Endereço em outro formato é recusado na publicação.",
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -4712,7 +4452,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "A cor do painel pinta o cartão da tela de acesso. Em Texto sobre o painel, Automático escolhe texto claro ou escuro pelo contraste com a cor; Sempre claro e Sempre escuro impõem o texto, por decisão de identidade visual, mesmo quando isso reprova a WCAG. Abaixo da cor aparece a razão de contraste: abaixo de 4,5, quem tem baixa visão pode não conseguir ler, e uma cor mais escura ou mais clara resolve sem mudar o tom.",
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -4731,7 +4470,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em Configurações › Aparência, Estilo do painel escolhe entre Sólido (o padrão) e Vidro. Com o Vidro escolhido aparecem mais dois campos. Cor no vidro diz quanto da cor do painel vai no vidro, de Nenhuma (vidro puro, o padrão) a 90%. Desfoque da arte diz quanto a arte atrás do cartão fica desfocada: Nenhum (o padrão, a arte nítida), Leve ou Forte. A prévia ao lado mostra a escolha na hora, e o vidro se vê também pela borda iluminada. Com cor no vidro, o contraste abaixo da cor é medido no pior trecho possível da arte (o mais claro e o mais escuro), na proporção escolhida; abaixo de 4,5, mais cor no vidro, uma cor mais escura ou mais clara, ou o painel sólido resolve. Sem cor, o texto vai direto sobre a arte, que precisa ser escura atrás do painel para o texto claro (ou clara para o escuro): o sistema não mede a arte. A cor do painel continua escolhendo a cor do texto no modo automático e é o painel de quem pediu ao sistema menos transparência. Vale depois de "Salvar alterações".',
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -4746,7 +4484,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A logo e a cor da barra lateral são escolhidas em Configurações › Aparência. A logo aceita JPG, PNG ou WEBP de até 6 MB; enviar guarda o arquivo em Logos enviadas, mas a escolha só vale depois de "Salvar alterações". Enquanto a escolha está pendente, a barra lateral já mostra a logo e a cor escolhidas; descartada a alteração, ela volta ao que está publicado. Os textos e ícones da barra mudam sozinhos para claro ou escuro conforme a cor. A logo selecionada não pode ser apagada: escolha outra ou restaure o padrão antes. O padrão é o símbolo do Yeendé.',
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -4761,7 +4498,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Configurações fica em Administração, no menu, com uma seção por item: Marca, Página inicial, Tela de acesso, Aparência, Painéis externos, Operação, Acessos, Módulos e abas e Status das atualizações. As seis primeiras abrem para quem tem Editor em Configurações; Acessos, para quem gerencia acessos; Módulos e abas e Status das atualizações, só para o administrador global. Cada pessoa vê só as seções que pode abrir.",
-    fato: "",
     fonte:
       "src/lib/acessos/access-roles.ts; src/modulos/configuracoes/secoes.ts",
   },
@@ -4777,7 +4513,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Nas seções Marca, Página inicial, Tela de acesso, Aparência, Painéis externos e Operação, o que muda fica pendente até "Salvar alterações" (na barra no pé da página, ou Ctrl+S): o sistema valida, compara com o que está publicado e abre a revisão; sem diferença, não há nada a publicar. A publicação pede o motivo da alteração, grava tudo numa transação só e cria uma nova entrada no histórico, sem apagar nada. Acessos e Módulos e abas salvam pela própria tela, também com motivo. Sair com alteração pendente pergunta antes.',
-    fato: "",
     fonte:
       "src/modulos/configuracoes/estado.ts; src/modulos/configuracoes/configuracoes.tsx",
   },
@@ -4793,7 +4528,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em Configurações › Operação fica o histórico de configurações, com as 30 últimas publicações. Cada item tem "Restaurar", que pede o motivo da restauração e publica de novo aqueles valores; o histórico não perde nada.',
-    fato: "",
     fonte:
       "src/modulos/configuracoes/estado.ts; src/modulos/configuracoes/configuracoes.tsx",
     abrir: "config:operacao",
@@ -4813,7 +4547,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em Configurações › Marca ficam o nome da equipe, a função ou área, o texto institucional e o logo da equipe (endereço https:// ou /caminho de PNG, JPG, WEBP ou SVG), que aparecem no pé do cartão da tela de acesso, o texto do rodapé (que entra no lugar do texto institucional quando ele está vazio) e, em "Documentos oficiais", o cabeçalho da agência (uma linha por linha do timbrado: nome, endereço e site) usado no Word e na prévia "Como fica no SEI" da Classificação. A barra lateral não mostra a equipe. Vale depois de "Salvar alterações".',
-    fato: "",
     fonte:
       "src/modulos/configuracoes/marca.tsx; src/lib/configuracoes/publicacao-de-configuracoes.ts; src/app/entrada/marca.ts",
     abrir: "config:marca",
@@ -4831,7 +4564,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "A prévia ao lado da seção Marca é a própria barra lateral, em miniatura e sem clique: a logo Yeendé, o seletor de área, os seus itens de menu com os selos BETA, Administração e o rodapé com Claro/Escuro, Recolher menu, Sair e a versão. Ela usa a cor e o logo escolhidos em Aparência antes de salvar e segue o tema claro ou escuro do sistema; para ver o outro tema, troque no rodapé da barra. Se a barra mudar, a prévia muda junto.",
-    fato: "",
     fonte:
       "src/modulos/configuracoes/previa-da-barra-lateral.tsx; src/componentes/barra-lateral/barra-lateral.tsx",
     abrir: "config:marca",
@@ -4847,7 +4579,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em Configurações › Aparência ficam a arte de fundo e o logo da tela de acesso, a cor do painel de acesso e do texto sobre ele, e a logo e a cor da barra lateral. Cada cor mostra a razão de contraste. A arte de fundo vale na hora; o resto, depois de "Salvar alterações".',
-    fato: "",
     fonte:
       "src/modulos/configuracoes/aparencia.tsx; src/lib/configuracoes/publicacao-de-configuracoes.ts",
     abrir: "config:aparencia",
@@ -4865,7 +4596,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Painéis externos são páginas de fora do Yeendé abertas pelo menu, no bloco Acompanhamento da área. Análises, Recursos, Entrevistas e Seleção viraram abas do próprio sistema e seus painéis externos foram arquivados; sem painel ativo, nenhum aparece no menu. Em Configurações › Painéis externos só se editam os painéis que já existem: título, endereço (https:// ou http://; painel ativo precisa de endereço), ativo e em manutenção. Ver um painel exige a marcação dele para a pessoa em Acessos.",
-    fato: "",
     fonte:
       "src/lib/configuracoes/paineis-externos-das-configuracoes.ts; src/modulos/configuracoes/paineis-externos.tsx; supabase/migrations/20260930235500_arquiva_painel_externo_selecao.sql",
     abrir: "config:recursos",
@@ -4884,7 +4614,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Em Configurações › Operação ficam a versão do sistema e a versão publicada, o Realtime do monitoramento (ativo ou inativo), o heartbeat de auditoria (1 a 60 minutos), o e-mail do suporte (para onde a Aya abre chamados) e o histórico de publicações, com Restaurar.",
-    fato: "",
     fonte:
       "src/modulos/configuracoes/operacao.tsx; src/lib/configuracoes/publicacao-de-configuracoes.ts",
     abrir: "config:operacao",
@@ -4900,7 +4629,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Enquanto o sistema carrega, a tela de entrada mostra um cartão provisório com as mesmas peças do cartão de verdade — a marca, a saudação padrão e o botão do Google, ainda sem ação —, por isso a troca não pisca nem muda de tamanho. Quando o sistema termina de carregar, entram a saudação e o botão configurados em Configurações › Tela de acesso.",
-    fato: "",
     fonte: "index.html; src/styles/platform-shell.css",
     abrir: "config:acesso",
   },
@@ -4929,7 +4657,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'As comemorações marcam só ocasiões reais do processo, nunca uma pessoa (não há ranking), e a frase diz o fato com o número, sem agradecimento. Com efeito (fogos, estrelas…), só quatro: edital todo analisado (só quando a última ficha em análise é concluída), quem concluiu a última ficha do edital, marcos do ano da área (1.000, 2.500, 5.000, 7.500 e 10.000 análises concluídas, depois a cada 5.000; quem abre o Yeendé pela primeira vez não recebe o marco já alcançado) e acesso liberado ou reativado. Fila de análises zerada, vaga pronta para a Classificação nas Entrevistas, entrevistas do dia concluídas e os marcos personalizados mostram só o aviso no topo, sem efeito. Cada pessoa vê no máximo uma comemoração com efeito por dia neste navegador; as seguintes do mesmo dia aparecem só como aviso. A meta do dia e o fim de um tour ou de uma trilha comigo não comemoram. Em Configurações › Comemorações, quem edita as configurações escolhe, para cada marco com efeito: ligado ou desligado, o efeito (Fogos, Confete, Serpentina, Chuva de estrelas, Corações, Balões, Aya comemorando ou Combinado), a intensidade (Suave, Normal ou Festa), a duração (de 2 a 15 segundos; em branco, automática), o som (desligado por padrão), uma mensagem própria e quem vê; nos marcos só de aviso, só ligado, mensagem e quem vê. Por enquanto só quem fez vê: "Toda a área online" depende de um aviso em tempo real que o Yeendé ainda não tem. Nos fogos, a tela escurece de leve, eu atravesso voando e o último estouro desenha o marco no céu (o número, um coração, uma estrela ou um visto); a frase fica só no aviso. O aviso no topo tem "Pular" e o botão de som; o som só toca depois de você interagir com a página. Com movimento reduzido no aparelho, só o aviso. Cada marco aparece uma vez por pessoa. As mudanças valem depois de "Salvar alterações", com motivo, e ficam no histórico de Operação. Para não ver comemorações neste navegador, desligue "Para mim", na linha do título de Configurações › Comemorações. O liga/desliga geral, para todos, fica em Módulos e abas › Sistema inteiro.',
-    fato: "",
     fonte:
       "src/lib/comemoracao/catalogo-de-comemoracoes.ts; src/lib/comemoracao/motor-de-efeitos.ts; src/lib/comemoracao/comemoracao.ts; src/lib/comemoracao/fogos.ts; src/modulos/configuracoes/comemoracoes.tsx",
     abrir: "config:comemoracoes",
@@ -4948,7 +4675,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Em Configurações › Comemorações, o botão Testar de cada marco solta a comemoração com as opções que estão na tela, mesmo antes de salvar. No Palco de testes, escolha o efeito, a intensidade, a duração e o som e clique em Soltar para ver na hora. Testar não grava nada nem aparece para outras pessoas, funciona mesmo com as comemorações desligadas para você e não conta no limite de uma comemoração com efeito por dia; com movimento reduzido no aparelho, e nos marcos só de aviso, aparece só o aviso.",
-    fato: "",
     fonte:
       "src/modulos/configuracoes/comemoracoes.tsx; src/modulos/configuracoes/palco-de-testes.tsx",
     abrir: "config:comemoracoes",
@@ -4965,7 +4691,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em Configurações › Comemorações › Marcos personalizados, Adicionar marco cria uma comemoração com nome e meta: "Edital chegou a N contratados" (soma os contratados das linhas daquele edital no monitoramento) ou "Área passou de N análises no dia" (conta as análises concluídas hoje na tela de Análises curriculares da área). Como os outros marcos, aparece quando a pessoa vê o número cruzar a meta, uma vez, só com o aviso no topo (sem efeito): "Edital 012/2026: 30 contratados." ou "200 análises concluídas hoje.", ou a mensagem própria. Se vários são alcançados na mesma leitura (200, 300 e 400 análises no dia), aparece só o maior. Vale depois de "Salvar alterações".',
-    fato: "",
     fonte:
       "src/lib/comemoracao/catalogo-de-comemoracoes.ts; src/app/marcos-personalizados.ts",
     abrir: "config:comemoracoes",
@@ -4986,7 +4711,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O Painel de entrevistas é para acompanhar (gestão e coordenação), como o Painel das análises ao lado da Avaliação documental; fazer é em Conduzir entrevistas, outra entrada do menu. O painel mostra, da área atual: os filtros, os indicadores, a agenda dos próximos dias quando há um edital escolhido, os gráficos, as pendências (sem comparecimento, sem nota, sem parecer, aprovados sem entrevista, sem análise, sem edital e nota divergente), os empatados na nota da entrevista, a tabela e a exportação ("Exportar em Excel" e "Salvar em PDF", no topo). Só leitura. Edital de treinamento, quando houver, não entra no painel. Quem tem Leitor em Entrevistas vê o painel e Conduzir entrevistas; escrever exige Editor.',
-    fato: "O Painel de entrevistas acompanha; Conduzir entrevistas faz (fila do dia, ficha de notas, Preparar e roteiros). As duas usam o recurso Entrevistas.",
     fonte:
       "src/modulos/entrevistas/entrevistas.tsx; src/modulos/entrevistas/agenda-e-empates.tsx; src/lib/entrevistas/painel-de-entrevistas.ts",
     abrir: "entrevistas",
@@ -5011,8 +4735,7 @@ export const VERBETES_AYA = Object.freeze([
       "mostrar editais concluidos",
     ],
     resposta:
-      'Conduzir entrevistas é a tela de fazer (secretaria e avaliadores), com entrada própria no menu. No cabeçalho ficam o edital (com o selo Treinamento ao lado quando é de treinamento; abre sozinho o último aberto na área ou, se houver um só, ele; o administrador global tem, dentro do próprio seletor, "Mostrar também os concluídos e fora da janela"), as seções Fila e Preparar e o Atualizar. A Fila abre em Hoje: os convocados com horário hoje na agenda salva na Classificação; sem entrevista hoje, abre em Próximos; sem agenda, em Todos. No alto fica a faixa de situação: o total do período (Hoje, Próximos ou Todos), Aguardando, Em andamento, A concluir, Concluídas, Faltaram e, quando há, Sem nota (quem ainda aguardava ou estava em andamento depois do dia marcado, de qualquer dia). Cada número é o total da lista que ele abre: clicar filtra (de novo, tira). Embaixo dos números, a barra da distribuição, "X de Y hoje" (concluídas e faltas entre as de hoje) e a próxima entrevista do dia (horário, nome, vaga e banca) com "Iniciar". A lista vem num card: Hoje · Próximos · Todos, a busca pelo nome ou código (a tecla "/" leva até ela; Esc limpa), Vaga, Banca (com "Minha banca" para quem está na banca) e o "⋯" (a agenda na Classificação e Preparar). A tabela segue a ordem de horário, 50 e mais 50 ao rolar: o horário em destaque (os encerrados acinzentados; fora de hoje, o dia embaixo), em Hoje a linha "Agora · HH:MM" entre o que passou e o que vem, a pessoa (o nome e, embaixo, o código e a modalidade), a vaga com o cargo, a banca e a situação — Aguardando, Em andamento (com "3 de 6" notas), A concluir (o resultado definido, falta concluir; com a nota), Concluída (com a nota), Faltou ou Sem nota. A ação da linha é azul quando há o que fazer (Continuar, Concluir, Lançar nota) e neutra nas outras (Iniciar, Ver, Remarcar — a agenda é na Classificação); o "⋯" tem "Ver ficha", "Remarcar na agenda" e "Copiar código". A ficha de notas abre em tela cheia e "Salvar e abrir o próximo" segue a ordem da lista. Ao concluir todas as de hoje, aparece um aviso no topo, sem efeito ("Entrevistas de hoje concluídas: 4 de 4."), se as comemorações estiverem ligadas. O período, a situação, a vaga e a banca ficam no endereço da página. Preparar guia a preparação em quatro passos.',
-    fato: "A fila de Conduzir entrevistas abre em Hoje, pela agenda salva na Classificação; concluída é a entrevista concluída na ficha (só leitura), A concluir é quem já tem parecer ou todas as notas e falta concluir, faltou é quem tem Faltou marcado.",
+      'Conduzir entrevistas é a tela de fazer (secretaria e avaliadores), com entrada própria no menu. No cabeçalho ficam o edital (com o selo Treinamento ao lado quando é de treinamento; abre sozinho o último aberto na área ou, se houver um só, ele; o administrador global tem, dentro do próprio seletor, "Mostrar também os concluídos e fora da janela"), as seções Fila e Preparar e o Atualizar. A Fila abre em Hoje: os convocados com horário hoje na agenda salva na Classificação; sem entrevista hoje, abre em Próximos; sem agenda, em Todos. No alto fica a faixa de situação: o total do período (Hoje, Próximos ou Todos), Aguardando, Em andamento, A concluir, Concluídas, Faltaram e, quando há, Sem nota (quem ainda aguardava ou estava em andamento depois do dia marcado, de qualquer dia). Cada número é o total da lista que ele abre: clicar filtra (de novo, tira). Embaixo dos números, a barra da distribuição, "X de Y hoje" (concluídas e faltas entre as de hoje) e a próxima entrevista do dia (horário, nome, vaga e banca) com "Iniciar". A lista vem num card: Hoje · Próximos · Todos, a busca pelo nome ou código (a tecla "/" leva até ela; Esc limpa), Vaga, Banca (com "Minha banca" para quem está na banca) e o "⋯" (a agenda na Classificação e Preparar). A tabela segue a ordem de horário, 50 e mais 50 ao rolar: o horário em destaque (os encerrados acinzentados; fora de hoje, o dia embaixo), em Hoje a linha "Agora · HH:MM" entre o que passou e o que vem, a pessoa (o nome e, embaixo, o código e a modalidade), a vaga com o cargo, a banca e a situação — Aguardando, Em andamento (com "3 de 6" notas), A concluir (o resultado definido, falta concluir; com a nota), Concluída (com a nota), Faltou ou Sem nota. A ação da linha é azul quando há o que fazer (Continuar, Concluir, Lançar nota) e neutra nas outras (Iniciar, Ver, Remarcar — a agenda é na Classificação); o "⋯" tem "Ver ficha", "Remarcar na agenda" e "Copiar código". A ficha de notas abre em tela cheia e "Salvar e abrir o próximo" segue a ordem da lista. Ao concluir todas as de hoje, aparece um aviso no topo, sem efeito ("Entrevistas de hoje concluídas: 4 de 4."), se as comemorações estiverem ligadas. O edital, o período, a situação, a vaga e a banca ficam no endereço da página: o link copiado ou o F5 abrem o mesmo edital. Preparar guia a preparação em quatro passos.',
     fonte:
       "src/modulos/entrevistas/conduzir.tsx; src/modulos/entrevistas/fila-do-dia.tsx; src/lib/entrevistas/fila-de-conducao.ts",
     abrir: "conduzir-entrevistas",
@@ -5032,7 +4755,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em Conduzir entrevistas, com o edital aberto e com internet, o botão "Levar para o campo" (no alto, ao lado do Atualizar) guarda neste aparelho a fila do dia, a agenda e as fichas: quem avalia numa banca leva só a sua banca; a coordenação, sem banca no edital, leva o edital inteiro. Ao terminar, aparece "Pronto para o campo", com a data até quando a cópia fica no aparelho (48 horas). Sem internet, a fila e as fichas abrem dessa cópia, só para consulta, com a data dos dados ao lado do edital, como "Dados de 17/11, 10:14". Lançar notas, concluir e convocar precisam de internet. O edital aberto com internet também fica guardado sozinho, do mesmo jeito; o botão confirma que a cópia está atualizada. A cópia não leva CPF nem contatos e sai ao Sair, ao perder o acesso ou quando outra pessoa entra no navegador.',
-    fato: "",
     fonte:
       "src/modulos/entrevistas/conduzir.tsx; src/modulos/entrevistas/estado-da-conducao.ts (levarParaOCampo); src/lib/entrevistas/conducao-para-o-campo.ts; src/app/copias-da-conducao.ts",
   },
@@ -5054,7 +4776,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em Conduzir entrevistas › Preparar fica, no alto, num card, "N de 4 passos prontos" com a barra dos quatro passos, o período das entrevistas (o primeiro e o último dia da agenda) e "Regras da entrevista" (abre o resumo em linguagem simples: quem é chamado, como a nota é calculada, quem avalia e o desempate, cada um com o botão Editar). Embaixo, à esquerda, a trilha dos quatro passos, como o assistente da regra da Avaliação documental, cada um com Pronto ou Pendente e uma linha (o que está pronto ou o primeiro que falta): 1 Roteiro (o roteiro do edital, a versão com nome, a pontuação e as competências; logo abaixo, os roteiros da área), 2 Banca (o modo de lançamento e cada banca com os membros e as competências que cada um avalia), 3 Convocação (quem é chamado, em linguagem simples, a tabela das vagas e a lista de convocação da Classificação para convocar) e 4 Agenda (dia, horário e banca de cada convocado, montados na Classificação › Agenda; aqui só se confere, com o botão para a Classificação). À direita, o passo escolhido, com "O que falta" em destaque (por exemplo "Escolha o roteiro da entrevista.", "Banca 1: ninguém avalia …", "1 candidato da lista ainda não foi convocado.", "2 convocados ainda estão sem horário.") e o que resolve. Preparar abre no primeiro passo pendente, e o passo escolhido fica no endereço da página. Os passos 1 e 2 mostram o roteiro e a banca gravados; para mudar, "Trocar o roteiro nas Regras do edital" ou "Editar a banca nas Regras do edital" abrem Editais › Regras do edital na etapa Entrevista, onde "Editar roteiro e banca" abre os campos e "Salvar configuração" grava os dois juntos, com a lista do que falta para salvar ao lado (clicar num item leva ao campo). Os roteiros da área (editar, duplicar, criar) continuam no passo 1 de Preparar. Quem não tem Editor vê tudo, sem os botões. Edital ainda não preparado mostra o aviso na Fila, com o atalho para Preparar.',
-    fato: "Preparar a entrevista tem quatro passos (Roteiro, Banca, Convocação e Agenda), cada um com o estado e o que falta; a agenda é montada na Classificação.",
     fonte:
       "src/modulos/entrevistas/preparar.tsx; src/modulos/entrevistas/editor-da-configuracao.tsx; src/modulos/entrevistas/configuracao-do-edital.tsx; src/lib/entrevistas/passos-do-preparar.ts; src/modulos/entrevistas/conduzir.tsx",
     abrir: "conduzir-entrevistas",
@@ -5076,7 +4797,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em Conduzir entrevistas › Preparar, o bloco "Regras da entrevista" explica o edital em linguagem simples, montado com os dados reais da regra de classificação, do roteiro e da banca. "Quem é chamado para a entrevista": quantas pessoas por vaga imediata (e as exceções por cargo, como "Enfermeiro: 6 pessoas"), até que posição nas vagas só de cadastro reserva e se quem empata com o último chamado entra, com a tabelinha por vaga (vagas imediatas e até que posição chama) e quantos da lista já estão na ficha. "Como a nota é calculada": quantas notas cada avaliador dá (os aspectos) e em que escala, a média, o que deixa inapto (mínimo por competência, mínimo total) e o que acontece com quem falta. "Quem avalia": cada banca com os membros e as competências de cada um. "Desempate": os critérios da Classificação, na ordem. Cada bloco tem o botão Editar que leva aonde aquilo muda: Classificação (convocação e desempate), o roteiro (a nota), a banca (Editais › Regras do edital, etapa Entrevista); "Ver convocação" desce até a convocação. Os detalhes técnicos (a regra em uma linha, de onde vêm as vagas) ficam em "Ver detalhes". Quem não pode mudar não vê o Editar.',
-    fato: "O resumo das regras da entrevista sai da regra de classificação, do roteiro e da banca do edital; para mudar, use o Editar de cada bloco.",
     fonte:
       "src/lib/entrevistas/resumo-da-entrevista.ts; src/modulos/entrevistas/resumo-das-regras.tsx; src/modulos/entrevistas/conducao.tsx",
     abrir: "conduzir-entrevistas",
@@ -5099,7 +4819,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na configuração do edital (Conduzir entrevistas › Preparar › Editar configuração), cada membro da banca tem "Competências que avalia": Todas (o padrão) ou "Só estas", marcando as competências dele — por exemplo, o colaborador do DSEI que avalia só "Trabalho em equipe". Cada competência precisa de ao menos um avaliador em cada banca ("Na banca 1, ninguém avalia …" impede salvar), e não dá para tirar de alguém uma competência em que ele já deu nota (apague as notas antes). A nota da competência é a média só dos avaliadores que a avaliam. Na ficha de notas, na aba do avaliador, as competências que não são dele aparecem esmaecidas, com "avaliada por …", e a digitação passa direto por elas; no modo Por competência, só aparecem os avaliadores daquela competência. Os contadores ("0/3", "faltam N notas", "X de Y notas") contam só o que cada um deve lançar. O banco recusa a nota de um avaliador numa competência que não é dele ("… não avalia … neste edital"). Edital sem essa configuração continua igual: todos avaliam todas.',
-    fato: "Cada membro da banca avalia todas as competências (padrão) ou só as marcadas; a média da competência é só de quem a avalia, e o banco recusa nota fora da competência do avaliador.",
     fonte:
       "supabase/migrations/20261008170000_avaliador_por_competencia.sql; src/lib/entrevistas/conducao-de-entrevista.ts; src/modulos/entrevistas/competencias-do-membro.tsx; src/modulos/entrevistas/ficha.tsx; python/monitora/entrevistas/calculo.py",
     abrir: "conduzir-entrevistas",
@@ -5117,7 +4836,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Empate é quando dois ou mais candidatos do mesmo edital e da mesma vaga têm a mesma nota na entrevista. O Painel de entrevistas marca esses candidatos com o selo "Empate" e avisa: o desempate é feito na Classificação, pelos critérios da regra de classificação do edital (Classificação › Regra), com o botão que abre a Classificação no edital. O roteiro não tem mais critérios de desempate próprios: no editor do roteiro e em Preparar, os critérios aparecem só para ler, os da regra de classificação, com "Editar na Classificação". O texto antigo do roteiro continua guardado, sem uso.',
-    fato: "O desempate da entrevista é o da regra de classificação do edital, feito na Classificação.",
     fonte:
       "src/lib/entrevistas/painel-de-entrevistas.ts; src/lib/entrevistas/convocacao-da-entrevista.ts; supabase/migrations/20261008130000_conduzir_entrevistas_no_menu.sql",
     abrir: "classificacao",
@@ -5134,7 +4852,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em Conduzir entrevistas, cada edital tem uma janela: começa 7 dias antes da data de início mais antiga das etapas de entrevista do cronograma e termina 15 dias depois da data de fim mais tardia (sem data de fim, vale a de início). Conta como etapa de entrevista toda atividade cujo nome tenha "entrevista" ou "comportamental". O dia de hoje é o de Brasília, e os dois extremos contam. O edital aparece na lista se estiver na janela, se tiver uma liberação vigente ou se tiver convocado ainda sem parecer.',
-    fato: "Conduzir entrevistas mostra o edital de 7 dias antes a 15 dias depois das etapas de entrevista do cronograma, quando liberado pelo administrador global ou quando há convocado sem parecer.",
     fonte: "supabase/migrations/20260930235000_janela_da_entrevista.sql",
   },
   {
@@ -5149,7 +4866,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Um edital fica fora de Conduzir entrevistas quando: o cronograma não tem atividade com "entrevista" ou "comportamental" (aparece "sem etapa de entrevista no cronograma"); hoje está fora da janela (antes de 7 dias do início ou depois de 15 dias do fim das etapas de entrevista); não há liberação vigente (nunca liberado, vencida ou encerrada); e não há convocado sem parecer. Também some se o edital é de outra área, está inativo ou fica fora do recorte da sua coordenação, ou se você não tem acesso a Entrevistas ou à área. Ter entrevistas no Painel de entrevistas não faz o edital entrar. Para incluir um edital fora da janela, peça ao administrador global que o libere; ele também tem a caixa "Mostrar todos os editais da área".',
-    fato: "",
     fonte:
       "supabase/migrations/20260930235000_janela_da_entrevista.sql; src/lib/entrevistas/conducao-de-entrevista.ts",
     abrir: "entrevistas",
@@ -5166,7 +4882,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Só o administrador global libera um edital fora da janela: em Conduzir entrevistas, escolhe o edital e preenche "Liberar até" (de hoje até no máximo 180 dias) e o Motivo (3 a 500 caracteres). A liberação vence sozinha depois da data e pode ser encerrada antes, também com motivo. Só existe uma liberação vigente por edital; a anterior fica guardada no histórico. A caixa "Mostrar todos os editais da área" também é só do administrador global e traz todos os editais ativos da área, ignorando a janela.',
-    fato: "",
     fonte:
       "supabase/migrations/20260930235000_janela_da_entrevista.sql; src/modulos/entrevistas/conducao.tsx",
   },
@@ -5185,7 +4900,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Os roteiros ficam em Conduzir entrevistas › Preparar, no passo 1 (Roteiro), em "Roteiros da área" (a configuração do gestor, como a Regra fica na Avaliação documental). O editor abre ao lado, em seções que abrem e fecham: Identificação, Competências e aspectos, Escala e níveis, Aprovação, eliminação e ausência (com as frases simples do que elimina, como "Abaixo de 2 em qualquer competência ou abaixo de 8 no total, o candidato fica inapto." e "Quem falta é eliminado."), Resultado e desempate (o desempate só para ler, da Classificação) e Banca padrão. Perto do Salvar fica a lista do que falta ("Competência 2 (Escuta): Nota máxima: maior que 0 e até 100."); clicar num item abre a seção dele, e tentar salvar com pendência marca as seções em vermelho. O nome da versão fica no alto do editor. O roteiro é um modelo reutilizável da entrevista: competências (1 a 20, cada uma com nota máxima, peso e mínimo), escala, regra de aprovação e banca padrão; serve a vários editais. O desempate não é do roteiro: é o da regra de classificação do edital, mostrado só para ler. Quem é convocado sai da lista de convocação da Classificação. Editar grava uma versão nova: os editais que já usam a anterior continuam nela, e a nova vale para as próximas configurações. "Duplicar" cria um roteiro novo, na versão 1. Roteiro sem área serve para qualquer área.',
-    fato: "",
     fonte:
       "supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql; src/lib/entrevistas/roteiro-de-entrevista.ts; src/modulos/entrevistas/roteiros.tsx",
     abrir: "conduzir-entrevistas",
@@ -5204,7 +4918,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "A escala do roteiro pode ser FAIXA (de 0 até a nota máxima, de passo em passo; passo até 5, padrão 0,5), LISTA (só as notas cadastradas) ou NIVEIS (níveis com nome e descrição). O candidato fica APTO quando compareceu, todas as competências têm nota, o total chega ao mínimo total, cada competência chega ao seu mínimo e nenhuma média é eliminatória (se a média da banca numa competência for uma das notas eliminatórias, ele fica INAPTO). Faltou e o roteiro diz que ausência elimina: INAPTO. Falta nota ou comparecimento: SEM_PARECER. A nota da competência é a média dos avaliadores vezes o peso.",
-    fato: "",
     fonte:
       "supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql; src/lib/entrevistas/roteiro-de-entrevista.ts",
   },
@@ -5223,7 +4936,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O roteiro pode ter aspectos (opcionais; até 10), configurados na edição do roteiro — o botão "Conceitua · Propriedade · Profundidade" preenche o modelo da Saúde Indígena. Com aspectos, cada avaliador dá uma nota em cada aspecto, na escala do roteiro, e a nota dele na competência é a média dos aspectos, sem arredondar no meio (o avaliador só conta com todos os aspectos lançados). A nota da competência é a média dos avaliadores que lançaram, vezes o peso, com 2 casas. A nota final é a soma das competências sem arredondar, arredondada a 2 casas no fim. Exemplo: 4 avaliadores com 1, 1, 1 e 2 com 2, 1, 1 dão 1,11 na competência. Com aspectos, quem elimina é o mínimo da competência (abaixo dele, INAPTO): as notas eliminatórias exatas (0 ou 1) não se aplicam a médias. Roteiro sem aspectos continua com uma nota por avaliador. Editar o roteiro grava uma versão nova; os editais que já usam a anterior seguem nela.',
-    fato: "Com aspectos, a nota do avaliador é a média dos aspectos, a competência é a média dos avaliadores e o total é arredondado só no fim; elimina quem fica abaixo do mínimo da competência.",
     fonte:
       "supabase/migrations/20261008100000_aspectos_da_entrevista.sql; src/lib/entrevistas/conducao-de-entrevista.ts; python/monitora/entrevistas/calculo.py; tests/fixtures/entrevistas/casos-de-calculo.json",
     abrir: "entrevistas",
@@ -5241,7 +4953,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na configuração do edital, escolher o roteiro preenche a composição da banca com o padrão dele. "Completar pela composição" acrescenta as linhas que faltam, com o nome vazio; "Sou eu" liga o membro ao seu perfil. Quem sai da banca deixa de avaliar, mas as notas que já deu ficam na ficha, com a marca "saiu da banca". O modo de lançamento pode ser "Secretaria passa a limpo" (padrão) ou "Cada avaliador lança a sua": nesse caso cada avaliador só edita a própria coluna (o administrador global lança por qualquer um). A troca de roteiro fica bloqueada quando já há notas lançadas com outro roteiro.',
-    fato: "",
     fonte:
       "src/lib/entrevistas/conducao-de-entrevista.ts; src/modulos/entrevistas/conducao.tsx; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql",
   },
@@ -5261,7 +4972,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Há uma convocação só: a lista "Convocação para entrevista" da Classificação. Em Conduzir entrevistas › Preparar, a convocação mostra a última lista gerada na Classificação, por vaga, na mesma ordem, com os mesmos critérios e o mesmo limite da regra de classificação do edital (N vezes as vagas imediatas ou até a posição do cadastro reserva, exceções por cargo, empatados no limite); quem está só na lista de uma modalidade aparece com a marca da lista. "Convocar selecionados" leva os da lista para a ficha de notas (todos vêm marcados; dá para desmarcar). O banco recusa quem não está na lista vigente e, se a Classificação gerou outra lista depois que a tela abriu, pede para recarregar. Convocar exige a configuração salva. Quem foi convocado antes e não está na lista vigente continua na ficha, com a marca "Fora da lista vigente". Desconvocar exige motivo (3 a 500 caracteres), fica no histórico e só vale para quem ainda não tem nota; nada é apagado.',
-    fato: "No Yeendé, a convocação para a entrevista é a lista de convocação da Classificação; Entrevistas não tem ranking, regra nem vagas próprios.",
     fonte:
       "src/lib/entrevistas/convocacao-da-entrevista.ts; src/modulos/entrevistas/conducao.tsx; supabase/migrations/20261005150000_convocacao_unica_da_entrevista.sql",
     abrir: "entrevistas",
@@ -5279,7 +4989,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Enquanto a Classificação não gerou a lista de convocação do edital, Conduzir entrevistas mostra o cálculo atual (a mesma conta da Classificação, com a regra e as vagas de agora) e o aviso "Lista ainda não gerada na Classificação", sem o botão de convocar: para convocar, gere a lista na Classificação (o botão "Gerar na Classificação" abre a tela já no edital, para quem é Editor de Classificação). Sem acesso à Classificação, a tela só avisa. Se a regra de classificação mudou depois da lista, aparece "A regra da Classificação mudou depois desta lista": gere a lista de novo.',
-    fato: "",
     fonte:
       "src/lib/entrevistas/convocacao-da-entrevista.ts; src/modulos/entrevistas/estado-da-conducao.ts",
     abrir: "classificacao",
@@ -5298,7 +5007,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'As vagas imediatas não se digitam na entrevista. Em Conduzir entrevistas › Preparar, o resumo das regras mostra a tabelinha por vaga (vagas imediatas e até que posição chama) e, em "Ver detalhes", a regra de convocação da Classificação (versão vigente) e, por vaga, as vagas, até que posição se convoca e de onde vêm as vagas, com o botão para a tela onde se mudam: o quadro de vagas do edital (Editais), a configuração da convocação (Lista de aprovados) ou os percentuais da regra (Classificação). Vaga sem quadro aparece como "sem quadro de vagas": cadastre o quadro no edital. A regra de convocação (múltiplo, posição do cadastro reserva, exceções por cargo) muda em Classificação › Regra. O que a entrevista guardava antes (vagas digitadas e regra própria) ficou no banco, sem uso.',
-    fato: "",
     fonte:
       "src/modulos/entrevistas/conducao.tsx; src/lib/entrevistas/convocacao-da-entrevista.ts; src/lib/classificacao/vagas.ts",
     abrir: "entrevistas",
@@ -5321,7 +5029,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na Fila de Conduzir entrevistas, abra um convocado: a ficha ocupa a tela inteira (fica só o menu lateral). No cabeçalho: o nome e o código, a vaga, os chips (nota da análise, modalidade, roteiro e aspectos), os detalhes no "i" (modo de lançamento, nota e parecer gravados, nome do roteiro), o comparecimento (Compareceu / Faltou), a banca quando há mais de uma e Anterior / "1 de 15" / Próximo. O lançamento padrão é Por avaliador, como a secretaria passando a limpo a folha de cada avaliador: uma aba por avaliador ("Avaliador · origem", com o check quando está completo) e, nela, a matriz com as competências nas linhas (e o mínimo de cada uma) e os aspectos nas colunas (Conceitua, Propriedade, Profundidade); sem aspectos, uma coluna "Nota". A média da linha aparece num chip: vermelho abaixo do mínimo, verde ok. Com avaliador por competência, as competências que não são do avaliador aparecem esmaecidas ("avaliada por …") e não contam nas notas que faltam. Completo um avaliador, a ficha passa sozinha ao próximo; com todos completos, o foco vai para "Salvar e abrir o próximo". "Por competência" (para lançar ao vivo) troca as abas pelas competências e as linhas pelos avaliadores; a escolha fica guardada no navegador. Digitar a primeira nota marca Compareceu. Com Faltou, a matriz some e fica a confirmação: se a ausência elimina no roteiro, parecer Inapto e total 0. A lateral mostra o resultado na hora, com as mesmas regras do banco: o total sobre o máximo num anel com a marca do mínimo, a nota da banca em cada competência em barras com a marca do mínimo, o parecer (Apto verde, Inapto vermelho, Sem parecer cinza) com os motivos e "X de Y notas". Os níveis da escala ficam numa linha embaixo da matriz e na dica da célula em foco. Com tudo lançado (ou com Faltou marcado), o parecer aparece em texto pronto embaixo da matriz — quem, edital e vaga, o roteiro, a banca, a nota de cada competência com o mínimo, o total e o parecer com o motivo — com "Copiar parecer", como na ficha da Avaliação documental; com alterações sem salvar, ele diz que é a prévia. A ficha tem a observação de cada avaliador e a justificativa da banca (veja "Observação do avaliador e justificativa da banca"). No celular, um avaliador por vez, uma competência por linha com as células grandes e o teclado numérico. A cada gravação o banco recalcula o resultado, que aparece no Painel de entrevistas; toda nota lançada, corrigida ou apagada vai para o histórico. O cartão da fila mostra as notas lançadas sobre as esperadas enquanto a entrevista está em andamento.',
-    fato: "",
     fonte:
       "src/modulos/entrevistas/ficha.tsx; src/modulos/entrevistas/parecer-pronto.tsx; src/lib/entrevistas/parecer-da-entrevista.ts; src/modulos/entrevistas/matriz-de-notas.tsx; src/modulos/entrevistas/resultado-da-ficha.tsx; src/modulos/entrevistas/cabecalho-da-ficha.tsx; src/lib/entrevistas/conducao-de-entrevista.ts",
   },
@@ -5342,7 +5049,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A ficha de entrevista funciona como a da Avaliação documental. Com o resultado definido (comparecimento marcado e, se compareceu, todas as notas) e tudo salvo, aparece "Concluir" no rodapé; em Inapto ou falta, a justificativa da banca precisa estar escrita. Concluída, a ficha fica só para leitura: as notas, o comparecimento, a banca e os textos não mudam, e o rodapé mostra "Concluída por … em …". Para mudar, a coordenação do edital (a mesma da Avaliação documental, incluindo o gestor e o administrador global) clica em "Reabrir", escolhe o motivo na lista (Correção de nota, Correção do comparecimento, Correção da banca ou dos avaliadores, Correção da justificativa da banca, Recurso deferido ou Outro, que pede a descrição) e pode escrever um complemento. A ficha volta a aceitar notas e precisa ser concluída de novo. Conclusão e reabertura vão para o histórico da entrevista, com quem, quando e o motivo. Na fila, quem já tem o resultado e ainda não foi concluído aparece como "A concluir". Se uma nota mudar depois das listas ENTREVISTA ou FINAL geradas, a Classificação avisa que a lista precisa ser gerada de novo. As entrevistas do 93/2026, importadas das planilhas da banca e conferidas, já estão concluídas.',
-    fato: "No Yeendé, a ficha de entrevista concluída é só leitura; só a coordenação do edital reabre, com motivo da lista.",
     fonte:
       "src/modulos/entrevistas/ficha.tsx; src/lib/entrevistas/reabertura-da-entrevista.ts; src/modulos/avaliacao-documental/ficha/reabrir-a-ficha.tsx; supabase/migrations/20261117050000_concluir_e_reabrir_a_entrevista.sql",
     abrir: "conduzir-entrevistas",
@@ -5362,7 +5068,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na ficha de notas há dois textos. A "Observação do avaliador" é opcional, uma por avaliador na entrevista (até 1.000 caracteres, numa linha que cresce): fica embaixo da matriz de notas dele, no lançamento Por avaliador, ou junto do nome de cada avaliador, em "Observações dos avaliadores", no Por competência. Não há observação por competência. No modo "Cada avaliador lança a sua", cada um escreve só a própria. A "Justificativa da banca" é uma por entrevista (até 4.000 caracteres): opcional quando o parecer é Apto e obrigatória quando é Inapto ou quando o candidato faltou. Sem ela, o rodapé mostra "Falta a justificativa da banca" (clicar leva ao campo) e o Salvar não grava; o banco também recusa ("Escreva a justificativa da banca: ela é obrigatória quando o parecer é Inapto" ou "… quando o candidato falta"). A regra vale para cada gravação nova: as entrevistas gravadas antes continuam como estão e a carga da planilha não muda. A justificativa entra no parecer pronto e no "Copiar parecer". Toda mudança dos dois textos vai para o histórico da entrevista, com quem e quando.',
-    fato: "No Yeendé, a justificativa da banca é obrigatória para Inapto e Faltou (em gravação nova); a observação do avaliador é opcional, uma por avaliador.",
     fonte:
       "src/modulos/entrevistas/textos-da-ficha.tsx; src/modulos/entrevistas/ficha.tsx; supabase/migrations/20261008220000_observacao_e_justificativa_da_entrevista.sql",
     abrir: "conduzir-entrevistas",
@@ -5381,7 +5086,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A matriz da ficha de notas funciona como uma planilha. Digitar uma nota da escala (de 0 a 5, por exemplo) grava e passa à próxima célula; numa escala com notas que começam igual (0 a 10, ou com meias notas), Enter, Tab ou uma seta confirmam. Enter vai à próxima célula e Shift+Enter à anterior; as setas andam pela matriz; Tab e Shift+Tab seguem a ordem. Backspace apaga a nota; na célula vazia, volta à anterior. Nota fora da escala não entra: a célula fica como estava e aparece o aviso, por exemplo "“7” não está na escala (0 a 5)". Com aspectos, o banco só aceita os aspectos todos lançados (ou todos apagados) para o mesmo avaliador e competência: salvar com algum faltando avisa e abre a aba certa. Ctrl+Enter salva e Esc volta à fila. Os atalhos estão no "?" do rodapé.',
-    fato: "",
     fonte:
       "src/modulos/entrevistas/matriz-de-notas.tsx; src/modulos/entrevistas/campo-de-nota.tsx; src/lib/entrevistas/digitacao-de-notas.ts",
   },
@@ -5402,7 +5106,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Os resultados ficam no Painel de entrevistas, só de consulta (a condução é em Conduzir entrevistas). Indicadores: Vagas com entrevista, Candidatos, Compareceram, Aptos, Inaptos, Média das notas (de quem compareceu) e Aprovados na análise sem entrevista; clicar em Compareceram, Aptos ou Inaptos filtra a tela. Pendências: sem comparecimento registrado, compareceu sem nota, com nota sem parecer, aprovados sem entrevista (só nas vagas que já têm entrevista), entrevista sem análise ligada, sem edital cadastrado e nota divergente (total diferente da soma dos critérios); cada uma filtra o painel. A nota total vai de 0 a 20 e cada critério, em geral, de 0 a 5. A ligação com a análise curricular é pelo código do candidato e da vaga e, na falta, pelo nome.",
-    fato: "",
     fonte:
       "src/modulos/entrevistas/paineis.tsx; src/lib/entrevistas/entrevistas-do-painel.ts; supabase/migrations/20260929235000_entrevistas.sql",
     abrir: "entrevistas",
@@ -5418,7 +5121,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Os dados do Painel de entrevistas vêm da planilha "[dash] entrevistados" (aba Entrevistados), carregada pelo GitHub Actions quando alguém clica em "Rodar agora" (a agenda automática está desligada desde 16/10/2026). Uma carga com menos da metade das linhas ativas é recusada, para não apagar tudo por uma planilha quebrada; quem some da planilha fica inativo, nada é apagado. A data da última carga aparece no topo da tela.',
-    fato: "",
     fonte:
       ".github/workflows/sincronizar-entrevistas.yml; docs/sincronizacao-das-planilhas.md; supabase/migrations/20260929235000_entrevistas.sql",
   },
@@ -5434,7 +5136,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A agenda das entrevistas fica na Classificação, na visão Agenda (ou pelo botão "Agenda das entrevistas" da lista Convocação para entrevista), porque os convocados saem dessa lista e a agenda preenche o documento dela. Cada edital tem a sua regra da agenda, com versões, e uma agenda salva: um horário por convocado, com dia, hora de Brasília e banca. Os convocados vêm da última lista de convocação gerada; sem lista gerada, do cálculo atual, com um aviso. Quem conduz vê a fila do dia em Conduzir entrevistas. Salvar a regra e a agenda exige Editor em Entrevistas ou em Classificação; ler, Leitor em uma delas; sempre com acesso à área e ao edital.',
-    fato: "",
     fonte:
       "src/modulos/classificacao/agenda.tsx; supabase/migrations/20261005120000_agenda_das_entrevistas.sql",
     abrir: "classificacao",
@@ -5455,7 +5156,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A regra da agenda tem: os dias (um intervalo, com a opção "Só dias úteis", ou uma lista de dias, em dd/mm/aaaa) e os dias sem entrevista (feriados); de 1 a 6 períodos por dia (ex.: 08:00–12:00 e 14:00–18:00), no horário de Brasília; a duração de cada entrevista (5 a 240 minutos) e o intervalo entre elas (0 a 120); uma pausa opcional (ex.: almoço), em que nenhuma entrevista acontece; de 1 a 20 bancas simultâneas, com nome (os membros cadastrados na banca de Entrevistas aparecem junto); a ordem dos candidatos (classificação na convocação, vaga/cargo, alfabética ou modalidade, com a ampla primeiro); "Agrupar por cargo" (todos de um cargo antes do próximo, e cada cargo começa num horário novo); e "Reservar o primeiro horário de cada período" (fica livre para encaixe). Até 60 dias. Salvar cria uma versão nova; da segunda em diante, com motivo.',
-    fato: "",
     fonte:
       "src/lib/entrevistas/agenda-das-entrevistas.ts; supabase/migrations/20261005120000_agenda_das_entrevistas.sql",
     abrir: "classificacao",
@@ -5472,7 +5172,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       '"Gerar agenda" monta os horários de cada dia a partir de cada período: começa no início, avança de duração mais intervalo e pula a pausa. Em cada horário cabe uma entrevista por banca. Os convocados, na ordem da regra, ocupam os horários em ordem: banca 1, banca 2… no mesmo horário, depois o próximo horário e o próximo dia. Se não couber, a tela diz quantos ficaram sem horário e quanto tempo de entrevista falta; se sobrar muito (30% dos lugares ou mais), diz quantos horários sobram e quantos dias bastam. O resultado é um rascunho: só vale depois de "Salvar agenda".',
-    fato: "",
     fonte: "src/lib/entrevistas/agenda-das-entrevistas.ts",
     abrir: "classificacao",
   },
@@ -5488,7 +5187,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na agenda, "Mudar" abre o ajuste de um convocado: escolher um horário livre (de qualquer banca, inclusive os reservados) ou "Sem horário", ou trocar de lugar com outro convocado (os dois trocam dia, hora e banca). O ajuste fica marcado como "Ajuste manual". Conflito é a mesma banca com horários que se sobrepõem no mesmo dia ou o mesmo candidato duas vezes: a tela lista os conflitos e não deixa salvar até resolver; o banco também recusa. "Gerar de novo" sobre uma agenda com ajustes manuais pergunta antes, porque a distribuição da regra substitui os ajustes. Cada gravação fica no histórico (Gravações), com quem, quando e o que mudou.',
-    fato: "",
     fonte:
       "src/modulos/classificacao/agenda.tsx; src/lib/entrevistas/agenda-das-entrevistas.ts; supabase/migrations/20261005120000_agenda_das_entrevistas.sql",
     abrir: "classificacao",
@@ -5504,7 +5202,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Com a agenda salva, o documento da Convocação para entrevista (Copiar para o SEI, Baixar DOCX, PDF e Como fica no SEI) sai com as colunas DATA e HORA preenchidas com o dia e a hora de início de cada convocado; quem não tem horário fica em branco, para preencher no SEI. O modelo publicado não ganha coluna de banca. O XLSX da agenda (botão XLSX na visão Agenda) traz dia, hora de início e fim, banca, nome, vaga, cargo, modalidade e se o horário foi ajustado à mão.",
-    fato: "",
     fonte:
       "src/lib/classificacao/documento-sei.ts; src/lib/entrevistas/agenda-das-entrevistas.ts",
     abrir: "classificacao",
@@ -5520,7 +5217,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A agenda é montada e ajustada na Classificação, visão Agenda. Em Conduzir entrevistas, a Fila usa a agenda salva: Hoje são os convocados com horário hoje (Brasília), Próximos os dos dias seguintes (o cartão mostra o dia) e Todos inclui quem não tem horário; Preparar › Agenda mostra a agenda do edital por dia e quem ainda está sem horário. No Painel de entrevistas, com um edital escolhido, a "Agenda dos próximos dias" mostra até cinco dias com entrevista, um por coluna, com o botão Conduzir. Sem agenda salva, a Fila abre em Todos.',
-    fato: "",
     fonte:
       "src/modulos/entrevistas/fila-do-dia.tsx; src/modulos/entrevistas/agenda-e-empates.tsx; src/lib/entrevistas/fila-de-conducao.ts",
     abrir: "conduzir-entrevistas",
@@ -5539,7 +5235,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O Painel de entrevistas e Conduzir entrevistas usam o mesmo recurso, Entrevistas: quem tem Leitor vê os dois (a fila, as fichas, o Preparar e os roteiros, sem os botões). Lançar notas, convocar, desconvocar, salvar a configuração do edital e editar roteiros exige Editor em Entrevistas e acesso à área e ao edital (recorte da coordenação). No modo "Cada avaliador lança a sua", cada avaliador só edita a própria coluna. "Convocar selecionados" só aparece quando a Classificação já gerou a lista de convocação do edital, e liberar edital fora da janela é só do administrador global.',
-    fato: "",
     fonte:
       "src/modulos/entrevistas/conduzir.tsx; src/lib/acessos/access-roles.ts; supabase/migrations/20260930220000_entrevistas_roteiros_e_notas.sql",
     abrir: "config:acessos",
@@ -5557,7 +5252,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Além do nome do roteiro, cada versão dele pode ter um nome próprio (3 a 80 caracteres). Ao salvar o roteiro (Conduzir entrevistas › Preparar › Roteiros), o campo "Nome desta versão" vem com a sugestão — o nome do roteiro e a data — editável (vazio grava sem nome). O cartão do roteiro, o resumo do edital, a escolha do roteiro e a ficha de notas mostram o nome da versão em destaque e o número discreto ("Banca por competência · v2"); sem nome, "Versão 2". "Renomear", no cartão, troca só o nome, com motivo de 10 a 500 caracteres: as competências, a escala e os editais que usam a versão não mudam, e a troca fica no histórico. Renomeia quem tem Editor em Entrevistas, na área do roteiro.',
-    fato: "No Yeendé, a versão do roteiro de entrevista tem nome opcional (NO_VERSAO), trocável com motivo sem mudar o roteiro.",
     fonte:
       "src/lib/base/nome-da-versao.ts; supabase/migrations/20261008180000_nome_das_versoes_das_regras.sql (salvar_roteiro_entrevista, renomear_versao_roteiro_entrevista)",
   },
@@ -5575,7 +5269,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O Cronograma mostra, num calendário, as etapas dos cronogramas cadastrados em Editais, só da área atual. As etapas não se editam aqui (só as demandas internas), e a tela se atualiza quando um cronograma é salvo. O Mês mostra cada etapa como um chip curto "unidade – etapa", com a borda na cor do tipo, só no dia em que ela acontece ou, se tem período, no dia em que começa ("início") e no dia em que termina ("fim"); os dias do meio ficam sem chip. Cada dia mostra até três chips e "+N mais", e clicar no dia abre todas as etapas dele, inclusive as que estão em andamento. A Lista mostra, dia a dia, o que começa ou termina, com "Acontecendo agora" no topo; a Semana segue o critério do Mês (só o início e o fim de cada período; nos dias do meio, "N em andamento"). Há filtros por unidade, edital e busca; a legenda dos tipos, acima do calendário, é o filtro de tipo: clicar num tipo esconde ou mostra as etapas dele no Mês, na Semana, na Lista e nas contagens, e "Mostrar todos" religa todos. Os tipos escondidos ficam lembrados neste navegador. O tipo é deduzido do texto da atividade: Impugnação, Recursos, Resultado final, Resultado, Convocação para entrevista, Entrevistas, Inscrições, Análise curricular ou Outros. Etapas com ano impossível ficam fora de "Próximas etapas" e aparecem listadas para correção.',
-    fato: "",
     fonte:
       "src/modulos/cronograma/calendario-editais.tsx; src/lib/cronograma/calendario-editais.ts; src/lib/editais/etapas-de-edital.ts; src/lib/cronograma/datas-do-cronograma.ts",
     abrir: "calendario",
@@ -5593,7 +5286,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "As etapas se alteram no formulário do edital, na tela Editais, por quem tem nível Editor em Editais ou em Cronograma. O Cronograma em si só mostra as datas salvas, e vê a aba quem tem pelo menos Leitor em Cronograma. Em edital já cadastrado, a alteração pede um motivo, que vai para o histórico do edital.",
-    fato: "",
     fonte:
       "src/lib/acessos/access-roles.ts; src/modulos/editais/modal-do-edital.tsx",
     abrir: "nucleo",
@@ -5610,7 +5302,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Os filtros ficam recolhidos em "Refinar resultados" (o botão "Mostrar filtros" abre): busca por etapa, edital ou unidade, unidade, edital e "Ocultar concluídas"; o tipo de etapa se escolhe na legenda, acima do calendário. "Ocultar concluídas" começa ligada, porque o que já terminou raramente é o que se procura; "Limpar tudo" tira os filtros, religa todos os tipos da legenda e mostra também as concluídas. A linha do tempo oferece só os editais que restaram no filtro, e clicar numa etapa (nas próximas etapas ou no dia) mostra o edital dela na linha do tempo.',
-    fato: "",
     fonte:
       "src/modulos/cronograma/calendario-editais.tsx; src/lib/cronograma/calendario-editais.ts",
     abrir: "calendario",
@@ -5628,7 +5319,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O Cronograma só mostra etapas já salvas no cronograma de cada edital, em Editais, e só da área atual: edital sem cronograma não aparece, nem o edital suspenso (status excepcional "Suspenso" no formulário do edital), porque as datas dele não valem enquanto durar a suspensão; ao tirar o status excepcional, as etapas voltam. "Ocultar concluídas" começa ligada, então as etapas que já terminaram ficam escondidas até você desligá-la ou clicar em "Limpar tudo". Etapa com ano impossível sai de "Próximas etapas" e aparece na lista para correção. Confira também a busca, os filtros de unidade e edital e se o tipo está desligado na legenda (riscado).',
-    fato: "",
     fonte:
       "src/modulos/cronograma/calendario-editais.tsx; src/lib/cronograma/calendario-editais.ts; src/lib/cronograma/datas-do-cronograma.ts",
     abrir: "calendario",
@@ -5647,7 +5337,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Além das etapas dos editais, o Cronograma mostra as demandas internas da área: itens da equipe com título, data (ou período), edital opcional e responsáveis. Elas aparecem no calendário com o tipo "Demanda interna", que também se liga e desliga na legenda, e no card "Demandas internas". Uma demanda em aberto cujo último dia já passou aparece como "Atrasada" e não some com "Ocultar concluídas". Quem é gestor da área (Editor em Cronograma ou Editais com acesso à área) ou administrador global cria pelo botão "Nova demanda" e, no detalhe da demanda, conclui, reabre, edita ou exclui; quem só tem acesso à área vê as demandas e os responsáveis. Cada mudança fica registrada com quem fez e quando.',
-    fato: "",
     fonte:
       "src/modulos/cronograma/demandas-internas.tsx; src/lib/cronograma/demandas-internas.ts",
     abrir: "calendario",
@@ -5663,7 +5352,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No formulário de um edital já cadastrado, em Editais, o bloco "Responsáveis pelo edital" guarda as pessoas do sistema responsáveis por ele. O gestor da área ou o administrador global escolhe as pessoas e clica em "Salvar responsáveis" (grava na hora, sem o Salvar do edital); quem só vê o edital lê os nomes. Só aparecem pessoas que têm acesso ao edital. O campo antigo "Responsável" (USI ou CORES) continua como estava.',
-    fato: "",
     fonte: "src/modulos/editais/responsaveis-do-edital.tsx",
     abrir: "nucleo",
   },
@@ -5680,7 +5368,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Quem é responsável por algum edital ou demanda interna vê, no primeiro acesso do dia, o resumo "seus editais hoje": o que começa ou termina hoje, nos próximos 7 dias e as demandas atrasadas. O sininho no topo mostra o número de pendências e reabre o resumo quando quiser. "Fechar" não deixa o resumo voltar sozinho no mesmo dia; "Ver no cronograma" abre o Cronograma só com os seus editais e demandas ("Ver todos" volta ao normal); "Concluir" fecha uma demanda atrasada, para quem pode. Para não abrir mais ao entrar, desmarque "Mostrar ao entrar" no próprio resumo: o sininho continua. Sem pendências, o resumo não abre.',
-    fato: "",
     fonte:
       "src/modulos/resumo-do-dia/resumo-do-dia.tsx; src/lib/resumo-do-dia/resumo-do-dia.ts",
     abrir: "calendario",
@@ -5702,7 +5389,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, a página Mapa, no bloco Acompanhar do menu da Saúde Indígena, é o mapa dos DSEIs com a página toda para ele: as bolhas dos 34 distritos, as CASAIs nacionais, a lista "Territórios por vagas", as Terras Indígenas, o satélite e a tela cheia. Clicar num DSEI abre o mapa dele, e o endereço muda para o do distrito (por exemplo, /saude-indigena/mapa/yanomami): o link copiado abre o mapa já nele, e o voltar do navegador volta ao Brasil. O mapa conta todos os editais da área, sem os filtros da Visão geral, com as mesmas contas dos indicadores. Quem abre a Visão geral abre o Mapa. A Visão geral ficou com um cartão pequeno: quantos DSEIs têm edital, o que tem mais vagas ociosas e o menos preenchido; o nome do DSEI abre o Mapa nele, e "Abrir no mapa", no Brasil.',
-    fato: "",
     fonte: "src/modulos/mapa/; src/modulos/visao-geral/cartao-do-mapa.tsx",
     abrir: "mapa",
   },
@@ -5721,7 +5407,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, a visão nacional do mapa mostra uma bolha por DSEI e, ao lado, a lista "Territórios por vagas". Clicar numa bolha ou numa linha da lista abre o mapa daquele DSEI, com os polos base, CASAIs, UBSIs e demais unidades, e o endereço da página passa a ser o do DSEI. O mapa desce do Brasil até o distrito, em menos de um segundo, para quem abre não perder onde está. "← Voltar ao Brasil", no topo do mapa do DSEI ou no canto de baixo à esquerda do próprio mapa, volta à visão nacional (a tecla Esc faz o mesmo). Pelo teclado, Tab chega às bolhas; o foco abre o cartão do DSEI e Enter abre o distrito.',
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -5737,7 +5422,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, cada bolha da visão nacional fica na sede do DSEI, na posição cadastrada no SIGEPSI. O tamanho segue a população indígena atendida (a área da bolha é proporcional à população). Verde com borda amarela é DSEI com edital; azul, sem edital. O mapa mostra todos os DSEIs, com os editais da área inteira. Passar o mouse (ou chegar pelo teclado) na bolha abre o cartão do DSEI: população, quantos polos base o distrito tem, quantos pontos o mapa desenha, as UFs administrativas e os números do recorte (editais, vagas, contratadas, ociosas e % preenchidas, com a barra na cor de "Territórios por vagas"). O losango da CASAI nacional mostra o mesmo cartão, com os números dela. São as mesmas contas da lista e dos indicadores do topo.',
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -5746,7 +5430,6 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: ["botao calor", "modo calor", "mapa de calor", "mapa sem calor"],
     resposta:
       'No Yeendé, o mapa da Saúde Indígena não tem modo de calor: a bolha só diz se o DSEI tem edital (verde) ou não (azul). As vagas ociosas de cada DSEI aparecem na dica da bolha e, como preenchimento, na barra de "Territórios por vagas"; a taxa de ociosidade de cada edital fica na tabela da Visão geral.',
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -5764,7 +5447,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, "Territórios por vagas" lista os mesmos DSEIs que o mapa desenha, do que tem mais vagas para o que tem menos (empate decidido pela população). "Ordenar", no topo da lista, troca a ordem: Vagas, A–Z, Nº do DSEI (a numeração 1–34 do Mapa DSEIs), % preenchidas ou Ociosas; empates vão pelo nome, e o título da lista acompanha a ordem. Sem escolha, a lista fica por vagas no Mapa e no Satélite e pelo nº do DSEI no Mapa DSEIs; a escolha fica guardada neste navegador e vale para todos os fundos. A barra é o preenchimento: vagas menos ociosas, divididas pelas vagas. Acima de 80% preenchidas fica verde, de 41% a 80% amarela e até 40% vermelha. Clicar na linha abre o DSEI, como clicar na bolha.',
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -5782,7 +5464,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, o botão "Mapa DSEIs" (ao lado de Mapa e Satélite, no mapa nacional da Saúde Indígena) troca o fundo de ruas por um fundo liso e pinta as áreas dos 34 DSEIs, cada uma com o seu número. É o fundo com que o mapa abre para todos; quem escolhe Mapa ou Satélite tem a escolha guardada neste navegador. A numeração é a ordem alfabética oficial: 1 Alagoas e Sergipe até 34 Yanomami; a lista "Territórios por vagas" mostra o mesmo número. "Colorir por" escolhe a cor: uma cor fixa por DSEI (padrão; a cor só identifica o DSEI, não indica situação), % preenchidas (cinco faixas de 20 pontos) ou vagas ociosas (cinco faixas pelos valores do recorte). DSEI fora do recorte ou sem vaga fica cinza, "sem dado". Passar o mouse num DSEI realça a linha da lista e vice-versa; clicar abre o DSEI. Nesse modo as sedes e as CASAIs começam ligadas ("Sedes e CASAIs" as desliga) e as Terras Indígenas, desligadas (o botão "Terras Indígenas" as liga). As áreas são as da camada de abrangência dos DSEIs publicada pela Funai (cópia de 20/04/2022): cobrem as regiões com atendimento, não o país inteiro.',
-    fato: "",
     fonte: "interface do Yeendé; Funai, camada areas_dsei",
   },
   {
@@ -5800,7 +5481,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, os botões acima do mapa nacional acendem os DSEIs que atendem a um critério e apagam os outros, no mapa e na lista "Territórios por vagas". "Com vagas ociosas" acende quem tem vaga ociosa; "Menos de 40% preenchidas", quem tem vaga e preencheu menos de 40% dela (DSEI sem vaga não entra); "Acesso só aéreo ou fluvial", quem tem ao menos uma unidade que, no SIGEPSI, só se alcança por avião ou barco. O número ao lado é quantos DSEIs acendem. Um destaque por vez; clicar de novo apaga. O de acesso só aparece quando o SIGEPSI traz o meio de acesso das unidades. No fundo "Mapa DSEIs" os botões saem, porque lá a cor vem de "Colorir por". As contas são as mesmas da lista e dos indicadores, nada é recontado.',
-    fato: "",
     fonte: "src/lib/mapas/mapa-saude-indigena/pontos-de-interesse.ts",
   },
   {
@@ -5814,7 +5494,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "No Yeendé, quando duas sedes caem no mesmo ponto da tela (Yanomami e Leste de Roraima, ambas em Boa Vista), as bolhas abrem num pequeno leque em volta do ponto real, com um traço até ele. A coordenada não muda; ao aproximar o zoom, cada bolha volta ao seu lugar. No mapa do DSEI vale o mesmo para unidades a menos de 14 pixels uma da outra.",
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -5831,7 +5510,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, o losango roxo marca as CASAIs de referência nacional (CASAI DF, em Brasília, e CASAI São Paulo), desenhadas a partir do SIGEPSI. Clicar nele abre a Visão geral filtrada pela busca "CASAI" mais o nome da cidade. No seletor "DSEI / CASAI" da página Mapa as duas ficam no grupo "CASAIs nacionais": escolher uma leva o mapa voando até ela e mostra o município, a UF e os processos seletivos dela (os editais "CASAI Brasília" e "CASAI São Paulo", contados pelo nome ou pela cidade), com "Abrir na Visão geral". O endereço passa a ser o da CASAI (por exemplo, /saude-indigena/mapa/casai-df). As CASAIs nacionais não têm unidades próprias no mapa.',
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -5847,7 +5525,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "No Yeendé, o mapa do DSEI usa forma além de cor, para quem não distingue as cores: estrela grafite é a sede do DSEI, círculo laranja é polo base, casa vermelha é CASAI, cruz violeta é UBSI e losango verde-azulado é outra unidade de saúde. Os botões acima da lista de unidades escondem ou mostram cada tipo, na lista e no mapa.",
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -5861,7 +5538,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, a UF de cada unidade vem do SIGEPSI (pelo CEP do ponto); quando ela não está entre as UFs de abrangência do DSEI, a unidade fica no lugar verdadeiro com um anel tracejado e uma linha pontilhada até a sede. A linha é vínculo administrativo, não trajeto. O mapa abre enquadrando só o território; "Mostrar vínculos externos" amplia para incluir essas unidades. Unidade sem UF no SIGEPSI (sem CEP) não é tratada como externa nem herda a UF da sede: a dica avisa que o vínculo não foi classificado.',
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -5875,7 +5551,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, a dica do DSEI responde a duas perguntas: "Polos base" é quantos polos base o distrito tem no SIGEPSI; "No mapa" é quantos pontos o mapa desenha (polos, ROTA, unidades e CASAIs, todos do SIGEPSI). Os números podem divergir porque o mapa também desenha as CASAIs e as unidades de lotação, e a ROTA conta como polo.',
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -5892,7 +5567,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, o popup de cada ponto do mapa do DSEI traz só o que a unidade é: tipo, nome, município e UF e o código CNES (quando há). Não há frases como "Localização em validação", "Fontes discordam" ou "validada". A lista de DSEIs, a sede, os polos base, as CASAIs (todas, inclusive as nacionais) e as unidades de lotação de cada um vêm do SIGEPSI, a fonte verdadeira dos pontos, lidos a cada abertura do mapa; do banco do Yeendé vêm só o nome bem grafado, a população (o tamanho da bolha) e as UFs administrativas de cada DSEI. Se um ponto parecer errado, a correção é feita no próprio SIGEPSI: o mapa não tem editor de coordenadas.',
-    fato: "",
     fonte:
       "src/lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts; src/lib/mapas/mapa-saude-indigena/mapa-do-dsei.ts",
   },
@@ -5909,7 +5583,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, as Terras Indígenas vêm da Funai e aparecem em três fases, cada uma um interruptor na legenda: homologada ou regularizada (limite contínuo), em processo (tracejado) e em estudo (círculo tracejado, sem limite publicado). No mapa do DSEI, a lista "Terras Indígenas e povos" traz as terras que caem na área do distrito; clicar leva o mapa até a terra. Quando a Funai não declara o povo, a lista diz isso em vez de inventar.',
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -5925,7 +5598,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, com um DSEI aberto, o botão "← Voltar ao Brasil" no topo do mapa ou o fixo no canto de baixo à esquerda do próprio mapa (ou a tecla Esc, com o foco no mapa; o botão do canto mostra o atalho) fecha o distrito: o mapa se afasta devagar até o Brasil inteiro e o endereço volta a ser o da página Mapa. O botão "Brasil" do mapa nacional também volta voando ao país inteiro. O foco volta à linha do DSEI em "Territórios por vagas". O voltar do navegador faz a mesma volta. Em tela cheia, o primeiro Esc volta ao Brasil e o segundo sai da tela cheia. Quem pediu menos movimento ao sistema vê o mapa ir e voltar sem animação (abrir um DSEI, escolher uma CASAI, voltar ao Brasil).',
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -5939,7 +5611,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, o mapa da Saúde Indígena ocupa a página Mapa e não se recolhe. "Tela cheia" faz o mapa ocupar a janela; "Sair da tela cheia" ou a tecla Esc voltam (com um DSEI aberto, o primeiro Esc volta ao Brasil e o segundo sai da tela cheia). Os controles continuam no topo. No celular, a lista fica abaixo do mapa. A legenda do mapa nacional abre pelo botão "Legenda". Sem internet, o fundo do mapa não carrega, mas a lista de territórios continua.',
-    fato: "",
     fonte: "interface do Yeendé",
   },
   {
@@ -5958,7 +5629,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No mapa da Saúde Indígena os pontos (sede, polos base, CASAIs e unidades) vêm do SIGEPSI, e o mapa não tem editor de coordenadas nem botão "Coordenadas", fila de pendências ou "Conferido". Para corrigir um ponto, peça a correção no próprio SIGEPSI; o mapa passa a mostrar a posição nova na abertura seguinte. O editor de coordenadas existe só no mapa de Projetos (veja as regras do mapa de Projetos).',
-    fato: "",
     fonte:
       "src/lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts; src/modulos/mapa-saude-indigena/localizacoes.ts",
   },
@@ -5975,7 +5645,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, com um DSEI aberto na página Mapa, o cartão "Processos seletivos" mostra os editais abertos (nem concluídos nem cancelados), as vagas, as contratadas, as em seleção, as ociosas e as pessoas aguardando chamada daquele DSEI, pelas mesmas contas da Visão geral. Em seleção e Ociosas aparecem como "—" quando nenhum edital do DSEI está naquela situação; Aguardando chamada fica "—" quando nenhum edital tem lista de aprovados. "Abrir na Visão geral" abre a Visão geral com o filtro Unidade nas unidades do DSEI. O cartão vem dos editais do Yeendé e não depende do SIGEPSI.',
-    fato: "",
     fonte:
       "src/lib/mapas/mapa-saude-indigena/processos-do-dsei.ts; src/modulos/mapa-saude-indigena/processos-do-dsei.tsx",
     abrir: "mapa",
@@ -5993,7 +5662,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, com um DSEI aberto na página Mapa, o cartão "Território" mostra a população indígena, as aldeias e as terras indígenas do distrito, lidas do SIGEPSI (dados do SIASI). As terras contam uma vez cada, pelo código: a terra que atravessa dois DSEIs aparece nos dois, mas não conta em dobro num total. Enquanto o SIGEPSI não libera esse dado para o Yeendé (em novembro de 2026 ainda não liberava), o cartão diz "Dado do SIGEPSI indisponível", nunca zero.',
-    fato: "",
     fonte:
       "src/lib/mapas/mapa-saude-indigena/territorio-do-sigepsi.ts; api/territorio-dos-dseis.ts",
     abrir: "mapa",
@@ -6016,7 +5684,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, as unidades do DSEI aberto na página Mapa trazem do SIGEPSI o meio de acesso (Terrestre, Fluvial, Aéreo; uma unidade pode ter mais de um), a acessibilidade geográfica (de Muito acessível a Muito remoto), se é urbana ou rural, se fica em área de floresta e o CNES. O CNES casa com a unidade pelo nome, porque o SIGEPSI não liga os dois por código; sem casamento seguro, fica "—". A tabela "Unidades" tem os filtros Meio de acesso e Área de floresta e sai em "Exportar em Excel" e "Salvar em PDF". No Brasil, "Acesso e vagas ociosas" lista os DSEIs com alguma unidade no filtro, com as vagas e as vagas ociosas de cada um; o nome abre o DSEI. O meio de acesso, a acessibilidade, urbano/rural e floresta vêm do mesmo cadastro de localizações que desenha os pontos. O CNES depende de o SIGEPSI liberar a rota da rede para o Yeendé; enquanto não libera, a coluna dá lugar a "CNES: Dado do SIGEPSI indisponível" e o resto continua.',
-    fato: "",
     fonte:
       "src/lib/mapas/mapa-saude-indigena/territorio-na-tela.ts; src/modulos/mapa-saude-indigena/territorio-do-dsei.tsx",
     abrir: "mapa",
@@ -6034,7 +5701,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, o mapa da Saúde Indígena depende do SIGEPSI para a lista de DSEIs e para todos os pontos e não tem plano B. Enquanto o SIGEPSI não responde, o mapa fica em "carregando". Se ele falhar, a página Mapa mostra "Não foi possível carregar o mapa da Saúde Indígena: o SIGEPSI não respondeu", com o botão "Tentar novamente"; o mesmo vale no servidor local, que não tem a rota do SIGEPSI. DSEI que só existe no cadastro do banco, sem aparecer no SIGEPSI, não é desenhado.',
-    fato: "",
     fonte:
       "src/modulos/mapa/mapa.tsx; src/modulos/mapa-saude-indigena/localizacoes.ts",
   },
@@ -6053,7 +5719,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O navegador lembra o e-mail da última conta Google que entrou no Yeendé e o manda ao Google como sugestão: com essa conta já aberta no computador, o Google devolve sem pedir a escolha de conta. Ao abrir o Yeendé sem sessão, o botão mostra "Entrando como" e o e-mail e o sistema entra sozinho, uma vez por aba; se der errado, fica a tela de entrada de sempre. Depois de Sair, ele não entra sozinho: a próxima entrada é pelo botão, que já leva o e-mail como sugestão. Só o e-mail fica guardado, neste navegador.',
-    fato: "",
     fonte:
       "src/lib/sessao/entrada-direta.ts; src/app/sessao.ts; src/app/entrada/entrada.tsx",
   },
@@ -6070,7 +5735,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na tela de entrada, "Usar outra conta" fica abaixo do botão do Google sempre que o navegador lembra uma conta, inclusive enquanto aparece "Entrando como". Ele esquece o e-mail lembrado e abre a escolha de conta do Google; a conta escolhida passa a ser a lembrada. Na tela de pedido de acesso, o "Usar outra conta" faz o mesmo.',
-    fato: "",
     fonte:
       "src/lib/sessao/entrada-direta.ts; src/app/entrada/entrada.tsx; src/app/entrada/solicitacao-de-acesso.tsx",
   },
@@ -6086,7 +5750,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Sair encerra a sessão só neste navegador: o Yeendé aberto em outro computador ou navegador continua conectado. Saem também as cópias guardadas no aparelho, e a tela volta ao início. O e-mail da conta continua lembrado como sugestão, mas o Yeendé não entra mais sozinho até a próxima entrada pelo botão.",
-    fato: "",
     fonte: "src/app/sessao.ts; src/lib/sessao/entrada-direta.ts",
   },
   {
@@ -6100,7 +5763,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Pessoas online fica no menu da conta (clique na sua foto, no alto à direita) e só o administrador global e o Gestor veem. Mostra quem está com o Yeendé aberto: nome, foto ou iniciais, grupo e onde a pessoa está, como "Análises curriculares · Saúde Indígena" ou "Configurações › Acessos" (painel externo aparece como "Painel externo"). A presença de cada pessoa é avisada a cada 2 minutos e meio com a aba visível (e na hora de trocar de página, área ou seção); quem fecha ou esconde a aba sai da lista em até 6 minutos. A contagem do botão se atualiza a cada 10 minutos, e a lista aberta, a cada 2 minutos e meio.',
-    fato: "",
     fonte:
       "src/lib/sessao/online-presence.ts; src/app/presenca.ts; src/componentes/pessoas-online/pessoas-online.tsx; src/lib/acessos/access-roles.ts (podeVerPessoasOnline)",
   },
@@ -6120,7 +5782,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Quando sai uma versão nova do Yeendé, aparece no canto de baixo da página (no celular, embaixo, na largura da tela) o cartão "O Yeendé foi atualizado", com "Agora não" e "Atualizar". "Agora não" fecha o cartão, que só volta numa versão mais nova. "Atualizar" vira "Atualizando…" e recarrega a página uma vez, já com a versão nova. Se a versão trouxe uma mudança que importa, o cartão diz o que é, como "Novo: motivo padronizado na reabertura". O sistema confere a versão a cada 5 minutos com a aba aberta e ao voltar para ela, sem consultar o banco. Nada recarrega à força: com rascunho ou alteração não salva, "Atualizar" pede para salvar antes. Se uma ação falhar porque a tela é de uma versão anterior, o cartão fica amarelo, pede "Atualize para continuar" e não tem "Agora não". Só uma tela que não consegue abrir por ser da versão antiga recarrega sozinha, uma vez.',
-    fato: "",
     fonte:
       "src/app/aviso-de-versao.ts; src/componentes/aviso-de-versao/aviso-de-versao.tsx; src/lib/base/versao-do-sistema.ts; src/lib/base/novidades.ts; src/lib/carga/importar-com-recarga.ts; src/modules/pwa-lifecycle.ts; src/app/navegacao.ts (navigate)",
   },
@@ -6142,7 +5803,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Depois de aberto uma vez com internet, o Yeendé guarda no aparelho o necessário para abrir todas as telas, mesmo as que você ainda não abriu. Sem conexão, aparece o aviso "Sem conexão com a internet" e você continua trocando de tela, recarregando a página e até abrindo o Yeendé de novo: até 48 horas depois da última entrada com internet, ele entra com o seu perfil guardado no aparelho e confere as suas permissões no banco quando a conexão volta (se o acesso tiver sido retirado, o Yeendé fecha e apaga o que guardou). Os dados vêm do banco: sem internet, Análises, Seleção, Entrevistas (o painel, a fila do dia e a ficha) e a Lista de aprovados mostram o que o aparelho guardou da última vez que foram abertas com internet, com a data no alto, como "Dados de 17/11, 10:14"; dá para consultar, não para gravar. Essas cópias ficam só no aparelho, sem CPF nem contatos, valem 48 horas e saem ao Sair, ao perder o acesso ou quando outra pessoa entra no navegador. Mapas de terras e DSEIs precisam de internet. Quando a conexão volta, aparece "Conexão restabelecida". O Yeendé se instala pelo navegador, no celular e no computador; não há aplicativo de loja.',
-    fato: "",
     fonte:
       "sw.js; sw-policy.js; src/lib/carga/cache-do-service-worker.ts; src/app/casca/aviso-de-conexao.tsx; src/lib/carga/cache-de-payload.ts; src/lib/sessao/sessao-sem-rede.ts; src/app/sessao.ts; src/app/copias-da-conducao.ts",
   },
@@ -6157,7 +5817,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Ctrl+K (ou Cmd+K) abre a busca global, com usuário conectado. Ela procura em edital, unidade, etapa, status, UF, risco, ciclo, responsável e observações e mostra até 12 resultados. Escolher um resultado limpa os filtros, filtra a unidade e o edital, abre o painel e destaca a linha na tabela; sem permissão, aparece um aviso. Quem não é administrador global só encontra editais das suas áreas.",
-    fato: "",
     fonte:
       "src/lib/navegacao/busca-global.ts; src/componentes/busca-global/busca-global.tsx; src/lib/editais/responsavel-do-edital.ts",
   },
@@ -6174,7 +5833,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "A foto que aparece para os colegas (em Pessoas online e em Acessos) é a da conta Google com que você entra. O Yeendé a copia para o seu perfil quando o perfil é criado ou ligado à sua conta e, depois, sempre que ela muda (no sinal de presença enviado enquanto o sistema está aberto); só vale endereço https. Não há escolha de foto dentro do Yeendé: para trocar, troque a foto da conta Google. Sem foto no Google, aparecem as iniciais.",
-    fato: "",
     fonte: "supabase/migrations/20261005200000_foto_do_google_no_perfil.sql",
   },
   {
@@ -6191,7 +5849,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em Configurações › Status das atualizações (só o administrador global) aparece, para cada carga de dados, a última execução e um selo: "Falhou" (a execução terminada mais recente deu erro), "Em andamento", "Atrasada" (a última que deu certo passou do prazo), "Em dia" ou "Ainda sem carga". Mostra as 10 últimas execuções de cada uma.',
-    fato: "",
     fonte:
       "src/lib/automacao/saude-das-cargas.ts; supabase/migrations/20261001120000_saude_das_cargas.sql",
     abrir: "config:cargas",
@@ -6208,7 +5865,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'As análises curriculares chegam pelo Apps Script das planilhas (o envio incremental roda a cada 20 minutos, mas, com a planilha sem mudança, só chama o banco a cada 6 horas; por isso fica "Atrasada" depois de 7 horas sem envio; a carga completa não tem prazo). Entrevistas e Seleção carregam pelo GitHub Actions só quando alguém clica em "Rodar agora": a agenda automática delas está desligada de propósito desde 16/10/2026, por isso aparecem como "desligada desde 16/10/2026" e nunca ficam "Atrasada". Quem marca os horários das cargas é o banco (Agenda dos robôs), não o GitHub. O robô da Empregare não tem agenda: roda só quando um administrador clica em "Rodar agora", por isso nunca fica "Atrasado". O prazo de cada tarefa do banco sai da própria agenda: o maior intervalo entre duas execuções mais uma folga. As que rodam a cada poucos minutos (como o pacote do painel de análises, a cada 5 minutos) atrasam depois de 15 minutos; as de hora em hora, depois de 2 horas; as diárias, depois de 26 horas; as mensais, depois de 32 dias. Quando a agenda tem uma noite sem carga, o prazo conta a noite (às 8h10, 13h10 e 18h10, o prazo é de 16 horas). As conferências de consistência rodam todo dia às 6h de Brasília e ficam atrasadas depois de 26 horas. Se um horário mudar no banco, o Status das atualizações mostra o horário novo e ajusta o prazo sozinho. A triagem da Avaliação documental roda no fim de cada carga do robô da Empregare e no Recalcular da coordenação, sem agenda, por isso também nunca fica "Atrasada". Os KPIs dos editais são recalculados no fim de cada carga da Seleção e, de novo, às 10h de Brasília.',
-    fato: "",
     fonte:
       "src/lib/automacao/saude-das-cargas.ts; src/lib/automacao/agenda-do-cron.ts; supabase/migrations/20261001120000_saude_das_cargas.sql; supabase/migrations/20261002090000_kpis_depois_da_carga_da_selecao.sql; supabase/migrations/20261002130000_kpis_de_todo_edital_com_fonte.sql; .github/workflows/sincronizar-selecao.yml; .github/workflows/sincronizar-entrevistas.yml; supabase/migrations/20260930235900_kpis_uma_vez_por_dia.sql; docs/agenda-dos-robos.md",
   },
@@ -6232,7 +5888,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O agendamento do próprio GitHub atrasava ou pulava as cargas (as de hora em hora chegaram a rodar só a cada 5 a 8 horas). Por isso o banco do Yeendé passou a ser o único agendador (e também quem atende o "Rodar agora", com a mesma chave): na hora marcada, ele pede ao GitHub a execução das Conferências (6h); as agendas de Entrevistas e Seleção estão desligadas desde 16/10/2026. A linha "Agenda dos robôs" do Status das atualizações mostra o último pedido aceito e as falhas das últimas 24 horas, e fica atrasada sem pedido aceito há mais que o prazo da carga agendada mais frequente (hoje, só as Conferências: 26 horas); sem nenhuma carga agendada, não fica atrasada. "Sem chave no Vault" quer dizer que falta o token do GitHub no Supabase: nada é pedido e as cargas param de rodar sozinhas. "Falhou" com HTTP 401 quer dizer chave inválida ou expirada (403 ou 404: sem permissão no repositório). Para resolver, gere um novo token fine-grained (Actions: read and write, só o repositório agsus-monitora) e, no Supabase (Integrations › Vault › Secrets), troque o valor do segredo github_disparo_robos, com o mesmo nome. O próximo horário já usa a chave nova; para não esperar, use o "Rodar agora" de cada carga.',
-    fato: "",
     fonte:
       "docs/agenda-dos-robos.md; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql; src/lib/automacao/saude-das-cargas.ts",
     abrir: "config:cargas",
@@ -6254,7 +5909,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em Configurações › Status das atualizações, o administrador global vê o botão "Rodar agora" nas linhas Robô da Empregare, Conferências de consistência, Triagem (Avaliação documental), Seleção e Entrevistas. Na triagem, o Rodar agora recalcula todos os editais ativos com vagas da Empregare; a coordenação de um edital usa o Recalcular da aba Triagem. O clique pede ao banco, que pede ao GitHub Actions (com a mesma chave da Agenda dos robôs) a execução do workflow daquela carga, em modo normal, e registra quem pediu; funciona também fora do site publicado; para escolher editais, vagas, modo ou limite, use "Opções". O botão fica desabilitado enquanto a carga roda (pelo registro do banco) e por 3 minutos depois do pedido; em segundos a linha diz se o GitHub aceitou. A nova execução entra na lista em alguns minutos; o robô da Empregare pode levar mais de meia hora.',
-    fato: "",
     fonte:
       "src/lib/automacao/robos-de-carga.ts; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql; docs/robo-empregare.md",
     abrir: "config:cargas",
@@ -6284,7 +5938,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em Configurações › Status das atualizações, o administrador global tem o botão "Opções" nas linhas Robô da Empregare, Triagem e Conferências de consistência. Ele abre uma gaveta para rodar com escolhas: editais (com busca e filtro por área; aparecem só os vigentes, e "Mostrar todos" traz os encerrados e cancelados), códigos de vaga da Empregare (cole a lista separada por vírgula, espaço ou linha; só dígitos — o que tiver letra é recusado; ao escolher o edital aparecem as vagas conhecidas dele com o cargo, e "Adicionar todas" põe todas), modo e limite de vagas (de 1 a 500; padrão 60). No robô da Empregare, os modos são: Normal (exporta, baixa e grava), Seco (só lista as vagas que exportaria, sem entrar na Empregare), Fumaça (só testa o login) e Forçar (grava mesmo se o arquivo vier com menos da metade dos candidatos). Na triagem: Normal, Seco (calcula sem gravar) e Refazer lote (recorta o lote do zero, só com todas as fichas do edital intocadas). Nas conferências: Normal e Seco. Com códigos de vaga, o robô roda só os códigos; o edital escolhido serve para as sugestões. Antes de confirmar, "Vai rodar" mostra a prévia, como "5 vagas do 93/2026: 179698, 180231…", e avisa quando o limite corta (ficam as vagas nunca carregadas ou carregadas há mais tempo). Depois do pedido, a linha acompanha: "Pedido enviado. Aguardando o GitHub", depois "Rodando" e o resultado por vaga (gravada, candidatos no arquivo, ativos e quantos com link da Empregare), com o link da execução no GitHub. O modo seco e o fumaça não gravam no banco: o resultado fica no resumo da execução no GitHub. Em "Detalhes", o robô da Empregare e a triagem mostram as 8 últimas execuções com quem pediu, os parâmetros usados e o resultado. A coordenação de um edital continua usando o Recalcular da aba Triagem.',
-    fato: "",
     fonte:
       "src/lib/automacao/robos-de-carga.ts; src/lib/automacao/painel-dos-robos.ts; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql; supabase/migrations/20261007190000_painel_dos_robos.sql; docs/robo-empregare.md",
     abrir: "config:cargas",
@@ -6307,7 +5960,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No "Opções" do Robô da Empregare, o modo "Só anexos" relê só os anexos do questionário das vagas ou editais escolhidos, sem exportar: situação dos inscritos, ativos, lote e triagem não mudam (serve com as inscrições encerradas). Em "Códigos de candidato" vão os códigos da Empregare de quem precisa ser relido; em branco, o robô relê quem respondeu depois da última captura (captura feita no dia da "DATA DE RESPOSTA" da exportação ou antes). "Só comparar (não grava)" faz a releitura e mostra, por candidato, quantos anexos são novos, alterados ou sumiram, sem gravar nada (o resultado fica no resumo da execução no GitHub). O robô nunca reduz anexos: se a releitura vier com menos perguntas ou sem um arquivo que está gravado, nada daquele candidato é gravado e ele aparece como "bloqueado"; quem não pôde ser relido (sem resposta na lista ou tempo esgotado) aparece como "não relido". Quando um arquivo é trocado, a leitura automática dele é refeita.',
-    fato: "",
     fonte:
       "scripts/robo-empregare/so_anexos.py; supabase/migrations/20261020130000_robo_modo_anexos.sql; docs/robo-empregare.md",
     abrir: "config:cargas",
@@ -6327,7 +5979,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       '"A chave de disparo dos robôs expirou ou foi recusada" quer dizer que o token do GitHub guardado no cofre do Supabase (Vault, nome github_disparo_robos) venceu, foi revogado ou não tem permissão: um administrador gera um novo token fine-grained (Actions: read and write, só o repositório agsus-monitora) e troca o valor do segredo no Vault, com o mesmo nome. É a mesma chave da Agenda dos robôs; a antiga variável GITHUB_DISPATCH_TOKEN da Vercel não é mais usada. "Rodando…" e "Pedido enviado" são esperados: a carga está na fila ou rodando. "Esta carga acabou de ser pedida" aparece num segundo clique em menos de 2 minutos. O estado e o histórico continuam visíveis em todos os casos.',
-    fato: "",
     fonte:
       "docs/agenda-dos-robos.md; docs/robo-empregare.md; supabase/migrations/20261008140000_agenda_dos_robos_pelo_banco.sql",
     abrir: "config:cargas",
@@ -6347,7 +5998,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A Empregare não tem API, então um robô entra no portal da empresa, pede a exportação "Candidatos da vaga (Excel)" de cada vaga dos editais ativos em curso (as vagas vêm do quadro de vagas do edital e, nos editais antigos, da Seleção), baixa os arquivos e grava os candidatos no Yeendé, com todas as colunas e respostas do questionário. Uma vaga cujo arquivo traz menos da metade dos candidatos que já tinha é recusada (nada muda nela) e quem sai do arquivo fica inativo, sem ser apagado. "Falhou" na linha do robô pode ser falha geral (por exemplo, login recusado) ou execução parcial (alguma vaga não baixou ou foi recusada); a mensagem traz as contagens de vagas pedidas, baixadas, com falha e recusadas. Ele não tem agenda automática: roda só quando o administrador global clica em "Rodar agora".',
-    fato: "",
     fonte:
       "docs/robo-empregare.md; supabase/migrations/20261005170000_robo_empregare.sql; supabase/migrations/20261006080000_robo_empregare_vagas_do_quadro.sql",
     abrir: "config:cargas",
@@ -6365,7 +6015,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O robô escolhe as vagas no próprio Yeendé, sem depender da planilha Auditoria. A fonte principal é o quadro de vagas do edital: em todo edital com quadro salvo, entram os códigos de vaga da Empregare das análises daquele edital (o mesmo vínculo vaga → linha do quadro da Classificação). A Seleção (planilha Auditoria) continua como segunda fonte, para os editais antigos; um código que está nas duas entra uma vez só, ligado ao edital do quadro. Sem filtro, entram as vagas dos editais ativos e em curso; pelo botão "Opções" (ou pelo GitHub) dá para pedir editais ou códigos. Edital sem quadro e fora da Seleção não entra: salve o quadro de vagas do edital ou rode pelo "Opções" com os códigos.',
-    fato: "",
     fonte:
       "docs/robo-empregare.md; supabase/migrations/20261006080000_robo_empregare_vagas_do_quadro.sql",
     abrir: "config:cargas",
@@ -6381,7 +6030,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Veja as últimas execuções da linha e a mensagem da que falhou. Uma carga recusada (planilha com menos da metade das linhas, ou vaga da Empregare com menos da metade dos candidatos) não mudou nada: os dados de antes continuam na tela. Em Seleção, Entrevistas e no robô da Empregare, depois de corrigir a causa, o administrador global pode usar "Rodar agora"; as análises não têm esse botão, porque o envio sai do Apps Script de cada planilha. Atrasada quer dizer que a última execução que deu certo passou do prazo da carga.',
-    fato: "",
     fonte:
       "src/lib/automacao/saude-das-cargas.ts; src/lib/automacao/robos-de-carga.ts; docs/sincronizacao-das-planilhas.md",
     abrir: "config:cargas",
@@ -6399,7 +6047,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Em Configurações › Acessos ficam as pessoas (Usuários, com Pendentes e Desativadas), os Grupos de permissões e as Coordenações. Gerenciam acessos o administrador global e o coordenador (Gestão de acessos como Editor e uma coordenação); Grupos, Coordenações e Desativadas aparecem só para o administrador global. Ninguém altera o próprio acesso: outra pessoa precisa fazer. Toda mudança pede motivo (3 a 500 caracteres) e fica auditada.",
-    fato: "",
     fonte:
       "src/lib/acessos/teto-de-acessos.ts; src/lib/acessos/access-roles.ts; supabase/migrations/20260929121300_gestao_de_acessos_delegada.sql",
     abrir: "config:acessos",
@@ -6419,7 +6066,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em Configurações › Acessos › Usuários, clique em "Adicionar pessoa" e informe o e-mail institucional, o nome, o grupo (padrão Usuário), a coordenação (ou, sem coordenação, pelo menos uma área) e o motivo. O cadastro fica pronto antes de a pessoa entrar, e a tela mostra o "Convite pronto", com a mensagem para copiar ou abrir no e-mail. O link sozinho não dá acesso: só funciona entrando com a conta Google do e-mail convidado, e aí a pessoa entra sem precisar pedir acesso. Enquanto ela não entra, a situação mostra "Convidado · ainda não entrou" e dá para reenviar o convite; cancelar o convite (só o administrador global) desativa o cadastro, com motivo. O coordenador só cadastra na própria coordenação, com grupo dentro do teto dele.',
-    fato: "O acesso ao Yeendé é só por convite: a pessoa é cadastrada em Configurações › Acessos e entra com a conta Google do e-mail convidado; o link sozinho não dá acesso.",
     fonte:
       "src/modulos/acessos/modal-adicionar-pessoa.tsx; src/lib/acessos/convite-de-acesso.ts; supabase/migrations/20260929190100_adicionar_pessoa_e_contas_de_coordenacao.sql",
     abrir: "config:acessos",
@@ -6437,7 +6083,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em Configurações › Acessos, "Último acesso em …" é a última vez que a pessoa usou o Yeendé: o mais recente entre o último login, a última tela ou ação registrada e o último sinal de presença (enviado enquanto o sistema está aberto). Antes de 02/10/2026 era só o último login, e como a sessão se renova sozinha por semanas, a data ficava velha para quem continuava usando. "Convidado · ainda não entrou" aparece para quem nunca teve nenhum acesso. A aba "Desativadas" usa a mesma conta.',
-    fato: "",
     fonte:
       "supabase/migrations/20261002200000_gestor_coordenadas_e_ultimo_acesso.sql; src/lib/acessos/convite-de-acesso.ts",
     abrir: "config:acessos",
@@ -6456,7 +6101,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O grupo define o nível de cada módulo (Visão geral, Análises, Editais, Cronograma, Aprovados, Entrevistas, Classificação, Recursos, Parecer jurídico, Seleção, Importação, Relatórios, Configurações e Gestão de acessos): Sem acesso, Leitor, Editor ou Administrador. Os grupos de base são Usuário, Gestor, Contratador, Coordenador, Jurídico e Administrador global (acesso total, não editável). Mudar um grupo muda todos que o seguem; só o administrador global gerencia grupos, e grupo de sistema ou com pessoas não pode ser removido. Para casos especiais, o modal da pessoa tem "Exceções por módulo": vale só para ela e passa por cima do grupo ("Do grupo" volta a seguir o grupo). Área é Sim ou Não; painel externo é marcado por pessoa.',
-    fato: "",
     fonte:
       "src/lib/acessos/permissoes-recursos.ts; supabase/migrations/20260929121000_grupos_de_acesso.sql; supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/modulos/acessos/gaveta-do-usuario.tsx",
   },
@@ -6472,7 +6116,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Coordenação é uma subdivisão de uma área; cada pessoa fica em no máximo uma. Ela limita o que a pessoa vê aos editais da área da coordenação: sem responsável, unidades nem editais, a área inteira; só com editais listados, só esses; com responsável ou unidades, os editais que casam a regra mais os listados. Vale para cronograma, listas, candidatos, convocação, vagas, anexos, histórico, análises e recursos. O coordenador gerencia só a própria coordenação e concede no máximo o próprio nível, nunca Gestão de acessos, sem mexer em área ou coordenação. Só o administrador global cria e muda coordenações.",
-    fato: "",
     fonte:
       "supabase/migrations/20260929121100_coordenacoes.sql; src/lib/acessos/teto-de-acessos.ts; supabase/migrations/20260929121300_gestao_de_acessos_delegada.sql",
   },
@@ -6486,7 +6129,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No modal da pessoa, a coluna "Como a pessoa vê" monta o menu dela com as mesmas regras da barra lateral; com alteração pendente, mostra o resultado com o selo "Depois de salvar". É só leitura: não é entrar como a pessoa.',
-    fato: "",
     fonte:
       "src/lib/acessos/ver-como.ts; src/modulos/acessos/gaveta-do-usuario.tsx",
   },
@@ -6505,7 +6147,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Clique na sua foto, no canto de cima, e em "Meus acessos". A gaveta mostra o seu grupo, as suas áreas, a sua coordenação (quando houver) e, em cada módulo, o seu nível: Leitor, Editor, Administrador ou Sem acesso. É o nível que vale para você, com as exceções individuais já somadas ao grupo. A gaveta só mostra: para ter mais, use "Pedir mais acesso" (logo abaixo, ou no mesmo menu), que vai para quem gerencia acessos; ninguém muda o próprio acesso. O acesso é lido quando você entra: se acabou de mudar, recarregue a página para ver o novo.',
-    fato: "",
     fonte:
       "src/lib/acessos/meus-acessos.ts; src/app/casca/meus-acessos.tsx; src/app/casca/topo.tsx",
   },
@@ -6527,7 +6168,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Clique na sua foto, no canto de cima, e em "Pedir mais acesso" (ou, em "Meus acessos", no botão do fim da gaveta). Escolha o que pedir: um módulo com um nível acima do seu (Leitor, Editor ou Administrador, conforme o módulo aceita), outra área (quem está numa coordenação não pede área: ela vem da coordenação) ou outro grupo; e escreva a justificativa (20 a 2.000 caracteres, com pelo menos 3 palavras). Fica um pedido por vez: enquanto ele aguarda, a gaveta mostra "Aguardando aprovação" e você pode cancelar. Quando alguém decide, a gaveta mostra "Aprovado" ou "Recusado" com o motivo. Aprovado, recarregue a página para o acesso novo valer. O administrador global não pede, porque já tem tudo. Nome, e-mail e foto vêm da conta Google e não se mudam por aqui.',
-    fato: "",
     fonte:
       "src/lib/acessos/pedido-de-mais-acesso.ts; src/app/casca/meus-acessos.tsx; supabase/migrations/20261124210000_ampliar_pedido_de_acesso.sql",
   },
@@ -6544,7 +6184,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Quem entra com Google institucional sem perfil ativo vê a página "Solicitação de acesso", com uma aba por área (Projetos, Saúde Indígena e SEDE): nome completo (vem do Google e pode ser corrigido), e-mail (só leitura), cargo ou função da lista da área ("Outro" pede a descrição), DSEI ou CASAI na Saúde Indígena, projeto em Projetos, setor ou diretoria na SEDE, coordenação (quando a área tem) e justificativa (20 a 2.000 caracteres, com pelo menos 3 palavras). Enviado, o pedido fica "aguardando aprovação" e a pessoa pode editar ou cancelar enquanto estiver pendente. Não há acesso automático nem senha: o login é sempre pelo Google.',
-    fato: "",
     fonte:
       "src/lib/acessos/solicitacao-de-acesso.ts; src/app/entrada/solicitacao-de-acesso.tsx; supabase/migrations/20261021140000_solicitacao_de_acesso_por_area.sql",
   },
@@ -6561,7 +6200,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Os pedidos ficam em Acessos › Usuários › Pendentes, com área, cargo, unidade ou lotação e justificativa. O administrador global vê todos; o coordenador vê os da coordenação dele e aprova nela, com grupo dentro do teto. O cargo pedido sugere o grupo (Avaliador da análise curricular → Avaliador; Gestor de processo seletivo → Gestor; Contratação → Contratador; Coordenação → Coordenador; Jurídico → Jurídico; os demais → Usuário), e a área do pedido vem marcada; quem aprova pode trocar os dois. Recusar pede um motivo da lista (ou "Outro", descrito) e a pessoa vê esse motivo quando entrar de novo, podendo corrigir e pedir outra vez. O pedido de mais acesso (de quem já tem conta, com o selo "Mais acesso") mostra o que a pessoa pediu ao lado do que tem hoje; aprovar concede exatamente aquilo (o nível no módulo, a área ou o grupo), sem escolher grupo nem áreas, e fica registrado quem aprovou. O coordenador aprova os da coordenação dele dentro do próprio teto (nunca Gestão de acessos nem área); ninguém vê nem aprova o próprio pedido.',
-    fato: "",
     fonte:
       "src/modulos/acessos/solicitacoes.tsx; src/lib/acessos/solicitacao-de-acesso.ts; src/lib/acessos/pedido-de-mais-acesso.ts",
     abrir: "config:acessos",
@@ -6577,7 +6215,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O Yeendé não envia e-mail. A pessoa vê a situação do pedido (aguardando, aprovado com "Entrar agora" ou recusado com o motivo) quando entra de novo com a mesma conta Google. Se precisar avisar, avise pelo canal da equipe.',
-    fato: "",
     fonte: "src/app/entrada/pedido-de-acesso.ts",
   },
   {
@@ -6593,7 +6230,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Só o administrador global desativa uma conta, com motivo; ela vai para a aba "Desativadas", que mostra quando, por quem e por quê. "Reativar" pede grupo, coordenação, áreas e motivo (vêm como estavam) e resolve o pedido pendente da pessoa. Quem foi desativado vê "Seu acesso ao Yeendé foi desativado." e pode pedir reativação.',
-    fato: "",
     fonte:
       "supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/modulos/acessos/contas-desativadas.tsx; src/lib/acessos/solicitacao-de-acesso.ts",
     abrir: "config:acessos",
@@ -6610,7 +6246,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O banco recusa salvar uma pessoa ativa sem nenhuma área (menos o administrador global, que já vê todas); o modal avisa e o salvar espera a área. Uma conta de setor (e-mail compartilhado) pode virar coordenação em "Avançado" › "Mover para Coordenações" (só o administrador global, com confirmação escrita): cria a coordenação com o nome da conta e desativa a conta, de forma reversível.',
-    fato: "",
     fonte:
       "supabase/migrations/20260930130000_acessos_trava_de_area_e_convite.sql; supabase/migrations/20260929190100_adicionar_pessoa_e_contas_de_coordenacao.sql",
   },
@@ -6626,7 +6261,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Confira, nesta ordem: a pessoa entrou com a conta Google do e-mail convidado (o link sozinho não dá acesso e outra conta não serve); o e-mail é de um domínio permitido (Configurações › Tela de acesso); e o cadastro está ativo — conta desativada vê "Seu acesso ao Yeendé foi desativado." e pode pedir reativação. Quem entra sem convite vê a tela de pedido de acesso, que vai para Acessos › Usuários › Pendentes. Se o Login Google estiver Inativo, o botão some da tela de entrada; com o sistema inteiro em manutenção, quem não é administrador global vê a tela de manutenção.',
-    fato: "",
     fonte:
       "src/lib/acessos/convite-de-acesso.ts; src/lib/acessos/solicitacao-de-acesso.ts; supabase/migrations/20260930180000_contas_desativadas_e_reativacao.sql; src/lib/navegacao/situacao-dos-modulos.ts",
     abrir: "config:acessos",
@@ -6644,7 +6278,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Em Editais ficam os editais da área atual: a tabela, os alertas de cronograma e o formulário de cada edital, com cronograma, status, anexos em PDF, quadro de vagas e histórico. Os indicadores do painel (Total de editais, Editais ativos, Editais inativos, Em andamento, Sem cronograma, Incompletos, Próximos 7 dias e Excepcionais) filtram a fila ao clicar; clicar de novo no mesmo indicador tira o filtro. Cadastra e edita quem tem nível Editor em Editais ou em Cronograma.",
-    fato: "",
     fonte:
       "src/modulos/editais/; src/lib/editais/editais-do-nucleo.ts; src/lib/acessos/access-roles.ts",
     abrir: "nucleo",
@@ -6664,7 +6297,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Em Editais, edital inativo é o que teve o processo encerrado: status Concluído ou Cancelado — o mesmo sentido do Inativo da Situação do processo nas Análises curriculares. Os demais (Planejado, Em andamento, Suspenso, Paralisado ou sem status) são ativos. Total de editais é a soma dos dois, só da área atual. Os indicadores contam ativos e inativos juntos, e o clique leva a tabela à aba em que ela mostra o mesmo número: Editais ativos à aba Ativos, Editais inativos ao Histórico (com o chip Situação) e os demais, incluindo o Total de editais, à aba Todos. Clicar de novo, ou no x do chip, tira o filtro e a aba fica. Edital desligado no banco não aparece na tela.",
-    fato: "",
     fonte:
       "src/lib/editais/editais-do-nucleo.ts; src/modulos/editais/painel-operacional.tsx; docs/historias-de-usuario/editais.md",
     abrir: "nucleo",
@@ -6685,7 +6317,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em Editais, cada linha da tabela leva a etiqueta do seu alerta: Sem cronograma (nenhuma etapa cadastrada), Cronograma incompleto (faltam etapas), Próxima etapa em até 3 dias, Próxima etapa em até 7 dias ou Situação excepcional (status excepcional registrado à mão, ou suspenso, paralisado ou cancelado digitado no status com o cálculo manual). Cronograma regular não leva etiqueta. O indicador Próximos 7 dias soma os de até 3 e até 7 dias. Enquanto o resumo não chega, os indicadores aparecem como cartões cinzas, nunca zerados: zero é sempre um número apurado. "Nenhum edital ativo nesta área" quer dizer que não há edital cadastrado, não que houve falha; "Não foi possível carregar os alertas dos editais" é falha, e o botão "Tentar novamente" pede de novo.',
-    fato: "",
     fonte:
       "src/lib/editais/editais-do-nucleo.ts; src/modulos/editais/painel-operacional.tsx",
     abrir: "nucleo",
@@ -6703,7 +6334,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Com o cálculo automático ligado, o status e a etapa do edital saem das datas do cronograma: antes da primeira etapa, "Planejado" e "Aguardando: …"; durante, "Em andamento" e o nome da etapa atual; depois da última, "Concluído". Com o cálculo automático desligado (cálculo manual), valem o status e a etapa digitados no formulário, e o andamento e a próxima etapa continuam vindo das etapas. Sem etapas e sem status digitado, aparece "Cronograma pendente". Ao salvar, vale o calculado; o status excepcional (Suspenso, Cancelado ou Paralisado) é a única forma de contrariar o cálculo, e pede motivo e data da decisão.',
-    fato: "",
     fonte:
       "src/lib/cronograma/cronograma-do-edital.ts; src/lib/editais/editais-do-nucleo.ts",
   },
@@ -6723,7 +6353,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em Editais, o botão "Cronograma encerrado (N)", no topo, abre a lista dos editais cujo cronograma já terminou pelas datas e cujo status gravado continua outro (como "Em andamento"): o mesmo caso do aviso "Cronograma encerrado, status ainda em andamento" das conferências. Cada linha mostra o edital, a unidade, quando o cronograma terminou, o status gravado e as outras pendências abertas do edital (avisos não dispensados). O sistema não muda o status sozinho: a data passar não prova que o resultado foi publicado nem que o processo foi homologado, e a Avaliação documental e a Classificação leem o status gravado. Quem edita editais marca os editais ("Selecionar esta página" pega os que estão à vista; "Selecionar todos os N" pega a lista inteira) e usa "Marcar como concluídos"; a confirmação mostra quantos e quais serão afetados e pede um motivo de 10 a 500 caracteres, sem CPF nem e-mail (por exemplo, "conferido com a equipe em 19/11"). O banco só marca o edital cujo cronograma terminou e cujo status gravado não é Concluído, Cancelado nem Encerrado; os outros voltam recusados, com o motivo. Cada edital marcado fica no histórico do cronograma como "Status marcado como Concluído", com quem, quando e o motivo. Salvar o edital depois não desfaz a marcação: com o cálculo automático, o salvar grava o mesmo status. O aviso da central some na próxima conferência (todo dia às 6h). Para manter o status, o gestor do módulo usa "Dispensar" na linha, com justificativa: é o mesmo "Dispensado com justificativa" da central de avisos, e o edital sai da lista.',
-    fato: "Só quem edita editais marca em lote; o motivo é obrigatório e vai ao histórico do cronograma; o sistema nunca muda o status sozinho.",
     fonte:
       "src/modulos/editais/encerrados-do-cronograma.tsx; src/lib/editais/encerrados-do-cronograma.ts; migration 20261119120000_concluir_editais_com_cronograma_encerrado.sql",
     abrir: "nucleo",
@@ -6745,7 +6374,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em Editais, na aba Histórico, o ⋯ da linha de um edital concluído tem "Reativar edital", para quem tem nível Editor em Editais ou em Cronograma. O modal pede o motivo (de 10 a 500 caracteres, sem CPF nem e-mail), a nova data de fim (depois de hoje) e o nome da etapa ("Convocação de remanescentes", se ninguém mudar). Ao confirmar, a etapa entra no fim do cronograma, de hoje até a data informada, pelo mesmo salvar do formulário: com o cálculo automático, o status volta a "Em andamento", a data de encerramento do edital passa a ser a nova data e o edital sai do Histórico e volta para Ativos. A reativação fica no histórico do cronograma do edital ("Reativação do edital: " e o motivo), com quem fez e quando. Não se reativa por aqui: o edital cancelado (o cancelamento é status excepcional; tire o status excepcional no formulário do edital, em Editar), o edital com o cálculo manual (o status é o digitado; ligue o cálculo automático ou mude o status no formulário) e o edital sem cronograma. Se a lista de aprovados vigente ficou inativa porque a validade venceu, ela volta a ficar ativa ao reativar, depois de gravar o cronograma, com a validade contada da nova data de fim; o modal avisa antes ("volta a ficar ativa, com validade até …"). Isso é para quem tem Editor em Importação e convocação (ou o administrador global); sem essa permissão, o modal diz que a lista continua inativa e quem pode ativá-la, em Lista de aprovados › Listas do edital. Se a ativação falhar, o edital continua reativado e o aviso diz para ativar a lista em Listas do edital. Para estender uma etapa que já existe em vez de acrescentar outra, use o formulário do edital.',
-    fato: "Reativar acrescenta uma etapa de hoje até a nova data de fim e ativa de novo a lista de aprovados vencida (para quem edita a Importação); cancelado e cálculo manual se resolvem no formulário.",
     fonte:
       "src/modulos/editais/reativar-edital.tsx; src/lib/editais/reativar-edital.ts; src/modulos/editais/estado.ts (reativarEdital)",
     abrir: "nucleo",
@@ -6762,7 +6390,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Status excepcional (Suspenso, Cancelado ou Paralisado) é para quando o cronograma não reflete a situação real do edital. Ele passa por cima do status calculado, exige motivo e data da decisão, e o motivo vai para o histórico do edital.",
-    fato: "",
     fonte: "src/lib/cronograma/cronograma-do-edital.ts",
   },
   {
@@ -6776,7 +6403,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O cronograma não salva com etapa sem atividade ou sem datas, data final antes da inicial, ano fora de 2015 a 2100 ou atividade repetida. Só geram aviso: data fora do ano do edital, falta de etapa de resultado final, etapas sobrepostas e etapas fora de sequência (o prazo de recurso começando antes do resultado preliminar, ou o recurso e a análise dos recursos terminando depois do resultado final da mesma fase ou do processo seletivo). O aviso de sequência também aparece na linha do tempo do edital. Com o cálculo automático ligado, as datas de início e encerramento do edital acompanham a primeira e a última etapa sempre que as etapas mudam, inclusive por errata; com o cálculo manual, ficam as datas digitadas. Em edital já cadastrado, mexer no cronograma pede o motivo da alteração, que vai para o histórico; edital novo não pede justificativa (o histórico registra "Cadastro do edital").',
-    fato: "",
     fonte:
       "src/lib/cronograma/cronograma-do-edital.ts; src/lib/cronograma/sequencia-do-cronograma.ts; src/modulos/editais/modal-do-edital.tsx; supabase/migrations/20260928120000_edital_novo_sem_motivo.sql",
   },
@@ -6792,7 +6418,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       '"Copiar cronograma" lista os outros editais que já têm etapas e copia só atividades, datas e observações. O preenchimento em lote aceita uma data ou intervalo por linha, na ordem das atividades do modelo padrão (12 etapas, que precisa ser criado antes), nos formatos 17/06/2026, 18/06/2026 a 20/06/2026 ou 18 a 20/06/2026.',
-    fato: "",
     fonte:
       "src/lib/editais/editais-do-nucleo.ts; src/lib/cronograma/cronograma-do-edital.ts",
   },
@@ -6810,7 +6435,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No formulário do edital, os anexos em PDF (só PDF, até 4 MB, pode escolher mais de um quando cada anexo vem separado) são lidos no servidor sem gravar nada: o Anexo I vira as etapas do cronograma e o Anexo II, o quadro de vagas (em Projetos o quadro vem no Anexo I, sem modalidades). "Usar no cronograma" troca as etapas (pede confirmação se já houver). "Salvar quadro de vagas" grava na hora em edital já cadastrado (confirma antes de substituir o atual); em edital novo, o quadro vai junto no salvar do edital. As datas do PDF vêm sem ano: o ano começa no do edital e avança quando a data volta de dezembro para janeiro.',
-    fato: "",
     fonte:
       "src/modulos/editais/importar-anexos.tsx; api/anexos-do-edital.py; src/lib/editais/anexos-do-edital.ts",
     abrir: "nucleo",
@@ -6830,7 +6454,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No editor de cronograma de um edital já cadastrado, "Lançar retificação (PDF)" lê o PDF da retificação publicada (1ª, 2ª… Retificação do Cronograma ou do Anexo I) no servidor, sem gravar nada, e compara a tabela do "Leia-se" com o cronograma gravado, etapa a etapa: igual, data muda, etapa nova ou etapa que sumiu. A etapa casada guarda o nome gravado; só as datas mudam. Dá para corrigir as datas, dizer a que etapa gravada uma etapa nova corresponde, deixar uma etapa nova de fora ou manter uma que sumiu. Os avisos da leitura aparecem na linha: duas datas soltas ("24/09 e 07/10") viram o intervalo do menor ao maior, digitação estranha ("05/ a 16/10") é corrigida e etapa sem data precisa ser preenchida. PDF de outro edital é bloqueado. "Aplicar retificação" grava o cronograma com o nome da retificação como número da errata e o SEI e a data da assinatura no motivo, e o histórico registra a errata. Com alterações não salvas no formulário, salve ou descarte antes de aplicar.',
-    fato: "",
     fonte:
       "src/modulos/editais/lancar-retificacao.tsx; api/anexos-do-edital.py; src/lib/cronograma/retificacao-do-cronograma.ts",
     abrir: "nucleo",
@@ -6846,7 +6469,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "O quadro de vagas do edital tem uma linha por cargo e lotação, com as vagas por modalidade e o total de vagas imediatas (zero quer dizer só cadastro reserva), vindo do PDF ou digitado. Salvar de novo desativa o quadro anterior. Para ligar uma vaga ao quadro, todas as palavras do cargo precisam estar no nome da vaga (vale o cargo mais específico, a lotação desempata e o texto entre parênteses é ignorado); sem ligação única, a vaga não liga.",
-    fato: "",
     fonte:
       "supabase/migrations/20260930233000_quadro_de_vagas_do_edital.sql; supabase/migrations/20260930235950_quadro_ignora_parenteses.sql",
   },
@@ -6864,9 +6486,29 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Cada vaga com código do edital (da Empregare ou da planilha) fica ligada a uma linha do quadro de vagas, em três situações: confirmada (uma linha), ambígua (mais de uma linha possível, como o mesmo cargo em várias lotações quando o nome da vaga veio cortado, ou a lotação do nome que não bate com a linha do cargo) e ausente (nenhuma linha, como o cargo do quadro que não está no nome). O sistema liga sozinho pela regra do nome e, sem ela, pelo "CARGO N" do título da vaga na Empregare, todo dia às 5h30 e ao salvar o quadro. No formulário do edital, em Anexos do edital, "Revisar vagas" abre a fila: escolha a linha e confirme, ou marque "Sem linha" quando a vaga não tem linha; a decisão vale para a Classificação, a pré-classificação e as conferências, e "Voltar à regra" desfaz. Ao importar o quadro de novo, a vaga passa para a linha de mesmo cargo e lotação; se a linha escolhida saiu do quadro, a vaga volta a ausente com o aviso. Edital cancelado mostra "não se aplica"; vagas de outra origem, "externo"; sem vaga com código, "pendente de integração".',
-    fato: "",
     fonte:
       "supabase/migrations/20261118120000_vinculo_da_vaga_com_o_quadro.sql; src/lib/editais/vinculos-do-quadro.ts",
+    abrir: "nucleo",
+  },
+  {
+    arquivo: "regras-dos-editais.md",
+    titulo: "Corrigir uma vaga do quadro",
+    perguntas: [
+      "como corrijo uma vaga do quadro",
+      "corrigir vaga do quadro de vagas",
+      "retificar quadro de vagas",
+      "editar linha do quadro",
+      "mudar quantidade de vagas do quadro",
+      "acrescentar vaga ao quadro",
+      "retirar vaga do quadro",
+      "retificacao do edital numa vaga so",
+      "tirar cargo do quadro",
+      "colocar cargo no quadro",
+    ],
+    resposta:
+      'Não precisa subir o PDF de novo. No formulário do edital, em Anexos do edital › "Ver quadro": "Editar" muda cargo, lotação, vagas por modalidade (o total é a soma) e cadastro reserva; "Retirar" tira a linha; "Acrescentar vaga" põe uma nova. "Conferir o que muda" mostra a linha antes e depois e as vagas da seleção: as que continuam, as que ficam sem linha (ao retirar) e as que passam à linha nova pela regra do nome. Grave com o motivo ("Retificação nº 2 do edital") e, se houver, o número da errata. A linha corrigida ou nova fica Manual, o vínculo das vagas acompanha a linha corrigida e o quadro anterior fica no histórico. Corrige quem é Editor em Editais ou em Cronograma.',
+    fonte:
+      "supabase/migrations/20261126180000_retificar_linha_do_quadro_de_vagas.sql; src/lib/editais/retificar-quadro.ts; src/modulos/editais/retificar-quadro.tsx",
     abrir: "nucleo",
   },
   {
@@ -6880,7 +6522,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "No Yeendé, as vagas imediatas não se digitam mais à mão (manual) nas Entrevistas: o número digitado lá antes ficou no banco, sem uso. Valem, nesta ordem: o quadro de vagas do edital, cadastrado em Editais; sem ele, a configuração de convocação do edital, em Lista de aprovados › Convocação (o total de vagas imediatas informado por vaga e dividido pelo modelo de cotas; zero quer dizer só cadastro reserva). Quando o quadro só traz o total, a divisão por modalidade sai dessa configuração ou dos percentuais da regra de classificação. A Classificação, a convocação das Entrevistas e a ordem de chamada da lista de aprovados usam essa mesma conta.",
-    fato: "",
     fonte:
       "src/lib/classificacao/vagas.ts; src/lib/classificacao/convocacao-do-edital.ts; src/lib/aprovados/carta-de-convocacao/configuracao-de-convocacao.ts; supabase/migrations/20261005150000_convocacao_unica_da_entrevista.sql",
     abrir: "nucleo",
@@ -6896,7 +6537,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Só o administrador global move um edital para outra área, com motivo obrigatório e confirmação; o banco confere de novo e registra a mudança no histórico. O edital leva junto a lista de aprovados, o cronograma e a convocação. O botão só fica ativo depois de salvar ou descartar as alterações do formulário. Edital novo nasce na área do menu, e unidade de outra área é recusada.",
-    fato: "",
     fonte:
       "src/modulos/editais/estado.ts; supabase/migrations/20260928220000_edital_na_area_certa.sql; src/lib/acessos/access-roles.ts",
   },
@@ -6910,7 +6550,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "No formulário do edital, Inscritos, Aptos análise, Cancelados, Eliminados nota, Reprovados análise, Total eliminados, Aprovados análise, Aprovados prova, Entrevistados, Contratados e Vagas ociosas aparecem só para conferência: vêm das cargas do sistema e não se editam ali. A UF é preenchida pela unidade escolhida, e unidade nova digitada fica registrada na área do edital ao salvar.",
-    fato: "",
     fonte: "src/modulos/editais/modal-do-edital.tsx",
   },
   {
@@ -6928,7 +6567,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No formulário do edital, em "Validade do processo seletivo", informe os anos (0 a 10), os meses (0 a 11) e se o prazo foi prorrogado. O prazo conta da data de encerramento do edital: o último dia de validade é essa data mais os anos e meses, em dobro quando prorrogado (quando o mês de chegada não tem o dia, vale o último dia dele: 31/01 mais um mês dá 28/02 ou 29/02). Com 0 anos e 0 meses a lista não vence. O formulário mostra o prazo calculado. Passado o último dia (no horário de Brasília), a lista de aprovados vigente do edital fica inativa: na hora, ao salvar o edital, e todo dia logo depois da meia-noite. Prorrogar o edital ou aumentar o prazo não a ativa sozinho: depois disso, ative a lista em Lista de aprovados › Listas do edital ("Aplicar situação"). "Reativar edital", no Histórico de Editais, já faz as duas coisas.',
-    fato: "",
     fonte:
       "src/lib/editais/validade-do-edital.ts; src/modulos/editais/modal-do-edital.tsx",
     abrir: "nucleo",
@@ -6946,7 +6584,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Cadastrar ("Novo edital") e editar (Editar, no ⋯ da linha) é de quem tem nível Editor em Editais ou em Cronograma, em Configurações › Acessos. Com Leitor, a tela mostra a tabela, os indicadores e o "Ver cronograma", sem esses botões. Na linha, "Abrir" leva à página do edital e o ⋯ guarda o resto; a Lista de aprovados aparece no ⋯ para quem tem Editor em Importação e convocação, e fica à vista, em amarelo ou vermelho, quando há aviso (concluído sem aprovados, edital cancelado ou suspenso). Mover o edital de área é só do administrador global.',
-    fato: "",
     fonte:
       "src/modulos/editais/nucleo.tsx; src/lib/acessos/access-roles.ts (canManageEditais, canImportApprovedList, canMoveEditalBetweenAreas)",
     abrir: "config:acessos",
@@ -6962,7 +6599,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Editais mostra só os editais da área escolhida no menu e, se você está numa coordenação, só os do recorte dela; quem não é administrador global nem recebe do banco editais de outras áreas. Confira também os filtros e o indicador clicado: Editais ativos ou Editais inativos deixam só aquela situação (chip Situação), e clicar de novo no indicador ou no x do chip volta a mostrar todos. Edital desligado no banco não aparece. Se o edital é de outra área, troque a área no menu ou peça a liberação a quem administra os acessos.",
-    fato: "",
     fonte:
       "src/lib/editais/editais-do-nucleo.ts; src/modulos/editais/painel-operacional.tsx; supabase/migrations/20260925181000_recorta_dados_por_area.sql",
     abrir: "nucleo",
@@ -6994,7 +6630,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Hoje não há edital de treinamento no Yeendé. Os que existiam — "Treinamento – Saúde Indígena (991/2099)", "Treinamento – Projetos (992/2099)" e o edital "Teste" da SEDE, que tinha sido marcado como treinamento — foram apagados em 04/11/2026, com todos os dados fictícios ligados a eles. O recurso continua no sistema e pode ser usado de novo: um edital marcado como treinamento aparece com o selo Treinamento em Editais, Conduzir entrevistas, Avaliação documental e Classificação, e fica fora da Visão geral, dos indicadores, dos painéis (análises, entrevistas e aprovados), das comemorações, das conferências, dos robôs, do painel dos robôs e do Status das atualizações; documento oficial gerado dele sai com "TREINAMENTO — SEM VALOR OFICIAL" no título. A tela não cria nem marca edital de treinamento: quem cria é a equipe técnica, por uma correção de dados com ensaio, que recria o pacote pronto da Saúde Indígena ou de Projetos (só essas duas áreas: edital fictício com vagas, candidatos sem CPF e com e-mail @exemplo.invalid, a regra da avaliação documental conferida, a triagem, as fichas pendentes e a entrevista com roteiro, banca, convocados e agenda a partir do dia). Se precisar de um para treinar ou apresentar, peça ao suporte.',
-    fato: "",
     fonte:
       "src/lib/editais/edital-de-treinamento.ts; supabase/migrations/20261007230000_edital_de_treinamento.sql; supabase/migrations/20261009120000_treinamentos_completos.sql; docs/banco-de-dados.md",
     abrir: "nucleo",
@@ -7013,7 +6648,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O botão Reiniciar treinamento (setas circulares) só aparece, em Editais e para o administrador global, na linha de um edital de treinamento; como hoje não há nenhum, ele não aparece. Quando houver um, da Saúde Indígena ou de Projetos: ao clicar, a própria linha pede a confirmação; em Reiniciar, tudo o que foi feito naquele treinamento (convocações, notas, listas geradas, fichas e triagem, decisões de lote, aprovados, recursos) é apagado e os dados fictícios voltam ao estado inicial, com o cronograma e a agenda recalculados a partir de hoje — reinicie no dia da apresentação para a fila "Hoje" de Conduzir entrevistas ter itens. Só edital de treinamento pode ser reiniciado: o banco recusa qualquer edital real, edital de treinamento de outra área e edital com vaga trazida pelo robô da Empregare; nesses casos nada é apagado.',
-    fato: "",
     fonte:
       "supabase/migrations/20261009120000_treinamentos_completos.sql; src/modulos/editais/nucleo.tsx",
     abrir: "nucleo",
@@ -7037,7 +6671,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em Editais, "Regras do edital", no ⋯ da linha do edital, abre, no lugar da tabela, uma página com todas as regras daquele edital, na ordem das etapas: 1 Triagem (requisitos e motivos de eliminação, nota da lista, desempate e formação do lote), 2 Avaliação documental (o que vale, o que elimina, como a experiência é contada e comprovada, no assistente ou no modo avançado), 3 Entrevista (o resumo de quem é chamado, como a nota sai, quem avalia e o desempate e, embaixo, "Roteiro e banca": o roteiro do edital e a banca, com "Editar roteiro e banca" e "Salvar configuração"; os roteiros da área — editar, duplicar, criar — continuam em Conduzir entrevistas › Preparar), 4 Classificação (composição da nota, notas mínimas, desempate — os critérios marcados usam o que a Avaliação documental comprovou —, cotas e convocação para entrevista) e 5 Chamada para contratação (o tipo de convocação, o modelo de regras com a prévia e as vagas imediatas de cada vaga, com "Salvar convocação"). Quem edita cada etapa é quem já editava (coordenação do edital, gestor da Classificação, quem configura a entrevista, quem importa a lista de aprovados, administrador global); os outros veem a regra travada. As telas da Triagem, da Avaliação documental (Configurações › Regras e critérios), de Conduzir entrevistas › Preparar (passos Roteiro e Banca), da Classificação (Regra) e o modal "Listas do edital" da Lista de aprovados (aba Lista de convocação) mostram a regra resumida com "Editar nas Regras do edital", que abre a página já na etapa. O "voltar" do navegador fecha a página e volta à tabela de Editais (trocar de etapa não conta como página nova). Salvar cria versão nova com motivo e não recalcula nada. A Provisória por ART e o lote saíram da regra da Avaliação documental — também do assistente: o corte por pontos mínimos, a base da nota do lote e o desempate da lista ficam só na Triagem.',
-    fato: "",
     fonte:
       "src/modulos/regras-do-edital/; src/lib/regras-do-edital/regras-do-edital.ts; src/modulos/entrevistas/editor-da-configuracao.tsx; src/modulos/aprovados/chamada-para-contratacao.tsx",
     abrir: "nucleo",
@@ -7054,7 +6687,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Na Visão geral de Projetos, o mapa mostra um ponto por lugar das vagas de todos os projetos (Caminhoneiros, Saúde nas Fronteiras, Escritório Distrital e Regional, Rio Doce, MFC e CCE), na cor do projeto, com legenda, filtro e agrupamento por projeto; o tamanho do ponto segue as vagas. Os lugares foram lidos dos PDFs dos editais (município do IBGE ou só a UF, com o arquivo e a página como prova) e se juntam aos "UBS móvel" do nome da vaga. Lugar só com UF aparece como estado e não tem candidatos. A SEDE não tem mapa.',
-    fato: "",
     fonte:
       "supabase/migrations/20261001180000_locais_das_vagas_dos_projetos.sql; src/lib/visao-geral/visao-geral-da-area.ts; src/modulos/mapa-de-projetos/mapa-de-projetos.tsx",
   },
@@ -7070,7 +6702,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Clique num ponto do mapa, ou num lugar da lista "Municípios por vagas", para ver o projeto, o edital, as vagas publicadas, as lotações e os candidatos daquele lugar; o mapa aproxima e abre o resumo. A lista vem ordenada pelas vagas e a barra mostra a parte aprovada entre os já analisados. Cada lugar mostra o nome e as vagas na primeira linha e os projetos como selos na segunda (com o filtro de um projeto ou agrupada, os selos saem, porque seriam iguais). Os candidatos só aparecem quando o nome da vaga nas análises diz o lugar (como "UBS móvel Irati/PR"); vagas como as dos escritórios não dizem o município, então o lugar fica sem a contagem, em vez de mostrar um zero que não é real. Com dois ou mais projetos, o campo "Projeto" mostra só os lugares de um projeto (o mapa reenquadra) e "Agrupar por projeto" separa a lista em um bloco por projeto — um lugar de dois projetos aparece nos dois. Ponto com contorno tracejado tem mais de um projeto; lugar sem coordenada aparece na lista, mas não no mapa. "Brasil" volta ao país inteiro e "Tela cheia" amplia o painel (Esc sai).',
-    fato: "",
     fonte:
       "src/modulos/mapa-de-projetos/mapa-de-projetos.tsx; src/modulos/mapa-de-projetos/lista.tsx; src/lib/visao-geral/visao-geral-da-area.ts",
   },
@@ -7086,7 +6717,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O mapa de Projetos segue as mesmas regras do mapa da Saúde Indígena. Os filtros e a busca da Visão geral valem para ele: com algum filtro, só ficam os lugares que têm edital no recorte, e cada lugar mostra só esses editais; sem nenhum, a lista diz "Nenhum município no recorte.". Sem filtro, o mapa mostra o Brasil inteiro; com filtro da página ou com um projeto escolhido no campo "Projeto", ele aproxima do único lugar que sobrou ou enquadra todos os que sobraram. "Agrupar por projeto" não muda o enquadramento, e "Brasil" volta ao país inteiro. O tamanho do ponto segue as vagas do lugar com a mesma escala da bolha do DSEI e não muda quando se filtra. Lugares que caem no mesmo ponto abrem em leque, com um traço até a posição real.',
-    fato: "",
     fonte:
       "docs/biblioteca/modulo-mapa-de-projetos.md; src/lib/mapas/enquadramento-do-brasil.ts; src/lib/visao-geral/visao-geral-da-area.ts",
   },
@@ -7102,7 +6732,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Cada ponto do mapa de Projetos é um lugar das vagas, e a coordenada dele fica no banco do Yeendé. Na carga inicial, o município vai para a sede municipal do IBGE (pelo código do IBGE do edital ou pelo nome do "UBS móvel" da vaga) e o lugar que o edital só diz a UF (a CCE, por exemplo) vai para o centro do estado, calculado pela média das sedes municipais. Depois disso, quem muda a posição é o administrador global ou o Gestor, pelo editor de coordenadas, e cada alteração fica registrada com autoria e motivo. Lugar sem coordenada no banco aparece na lista, mas não no mapa.',
-    fato: "",
     fonte:
       "supabase/migrations/20261002190000_coordenadas_mapa_projetos.sql; supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql; src/lib/visao-geral/visao-geral-da-area.ts",
   },
@@ -7118,7 +6747,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No mapa de Projetos, o administrador global e o Gestor veem o botão "Coordenadas", que leva o mapa para a tela inteira com o editor num painel à direita (no celular, embaixo): "Recolher editor" deixa só uma faixa, e "Voltar à lista", o próprio "Coordenadas" ou Esc saem e devolvem a lista "Municípios por vagas". Busque pelo lugar, município, UF, projeto, edital ou lotação e escolha um item: o mapa enquadra o lugar e a sugestão na parte que o painel não cobre e aparece um pin de prévia. Para mudar a posição, digite latitude e longitude, arraste o pin ou use uma sugestão ("Usar esta" ou um clique no círculo dela no mapa). Depois informe o motivo e a fonte e clique em "Salvar coordenada" e em "Confirmar correção". Se a posição já estiver certa, "Conferido" (com confirmação) tira o lugar da fila sem mudar a posição. A seção Histórico (fechada de início; abre pelo título) mostra quem mudou, quando e de onde para onde, e "Desfazer última alteração" volta a mais recente, com motivo. Se outra pessoa mudou o lugar antes, atualize a página e tente de novo. O mapa já mostra a posição nova assim que ela é gravada.',
-    fato: "",
     fonte:
       "src/modulos/mapa-de-projetos/editor-de-coordenadas.tsx; src/modulos/editor-de-coordenadas/editor-de-coordenadas.tsx; supabase/migrations/20261002190000_coordenadas_mapa_projetos.sql",
   },
@@ -7134,7 +6762,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A fila do editor de Projetos começa em "Só pendentes": são os lugares cuja posição ainda não foi conferida pelo administrador global ou por um Gestor. Na carga inicial, todo município aparece porque o ponto é só a sede do município (o edital diz o município, não o endereço), e todo lugar só com UF aparece porque o ponto é o centro do estado. Também ficam pendentes o lugar sem coordenada, o município cujo nome, código ou UF não batem, o mesmo município com coordenadas diferentes e o ponto fora do Brasil. A gravidade compara a posição com a referência do lugar (a sede do município pelo IBGE ou o centro da UF): "Provável erro" quando falta a coordenada, o motivo já é um erro ou a referência está a mais de 10 km; "Revisar" quando ela está entre 2 e 10 km, ou quando a lotação é um escritório e o edital só diz a UF; "Só confirmar" quando a posição é a da referência; e "Sem sugestão" quando não há posição candidata. As sugestões são a sede do município (IBGE), o centro da UF, a sede do DSEI do mapa da Saúde Indígena (para escritório distrital) e os outros lugares das vagas na mesma UF.',
-    fato: "",
     fonte:
       "src/lib/mapas/coordenadas-dos-projetos.ts; src/lib/mapas/editor-de-coordenadas.ts; supabase/correcoes/20261002-pendencias-das-coordenadas-dos-projetos.sql",
   },
@@ -7153,7 +6780,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No canto do mapa, "Mapa" mostra a vista cartográfica (fronteiras, nomes e estradas) e "Satélite" mostra a imagem aérea da Esri, boa para ver o terreno em volta de um polo. Trocar muda só o fundo, não os pontos. A escolha fica guardada no navegador e vale para a próxima visita. Se o fundo escolhido falhar quatro vezes seguidas, o mapa passa sozinho para o outro. Se o mapa ficar cinza nas duas vistas, o problema é a rede ou o acesso aos servidores dos mapas, não os dados do Yeendé.',
-    fato: "",
     fonte:
       "src/modules/map-base-layer-switcher.ts; src/modulos/mapa-saude-indigena/leaflet.ts",
   },
@@ -7169,7 +6795,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No mapa da Saúde Indígena, toda coordenada vem do SIGEPSI: a sede de cada DSEI (onde fica a bolha), os polos base, a ROTA, as CASAIs (inclusive as nacionais, de Brasília e São Paulo) e as unidades de lotação, com a UF pelo CEP. Do banco do Yeendé vêm só o nome, a população e as UFs administrativas de cada DSEI. O mapa desenha o que o SIGEPSI devolve; nada é recalculado na tela, e se o SIGEPSI não responde a página Mapa mostra o erro "Não foi possível carregar o mapa da Saúde Indígena: o SIGEPSI não respondeu", com "Tentar novamente". Para corrigir um ponto, a correção é feita no SIGEPSI. A planilha "Lotações, Meios de Acesso/Polo Base" também não entra no mapa. De 02/10 a 16/11/2026 o mapa desenhava as coordenadas gravadas no banco, auditadas em 01 e 02/10/2026 contra fontes oficiais; esse registro histórico está em docs/coordenadas/.',
-    fato: "",
     fonte:
       "src/lib/mapas/mapa-saude-indigena/localizacoes-do-sigepsi.ts; docs/coordenadas/auditoria-oficial-das-coordenadas-2026-10-01.md; docs/coordenadas/pontos-so-na-planilha-de-lotacoes.md",
   },
@@ -7184,7 +6809,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em Configurações › Módulos e abas (só o administrador global), dá para pôr o sistema inteiro em manutenção, ativar, desativar ou pôr em manutenção cada área, cada aba (em todas as áreas ou só numa) e cada painel externo, e ligar o selo BETA de uma aba. Nada grava na hora: as mudanças vão juntas em "Revisar e salvar", com motivo (3 a 500 caracteres). O histórico mostra as 50 últimas mudanças. Pelo menos uma área precisa ficar ativa.',
-    fato: "",
     fonte:
       "src/modulos/modulos/modulos.tsx; supabase/migrations/20260930140000_modulos_e_manutencao.sql",
     abrir: "config:modulos",
@@ -7202,7 +6826,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em manutenção, a aba (ou a área, ou o sistema inteiro) continua no menu com o aviso, mas quem não é administrador global vê a tela de manutenção com a mensagem e a previsão configuradas; o administrador global entra normalmente, com a faixa "Em manutenção para os demais usuários". Vale a mensagem do nível mais alto: sistema, depois área, depois aba em todas as áreas, depois aba naquela área. O sistema inteiro não se desativa, só entra ou sai de manutenção. Se a situação não puder ser lida do banco, tudo vale como ativo.',
-    fato: "",
     fonte:
       "src/lib/navegacao/situacao-dos-modulos.ts; supabase/migrations/20260930140000_modulos_e_manutencao.sql",
   },
@@ -7217,7 +6840,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Desativada, a área (ou a aba, ou o painel) some do menu de todos, administrador global inclusive. Quem estava na página vê, em até uns 2 minutos e sem recarregar, o aviso "Esta página foi desativada pela coordenação.", com o botão para a página inicial; a página para de carregar dados. Quem tinha alteração não salva (uma ficha da Avaliação documental, por exemplo) vê só uma faixa pedindo para salvar, e a página fecha depois. Religada, a aba volta ao menu sozinha. Pelo menos uma área precisa continuar ativa.',
-    fato: "",
     fonte:
       "supabase/migrations/20260930140000_modulos_e_manutencao.sql; supabase/migrations/20261019160000_versao_do_catalogo_na_presenca.sql; src/lib/navegacao/menu-lateral.ts; src/lib/navegacao/pagina-desligada.ts; src/app/vigia-do-catalogo.ts",
   },
@@ -7227,7 +6849,6 @@ export const VERBETES_AYA = Object.freeze([
     perguntas: ["o que e o selo beta", "selo beta", "aba beta", "beta"],
     resposta:
       "O selo BETA aparece ao lado do nome da aba no menu e marca uma aba ainda em teste. É ligado por aba, em Configurações › Módulos e abas, pelo administrador global, e vale em todas as áreas.",
-    fato: "",
     fonte:
       "src/lib/navegacao/menu-lateral.ts; src/lib/navegacao/modulos-e-abas.ts",
   },
@@ -7242,7 +6863,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "O liga/desliga geral das comemorações fica em Configurações › Módulos e abas › Sistema inteiro, com o administrador global: desligado, ninguém vê comemoração nenhuma. Cada marco, o efeito de cada um e os marcos personalizados ficam em Configurações › Comemorações.",
-    fato: "",
     fonte:
       "src/lib/comemoracao/comemoracao.ts; supabase/migrations/20260930150000_comemoracoes_e_marcos.sql",
   },
@@ -7265,7 +6885,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A página Relatórios, no bloco Dados do menu (antes se chamava Painéis), reúne os relatórios de acompanhamento e gestão da área escolhida, que cruzam editais. Ela abre num catálogo de cartões, em grupos: Editais (Resumo dos editais, Editais por cargo e Montar relatório) e Aprovados (Aprovados, Resumo por cargo e status e Relatório da diretoria). Cada cartão diz o que o relatório mostra e quando foi calculado; os calculados no banco mostram quantas linhas têm e já exportam o relatório inteiro por "Exportar em Excel" ou "Salvar em PDF". Montar relatório abre o montador (seções, colunas e formato); o Relatório da diretoria sai direto do cartão; o Resumo por cargo e status só aparece para quem tem acesso à Lista de aprovados. A Visão geral e a Lista de aprovados têm o botão "Ver em Relatórios", que abre o relatório que saiu delas já no recorte da tela. "Abrir" mostra a tabela, com "Todos os relatórios" para voltar ao catálogo; o endereço guarda o relatório aberto, então o link copiado abre direto nele, e o link antigo de Painéis continua funcionando. O sistema recalcula os relatórios de hora em hora; o botão Sincronizar, no topo, recalcula na hora o relatório aberto, ou todos quando o catálogo está à vista (no máximo uma vez por minuto cada um). O ícone de informação ao lado dos botões diz de onde vêm os dados de cada relatório. Os documentos de uma etapa, como o resultado da Classificação e as cartas de convocação, continuam na tela da etapa. Quem vê é quem o administrador libera em Relatórios, na tela de Acessos.',
-    fato: "",
     fonte:
       "src/modulos/paineis-de-dados/; src/lib/paineis/catalogo-dos-relatorios.ts",
     abrir: "paineis-de-dados",
@@ -7281,7 +6900,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Em Relatórios, o Resumo dos editais traz uma linha por edital ativo da área: número, DSEI ou unidade, total de vagas imediatas (as do cadastro do edital), data da divulgação e data final do processo seletivo. A data da divulgação é o início da primeira etapa do cronograma, e a data final é o fim da última etapa; sem cronograma, valem as datas do cadastro do edital. Editais de treinamento não entram.",
-    fato: "",
     fonte:
       "supabase/migrations/20261116160000_relatorios_dos_paineis_prontos.sql",
   },
@@ -7299,7 +6917,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em Relatórios, Editais por cargo traz uma linha por vaga de cada edital (na Saúde Indígena, uma vaga é um cargo num DSEI): o código da vaga, o cargo, as vagas imediatas, os inscritos da Seleção e os aprovados da lista de aprovados vigente. Inscritos e aprovados se casam pelo código da vaga, como no Painel da Seleção; nas vagas de outras bancas, sem código, pelo nome da vaga. As vagas imediatas vêm, nesta ordem, do quadro de vagas do edital (como na Classificação), da convocação da Lista de aprovados, do local da vaga publicado no edital ou do número no título da vaga ("2 vagas (1 AC + …)" conta 2; "Cadastro Reserva" conta 0). Célula vazia quer dizer que o edital não tem quadro de vagas importado nem convocação configurada para aquela vaga. Aprovados de uma vaga que a Seleção não tem saem numa linha própria, e o edital sem vaga na Seleção sai numa linha só, com os inscritos do edital. Aprovados vazio quer dizer edital sem lista de aprovados.',
-    fato: "",
     fonte:
       "supabase/migrations/20261116180000_vagas_imediatas_dos_paineis_pelo_quadro.sql",
   },
@@ -7317,7 +6934,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Em Relatórios, com um relatório aberto, o botão Fontes dos dados mostra, para esse relatório e a área escolhida no menu, de onde vem cada coluna que pode trocar de origem (vagas, datas, inscritos, aprovados, nota, classificação, status, matrícula e data de admissão). Quem é Administrador em Relatórios escolhe outra fonte, entre as conferidas que o sistema lista (por exemplo, as vagas da convocação ou o quadro de vagas do edital), informa o motivo e salva; ou volta ao padrão. A escolha vale só para aquela área, e cada troca fica no histórico com quem, quando e o motivo. Coluna com fonte diferente do padrão aparece com um asterisco no cabeçalho, com a fonte na dica, e o XLSX traz a aba Fontes. Se a fonte não tiver o dado de uma linha, a célula fica vazia; com fonte diferente do padrão, os totais entre os relatórios podem não fechar. Ninguém escreve SQL: fonte nova é criada pela equipe de desenvolvimento.",
-    fato: "",
     fonte:
       "src/modulos/paineis-de-dados/fontes-dos-dados.tsx; supabase/migrations/20261113220000_fontes_das_colunas_dos_paineis.sql",
     abrir: "paineis-de-dados",
@@ -7335,7 +6951,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em Relatórios, o cartão "Relatório da diretoria" (grupo Aprovados) gera direto, em Excel ou PDF, o modelo Diretoria com os editais da área: Editais, Vagas por cargo e Aprovados. Ele convive com os cartões Editais por cargo e Aprovados, que contam parecido por regras diferentes, e cada cartão diz a sua: no Relatório da diretoria, a data de admissão é a conciliada com o RH e cada download fica registrado com o nome de quem baixou; no relatório Aprovados, é o dia em que o aprovado virou Contratado no sistema. Editais por cargo é calculado no banco, com os aprovados casados pelo código da vaga; as vagas por cargo da diretoria são ligadas na hora de gerar. A aba Aprovados da diretoria só sai para quem tem acesso à Lista de aprovados. Unificar as duas regras depende de decisão da equipe.',
-    fato: "",
     fonte:
       "src/lib/paineis/catalogo-dos-relatorios.ts; src/modulos/paineis-de-dados/gerar-relatorio.ts; src/lib/paineis/relatorio-da-diretoria.ts",
     abrir: "paineis-de-dados",
@@ -7358,7 +6973,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No montador de relatório (cartão "Montar relatório", em Relatórios), o grupo Gráficos tem quatro caixas: Vagas × contratadas por unidade (barras por DSEI ou unidade, com o preenchimento das vagas imediatas), Editais por fase (os editais em andamento de Inscrições a Resultado, como o "Em andamento, por fase" da Visão geral), Contratações por mês (linha com as admissões conciliadas com o RH dos aprovados contratados) e Situação dos aprovados (barras empilhadas por edital com Contratado, Convocado, Desistente e Reserva, que é quem ainda não tem status). Os gráficos seguem o mesmo recorte do relatório. Ao marcar um gráfico, a miniatura aparece logo abaixo; os dois dos aprovados só aparecem para quem tem acesso à Lista de aprovados, e a miniatura deles carrega no botão "Carregar prévia", porque a leitura dos aprovados fica registrada com o nome de quem pediu (a geração reaproveita essa leitura no mesmo formato). No PDF, cada gráfico sai como imagem, depois dos números, com o título em cima e a fonte embaixo. No Excel, cada gráfico vira uma aba com a tabela dos números dele: a planilha gerada pelo Yeendé não desenha gráfico, e o desenho fica no PDF. O CSV não leva gráficos.',
-    fato: "",
     fonte:
       "src/lib/paineis/graficos-do-relatorio.ts; src/modulos/paineis-de-dados/graficos-do-relatorio.tsx; src/modulos/paineis-de-dados/montador-de-relatorio.tsx",
     abrir: "paineis-de-dados",
@@ -7374,7 +6988,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O botão "Ver em Relatórios" leva ao relatório que saiu de uma tela, já no recorte dela: na Visão geral, abre o montador de relatório com os filtros, a busca e o atalho que estavam na tela; na Lista de aprovados (topo da aba Aprovados), abre o Resumo por cargo e status nos editais escolhidos. O montador e o Resumo por cargo moraram nessas telas até 23/11/2026; a Visão geral continua exportando a tabela em Excel e PDF. O botão só aparece para quem tem acesso a Relatórios. O endereço guarda o relatório aberto (e os editais do Resumo), então o link copiado abre do mesmo jeito.',
-    fato: "",
     fonte:
       "src/componentes/ver-em-relatorios.tsx; src/modulos/paineis-de-dados/paineis-de-dados.tsx",
     abrir: "paineis-de-dados",
@@ -7391,7 +7004,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Em Relatórios, o relatório Aprovados traz uma linha por candidato da lista de aprovados vigente de cada edital da área: edital, cargo da vaga, nota, classificação, nome, status, matrícula e data de admissão. O sistema não guarda a data real de admissão: a coluna mostra a data em que o status atual (Contratado ou Migração) foi registrado no sistema, e fica vazia para os outros status.",
-    fato: "",
     fonte:
       "supabase/migrations/20261116160000_relatorios_dos_paineis_prontos.sql",
   },
@@ -7408,7 +7020,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "Nas tabelas de Relatórios, arraste a borda direita do cabeçalho de uma coluna para alargar ou estreitar a coluna; com o teclado, leve o foco até a borda e use as setas para a esquerda e para a direita. A largura vale enquanto a página estiver aberta, inclusive ao trocar de página ou de relatório; ao recarregar a página, as colunas voltam ao tamanho original.",
-    fato: "",
     fonte: "src/modulos/paineis-de-dados/paineis-de-dados.tsx",
     abrir: "paineis-de-dados",
   },
@@ -7428,7 +7039,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O Painel de recursos é para acompanhar os recursos dos candidatos da área atual, do registro à resposta enviada: os filtros, os quatro indicadores, o recorte, os gráficos, as pendências prioritárias, a fila e a exportação ("Exportar em Excel" e "Salvar em PDF", no topo). Só leitura: clicar num recurso abre o detalhe para ler (dados, parecer, ajuste, etapas, resposta, anexos e histórico), sem nenhum botão de ação. Fazer é em Analisar recursos, outra entrada do menu: quem pode analisar tem no topo "Analisar", que abre Analisar recursos com os mesmos filtros, e, no detalhe, "Analisar este recurso", que abre o mesmo recurso lá. Quem tem Leitor em Recursos vê só o painel. Quem está numa coordenação vê só os recursos dos editais dela.',
-    fato: "O Painel de recursos acompanha (só leitura); Analisar recursos faz (registrar, enviar ao parecer, decidir, responder, ajustar a pontuação). As duas usam o recurso Recursos.",
     fonte:
       "src/modulos/recursos/recursos.tsx; supabase/migrations/20261009230000_analisar_recursos_no_menu.sql; supabase/migrations/20260929190200_recorte_por_coordenacao_nos_recursos.sql",
     abrir: "recursos",
@@ -7448,7 +7058,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Analisar recursos é a tela de fazer, com entrada própria no menu (selo BETA). Tem no topo Atualizar, "Ver no painel" (volta ao Painel de recursos com os mesmos filtros), Modelos de resposta (para o Administrador de Recursos) e Novo recurso (para quem tem Editor em Recursos); embaixo, os filtros e a fila. "Abrir" (ou clicar na linha) abre a gaveta do recurso com as ações: editar e excluir, marcar as etapas, enviar para o parecer jurídico, decidir (deferir, deferir parcialmente, indeferir, devolver, reabrir), o ajuste da pontuação, a resposta ao candidato e os anexos. Vê a entrada quem tem Editor em Recursos ou a permissão "Parecer jurídico (Recursos)"; quem só tem Leitor fica com o Painel de recursos. O banco confere cada ação. As origens ativas são análise curricular, entrevista e resultado final; um segundo recurso sem decisão para o mesmo candidato, edital e origem gera um aviso e só é gravado com confirmação.',
-    fato: "Analisar recursos aparece para quem tem Editor em Recursos ou o Parecer jurídico; o Painel de recursos, para todo mundo que vê Recursos.",
     fonte:
       "src/modulos/recursos/recursos.tsx; src/lib/acessos/access-roles.ts (canAnalisarRecursos); supabase/migrations/20261009230000_analisar_recursos_no_menu.sql; supabase/migrations/20261001170000_recursos_parecer_juridico.sql",
     abrir: "analisar-recursos",
@@ -7467,7 +7076,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, o recurso nasce Registrado: quem edita Recursos cadastra os dados, anexa documentos e escreve o rascunho da resposta, e então o envia para parecer jurídico (Em análise jurídica). Só quem tem a permissão "Parecer jurídico (Recursos)" decide: defere, defere parcialmente ou indefere, sempre com o texto do parecer (10 a 20.000 caracteres), ou devolve para ajuste com um comentário. Quem decidiu, quando e o parecer ficam gravados, e cada passo vai para o histórico do recurso.',
-    fato: "No Yeendé, o recurso vai de Registrado a Em análise jurídica e só quem tem a permissão Parecer jurídico decide (Deferido, Deferido parcialmente ou Indeferido); o nível Administrador de Recursos não decide.",
     fonte:
       "supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/lib/recursos/recursos-dos-candidatos.ts",
   },
@@ -7487,7 +7095,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Decide o recurso (deferir, deferir parcialmente ou indeferir), devolve para ajuste e reabre a decisão só quem tem a permissão "Parecer jurídico (Recursos)", que tem dois níveis: Sem acesso ou Editor. Ela é dada por grupo ou individualmente em Configurações › Acessos. O grupo Jurídico já vem com ela (e com Editor em Recursos), e o grupo do administrador global também; os outros grupos não. O nível Administrador em Recursos não decide: serve para manter os modelos de resposta. O banco recusa qualquer mudança de situação ou parecer feita sem a permissão.',
-    fato: "",
     fonte:
       "supabase/migrations/20261001170000_recursos_parecer_juridico.sql; src/lib/acessos/permissoes-recursos.ts",
     abrir: "config:acessos",
@@ -7502,7 +7109,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, "Aguardando parecer" conta os recursos Em análise jurídica: já enviados ao jurídico e ainda sem decisão. Clicar no indicador filtra a tela por eles. No detalhe, quem não tem o parecer jurídico (e todos no Painel de recursos) vê "Aguardando parecer jurídico" no lugar dos botões de decisão.',
-    fato: "",
     fonte:
       "src/modulos/recursos/paineis.tsx; src/lib/recursos/recursos-dos-candidatos.ts",
   },
@@ -7516,7 +7122,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, "Deferido parcialmente" é o mesmo que "parcialmente indeferido" (o código no banco continua PARCIALMENTE_INDEFERIDO, usado pelos modelos de resposta). O indicador "Deferidos" soma os deferidos e os deferidos parcialmente.',
-    fato: "",
     fonte: "supabase/migrations/20261001170000_recursos_parecer_juridico.sql",
   },
   {
@@ -7529,7 +7134,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, o jurídico pode devolver um recurso Em análise jurídica para ajuste, dizendo o que falta (3 a 2.000 caracteres). Ele volta a Registrado, com o comentário em destaque no detalhe, e aparece na pendência "Devolvidos pelo jurídico" até ser reenviado.',
-    fato: "",
     fonte: "supabase/migrations/20261001170000_recursos_parecer_juridico.sql",
   },
   {
@@ -7542,7 +7146,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "No Yeendé, só o jurídico reabre uma decisão, com motivo, e só enquanto a resposta não foi enviada ao candidato. O recurso volta a Em análise jurídica; o parecer anterior continua no histórico.",
-    fato: "",
     fonte: "supabase/migrations/20261001170000_recursos_parecer_juridico.sql",
   },
   {
@@ -7558,7 +7161,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, quem edita escreve o rascunho da resposta e pode enviá-lo para revisão; aprovar ou devolver o texto da resposta é do parecer jurídico, e aprovar exige o recurso decidido e um modelo da mesma situação da decisão (quem escreveu ou enviou para revisão não aprova). Marcar a resposta como enviada ao candidato é de quem edita, só com a resposta aprovada e o recurso decidido: isso marca a etapa "Resposta enviada ao candidato" com o nome de quem marcou e a hora. Depois disso a decisão não reabre.',
-    fato: "",
     fonte:
       "supabase/migrations/20261001170000_recursos_parecer_juridico.sql (transicionar_resposta_recurso, marcar_etapa_recurso)",
   },
@@ -7573,7 +7175,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'O prazo do recurso vem do cronograma do edital: é o fim da atividade de resposta aos recursos daquela origem (análise curricular, entrevista ou resultado final); havendo mais de uma, vale a mais tardia. Sem atividade de resposta, usa o fim do prazo de abertura dos recursos (o prazo estimado, com asterisco). Sem nenhuma das duas, entra a pendência "Prazo não encontrado no cronograma". "Prazo vencido" é o recurso sem resposta enviada com o prazo já passado; "vencendo" é o que vence hoje ou nos próximos dois dias.',
-    fato: "",
     fonte:
       "src/lib/recursos/prazo-do-recurso.ts; src/lib/recursos/recursos-dos-candidatos.ts",
   },
@@ -7590,7 +7191,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, o Painel de recursos tem quatro indicadores: Aguardando parecer, Prazo vencido, Deferidos (com os parcialmente) e Indeferidos; cada um filtra a tela. O total está na contagem da fila; a taxa de decisão, no recorte ("% decididos"); sem processo SEI, sem resposta, respostas em revisão, aprovadas ou devolvidas, mudança de nota, prazo vencendo e registrados sem envio estão nas Pendências prioritárias e nos gráficos.',
-    fato: "",
     fonte:
       "src/modulos/recursos/paineis.tsx; src/lib/recursos/recursos-dos-candidatos.ts",
   },
@@ -7606,7 +7206,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, "Prazo não encontrado no cronograma" quer dizer que o cronograma do edital não traz o prazo de recurso daquela origem; "Candidato fora das análises" é o recurso cadastrado com os dados digitados, que vale conferir; "Mudança de nota ou classificação" junta a nota mudou (a nota atual da análise difere da guardada no cadastro do recurso) e a classificação mudada pelo ajuste da pontuação aprovado, para conferir no resultado final; "Prazo vence em até 2 dias" é o recurso sem resposta cujo prazo vence hoje ou nos próximos dois dias; "Devolvidos pelo jurídico" são os que voltaram para ajuste.',
-    fato: "",
     fonte:
       "src/lib/recursos/recursos-dos-candidatos.ts; supabase/migrations/20260929120000_recursos.sql",
   },
@@ -7622,7 +7221,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Os anexos do recurso (pdf, docx, doc, jpg, png ou odt, até 20 MB) não se apagam: arquivar exige motivo (3 a 500 caracteres) e o arquivo continua guardado; todo download fica registrado. Os modelos de resposta são mantidos por quem tem Administrador em Recursos: editar grava uma versão nova, e cada resposta guarda a versão usada. O texto da fundamentação entra no lugar marcado {fundamentacao}, e campo sem valor aparece como "[não informado: …]".',
-    fato: "",
     fonte:
       "supabase/migrations/20260929230000_recursos_modelos_anexos_respostas.sql",
   },
@@ -7641,7 +7239,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Sim. Em Analisar recursos, no recurso deferido (total ou parcialmente), a seção "Ajuste da pontuação" da gaveta mostra os componentes da nota que a regra de classificação do edital tem — pertencimento étnico, formação, cursos, experiência, nota documental, entrevista ou cada competência, ART — com o valor atual (da análise ou da entrevista) e um campo para o novo valor e a justificativa; a nota documental (e a da entrevista, quando há competências) é a soma das diferenças. Escreva a justificativa geral ou a de cada componente alterado. Antes de confirmar, a prévia mostra a nova nota, a nova posição do candidato e quem muda de lugar por causa dele, calculadas pelo motor da Classificação na lista da etapa do recurso (documental, entrevista ou resultado final). Propor é de quem decide o recurso (Parecer jurídico); pode-se propor já em análise jurídica. A nota da planilha nunca é sobrescrita: cada proposta é uma versão guardada com quem propôs, quando e os valores antes e depois.',
-    fato: "No Yeendé, o ajuste da pontuação do recurso deferido fica em tabela própria, em versões (proposto, aprovado, cancelado); a nota da análise curricular nunca é sobrescrita e só o ajuste aprovado vale na Classificação.",
     fonte:
       "src/modulos/recursos/ajuste.tsx; src/lib/classificacao/ajustes.ts; supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql",
     abrir: "analisar-recursos",
@@ -7660,7 +7257,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       "No Yeendé, o ajuste proposto ainda não vale. Aprova quem aprova a resposta hoje (Parecer jurídico) e só com o recurso deferido, total ou parcialmente: ao aprovar, a prévia é recalculada com os dados de agora e gravada junto, e o ajuste passa a valer na Classificação (o aprovado anterior do mesmo recurso, se houver, fica como versão cancelada). Cancelar pede motivo. Reabrir a decisão, indeferir, devolver para ajuste ou excluir o recurso cancela o ajuste proposto e o aprovado automaticamente, e tudo fica no histórico do recurso.",
-    fato: "",
     fonte: "supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql",
     abrir: "analisar-recursos",
   },
@@ -7675,7 +7271,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'No Yeendé, "O recurso mudou a classificação" deixou de ser uma caixa marcada à mão: é marcada automaticamente quando o ajuste da pontuação aprovado muda a posição ou a situação do candidato (pela prévia calculada na aprovação) e desmarcada quando esse ajuste é cancelado. Os recursos marcados à mão antes dessa mudança continuam como estavam. A marca alimenta a pendência "Mudança de nota ou classificação", o filtro e o CSV.',
-    fato: "",
     fonte:
       "supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql; src/lib/recursos/recursos-dos-candidatos.ts",
     abrir: "recursos",
@@ -7693,7 +7288,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'Em Analisar recursos, "Novo recurso" (para quem tem Editor em Recursos) abre o cadastro: escolha o edital (só os da área atual), a origem e o candidato, buscado nas análises curriculares daquele edital; cargo, vaga, código, nota atual e resultado vêm sozinhos, e o analista vem preenchido com o responsável pela análise. "Não encontrei o candidato" permite digitar o nome, e o recurso fica marcado como fora das análises. O recurso nasce Registrado; depois, anexe os documentos, escreva a resposta e envie para o parecer jurídico. Na edição, edital e candidato não mudam: para isso, exclua e cadastre de novo.',
-    fato: "",
     fonte:
       "src/modulos/recursos/formulario.tsx; supabase/migrations/20261001170000_recursos_parecer_juridico.sql",
     abrir: "analisar-recursos",
@@ -7709,7 +7303,6 @@ export const VERBETES_AYA = Object.freeze([
     ],
     resposta:
       'A seção "Ajuste da pontuação" da gaveta (em Analisar recursos; no Painel de recursos, só para ler) só aparece quando o recurso é de um candidato das análises (recurso "fora das análises" não tem) e o edital tem regra de classificação salva. Propor é de quem tem a permissão "Parecer jurídico (Recursos)", com o recurso em análise jurídica ou já deferido (total ou parcialmente); quem não pode propor só vê a seção se já houver versões do ajuste. Indeferir, devolver, reabrir ou excluir o recurso cancela o ajuste.',
-    fato: "",
     fonte:
       "src/modulos/recursos/ajuste.tsx; supabase/migrations/20261005130000_recurso_ajusta_pontuacao.sql",
     abrir: "analisar-recursos",

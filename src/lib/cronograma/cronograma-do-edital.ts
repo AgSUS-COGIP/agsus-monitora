@@ -557,14 +557,17 @@ export function aplicarDatasEmLote(
 
 // ── Linha do tempo ───────────────────────────────────────────────────────
 
+/* Criado uma vez: a Visão geral pede "hoje" para cada edital na abertura. */
+const DIA_EM_BRASILIA = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "America/Sao_Paulo",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
 /** Hoje em Brasília, como "AAAA-MM-DD", para comparar com as datas das etapas. */
 export function hojeEmBrasilia(agora = new Date()) {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Sao_Paulo",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(agora);
+  return DIA_EM_BRASILIA.format(agora);
 }
 
 /** Concluída, em andamento, a próxima ou futura — só pelas datas. */

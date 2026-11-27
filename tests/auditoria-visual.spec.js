@@ -68,7 +68,8 @@ const TELAS = [
   { tela: "selecao", caminho: "/sede/selecao" },
   { tela: "paineis-de-dados", caminho: "/sede/paineis-de-dados" },
   { tela: "mapa-saude-indigena", caminho: "/saude-indigena/mapa" },
-  { tela: "mapa-de-projetos", caminho: "/projetos/mapa" },
+  // O mapa de Projetos mora na Visão geral de Projetos (/projetos/mapa leva até ela).
+  { tela: "mapa-de-projetos", caminho: "/projetos/visao-geral" },
   ...[
     "marca",
     "inicio",

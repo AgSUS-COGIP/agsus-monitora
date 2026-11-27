@@ -37,6 +37,7 @@ import type {
   EtapaDoCronograma,
 } from "../../lib/cronograma/cronograma-do-edital.ts";
 import type { QuadroParaSalvar } from "../../lib/editais/anexos-do-edital.ts";
+import type { QuadroRetificado } from "../../lib/editais/retificar-quadro.ts";
 import type {
   ItemDoResumo,
   UnidadeComArea,
@@ -382,7 +383,7 @@ export function criarEstadoDoNucleo({
   /** Grava o quadro de vagas de um edital já cadastrado, sem esperar o Salvar do edital. */
   async function salvarQuadroDeVagas(
     id: unknown,
-    quadro: QuadroParaSalvar,
+    quadro: QuadroParaSalvar | QuadroRetificado,
   ): Promise<unknown> {
     if (!supabase) throw new Error("Supabase indisponível.");
     await exigirSessao(supabase);

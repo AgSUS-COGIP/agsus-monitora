@@ -1827,7 +1827,7 @@ bloco("carga-da-entrada", () => {
     });
 
     it("sessão guardada que expirou dá lugar ao login", () => {
-      const fonte = funcaoDaSessao("async function iniciar()");
+      const fonte = funcaoDaSessao("async function arrancar(");
       const semSessao = fonte.slice(fonte.lastIndexOf("await entrar("));
       expect(semSessao).toContain('chamar("encerrarEspera")');
     });

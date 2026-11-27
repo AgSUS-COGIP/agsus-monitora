@@ -5,6 +5,17 @@ import * as alcanceDaBarraNs from "../src/lib/base/alcance-da-selecao.ts";
 import { BarraDeSelecao } from "../src/ui/barra-de-selecao.tsx";
 import { TabelaInfinita as TabelaInfinitaDaBarra } from "../src/ui/tabela-infinita.tsx";
 import { BotoesDeExportacao } from "../src/ui/botoes-de-exportacao.tsx";
+import { Popover, desvioParaCaber } from "../src/ui/popover.tsx";
+import {
+  opcoesDoMapa,
+  protegerMapa,
+} from "../src/modulos/mapa-saude-indigena/guarda-do-mapa.ts";
+import {
+  criarEditorSobDemanda,
+  type EditorSobDemanda,
+} from "../src/modulos/editor-de-coordenadas/editor-sob-demanda.ts";
+import type { EditorDeCoordenadas } from "../src/modulos/editor-de-coordenadas/editor-de-coordenadas.tsx";
+import { usarRegraDaTriagem } from "../src/modulos/triagem/usar-regra-da-triagem.ts";
 import {
   act,
   createElement,
@@ -3160,6 +3171,312 @@ bloco("componentes/barra-de-selecao", () => {
       expect(alcance()).toBe("");
       expect(pagina.checked).toBe(false);
     });
+  });
+});
+
+bloco("modulos/regra-da-triagem-na-troca-de-edital", () => {
+  /* Salvar a regra e trocar de edital antes da resposta (rede lenta). */
+  let raiz: Root | null = null;
+  afterEach(() => {
+    act(() => raiz?.unmount());
+    raiz = null;
+    document.body.innerHTML = "";
+  });
+
+  it("a regra salva do edital anterior não entra no edital novo", async () => {
+    let responderSalvar: (valor: unknown) => void = () => {};
+    const rpc = vi.fn((nome: string, argumentos: Record<string, unknown>) => {
+      if (nome === "salvar_regra_triagem")
+        return new Promise((pronto) => (responderSalvar = pronto));
+      return Promise.resolve({
+        pode_coordenar: true,
+        regra: { versao: 1, edital: argumentos["p_edital"] },
+      });
+    });
+    let visto: ReturnType<typeof usarRegraDaTriagem> | null = null;
+    function Sonda({ edital }: { edital: string }) {
+      visto = usarRegraDaTriagem(rpc, edital);
+      return null;
+    }
+    const caixa = document.createElement("div");
+    document.body.append(caixa);
+    raiz = createRoot(caixa);
+    await act(async () => raiz!.render(h(Sonda, { edital: "E1" })));
+    const salvar = definido(
+      visto as ReturnType<typeof usarRegraDaTriagem> | null,
+    ).salvar;
+    let salvo: Promise<unknown> = Promise.resolve();
+    await act(async () => {
+      salvo = salvar({ formato: 1 }, "lote por vaga");
+    });
+    await act(async () => raiz!.render(h(Sonda, { edital: "E2" })));
+    await act(async () => {
+      responderSalvar({ regra: { versao: 2, edital: "E1" } });
+      await salvo;
+    });
+    expect(
+      definido(visto as ReturnType<typeof usarRegraDaTriagem> | null).resposta
+        ?.regra,
+    ).toMatchObject({ versao: 1, edital: "E2" });
+  });
+});
+
+bloco("modulos/editor-de-coordenadas-sob-demanda", () => {
+  /* O download do editor falhou uma vez: o erro aparece e "Tentar novamente" baixa de novo. */
+  let raiz: Root | null = null;
+  afterEach(() => {
+    act(() => raiz?.unmount());
+    raiz = null;
+    document.body.innerHTML = "";
+  });
+
+  it("falha no download: mostra o erro, e tentar de novo traz o editor", async () => {
+    const editorFalso: typeof EditorDeCoordenadas = () => null;
+    const importar = vi
+      .fn<() => Promise<{ EditorDeCoordenadas: typeof EditorDeCoordenadas }>>()
+      .mockRejectedValueOnce(new Error("Failed to fetch"))
+      .mockResolvedValue({ EditorDeCoordenadas: editorFalso });
+    const sob = criarEditorSobDemanda(importar);
+    let visto: EditorSobDemanda | null = null;
+    function Sonda() {
+      visto = sob.usar();
+      return null;
+    }
+    const atual = () => definido(visto as EditorSobDemanda | null);
+    const caixa = document.createElement("div");
+    document.body.append(caixa);
+    raiz = createRoot(caixa);
+    await act(async () => raiz!.render(h(Sonda)));
+    await act(async () => {});
+    expect(atual()).toMatchObject({ editor: null, erro: "Failed to fetch" });
+    // Sem pedir sozinho em laço: só um download até a pessoa pedir.
+    expect(importar).toHaveBeenCalledTimes(1);
+
+    await act(async () => atual().tentarDeNovo());
+    await act(async () => {});
+    expect(atual()).toMatchObject({ editor: editorFalso, erro: "" });
+    expect(importar).toHaveBeenCalledTimes(2);
+  });
+});
+
+bloco("modulos/mapa-escondido-sem-nan", () => {
+  /*
+    As telas visitadas ficam montadas e escondidas: o contêiner do mapa fica
+    com largura 0. O Leaflet que enquadra (folga maior que a moldura) ou voa
+    (divide pela largura) com medida 0 dá "Invalid LatLng object: (NaN,
+    NaN)" — o erro real gravado de 23 a 26/11/2026. O falso abaixo faz a
+    mesma conta que o Leaflet e lança o mesmo erro.
+  */
+  type Caixa = {
+    getSouth(): number;
+    getNorth(): number;
+    getWest(): number;
+    getEast(): number;
+  };
+  type Par = [number, number];
+  function caixa(entrada: Caixa | [Par, Par] | Par, segundo?: Par): Caixa {
+    if (!Array.isArray(entrada)) return entrada;
+    const [a, b]: [Par, Par] = segundo
+      ? [entrada as Par, segundo]
+      : (entrada as [Par, Par]);
+    return {
+      getSouth: () => Math.min(a[0], b[0]),
+      getNorth: () => Math.max(a[0], b[0]),
+      getWest: () => Math.min(a[1], b[1]),
+      getEast: () => Math.max(a[1], b[1]),
+    };
+  }
+  const L = {
+    latLngBounds: caixa,
+    latLng: (lat: number, lng: number) => ({ lat, lng }),
+  };
+  const invalido = () => {
+    throw new Error("Invalid LatLng object: (NaN, NaN)");
+  };
+
+  function mapaFalso({ enquadramentoProprio = true } = {}) {
+    const medida = { x: 800, y: 400 };
+    const ouvintes: Record<string, (() => void)[]> = {};
+    const container = document.createElement("div");
+    const mapa = {
+      options: { enquadramentoProprio },
+      _loaded: true,
+      on(eventos: string, ouvinte: () => void) {
+        for (const nome of eventos.split(" "))
+          (ouvintes[nome] ??= []).push(ouvinte);
+        return mapa;
+      },
+      disparar(nome: string) {
+        for (const ouvinte of ouvintes[nome] ?? []) ouvinte();
+      },
+      whenReady: (pronto: () => void) => pronto(),
+      getContainer: () => container,
+      getSize: () => ({ ...medida }),
+      getZoom: () => 4.5,
+      getMinZoom: () => 4.5,
+      getMaxZoom: () => 19,
+      setMaxBounds: vi.fn(),
+      setMinZoom: vi.fn(),
+      setMaxZoom: vi.fn(),
+      eachLayer: () => {},
+      zoomIn: vi.fn(),
+      zoomOut: vi.fn(),
+      invalidateSize: vi.fn(),
+      panInsideBounds: vi.fn(),
+      setView: vi.fn(),
+      // Como o Leaflet: a moldura menos a folga entra num logaritmo.
+      fitBounds: vi.fn((_limites: unknown, opcoes?: { padding?: Par }) => {
+        const folga = opcoes?.padding?.[0] ?? 0;
+        const util = Math.min(medida.x, medida.y) - 2 * folga;
+        if (Number.isNaN(Math.log2(util / 256))) invalido();
+      }),
+      flyToBounds: vi.fn((_limites?: unknown, _opcoes?: unknown) => {
+        if (!Math.max(medida.x, medida.y)) invalido();
+      }),
+      flyTo: vi.fn((_centro?: unknown, _zoom?: unknown) => {
+        if (!Math.max(medida.x, medida.y)) invalido();
+      }),
+    };
+    return { mapa, medida, container };
+  }
+
+  let observados: ResizeObserverCallback[] = [];
+  beforeEach(() => {
+    observados = [];
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        constructor(aoMudar: ResizeObserverCallback) {
+          observados.push(aoMudar);
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    vi.stubGlobal("requestAnimationFrame", (quadro: FrameRequestCallback) => {
+      quadro(0);
+      return 1;
+    });
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const medir = (largura: number, altura: number) => {
+    const entrada = {
+      contentRect: { width: largura, height: altura },
+    } as ResizeObserverEntry;
+    for (const aoMudar of observados) aoMudar([entrada], {} as ResizeObserver);
+  };
+
+  it("escondido, enquadrar e voar não fazem conta com medida 0", () => {
+    const { mapa, medida } = mapaFalso();
+    // As funções do Leaflet, antes de a guarda pôr as dela por cima.
+    const { fitBounds, flyTo, flyToBounds, setView } = mapa;
+    protegerMapa(L, mapa);
+    medida.x = 0;
+    medida.y = 0;
+    expect(() =>
+      mapa.fitBounds(
+        caixa([
+          [-33.7, -73.9],
+          [5.3, -34.8],
+        ]),
+        { padding: [30, 30] },
+      ),
+    ).not.toThrow();
+    expect(() => mapa.flyTo([-3.1, -60], 8)).not.toThrow();
+    expect(() =>
+      mapa.flyToBounds(
+        caixa([
+          [-4, -61],
+          [-3, -60],
+        ]),
+      ),
+    ).not.toThrow();
+    expect(fitBounds).not.toHaveBeenCalled();
+    expect(flyTo).not.toHaveBeenCalled();
+    expect(flyToBounds).not.toHaveBeenCalled();
+    // Só o centro, sem animação: o enquadramento vem quando aparecer.
+    expect(setView).toHaveBeenLastCalledWith({ lat: -3.5, lng: -60.5 }, 4.5, {
+      animate: false,
+    });
+  });
+
+  it("o resize de um mapa escondido não reenquadra o Brasil com medida 0", () => {
+    const { mapa, medida } = mapaFalso({ enquadramentoProprio: false });
+    const { fitBounds } = mapa;
+    protegerMapa(L, mapa);
+    fitBounds.mockClear();
+    medida.x = 0;
+    medida.y = 0;
+    expect(() => mapa.disparar("resize")).not.toThrow();
+    expect(fitBounds).not.toHaveBeenCalled();
+  });
+
+  it("sem trackResize; remede só com medida real, uma vez ao voltar a aparecer", () => {
+    expect(opcoesDoMapa(L)).toMatchObject({ trackResize: false });
+    const { mapa } = mapaFalso();
+    protegerMapa(L, mapa);
+    mapa.invalidateSize.mockClear();
+    medir(0, 0);
+    expect(mapa.invalidateSize).not.toHaveBeenCalled();
+    medir(800, 400);
+    medir(800, 400);
+    expect(mapa.invalidateSize).toHaveBeenCalledTimes(1);
+    expect(mapa.invalidateSize).toHaveBeenCalledWith({
+      animate: false,
+      pan: false,
+    });
+  });
+});
+
+bloco("ui/popover-dentro-da-janela", () => {
+  let raiz: Root | null = null;
+  afterEach(() => {
+    act(() => raiz?.unmount());
+    raiz = null;
+    document.body.innerHTML = "";
+  });
+
+  it("o desvio põe o painel dentro da janela, com a folga das bordas", () => {
+    expect(desvioParaCaber(40, 300, 375)).toBe(0);
+    // O balão da Visão geral a 375px: 118px fora, à esquerda.
+    expect(desvioParaCaber(-118, 210, 375)).toBe(134);
+    expect(desvioParaCaber(200, 420, 375)).toBe(-61);
+    // Mais largo que a janela: fica a borda esquerda.
+    expect(desvioParaCaber(10, 400, 375)).toBe(6);
+  });
+
+  it("a 375px, o painel que sairia pela esquerda abre deslocado para dentro", () => {
+    const caixa = document.createElement("div");
+    document.body.append(caixa);
+    const largura = vi
+      .spyOn(document.documentElement, "clientWidth", "get")
+      .mockReturnValue(375);
+    const medida = vi
+      .spyOn(HTMLElement.prototype, "getBoundingClientRect")
+      .mockImplementation(function (this: HTMLElement) {
+        return this.classList.contains("ui-popover-painel")
+          ? DOMRect.fromRect({ x: -118, y: 0, width: 328, height: 80 })
+          : DOMRect.fromRect({ x: 0, y: 0, width: 0, height: 0 });
+      });
+    raiz = createRoot(caixa);
+    act(() =>
+      raiz!.render(
+        h(Popover, {
+          rotulo: "Inscritos",
+          gatilho: "372",
+          lado: "direita",
+          children: "Origem",
+        }),
+      ),
+    );
+    act(() => caixa.querySelector("button")!.click());
+    const painel = caixa.querySelector<HTMLElement>(".ui-popover-painel");
+    expect(painel?.style.getPropertyValue("--ui-popover-desvio")).toBe("134px");
+    medida.mockRestore();
+    largura.mockRestore();
   });
 });
 
