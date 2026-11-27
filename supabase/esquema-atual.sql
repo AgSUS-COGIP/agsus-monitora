@@ -54462,7 +54462,7 @@ CREATE TABLE public."TB_MODELO_CONVOCACAO" (
     "CO_USUARIO_ATUALIZACAO" uuid NOT NULL,
     "DT_CRIACAO" timestamp with time zone DEFAULT now() NOT NULL,
     "DT_ATUALIZACAO" timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT "CK_MODELO_CONVOC_DISTRIB" CHECK ((("TP_DISTRIBUICAO")::text = ANY (ARRAY[('PROPORCIONAL'::character varying)::text, ('POSICAO_FIXA'::character varying)::text, ('SERIE_MGI'::character varying)::text]))),
+    CONSTRAINT "CK_MODELO_CONVOC_DISTRIB" CHECK ((("TP_DISTRIBUICAO")::text = ANY (ARRAY[('PROPORCIONAL'::character varying)::text, ('POSICAO_FIXA'::character varying)::text, ('SERIE_MGI'::character varying)::text, ('ORDEM_AGSUS'::character varying)::text]))),
     CONSTRAINT "CK_MODELO_CONVOC_MULTIPLA" CHECK ((("TP_COTA_MULTIPLA")::text = ANY (ARRAY[('MAIOR_PERCENTUAL'::character varying)::text, ('ACUMULA_COM_ACUMULAVEL'::character varying)::text, ('TODAS'::character varying)::text]))),
     CONSTRAINT "CK_MODELO_CONVOC_NOME" CHECK ((NULLIF(btrim("NO_MODELO"), ''::text) IS NOT NULL))
 );
@@ -54519,7 +54519,7 @@ COMMENT ON COLUMN public."TB_MODELO_CONVOCACAO"."DT_ATUALIZACAO" IS 'Quando o mo
 -- Name: CONSTRAINT "CK_MODELO_CONVOC_DISTRIB" ON "TB_MODELO_CONVOCACAO"; Type: COMMENT; Schema: public; Owner: -
 --
 
-COMMENT ON CONSTRAINT "CK_MODELO_CONVOC_DISTRIB" ON public."TB_MODELO_CONVOCACAO" IS 'Formas de distribuir as vagas de reserva: PROPORCIONAL, POSICAO_FIXA ou SERIE_MGI.';
+COMMENT ON CONSTRAINT "CK_MODELO_CONVOC_DISTRIB" ON public."TB_MODELO_CONVOCACAO" IS 'Formas de distribuir as vagas de reserva: PROPORCIONAL, POSICAO_FIXA, SERIE_MGI ou ORDEM_AGSUS (a série do MGI com a posição ocupada indo para a livre seguinte, como a tabela da UJUR; 20261127160000).';
 
 --
 -- Name: TB_MODELO_ESPELHO_NOTA; Type: TABLE; Schema: public; Owner: -
