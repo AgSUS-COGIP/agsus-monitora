@@ -6527,6 +6527,42 @@ bloco("modulos/paineis-de-dados", () => {
       expect(primeiroTh()?.style.width).toBe("260px");
     });
 
+    it("o toque que vira rolagem (pointercancel) encerra o arraste", async () => {
+      await montar({ "resumo-dos-editais": CENTO_E_VINTE });
+      await act(async () => {
+        alca()?.dispatchEvent(
+          new MouseEvent("pointerdown", { bubbles: true, clientX: 10 }),
+        );
+        window.dispatchEvent(
+          new MouseEvent("pointermove", { bubbles: true, clientX: 110 }),
+        );
+        window.dispatchEvent(
+          new MouseEvent("pointercancel", { bubbles: true }),
+        );
+        window.dispatchEvent(
+          new MouseEvent("pointermove", { bubbles: true, clientX: 410 }),
+        );
+      });
+      expect(primeiroTh()?.style.width).toBe("160px");
+    });
+
+    it("a tela que sai no meio do arraste não deixa a coluna seguindo o ponteiro", async () => {
+      await montar({ "resumo-dos-editais": CENTO_E_VINTE });
+      const ouvintes = vi.spyOn(window, "removeEventListener");
+      await act(async () => {
+        alca()?.dispatchEvent(
+          new MouseEvent("pointerdown", { bubbles: true, clientX: 10 }),
+        );
+      });
+      await act(async () => raiz?.unmount());
+      const tirados = ouvintes.mock.calls.map(([tipo]) => tipo);
+      expect(tirados).toEqual(
+        expect.arrayContaining(["pointermove", "pointerup", "pointercancel"]),
+      );
+      ouvintes.mockRestore();
+      caixa?.remove();
+    });
+
     it("seta para a esquerda na alça estreita a coluna", async () => {
       await montar({ "resumo-dos-editais": CENTO_E_VINTE });
       await arrastar(alca(), 10, 210);

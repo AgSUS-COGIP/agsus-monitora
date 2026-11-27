@@ -55,17 +55,23 @@ export function MolduraDaPrevia({
   children,
 }: Propriedades) {
   const quadro = useRef<HTMLIFrameElement>(null);
+  const preparado = useRef<Document | null>(null);
   const [corpo, definirCorpo] = useState<HTMLElement | null>(null);
 
   /*
     O documento do quadro existe assim que ele entra na página (about:blank).
     Se o navegador trocar esse documento ao terminar de carregar, o `load`
-    prepara o novo.
+    prepara o novo. O mesmo documento não se prepara duas vezes: trocar as
+    folhas de novo (o `load` do about:blank logo depois da montagem)
+    cancelava os downloads em curso e baixava tudo outra vez.
   */
   const iniciar = useCallback(() => {
     const documento = quadro.current?.contentDocument;
     if (!documento?.body) return;
-    prepararDocumento(documento);
+    if (preparado.current !== documento) {
+      prepararDocumento(documento);
+      preparado.current = documento;
+    }
     definirCorpo(documento.body);
   }, []);
 

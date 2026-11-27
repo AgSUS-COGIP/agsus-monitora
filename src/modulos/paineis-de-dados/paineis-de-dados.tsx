@@ -183,6 +183,9 @@ function AlcaDaColuna({
   aoComecar: (th: HTMLElement) => number;
   aoMudar: (largura: number) => void;
 }) {
+  // O arraste em curso: soltar também quando a tabela sai da tela no meio dele.
+  const soltarArraste = useRef<(() => void) | null>(null);
+  useEffect(() => () => soltarArraste.current?.(), []);
   return (
     <span
       role="separator"
@@ -201,12 +204,19 @@ function AlcaDaColuna({
         const inicio = evento.clientX;
         const mover = (m: MouseEvent) =>
           aoMudar(larguraArrastada(base, m.clientX - inicio));
+        // No toque, o navegador que assume a rolagem manda `pointercancel`,
+        // não `pointerup`: os dois encerram o arraste.
         const soltar = () => {
           window.removeEventListener("pointermove", mover);
           window.removeEventListener("pointerup", soltar);
+          window.removeEventListener("pointercancel", soltar);
+          soltarArraste.current = null;
         };
+        soltarArraste.current?.();
+        soltarArraste.current = soltar;
         window.addEventListener("pointermove", mover);
         window.addEventListener("pointerup", soltar);
+        window.addEventListener("pointercancel", soltar);
       }}
       onKeyDown={(evento) => {
         if (evento.key !== "ArrowLeft" && evento.key !== "ArrowRight") return;
