@@ -29,7 +29,7 @@ _ACUMULO_DA_REGRA = {
     "TODAS": "todas",
 }
 _ARREDONDAMENTOS = ("meio_acima", "sempre_acima")
-_DISTRIBUICOES = ("proporcional", "serie_mgi", "posicao_fixa")
+_DISTRIBUICOES = ("proporcional", "serie_mgi", "ordem_agsus", "posicao_fixa")
 _COTAS_MULTIPLAS = ("maior_percentual", "acumula_com_acumulavel", "todas")
 _MARCAS = re.compile("[̀-ͯ]")
 _NAO_ALFANUMERICO = re.compile(r"[^a-z0-9]+")
