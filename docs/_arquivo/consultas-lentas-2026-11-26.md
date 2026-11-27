@@ -12,8 +12,8 @@ RPCs mais lentas do `pg_stat_statements` desde 16/11. **Nada foi aplicado nem ro
 **Estado:** diagnóstico pela leitura do corpo de cada função e das que ela chama em
 `supabase/esquema-atual.sql` (as linhas citadas são desse arquivo), **conferido no banco em
 26/11/2026** com as consultas de [Para medir](#para-medir), em `begin read only; … rollback;`
-(seção [Medido em 26/11/2026](#medido-em-26112026)). Migrations escritas, **não aplicadas**:
-[Migrations](#migrations).
+(seção [Medido em 26/11/2026](#medido-em-26112026)). Três migrations **ensaiadas, aplicadas e
+registradas em 27/11/2026**: [Migrations](#migrations).
 
 ## Medido em 26/11/2026
 
@@ -31,10 +31,23 @@ piores casos (7,7 a 10,4 s) batem no limite de quem está na tela.
 
 ## Migrations
 
-Em `supabase/migrations/`, cada uma com rollback, ensaio (termina em `rollback`) e teste em PGlite
-(`tests/repositorio-e-banco.test.ts`, bloco `consultas-lentas-no-banco`: hoje × migrada × migrada +
-rollback, as mesmas respostas, o corpo de volta pelo md5). Guarda: o md5 do `prosrc` do retrato
-(`md5(replace(prosrc, E'\r', ''))`). Ordem de ganho:
+**Aplicadas e registradas em 27/11/2026** (`public.migracoes_aplicadas`: 20261126190000 =
+`2ee336504efc`, 20261126190100 = `69983424bdfc`, 20261126190200 = `8f3e7666611b`). Guardadas sem
+mudança em `tests/fixtures/sql-do-banco/`, que monta o teste em PGlite
+(`tests/repositorio-e-banco.test.ts`, bloco `consultas-lentas-no-banco`: antes × com a migration,
+as mesmas respostas). O rollback, o ensaio e os testes deles saíram (regra do #712). A guarda era o
+md5 do `prosrc` do retrato de 26/11 (`md5(replace(prosrc, E'\r', ''))`).
+
+Os ensaios em produção, antes de aplicar:
+
+- Classificação: contagem igual em 25 números de edital; a contagem nova, 9 ms (eram 2.068 ms).
+- Vagas por cargo: cargo igual ao de `FC_CARGO_DA_GRAFIA` em 3.515 nomes; o mapa novo, 125 ms
+  (eram 781 ms só nas vagas da Saúde Indígena).
+- Marca: saiu só `public.TB_PERFIL_USUARIO`, de `acompanhamento_visao_geral` e de `selecao_area`.
+- As três, migration + rollback numa transação desfeita: 0 funções diferentes, a coluna nova some,
+  fontes e gatilhos iguais aos de antes.
+
+Em ordem de ganho:
 
 1. **`20261126190000_editais_da_classificacao_sem_funcao_por_analise`** (4): `an` conta por número
    de edital distinto com `FC_NUMERO_EDITAL(edital) = número` como condição do índice que já

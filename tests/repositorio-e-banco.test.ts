@@ -27,12 +27,9 @@ import {
 import {
   bancoAntes as bancoAntesDasConsultasLentas,
   EU,
-  md5DaFuncao,
   migration as migrationDasConsultasLentas,
   MIGRATIONS as MIGRATIONS_DAS_CONSULTAS_LENTAS,
   OUTRA_PESSOA,
-  rollback as rollbackDasConsultasLentas,
-  ensaio as ensaioDasConsultasLentas,
 } from "./apoio/banco-das-consultas-lentas.ts";
 import {
   conferirBiblioteca,
@@ -2724,16 +2721,15 @@ bloco("marca-do-yeende", () => {
 
 bloco("consultas-lentas-no-banco", () => {
   /*
-    As migrations das consultas lentas de 26/11/2026 num Postgres de verdade (PGlite), com as
-    funções de produção copiadas do retrato: hoje × migrada × migrada + rollback, com as mesmas
-    respostas e os corpos de volta (o md5 do prosrc da guarda). O ensaio roda e não muda nada.
-    Proposta: docs/_arquivo/consultas-lentas-2026-11-26.md.
+    As migrations das consultas lentas (26/11/2026; aplicadas em 27/11/2026) num Postgres de
+    verdade (PGlite): o banco de antes (as funções de produção copiadas do retrato de 26/11) × com
+    a migration, guardada sem mudança em tests/fixtures/sql-do-banco/. A guarda, o ensaio e o
+    rollback saíram com elas (regra do #712). Proposta: docs/_arquivo/consultas-lentas-2026-11-26.md.
   */
   type BancoDasConsultas = Awaited<
     ReturnType<typeof bancoAntesDasConsultasLentas>
   >;
   const { classificacao, vagas, marca } = MIGRATIONS_DAS_CONSULTAS_LENTAS;
-  const CLASSIFICACAO_DE_HOJE = "33a2a3adf41b161b89202166b267d33d";
   const EDITAL_6 = "aaaaaaaa-0000-4000-8000-000000000006";
   const EDITAL_7 = "aaaaaaaa-0000-4000-8000-000000000007";
   const EDITAL_8 = "aaaaaaaa-0000-4000-8000-000000000008";
@@ -2768,11 +2764,11 @@ bloco("consultas-lentas-no-banco", () => {
     ).rows[0]?.r;
 
   describe("editais da Classificação sem função por análise", () => {
-    it("migrada e depois do rollback, a mesma resposta; o corpo volta letra por letra", async () => {
+    it("com a migration, a mesma resposta de antes", async () => {
       const db = await comEditaisEAnalises();
-      const hoje = await editaisDaClassificacao(db);
+      const antes = await editaisDaClassificacao(db);
       const editais = (
-        JSON.parse(hoje ?? "{}") as {
+        JSON.parse(antes ?? "{}") as {
           editais: { edital: string; candidatos: number }[];
         }
       ).editais;
@@ -2785,33 +2781,11 @@ bloco("consultas-lentas-no-banco", () => {
       });
 
       await db.exec(migrationDasConsultasLentas(classificacao));
-      expect(
-        await md5DaFuncao(db, "public.listar_editais_classificacao(text)"),
-      ).not.toBe(CLASSIFICACAO_DE_HOJE);
-      expect(await editaisDaClassificacao(db)).toBe(hoje);
-
-      await db.exec(rollbackDasConsultasLentas(classificacao));
-      expect(
-        await md5DaFuncao(db, "public.listar_editais_classificacao(text)"),
-      ).toBe(CLASSIFICACAO_DE_HOJE);
-      expect(await editaisDaClassificacao(db)).toBe(hoje);
-    });
-
-    it("o ensaio roda e não muda nada; a guarda recusa um corpo que não é o do retrato", async () => {
-      const db = await comEditaisEAnalises();
-      await db.exec(ensaioDasConsultasLentas(classificacao));
-      expect(
-        await md5DaFuncao(db, "public.listar_editais_classificacao(text)"),
-      ).toBe(CLASSIFICACAO_DE_HOJE);
-      await db.exec(migrationDasConsultasLentas(classificacao));
-      await expect(
-        db.exec(migrationDasConsultasLentas(classificacao)),
-      ).rejects.toThrow(/mudou desde 26\/11\/2026/);
+      expect(await editaisDaClassificacao(db)).toBe(antes);
     });
   });
 
   describe("vagas por cargo sem função por linha", () => {
-    const VAGAS_DE_HOJE = "0d36350d911b76999671df93fc2c3a4b";
     const vagasPorCargo = async (db: BancoDasConsultas) =>
       (
         await db.query<{ r: string }>(
@@ -2842,10 +2816,10 @@ bloco("consultas-lentas-no-banco", () => {
       return db;
     }
 
-    it("migrada e depois do rollback, os mesmos cargos; o corpo volta letra por letra", async () => {
+    it("com a migration, os mesmos cargos de antes", async () => {
       const db = await comCargosEVagas();
-      const hoje = await vagasPorCargo(db);
-      const resposta = JSON.parse(hoje ?? "{}") as {
+      const antes = await vagasPorCargo(db);
+      const resposta = JSON.parse(antes ?? "{}") as {
         vagas: { cargo: string; co_cargo: number | null }[];
         quadro: { cargo: string; co_cargo: number | null }[];
       };
@@ -2865,33 +2839,7 @@ bloco("consultas-lentas-no-banco", () => {
       expect(resposta.quadro.map((q) => q.co_cargo)).toEqual([2, 1]);
 
       await db.exec(migrationDasConsultasLentas(vagas));
-      expect(
-        await md5DaFuncao(
-          db,
-          "public.listar_vagas_por_cargo_da_visao_geral(text, uuid[])",
-        ),
-      ).not.toBe(VAGAS_DE_HOJE);
-      expect(await vagasPorCargo(db)).toBe(hoje);
-
-      await db.exec(rollbackDasConsultasLentas(vagas));
-      expect(
-        await md5DaFuncao(
-          db,
-          "public.listar_vagas_por_cargo_da_visao_geral(text, uuid[])",
-        ),
-      ).toBe(VAGAS_DE_HOJE);
-      expect(await vagasPorCargo(db)).toBe(hoje);
-    });
-
-    it("o ensaio confere o mapa com a função, roda e não muda nada", async () => {
-      const db = await comCargosEVagas();
-      await db.exec(ensaioDasConsultasLentas(vagas));
-      expect(
-        await md5DaFuncao(
-          db,
-          "public.listar_vagas_por_cargo_da_visao_geral(text, uuid[])",
-        ),
-      ).toBe(VAGAS_DE_HOJE);
+      expect(await vagasPorCargo(db)).toBe(antes);
     });
   });
 
@@ -2899,10 +2847,6 @@ bloco("consultas-lentas-no-banco", () => {
     const RPCS = [
       "listar_acompanhamento_da_visao_geral",
       "get_selecao_da_area",
-    ];
-    const DE_HOJE = [
-      "cf8eb6267f73d966d89619c113cd8680",
-      "ed4747beef8f3de1309a3a41f6b27a08",
     ];
     const marcaDe = async (db: BancoDasConsultas, rpc: string) =>
       (
@@ -2922,18 +2866,8 @@ bloco("consultas-lentas-no-banco", () => {
       db.exec(
         `update public."TB_PERFIL_USUARIO" set nome = '${nome}' where user_id = '${OUTRA_PESSOA}'`,
       );
-    const corpos = async (db: BancoDasConsultas) => [
-      await md5DaFuncao(
-        db,
-        'private."FC_ATUALIZAR_FONTES_DAS_LEITURAS"(boolean)',
-      ),
-      await md5DaFuncao(
-        db,
-        'private."FC_MARCA_DA_RPC"(text, text, uuid, text, text)',
-      ),
-    ];
 
-    it("hoje, mudar o perfil de outra pessoa muda a marca de todo mundo", async () => {
+    it("antes, mudar o perfil de outra pessoa mudava a marca de todo mundo", async () => {
       const db = await comEditaisEAnalises();
       for (const rpc of RPCS) {
         const antes = await marcaDe(db, rpc);
@@ -2942,7 +2876,7 @@ bloco("consultas-lentas-no-banco", () => {
       }
     });
 
-    it("migrada: o perfil dos outros não muda a marca; o monitoramento e o próprio recorte mudam", async () => {
+    it("com a migration: o perfil dos outros não muda a marca; o monitoramento e o próprio recorte mudam", async () => {
       const db = await comEditaisEAnalises();
       await db.exec(migrationDasConsultasLentas(marca));
       for (const leitura of ["acompanhamento_visao_geral", "selecao_area"])
@@ -2966,34 +2900,6 @@ bloco("consultas-lentas-no-banco", () => {
         );
         expect(await marcaDe(db, rpc)).not.toBe(antes);
       }
-    });
-
-    it("o rollback devolve os corpos, a coluna e as fontes; o ensaio roda e não muda nada", async () => {
-      const db = await comEditaisEAnalises();
-      expect(await corpos(db)).toEqual(DE_HOJE);
-      const fontesDeHoje = await fontes(db, "acompanhamento_visao_geral");
-      expect(fontesDeHoje).toContain("public.TB_PERFIL_USUARIO");
-
-      await db.exec(ensaioDasConsultasLentas(marca));
-      expect(await corpos(db)).toEqual(DE_HOJE);
-      expect(await fontes(db, "acompanhamento_visao_geral")).toEqual(
-        fontesDeHoje,
-      );
-
-      await db.exec(migrationDasConsultasLentas(marca));
-      await db.exec(rollbackDasConsultasLentas(marca));
-      expect(await corpos(db)).toEqual(DE_HOJE);
-      expect(await fontes(db, "acompanhamento_visao_geral")).toEqual(
-        fontesDeHoje,
-      );
-      expect(await fontes(db, "selecao_area")).toContain(
-        "public.TB_PERFIL_USUARIO",
-      );
-      const coluna = await db.query(
-        `select 1 from pg_attribute where attrelid = 'private."TD_LEITURA_POR_MARCA"'::regclass
-            and attname = 'DS_FONTES_PELA_PESSOA' and not attisdropped`,
-      );
-      expect(coluna.rows).toHaveLength(0);
     });
   });
 });

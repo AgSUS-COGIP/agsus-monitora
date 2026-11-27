@@ -1,10 +1,12 @@
 /*
-  Banco de teste das migrations das consultas lentas (26/11/2026), num Postgres de verdade
-  (PGlite).
+  Banco de teste das migrations das consultas lentas (26/11/2026; aplicadas em 27/11/2026), num
+  Postgres de verdade (PGlite).
 
-  O que é de verdade: as tabelas, chaves, índices e funções que as migrations mudam, como estão
-  em produção (tests/fixtures/banco-antes-das-consultas-lentas.sql, copiadas do retrato), e as
-  migrations, os rollbacks e os ensaios de supabase/ (lidos sem mudança).
+  O que é de verdade: as tabelas, chaves, índices e funções que as migrations mudam, como
+  estavam em produção antes delas (tests/fixtures/banco-antes-das-consultas-lentas.sql, copiadas
+  do retrato de 26/11/2026), e as migrations, guardadas sem mudança em
+  tests/fixtures/sql-do-banco/ (o hash registrado é o delas). A guarda, o rollback e o ensaio
+  saíram com elas (regra do #712).
 
   O que é imitação (o Supabase tem, o PGlite não, ou é de outro assunto): os papéis, a sessão
   (auth.uid() lê teste.uid; jwt e papel fixos), as permissões (private.pode_recurso: quem tem
@@ -29,9 +31,8 @@ export const MIGRATIONS = {
 
 const ler = (caminho: string) =>
   readFileSync(caminho, "utf8").replace(/\r\n/g, "\n");
-export const migration = (nome: string) => ler(`supabase/migrations/${nome}`);
-export const rollback = (nome: string) => ler(`supabase/rollback/${nome}`);
-export const ensaio = (nome: string) => ler(`supabase/ensaios/${nome}`);
+export const migration = (nome: string) =>
+  ler(`tests/fixtures/sql-do-banco/${nome}`);
 
 export const EU = "11111111-1111-4111-8111-111111111111";
 export const OUTRA_PESSOA = "22222222-2222-4222-8222-222222222222";
@@ -110,12 +111,3 @@ async function montarAntes(): Promise<Banco> {
 
 /** Um clone limpo do banco de antes das migrations (fechado pelo bloco que o pede). */
 export const bancoAntes = moldeDeBanco(montarAntes);
-
-/** O md5 do prosrc (sem \r) de uma função, como na guarda das migrations. */
-export async function md5DaFuncao(db: Banco, assinatura: string) {
-  const { rows } = await db.query<{ md5: string | null }>(
-    `select md5(replace(prosrc, E'\\r', '')) as md5 from pg_proc where oid = to_regprocedure($1)`,
-    [assinatura],
-  );
-  return rows[0]?.md5 ?? null;
-}
