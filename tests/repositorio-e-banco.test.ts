@@ -25,6 +25,13 @@ import {
   rpc,
 } from "./apoio/banco-do-fundamento.ts";
 import {
+  bancoAntes as bancoAntesDasConsultasLentas,
+  EU,
+  migration as migrationDasConsultasLentas,
+  MIGRATIONS as MIGRATIONS_DAS_CONSULTAS_LENTAS,
+  OUTRA_PESSOA,
+} from "./apoio/banco-das-consultas-lentas.ts";
+import {
   conferirBiblioteca,
   extrairLinks,
   lerCabecalho,
@@ -2709,5 +2716,190 @@ bloco("marca-do-yeende", () => {
     expect(readdirSync("icons").filter((f) => f.startsWith("agsus-"))).toEqual(
       [],
     );
+  });
+});
+
+bloco("consultas-lentas-no-banco", () => {
+  /*
+    As migrations das consultas lentas (26/11/2026; aplicadas em 27/11/2026) num Postgres de
+    verdade (PGlite): o banco de antes (as funções de produção copiadas do retrato de 26/11) × com
+    a migration, guardada sem mudança em tests/fixtures/sql-do-banco/. A guarda, o ensaio e o
+    rollback saíram com elas (regra do #712). Proposta: docs/_arquivo/consultas-lentas-2026-11-26.md.
+  */
+  type BancoDasConsultas = Awaited<
+    ReturnType<typeof bancoAntesDasConsultasLentas>
+  >;
+  const { classificacao, vagas, marca } = MIGRATIONS_DAS_CONSULTAS_LENTAS;
+  const EDITAL_6 = "aaaaaaaa-0000-4000-8000-000000000006";
+  const EDITAL_7 = "aaaaaaaa-0000-4000-8000-000000000007";
+  const EDITAL_8 = "aaaaaaaa-0000-4000-8000-000000000008";
+  const SEM_NUMERO = "aaaaaaaa-0000-4000-8000-000000000009";
+  const EDITAL_6_SI = "bbbbbbbb-0000-4000-8000-000000000006";
+
+  async function comEditaisEAnalises() {
+    const db = await bancoAntesDasConsultasLentas();
+    await db.exec(`
+      set teste.uid = '${EU}';
+      insert into public."TB_MONITORAMENTO_INDIGENA" (id, edital, unidade, "CO_AREA", status) values
+        ('${EDITAL_6}', '6/2026', 'Unidade A', 'sede', 'Em andamento'),
+        ('${EDITAL_7}', 'Edital 07/2026', 'Unidade B', 'sede', 'Concluído'),
+        ('${EDITAL_8}', '8/2026', 'Unidade C', 'sede', null),
+        ('${SEM_NUMERO}', 'Chamada interna', 'Unidade D', 'sede', null),
+        ('${EDITAL_6_SI}', '6/2026', 'DSEI X', 'saude-indigena', null);
+      insert into public."TB_ANALISE_CURRICULAR" (unidade, edital, chave_natural, "CO_PLANILHA", "CO_AREA", ativo)
+      select 'Unidade', e.edital, 'chave-' || e.edital || '-' || g, 'planilha', e.area, e.ativo
+        from (values ('06/2026', 'sede', true, 3), ('7/2026 (sanitarista)', 'sede', true, 2),
+                     ('8/2026', 'sede', false, 1), ('99/2026', 'sede', true, 4),
+                     ('6/2026', 'saude-indigena', true, 5)) e(edital, area, ativo, quantas),
+             generate_series(1, e.quantas) g;
+    `);
+    return db;
+  }
+
+  const editaisDaClassificacao = async (db: BancoDasConsultas) =>
+    (
+      await db.query<{ r: string }>(
+        `select public.listar_editais_classificacao('sede')::text as r`,
+      )
+    ).rows[0]?.r;
+
+  describe("editais da Classificação sem função por análise", () => {
+    it("com a migration, a mesma resposta de antes", async () => {
+      const db = await comEditaisEAnalises();
+      const antes = await editaisDaClassificacao(db);
+      const editais = (
+        JSON.parse(antes ?? "{}") as {
+          editais: { edital: string; candidatos: number }[];
+        }
+      ).editais;
+      // Inativa, de outro edital, de outra área ou sem número não conta; sem análise, sai.
+      expect(
+        Object.fromEntries(editais.map((e) => [e.edital, e.candidatos])),
+      ).toEqual({
+        "6/2026": 3,
+        "Edital 07/2026": 2,
+      });
+
+      await db.exec(migrationDasConsultasLentas(classificacao));
+      expect(await editaisDaClassificacao(db)).toBe(antes);
+    });
+  });
+
+  describe("vagas por cargo sem função por linha", () => {
+    const vagasPorCargo = async (db: BancoDasConsultas) =>
+      (
+        await db.query<{ r: string }>(
+          `select public.listar_vagas_por_cargo_da_visao_geral('sede', array['${EDITAL_6}', '${EDITAL_7}']::uuid[])::text as r`,
+        )
+      ).rows[0]?.r;
+
+    async function comCargosEVagas() {
+      const db = await comEditaisEAnalises();
+      await db.exec(`
+        insert into public."TD_CARGO" ("CO_CARGO", "NO_CARGO", "CO_AREA", "ST_REGISTRO_ATIVO") values
+          (1, 'Enfermeiro 40h', 'sede', 'S'), (2, 'Técnico de Enfermagem', 'sede', 'S'),
+          (3, 'Médico', 'sede', 'S'), (4, 'Nutricionista', 'projetos', 'S'),
+          (5, 'Cargo Antigo', 'sede', 'N');
+        insert into public."TD_CARGO_APELIDO" ("CO_AREA", "DS_GRAFIA_NORMALIZADA", "CO_CARGO", "TP_ORIGEM", "ST_CONFIRMADO", "DT_CONFIRMACAO") values
+          ('sede', 'ENF 40H', 1, 'MANUAL', 'S', now()),
+          ('sede', 'MEDICO CLINICO', 3, 'MANUAL', 'N', null),
+          ('sede', 'MEDICO', 2, 'MANUAL', 'S', now());
+        insert into public."TB_SELECAO_VAGA" ("CO_AREA", "DS_EDITAL", "DS_VAGA_PLANILHA", "DS_CHAVE_ORIGEM", "CO_MONITORAMENTO", "NO_CARGO", "QT_INSCRITO")
+        select 'sede', '6/2026', 'Vaga ' || n, 'chave-' || n, '${EDITAL_6}', n, 10
+          from unnest(array['enfermeiro   40h', 'Enf 40h', 'Médico', 'Médico clínico', 'Cargo Antigo',
+                            'Nutricionista', 'Desconhecido']) n;
+        insert into public."TB_SELECAO_VAGA" ("CO_AREA", "DS_EDITAL", "DS_VAGA_PLANILHA", "DS_CHAVE_ORIGEM", "CO_MONITORAMENTO", "NO_CARGO")
+        values ('sede', '8/2026', 'Fora do pedido', 'chave-fora', '${EDITAL_8}', 'Enfermeiro 40h');
+        insert into public."TB_QUADRO_VAGA_EDITAL" ("CO_MONITORAMENTO", "NU_ORDEM", "NO_CARGO") values
+          ('${EDITAL_7}', 1, 'Técnico de enfermagem'), ('${EDITAL_7}', 2, 'ENFERMEIRO 40H');
+      `);
+      return db;
+    }
+
+    it("com a migration, os mesmos cargos de antes", async () => {
+      const db = await comCargosEVagas();
+      const antes = await vagasPorCargo(db);
+      const resposta = JSON.parse(antes ?? "{}") as {
+        vagas: { cargo: string; co_cargo: number | null }[];
+        quadro: { cargo: string; co_cargo: number | null }[];
+      };
+      // Pelo nome, pelo apelido confirmado; ambíguo (nome de um, apelido de outro), apelido sem
+      // confirmação, cargo inativo, de outra área ou sem cadastro: nulo.
+      expect(
+        Object.fromEntries(resposta.vagas.map((v) => [v.cargo, v.co_cargo])),
+      ).toEqual({
+        "enfermeiro   40h": 1,
+        "Enf 40h": 1,
+        Médico: null,
+        "Médico clínico": null,
+        "Cargo Antigo": null,
+        Nutricionista: null,
+        Desconhecido: null,
+      });
+      expect(resposta.quadro.map((q) => q.co_cargo)).toEqual([2, 1]);
+
+      await db.exec(migrationDasConsultasLentas(vagas));
+      expect(await vagasPorCargo(db)).toBe(antes);
+    });
+  });
+
+  describe("marca das leituras sem o perfil dos outros", () => {
+    const RPCS = [
+      "listar_acompanhamento_da_visao_geral",
+      "get_selecao_da_area",
+    ];
+    const marcaDe = async (db: BancoDasConsultas, rpc: string) =>
+      (
+        await db.query<{ m: string }>(
+          `select private."FC_MARCA_DA_RPC"($1, 'sede') as m`,
+          [rpc],
+        )
+      ).rows[0]?.m;
+    const fontes = async (db: BancoDasConsultas, leitura: string) =>
+      (
+        await db.query<{ f: string }>(
+          `select "NO_FONTE" as f from private."TD_FONTE_DA_LEITURA" where "NO_LEITURA" = $1 order by 1`,
+          [leitura],
+        )
+      ).rows.map((l) => l.f);
+    const mudarOutroPerfil = (db: BancoDasConsultas, nome: string) =>
+      db.exec(
+        `update public."TB_PERFIL_USUARIO" set nome = '${nome}' where user_id = '${OUTRA_PESSOA}'`,
+      );
+
+    it("antes, mudar o perfil de outra pessoa mudava a marca de todo mundo", async () => {
+      const db = await comEditaisEAnalises();
+      for (const rpc of RPCS) {
+        const antes = await marcaDe(db, rpc);
+        await mudarOutroPerfil(db, `Outra ${rpc}`);
+        expect(await marcaDe(db, rpc)).not.toBe(antes);
+      }
+    });
+
+    it("com a migration: o perfil dos outros não muda a marca; o monitoramento e o próprio recorte mudam", async () => {
+      const db = await comEditaisEAnalises();
+      await db.exec(migrationDasConsultasLentas(marca));
+      for (const leitura of ["acompanhamento_visao_geral", "selecao_area"])
+        expect(await fontes(db, leitura)).toEqual([
+          "public.TB_MONITORAMENTO_INDIGENA",
+        ]);
+      // A leitura que lê os perfis como conteúdo continua com eles.
+      expect(await fontes(db, "perfis_de_teste")).toEqual([
+        "public.TB_PERFIL_USUARIO",
+      ]);
+      for (const rpc of RPCS) {
+        const antes = await marcaDe(db, rpc);
+        await mudarOutroPerfil(db, `Outra ${rpc}`);
+        expect(await marcaDe(db, rpc)).toBe(antes);
+        await db.exec(`set teste.visiveis = '{${EDITAL_6}}'`);
+        expect(await marcaDe(db, rpc)).not.toBe(antes);
+        await db.exec(`reset teste.visiveis`);
+        expect(await marcaDe(db, rpc)).toBe(antes);
+        await db.exec(
+          `update public."TB_MONITORAMENTO_INDIGENA" set status = 'Mudou ${rpc}' where id = '${EDITAL_8}'`,
+        );
+        expect(await marcaDe(db, rpc)).not.toBe(antes);
+      }
+    });
   });
 });
