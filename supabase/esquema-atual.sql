@@ -1626,7 +1626,10 @@ begin
     select coalesce(array_agg(distinct x.f order by x.f), '{}') into v_fontes
       from (select f from private."FC_FONTES_PELO_CODIGO"(v_leitura."DS_FUNCOES") f
             union
-            select unnest(v_leitura."DS_FONTES_EXTRAS")) x(f);
+            select unnest(v_leitura."DS_FONTES_EXTRAS")) x(f)
+     -- Fonte lida só pela permissão de quem chama: o recorte da pessoa entra na chave da
+     -- marca (FC_MARCA_DA_RPC), e a mudança no perfil de outra pessoa não muda a marca (20261126190200).
+     where x.f <> all (v_leitura."DS_FONTES_PELA_PESSOA");
     delete from private."TD_FONTE_DA_LEITURA" f
      where f."NO_LEITURA" = v_leitura."NO_LEITURA" and f."NO_FONTE" <> all (v_fontes);
     insert into private."TD_FONTE_DA_LEITURA" ("NO_LEITURA", "NO_FONTE")
@@ -9239,6 +9242,9 @@ declare
   v_escopo text;
   v_modulo text;
   v_pacote text;
+  -- O recorte de quem chama (FC_EDITAIS_VISIVEIS: nulo = área inteira), na chave da marca das
+  -- leituras com TB_PERFIL_USUARIO em DS_FONTES_PELA_PESSOA (20261126190200).
+  v_visiveis uuid[];
 begin
   -- A permissão de cada RPC é conferida aqui com os mesmos erros da função de sempre:
   -- a resposta `inalterado` não monta nada, mas também não sai para quem não pode ler.
@@ -9299,7 +9305,10 @@ begin
     if not private."FC_PODE_AREA"(p_area) then
       raise exception 'Sem acesso a esta área' using errcode = '42501';
     end if;
-    return private."FC_MARCA_DA_LEITURA"('selecao_area', p_area);
+    v_visiveis := (select private."FC_EDITAIS_VISIVEIS"())::uuid[];
+    return private."FC_MARCA_DA_LEITURA"('selecao_area', concat_ws('|', p_area,
+      case when v_visiveis is null then 'todos'
+           else md5(array(select x from unnest(v_visiveis) x order by x)::text) end));
 
   when 'listar_acompanhamento_da_visao_geral' then
     v_area := lower(btrim(coalesce(p_area, '')));
@@ -9309,7 +9318,10 @@ begin
     if not (v_area = any ((select private."FC_AREAS_USUARIO"())::text[])) then
       raise exception 'Sem permissão para esta área' using errcode = '42501';
     end if;
-    return private."FC_MARCA_DA_LEITURA"('acompanhamento_visao_geral', v_area);
+    v_visiveis := (select private."FC_EDITAIS_VISIVEIS"())::uuid[];
+    return private."FC_MARCA_DA_LEITURA"('acompanhamento_visao_geral', concat_ws('|', v_area,
+      case when v_visiveis is null then 'todos'
+           else md5(array(select x from unnest(v_visiveis) x order by x)::text) end));
 
   when 'obter_regra_analise' then
     perform private."FC_EXIGIR_AVALIACAO_EDITAL"(p_edital, 1);
@@ -31480,11 +31492,17 @@ begin
           from public."TB_MONITORAMENTO_INDIGENA" m
          where m."CO_AREA" = p_area and (v_editais is null or m.id = any (v_editais))
       ),
+      -- Uma contagem por número de edital da área, com o número como condição do índice
+      -- IN_ANALISECURR_AREANUMEDITAL: FC_NUMERO_EDITAL não roda mais por análise
+      -- (com ela, 2,1 s para 13.205 análises da Saúde Indígena; sem ela, 9 ms). Número sem
+      -- análise conta 0, como a falta da linha contava no coalesce abaixo.
       an as (
-        select private."FC_NUMERO_EDITAL"(a.edital) as numero, count(*)::integer as qt
-          from public."TB_ANALISE_CURRICULAR" a
-         where a."CO_AREA" = p_area and a.ativo
-         group by 1
+        select n.numero,
+               (select count(*)::integer
+                  from public."TB_ANALISE_CURRICULAR" a
+                 where a."CO_AREA" = p_area and a.ativo
+                   and private."FC_NUMERO_EDITAL"(a.edital) = n.numero) as qt
+          from (select distinct m.numero from m where m.numero is not null) n
       ),
       ul as (
         select distinct on (l."CO_MONITORAMENTO") l."CO_MONITORAMENTO" as id,
@@ -33685,6 +33703,8 @@ declare
   v_area text := lower(btrim(coalesce(p_area, '')));
   v_visiveis uuid[];
   v_editais uuid[];
+  -- Nome do cargo (como veio na vaga ou no quadro) -> o cargo oficial da área, ou nulo.
+  v_cargos jsonb;
 begin
   if (select auth.uid()) is null then
     raise exception 'Sessão não localizada.' using errcode = '28000';
@@ -33708,6 +33728,50 @@ begin
      and not private."FC_EH_TREINAMENTO"(m."ST_TREINAMENTO")
      and (v_visiveis is null or m.id = any (v_visiveis));
 
+  /*
+    O cargo oficial de cada nome, de uma vez (26/11/2026): era private."FC_CARGO_DA_GRAFIA"
+    por linha de vaga e de quadro, ~0,28 ms cada (2.836 vagas e 2.610 nomes distintos na Saúde
+    Indígena: 0,8 s só nas vagas). A regra é a da função: a grafia normalizada do nome casa
+    com o nome normalizado de um cargo ativo da área ou com um apelido confirmado e ativo da
+    área (de cargo ativo); vale só se casar com um cargo só, senão nulo.
+  */
+  with nomes as (
+    select s."NO_CARGO"::text as nome
+      from public."TB_SELECAO_VAGA" s
+     where s."ST_REGISTRO_ATIVO" = 'S'
+       and s."CO_MONITORAMENTO" = any (v_editais)
+       and s."NO_CARGO" is not null
+    union
+    select q."NO_CARGO"::text
+      from public."TB_QUADRO_VAGA_EDITAL" q
+     where q."ST_REGISTRO_ATIVO" = 'S'
+       and q."CO_MONITORAMENTO" = any (v_editais)
+       and q."NO_CARGO" is not null
+  ),
+  grafias as materialized (
+    select n.nome, private."FC_NORMALIZAR_GRAFIA_CARGO"(n.nome) as grafia from nomes n
+  ),
+  oficiais as materialized (
+    select c."CO_CARGO", private."FC_NORMALIZAR_GRAFIA_CARGO"(c."NO_CARGO") as grafia
+      from public."TD_CARGO" c
+     where c."ST_REGISTRO_ATIVO" = 'S'
+       and c."CO_AREA" = v_area
+    union
+    select a."CO_CARGO", a."DS_GRAFIA_NORMALIZADA"::text
+      from public."TD_CARGO_APELIDO" a
+      join public."TD_CARGO" c on c."CO_CARGO" = a."CO_CARGO" and c."ST_REGISTRO_ATIVO" = 'S'
+     where a."ST_REGISTRO_ATIVO" = 'S'
+       and a."ST_CONFIRMADO" = 'S'
+       and a."CO_AREA" = v_area
+  )
+  select coalesce(jsonb_object_agg(x.nome, x.co_cargo), '{}'::jsonb)
+    into v_cargos
+    from (select g.nome,
+                 case when count(distinct o."CO_CARGO") = 1 then min(o."CO_CARGO") end as co_cargo
+            from grafias g
+            left join oficiais o on o.grafia = g.grafia
+           group by g.nome) x;
+
   return jsonb_build_object(
     'vagas', coalesce((
       select jsonb_agg(jsonb_build_object(
@@ -33716,7 +33780,7 @@ begin
                'vaga', s."DS_VAGA_PLANILHA",
                'cargo', s."NO_CARGO",
                -- O cargo oficial (TD_CARGO) da grafia; nulo sem cadastro na área ou sem casamento único.
-               'co_cargo', private."FC_CARGO_DA_GRAFIA"(s."NO_CARGO", v_area),
+               'co_cargo', (v_cargos ->> s."NO_CARGO"::text)::integer,
                'unidade', s."NO_UNIDADE",
                'inscritos', s."QT_INSCRITO"
              ) order by s."CO_MONITORAMENTO", s."DS_VAGA_PLANILHA")
@@ -33728,7 +33792,7 @@ begin
       select jsonb_agg(jsonb_build_object(
                'monitoramento_id', q."CO_MONITORAMENTO",
                'cargo', q."NO_CARGO",
-               'co_cargo', private."FC_CARGO_DA_GRAFIA"(q."NO_CARGO", v_area),
+               'co_cargo', (v_cargos ->> q."NO_CARGO"::text)::integer,
                'lotacao', q."NO_LOTACAO",
                'vagas', q."QT_VAGA_IMEDIATA",
                'reserva', q."ST_CADASTRO_RESERVA" = 'S'
@@ -48055,7 +48119,8 @@ CREATE TABLE private."TD_LEITURA_POR_MARCA" (
     "NO_LEITURA" character varying(60) NOT NULL,
     "DS_FUNCOES" text[] NOT NULL,
     "DS_FONTES_EXTRAS" text[] DEFAULT '{}'::text[] NOT NULL,
-    "DS_LEITURA" text NOT NULL
+    "DS_LEITURA" text NOT NULL,
+    "DS_FONTES_PELA_PESSOA" text[] DEFAULT '{}'::text[] NOT NULL
 );
 
 --
@@ -48087,6 +48152,12 @@ COMMENT ON COLUMN private."TD_LEITURA_POR_MARCA"."DS_FONTES_EXTRAS" IS 'Tabelas 
 --
 
 COMMENT ON COLUMN private."TD_LEITURA_POR_MARCA"."DS_LEITURA" IS 'O que a leitura entrega (para quem mantém).';
+
+--
+-- Name: COLUMN "TD_LEITURA_POR_MARCA"."DS_FONTES_PELA_PESSOA"; Type: COMMENT; Schema: private; Owner: -
+--
+
+COMMENT ON COLUMN private."TD_LEITURA_POR_MARCA"."DS_FONTES_PELA_PESSOA" IS 'Tabelas (esquema.TABELA) que a leitura só lê pela permissão de quem chama (20261126190200): ficam fora de TD_FONTE_DA_LEITURA, e o recorte da pessoa entra na chave da marca (FC_MARCA_DA_RPC). Mudar o perfil de outra pessoa não muda a marca.';
 
 --
 -- Name: TH_COORDENADA_LOCAL_VAGA; Type: TABLE; Schema: private; Owner: -
